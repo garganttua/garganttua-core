@@ -1,13 +1,14 @@
-package com.garganttua.tooling.objects.mapper.rules;
+package com.garganttua.objects.mapper.rules;
 
 import java.lang.reflect.Field;
 
+import com.garganttua.objects.mapper.GGMapperException;
+import com.garganttua.objects.mapper.IGGMappingRuleExecutor;
+import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.utils.GGFieldAccessManager;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
-import com.garganttua.tooling.objects.mapper.IGGAPIMappingRuleExecutor;
 
-public class GGAPISimpleFieldMappingExecutor implements IGGAPIMappingRuleExecutor {
+public class GGAPISimpleFieldMappingExecutor implements IGGMappingRuleExecutor {
 
 	private Field sourceField;
 	private Field destinationField;
@@ -18,12 +19,12 @@ public class GGAPISimpleFieldMappingExecutor implements IGGAPIMappingRuleExecuto
 	}
 
 	@Override
-	public <destination> destination doMapping(Class<destination> destinationClass, destination destinationObject, Object sourceObject) throws GGAPIMappingRuleExecutorException {
+	public <destination> destination doMapping(Class<destination> destinationClass, destination destinationObject, Object sourceObject) throws GGMapperException {
 		if( destinationObject == null ) {
 			try {
 				destinationObject = GGObjectReflectionHelper.instanciateNewObject(destinationClass);
-			} catch (GGAPIObjectReflectionHelperExcpetion e) {
-				throw new GGAPIMappingRuleExecutorException(e);
+			} catch (GGReflectionException e) {
+				throw new GGMapperException(e);
 			}
 		}
 
@@ -32,7 +33,7 @@ public class GGAPISimpleFieldMappingExecutor implements IGGAPIMappingRuleExecuto
 				this.destinationField.set(destinationObject, this.sourceField.get(sourceObject));
 			}
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new GGAPIMappingRuleExecutorException(e);
+			throw new GGMapperException(e);
 		}
 		
 		return destinationObject;

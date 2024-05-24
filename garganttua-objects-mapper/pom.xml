@@ -5,15 +5,33 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-tooling</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 	<artifactId>garganttua-objects-mapper</artifactId>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-reflections</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<artifactId>garganttua-reflection</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+			<version>1.18.26</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<scope>provided</scope>
+			<version>2.0.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.9.1</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

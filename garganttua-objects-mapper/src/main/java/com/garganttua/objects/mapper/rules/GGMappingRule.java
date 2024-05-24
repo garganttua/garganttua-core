@@ -1,15 +1,15 @@
-package com.garganttua.tooling.objects.mapper.rules;
+package com.garganttua.objects.mapper.rules;
 
 import java.util.Objects;
 
-import com.garganttua.reflection.GGAPIObjectAddress;
+import com.garganttua.reflection.GGObjectAddress;
 
-public record GGAPIMappingRule (
-		GGAPIObjectAddress sourceFieldAddress,
-		GGAPIObjectAddress destinationFieldAddress,
+public record GGMappingRule (
+		GGObjectAddress sourceFieldAddress,
+		GGObjectAddress destinationFieldAddress,
 		Class<?> destinationClass,
-		GGAPIObjectAddress fromSourceMethodAddress,
-		GGAPIObjectAddress toSourceMethodAddress
+		GGObjectAddress fromSourceMethodAddress,
+		GGObjectAddress toSourceMethodAddress
 	){
 
     @Override
@@ -27,7 +27,7 @@ public record GGAPIMappingRule (
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        GGAPIMappingRule that = (GGAPIMappingRule) o;
+        GGMappingRule that = (GGMappingRule) o;
         return Objects.equals(sourceFieldAddress, that.sourceFieldAddress) &&
                 Objects.equals(destinationFieldAddress, that.destinationFieldAddress) &&
                 Objects.equals(destinationClass, that.destinationClass) &&
