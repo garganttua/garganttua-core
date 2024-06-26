@@ -5,10 +5,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Vector;
 
 import com.garganttua.reflection.GGReflectionException;
@@ -62,7 +65,6 @@ public class GGObjectReflectionHelper {
 	}
 	
 	static public void setObjectFieldValue(Object entity, Field field, Object value) throws GGReflectionException {
-	
 		if( field == null ) {
 			throw new GGReflectionException("Cannot set null field of object "+entity.getClass().getName()+" with value "+value);
 		}
@@ -133,6 +135,13 @@ public class GGObjectReflectionHelper {
 
 	public static <K> Vector<K>  newVectorOf(Class<?> type) {
 		return new Vector<K>();
+	}
+	
+	public static boolean isImplementingInterface(Class<?> interfaceType, Class<?> objectType) {
+		List<Class<?>> interfaces = Arrays.asList(objectType.getInterfaces());
+		
+		Optional<Class<?>> found = interfaces.parallelStream().filter(c -> c.equals(interfaceType)).findFirst();
+		return found.isPresent();
 	}
 
 }

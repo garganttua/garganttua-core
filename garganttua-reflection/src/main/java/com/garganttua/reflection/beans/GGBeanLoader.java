@@ -2,7 +2,10 @@ package com.garganttua.reflection.beans;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.garganttua.reflection.GGReflectionException;
 
 public class GGBeanLoader implements IGGBeanLoader {
 	
@@ -16,9 +19,21 @@ public class GGBeanLoader implements IGGBeanLoader {
 	}
 
 	@Override
-	public <T> T getBean(String supplier, String name, String type, Class<T> clazz) {
+	public Object getBeanNamed(String supplier, String name) throws GGReflectionException {
 		IGGBeanSupplier beanSupplier = this.beanSuppliers.get(supplier);
-		return beanSupplier==null?null:beanSupplier.getBean(name, type, clazz);
+		return beanSupplier==null?null:beanSupplier.getBeanNamed(name);
+	}
+
+	@Override
+	public <T> T getBeanOfType(String supplier, Class<T> type) throws GGReflectionException{
+		IGGBeanSupplier beanSupplier = this.beanSuppliers.get(supplier);
+		return beanSupplier==null?null:beanSupplier.getBeanOfType(type);
+	}
+
+	@Override
+	public <T> List<T> getBeansImplementingInterface(String supplier, Class<T> interfasse) throws GGReflectionException {
+		IGGBeanSupplier beanSupplier = this.beanSuppliers.get(supplier);
+		return beanSupplier==null?null:beanSupplier.getBeansImplementingInterface(interfasse);
 	}
 
 }

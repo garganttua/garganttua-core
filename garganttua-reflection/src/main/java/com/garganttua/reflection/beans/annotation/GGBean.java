@@ -9,10 +9,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GGBean {
 	
-	String type();
+	String name() default "";
 	
-	String name();
-	
-	GGBeanLoadingStrategy strategy();
+	GGBeanLoadingStrategy strategy() default GGBeanLoadingStrategy.singleton;
 	
 }
