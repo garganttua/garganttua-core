@@ -12,4 +12,8 @@ public interface IGGBeanLoader {
 	
 	<T> List<T> getBeansImplementingInterface(String supplier, Class<T> interfasse) throws GGReflectionException;
 
+	Object getBeanNamed(String qualifierName) throws GGReflectionException;
+
+	<T> T getBeanOfType(Class<T> type) throws GGReflectionException;
+
 }

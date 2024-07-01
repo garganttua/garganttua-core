@@ -40,6 +40,9 @@ public class GGBeanSupplier implements IGGBeanSupplier {
     @Override
 	public Object getBeanNamed(String name) throws GGReflectionException {
     	Optional<GGBeanFactory> beanFactory = beans.parallelStream().filter(bf -> bf.getName().equals(name)).findFirst();
+    	if( beanFactory.isEmpty() ) {
+    		throw new GGReflectionException("Bean "+name+" not found");
+    	}
 		return beanFactory.get().getBean();
 	}
 
@@ -47,6 +50,9 @@ public class GGBeanSupplier implements IGGBeanSupplier {
 	@Override
 	public <T> T getBeanOfType(Class<T> type) throws GGReflectionException {
     	Optional<GGBeanFactory> beanFactory = beans.parallelStream().filter(bf -> bf.getType().equals(type)).findFirst();
+    	if( beanFactory.isEmpty() ) {
+    		throw new GGReflectionException("Bean "+type+" not found");
+    	}
 		return (T) beanFactory.get().getBean();
 	}
 

@@ -36,4 +36,16 @@ public class GGBeanLoader implements IGGBeanLoader {
 		return beanSupplier==null?null:beanSupplier.getBeansImplementingInterface(interfasse);
 	}
 
+	@Override
+	public Object getBeanNamed(String qualifierName) throws GGReflectionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> T getBeanOfType(Class<T> type) throws GGReflectionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
