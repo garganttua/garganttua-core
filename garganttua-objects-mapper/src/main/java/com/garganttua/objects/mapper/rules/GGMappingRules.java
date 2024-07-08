@@ -97,11 +97,14 @@ public class GGMappingRules {
 
 	private static void validate(IGGObjectQuery sourceQuery, GGMappingRule rule)
 			throws GGMapperException {
+		if( log.isDebugEnabled() ) {
+			log.debug("Validating mapping rule "+rule.toString()+" for source query "+sourceQuery.toString());
+		}
 		try {
 			IGGObjectQuery destQuery = GGObjectQueryFactory.objectQuery(rule.destinationClass());
 			
 			List<Object> sourceField_ = sourceQuery.find(rule.sourceFieldAddress());
-			List<Object> destField_ = destQuery.find(rule.sourceFieldAddress());
+			List<Object> destField_ = destQuery.find(rule.destinationFieldAddress());
 			
 			Field sourceField = (Field) sourceField_.get(sourceField_.size()-1);
 			Field destField = (Field) destField_.get(destField_.size()-1);
@@ -119,6 +122,9 @@ public class GGMappingRules {
 				GGMappingRules.validateMethod(rule, destField, sourceField, toMethod);
 			}
 		} catch (GGReflectionException e) {
+			if( log.isDebugEnabled() ) {
+				log.warn("Error : ", e);
+			}
 			throw new GGMapperException(e);
 		}
 	}

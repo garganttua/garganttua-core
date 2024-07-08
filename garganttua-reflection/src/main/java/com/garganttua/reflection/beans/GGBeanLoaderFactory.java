@@ -3,12 +3,29 @@ package com.garganttua.reflection.beans;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.garganttua.reflection.properties.IGGPropertyLoader;
+
 public class GGBeanLoaderFactory {
 
-	public static IGGBeanLoader getLoader(Collection<String> packages) {
+	public static IGGBeanLoader getLoader(IGGPropertyLoader propLoader, Collection<String> packages) {
 		Collection<IGGBeanSupplier> beanSuppliers = new HashSet<IGGBeanSupplier>();
-		beanSuppliers.add(new GGBeanSupplier(packages));
-		return new GGBeanLoader(beanSuppliers);
+		GGBeanSupplier ggBeanSupplier = new GGBeanSupplier(packages, propLoader);
+		beanSuppliers.add(ggBeanSupplier);
+		GGBeanLoader ggBeanLoader = new GGBeanLoader(beanSuppliers);
+		ggBeanSupplier.setBeanLoader(ggBeanLoader);
+		return ggBeanLoader;
+	}
+	
+	public static IGGBeanLoader getLoader(IGGPropertyLoader propLoader, Collection<String> packages, Collection<IGGBeanSupplier> suppliers) {
+		Collection<IGGBeanSupplier> beanSuppliers = new HashSet<IGGBeanSupplier>();
+		GGBeanSupplier ggBeanSupplier = new GGBeanSupplier(packages, propLoader);
+		beanSuppliers.add(ggBeanSupplier);
+		suppliers.forEach( supplier -> {
+			beanSuppliers.add(supplier);
+		});
+		GGBeanLoader ggBeanLoader = new GGBeanLoader(beanSuppliers);
+		ggBeanSupplier.setBeanLoader(ggBeanLoader);
+		return ggBeanLoader;
 	}
 
 }

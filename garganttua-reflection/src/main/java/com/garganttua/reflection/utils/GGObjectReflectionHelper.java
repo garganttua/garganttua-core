@@ -116,6 +116,8 @@ public class GGObjectReflectionHelper {
 		
 		Class<?>[] params = method.getParameterTypes();
 		for( int i = 0; i < args.length; i++ ) {
+			if( args[i] == null )
+				continue;
 			if( !params[i].isAssignableFrom(args[i].getClass()) ) {
 				throw new GGReflectionException("Method "+method.getName()+" needs parameter "+i+" to be of type "+params[i]+", not "+args[i].getClass());
 			}

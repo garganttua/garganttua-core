@@ -39,7 +39,10 @@ public class GGMapper implements IGGMapper {
 	private <destination> destination doMapping(GGMappingDirection mappingDirection, Class<destination> destinationClass, Object source, List<GGMappingRule> rules) throws GGMapperException {
 		if( this.configuration.doValidation() ) {
 			try {
-				GGMappingRules.validate(source.getClass(), rules);
+				if( mappingDirection == GGMappingDirection.REVERSE )
+					GGMappingRules.validate(destinationClass, rules);
+				if( mappingDirection == GGMappingDirection.REGULAR )
+					GGMappingRules.validate(source.getClass(), rules);
 			} catch (GGMapperException e) {
 				if( this.configuration.failOnError() ) {
 					if( log.isDebugEnabled() ) {

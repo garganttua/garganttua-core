@@ -10,7 +10,10 @@ import java.util.stream.Collectors;
 
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.beans.annotation.GGBean;
+import com.garganttua.reflection.properties.IGGPropertyLoader;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+
+import lombok.Setter;
 
 public class GGBeanSupplier implements IGGBeanSupplier {
 
@@ -18,12 +21,20 @@ public class GGBeanSupplier implements IGGBeanSupplier {
 	
 	private List<GGBeanFactory> beans = Collections.synchronizedList(new ArrayList<GGBeanFactory>());
 	
-	public GGBeanSupplier(Collection<String> packages) {
+	@Setter
+	private IGGBeanLoader beanLoader;
+	
+	@FunctionalInterface
+	protected interface IGGBeanLoaderAccessor {
+		IGGBeanLoader getBeanLoader();
+	}
+	
+	public GGBeanSupplier(Collection<String> packages, IGGPropertyLoader propLoader) {
 		packages.parallelStream().forEach(package_ -> {
 			try {
 				List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_, GGBean.class);
 				annotatedClasses.forEach( annotatedClass -> {
-					GGBeanFactory beanFactory = new GGBeanFactory(annotatedClass.getAnnotation(GGBean.class), annotatedClass);
+					GGBeanFactory beanFactory = new GGBeanFactory(annotatedClass.getAnnotation(GGBean.class), annotatedClass, () -> {return this.beanLoader;}, propLoader);
 					this.beans.add(beanFactory);
 				});
 			} catch (ClassNotFoundException | IOException e) {

@@ -16,7 +16,7 @@ public class GGBeanLoaderTest {
 	@Test
 	public void testBeanLoaderWithName() throws GGReflectionException {
 		
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(Arrays.asList("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, Arrays.asList("com"));
 		assertNotNull(beanLoader);
 		
 		BeanTest b = (BeanTest) beanLoader.getBeanNamed("gg", "BeanTest");
@@ -27,7 +27,7 @@ public class GGBeanLoaderTest {
 	@Test
 	public void testNamedBeanLoader() throws GGReflectionException {
 		
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(Arrays.asList("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, Arrays.asList("com"));
 		assertNotNull(beanLoader);
 		
 		NamedBeanTest b = (NamedBeanTest) beanLoader.getBeanNamed("gg", "test");
@@ -38,7 +38,7 @@ public class GGBeanLoaderTest {
 	@Test
 	public void testBeanLoaderWithType() throws GGReflectionException {
 		
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(Arrays.asList("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, Arrays.asList("com"));
 		assertNotNull(beanLoader);
 		
 		BeanTest b = beanLoader.getBeanOfType("gg", BeanTest.class);
@@ -49,7 +49,7 @@ public class GGBeanLoaderTest {
 	@Test
 	public void testBeanLoaderWithInterfaceImplemented() throws GGReflectionException {
 		
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(Arrays.asList("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, Arrays.asList("com"));
 		assertNotNull(beanLoader);
 		
 		List<IBeanTest> b = beanLoader.getBeansImplementingInterface("gg", IBeanTest.class);
@@ -61,7 +61,7 @@ public class GGBeanLoaderTest {
 	@Test
 	public void testBeanLoaderWithSingletonStrategy() throws GGReflectionException {
 		
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(Arrays.asList("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, Arrays.asList("com"));
 		assertNotNull(beanLoader);
 		
 		BeanTest b = (BeanTest) beanLoader.getBeanNamed("gg", "BeanTest");
@@ -76,7 +76,7 @@ public class GGBeanLoaderTest {
 	@Test
 	public void testBeanLoaderWithNewInstanceStrategy() throws GGReflectionException {
 		
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(Arrays.asList("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, Arrays.asList("com"));
 		assertNotNull(beanLoader);
 		
 		BeanTestNI b = (BeanTestNI) beanLoader.getBeanNamed("gg", "BeanTestNI");
