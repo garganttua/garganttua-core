@@ -46,7 +46,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 		if( objectClass == null ) {
 			throw new GGReflectionException("class is null");
 		}
-		if( this.object.getClass().isAssignableFrom(this.objectClass) ) {
+		if( !object.getClass().isAssignableFrom(objectClass) ) {
 			throw new GGReflectionException("Provided class "+objectClass+" and object "+object.getClass()+" do not match");
 		}
 		this.object = object;
