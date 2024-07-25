@@ -63,7 +63,7 @@ public class GGObjectMethodInvoker {
 			return GGObjectReflectionHelper.invokeMethod(object, methodName, method, args);
 
 		} else {
-				return this.invokeMethodRecursively(object, 0, 0, args);
+			return this.invokeMethodRecursively(object, 0, 0, args);
 		}
 	}
 	
@@ -83,7 +83,7 @@ public class GGObjectMethodInvoker {
 					"field names of address " + fieldName + " and fields list " + field.getName() + " do not match");
 		}
 
-		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, fieldName, field);
+		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, field);
 		if (temp == null ) {
 			throw new GGReflectionException("cannot invoke method with address "+this.address+". The field "+fieldName+" of object "+object+" is null");
 		}

@@ -17,6 +17,7 @@ import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.fields.GGFields;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -164,6 +165,8 @@ public class GGMappingRules {
 			
 			if( sourceFieldLeaf.getType().equals(destinationFieldLeaf.getType()) ) {
 				return new GGAPISimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
+			} else if( !GGFields.isArrayOrMapOrCollectionField(sourceFieldLeaf) && !GGFields.isArrayOrMapOrCollectionField(destinationFieldLeaf) ) {
+				return new GGAPISimpleMapableFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
 			}
 
 		} catch (GGReflectionException e) {

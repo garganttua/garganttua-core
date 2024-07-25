@@ -88,7 +88,7 @@ public class GGObjectFieldSetter {
 					"field names of address " + fieldName + " and fields list " + field.getName() + " do not match");
 		}
 
-		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, fieldName, field);
+		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, field);
 		if (temp == null ) {
 			temp = GGFields.instanciate(field);
 			GGObjectReflectionHelper.setObjectFieldValue(object, field, temp);
@@ -242,5 +242,4 @@ public class GGObjectFieldSetter {
 			}
 		}
 	}
-
 }

@@ -1,6 +1,5 @@
 package com.garganttua.reflection.utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -93,15 +92,15 @@ public class GGObjectReflectionHelper {
 			throw new GGReflectionException("Cannot get field "+fieldName+" of object "+entity.getClass().getName());
 		}
 		
-		return getObjectFieldValue(entity, fieldName, field);
+		return getObjectFieldValue(entity, field);
 	}
 
-	public static Object getObjectFieldValue(Object entity, String fieldName, Field field)
+	public static Object getObjectFieldValue(Object entity, Field field)
 			throws GGReflectionException {
 		try( GGFieldAccessManager manager = new GGFieldAccessManager(field) ){
 			return field.get(entity);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new GGReflectionException("Cannot get field "+fieldName+" of object "+entity.getClass().getName(), e);
+			throw new GGReflectionException("Cannot get field "+field.getName()+" of object "+entity.getClass().getName(), e);
 		}
 	}
 

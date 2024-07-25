@@ -53,7 +53,7 @@ public class GGObjectFieldGetter {
 			if( !field.getName().equals(fieldName) ) {
 				throw new GGReflectionException("field names of address "+fieldName+" and fields list "+field.getName()+" do not match");
 			}
-			value = GGObjectReflectionHelper.getObjectFieldValue(object, "", field);
+			value = GGObjectReflectionHelper.getObjectFieldValue(object, field);
 		} else {
 			value = this.getValueRecursively(object, 0, 0);
 		}
@@ -76,7 +76,7 @@ public class GGObjectFieldGetter {
 //			throw new GGReflectionException("field names of address "+fieldName+" and fields list "+field.getName()+" do not match");
 //		}
 		
-		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, fieldName, field);
+		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, field);
 		if( temp == null ) {
 			return null;
 		}
@@ -91,7 +91,7 @@ public class GGObjectFieldGetter {
 			
 		} else {
 			if( isLastIteration ) {
-				value = GGObjectReflectionHelper.getObjectFieldValue(temp, fieldName, nextField);
+				value = GGObjectReflectionHelper.getObjectFieldValue(temp, nextField);
 			} else {
 				value = this.getValueRecursively(temp, addressIndex+1, fieldIndex+1);
 			}
@@ -143,7 +143,7 @@ public class GGObjectFieldGetter {
 	private void processArrayObject(Object value, Field field, Field nextField, boolean isLastIteration, String fieldName,
 			int addressIndex, int fieldIndex, Object obj, int fieldIncrement, int addressIncrement) throws GGReflectionException {
 		if( isLastIteration ) {
-			((List<Object>) value).add(GGObjectReflectionHelper.getObjectFieldValue(obj, fieldName, nextField));
+			((List<Object>) value).add(GGObjectReflectionHelper.getObjectFieldValue(obj, nextField));
 		} else {
 			((List<Object>) value).add(this.getValueRecursively(obj, addressIndex+addressIncrement, fieldIndex+fieldIncrement));
 		}
