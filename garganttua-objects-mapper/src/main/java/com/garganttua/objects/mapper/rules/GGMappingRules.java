@@ -150,12 +150,19 @@ public class GGMappingRules {
 	public static IGGMappingRuleExecutor getRuleExecutor(GGMappingDirection mappingDirection, GGMappingRule rule, Object source, Class<?> destinationClass) throws GGMapperException {
 		List<Object> destinationField = null;
 		List<Object> sourceField = null;
+		List<Object> mappingMethod = null;
 		
 		try {
 			if( mappingDirection == GGMappingDirection.REGULAR ) {
+				if( rule.fromSourceMethodAddress() != null ) {
+					mappingMethod = GGObjectQueryFactory.objectQuery(destinationClass).find(rule.fromSourceMethodAddress());
+				}
 				sourceField = GGObjectQueryFactory.objectQuery(source.getClass()).find(rule.sourceFieldAddress());
 				destinationField = GGObjectQueryFactory.objectQuery(destinationClass).find(rule.destinationFieldAddress());
 			} else {
+				if( rule.toSourceMethodAddress() != null ) {
+					mappingMethod = GGObjectQueryFactory.objectQuery(source.getClass()).find(rule.toSourceMethodAddress());
+				}
 				sourceField = GGObjectQueryFactory.objectQuery(source.getClass()).find(rule.destinationFieldAddress());
 				destinationField = GGObjectQueryFactory.objectQuery(destinationClass).find(rule.sourceFieldAddress());
 			}
@@ -163,7 +170,10 @@ public class GGMappingRules {
 			Field sourceFieldLeaf = (Field) sourceField.get(sourceField.size()-1);
 			Field destinationFieldLeaf = (Field) destinationField.get(destinationField.size()-1);
 			
-			if( sourceFieldLeaf.getType().equals(destinationFieldLeaf.getType()) ) {
+			if( mappingMethod != null ) {
+				Method methodLeaf = (Method) mappingMethod.get(mappingMethod.size()-1);
+				return new GGAPIMethodMappingExecutor(methodLeaf, sourceFieldLeaf, destinationFieldLeaf, mappingDirection);
+			} else if( sourceFieldLeaf.getType().equals(destinationFieldLeaf.getType()) ) {
 				return new GGAPISimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
 			} else if( !GGFields.isArrayOrMapOrCollectionField(sourceFieldLeaf) && !GGFields.isArrayOrMapOrCollectionField(destinationFieldLeaf) ) {
 				return new GGAPISimpleMapableFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);

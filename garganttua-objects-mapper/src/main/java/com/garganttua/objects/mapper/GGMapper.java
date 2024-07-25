@@ -82,7 +82,7 @@ public class GGMapper implements IGGMapper {
 		} else if( sourceRules.size() !=0 && destinationRules.size() == 0 ){
 			return GGMappingDirection.REVERSE;
 		} else {
-			throw new GGMapperException("Cannot determine mapping direction as source and destination are annotated with mapping rules");
+			throw new GGMapperException("Cannot determine mapping direction as source and destination are annotated with mapping rules, or neither has mapping rule");
 		}
 	}
 
