@@ -62,7 +62,7 @@
 	</build>
 
 	<modules>
-	<module>garganttua-reflection</module>
-	<module>garganttua-objects-mapper</module>
+		<module>garganttua-reflection</module>
+		<module>garganttua-objects-mapper</module>
 	</modules>
 </project>
