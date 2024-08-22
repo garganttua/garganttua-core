@@ -14,7 +14,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -49,8 +48,6 @@ jobs:
       with:
         java-version: '18'
         distribution: 'temurin'
-        server-id: github
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
