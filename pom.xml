@@ -27,8 +27,15 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-	<dependencies>
-	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-reflection</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>	
+	</dependencyManagement>
 
 	<build>
 		<plugins>
