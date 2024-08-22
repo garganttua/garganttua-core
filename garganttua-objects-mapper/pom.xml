@@ -13,7 +13,6 @@
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-reflection</artifactId>
-			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
