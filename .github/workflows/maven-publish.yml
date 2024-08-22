@@ -48,6 +48,8 @@ jobs:
       with:
         java-version: '18'
         distribution: 'temurin'
+        server-id: github garganttua tooling
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
