@@ -48,16 +48,8 @@ jobs:
       with:
         java-version: '18'
         distribution: 'temurin'
-<<<<<<< HEAD
-<<<<<<< HEAD
         server-id: github garganttua tooling
         settings-path: ${{ github.workspace }} # location for the settings.xml file
-=======
->>>>>>> 282b907 (Update maven-publish.yml)
-=======
-        server-id: github garganttua tooling
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
->>>>>>> dc8a944 (Update maven-publish.yml)
 
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
