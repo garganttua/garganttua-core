@@ -62,7 +62,7 @@ public class GGMapper implements IGGMapper {
 		
 		for( GGMappingRule rule: rules ) {		
 			try {
-				IGGMappingRuleExecutor executor = GGMappingRules.getRuleExecutor(mappingDirection, rule, source, destinationClass);		
+				IGGMappingRuleExecutor executor = GGMappingRules.getRuleExecutor(this, mappingDirection, rule, source, destinationClass);		
 				destObject = executor.doMapping(destinationClass, destObject, source);
 			} catch (GGMapperException e) {
 				if( this.configuration.failOnError() ) {

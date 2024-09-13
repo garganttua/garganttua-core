@@ -12,11 +12,12 @@ public class GGAPISimpleMapableFieldMappingExecutor implements IGGMappingRuleExe
 
 	private Field sourceFieldLeaf;
 	private Field destinationFieldLeaf;
-	private GGMapper mapper = new GGMapper();
+	private GGMapper mapper;
 
-	public GGAPISimpleMapableFieldMappingExecutor(Field sourceFieldLeaf, Field destinationFieldLeaf) {
+	public GGAPISimpleMapableFieldMappingExecutor(GGMapper mapper, Field sourceFieldLeaf, Field destinationFieldLeaf) {
 		this.sourceFieldLeaf = sourceFieldLeaf;
 		this.destinationFieldLeaf = destinationFieldLeaf;
+		this.mapper = mapper;
 	}
 
 	@SuppressWarnings("unchecked")

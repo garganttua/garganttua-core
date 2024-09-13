@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.objects.mapper.GGMapper;
 import com.garganttua.objects.mapper.GGMapperException;
 import com.garganttua.objects.mapper.GGMappingDirection;
 import com.garganttua.objects.mapper.IGGMappingRuleExecutor;
@@ -146,7 +147,7 @@ public class GGMappingRules {
 		}
 	}
 
-	public static IGGMappingRuleExecutor getRuleExecutor(GGMappingDirection mappingDirection, GGMappingRule rule, Object source, Class<?> destinationClass) throws GGMapperException {
+	public static IGGMappingRuleExecutor getRuleExecutor(GGMapper mapper, GGMappingDirection mappingDirection, GGMappingRule rule, Object source, Class<?> destinationClass) throws GGMapperException {
 		List<Object> destinationField = null;
 		List<Object> sourceField = null;
 		List<Object> mappingMethod = null;
@@ -175,7 +176,7 @@ public class GGMappingRules {
 			} else if( sourceFieldLeaf.getType().equals(destinationFieldLeaf.getType()) ) {
 				return new GGAPISimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
 			} else if( !GGFields.isArrayOrMapOrCollectionField(sourceFieldLeaf) && !GGFields.isArrayOrMapOrCollectionField(destinationFieldLeaf) ) {
-				return new GGAPISimpleMapableFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
+				return new GGAPISimpleMapableFieldMappingExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
 			}
 
 		} catch (GGReflectionException e) {
