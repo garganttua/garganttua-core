@@ -113,7 +113,8 @@ public class GGMapper implements IGGMapper {
 		return configuration;
 	}
 	
-	private GGMappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException {
+	@Override
+	public GGMappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException {
 		GGMappingConfiguration lookup = new GGMappingConfiguration(source, destination, null, null, null);
 		Optional<GGMappingConfiguration> found = this.mappingConfigurations.parallelStream().filter(configuration -> {return configuration.equals(lookup);}).findFirst();
 		if( found.isPresent() ) {

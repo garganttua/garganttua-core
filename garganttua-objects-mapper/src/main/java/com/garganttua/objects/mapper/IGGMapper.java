@@ -8,4 +8,6 @@ public interface IGGMapper {
 
 	GGMappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException;
 
+	GGMappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException;
+
 }
