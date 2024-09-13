@@ -52,9 +52,9 @@ public record GGMappingConfiguration (
 			}
 
 			if( mappingDirection == GGMappingDirection.REVERSE )
-				GGMappingRules.validate(destination, sourceRules);
+				GGMappingRules.validate(destination, destinationRules);
 			if( mappingDirection == GGMappingDirection.REGULAR )
-				GGMappingRules.validate(source, destinationRules);
+				GGMappingRules.validate(source, sourceRules);
 
 		}
 }
