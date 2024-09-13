@@ -1,6 +1,9 @@
 package com.garganttua.objects.mapper;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.objects.mapper.rules.GGMappingRule;
 import com.garganttua.objects.mapper.rules.GGMappingRules;
@@ -10,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGMapper implements IGGMapper {
 	
+	protected Set<GGMappingConfiguration> mappingConfigurations = new HashSet<GGMappingConfiguration>();
+	
 	private GGMapperConfiguration configuration = new GGMapperConfiguration();
 
 	@Override
@@ -18,16 +23,14 @@ public class GGMapper implements IGGMapper {
 			log.debug("Mapping {} to {}", source, destinationClass);
 		}
 		try {
-			List<GGMappingRule> destinationRules = GGMappingRules.parse(destinationClass);
-			List<GGMappingRule> sourceRules = GGMappingRules.parse(source.getClass());
 			
-			GGMappingDirection mappingDirection = this.determineMapingDirection(sourceRules, destinationRules);
+			GGMappingConfiguration mappingConfiguration = this.getMappingConfiguration(source.getClass(), destinationClass);
 			
-			switch( mappingDirection ) {
+			switch( mappingConfiguration.mappingDirection() ) {
 			case REGULAR:
-				return this.doMapping(mappingDirection, destinationClass, source, destinationRules);
+				return this.doMapping(mappingConfiguration.mappingDirection(), destinationClass, source, mappingConfiguration.destinationRules());
 			case REVERSE:
-				return this.doMapping(mappingDirection, destinationClass, source, sourceRules);
+				return this.doMapping(mappingConfiguration.mappingDirection(), destinationClass, source, mappingConfiguration.sourceRules());
 			}
 			
 		} catch (GGMapperException e) {
@@ -90,5 +93,33 @@ public class GGMapper implements IGGMapper {
 	public GGMapper configure(GGMapperConfigurationItem element, Object value) {
 		this.configuration.configure(element, value);
 		return this;
+	}
+
+	@Override
+	public GGMappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException{
+		if( log.isDebugEnabled() ) {
+			log.debug("Recording mapping configuration from "+source.getSimpleName()+" to "+destination.getSimpleName());
+		}
+		List<GGMappingRule> destinationRules = GGMappingRules.parse(destination);
+		List<GGMappingRule> sourceRules = GGMappingRules.parse(source);
+		GGMappingDirection mappingDirection = this.determineMapingDirection(sourceRules, destinationRules);
+		GGMappingConfiguration configuration = new GGMappingConfiguration(source, destination, sourceRules, destinationRules, mappingDirection);
+		
+		this.mappingConfigurations.add(configuration);
+		
+		if( log.isDebugEnabled() ) {
+			log.debug("Recorded mapping configuration "+configuration);
+		}
+		return configuration;
+	}
+	
+	private GGMappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException {
+		GGMappingConfiguration lookup = new GGMappingConfiguration(source, destination, null, null, null);
+		Optional<GGMappingConfiguration> found = this.mappingConfigurations.parallelStream().filter(configuration -> {return configuration.equals(lookup);}).findFirst();
+		if( found.isPresent() ) {
+			return found.get();
+		} else {
+			return this.recordMappingConfiguration(source, destination);
+		}
 	}
 }
