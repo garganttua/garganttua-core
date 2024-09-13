@@ -40,24 +40,6 @@ public class GGMapper implements IGGMapper {
 	}
 	
 	private <destination> destination doMapping(GGMappingDirection mappingDirection, Class<destination> destinationClass, Object source, List<GGMappingRule> rules) throws GGMapperException {
-		if( this.configuration.doValidation() ) {
-			try {
-				if( mappingDirection == GGMappingDirection.REVERSE )
-					GGMappingRules.validate(destinationClass, rules);
-				if( mappingDirection == GGMappingDirection.REGULAR )
-					GGMappingRules.validate(source.getClass(), rules);
-			} catch (GGMapperException e) {
-				if( this.configuration.failOnError() ) {
-					if( log.isDebugEnabled() ) {
-						log.debug("Unable to validate mapping, aborting", e);
-					}
-					throw new GGMapperException("Unable to validate mapping, aborting", e);
-				} else {
-					log.warn("Unable to validate mapping, ignoring", e);
-				}
-			}
-		}
-		
 		destination destObject = null;
 		
 		for( GGMappingRule rule: rules ) {		
@@ -96,7 +78,7 @@ public class GGMapper implements IGGMapper {
 	}
 
 	@Override
-	public GGMappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException{
+	public GGMappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException {
 		if( log.isDebugEnabled() ) {
 			log.debug("Recording mapping configuration from "+source.getSimpleName()+" to "+destination.getSimpleName());
 		}
@@ -104,6 +86,20 @@ public class GGMapper implements IGGMapper {
 		List<GGMappingRule> sourceRules = GGMappingRules.parse(source);
 		GGMappingDirection mappingDirection = this.determineMapingDirection(sourceRules, destinationRules);
 		GGMappingConfiguration configuration = new GGMappingConfiguration(source, destination, sourceRules, destinationRules, mappingDirection);
+		
+		try {
+			if( this.configuration.doValidation() )
+				configuration.validate();
+		} catch (GGMapperException e) {
+			if( this.configuration.failOnError() ) {
+				if( log.isDebugEnabled() ) {
+					log.debug("Unable to validate mapping, aborting", e);
+				}
+				throw new GGMapperException("Unable to validate mapping, aborting", e);
+			} else {
+				log.warn("Unable to validate mapping, ignoring", e);
+			}
+		}
 		
 		this.mappingConfigurations.add(configuration);
 		
