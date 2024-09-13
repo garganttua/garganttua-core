@@ -6,4 +6,6 @@ public interface IGGMapper {
 
 	<destination> destination map(Object source, Class<destination> destinationClass) throws GGMapperException;
 
+	GGMappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws GGMapperException;
+
 }

@@ -130,4 +130,12 @@ public class GGMapperTest {
 			new GGMapper().configure(GGMapperConfigurationItem.FAIL_ON_ERROR, true).map(entity, GenericGGDto.class);
 		});
 	}
+	
+	@Test
+	public void testRecordMappingConfiguration() throws GGMapperException {
+		GGMapper mapper = new GGMapper().configure(GGMapperConfigurationItem.FAIL_ON_ERROR, true);
+		mapper.recordMappingConfiguration(GenericGGEntity.class, GenericGGDto.class);
+		
+		assertEquals(1, mapper.mappingConfigurations.size());
+	}
 }

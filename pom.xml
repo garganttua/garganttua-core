@@ -5,11 +5,11 @@
 	<groupId>com.garganttua</groupId>
 	<artifactId>garganttua-tooling</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.3</version>
+	<version>1.0.4-SNAPSHOT</version>
 
 	<licenses>
 		<license>
-			<name>MIT License</name>
+			<name>MIT License</name>  
 		</license>
 	</licenses>
 
@@ -36,9 +36,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-
-	<dependencies>
-	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>

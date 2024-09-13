@@ -17,7 +17,6 @@ import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.fields.GGFields;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 

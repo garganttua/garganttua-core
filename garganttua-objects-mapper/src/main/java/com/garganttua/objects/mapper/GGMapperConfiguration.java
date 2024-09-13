@@ -12,6 +12,10 @@ public class GGMapperConfiguration {
 		this.configurations.put(GGMapperConfigurationItem.DO_VALIDATION, true);
 	}
 
+	public GGMapperConfiguration(Class<?> fromClass, Class<?> toClass) {
+		// TODO Auto-generated constructor stub
+	}
+
 	public void configure(GGMapperConfigurationItem element, Object value) {
 		this.configurations.put(element, value);
 	}
