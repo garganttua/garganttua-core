@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Objects;
 
 import com.garganttua.objects.mapper.rules.GGMappingRule;
+import com.garganttua.objects.mapper.rules.GGMappingRules;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public record GGMappingConfiguration (
 		Class<?> source, 
 		Class<?> destination, 
@@ -41,4 +45,16 @@ public record GGMappingConfiguration (
 	                ", mappingDirection=" + mappingDirection +
 	                '}';
 	    }
+
+		public void validate() throws GGMapperException {
+			if( log.isDebugEnabled() ) {
+				log.debug("Validating configuration "+toString());
+			}
+
+			if( mappingDirection == GGMappingDirection.REVERSE )
+				GGMappingRules.validate(destination, sourceRules);
+			if( mappingDirection == GGMappingDirection.REGULAR )
+				GGMappingRules.validate(source, destinationRules);
+
+		}
 }
