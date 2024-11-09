@@ -30,12 +30,20 @@ public class GGInjector implements IGGInjector {
 	@Override
 	public void injectBeans(Object entity) throws GGReflectionException {
 	    Class<?> clazz = entity.getClass();
-	    for (Field field : clazz.getDeclaredFields()) {
+	    this.injectBeans(entity, clazz);
+	}
+
+	private void injectBeans(Object entity, Class<?> clazz) throws GGReflectionException {
+		for (Field field : clazz.getDeclaredFields()) {
 	        if (field.isAnnotationPresent(Inject.class)) {
 	            Object bean = this.getBean(entity, field);
 	    		this.doInjection(entity, field, bean);
 	        }
 	    }
+		
+		if( clazz.getSuperclass() != null ) {
+			this.injectBeans(entity, clazz.getSuperclass());
+		}
 	}
 
 	private void doInjection(Object entity, Field field, Object bean) throws GGReflectionException {
