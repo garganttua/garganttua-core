@@ -72,7 +72,15 @@ public class GGBeanFactory {
 	
 	private Object injectDependenciesAndValues(Object object) throws GGReflectionException {
         Class<?> clazz = object.getClass();
-        for (Field field : clazz.getDeclaredFields()) {
+        return this.injectDependenciesAndValues(object, clazz);
+    }
+
+	private Object injectDependenciesAndValues(Object object, Class<?> clazz) throws GGReflectionException {
+		if( clazz.getSuperclass() != null ) {
+			object = this.injectDependenciesAndValues(object, clazz.getSuperclass());
+		}
+		
+		for (Field field : clazz.getDeclaredFields()) {
             if (field.isAnnotationPresent(Inject.class)) {
                 Object bean;
                 if (field.isAnnotationPresent(Qualifier.class)) {
@@ -115,5 +123,5 @@ public class GGBeanFactory {
             }   
         }
         return object;
-    }
+	}
 }
