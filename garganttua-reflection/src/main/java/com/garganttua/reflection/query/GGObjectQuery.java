@@ -149,7 +149,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 		Method method = GGObjectReflectionHelper.getMethod(objectClass, elementName);
 
-		if (method != null) {
+		if (method != null) { 
 			return new GGObjectAddress(address==null?elementName:address + "." + elementName);
 		}
 		if (field != null) {

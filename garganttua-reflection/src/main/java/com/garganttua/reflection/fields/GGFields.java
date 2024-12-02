@@ -19,14 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 public class GGFields {
 	
 	static public Class<?> getGenericType(Field field, int genericTypeIndex) {
-		return GGAPIFieldsgetGenericType(field.getGenericType(), genericTypeIndex);
+		return getGenericType(field.getGenericType(), genericTypeIndex);
 	}
 	
 	static public Class<?> getGenericType(Class<?> clazz, int genericTypeIndex) {
-		return GGAPIFieldsgetGenericType(clazz.getGenericSuperclass(), genericTypeIndex);
+		return getGenericType(clazz.getGenericSuperclass(), genericTypeIndex);
 	}
 
-	private static Class<?> GGAPIFieldsgetGenericType(Type type, int genericTypeIndex) {
+	private static Class<?> getGenericType(Type type, int genericTypeIndex) {
 		if (type instanceof ParameterizedType) {
 			ParameterizedType parameterizedType = (ParameterizedType) type;
 			Type[] typeArguments = parameterizedType.getActualTypeArguments();
