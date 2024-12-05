@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -19,14 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 public class GGFields {
 	
 	static public Class<?> getGenericType(Field field, int genericTypeIndex) {
-		return GGAPIFieldsgetGenericType(field.getGenericType(), genericTypeIndex);
+		return getGenericType(field.getGenericType(), genericTypeIndex);
 	}
 	
 	static public Class<?> getGenericType(Class<?> clazz, int genericTypeIndex) {
-		return GGAPIFieldsgetGenericType(clazz.getGenericSuperclass(), genericTypeIndex);
+		return getGenericType(clazz.getGenericSuperclass(), genericTypeIndex);
 	}
 
-	private static Class<?> GGAPIFieldsgetGenericType(Type type, int genericTypeIndex) {
+	private static Class<?> getGenericType(Type type, int genericTypeIndex) {
 		if (type instanceof ParameterizedType) {
 			ParameterizedType parameterizedType = (ParameterizedType) type;
 			Type[] typeArguments = parameterizedType.getActualTypeArguments();
@@ -44,9 +45,26 @@ public class GGFields {
 
 		if (clazz == Integer.class || clazz == Long.class || clazz == Float.class || clazz == Double.class
 				|| clazz == Short.class || clazz == Byte.class || clazz == Character.class || clazz == Boolean.class
-				|| clazz == String.class) {
+				|| clazz == String.class || clazz == Date.class) {
 			return false;
 		}
+		return true;
+	}
+	
+	public static boolean isNotPrimitiveOrInternal(Class<?> clazz) {
+		if( !isNotPrimitive(clazz) ) {
+			return false;
+		}
+		Package package1 = clazz.getPackage();
+		if (package1 == null) {
+			return false;
+		}
+
+		String packageName = package1.getName();
+		if (packageName.startsWith("java.") || packageName.startsWith("javax.")) {
+			return false;
+		}
+
 		return true;
 	}
 	

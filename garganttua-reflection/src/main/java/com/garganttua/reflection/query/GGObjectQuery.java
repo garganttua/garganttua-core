@@ -55,7 +55,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 	@Override
 	public List<Object> find(String fieldAddress) throws GGReflectionException {
-		return this.find(new GGObjectAddress(fieldAddress));
+		return this.find(new GGObjectAddress(fieldAddress, true));
 	}
 
 	@Override
@@ -149,11 +149,11 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 		Method method = GGObjectReflectionHelper.getMethod(objectClass, elementName);
 
-		if (method != null) {
-			return new GGObjectAddress(address==null?elementName:address + "." + elementName);
+		if (method != null) { 
+			return new GGObjectAddress(address==null?elementName:address + "." + elementName, true);
 		}
 		if (field != null) {
-			return new GGObjectAddress(address==null?elementName:address + "." + elementName);
+			return new GGObjectAddress(address==null?elementName:address + "." + elementName, true);
 		}
 
 		if( objectClass.getSuperclass() != null ) {
@@ -192,7 +192,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 			if (GGFields.isNotPrimitive(keyClass)) {
 				GGObjectAddress keyAddress = null;
 				if( address == null ) {
-					keyAddress = new GGObjectAddress(f.getName());
+					keyAddress = new GGObjectAddress(f.getName(), true);
 					keyAddress.addElement(GGObjectAddress.MAP_KEY_INDICATOR);
 				} else {
 					keyAddress = address.clone();
@@ -207,7 +207,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 			if (GGFields.isNotPrimitive(valueClass)) {
 				GGObjectAddress valueAddress = null;
 				if( address == null ) {
-					valueAddress = new GGObjectAddress(f.getName());
+					valueAddress = new GGObjectAddress(f.getName(), true);
 					valueAddress.addElement(GGObjectAddress.MAP_VALUE_INDICATOR);
 				} else {
 					valueAddress = address.clone();
@@ -226,7 +226,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 	private GGObjectAddress doIfIsArray(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
 	    if (f.getType().isArray()) {
 	        final Class<?> componentType = f.getType().getComponentType();
-	        final GGObjectAddress newAddress = address == null ? new GGObjectAddress(f.getName())
+	        final GGObjectAddress newAddress = address == null ? new GGObjectAddress(f.getName(), true)
 	                : address.addElement(f.getName());
 	        return this.address(componentType, elementName, newAddress);
 	    }
@@ -236,7 +236,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 	private GGObjectAddress doIfIsCollection(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
 		if (Collection.class.isAssignableFrom(f.getType())) {
 			final Class<?> t = GGFields.getGenericType(f, 0);
-			final GGObjectAddress a = this.address(t, elementName, address==null ? new GGObjectAddress(f.getName())
+			final GGObjectAddress a = this.address(t, elementName, address==null ? new GGObjectAddress(f.getName(), true)
 					: address.addElement(f.getName()));
 			if (a != null) {
 				return a;
@@ -247,7 +247,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 	
 	private GGObjectAddress doIfNotEnum(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
 		if( !f.getType().isEnum() ) {
-			GGObjectAddress a = this.address(f.getType(), elementName, address==null ? new GGObjectAddress(f.getName())
+			GGObjectAddress a = this.address(f.getType(), elementName, address==null ? new GGObjectAddress(f.getName(), true)
 					: address.addElement(f.getName()));
 			if (a != null) {
 				return a;
@@ -261,7 +261,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 		if( object == null ) {
 			throw new GGReflectionException("Object is null");
 		}
-		return this.setValue(object, new GGObjectAddress(fieldAddress), fieldValue);
+		return this.setValue(object, new GGObjectAddress(fieldAddress, true), fieldValue);
 	}
 
 	@Override
@@ -278,7 +278,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 		if( object == null ) {
 			throw new GGReflectionException("Object is null");
 		}
-		return this.getValue(object, new GGObjectAddress(fieldAddress));
+		return this.getValue(object, new GGObjectAddress(fieldAddress, true));
 	}
 	
 	@Override
@@ -292,12 +292,12 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 	@Override
 	public Object setValue(String fieldAddress, Object fieldValue) throws GGReflectionException {
-		return this.setValue(new GGObjectAddress(fieldAddress), fieldValue);
+		return this.setValue(new GGObjectAddress(fieldAddress, true), fieldValue);
 	}
 
 	@Override
 	public Object getValue(String fieldAddress) throws GGReflectionException {
-		return this.getValue(new GGObjectAddress(fieldAddress));
+		return this.getValue(new GGObjectAddress(fieldAddress, true));
 	}
 
 	@Override
@@ -333,12 +333,12 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 	@Override
 	public Object fieldValueStructure(String address) throws GGReflectionException {
-		return this.fieldValueStructure(new GGObjectAddress(address));
+		return this.fieldValueStructure(new GGObjectAddress(address, true));
 	}
 
 	@Override
 	public Object invoke(String methodAddress, Object... args) throws GGReflectionException {
-		return this.invoke(this.object, new GGObjectAddress(methodAddress), args);
+		return this.invoke(this.object, new GGObjectAddress(methodAddress, true), args);
 	}
 
 	@Override
