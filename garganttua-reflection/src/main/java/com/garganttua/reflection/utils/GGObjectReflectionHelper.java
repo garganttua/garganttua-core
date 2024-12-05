@@ -173,23 +173,6 @@ public class GGObjectReflectionHelper {
 		return annotatedClasses.stream().collect(Collectors.toList());
 	}
 
-	public static boolean isNotPrimitiveOrInternal(Class<?> clazz) {
-		if (clazz.isPrimitive()) {
-			return false;
-		}
-		Package package1 = clazz.getPackage();
-		if (package1 == null) {
-			return false;
-		}
-
-		String packageName = package1.getName();
-		if (packageName.startsWith("java.") || packageName.startsWith("javax.")) {
-			return false;
-		}
-
-		return true;
-	}
-
 	public static String getMethodAddressAnnotatedWithAndCheckMethodParamsHaveGoodTypes(Class<?> entityClass,
 			Class<? extends Annotation> methodAnnotation, Type returnedType, Type ... methodParameters)
 			throws GGReflectionException {
@@ -283,7 +266,7 @@ public class GGObjectReflectionHelper {
 									+ " with wrong type " + field.getType().getName() + ", should be " + getClassFromType(fieldType));
 				}
 			} else {
-				if (isNotPrimitiveOrInternal(field.getType()) && !entityClass.equals(field.getType())) {
+				if (GGFields.isNotPrimitiveOrInternal(field.getType()) && !entityClass.equals(field.getType())) {
 					fieldAddress = getFieldAddressAnnotatedWithAndCheckType(field.getType(), annotationClass,
 							fieldType);
 					if (fieldAddress != null)
@@ -321,7 +304,7 @@ public class GGObjectReflectionHelper {
 				found = true;
 			} 
 			if ( ((found && linkedAnnotation) || !linkedAnnotation ) 
-					&& isNotPrimitiveOrInternal(field.getType()) 
+					&& GGFields.isNotPrimitiveOrInternal(field.getType()) 
 					&& !entityClass.equals(field.getType())) {
 				getFieldAddressesWithAnnotation(fieldsAddresses, field.getType(), annotation, linkedAnnotation);
 			}
