@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-tooling</artifactId>
-		<version>1.0.11-SNAPSHOT</version>
+		<version>1.0.12-SNAPSHOT</version>
 	</parent>
 	<artifactId>garganttua-objects-mapper</artifactId>
 
@@ -23,7 +23,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-<!--			<scope>provided</scope>-->
+			<scope>provided</scope>
 			<version>2.0.13</version>
 		</dependency>
 		<dependency>

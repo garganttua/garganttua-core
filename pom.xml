@@ -5,11 +5,11 @@
 	<groupId>com.garganttua</groupId>
 	<artifactId>garganttua-tooling</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.11-SNAPSHOT</version>
+	<version>1.0.12-SNAPSHOT</version>
 
 	<licenses>
 		<license>
-			<name>MIT License</name>  
+			<name>MIT License</name>
 		</license>
 	</licenses>
 
@@ -19,7 +19,7 @@
 			<email>jeremy.colombet@garganttua.com</email>
 		</developer>
 	</developers>
-	
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>github garganttua tooling</id>
@@ -44,7 +44,7 @@
 				<artifactId>garganttua-reflection</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-		</dependencies>	
+		</dependencies>
 	</dependencyManagement>
 
 	<build>
@@ -82,5 +82,6 @@
 		<module>garganttua-reflection</module>
 		<module>garganttua-objects-mapper</module>
 		<module>garganttua-executor-chain</module>
+		<module>garganttua-keys</module>
 	</modules>
 </project>

@@ -44,3 +44,5 @@ garganttua-executor-chain/bin/target/maven-status/maven-compiler-plugin/testComp
 garganttua-executor-chain/bin/target/surefire-reports/com.garganttua.executor.chain.TestGGExecutorChain.txt
 
 garganttua-executor-chain/bin/target/surefire-reports/TEST-com.garganttua.executor.chain.TestGGExecutorChain.xml
+
+garganttua-keys/.classpath
