@@ -29,36 +29,5 @@ replay_pid*
 
 garganttua-executor-chain/.classpath
 
+
 garganttua-keys/.classpath
-
-garganttua-keys/target/classes/META-INF/MANIFEST.MF
-
-garganttua-keys/target/classes/META-INF/maven/com.garganttua/garganttua-keys/pom.properties
-
-garganttua-keys/target/classes/META-INF/maven/com.garganttua/garganttua-keys/pom.xml
-
-garganttua-keys/target/maven-archiver/pom.properties
-
-garganttua-keys/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
-
-garganttua-keys/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
-
-garganttua-keys/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst
-
-garganttua-keys/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
-
-garganttua-keys/target/surefire-reports/com.garganttua.api.core.security.key.GGDeterministAsymetricTest.txt
-
-garganttua-keys/target/surefire-reports/com.garganttua.api.core.security.key.GGKeyRealmEncryptDecryptTest.txt
-
-garganttua-keys/target/surefire-reports/com.garganttua.api.core.security.key.GGKeySignatureTest.txt
-
-garganttua-keys/target/surefire-reports/com.garganttua.api.core.security.key.TestKeys.txt
-
-garganttua-keys/target/surefire-reports/TEST-com.garganttua.api.core.security.key.GGDeterministAsymetricTest.xml
-
-garganttua-keys/target/surefire-reports/TEST-com.garganttua.api.core.security.key.GGKeyRealmEncryptDecryptTest.xml
-
-garganttua-keys/target/surefire-reports/TEST-com.garganttua.api.core.security.key.GGKeySignatureTest.xml
-
-garganttua-keys/target/surefire-reports/TEST-com.garganttua.api.core.security.key.TestKeys.xml

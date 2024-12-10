@@ -7,9 +7,21 @@
 		<artifactId>garganttua-tooling</artifactId>
 		<version>1.0.12</version>
 	</parent>
-	<artifactId>garganttua-executor-chain</artifactId>
+	<artifactId>garganttua-keys</artifactId>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<scope>provided</scope>
+			<version>2.0.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+			<version>1.18.30</version>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
