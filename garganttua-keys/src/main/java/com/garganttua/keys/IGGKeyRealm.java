@@ -38,6 +38,4 @@ public interface IGGKeyRealm {
 
 	void revoke();
 
-	void removeKeyForEncryption();
-
 }

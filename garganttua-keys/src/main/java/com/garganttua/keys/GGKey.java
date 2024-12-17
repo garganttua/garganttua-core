@@ -36,28 +36,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGKey implements IGGKey {
 
-//	@JsonProperty
 	private GGKeyType type;
 
-//	@JsonProperty
 	private GGKeyAlgorithm algorithm;
 
 	/**
 	 * Base64 Encoded
 	 */
-//	@JsonProperty
 	private byte[] rawKey;
 
-//	@JsonProperty
 	private byte[] initializationVector;
 
-//	@JsonProperty
 	private GGEncryptionMode encryptionMode;
 
-//	@JsonProperty
 	private GGEncryptionPaddingMode encryptionPaddingMode;
 
-//	@JsonProperty
 	private GGSignatureAlgorithm signatureAlgorithm;
 	
 	public GGKey(GGKeyType type, GGKeyAlgorithm algorithm, byte[] rawKey, byte[] initializationVector, GGEncryptionMode encryptionMode, GGEncryptionPaddingMode paddingMode, GGSignatureAlgorithm signatureAlgorithm) {
@@ -78,7 +71,6 @@ public class GGKey implements IGGKey {
 	}
 
 	@Override
-//	@JsonIgnore
 	public Key getKey() throws GGKeyException {
 		Key key_ = null;
 		Decoder b64Decoder = Base64.getDecoder();

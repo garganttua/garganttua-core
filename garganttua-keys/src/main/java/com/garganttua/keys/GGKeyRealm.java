@@ -58,11 +58,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 		this(keyRealmName, keyAlgorithm, expiration, -1, encryptionMode, paddingMode, signatureAlgorithm);
 	}
 	
-//	public GGAPIKeyRealm(String keyRealmName, GGAPIKeyAlgorithm keyAlgorithm, Date expiration, int initializationVectorSize, GGAPIEncryptionMode encryptionMode,
-//			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) {
-//		this(keyRealmName, keyAlgorithm, expiration, initializationVectorSize, encryptionMode, paddingMode, signatureAlgorithm);
-//	}
-	
 	//Complete CTR
 
 	public GGKeyRealm(String keyRealmName, GGKeyAlgorithm keyAlgorithm, Date expiration, int initializationVectorSize, GGEncryptionMode encryptionMode,
@@ -103,13 +98,11 @@ public class GGKeyRealm implements IGGKeyRealm {
 	/**
 	 * Actually, a private key, or a secret key
 	 */
-//	@JsonProperty
 	protected GGKey encryptionKey;
 	
 	/**
 	 * Actually, a public key, or a secret key
 	 */
-//	@JsonProperty
 	protected GGKey decryptionKey;
 	
 	@Getter
@@ -121,7 +114,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 	@Getter
 	protected boolean revoked;
 	
-//	@JsonIgnore
 	private void createKeys() {
 		if( this.type == GGKeyRealmType.SYMETRIC) {
 			SecretKey key = this.keyAlgorithm.generateSymetricKey();
@@ -142,7 +134,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 	
 
 	@Override
-//	@JsonIgnore
 	public IGGKey getKeyForSigning() throws GGKeyException {
     	this.throwExceptionIfExpired();
     	this.throwExceptionIfRevoked();
@@ -150,7 +141,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 	}
 
 	@Override
-//	@JsonIgnore
 	public IGGKey getKeyForSignatureVerification() throws GGKeyException {
     	this.throwExceptionIfExpired();
     	this.throwExceptionIfRevoked();
@@ -158,7 +148,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 	}
 
     @Override
-//	@JsonIgnore
     public IGGKey getKeyForEncryption() throws GGKeyException {
     	this.throwExceptionIfExpired();
     	this.throwExceptionIfRevoked();
@@ -178,7 +167,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 	}
 
     @Override
-//	@JsonIgnore
 	public IGGKey getKeyForDecryption() throws GGKeyException {
 		this.throwExceptionIfExpired();
 		this.throwExceptionIfRevoked();
@@ -189,10 +177,4 @@ public class GGKeyRealm implements IGGKeyRealm {
 	public void revoke() {
 		this.revoked = true;
 	}
-
-	@Override
-	public void removeKeyForEncryption() {
-		this.encryptionKey = null;
-	}
-
 }
