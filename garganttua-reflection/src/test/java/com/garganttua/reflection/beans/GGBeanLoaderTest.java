@@ -7,11 +7,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.reflection.GGReflectionException;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.reflection.utils.ReflectionsAnnotationScanner;
 
 public class GGBeanLoaderTest {
+	
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	
 	@Test
 	public void testBeanLoaderWithName() throws GGReflectionException {

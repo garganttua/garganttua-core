@@ -1,6 +1,5 @@
 package com.garganttua.reflection.utils;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -17,12 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.Vector;
-import java.util.stream.Collectors;
-
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
 
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.fields.GGFields;
@@ -32,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGObjectReflectionHelper {
 
+	public static IGGAnnotationScanner annotationScanner;
+	
 	public static Constructor<?> getConstructorWithNoParams(Class<?> classs) {
 		try {
 			return classs.getDeclaredConstructor();
@@ -166,12 +162,9 @@ public class GGObjectReflectionHelper {
 		return found.isPresent();
 	}
 
-	public static List<Class<?>> getClassesWithAnnotation(String packageName, Class<? extends Annotation> annotation)
-			throws ClassNotFoundException, IOException {
-		Reflections reflections = new Reflections(packageName, Scanners.TypesAnnotated);
-		Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation, true);
-		return annotatedClasses.stream().collect(Collectors.toList());
-	}
+	public static List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation) {
+        return GGObjectReflectionHelper.annotationScanner.getClassesWithAnnotation(package_, annotation) ;
+    }
 
 	public static String getMethodAddressAnnotatedWithAndCheckMethodParamsHaveGoodTypes(Class<?> entityClass,
 			Class<? extends Annotation> methodAnnotation, Type returnedType, Type ... methodParameters)

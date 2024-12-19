@@ -5,7 +5,7 @@
 	<groupId>com.garganttua</groupId>
 	<artifactId>garganttua-tooling</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.13</version>
+	<version>1.0.14</version>
 
 	<licenses>
 		<license>
@@ -83,5 +83,6 @@
 		<module>garganttua-objects-mapper</module>
 		<module>garganttua-executor-chain</module>
 		<module>garganttua-keys</module>
+		<module>garganttua-annotation-scanner-spring</module>
 	</modules>
 </project>
