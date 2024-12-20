@@ -1,0 +1,9 @@
+{
+  "resources" : {
+    "includes" : [ {
+      "pattern" : "\\Qcom/garganttua/reflection/beans/IGGBeanSupplier.class\\E"
+    }, {
+      "pattern" : "\\Qcom/garganttua/reflection/properties/IGGPropertyLoader.class\\E"
+    } ]
+  }
+}

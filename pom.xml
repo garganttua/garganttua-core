@@ -84,5 +84,6 @@
 		<module>garganttua-executor-chain</module>
 		<module>garganttua-keys</module>
 		<module>garganttua-annotation-scanner-spring</module>
+		<module>garganttua-native-image-utils</module>
 	</modules>
 </project>
