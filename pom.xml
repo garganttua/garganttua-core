@@ -85,5 +85,6 @@
 		<module>garganttua-keys</module>
 		<module>garganttua-annotation-scanner-spring</module>
 		<module>garganttua-native-image-utils</module>
+		<module>garganttua-native-image-maven-plugin</module>
 	</modules>
 </project>

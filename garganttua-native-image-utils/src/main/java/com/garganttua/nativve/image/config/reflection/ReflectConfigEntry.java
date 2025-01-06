@@ -3,6 +3,7 @@ package com.garganttua.nativve.image.config.reflection;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT) 
@@ -24,15 +25,20 @@ public class ReflectConfigEntry {
     private boolean allDeclaredMethods = false;
     private List<Field> fields;
     private List<Method> methods;
+    
+    public ReflectConfigEntry(String name) {
+    	this.name = name;
+    }
 
+    @JsonIgnore
+    public Class<?> getEntryClass() throws ClassNotFoundException{
+    	return Class.forName(this.name);
+    }
+    
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-    
     public boolean isQueryAllConstructors() {
         return queryAllConstructors;
     }
