@@ -44,6 +44,11 @@
 				<artifactId>garganttua-reflection</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-native-image-utils</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 

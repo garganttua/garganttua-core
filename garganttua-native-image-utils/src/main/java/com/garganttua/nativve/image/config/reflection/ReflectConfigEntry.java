@@ -29,6 +29,9 @@ public class ReflectConfigEntry {
     public ReflectConfigEntry(String name) {
     	this.name = name;
     }
+    
+    public ReflectConfigEntry() {
+    }
 
     @JsonIgnore
     public Class<?> getEntryClass() throws ClassNotFoundException{

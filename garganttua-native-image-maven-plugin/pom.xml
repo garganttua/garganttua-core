@@ -28,6 +28,10 @@
 			<artifactId>maven-core</artifactId>
 			<version>3.8.6</version>
 		</dependency>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-native-image-utils</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
