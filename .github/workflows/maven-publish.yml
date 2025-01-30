@@ -6,7 +6,7 @@ name: Maven Package
 on:
   push:
     branches: 
-      - "**"  # Build on any branch push
+      - "*"  # Build on any branch push
     tags:
       - "*"  # Trigger on any tag creation
 
@@ -35,7 +35,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/')
+      startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: read
       packages: write
