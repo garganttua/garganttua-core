@@ -29,7 +29,7 @@ public class GGBeanSupplier implements IGGBeanSupplier {
 	}
 
 	public GGBeanSupplier(Collection<String> packages, IGGPropertyLoader propLoader) {
-		packages.parallelStream().forEach(package_ -> {
+		packages.stream().forEach(package_ -> {
 			List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_, GGBean.class);
 			annotatedClasses.forEach(annotatedClass -> {
 				GGBeanFactory beanFactory = new GGBeanFactory(annotatedClass.getAnnotation(GGBean.class),
@@ -48,7 +48,7 @@ public class GGBeanSupplier implements IGGBeanSupplier {
 
 	@Override
 	public Object getBeanNamed(String name) throws GGReflectionException {
-		Optional<GGBeanFactory> beanFactory = beans.parallelStream().filter(bf -> bf.getName().equals(name))
+		Optional<GGBeanFactory> beanFactory = beans.stream().filter(bf -> bf.getName().equals(name))
 				.findFirst();
 		if (beanFactory.isEmpty()) {
 			throw new GGReflectionException("Bean " + name + " not found");

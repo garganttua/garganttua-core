@@ -95,7 +95,5 @@ public class TestGGExecutorChain {
 		});
 		
 		executorChain.execute(integer);
-		
 	}
-	
 }
