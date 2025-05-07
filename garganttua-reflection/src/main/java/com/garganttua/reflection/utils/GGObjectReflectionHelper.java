@@ -333,8 +333,11 @@ public class GGObjectReflectionHelper {
         }
     }
 	
-	private static boolean equals(Type type1, Type type2) {
+	public static boolean equals(Type type1, Type type2) {
 		boolean equals = false;
+		if (type1 instanceof ParameterizedType && type2 instanceof ParameterizedType) {
+			equals = equalsParameterizedType((ParameterizedType) type1, (ParameterizedType) type2);
+		}
         if (type1 == type2) {
         	equals = true;
         }
@@ -354,9 +357,6 @@ public class GGObjectReflectionHelper {
         if( equals == true )
         	return equals;
 
-        if (type1 instanceof ParameterizedType && type2 instanceof ParameterizedType) {
-        	equals = equalsParameterizedType((ParameterizedType) type1, (ParameterizedType) type2);
-        }
         if( equals == true )
         	return equals;
 

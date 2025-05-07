@@ -18,6 +18,7 @@ import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.fields.GGFields;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -173,7 +174,18 @@ public class GGMappingRules {
 			if( mappingMethod != null ) {
 				Method methodLeaf = (Method) mappingMethod.get(mappingMethod.size()-1);
 				return new GGAPIMethodMappingExecutor(methodLeaf, sourceFieldLeaf, destinationFieldLeaf, mappingDirection);
-			} else if( sourceFieldLeaf.getType().equals(destinationFieldLeaf.getType()) ) {
+			} else if(Collection.class.isAssignableFrom(sourceFieldLeaf.getType()) && Collection.class.isAssignableFrom(destinationFieldLeaf.getType())) {
+				Class<?> sourceGenericeType = GGFields.getGenericType(sourceFieldLeaf, 0);
+				Class<?> destGenericeType = GGFields.getGenericType(destinationFieldLeaf, 0);
+				
+				if( GGObjectReflectionHelper.equals(sourceFieldLeaf.getType(), destinationFieldLeaf.getType()) && sourceGenericeType.equals(destGenericeType) ) {
+					return new GGAPISimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
+				} else if( !GGObjectReflectionHelper.equals(sourceFieldLeaf.getType(), destinationFieldLeaf.getType()) && sourceGenericeType.equals(destGenericeType) ) {
+					return new GGAPISimpleCollectionMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
+				} else {
+					return new GGAPIMapableCollectionMappingExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
+				}			
+			} else if( GGObjectReflectionHelper.equals(sourceFieldLeaf.getType(), destinationFieldLeaf.getType()) ) {
 				return new GGAPISimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
 			} else if( !GGFields.isArrayOrMapOrCollectionField(sourceFieldLeaf) && !GGFields.isArrayOrMapOrCollectionField(destinationFieldLeaf) ) {
 				return new GGAPISimpleMapableFieldMappingExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
