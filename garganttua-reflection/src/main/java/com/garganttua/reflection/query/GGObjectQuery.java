@@ -19,35 +19,36 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GGObjectQuery implements IGGObjectQuery {
-	
+
 	private Class<?> objectClass;
 	private Object object;
 
 	protected GGObjectQuery(Class<?> objectClass) throws GGReflectionException {
-		if( objectClass == null ) {
+		if (objectClass == null) {
 			throw new GGReflectionException("class is null");
 		}
 		this.objectClass = objectClass;
 		this.object = GGObjectReflectionHelper.instanciateNewObject(objectClass);
 	}
-	
+
 	protected GGObjectQuery(Object object) throws GGReflectionException {
-		if( object == null ) {
+		if (object == null) {
 			throw new GGReflectionException("object is null");
 		}
 		this.object = object;
 		this.objectClass = object.getClass();
 	}
-	
+
 	protected GGObjectQuery(Class<?> objectClass, Object object) throws GGReflectionException {
-		if( object == null ) {
+		if (object == null) {
 			throw new GGReflectionException("object is null");
 		}
-		if( objectClass == null ) {
+		if (objectClass == null) {
 			throw new GGReflectionException("class is null");
 		}
-		if( !object.getClass().isAssignableFrom(objectClass) ) {
-			throw new GGReflectionException("Provided class "+objectClass+" and object "+object.getClass()+" do not match");
+		if (!object.getClass().isAssignableFrom(objectClass)) {
+			throw new GGReflectionException(
+					"Provided class " + objectClass + " and object " + object.getClass() + " do not match");
 		}
 		this.object = object;
 		this.objectClass = objectClass;
@@ -120,11 +121,11 @@ public class GGObjectQuery implements IGGObjectQuery {
 			list.add(method);
 			return list;
 		} else if (field != null && method != null) {
-			throw new GGReflectionException( 
+			throw new GGReflectionException(
 					"Object element " + address.getElement(index) + " is also a field and a method in " + clazz);
 		}
 
-		throw new GGReflectionException (
+		throw new GGReflectionException(
 				"Object element " + address.getElement(index) + " not found in class " + clazz);
 	}
 
@@ -136,7 +137,8 @@ public class GGObjectQuery implements IGGObjectQuery {
 		return this.address(this.objectClass, elementName, null);
 	}
 
-	private GGObjectAddress address(Class<?> objectClass, String elementName, GGObjectAddress address) throws GGReflectionException {
+	private GGObjectAddress address(Class<?> objectClass, String elementName, GGObjectAddress address)
+			throws GGReflectionException {
 		if (log.isDebugEnabled()) {
 			log.debug("Looking for object element " + elementName + " in " + objectClass + " address " + address);
 		}
@@ -144,21 +146,21 @@ public class GGObjectQuery implements IGGObjectQuery {
 		try {
 			field = objectClass.getDeclaredField(elementName);
 		} catch (NoSuchFieldException | SecurityException e) {
-			
+
 		}
 
 		Method method = GGObjectReflectionHelper.getMethod(objectClass, elementName);
 
-		if (method != null) { 
-			return new GGObjectAddress(address==null?elementName:address + "." + elementName, true);
+		if (method != null) {
+			return new GGObjectAddress(address == null ? elementName : address + "." + elementName, true);
 		}
 		if (field != null) {
-			return new GGObjectAddress(address==null?elementName:address + "." + elementName, true);
+			return new GGObjectAddress(address == null ? elementName : address + "." + elementName, true);
 		}
 
-		if( objectClass.getSuperclass() != null ) {
-			address =  this.address(objectClass.getSuperclass(), elementName, address);
-			if( address != null ) {
+		if (objectClass.getSuperclass() != null && !Object.class.equals(objectClass.getSuperclass())) {
+			address = this.address(objectClass.getSuperclass(), elementName, address);
+			if (address != null) {
 				return address;
 			}
 		}
@@ -168,30 +170,31 @@ public class GGObjectQuery implements IGGObjectQuery {
 				if (GGFields.isNotPrimitive(f.getType())) {
 					GGObjectAddress a = null;
 					a = this.doIfIsCollection(f, elementName, address);
-					if( a != null )
+					if (a != null)
 						return a;
 					a = this.doIfIsMap(f, elementName, address);
-					if( a != null )
+					if (a != null)
 						return a;
 					a = this.doIfIsArray(f, elementName, address);
-					if( a != null )
+					if (a != null)
 						return a;
 					a = this.doIfNotEnum(f, elementName, address);
-					if( a != null )
+					if (a != null)
 						return a;
 				}
 			}
 		}
 		return null;
 	}
-	
-	private GGObjectAddress doIfIsMap(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
+
+	private GGObjectAddress doIfIsMap(Field f, String elementName, GGObjectAddress address)
+			throws GGReflectionException {
 		if (Map.class.isAssignableFrom(f.getType())) {
 			Class<?> keyClass = GGFields.getGenericType(f, 0);
 			Class<?> valueClass = GGFields.getGenericType(f, 1);
 			if (GGFields.isNotPrimitive(keyClass)) {
 				GGObjectAddress keyAddress = null;
-				if( address == null ) {
+				if (address == null) {
 					keyAddress = new GGObjectAddress(f.getName(), true);
 					keyAddress.addElement(GGObjectAddress.MAP_KEY_INDICATOR);
 				} else {
@@ -206,7 +209,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 			}
 			if (GGFields.isNotPrimitive(valueClass)) {
 				GGObjectAddress valueAddress = null;
-				if( address == null ) {
+				if (address == null) {
 					valueAddress = new GGObjectAddress(f.getName(), true);
 					valueAddress.addElement(GGObjectAddress.MAP_VALUE_INDICATOR);
 				} else {
@@ -214,7 +217,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 					valueAddress.addElement(f.getName());
 					valueAddress.addElement(GGObjectAddress.MAP_VALUE_INDICATOR);
 				}
-				GGObjectAddress a = this.address(valueClass, elementName, valueAddress);	
+				GGObjectAddress a = this.address(valueClass, elementName, valueAddress);
 				if (a != null) {
 					return a;
 				}
@@ -222,33 +225,38 @@ public class GGObjectQuery implements IGGObjectQuery {
 		}
 		return null;
 	}
-	
-	private GGObjectAddress doIfIsArray(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
-	    if (f.getType().isArray()) {
-	        final Class<?> componentType = f.getType().getComponentType();
-	        final GGObjectAddress newAddress = address == null ? new GGObjectAddress(f.getName(), true)
-	                : address.addElement(f.getName());
-	        return this.address(componentType, elementName, newAddress);
-	    }
-	    return null;
+
+	private GGObjectAddress doIfIsArray(Field f, String elementName, GGObjectAddress address)
+			throws GGReflectionException {
+		if (f.getType().isArray()) {
+			final Class<?> componentType = f.getType().getComponentType();
+			final GGObjectAddress newAddress = address == null ? new GGObjectAddress(f.getName(), true)
+					: address.addElement(f.getName());
+			return this.address(componentType, elementName, newAddress);
+		}
+		return null;
 	}
 
-	private GGObjectAddress doIfIsCollection(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
+	private GGObjectAddress doIfIsCollection(Field f, String elementName, GGObjectAddress address)
+			throws GGReflectionException {
 		if (Collection.class.isAssignableFrom(f.getType())) {
 			final Class<?> t = GGFields.getGenericType(f, 0);
-			final GGObjectAddress a = this.address(t, elementName, address==null ? new GGObjectAddress(f.getName(), true)
-					: address.addElement(f.getName()));
+			final GGObjectAddress a = this.address(t, elementName,
+					address == null ? new GGObjectAddress(f.getName(), true)
+							: address.addElement(f.getName()));
 			if (a != null) {
 				return a;
 			}
-		} 
+		}
 		return null;
 	}
-	
-	private GGObjectAddress doIfNotEnum(Field f, String elementName, GGObjectAddress address) throws GGReflectionException {
-		if( !f.getType().isEnum() ) {
-			GGObjectAddress a = this.address(f.getType(), elementName, address==null ? new GGObjectAddress(f.getName(), true)
-					: address.addElement(f.getName()));
+
+	private GGObjectAddress doIfNotEnum(Field f, String elementName, GGObjectAddress address)
+			throws GGReflectionException {
+		if (!f.getType().isEnum()) {
+			GGObjectAddress a = this.address(f.getType(), elementName,
+					address == null ? new GGObjectAddress(f.getName(), true)
+							: address.addElement(f.getName()));
 			if (a != null) {
 				return a;
 			}
@@ -258,15 +266,16 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 	@Override
 	public Object setValue(Object object, String fieldAddress, Object fieldValue) throws GGReflectionException {
-		if( object == null ) {
+		if (object == null) {
 			throw new GGReflectionException("Object is null");
 		}
 		return this.setValue(object, new GGObjectAddress(fieldAddress, true), fieldValue);
 	}
 
 	@Override
-	public Object setValue(Object object, GGObjectAddress fieldAddress, Object fieldValue) throws GGReflectionException {
-		if( object == null ) {
+	public Object setValue(Object object, GGObjectAddress fieldAddress, Object fieldValue)
+			throws GGReflectionException {
+		if (object == null) {
 			throw new GGReflectionException("Object is null");
 		}
 		List<Object> field = this.find(fieldAddress);
@@ -275,15 +284,15 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 	@Override
 	public Object getValue(Object object, String fieldAddress) throws GGReflectionException {
-		if( object == null ) {
+		if (object == null) {
 			throw new GGReflectionException("Object is null");
 		}
 		return this.getValue(object, new GGObjectAddress(fieldAddress, true));
 	}
-	
+
 	@Override
 	public Object getValue(Object object, GGObjectAddress fieldAddress) throws GGReflectionException {
-		if( object == null ) {
+		if (object == null) {
 			throw new GGReflectionException("Object is null");
 		}
 		List<Object> field = this.find(fieldAddress);
@@ -317,17 +326,18 @@ public class GGObjectQuery implements IGGObjectQuery {
 	public Object fieldValueStructure(GGObjectAddress address) throws GGReflectionException {
 		List<Object> fields = this.find(address);
 		Object structure = null;
-		
-		for( int i = fields.size()-1; i >= 0; i-- ) {
-			if( i == fields.size()-1 ) {
+
+		for (int i = fields.size() - 1; i >= 0; i--) {
+			if (i == fields.size() - 1) {
 				structure = GGFields.instanciate((Field) fields.get(i));
-			} else if( GGFields.isArrayOrMapOrCollectionField((Field) fields.get(i))) {
-				ArrayList<Object> list = (ArrayList<Object>) GGObjectReflectionHelper.newArrayListOf(((Field) fields.get(i)).getType());
+			} else if (GGFields.isArrayOrMapOrCollectionField((Field) fields.get(i))) {
+				ArrayList<Object> list = (ArrayList<Object>) GGObjectReflectionHelper
+						.newArrayListOf(((Field) fields.get(i)).getType());
 				list.add(structure);
 				structure = list;
 			}
 		}
-		
+
 		return structure;
 	}
 
@@ -348,7 +358,7 @@ public class GGObjectQuery implements IGGObjectQuery {
 
 	@Override
 	public Object invoke(Object object, GGObjectAddress methodAddress, Object... args) throws GGReflectionException {
-		if( object == null ) {
+		if (object == null) {
 			throw new GGReflectionException("Object is null");
 		}
 
