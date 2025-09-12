@@ -33,3 +33,11 @@ garganttua-executor-chain/.classpath
 garganttua-keys/.classpath
 
 garganttua-native-image-utils/.classpath
+
+garganttua-annotation-scanner-spring/.classpath
+
+garganttua-native-image-maven-plugin/.classpath
+
+garganttua-objects-mapper/.classpath
+
+garganttua-reflection/.classpath
