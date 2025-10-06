@@ -7,4 +7,8 @@ public class GGExecutorException extends Exception {
 	public GGExecutorException(Throwable t) {
 		super(t);
 	}
+
+	public GGExecutorException(String string) {
+		super(string);
+	}
 }
