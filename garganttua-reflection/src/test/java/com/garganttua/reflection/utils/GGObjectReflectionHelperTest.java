@@ -8,8 +8,6 @@ import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
-
 class SuperClass {
 	Long superField;
 }

@@ -41,3 +41,13 @@ garganttua-native-image-maven-plugin/.classpath
 garganttua-objects-mapper/.classpath
 
 garganttua-reflection/.classpath
+
+.vscode/
+
+garganttua-crypto/.classpath
+
+*.versionsBackup
+
+garganttua-mapper/.classpath
+
+garganttua-native/.classpath

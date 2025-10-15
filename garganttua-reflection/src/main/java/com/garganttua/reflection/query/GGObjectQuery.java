@@ -142,9 +142,9 @@ public class GGObjectQuery implements IGGObjectQuery {
         return address(this.objectClass, elementName, null);
     }
 
-    private GGObjectAddress address(Class<?> objectClass, String elementName, GGObjectAddress baseAddress)
+    private GGObjectAddress address(Class<?> objectClass, String elementName, GGObjectAddress address)
             throws GGReflectionException {
-        log.atTrace().log("Resolving address element='{}', class={}, baseAddress={}", elementName, objectClass, baseAddress);
+        log.atTrace().log("Resolving address element='{}', class={}, baseAddress={}", elementName, objectClass, address);
         Field field = null;
         try {
             field = objectClass.getDeclaredField(elementName);
@@ -153,24 +153,27 @@ public class GGObjectQuery implements IGGObjectQuery {
         Method method = GGObjectReflectionHelper.getMethod(objectClass, elementName);
         if (method != null) {
             log.atDebug().log("Found method '{}' in {}", elementName, objectClass.getName());
-            return new GGObjectAddress(baseAddress == null ? elementName : baseAddress + "." + elementName, true);
+            return new GGObjectAddress(address == null ? elementName : address + "." + elementName, true);
         }
         if (field != null) {
             log.atDebug().log("Found field '{}' in {}", elementName, objectClass.getName());
-            return new GGObjectAddress(baseAddress == null ? elementName : baseAddress + "." + elementName, true);
+            return new GGObjectAddress(address == null ? elementName : address + "." + elementName, true);
         }
 
         if (objectClass.getSuperclass() != null && !Object.class.equals(objectClass.getSuperclass()) && !GGFields.BlackList.isBlackListed(objectClass.getSuperclass())) {
-            return address(objectClass.getSuperclass(), elementName, baseAddress);
+            address = address(objectClass.getSuperclass(), elementName, address);
+            if( address != null ) {
+				return address;
+			}
         }
 
         for (Field f : objectClass.getDeclaredFields()) {
-            if (GGFields.isNotPrimitive(f.getType()) && !GGFields.BlackList.isBlackListed(f.getType()) && !Object.class.equals(f.getType()) && !"serialPersistentFields".equalsIgnoreCase(f.getName())) {
+            if (GGFields.isNotPrimitive(f.getType()) /* && !GGFields.BlackList.isBlackListed(f.getType()) && !Object.class.equals(f.getType()) && !"serialPersistentFields".equalsIgnoreCase(f.getName()) */) {
                 GGObjectAddress a;
-                if ((a = doIfIsCollection(f, elementName, baseAddress)) != null) return a;
-                if ((a = doIfIsMap(f, elementName, baseAddress)) != null) return a;
-                if ((a = doIfIsArray(f, elementName, baseAddress)) != null) return a;
-                if ((a = doIfNotEnum(f, elementName, baseAddress)) != null) return a;
+                if ((a = doIfIsCollection(f, elementName, address)) != null) return a;
+                if ((a = doIfIsMap(f, elementName, address)) != null) return a;
+                if ((a = doIfIsArray(f, elementName, address)) != null) return a;
+                if ((a = doIfNotEnum(f, elementName, address)) != null) return a;
             }
         }
 

@@ -1,0 +1,7 @@
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/ObjectSupplierTest.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/SupplierTest.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/beans/BeanTest.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/beans/BeanTestNI.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/beans/GGBeanLoaderTest.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/beans/IBeanTest.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/beans/NamedBeanTest.java

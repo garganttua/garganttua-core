@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Vector;
 
+import com.garganttua.core.reflection.IGGAnnotationScanner;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.fields.GGFields;
 

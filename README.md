@@ -1,3 +1,3 @@
-# Garganttua Tooling
+# Garganttua Core
 
-Garganttua tools 
+Garganttua core 

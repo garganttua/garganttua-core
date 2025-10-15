@@ -39,19 +39,20 @@ public class GGObjectMethodInvoker {
 		this.address = address;
 	}
 
-	public Object invoke(Object object, Object ...args) throws GGReflectionException {
+	public Object invoke(Object object, Object... args) throws GGReflectionException {
 		if (log.isDebugEnabled()) {
-			log.debug("Invoking method of object : class {}, address {}, parameters {}", this.clazz, this.address, args);
+			log.debug("Invoking method of object : class {}, address {}, parameters {}", this.clazz, this.address,
+					args);
 		}
-		
+
 		if (object == null) {
 			throw new GGReflectionException("object is null");
 		}
-		if( !object.getClass().isAssignableFrom(this.clazz) ) {
-			throw new GGReflectionException("object is not of type "+this.clazz);
+		if (!object.getClass().isAssignableFrom(this.clazz)) {
+			throw new GGReflectionException("object is not of type " + this.clazz);
 		}
-		
-		if( this.fields.size() == 1 ) {
+
+		if (this.fields.size() == 1) {
 			Method method = (Method) fields.get(0);
 			String methodName = this.address.getElement(0);
 
@@ -59,16 +60,16 @@ public class GGObjectMethodInvoker {
 				throw new GGReflectionException("method names of address " + methodName + " and fields list "
 						+ method.getName() + " do not match");
 			}
-			
+
 			return GGObjectReflectionHelper.invokeMethod(object, methodName, method, args);
 
 		} else {
 			return this.invokeMethodRecursively(object, 0, 0, args);
 		}
 	}
-	
-	private Object invokeMethodRecursively(Object object, int fieldIndex, int fieldNameIndex, Object ...args) throws GGReflectionException
-			{
+
+	private Object invokeMethodRecursively(Object object, int fieldIndex, int fieldNameIndex, Object... args)
+			throws GGReflectionException {
 		if (log.isDebugEnabled()) {
 			log.debug(
 					"Invoking method of object : class {}, address {}, parameters {}, address {}, fieldIndex {}, fieldNameIndex {}",
@@ -84,8 +85,9 @@ public class GGObjectMethodInvoker {
 		}
 
 		Object temp = GGObjectReflectionHelper.getObjectFieldValue(object, field);
-		if (temp == null ) {
-			throw new GGReflectionException("cannot invoke method with address "+this.address+". The field "+fieldName+" of object "+object+" is null");
+		if (temp == null) {
+			throw new GGReflectionException("cannot invoke method with address " + this.address + ". The field "
+					+ fieldName + " of object " + object + " is null");
 		}
 
 		if (GGFields.isArrayOrMapOrCollectionField(field)) {
@@ -107,11 +109,11 @@ public class GGObjectMethodInvoker {
 
 	private void doIfIsArray(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
 			List<Object> returned, Object[] args) throws GGReflectionException {
-		if( field.getType().isArray() ) {
+		if (field.getType().isArray()) {
 			Object[] array = (Object[]) temp;
-			
-			for(Object obj: array) {
-				if( isLastIteration ) {
+
+			for (Object obj : array) {
+				if (isLastIteration) {
 					Method leafMethod = (Method) this.fields.get(fieldIndex + 1);
 					String methodName = this.address.getElement(fieldNameIndex + 1);
 					returned.add(GGObjectReflectionHelper.invokeMethod(obj, methodName, leafMethod, args));
@@ -125,22 +127,22 @@ public class GGObjectMethodInvoker {
 	@SuppressWarnings("unchecked")
 	private void doIfIsMap(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
 			List<Object> returned, Object[] args) throws GGReflectionException {
-		if( Map.class.isAssignableFrom(field.getType()) ) {
+		if (Map.class.isAssignableFrom(field.getType())) {
 			Map<Object, Object> sub = (Map<Object, Object>) temp;
 			String mapElement = this.address.getElement(fieldNameIndex + 1);
 			Iterator<?> it = null;
-			if( mapElement.equals(GGObjectAddress.MAP_KEY_INDICATOR) ) {
+			if (mapElement.equals(GGObjectAddress.MAP_KEY_INDICATOR)) {
 				it = sub.keySet().iterator();
 			}
-			if( mapElement.equals(GGObjectAddress.MAP_VALUE_INDICATOR) ) {
+			if (mapElement.equals(GGObjectAddress.MAP_VALUE_INDICATOR)) {
 				it = sub.values().iterator();
 			}
-			if( it == null ) {
-				throw new GGReflectionException("Invalid address, "+mapElement+" should be either #key or #value");
+			if (it == null) {
+				throw new GGReflectionException("Invalid address, " + mapElement + " should be either #key or #value");
 			}
 			for (int i = 0; i < sub.size(); i++) {
 				Object tempObject = it.next();
-				if( isLastIteration ) {
+				if (isLastIteration) {
 					Method leafMethod = (Method) this.fields.get(fieldIndex + 2);
 					String methodName = this.address.getElement(fieldNameIndex + 2);
 					returned.add(GGObjectReflectionHelper.invokeMethod(tempObject, methodName, leafMethod, args));
@@ -155,10 +157,10 @@ public class GGObjectMethodInvoker {
 	private void doIfIsCollection(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
 			List<Object> returned, Object... args)
 			throws GGReflectionException {
-		if( Collection.class.isAssignableFrom(field.getType()) ) {
+		if (Collection.class.isAssignableFrom(field.getType())) {
 			Collection<Object> sub = (Collection<Object>) temp;
-			for(Object obj: sub) {
-				if( isLastIteration ) {
+			for (Object obj : sub) {
+				if (isLastIteration) {
 					Method leafMethod = (Method) this.fields.get(fieldIndex + 1);
 					String methodName = this.address.getElement(fieldNameIndex + 1);
 					returned.add(GGObjectReflectionHelper.invokeMethod(obj, methodName, leafMethod, args));

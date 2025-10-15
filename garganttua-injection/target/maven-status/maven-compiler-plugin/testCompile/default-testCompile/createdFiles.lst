@@ -1,0 +1,15 @@
+com/garganttua/di/impl/supplier/SimpleSupplier.class
+com/garganttua/di/impl/supplier/ObjectSupplierTest.class
+com/garganttua/di/impl/supplier/ObjectSupplierTest$4.class
+com/garganttua/di/impl/supplier/SupplierTest.class
+com/garganttua/di/impl/supplier/beans/BeanTestNI.class
+com/garganttua/di/impl/supplier/beans/BeanTest.class
+com/garganttua/di/impl/supplier/ObjectSupplierTest$3.class
+com/garganttua/di/impl/supplier/ObjectSupplierTest$1.class
+com/garganttua/di/impl/supplier/ObjectSupplierTest$2.class
+com/garganttua/di/impl/supplier/beans/NamedBeanTest.class
+com/garganttua/di/impl/supplier/beans/IBeanTest.class
+com/garganttua/di/impl/supplier/ObjectSupplierTest$1$1.class
+com/garganttua/di/impl/supplier/FailingSupplier.class
+com/garganttua/di/impl/supplier/ContextualSupplier.class
+com/garganttua/di/impl/supplier/beans/GGBeanLoaderTest.class
