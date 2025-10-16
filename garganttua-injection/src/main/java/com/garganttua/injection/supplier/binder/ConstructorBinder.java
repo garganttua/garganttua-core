@@ -7,9 +7,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IConstructorBinder;
 import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 
 public class ConstructorBinder<Constructed> extends ExecutableBinder<IDiContext> implements IConstructorBinder<Constructed> {
 
@@ -32,7 +32,7 @@ public class ConstructorBinder<Constructed> extends ExecutableBinder<IDiContext>
     @Override
     public Optional<Constructed> execute(IDiContext context)
             throws DiException {
-                Objects.requireNonNull(context, "Context cannot be null");
+                /* Objects.requireNonNull(context, "Context cannot be null"); */
         try {
             Object[] args = this.buildArguments(this.parameterSuppliers, context);
             return Optional.ofNullable(this.constructor.newInstance(args));

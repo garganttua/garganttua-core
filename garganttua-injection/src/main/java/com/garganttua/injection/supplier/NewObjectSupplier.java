@@ -4,9 +4,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IConstructorBinder;
 import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
+import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 
 public class NewObjectSupplier<ObjectClass> implements IContextualObjectSupplier<ObjectClass, IDiContext> {
 

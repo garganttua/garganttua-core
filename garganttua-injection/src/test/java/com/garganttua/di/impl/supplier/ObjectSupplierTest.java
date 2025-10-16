@@ -79,7 +79,7 @@ public class ObjectSupplierTest {
 
         IContextualObjectSupplier<String, IDiContext> supplier = builder.build();
 
-        assertEquals("hello from context", supplier.getObject(new IDiContext() {
+        assertEquals("hello from context", supplier.getObject(new DummyDiContext() {
         }).get());
 
     }
@@ -94,7 +94,7 @@ public class ObjectSupplierTest {
 
         IContextualObjectSupplier<String, IDiContext> supplier = builder.build();
 
-        assertEquals("hello from context", supplier.getObject(new IDiContext() {
+        assertEquals("hello from context", supplier.getObject(new DummyDiContext() {
         }).get());
     }
 

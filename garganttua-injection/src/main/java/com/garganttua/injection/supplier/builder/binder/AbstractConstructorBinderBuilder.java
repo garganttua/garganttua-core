@@ -8,8 +8,8 @@ import java.util.Objects;
 
 import com.garganttua.dsl.AbstractLinkedBuilder;
 import com.garganttua.dsl.DslException;
-import com.garganttua.injection.spec.IConstructorBinder;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 import com.garganttua.injection.spec.supplier.builder.binder.IConstructorBinderBuilder;
 import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.binder.ConstructorBinder;
