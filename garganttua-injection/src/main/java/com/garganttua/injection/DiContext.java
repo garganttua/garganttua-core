@@ -1,5 +1,6 @@
 package com.garganttua.injection;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -10,12 +11,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.inject.Inject;
+import javax.inject.Qualifier;
+
 import com.garganttua.injection.spec.IBeanScope;
 import com.garganttua.injection.spec.IDiChildContextFactory;
 import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.ILifecycle;
 import com.garganttua.injection.spec.IPropertyScope;
+import com.garganttua.reflection.GGReflectionException;
+import com.garganttua.reflection.utils.GGFieldAccessManager;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class DiContext implements IDiContext {
 
     // --- Singleton public ---
@@ -64,7 +73,7 @@ public class DiContext implements IDiContext {
     @Override
     public Set<IDiChildContextFactory<? extends IDiContext>> getChildContextFactories() throws DiException {
         ensureInitializedAndStarted();
-        return Collections.unmodifiableSet(new HashSet<>(childContextFactories));
+        return Collections.unmodifiableSet(new HashSet<IDiChildContextFactory<? extends IDiContext>>(childContextFactories));
     }
 
     // --- Gestion des beans ---
@@ -165,6 +174,91 @@ public class DiContext implements IDiContext {
     public void doInjection(Object instance) throws DiException {
         ensureInitializedAndStarted();
         // future: injection logic
+    }
+
+    public void injectBeans(Object entity) throws DiException {
+        Class<?> clazz = entity.getClass();
+        this.injectBeans(entity, clazz);
+    }
+
+    private void injectBeans(Object entity, Class<?> clazz) throws DiException {
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Inject.class)) {
+                Object bean = this.getBean(entity, field);
+                this.doInjection(entity, field, bean);
+            }
+        }
+
+        if (clazz.getSuperclass() != null) {
+            this.injectBeans(entity, clazz.getSuperclass());
+        }
+    }
+
+    private void doInjection(Object entity, Field field, Object bean) throws DiException {
+        try (GGFieldAccessManager accessManager = new GGFieldAccessManager(field)) {
+            field.set(entity, bean);
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            if (log.isDebugEnabled()) {
+                log.warn("Field  " + field.getName() + " of entity of type " + entity.getClass().getName()
+                        + " cannot be set", e);
+            }
+            throw new DiException("Field  " + field.getName() + " of entity of type "
+                    + entity.getClass().getName() + " cannot be set", e);
+        }
+    }
+
+    private Object getBean(Object entity, Field field) throws DiException {
+        Object bean = null;
+
+        if (Optional.class.isAssignableFrom(field.getType())) {
+            Class<?> optionalClass = this.getOptionalFieldType(field.getGenericType());
+            try {
+                Object optionalBean = this.researchBean(field, optionalClass);
+                return Optional.ofNullable(optionalBean);
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+
+        } else {
+            bean = this.researchBean(field, field.getType());
+        }
+
+        if (bean == null) {
+            throw new DiException("Bean not found for field: " + field.getName());
+        }
+
+        return bean;
+    }
+
+    private Class<?> getOptionalFieldType(Type type) throws DiException {
+        Type genericType = type;
+        if (genericType instanceof ParameterizedType) {
+            ParameterizedType paramType = (ParameterizedType) genericType;
+
+            Type[] typeArguments = paramType.getActualTypeArguments();
+            return (Class<?>) typeArguments[0];
+        }
+
+        throw new DiException("Invalid clazz " + type.getTypeName() + " should be Optional<?>");
+    }
+
+    private Object researchBean(Field field, Class<?> fieldType) throws DiException {
+        Object bean = null;
+        /* if (field.isAnnotationPresent(Qualifier.class)) {
+            String qualifierName = field.getAnnotation(Qualifier.class).toString();
+            bean = this.getBeanNamed(qualifierName);
+        } else {
+            bean = this.getBeanOfType(fieldType);
+        } */
+        /* if (bean == null) {
+            throw new DiException("Bean not found for field: " + field.getName());
+        } */
+        return bean;
+    }
+
+    public void injectProperties(Object entity) throws DiException {
+        // TODO Auto-generated method stub
+
     }
 
     @Override

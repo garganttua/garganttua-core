@@ -168,6 +168,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return new ConstructorBinder<Constructed>(objectClass, matchedConstructor, builtsuppliers);
     }
 
+    @SuppressWarnings("unchecked")
     private Constructor<Constructed> findMatchingConstructor(Class<?>[] paramTypes) {
         Constructor<Constructed>[] constructors = (Constructor<Constructed>[]) objectClass.getDeclaredConstructors();
 

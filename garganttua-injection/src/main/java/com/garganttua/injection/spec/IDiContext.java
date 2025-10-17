@@ -5,8 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.injection.DiException;
+import com.garganttua.injection.spec.injection.IInjector;
 
-public interface IDiContext extends ILifecycle {
+public interface IDiContext extends ILifecycle, IInjector {
 
     // --- Bean Scopes ---
     Set<IBeanScope> getBeanScopes() throws DiException;
@@ -35,7 +36,6 @@ public interface IDiContext extends ILifecycle {
     void setPropertyInScope(String scopeName, String key, Object value) throws DiException;
 
     // --- Core ---
-    void doInjection(Object instance) throws DiException;
 
     <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass, Object... args)
             throws DiException;

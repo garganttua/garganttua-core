@@ -11,4 +11,6 @@ public @interface GGProperty {
 
 	String value();
 
+	String scope() default "";
+
 }

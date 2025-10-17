@@ -116,8 +116,7 @@ public class DummyDiContext implements IDiContext{
 
     @Override
     public void doInjection(Object instance) throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doInjection'");
+        
     }
 
     @Override

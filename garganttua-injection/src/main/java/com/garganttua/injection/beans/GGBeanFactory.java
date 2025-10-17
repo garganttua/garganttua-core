@@ -1,41 +1,32 @@
 package com.garganttua.injection.beans;
 
-import java.lang.reflect.Field;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
-import javax.inject.Inject;
-import javax.inject.Qualifier;
-
-import com.garganttua.injection.beans.GGBeanSupplier.IGGBeanLoaderAccessor;
-import com.garganttua.injection.spec.beans.annotation.GGBean;
+import com.garganttua.injection.DiException;
+import com.garganttua.injection.IBeanSupplier;
+import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.beans.annotation.GGBeanLoadingStrategy;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.properties.GGProperty;
-import com.garganttua.reflection.properties.IGGPropertyLoader;
-import com.garganttua.reflection.utils.GGFieldAccessManager;
+import com.garganttua.injection.spec.injection.IInjector;
+import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
+import com.garganttua.injection.spec.supplier.binder.IMethodBinder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GGBeanFactory {
+public class GGBeanFactory<Bean> implements IBeanSupplier<Bean> {
 
-	private IGGPropertyLoader propLoader;
+	private IConstructorBinder<Bean> constructorBinder;
 
-	private IGGBeanLoaderAccessor beanLoaderAccessor;
+	private Set<IMethodBinder<?>> postConstructMethodBinders;
 
-	public GGBeanFactory(GGBean annotation, Class<?> type, IGGBeanLoaderAccessor beanLoaderAccessor,
-			IGGPropertyLoader propLoader) {
-		this.beanLoaderAccessor = beanLoaderAccessor;
-		this.propLoader = propLoader;
-		this.name = annotation.name().isEmpty() ? type.getSimpleName() : annotation.name();
-		this.strategy = annotation.strategy();
-		this.type = type;
-	}
+	private IInjector injector;
 
 	@Getter
-	private Class<?> type;
+	private Class<Bean> type;
 
 	@Getter
 	private String name;
@@ -43,7 +34,21 @@ public class GGBeanFactory {
 	@Getter
 	private GGBeanLoadingStrategy strategy;
 
-	private Object bean;
+	private Bean bean;
+
+	private IDiContext context;
+
+	public GGBeanFactory(Class<Bean> type, GGBeanLoadingStrategy strategy, Optional<String> name,
+			Optional<IConstructorBinder<Bean>> constructorBinder, Set<IMethodBinder<?>> postConstructMethodBinders,
+			IInjector injector, IDiContext context) {
+		this.context = context;
+		this.type = Objects.requireNonNull(type, "Bean type cannot be null");
+		this.strategy = Objects.requireNonNull(strategy, "Bean strategy cannot be null");
+		this.name = name.orElse(type.getSimpleName());
+		this.constructorBinder = constructorBinder.isPresent() ? constructorBinder.get() : null;
+		this.postConstructMethodBinders = postConstructMethodBinders;
+		this.injector = Objects.requireNonNull(injector, "Injector cannot be null");
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -51,7 +56,7 @@ public class GGBeanFactory {
 			return true;
 		if (o == null || getClass() != o.getClass())
 			return false;
-		GGBeanFactory that = (GGBeanFactory) o;
+		GGBeanFactory<Bean> that = (GGBeanFactory<Bean>) o;
 		return Objects.equals(type, that.type) &&
 				Objects.equals(name, that.name) &&
 				strategy == that.strategy;
@@ -62,73 +67,75 @@ public class GGBeanFactory {
 		return Objects.hash(type, name, strategy);
 	}
 
-	public Object getBean() throws GGReflectionException {
+	private Bean getBean() throws DiException {
+		Bean bean = createBeanInstance();
+		invokePostConstructMethods(bean);
+		performInjection(bean);
+		return bean;
+	}
+
+	private Bean createBeanInstance() throws DiException {
+		try {
+			if (constructorBinder != null) {
+				Optional<Bean> constructed = executeConstructorBinder();
+				return constructed.orElseThrow(
+						() -> new DiException("Constructor binder returned empty for bean of type " + type.getName()));
+			} else {
+				return GGObjectReflectionHelper.instanciateNewObject(type);
+			}
+		} catch (Exception e) {
+			throw new DiException("Failed to instantiate bean of type " + type.getName(), e);
+		}
+	}
+
+	private Optional<Bean> executeConstructorBinder() throws DiException {
+		return (context == null)
+				? constructorBinder.execute()
+				: constructorBinder.execute(context);
+	}
+
+	private void invokePostConstructMethods(Bean bean) throws DiException {
+		if (postConstructMethodBinders == null || postConstructMethodBinders.isEmpty()) {
+			return;
+		}
+
+		for (IMethodBinder<?> methodBinder : postConstructMethodBinders) {
+			try {
+				if (context == null) {
+					methodBinder.execute();
+				} else {
+					methodBinder.execute(context);
+				}
+			} catch (DiException e) {
+				throw new DiException("Post construct method binder failed for bean of type " + type.getName(), e);
+			}
+		}
+	}
+
+	private void performInjection(Bean bean) throws DiException {
+		try {
+			injector.doInjection(bean);
+		} catch (Exception e) {
+			throw new DiException("Dependency injection failed for bean of type " + type.getName(), e);
+		}
+	}
+
+	@Override
+	public Optional<Bean> getObject() throws DiException {
+		Bean bean = null;
 		if (this.strategy == GGBeanLoadingStrategy.newInstance) {
-			return this.injectDependenciesAndValues(GGObjectReflectionHelper.instanciateNewObject(this.type));
+			bean = getBean();
 		} else {
 			if (this.bean == null) {
-				this.bean = this.injectDependenciesAndValues(GGObjectReflectionHelper.instanciateNewObject(this.type));
+				this.bean = getBean();
 			}
-			return this.bean;
+			bean = this.bean;
 		}
+		return Optional.ofNullable(bean);
 	}
 
-	private Object injectDependenciesAndValues(Object object) throws GGReflectionException {
-		Class<?> clazz = object.getClass();
-		return this.injectDependenciesAndValues(object, clazz);
-	}
-
-	private Object injectDependenciesAndValues(Object object, Class<?> clazz) throws GGReflectionException {
-		if (clazz.getSuperclass() != null) {
-			object = this.injectDependenciesAndValues(object, clazz.getSuperclass());
-		}
-
-		for (Field field : clazz.getDeclaredFields()) {
-			if (field.isAnnotationPresent(Inject.class)) {
-				Object bean;
-				if (field.isAnnotationPresent(Qualifier.class)) {
-					String qualifierName = field.getAnnotation(Qualifier.class).toString();
-					bean = this.beanLoaderAccessor.getBeanLoader().getBeanNamed(qualifierName);
-				} else {
-					bean = this.beanLoaderAccessor.getBeanLoader().getBeanOfType(field.getType());
-				}
-				if (bean == null) {
-					throw new GGReflectionException("Bean not found for field: " + field.getName());
-				}
-
-				try (GGFieldAccessManager accessManager = new GGFieldAccessManager(field)) {
-					field.set(object, bean);
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					if (log.isDebugEnabled()) {
-						log.warn("Field  " + field.getName() + " of object of type " + object.getClass().getName()
-								+ " cannot be set", e);
-					}
-					throw new GGReflectionException("Field  " + field.getName() + " of entity of type "
-							+ object.getClass().getName() + " cannot be set", e);
-				}
-			} else if (field.isAnnotationPresent(GGProperty.class)) {
-				String value = field.getAnnotation(GGProperty.class).value();
-				if (value.startsWith("${") && value.endsWith("}")) {
-					String propertyName = value.substring(2, value.length() - 1);
-					String propertyValue = this.propLoader.getProperty(propertyName);
-					if (propertyValue == null) {
-						throw new GGReflectionException("Value not found: " + propertyName);
-					}
-					try (GGFieldAccessManager accessManager = new GGFieldAccessManager(field)) {
-						field.set(object, propertyValue);
-					} catch (IllegalArgumentException | IllegalAccessException e) {
-						if (log.isDebugEnabled()) {
-							log.warn("Field  " + field.getName() + " of entity of type " + object.getClass().getName()
-									+ " cannot be set", e);
-						}
-						throw new GGReflectionException("Field  " + field.getName() + " of entity of type "
-								+ object.getClass().getName() + " cannot be set", e);
-					}
-				} else {
-					throw new GGReflectionException("Malformed value annotation: " + field.getName());
-				}
-			}
-		}
-		return object;
+	@Override
+	public Class<Bean> getObjectClass() {
+		return this.type;
 	}
 }

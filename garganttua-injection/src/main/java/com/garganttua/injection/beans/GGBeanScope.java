@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.garganttua.injection.DiException;
+import com.garganttua.injection.spec.IBeanScope;
 import com.garganttua.injection.spec.beans.IGGBeanLoader;
 import com.garganttua.injection.spec.beans.IGGBeanSupplier;
 import com.garganttua.injection.spec.beans.annotation.GGBean;
@@ -16,7 +18,7 @@ import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.Setter;
 
-public class GGBeanSupplier implements IGGBeanSupplier {
+public class GGBeanScope implements IBeanScope {
 
 	private static final String BEAN_SUPPLIER = "gg";
 
@@ -30,7 +32,7 @@ public class GGBeanSupplier implements IGGBeanSupplier {
 		IGGBeanLoader getBeanLoader();
 	}
 
-	public GGBeanSupplier(Collection<String> packages, IGGPropertyLoader propLoader) {
+	public GGBeanScope(Collection<String> packages, IGGPropertyLoader propLoader) {
 		packages.stream().forEach(package_ -> {
 			List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_, GGBean.class);
 			annotatedClasses.forEach(annotatedClass -> {
@@ -76,5 +78,59 @@ public class GGBeanSupplier implements IGGBeanSupplier {
 				.filter(bf -> GGObjectReflectionHelper.isImplementingInterface(type, bf.getType()))
 				.collect(Collectors.toList());
 		return l;
+	}
+
+	@Override
+	public void onStart() throws DiException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'onStart'");
+	}
+
+	@Override
+	public void onStop() throws DiException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'onStop'");
+	}
+
+	@Override
+	public void onFlush() throws DiException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'onFlush'");
+	}
+
+	@Override
+	public void onInit() throws DiException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'onInit'");
+	}
+
+	@Override
+	public void onReload() throws DiException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'onReload'");
+	}
+
+	@Override
+	public <T> Optional<T> getBean(Class<T> type) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
+	}
+
+	@Override
+	public <T> Optional<T> getBean(String name, Class<T> type) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
+	}
+
+	@Override
+	public void registerBean(String name, Object bean) throws DiException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'registerBean'");
+	}
+
+	@Override
+	public boolean isMutable() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'isMutable'");
 	}
 }
