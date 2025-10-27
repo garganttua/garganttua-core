@@ -7,7 +7,7 @@ import com.garganttua.dsl.DslException;
 public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
 
     private String name;
-    private String scope;
+    private String provider;
     private Class<Bean> type;
 
     public BeanSupplierBuilder(Class<Bean> type) {
@@ -24,7 +24,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         if (type == null) {
             throw new DslException("Bean type must be provided");
         }
-        return new BeanSupplier<Bean>(name, type, scope);
+        return new BeanSupplier<Bean>(name, type, provider);
     }
 
     @Override
@@ -34,8 +34,8 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     }
 
     @Override
-    public IBeanSupplierBuilder<Bean> scope(String scope) {
-        this.scope = Objects.requireNonNull(scope, "Bean scope cannot be null");
+    public IBeanSupplierBuilder<Bean> provider(String provider) {
+        this.provider = Objects.requireNonNull(provider, "Bean scope cannot be null");
         return this;
     }
 

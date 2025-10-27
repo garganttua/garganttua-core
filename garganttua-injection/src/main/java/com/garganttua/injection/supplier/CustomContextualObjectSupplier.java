@@ -32,7 +32,7 @@ public class CustomContextualObjectSupplier<Supplied, Context> implements IConte
 
     @Override
     public Optional<Supplied> getObject(Context context) throws DiException {
-        return this.supply.supplyObject(context);
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getObject'");
     }
-
 }

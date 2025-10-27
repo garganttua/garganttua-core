@@ -3,7 +3,7 @@ package com.garganttua.injection.spec;
 import java.util.Optional;
 import java.util.Set;
 
-public interface IPropertyScope extends ILifecycle {
+public interface IPropertyProvider extends ILifecycle {
     String getName();
 
     <T> Optional<T> getProperty(String key, Class<T> type);

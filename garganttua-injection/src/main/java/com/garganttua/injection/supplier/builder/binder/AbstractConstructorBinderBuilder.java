@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.dsl.AbstractLinkedBuilder;
+import com.garganttua.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.dsl.DslException;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;
 import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractConstructorBinderBuilder<Constructed, Builder extends IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>>, Link>
-        extends AbstractLinkedBuilder<Link, IConstructorBinder<Constructed>>
+        extends AbstractAutomaticLinkedBuilder<Builder, Link, IConstructorBinder<Constructed>>
         implements IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>> {
 
     private final Class<Constructed> objectClass;
@@ -119,7 +119,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public IConstructorBinder<Constructed> build() throws DslException {
+    public IConstructorBinder<Constructed> doBuild() throws DslException {
         log.atDebug().log("[ConstructorBinderBuilder] Building constructor binder for {}", objectClass.getName());
 
         if (parameters == null || parameters.isEmpty()) {

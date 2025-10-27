@@ -6,6 +6,6 @@ public interface IBeanSupplierBuilder<Bean> extends IObjectSupplierBuilder<Bean,
 
     IBeanSupplierBuilder<Bean> name(String name);
 
-    IBeanSupplierBuilder<Bean> scope(String scope);
+    IBeanSupplierBuilder<Bean> provider(String scope);
 
 }

@@ -5,35 +5,36 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.injection.IInjector;
 
-public interface IDiContext extends ILifecycle, IInjector {
+public interface IDiContext extends ILifecycle {
 
     // --- Bean Scopes ---
-    Set<IBeanScope> getBeanScopes() throws DiException;
+    Set<IBeanProvider> getBeanProviders() throws DiException;
 
     <T> Optional<T> getBean(Class<T> type) throws DiException;
 
     <T> Optional<T> getBean(String name, Class<T> type) throws DiException;
 
-    <T> Optional<T> getBeanFromScope(String scopeName, Class<T> type) throws DiException;
+    <T> Optional<T> getBeanFromProvider(String providerName, Class<T> type) throws DiException;
 
-    <T> Optional<T> getBeanFromScope(String scopeName, String name, Class<T> type) throws DiException;
+    <T> Optional<T> getBeanFromProvider(String providerName, String name, Class<T> type) throws DiException;
 
-    <T> List<T> getBeansImplementingInterface(String scopeName, Class<T> interfasse) throws DiException;
+    <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse) throws DiException;
 
-    void setBeanInScope(String scopeName, String name, Object bean) throws DiException;
+    <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse, boolean includePrototypes) throws DiException;
 
-    void setBeanInScope(String scopeName, Object bean) throws DiException;
+    void setBeanInProvider(String providerName, String name, Object bean) throws DiException;
+
+    void setBeanInProvider(String providerName, Object bean) throws DiException;
 
     // --- Property Scopes ---
-    Set<IPropertyScope> getPropertyScopes() throws DiException;
+    Set<IPropertyProvider> getPropertyProviders() throws DiException;
 
     <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
 
-    <T> Optional<T> getPropertyFromScope(String scopeName, String key, Class<T> type) throws DiException;
+    <T> Optional<T> getPropertyFromProvider(String providerName, String key, Class<T> type) throws DiException;
 
-    void setPropertyInScope(String scopeName, String key, Object value) throws DiException;
+    void setPropertyInProvider(String providerName, String key, Object value) throws DiException;
 
     // --- Core ---
 

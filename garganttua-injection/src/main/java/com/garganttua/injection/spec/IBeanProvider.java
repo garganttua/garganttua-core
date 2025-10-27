@@ -1,0 +1,22 @@
+package com.garganttua.injection.spec;
+
+import java.util.List;
+import java.util.Optional;
+
+import com.garganttua.injection.DiException;
+
+public interface IBeanProvider extends ILifecycle {
+
+    String getName();
+
+    <T> Optional<T> getBean(Class<T> type) throws DiException;
+
+    <T> Optional<T> getBean(String name, Class<T> type) throws DiException;
+
+    <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes);
+
+    void registerBean(String name, Object bean) throws DiException;
+
+    boolean isMutable();
+
+}

@@ -41,7 +41,7 @@ public class MethodBinder<Returned> extends ExecutableBinder<IDiContext> impleme
     public Optional<Returned> execute(IDiContext context)
             throws DiException {
 
-        Optional<?> target = (Optional<?>) Supplier.getObject(this.objectSupplier, context);
+        Optional<?> target = Optional.ofNullable(Supplier.getObject(this.objectSupplier, context));
         if (target.isEmpty()) {
             throw new DiException("Target object supplier returned empty for method " + method);
         }

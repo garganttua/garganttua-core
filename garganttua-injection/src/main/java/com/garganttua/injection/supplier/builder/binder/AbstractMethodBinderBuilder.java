@@ -418,6 +418,18 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         Objects.requireNonNull(this.parameterNullableAllowed, "Parameter nullability metadata not initialized");
         Objects.requireNonNull(this.returnedType, "Returned type cannot be null");
 
+        List<IObjectSupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
+
+        return this.createBinder(builtParameterSuppliers, this.supplier);
+    }
+
+    protected MethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers, IObjectSupplierBuilder<?, ?> supplier)
+            throws DslException {
+        return new MethodBinder<ExecutionReturn>(supplier.build(), this.method, builtParameterSuppliers,
+                this.returnedType, this.collection);
+    }
+
+    protected List<IObjectSupplier<?>> getBuiltParameterSuppliers() throws DslException {
         List<IObjectSupplier<?>> builtParameterSuppliers = new ArrayList<>(this.parameters.size());
         for (int i = 0; i < this.parameters.size(); i++) {
             IObjectSupplierBuilder<?, ?> builder = this.parameters.get(i);
@@ -439,9 +451,6 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             builtParameterSuppliers
                     .add(new NullableEnforcingObjectSupplier<>(supplierInstance, allowNull, i, getMethodName()));
         }
-
-        IObjectSupplier<?> ownerSupplier = this.supplier.build();
-        return new MethodBinder<ExecutionReturn>(ownerSupplier, this.method, builtParameterSuppliers,
-                this.returnedType, this.collection);
+        return builtParameterSuppliers;
     }
 }

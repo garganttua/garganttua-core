@@ -4,14 +4,14 @@ import com.garganttua.injection.DiException;
 
 public interface ILifecycle {
 
-    void onStart() throws DiException;
+    ILifecycle onStart() throws DiException;
 
-    void onStop() throws DiException;
+    ILifecycle onStop() throws DiException;
 
-    void onFlush() throws DiException;
+    ILifecycle onFlush() throws DiException;
 
-    void onInit() throws DiException;
+    ILifecycle onInit() throws DiException;
 
-    void onReload() throws DiException;
+    ILifecycle onReload() throws DiException;
 
 }

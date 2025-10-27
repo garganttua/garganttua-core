@@ -5,47 +5,47 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IBeanScope;
+import com.garganttua.injection.spec.IBeanProvider;
 import com.garganttua.injection.spec.IDiChildContextFactory;
 import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.IPropertyScope;
+import com.garganttua.injection.spec.IPropertyProvider;
 
 public class DummyDiContext implements IDiContext{
 
     @Override
-    public void onStart() throws DiException {
+    public IDiContext onStart() throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onStart'");
     }
 
     @Override
-    public void onStop() throws DiException {
+    public IDiContext onStop() throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onStop'");
     }
 
     @Override
-    public void onFlush() throws DiException {
+    public IDiContext onFlush() throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onFlush'");
     }
 
     @Override
-    public void onInit() throws DiException {
+    public IDiContext onInit() throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onInit'");
     }
 
     @Override
-    public void onReload() throws DiException {
+    public IDiContext onReload() throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onReload'");
     }
 
     @Override
-    public Set<IBeanScope> getBeanScopes() {
+    public Set<IBeanProvider> getBeanProviders() {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getBeanScopes'");
+        throw new UnsupportedOperationException("Unimplemented method 'getBeanProviders'");
     }
 
     @Override
@@ -61,15 +61,15 @@ public class DummyDiContext implements IDiContext{
     }
 
     @Override
-    public <T> Optional<T> getBeanFromScope(String scopeName, Class<T> type) {
+    public <T> Optional<T> getBeanFromProvider(String scopeName, Class<T> type) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getBeanFromScope'");
+        throw new UnsupportedOperationException("Unimplemented method 'getBeanFromProvider'");
     }
 
     @Override
-    public <T> Optional<T> getBeanFromScope(String scopeName, String name, Class<T> type) {
+    public <T> Optional<T> getBeanFromProvider(String scopeName, String name, Class<T> type) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getBeanFromScope'");
+        throw new UnsupportedOperationException("Unimplemented method 'getBeanFromProvider'");
     }
 
     @Override
@@ -79,21 +79,21 @@ public class DummyDiContext implements IDiContext{
     }
 
     @Override
-    public void setBeanInScope(String scopeName, String name, Object bean) throws DiException {
+    public void setBeanInProvider(String scopeName, String name, Object bean) throws DiException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setBeanInScope'");
+        throw new UnsupportedOperationException("Unimplemented method 'setBeanInProvider'");
     }
 
     @Override
-    public void setBeanInScope(String scopeName, Object bean) throws DiException {
+    public void setBeanInProvider(String scopeName, Object bean) throws DiException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setBeanInScope'");
+        throw new UnsupportedOperationException("Unimplemented method 'setBeanInProvider'");
     }
 
     @Override
-    public Set<IPropertyScope> getPropertyScopes() {
+    public Set<IPropertyProvider> getPropertyProviders() {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPropertyScopes'");
+        throw new UnsupportedOperationException("Unimplemented method 'getPropertyProviders'");
     }
 
     @Override
@@ -103,20 +103,15 @@ public class DummyDiContext implements IDiContext{
     }
 
     @Override
-    public <T> Optional<T> getPropertyFromScope(String scopeName, String key, Class<T> type) {
+    public <T> Optional<T> getPropertyFromProvider(String scopeName, String key, Class<T> type) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPropertyFromScope'");
+        throw new UnsupportedOperationException("Unimplemented method 'getPropertyFromProvider'");
     }
 
     @Override
-    public void setPropertyInScope(String scopeName, String key, Object value) throws DiException {
+    public void setPropertyInProvider(String scopeName, String key, Object value) throws DiException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setPropertyInScope'");
-    }
-
-    @Override
-    public void doInjection(Object instance) throws DiException {
-        
+        throw new UnsupportedOperationException("Unimplemented method 'setPropertyInProvider'");
     }
 
     @Override
@@ -130,6 +125,13 @@ public class DummyDiContext implements IDiContext{
     public <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getChildContextFactories'");
+    }
+
+    @Override
+    public <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse,
+            boolean includePrototypes) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getBeansImplementingInterface'");
     }
 
 }

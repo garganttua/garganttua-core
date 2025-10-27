@@ -4,9 +4,9 @@ import com.garganttua.dsl.IBuilder;
 
 public interface IDiContextBuilder extends IBuilder<IDiContext> {
 
-    IDiContextBuilder beanScope(IBeanScope scope);
+    IDiContextBuilder beanProvider(IBeanProvider provider);
 
-    IDiContextBuilder propertyScope(IPropertyScope scope);
+    IDiContextBuilder propertyProvider(IPropertyProvider provider);
 
     IDiContextBuilder childContextFactory(IDiChildContextFactory<? extends IDiContext> instanciator);
 

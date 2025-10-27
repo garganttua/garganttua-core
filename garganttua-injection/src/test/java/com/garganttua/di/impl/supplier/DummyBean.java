@@ -1,19 +1,39 @@
 package com.garganttua.di.impl.supplier;
 
-import com.garganttua.injection.spec.beans.annotation.GGBean;
-import com.garganttua.injection.spec.beans.annotation.GGBeanLoadingStrategy;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-@GGBean(name = "dummy", strategy = GGBeanLoadingStrategy.newInstance)
+import com.garganttua.injection.spec.beans.annotation.Property;
+import com.garganttua.injection.spec.beans.annotation.Provider;
+
+@Singleton
+@Named("dummyBean")
 public class DummyBean {
 
     private String value = "default";
     private boolean postConstructCalled = false;
 
+    @Inject
+    @Provider("garganttua")
+    @Named("emailService")
+    @DummyBeanQualifier
+    private DummyOtherBean otherBean;
+
+    private AnotherDummyBean anotherBean;
+
     public DummyBean() {
     }
 
-    public DummyBean(String value) {
+    @Inject
+    public DummyBean(@Provider("dummy") @Property("com.garganttua.dummyPropertyInConstructor") String value) {
         this.value = value;
+    }
+
+    @Inject
+    public DummyBean(String value, @Singleton AnotherDummyBean anotherBean) {
+        this.value = value;
+        this.anotherBean = anotherBean;
     }
 
     public String getValue() {
@@ -28,6 +48,7 @@ public class DummyBean {
         return postConstructCalled;
     }
 
+    @Inject
     public void markPostConstruct() {
         this.postConstructCalled = true;
     }

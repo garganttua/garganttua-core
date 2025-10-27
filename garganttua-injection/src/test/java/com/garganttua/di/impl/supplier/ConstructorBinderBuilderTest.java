@@ -46,14 +46,14 @@ public class ConstructorBinderBuilderTest {
         }
 
         @Override
-        public ConcreteConstructorBinderBuilder autoDetect(boolean b) throws DslException {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'autoDetect'");
+        protected ConcreteConstructorBinderBuilder getBuilder() {
+            return this;
         }
 
         @Override
-        protected ConcreteConstructorBinderBuilder getBuilder() {
-            return this;
+        protected void doAutoDetection() throws DslException {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
         }
 
     }

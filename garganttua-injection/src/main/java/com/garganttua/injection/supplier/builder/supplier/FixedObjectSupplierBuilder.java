@@ -9,7 +9,6 @@ import com.garganttua.injection.supplier.FixedObjectSupplier;
 
 public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>>{
 
-
     private Supplied object;
 
     public FixedObjectSupplierBuilder(Supplied object) {
@@ -25,6 +24,10 @@ public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuil
     @Override
     public Class<Supplied> getObjectClass() {
         return (Class<Supplied>) this.object.getClass();
+    }
+
+    public static FixedObjectSupplierBuilder<?> of(Object object) {
+        return new FixedObjectSupplierBuilder<>(object);
     }
 
 }

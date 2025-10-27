@@ -2,10 +2,10 @@ package com.garganttua.dsl;
 
 import java.util.Objects;
 
-public abstract class AbstractAutomaticBuilder<Built, Builder> implements IAutomaticBuilder<Builder, Built> {
+public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutomaticBuilder<Builder, Built> {
 
     private Boolean autoDetect;
-    private Built built;
+    protected Built built;
 
     protected AbstractAutomaticBuilder() {
         this.autoDetect = false;

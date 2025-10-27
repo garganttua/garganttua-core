@@ -6,38 +6,38 @@ import java.util.List;
 import java.util.Objects;
 
 import com.garganttua.dsl.DslException;
-import com.garganttua.injection.spec.IBeanScope;
+import com.garganttua.injection.spec.IBeanProvider;
 import com.garganttua.injection.spec.IDiChildContextFactory;
 import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.IPropertyScope;
+import com.garganttua.injection.spec.IPropertyProvider;
 
 public class DiContextBuilder implements IDiContextBuilder {
 
-    private final List<IBeanScope> beanScopes = new ArrayList<>();
-    private final List<IPropertyScope> propertyScopes = new ArrayList<>();
+    private final List<IBeanProvider> beanProviders = new ArrayList<>();
+    private final List<IPropertyProvider> propertyProviders = new ArrayList<>();
     private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories = new ArrayList<>();
 
     @Override
-    public IDiContextBuilder beanScope(IBeanScope scope) {
-        Objects.requireNonNull(scope, "BeanScope cannot be null");
+    public IDiContextBuilder beanProvider(IBeanProvider provider) {
+        Objects.requireNonNull(provider, "BeanProvider cannot be null");
 
-        boolean exists = beanScopes.stream()
-                .anyMatch(s -> s.getName().equals(scope.getName()));
+        boolean exists = beanProviders.stream()
+                .anyMatch(s -> s.getName().equals(provider.getName()));
         if (!exists) {
-            beanScopes.add(scope);
+            beanProviders.add(provider);
         }
         return this;
     }
 
     @Override
-    public IDiContextBuilder propertyScope(IPropertyScope scope) {
-        Objects.requireNonNull(scope, "PropertyScope cannot be null");
+    public IDiContextBuilder propertyProvider(IPropertyProvider provider) {
+        Objects.requireNonNull(provider, "PropertyProvider cannot be null");
 
-        boolean exists = propertyScopes.stream()
-                .anyMatch(s -> s.getName().equals(scope.getName()));
+        boolean exists = propertyProviders.stream()
+                .anyMatch(s -> s.getName().equals(provider.getName()));
         if (!exists) {
-            propertyScopes.add(scope);
+            propertyProviders.add(provider);
         }
         return this;
     }
@@ -57,13 +57,13 @@ public class DiContextBuilder implements IDiContextBuilder {
 
     @Override
     public IDiContext build() throws DslException {
-        if (beanScopes.isEmpty() && propertyScopes.isEmpty()) {
-            throw new DslException("At least one BeanScope or PropertyScope must be provided");
+        if (beanProviders.isEmpty() && propertyProviders.isEmpty()) {
+            throw new DslException("At least one BeanProvider and PropertyProvider must be provided");
         }
 
         return new DiContext(
-                Collections.unmodifiableList(new ArrayList<>(beanScopes)),
-                Collections.unmodifiableList(new ArrayList<>(propertyScopes)),
+                Collections.unmodifiableList(new ArrayList<>(beanProviders)),
+                Collections.unmodifiableList(new ArrayList<>(propertyProviders)),
                 Collections.unmodifiableList(new ArrayList<>(childContextFactories)));
 
     }

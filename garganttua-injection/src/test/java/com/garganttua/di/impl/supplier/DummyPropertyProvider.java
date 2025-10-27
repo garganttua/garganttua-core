@@ -4,13 +4,13 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IPropertyScope;
+import com.garganttua.injection.spec.IPropertyProvider;
 
-public class DummyPropertyScope implements IPropertyScope {
+public class DummyPropertyProvider implements IPropertyProvider {
 
     private String name;
 
-    public DummyPropertyScope(String name) {
+    public DummyPropertyProvider(String name) {
         this.name = name;
     }
 
@@ -40,28 +40,28 @@ public class DummyPropertyScope implements IPropertyScope {
     }
 
     @Override
-    public void onStart() throws DiException {
-
+    public IPropertyProvider onStart() throws DiException {
+        return this;
     }
 
     @Override
-    public void onStop() throws DiException {
-
+    public IPropertyProvider onStop() throws DiException {
+        return this;
     }
 
     @Override
-    public void onFlush() throws DiException {
-
+    public IPropertyProvider onFlush() throws DiException {
+        return this;
     }
 
     @Override
-    public void onInit() throws DiException {
-
+    public IPropertyProvider onInit() throws DiException {
+        return this;
     }
 
     @Override
-    public void onReload() throws DiException {
-
+    public IPropertyProvider onReload() throws DiException {
+        return this;
     }
 
 }

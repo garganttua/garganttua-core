@@ -10,15 +10,17 @@ public class DummyConstructorBinderBuilder<TargetClass>
         super(new Object(), objectClass);
     }
 
-    @Override
-    public DummyConstructorBinderBuilder<TargetClass> autoDetect(boolean b) throws DslException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'autoDetect'");
-    }
 
     @Override
     protected DummyConstructorBinderBuilder<TargetClass> getBuilder() {
         return this;
+    }
+
+
+    @Override
+    protected void doAutoDetection() throws DslException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
     }
 
 }

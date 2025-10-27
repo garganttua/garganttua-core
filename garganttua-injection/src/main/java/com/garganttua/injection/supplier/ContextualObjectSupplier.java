@@ -25,11 +25,6 @@ public class ContextualObjectSupplier<Supplied> implements IContextualObjectSupp
     }
 
     @Override
-    public Optional<Supplied> getObject() throws DiException {
-        return this.getObject(null);
-    }
-
-    @Override
     public Class<Supplied> getObjectClass() {
         return this.suppliedType;
     }

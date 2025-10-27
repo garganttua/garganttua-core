@@ -4,44 +4,39 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IBeanScope;
+import com.garganttua.injection.spec.IBeanProvider;
 
-public class DummyBeanScope implements IBeanScope {
+public class DummyBeanProvider implements IBeanProvider {
 
     private String name;
 
-    public DummyBeanScope(String name) {
+    public DummyBeanProvider(String name) {
         this.name = name;
     }
 
     @Override
-    public void onStart() throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onStart'");
+    public IBeanProvider onStart() throws DiException {
+        return this;
     }
 
     @Override
-    public void onStop() throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onStop'");
+    public IBeanProvider onStop() throws DiException {
+        return this;
     }
 
     @Override
-    public void onFlush() throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onFlush'");
+    public IBeanProvider onFlush() throws DiException {
+        return this;
     }
 
     @Override
-    public void onInit() throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onInit'");
+    public IBeanProvider onInit() throws DiException {
+        return this;
     }
 
     @Override
-    public void onReload() throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onReload'");
+    public IBeanProvider onReload() throws DiException {
+        return this;
     }
 
     @Override
@@ -74,7 +69,7 @@ public class DummyBeanScope implements IBeanScope {
     }
 
     @Override
-    public <T> List<T> getBeansImplementingInterface(Class<T> interfasse) {
+    public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getBeansImplementingInterface'");
     }

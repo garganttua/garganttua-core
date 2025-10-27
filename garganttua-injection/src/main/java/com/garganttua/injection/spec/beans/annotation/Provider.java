@@ -5,12 +5,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface GGBean {
-	
-	String name() default "";
-	
-	GGBeanLoadingStrategy strategy() default GGBeanLoadingStrategy.singleton;
-	
+public @interface Provider {
+
+    String value();
+
 }
