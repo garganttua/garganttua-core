@@ -3,43 +3,27 @@ package com.garganttua.injection;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.injection.beans.BeanDefinition;
+
 public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
 
-    private String name;
-    private Class<Bean> type;
-    private String provider;
+    private Optional<String> provider;
+    private BeanDefinition<Bean> example;
 
-    public BeanSupplier(String name, Class<Bean> type, String provider) {
-        this.name = name;
-        this.type = Objects.requireNonNull(type, "Type cannot be null");;
-        this.provider = provider;
+    public BeanSupplier(Optional<String> provider, BeanDefinition<Bean> example) {
+        this.example = Objects.requireNonNull(example, "Example cannot be null");
+        this.provider = Objects.requireNonNull(provider, "Provider cannot be null");
     }
 
     @Override
     public Optional<Bean> getObject() throws DiException {
-
-        boolean nameProvided = this.name != null && !this.name.isEmpty();
-        boolean providerProvided = this.provider != null && !this.provider.isEmpty();
-
-        if( DiContext.context == null ){
-            throw new DiException("Context not built");
-        }
-
-        if( nameProvided && providerProvided ) {
-            return DiContext.context.getBeanFromProvider(this.provider, this.name, this.type);
-        } else if( nameProvided && !providerProvided) {
-            return DiContext.context.getBean(this.name, this.type);
-        }  else if( !nameProvided && providerProvided)  {
-            return DiContext.context.getBeanFromProvider(this.provider, this.type);
-        } else {
-            return DiContext.context.getBean(this.type);
-        }
+        if (this.provider.isPresent())
+            return DiContext.context.queryBean(provider.get(), example);
+        return DiContext.context.queryBean(example);
     }
 
     @Override
     public Class<Bean> getObjectClass() {
-        return this.type;
+        return this.example.type();
     }
-
-
 }

@@ -34,7 +34,6 @@ public class BeanProviderTest {
 
         DummyBean bean = found.get();
         assertEquals("default", bean.getValue());
-
     }
 
 }

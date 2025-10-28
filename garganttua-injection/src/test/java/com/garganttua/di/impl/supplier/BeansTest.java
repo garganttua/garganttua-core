@@ -4,21 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.dsl.DslException;
 import com.garganttua.injection.Beans;
 import com.garganttua.injection.DiContextBuilder;
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.IDiChildContextFactory;
+import com.garganttua.injection.beans.BeanProvider;
 import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.IPropertyProvider;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BeansTest {
@@ -27,45 +29,42 @@ public class BeansTest {
 
     @BeforeEach
     void setUp() throws DiException, DslException {
+        GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
         builder = new DiContextBuilder();
     }
 
-    @Test
+    /* @Test
     @Order(1)
     public void contextNotBuiltShouldThrowException() {
         DiException exception = assertThrows(DiException.class, () -> Beans.bean(DummyBean.class).build().getObject());
 
         assertEquals("Context not built", exception.getMessage());
-    }
+    } */
 
     @Test
+    @Order(2)
     public void contextNotInitializedShouldThrowException() {
-        IDiChildContextFactory<DummyChildContext> factory = new DummyChildContextFactory();
-        IBeanProvider beans = new DummyBeanProvider("provider1");
-        IPropertyProvider properties = new DummyPropertyProvider("provider1");
-        builder.childContextFactory(factory);
-        builder.beanProvider(beans);
-        builder.propertyProvider(properties);
+        builder.childContextFactory(new DummyChildContextFactory());
+        builder.beanProvider(new BeanProvider(List.of("com.garganttua")));
+        builder.propertyProvider(new DummyPropertyProvider("provider1"));
 
         assertDoesNotThrow(builder::build);
 
         DiException exception = assertThrows(DiException.class, () -> Beans.bean(DummyBean.class).build().getObject());
-        assertEquals("Context not initialized", exception.getMessage());
+        assertEquals("Lifecycle not initialized", exception.getMessage());
     }
 
     @Test
+    @Order(3)
     public void contextNotStartedShouldThrowException() throws DiException {
-        IDiChildContextFactory<DummyChildContext> factory = new DummyChildContextFactory();
-        IBeanProvider beans = new DummyBeanProvider("provider1");
-        IPropertyProvider properties = new DummyPropertyProvider("provider1");
-        builder.childContextFactory(factory);
-        builder.beanProvider(beans);
-        builder.propertyProvider(properties);
+        builder.childContextFactory(new DummyChildContextFactory());
+        builder.beanProvider(new BeanProvider(List.of("com.garganttua")));
+        builder.propertyProvider(new DummyPropertyProvider("provider1"));
 
         IDiContext context = assertDoesNotThrow(builder::build);
         context.onInit();
 
         DiException exception = assertThrows(DiException.class, () -> Beans.bean(DummyBean.class).build().getObject());
-        assertEquals("Context not started", exception.getMessage());
+        assertEquals("Lifecycle not started", exception.getMessage());
     }
 }

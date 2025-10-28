@@ -8,7 +8,7 @@ import com.garganttua.injection.spec.beans.annotation.Property;
 import com.garganttua.injection.spec.beans.annotation.Provider;
 
 @Singleton
-@Named("dummyBean")
+@Named("dummyBeanForTest")
 public class DummyBean {
 
     private String value = "default";

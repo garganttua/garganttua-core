@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.injection.DiException;
+import com.garganttua.injection.beans.BeanDefinition;
 import com.garganttua.injection.spec.IBeanProvider;
 
 public class DummyBeanProvider implements IBeanProvider {
@@ -72,6 +73,12 @@ public class DummyBeanProvider implements IBeanProvider {
     public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getBeansImplementingInterface'");
+    }
+
+    @Override
+    public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
     }
 
 }

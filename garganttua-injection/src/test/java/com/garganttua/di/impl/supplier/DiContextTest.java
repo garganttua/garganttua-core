@@ -1,8 +1,10 @@
 package com.garganttua.di.impl.supplier;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,24 +15,29 @@ import com.garganttua.injection.Beans;
 import com.garganttua.injection.DiContextBuilder;
 import com.garganttua.injection.DiException;
 import com.garganttua.injection.beans.BeanProvider;
+import com.garganttua.injection.properties.PropertyProvider;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class DiContextTest {
 
+    private PropertyProvider provider = new PropertyProvider();
+
     @BeforeEach
     void setUp() {
         GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+        this.provider.setProperty("com.garganttua.dummyPropertyInConstructor", "propertyValue");
     }
 
     @Test
     public void test() throws DiException, DslException {
         new DiContextBuilder()
         .beanProvider(new BeanProvider(List.of("com.garganttua")))
-        .propertyProvider(new DummyPropertyProvider("dummy"))
+        .propertyProvider(this.provider)
         .build().onInit().onStart();
 
-
-        assertNotNull(Beans.bean(DummyBean.class).build().getObject());
+        Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().getObject();
+        assertNotNull(bean);
+        assertTrue(bean.isPresent());
 
     }
 

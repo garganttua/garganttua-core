@@ -28,7 +28,7 @@ public class BeanDefinitionTest {
     void testEqualsAndHashCode() {
         BeanDefinition<MyBean> def1 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.singleton,
+                Optional.of(BeanStrategy.singleton),
                 Optional.of("myBean"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
@@ -37,7 +37,7 @@ public class BeanDefinitionTest {
 
         BeanDefinition<MyBean> def2 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.singleton,
+                Optional.of(BeanStrategy.singleton),
                 Optional.of("myBean"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
@@ -46,7 +46,7 @@ public class BeanDefinitionTest {
 
         BeanDefinition<MyBean> def3 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.prototype,
+                Optional.of(BeanStrategy.prototype),
                 Optional.of("myBean"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
@@ -63,7 +63,7 @@ public class BeanDefinitionTest {
     void testEffectiveName() {
         BeanDefinition<MyBean> def1 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.singleton,
+                Optional.of(BeanStrategy.singleton),
                 Optional.empty(),
                 Set.of(),
                 Optional.empty(),
@@ -77,7 +77,7 @@ public class BeanDefinitionTest {
     void testMatches() {
         BeanDefinition<MyBean> def1 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.singleton,
+                Optional.of(BeanStrategy.singleton),
                 Optional.of("bean1"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
@@ -86,7 +86,7 @@ public class BeanDefinitionTest {
 
         BeanDefinition<MyBean> def2 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.singleton,
+                Optional.of(BeanStrategy.singleton),
                 Optional.of("bean1"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
@@ -95,7 +95,7 @@ public class BeanDefinitionTest {
 
         BeanDefinition<MyBean> def3 = new BeanDefinition<>(
                 MyBean.class,
-                BeanStrategy.singleton,
+                Optional.of(BeanStrategy.singleton),
                 Optional.of("bean2"),
                 Set.of(),
                 Optional.empty(),

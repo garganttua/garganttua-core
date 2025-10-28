@@ -4,4 +4,6 @@ import com.garganttua.injection.IBeanSupplier;
 
 public interface IBeanFactory<Bean> extends IBeanSupplier<Bean> {
 
+    boolean matches(BeanDefinition<?> definition);
+
 }

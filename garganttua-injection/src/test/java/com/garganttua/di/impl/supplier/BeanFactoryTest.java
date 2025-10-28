@@ -37,16 +37,16 @@ public class BeanFactoryTest {
                                 .build();
 
                 singletonWithoutConstructorFactory = new BeanFactory<DummyBean>(
-                                new BeanDefinition<DummyBean>(DummyBean.class, BeanStrategy.singleton, Optional.empty(),
+                                new BeanDefinition<DummyBean>(DummyBean.class, Optional.of(BeanStrategy.singleton), Optional.empty(),
                                                 null, Optional.empty(), Set.of()));
                 singletonWithConstructorWithNoParamFactory = new BeanFactory<DummyBean>(
-                                new BeanDefinition<DummyBean>(DummyBean.class, BeanStrategy.singleton, Optional.empty(),
+                                new BeanDefinition<DummyBean>(DummyBean.class, Optional.of(BeanStrategy.singleton), Optional.empty(),
                                                 null, Optional.of(this.constructorWithNoParamBinder), Set.of()));
                 singletonWithConstructorWithParamFactory = new BeanFactory<>(
-                                new BeanDefinition<DummyBean>(DummyBean.class, BeanStrategy.singleton, Optional.empty(),
+                                new BeanDefinition<DummyBean>(DummyBean.class, Optional.of(BeanStrategy.singleton), Optional.empty(),
                                                 null, Optional.of(this.constructorWithParamBinder), Set.of()));
                 newInstanceWithoutConstructorFactory = new BeanFactory<>(new BeanDefinition<DummyBean>(DummyBean.class,
-                                BeanStrategy.prototype, Optional.empty(), null, Optional.empty(), Set.of()));
+                                Optional.of(BeanStrategy.prototype), Optional.empty(), null, Optional.empty(), Set.of()));
         }
 
         @Test

@@ -6,10 +6,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.garganttua.injection.beans.BeanDefinition;
 import com.garganttua.injection.spec.IBeanProvider;
 import com.garganttua.injection.spec.IDiChildContextFactory;
 import com.garganttua.injection.spec.IDiContext;
@@ -24,16 +27,26 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     // --- Singleton public ---
     public static IDiContext context;
 
-    private final List<IBeanProvider> beanProviders;
+    // --- Structures internes ---
+    private final Map<String, IBeanProvider> beanProviders;
     private final List<IPropertyProvider> propertyProviders;
     private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
 
     // --- Constructeur ---
-    public DiContext(List<IBeanProvider> beanProviders, List<IPropertyProvider> propertyProviders,
+    public DiContext(List<IBeanProvider> beanProviders,
+            List<IPropertyProvider> propertyProviders,
             List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
-        this.beanProviders = Collections.unmodifiableList(Objects.requireNonNull(beanProviders));
-        this.propertyProviders = Collections.unmodifiableList(Objects.requireNonNull(propertyProviders));
-        this.childContextFactories = Collections.unmodifiableList(Objects.requireNonNull(childContextFactories));
+
+        Objects.requireNonNull(beanProviders, "beanProviders cannot be null");
+        Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null");
+        Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null");
+
+        // Création de la Map à partir de la liste
+        this.beanProviders = Collections.unmodifiableMap(
+                beanProviders.stream().collect(Collectors.toMap(IBeanProvider::getName, bp -> bp)));
+        this.propertyProviders = Collections.unmodifiableList(propertyProviders);
+        this.childContextFactories = Collections.unmodifiableList(childContextFactories);
+
         context = this;
     }
 
@@ -41,7 +54,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public Set<IBeanProvider> getBeanProviders() throws DiException {
         ensureInitializedAndStarted();
-        return Collections.unmodifiableSet(new HashSet<>(beanProviders));
+        return Collections.unmodifiableSet(new HashSet<>(beanProviders.values()));
     }
 
     @Override
@@ -53,73 +66,75 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public Set<IDiChildContextFactory<? extends IDiContext>> getChildContextFactories() throws DiException {
         ensureInitializedAndStarted();
-        return Collections
-                .unmodifiableSet(new HashSet<IDiChildContextFactory<? extends IDiContext>>(childContextFactories));
+        return Collections.unmodifiableSet(new HashSet<>(childContextFactories));
     }
 
-    // --- Gestion des beans ---
+    /* // --- Gestion des beans ---
     @Override
     public <T> Optional<T> getBean(Class<T> type) throws DiException {
         ensureInitializedAndStarted();
-        return beanProviders.stream()
-                .map(provider -> provider.getBean(type))
-                .flatMap(Optional::stream)
-                .findFirst();
+        for (IBeanProvider provider : beanProviders.values()) {
+            Optional<T> bean = provider.getBean(type);
+            if (bean.isPresent())
+                return bean;
+        }
+        return Optional.empty();
     }
 
     @Override
     public <T> Optional<T> getBean(String name, Class<T> type) throws DiException {
         ensureInitializedAndStarted();
-        return beanProviders.stream()
-                .map(provider -> provider.getBean(name, type))
-                .flatMap(Optional::stream)
-                .findFirst();
+        for (IBeanProvider provider : beanProviders.values()) {
+            Optional<T> bean = provider.getBean(name, type);
+            if (bean.isPresent())
+                return bean;
+        }
+        return Optional.empty();
     }
 
     @Override
     public <T> Optional<T> getBeanFromProvider(String providerName, Class<T> type) throws DiException {
         ensureInitializedAndStarted();
-        return beanProviders.stream()
-                .filter(provider -> provider.getName().equals(providerName))
-                .findFirst()
-                .flatMap(provider -> provider.getBean(type));
+        IBeanProvider provider = beanProviders.get(providerName);
+        if (provider == null)
+            throw new DiException("Provider " + providerName + " not found");
+        return provider.getBean(type);
     }
 
     @Override
     public <T> Optional<T> getBeanFromProvider(String providerName, String name, Class<T> type) throws DiException {
         ensureInitializedAndStarted();
-        return beanProviders.stream()
-                .filter(provider -> provider.getName().equals(providerName))
-                .findFirst()
-                .flatMap(provider -> provider.getBean(name, type));
+        IBeanProvider provider = beanProviders.get(providerName);
+        if (provider == null)
+            throw new DiException("Provider " + providerName + " not found");
+        return provider.getBean(name, type);
     }
 
     @Override
-    public <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse, boolean includePrototypes) throws DiException {
+    public <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse,
+            boolean includePrototypes) throws DiException {
         ensureInitializedAndStarted();
-        return beanProviders.stream()
-                .filter(provider -> provider.getName().equals(providerName))
-                .findFirst()
-                .map(provider -> provider.getBeansImplementingInterface(interfasse, includePrototypes))
-                .orElse(Collections.emptyList());
+        IBeanProvider provider = beanProviders.get(providerName);
+        if (provider == null)
+            throw new DiException("Provider " + providerName + " not found");
+        return provider.getBeansImplementingInterface(interfasse, includePrototypes);
     }
 
     @Override
     public void setBeanInProvider(String providerName, String name, Object bean) throws DiException {
         ensureInitializedAndStarted();
-        beanProviders.stream()
-                .filter(provider -> provider.getName().equals(providerName))
-                .findFirst()
-                .filter(IBeanProvider::isMutable)
-                .orElseThrow(() -> new DiException("Provider " + providerName + " not found or immutable"))
-                .registerBean(name, bean);
+        IBeanProvider provider = beanProviders.get(providerName);
+        if (provider == null || !provider.isMutable()) {
+            throw new DiException("Provider " + providerName + " not found or immutable");
+        }
+        provider.registerBean(name, bean);
     }
 
     @Override
     public void setBeanInProvider(String providerName, Object bean) throws DiException {
         ensureInitializedAndStarted();
         setBeanInProvider(providerName, bean.getClass().getName(), bean);
-    }
+    } */
 
     @Override
     public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
@@ -189,17 +204,17 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         return null;
     }
 
-    @Override
+   /*  @Override
     public <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse) throws DiException {
         return this.getBeansImplementingInterface(providerName, interfasse, false);
-    }
+    } */
 
-
-
+    // --- Cycle de vie ---
     @Override
     protected ILifecycle doInit() throws DiException {
         for (Object obj : getAllLifecycleObjects()) {
-            if (obj instanceof ILifecycle lc) lc.onInit();
+            if (obj instanceof ILifecycle lc)
+                lc.onInit();
         }
         return this;
     }
@@ -207,7 +222,8 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     protected ILifecycle doStart() throws DiException {
         for (Object obj : getAllLifecycleObjects()) {
-            if (obj instanceof ILifecycle lc) lc.onStart();
+            if (obj instanceof ILifecycle lc)
+                lc.onStart();
         }
         return this;
     }
@@ -215,28 +231,60 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     protected ILifecycle doFlush() throws DiException {
         for (Object obj : getAllLifecycleObjects()) {
-            if (obj instanceof ILifecycle lc) lc.onFlush();
+            if (obj instanceof ILifecycle lc)
+                lc.onFlush();
         }
         return this;
     }
 
     @Override
     protected ILifecycle doStop() throws DiException {
-        // On arrête en ordre inverse pour respecter les dépendances potentielles
         List<Object> lifecycleObjects = new ArrayList<>(getAllLifecycleObjects());
         Collections.reverse(lifecycleObjects);
         for (Object obj : lifecycleObjects) {
-            if (obj instanceof ILifecycle lc) lc.onStop();
+            if (obj instanceof ILifecycle lc)
+                lc.onStop();
         }
         return this;
     }
 
-        // --- Utilitaires internes ---
     private List<Object> getAllLifecycleObjects() {
         List<Object> objs = new ArrayList<>();
-        objs.addAll(beanProviders);
+        objs.addAll(beanProviders.values());
         objs.addAll(propertyProviders);
         objs.addAll(childContextFactories);
         return objs;
+    }
+
+    @Override
+    public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanDefinition<Bean> definition)
+            throws DiException {
+        Objects.requireNonNull(provider, "Provider cannot be null");
+        Objects.requireNonNull(definition, "Bean definition cannot be null");
+        if (provider.isPresent())
+            return this.queryBean(provider.get(), definition);
+        return this.queryBean(definition);
+    }
+
+    @Override
+    public <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException {
+        IBeanProvider beanProvider = this.beanProviders.get(provider);
+        if (beanProvider == null)
+            throw new DiException("Invalid bean provider " + provider);
+
+        return beanProvider.queryBean(definition);
+    }
+
+    @Override
+    public <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException {
+        Objects.requireNonNull(definition, "Bean definition cannot be null");
+
+        for (IBeanProvider provider : this.beanProviders.values()) {
+            Optional<Bean> bean = provider.queryBean(definition);
+            if (bean.isPresent()) {
+                return bean;
+            }
+        }
+        return Optional.empty();
     }
 }

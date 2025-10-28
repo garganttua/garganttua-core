@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import com.garganttua.dsl.DslException;
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.beans.annotation.Property;
 import com.garganttua.injection.spec.supplier.binder.IMethodBinder;
 import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
-	@Property
 	private Bean bean;
 
 	private BeanDefinition<Bean> definition;
@@ -43,8 +41,8 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private Bean getBean() throws DiException {
 		Bean bean = createBeanInstance();
 
-		//inject beans
-		//inject values 
+		// inject beans
+		// inject values
 
 		this.invokePostConstructMethods(bean);
 		return bean;
@@ -91,8 +89,17 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	@Override
 	public Optional<Bean> getObject() throws DiException {
 		Bean bean = null;
-		if (this.definition.strategy() == BeanStrategy.prototype) {
-			bean = getBean();
+		Optional<BeanStrategy> strat = this.definition.strategy();
+
+		if (strat.isPresent()) {
+			if (strat.get() == BeanStrategy.prototype) {
+				bean = getBean();
+			} else {
+				if (this.bean == null) {
+					this.bean = getBean();
+				}
+				bean = this.bean;
+			}
 		} else {
 			if (this.bean == null) {
 				this.bean = getBean();
@@ -105,5 +112,10 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	@Override
 	public Class<Bean> getObjectClass() {
 		return this.definition.type();
+	}
+
+	@Override
+	public boolean matches(BeanDefinition<?> definition) {
+		return this.definition.matches(definition);
 	}
 }

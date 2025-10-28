@@ -1,17 +1,23 @@
 package com.garganttua.injection.spec;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.injection.DiException;
+import com.garganttua.injection.beans.BeanDefinition;
 
 public interface IDiContext extends ILifecycle {
 
     // --- Bean Scopes ---
     Set<IBeanProvider> getBeanProviders() throws DiException;
 
-    <T> Optional<T> getBean(Class<T> type) throws DiException;
+    <Bean> Optional<Bean> queryBean(Optional<String> ofNullable, BeanDefinition<Bean> definition) throws DiException;
+
+    <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException;
+
+    <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException;
+
+    /* <T> Optional<T> getBean(Class<T> type) throws DiException;
 
     <T> Optional<T> getBean(String name, Class<T> type) throws DiException;
 
@@ -21,11 +27,12 @@ public interface IDiContext extends ILifecycle {
 
     <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse) throws DiException;
 
-    <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse, boolean includePrototypes) throws DiException;
+    <T> List<T> getBeansImplementingInterface(String providerName, Class<T> interfasse, boolean includePrototypes)
+            throws DiException;
 
     void setBeanInProvider(String providerName, String name, Object bean) throws DiException;
 
-    void setBeanInProvider(String providerName, Object bean) throws DiException;
+    void setBeanInProvider(String providerName, Object bean) throws DiException; */
 
     // --- Property Scopes ---
     Set<IPropertyProvider> getPropertyProviders() throws DiException;
@@ -41,5 +48,7 @@ public interface IDiContext extends ILifecycle {
     <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass, Object... args)
             throws DiException;
 
-    <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories() throws DiException;
+    <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories()
+            throws DiException;
+
 }

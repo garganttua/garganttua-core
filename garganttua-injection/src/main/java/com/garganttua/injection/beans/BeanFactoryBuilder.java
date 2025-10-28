@@ -32,7 +32,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     protected IBeanFactory<Bean> doBuild() throws DslException {
         BeanDefinition<Bean> definition = new BeanDefinition<Bean>(
                 this.beanClass,
-                this.strategy,
+                Optional.ofNullable(this.strategy),
                 Optional.ofNullable(this.name),
                 this.qualifiers,
                 this.constructorBinderBuilder != null ? Optional.of(this.constructorBinderBuilder.build())

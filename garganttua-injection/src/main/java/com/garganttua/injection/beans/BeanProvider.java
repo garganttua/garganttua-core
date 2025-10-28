@@ -185,14 +185,24 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	protected ILifecycle doFlush() throws DiException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'doFlush'");
+		return this;
 	}
 
 	@Override
 	protected ILifecycle doStop() throws DiException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'doStop'");
+		return this;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
+		ensureInitializedAndStarted();
+
+		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream().filter(factory -> factory.matches(definition)).findFirst();
+		if( factoryOpt.isPresent() ){
+			return (Optional<T>) factoryOpt.get().getObject();
+		}
+		return Optional.empty();
 	}
 
 }

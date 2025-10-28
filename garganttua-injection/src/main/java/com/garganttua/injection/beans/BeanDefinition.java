@@ -7,12 +7,15 @@ import java.util.Set;
 
 import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 
-public record BeanDefinition<Bean>(Class<Bean> type, BeanStrategy strategy, Optional<String> name,
+public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<Class<? extends Annotation>> qualifiers,
-        Optional<IConstructorBinder<Bean>> constructorBinder, Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders) {
+        Optional<IConstructorBinder<Bean>> constructorBinder,
+        Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders) {
 
     public String effectiveName() {
-        return name.orElse(type.getSimpleName());
+        if( name.isPresent() )
+            return name.get();
+        return type.getSimpleName();
     }
 
     @Override
@@ -43,13 +46,31 @@ public record BeanDefinition<Bean>(Class<Bean> type, BeanStrategy strategy, Opti
     }
 
     public boolean matches(BeanDefinition<?> def) {
-        boolean result = true;
-        if (type != null && !type.isAssignableFrom(def.type())) return false;
-        if (!effectiveName().equals(def.effectiveName())) return false;
-        if (!qualifiers.isEmpty() && !def.qualifiers().containsAll(qualifiers)) return false;
-        if (strategy != null && strategy != def.strategy()) return false;
+        Objects.requireNonNull(def, "BeanDefinition to match cannot be null");
 
-        return result;
+        if (def.type() != null && !def.type().isAssignableFrom(this.type)) {
+            return false;
+        }
+
+        if (def.name().isPresent() && !def.effectiveName().equals(this.effectiveName())) {
+            return false;
+        }
+
+        if (def.strategy().isPresent() && !def.strategy().equals(this.strategy)) {
+            return false;
+        }
+
+        if (def.qualifiers() != null && !def.qualifiers().isEmpty() && !this.qualifiers.containsAll(def.qualifiers())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static <Bean> BeanDefinition<Bean> example(Class<Bean> type, Optional<BeanStrategy> strategy,
+            Optional<String> name,
+            Set<Class<? extends Annotation>> qualifiers) {
+        return new BeanDefinition<>(type, strategy, name, qualifiers, null, null);
     }
 
 }
