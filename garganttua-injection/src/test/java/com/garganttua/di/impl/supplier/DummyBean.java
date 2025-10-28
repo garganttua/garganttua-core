@@ -7,11 +7,14 @@ import javax.inject.Singleton;
 import com.garganttua.injection.spec.beans.annotation.Property;
 import com.garganttua.injection.spec.beans.annotation.Provider;
 
+import lombok.Getter;
+
 @Singleton
 @Named("dummyBeanForTest")
 public class DummyBean {
 
     private String value = "default";
+
     private boolean postConstructCalled = false;
 
     @Inject
@@ -20,18 +23,18 @@ public class DummyBean {
     @DummyBeanQualifier
     private DummyOtherBean otherBean;
 
+    @Getter
     private AnotherDummyBean anotherBean;
 
     public DummyBean() {
     }
 
-    @Inject
-    public DummyBean(@Provider("dummy") @Property("com.garganttua.dummyPropertyInConstructor") String value) {
+    public DummyBean(@Provider("garganttua") @Property("com.garganttua.dummyPropertyInConstructor") String value) {
         this.value = value;
     }
 
     @Inject
-    public DummyBean(String value, @Singleton AnotherDummyBean anotherBean) {
+    public DummyBean(@Provider("garganttua") @Property("com.garganttua.dummyPropertyInConstructor") String value, @Provider("garganttua") @Singleton @Named("AnotherDummyBeanForTest") AnotherDummyBean anotherBean) {
         this.value = value;
         this.anotherBean = anotherBean;
     }

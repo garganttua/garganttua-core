@@ -1,6 +1,7 @@
 com/garganttua/injection/supplier/builder/supplier/FixedObjectSupplierBuilder.class
 com/garganttua/injection/beans/IBeanConstructorBinderBuilder.class
 com/garganttua/injection/beans/IBeanQuery.class
+com/garganttua/injection/IPropertySupplier.class
 com/garganttua/injection/supplier/builder/binder/MethodResolver.class
 com/garganttua/injection/beans/IBeanFactory.class
 com/garganttua/injection/beans/BeanQueryBuilder.class
@@ -14,6 +15,7 @@ com/garganttua/injection/supplier/binder/ConstructorBinder.class
 com/garganttua/injection/beans/IBeanPostConstructMethodBinderBuilder.class
 com/garganttua/injection/BeanSupplier.class
 com/garganttua/injection/BeanSupplierBuilder.class
+com/garganttua/injection/IPropertySupplierBuilder.class
 com/garganttua/injection/supplier/builder/supplier/ContextualObjectSupplierBuilder.class
 com/garganttua/injection/spec/IDiChildContextFactory.class
 com/garganttua/injection/supplier/builder/binder/AbstractConstructorBinderBuilder.class
@@ -22,6 +24,7 @@ com/garganttua/injection/spec/supplier/builder/supplier/INewObjectSupplierConstr
 com/garganttua/injection/supplier/builder/binder/AbstractMethodBinderBuilder.class
 com/garganttua/injection/beans/BeanFactory.class
 com/garganttua/injection/spec/IBeanProvider.class
+com/garganttua/injection/supplier/builder/supplier/NullObjectSupplierBuilder.class
 com/garganttua/injection/beans/BeanDefinition.class
 com/garganttua/injection/Beans.class
 com/garganttua/injection/spec/supplier/builder/binder/IExecutableBinderBuilder.class
@@ -39,11 +42,12 @@ com/garganttua/injection/supplier/ContextualObjectSupplier.class
 com/garganttua/injection/supplier/CustomContextualObjectSupplier.class
 com/garganttua/injection/spec/ILifecycle.class
 com/garganttua/injection/IBeanSupplier.class
-com/garganttua/injection/BeanIdentifier.class
 com/garganttua/injection/spec/supplier/builder/binder/IConstructorBinderBuilder.class
 com/garganttua/injection/supplier/Supplier.class
 com/garganttua/injection/IBeanSupplierBuilder.class
 com/garganttua/injection/AbstractLifecycle.class
+com/garganttua/injection/PropertySupplierBuilder.class
+com/garganttua/injection/PropertySupplier.class
 com/garganttua/injection/spec/beans/annotation/Provider.class
 com/garganttua/injection/beans/BeanStrategy.class
 com/garganttua/injection/supplier/builder/supplier/CustomContextualObjectSupplierBuilder.class
@@ -55,8 +59,9 @@ com/garganttua/injection/spec/supplier/builder/supplier/IObjectSupplierBuilder.c
 com/garganttua/injection/spec/supplier/ICustomContextualObjectSupply.class
 com/garganttua/injection/beans/BeanQuery.class
 com/garganttua/injection/spec/supplier/binder/IConstructorBinder.class
+com/garganttua/injection/Properties.class
 com/garganttua/injection/beans/BeanPostConstructMethodBinderBuilder.class
-com/garganttua/injection/beans/GGBeanRefValidator.class
+com/garganttua/injection/supplier/NullObjectSupplier.class
 com/garganttua/injection/spec/IDiContextBuilder.class
 com/garganttua/injection/supplier/builder/binder/FieldResolver.class
 com/garganttua/injection/DiException.class

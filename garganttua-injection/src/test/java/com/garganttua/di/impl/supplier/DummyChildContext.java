@@ -62,13 +62,13 @@ public class DummyChildContext implements IDiContext{
     }
 
     @Override
-    public <T> Optional<T> getPropertyFromProvider(String scopeName, String key, Class<T> type) {
+    public <T> Optional<T> getProperty(String scopeName, String key, Class<T> type) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPropertyFromProvider'");
     }
 
     @Override
-    public void setPropertyInProvider(String scopeName, String key, Object value) throws DiException {
+    public void setProperty(String scopeName, String key, Object value) throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPropertyInProvider'");
     }
@@ -103,6 +103,12 @@ public class DummyChildContext implements IDiContext{
     public <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
+    }
+
+    @Override
+    public <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getProperty'");
     }
 
 }

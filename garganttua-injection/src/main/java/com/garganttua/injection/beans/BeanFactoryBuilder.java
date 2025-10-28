@@ -1,16 +1,19 @@
 package com.garganttua.injection.beans;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
 import javax.inject.Qualifier;
 
 import com.garganttua.dsl.AbstractAutomaticBuilder;
 import com.garganttua.dsl.DslException;
+import com.garganttua.injection.supplier.builder.supplier.NullObjectSupplierBuilder;
 
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
@@ -43,17 +46,37 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
 
     @Override
     protected void doAutoDetection() throws DslException {
-        // Set auto detection on child builders
-        if (this.constructorBinderBuilder != null)
-            this.constructorBinderBuilder.autoDetect(true);
-        this.postConstructMethodBinderBuilders.forEach(b -> {
-            try {
-                b.autoDetect(true);
-            } catch (DslException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        });
+        if (this.constructorBinderBuilder == null) {
+            this.lookForConstructor();
+        }
+
+    }
+
+    private void lookForConstructor() throws DslException {
+        Arrays.stream(this.beanClass.getDeclaredConstructors())
+                .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
+                .findFirst()
+                .ifPresent(constructor -> {
+                    try {
+                        this.constructorBinderBuilder = new BeanConstructorBinderBuilder<Bean>(this, this.beanClass)
+                                .autoDetect(true);
+
+                        Arrays.stream(constructor.getParameters())
+                                .forEach(parameter -> {
+                                    try {
+                                        String paramName = parameter.getName();
+                                        Class<?> paramType = parameter.getType();
+                                        this.constructorBinderBuilder.withParam(new NullObjectSupplierBuilder<>(paramType), true);
+                                    } catch (DslException e) {
+                                        // TODO Auto-generated catch block
+                                        e.printStackTrace();
+                                    }
+                                });
+                    } catch (DslException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                });
     }
 
     @Override

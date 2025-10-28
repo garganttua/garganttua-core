@@ -1,5 +1,6 @@
 package com.garganttua.di.impl.supplier;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,6 +15,7 @@ import com.garganttua.dsl.DslException;
 import com.garganttua.injection.Beans;
 import com.garganttua.injection.DiContextBuilder;
 import com.garganttua.injection.DiException;
+import com.garganttua.injection.Properties;
 import com.garganttua.injection.beans.BeanProvider;
 import com.garganttua.injection.properties.PropertyProvider;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
@@ -23,22 +25,35 @@ public class DiContextTest {
     private PropertyProvider provider = new PropertyProvider();
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws DiException, DslException {
         GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+        new DiContextBuilder()
+                .beanProvider(new BeanProvider(List.of("com.garganttua")))
+                .propertyProvider(this.provider)
+                .build().onInit().onStart();
+
         this.provider.setProperty("com.garganttua.dummyPropertyInConstructor", "propertyValue");
     }
 
     @Test
-    public void test() throws DiException, DslException {
-        new DiContextBuilder()
-        .beanProvider(new BeanProvider(List.of("com.garganttua")))
-        .propertyProvider(this.provider)
-        .build().onInit().onStart();
+    public void testPropertiesAreLoaded() throws DiException, DslException {
+        Optional<String> property = Properties.property(String.class).key("com.garganttua.dummyPropertyInConstructor")
+                .build().getObject();
 
+        assertNotNull(property);
+        assertTrue(property.isPresent());
+
+        assertEquals("propertyValue", property.get());
+    }
+
+    @Test
+    public void testDummyBeanIsLoaded() throws DiException, DslException {
         Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().getObject();
         assertNotNull(bean);
         assertTrue(bean.isPresent());
 
+        assertEquals("propertyValue", bean.get().getValue());
+        assertNotNull(bean.get().getAnotherBean());
     }
 
 }

@@ -216,19 +216,6 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                     "Method " + getMethodName() + " has only " + this.parameterTypes.length + " parameters");
         }
 
-        if (object == null) {
-            if (!acceptNullable) {
-                log.atWarn().log("[MethodBinderBuilder] Null value provided for parameter {} but acceptNullable=false",
-                        i);
-                throw new DslException(
-                        "Parameter " + i + " of method " + getMethodName() + " cannot be null");
-            }
-            this.parameters.set(i, new FixedObjectSupplierBuilder<>(null));
-            this.parameterNullableAllowed.set(i, Boolean.TRUE);
-            log.atInfo().log("[MethodBinderBuilder] Parameter {} bound as nullable null", i);
-            return this.getReturned();
-        }
-
         if (!this.isValidParameterType(i, object)) {
             log.atWarn().log("[MethodBinderBuilder] Invalid parameter type {} for method {} expected {}",
                     object.getClass(), getMethodName(), this.parameterTypes[i]);
@@ -239,6 +226,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         }
 
         this.parameters.set(i, new FixedObjectSupplierBuilder<>(object));
+
         this.parameterNullableAllowed.set(i, acceptNullable);
         log.atInfo().log("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
                 object.getClass(), acceptNullable);
@@ -423,7 +411,8 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return this.createBinder(builtParameterSuppliers, this.supplier);
     }
 
-    protected MethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers, IObjectSupplierBuilder<?, ?> supplier)
+    protected MethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
+            IObjectSupplierBuilder<?, ?> supplier)
             throws DslException {
         return new MethodBinder<ExecutionReturn>(supplier.build(), this.method, builtParameterSuppliers,
                 this.returnedType, this.collection);

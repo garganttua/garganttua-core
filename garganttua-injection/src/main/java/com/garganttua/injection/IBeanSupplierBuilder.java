@@ -9,7 +9,7 @@ public interface IBeanSupplierBuilder<Bean> extends IObjectSupplierBuilder<Bean,
 
     IBeanSupplierBuilder<Bean> name(String name);
 
-    IBeanSupplierBuilder<Bean> provider(String scope);
+    IBeanSupplierBuilder<Bean> provider(String provider);
 
     IBeanSupplierBuilder<Bean> strategy(BeanStrategy strategy);
 

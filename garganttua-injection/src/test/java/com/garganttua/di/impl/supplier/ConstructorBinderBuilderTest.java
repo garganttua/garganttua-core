@@ -17,6 +17,7 @@ import com.garganttua.injection.DiException;
 import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 import com.garganttua.injection.supplier.builder.binder.AbstractConstructorBinderBuilder;
 import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
+import com.garganttua.injection.supplier.builder.supplier.NullObjectSupplierBuilder;
 
 public class ConstructorBinderBuilderTest {
 

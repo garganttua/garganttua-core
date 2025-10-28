@@ -22,7 +22,7 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getProperty(String key, Class<T> type) {
+    public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
         Object value = properties.get(key);
         if (value == null) {
             return Optional.empty();
@@ -42,7 +42,7 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
                     return Optional.of(type.cast(Boolean.parseBoolean(value.toString())));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new DiException(e.getMessage(), e);
             }
             return Optional.empty();
         }
@@ -51,15 +51,14 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
     }
 
     @Override
-    public void setProperty(String key, Object value) {
+    public void setProperty(String key, Object value) throws DiException {
         if (!isMutable()) {
-            throw new UnsupportedOperationException("PropertyProvider is not mutable");
+            throw new DiException("PropertyProvider is not mutable");
         }
         if (key == null || key.isBlank()) {
-            throw new IllegalArgumentException("Property key cannot be null or blank");
+            throw new DiException("Property key cannot be null or blank");
         }
         properties.put(key, value);
-
     }
 
     @Override

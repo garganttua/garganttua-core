@@ -92,23 +92,23 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
 
     @Override
     public Builder withParam(String paramName, Object parameter) throws DslException {
-        throw new DslException("Parameter name-based binding is not sLinkported for constructors");
+        throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
     @Override
     public Builder withParam(String paramName, IObjectSupplierBuilder<?, ?> supplier) throws DslException {
-        throw new DslException("Parameter name-based binding is not sLinkported for constructors");
+        throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
     @Override
     public Builder withParam(String paramName, Object parameter, boolean acceptNullable) throws DslException {
-        throw new DslException("Parameter name-based binding is not sLinkported for constructors");
+        throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
     @Override
     public Builder withParam(String paramName, IObjectSupplierBuilder<?, ?> supplier, boolean acceptNullable)
             throws DslException {
-        throw new DslException("Parameter name-based binding is not sLinkported for constructors");
+        throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
     private void ensureCapacity(int index) {

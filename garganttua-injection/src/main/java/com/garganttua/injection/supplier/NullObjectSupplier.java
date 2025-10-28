@@ -1,4 +1,4 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.injection.supplier;
 
 import java.util.Optional;
 
@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class NullObjectSupplier<T> implements IObjectSupplier<T>{
 
-    private Class<T> class1;
+    private Class<T> objectClass;
 
     @Override
     public Optional<T> getObject() throws DiException {
@@ -19,7 +19,7 @@ public class NullObjectSupplier<T> implements IObjectSupplier<T>{
 
     @Override
     public Class<T> getObjectClass() {
-        return this.class1;
+        return this.objectClass;
     }
 
 }

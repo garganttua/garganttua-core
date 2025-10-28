@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0.006" tests="3" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0" tests="3" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -12,7 +12,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="FR"/>
     <property name="sun.boot.library.path" value="/home/jeremy/.sdkman/candidates/java/21.0.2-open/lib"/>
-    <property name="sun.java.command" value="/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/surefire/surefirebooter11991629171851858808.jar /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/surefire 2025-10-28T13-48-33_228-jvmRun1 surefire5425433782309249070tmp surefire_55611680925244722863tmp"/>
+    <property name="sun.java.command" value="/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/surefire/surefirebooter12250953678841277138.jar /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/surefire 2025-10-28T16-41-41_481-jvmRun1 surefire10140295534528733593tmp surefire_514657289274039292534tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/test-classes:/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/classes:/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/target/garganttua-dsl-2.0.0.jar:/home/jeremy/.m2/repository/org/slf4j/slf4j-api/2.0.13/slf4j-api-2.0.13.jar:/home/jeremy/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.9.1/junit-jupiter-engine-5.9.1.jar:/home/jeremy/.m2/repository/org/junit/platform/junit-platform-engine/1.9.1/junit-platform-engine-1.9.1.jar:/home/jeremy/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/home/jeremy/.m2/repository/org/junit/platform/junit-platform-commons/1.9.1/junit-platform-commons-1.9.1.jar:/home/jeremy/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.9.1/junit-jupiter-api-5.9.1.jar:/home/jeremy/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/home/jeremy/Garganttua Projects/garganttua-core/garganttua-reflection/target/garganttua-reflection-2.0.0.jar:/home/jeremy/Garganttua Projects/garganttua-core/garganttua-commons/target/garganttua-commons-2.0.0.jar:/home/jeremy/.m2/repository/org/javatuples/javatuples/1.2/javatuples-1.2.jar:/home/jeremy/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/home/jeremy/Garganttua Projects/garganttua-core/garganttua-bindings/garganttua-reflections/target/garganttua-reflections-2.0.0.jar:/home/jeremy/.m2/repository/org/reflections/reflections/0.10.2/reflections-0.10.2.jar:/home/jeremy/.m2/repository/org/javassist/javassist/3.28.0-GA/javassist-3.28.0-GA.jar:/home/jeremy/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar:/home/jeremy/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar:"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -27,7 +27,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
-    <property name="surefire.real.class.path" value="/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/surefire/surefirebooter11991629171851858808.jar"/>
+    <property name="surefire.real.class.path" value="/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/target/surefire/surefirebooter12250953678841277138.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="21.0.2+13-58"/>
     <property name="user.name" value="jeremy"/>
@@ -54,6 +54,6 @@
     <property name="java.class.version" value="65.0"/>
   </properties>
   <testcase name="testMatches" classname="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0"/>
-  <testcase name="testEffectiveName" classname="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0.002"/>
-  <testcase name="testEqualsAndHashCode" classname="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0.003"/>
+  <testcase name="testEffectiveName" classname="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0"/>
+  <testcase name="testEqualsAndHashCode" classname="com.garganttua.di.impl.supplier.BeanDefinitionTest" time="0"/>
 </testsuite>

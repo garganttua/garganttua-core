@@ -1,7 +1,5 @@
 package com.garganttua.injection.supplier;
 
-import java.util.Optional;
-
 import com.garganttua.injection.DiException;
 import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;

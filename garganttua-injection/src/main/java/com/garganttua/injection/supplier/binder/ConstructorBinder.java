@@ -32,7 +32,6 @@ public class ConstructorBinder<Constructed> extends ExecutableBinder<IDiContext>
     @Override
     public Optional<Constructed> execute(IDiContext context)
             throws DiException {
-                /* Objects.requireNonNull(context, "Context cannot be null"); */
         try {
             Object[] args = this.buildArguments(this.parameterSuppliers, context);
             return Optional.ofNullable(this.constructor.newInstance(args));

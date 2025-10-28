@@ -3,12 +3,14 @@ package com.garganttua.injection.spec;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.injection.DiException;
+
 public interface IPropertyProvider extends ILifecycle {
     String getName();
 
-    <T> Optional<T> getProperty(String key, Class<T> type);
+    <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
 
-    void setProperty(String key, Object value);
+    void setProperty(String key, Object value) throws DiException;
 
     boolean isMutable();
 

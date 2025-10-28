@@ -11,7 +11,7 @@ public interface IDiContext extends ILifecycle {
     // --- Bean Scopes ---
     Set<IBeanProvider> getBeanProviders() throws DiException;
 
-    <Bean> Optional<Bean> queryBean(Optional<String> ofNullable, BeanDefinition<Bean> definition) throws DiException;
+    <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException;
 
     <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException;
 
@@ -37,11 +37,13 @@ public interface IDiContext extends ILifecycle {
     // --- Property Scopes ---
     Set<IPropertyProvider> getPropertyProviders() throws DiException;
 
+    <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException;
+
     <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
 
-    <T> Optional<T> getPropertyFromProvider(String providerName, String key, Class<T> type) throws DiException;
+    <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException;
 
-    void setPropertyInProvider(String providerName, String key, Object value) throws DiException;
+    void setProperty(String provider, String key, Object value) throws DiException;
 
     // --- Core ---
 

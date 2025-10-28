@@ -1,5 +1,4 @@
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/AbstractLifecycle.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/BeanIdentifier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/BeanSupplier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/BeanSupplierBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/Beans.java
@@ -8,6 +7,11 @@
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/DiException.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/IBeanSupplier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/IBeanSupplierBuilder.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/IPropertySupplier.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/IPropertySupplierBuilder.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/Properties.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/PropertySupplier.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/PropertySupplierBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/BeanConstructorBinderBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/BeanDefinition.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/BeanFactory.java
@@ -17,7 +21,6 @@
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/BeanQuery.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/BeanQueryBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/BeanStrategy.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/GGBeanRefValidator.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/IBeanConstructorBinderBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/IBeanFactory.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/beans/IBeanFactoryBuilder.java
@@ -52,6 +55,7 @@
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/CustomContextualObjectSupplier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/FixedObjectSupplier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/NewObjectSupplier.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/NullObjectSupplier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/Supplier.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/binder/ConstructorBinder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/binder/ExecutableBinder.java
@@ -63,4 +67,5 @@
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/builder/supplier/ContextualObjectSupplierBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/builder/supplier/CustomContextualObjectSupplierBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/builder/supplier/FixedObjectSupplierBuilder.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/builder/supplier/NullObjectSupplierBuilder.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/main/java/com/garganttua/injection/supplier/builder/supplier/NullableEnforcingObjectSupplier.java
