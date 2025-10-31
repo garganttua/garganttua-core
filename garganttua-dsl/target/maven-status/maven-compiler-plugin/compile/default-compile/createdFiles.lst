@@ -1,8 +1,0 @@
-com/garganttua/dsl/IBuilder.class
-com/garganttua/dsl/ILinkedBuilder.class
-com/garganttua/dsl/AbstractLinkedBuilder.class
-com/garganttua/dsl/AbstractAutomaticBuilder.class
-com/garganttua/dsl/IAutomaticLinkedBuilder.class
-com/garganttua/dsl/AbstractAutomaticLinkedBuilder.class
-com/garganttua/dsl/DslException.class
-com/garganttua/dsl/IAutomaticBuilder.class

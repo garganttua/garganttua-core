@@ -1,8 +1,0 @@
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/AbstractAutomaticBuilder.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/AbstractAutomaticLinkedBuilder.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/AbstractLinkedBuilder.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/DslException.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/IAutomaticBuilder.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/IAutomaticLinkedBuilder.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/IBuilder.java
-/home/jeremy/Garganttua Projects/garganttua-core/garganttua-dsl/src/main/java/com/garganttua/dsl/ILinkedBuilder.java

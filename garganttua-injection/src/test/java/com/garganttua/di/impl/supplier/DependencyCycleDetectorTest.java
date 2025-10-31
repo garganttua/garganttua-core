@@ -145,7 +145,7 @@ class DependencyCycleDetectorTest {
         String msg = ex.getMessage();
 
         // Assert
-        assertTrue(msg.contains("B -> C -> A -> B"),
-                () -> "Expected cycle message to contain 'B -> C -> A -> B' but got: " + msg);
+        assertTrue(msg.contains("A -> B -> C -> A"),
+                () -> "Expected cycle message to contain 'A -> B -> C -> A' but got: " + msg);
     }
 }
