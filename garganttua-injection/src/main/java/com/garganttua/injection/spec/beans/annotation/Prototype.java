@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 import javax.inject.Scope;
 
 @Scope
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Prototype {}

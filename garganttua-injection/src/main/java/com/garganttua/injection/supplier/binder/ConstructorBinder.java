@@ -11,34 +11,28 @@ import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;
 import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 
-public class ConstructorBinder<Constructed> extends ExecutableBinder<IDiContext> implements IConstructorBinder<Constructed> {
+public class ConstructorBinder<Constructed>
+        extends ExecutableBinder<Constructed, IDiContext>
+        implements IConstructorBinder<Constructed> {
 
-    private Class<Constructed> objectClass;
-    private List<IObjectSupplier<?>> parameterSuppliers;
-    private Constructor<Constructed> constructor;
+    private final Class<Constructed> objectClass;
+    private final Constructor<Constructed> constructor;
 
     public ConstructorBinder(Class<Constructed> objectClass,
-            Constructor<Constructed> constructor, List<IObjectSupplier<?>> parameterSuppliers) {
-        this.constructor = Objects.requireNonNull(constructor, "Constructor cannot be null");
+            Constructor<Constructed> constructor,
+            List<IObjectSupplier<?>> parameterSuppliers) {
+        super(parameterSuppliers);
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
-        this.parameterSuppliers = Objects.requireNonNull(parameterSuppliers, "Parameters suppliers cannot be null");
+        this.constructor = Objects.requireNonNull(constructor, "Constructor cannot be null");
     }
 
     @Override
-    public Optional<Constructed> execute() throws DiException {
-        return this.execute(null);
-    }
-
-    @Override
-    public Optional<Constructed> execute(IDiContext context)
-            throws DiException {
+    public Optional<Constructed> execute(IDiContext context) throws DiException {
         try {
-            Object[] args = this.buildArguments(this.parameterSuppliers, context);
+            Object[] args = this.buildArguments(context);
             return Optional.ofNullable(this.constructor.newInstance(args));
-
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
-            throw new DiException("Error creating new instance of type " + this.objectClass.getSimpleName(), e);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new DiException("Error creating new instance of type " + objectClass.getSimpleName(), e);
         }
     }
 
@@ -46,5 +40,4 @@ public class ConstructorBinder<Constructed> extends ExecutableBinder<IDiContext>
     public Class<Constructed> getConstructedClass() {
         return this.objectClass;
     }
-
 }

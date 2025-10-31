@@ -5,11 +5,10 @@ import java.util.Optional;
 import com.garganttua.injection.DiException;
 import com.garganttua.injection.spec.IDiContext;
 
-public interface IExecutableBinder<ExecutionReturn> {
+public interface IExecutableBinder<ExecutionReturn> extends Dependent {
 
     Optional<ExecutionReturn> execute() throws DiException;
 
     Optional<ExecutionReturn> execute(IDiContext context)
             throws DiException;
-
 }

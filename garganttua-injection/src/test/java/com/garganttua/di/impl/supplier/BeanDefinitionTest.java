@@ -32,6 +32,7 @@ public class BeanDefinitionTest {
                 Optional.of("myBean"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 
@@ -41,6 +42,7 @@ public class BeanDefinitionTest {
                 Optional.of("myBean"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 
@@ -50,6 +52,7 @@ public class BeanDefinitionTest {
                 Optional.of("myBean"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 
@@ -67,6 +70,7 @@ public class BeanDefinitionTest {
                 Optional.empty(),
                 Set.of(),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 
@@ -81,6 +85,7 @@ public class BeanDefinitionTest {
                 Optional.of("bean1"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 
@@ -90,6 +95,7 @@ public class BeanDefinitionTest {
                 Optional.of("bean1"),
                 Set.of(TestQualifier.class),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 
@@ -99,6 +105,7 @@ public class BeanDefinitionTest {
                 Optional.of("bean2"),
                 Set.of(),
                 Optional.empty(),
+                Set.of(),
                 Set.of()
         );
 

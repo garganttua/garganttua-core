@@ -18,5 +18,7 @@
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/DummyDiContext.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/DummyOtherBean.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/DummyPropertyProvider.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/InjectableBuilderFactoryTest.java
+/home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/InjectableBuilderRegistryTest.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/ObjectSupplierTest.java
 /home/jeremy/Garganttua Projects/garganttua-core/garganttua-injection/src/test/java/com/garganttua/di/impl/supplier/SupplierTest.java

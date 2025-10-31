@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 public class DiContextTest {
 
     private PropertyProvider provider = new PropertyProvider();
+    String propertyValue = UUID.randomUUID().toString();
 
     @BeforeEach
     void setUp() throws DiException, DslException {
@@ -32,7 +34,7 @@ public class DiContextTest {
                 .propertyProvider(this.provider)
                 .build().onInit().onStart();
 
-        this.provider.setProperty("com.garganttua.dummyPropertyInConstructor", "propertyValue");
+        this.provider.setProperty("com.garganttua.dummyPropertyInConstructor", propertyValue);
     }
 
     @Test
@@ -43,7 +45,7 @@ public class DiContextTest {
         assertNotNull(property);
         assertTrue(property.isPresent());
 
-        assertEquals("propertyValue", property.get());
+        assertEquals(propertyValue, property.get());
     }
 
     @Test
@@ -52,8 +54,10 @@ public class DiContextTest {
         assertNotNull(bean);
         assertTrue(bean.isPresent());
 
-        assertEquals("propertyValue", bean.get().getValue());
+        assertEquals(propertyValue, bean.get().getValue());
         assertNotNull(bean.get().getAnotherBean());
+        assertTrue(bean.get().isPostConstructCalled());
+        assertNotNull(bean.get().getOtherBean());
     }
 
 }

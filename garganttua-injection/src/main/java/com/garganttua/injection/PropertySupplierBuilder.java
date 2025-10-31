@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.dsl.DslException;
-import com.garganttua.injection.beans.BeanDefinition;
 
 public class PropertySupplierBuilder<Property> implements IPropertySupplierBuilder<Property>{
 

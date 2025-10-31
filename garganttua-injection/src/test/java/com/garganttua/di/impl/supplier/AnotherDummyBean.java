@@ -16,7 +16,7 @@ public class AnotherDummyBean {
     private String randomValue;
 
     public AnotherDummyBean() {
-        this.randomValue = UUID.randomUUID().toString();;   
+        this.randomValue = UUID.randomUUID().toString();
     }
 
 }

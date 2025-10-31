@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,12 @@ public class ConstructorBinderBuilderTest {
         protected void doAutoDetection() throws DslException {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
+        }
+
+        @Override
+        public Set<Class<?>> getDependencies() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 
     }

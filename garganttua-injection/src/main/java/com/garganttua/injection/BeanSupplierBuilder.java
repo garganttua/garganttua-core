@@ -22,6 +22,39 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         this.type = Objects.requireNonNull(type, "Type cannot be null");
     }
 
+    public BeanSupplierBuilder(Optional<String> provider, BeanDefinition<Bean> example) {
+        Objects.requireNonNull(example, "Example cannot be null");
+
+        if (provider != null && provider.isPresent()) {
+            initFromExample(example);
+            this.provider = provider.get();
+        } else {
+            initFromExample(example);
+        }
+    }
+
+    public BeanSupplierBuilder(BeanDefinition<Bean> example) {
+        Objects.requireNonNull(example, "Example cannot be null");
+        initFromExample(example);
+    }
+
+    public BeanSupplierBuilder(String provider, BeanDefinition<Bean> example) {
+        Objects.requireNonNull(provider, "Provider cannot be null");
+        Objects.requireNonNull(example, "Example cannot be null");
+
+        initFromExample(example);
+        this.provider = provider;
+    }
+
+    private void initFromExample(BeanDefinition<Bean> example) {
+        this.type = example.type();
+        this.name = example.name().orElse(null);
+        this.strategy = example.strategy().orElse(BeanStrategy.singleton);
+        if (!example.qualifiers().isEmpty()) {
+            this.qualifier = example.qualifiers().iterator().next();
+        }
+    }
+
     @Override
     public Class<Bean> getObjectClass() {
         return type;
@@ -36,7 +69,8 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         if (this.qualifier != null) {
             qualifiers.add(this.qualifier);
         }
-        return new BeanSupplier<Bean>(Optional.ofNullable(this.provider), BeanDefinition.example(this.type, Optional.ofNullable(this.strategy), Optional.ofNullable(this.name), qualifiers));
+        return new BeanSupplier<Bean>(Optional.ofNullable(this.provider), BeanDefinition.example(this.type,
+                Optional.ofNullable(this.strategy), Optional.ofNullable(this.name), qualifiers));
     }
 
     @Override
@@ -61,6 +95,11 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     public IBeanSupplierBuilder<Bean> qualifier(Class<? extends Annotation> qualifier) {
         this.qualifier = Objects.requireNonNull(qualifier, "Qualifier cannot be null");
         return this;
+    }
+
+    @Override
+    public Set<Class<?>> getDependencies() {
+        return Set.of();
     }
 
 }

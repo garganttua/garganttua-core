@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.dsl.AbstractLinkedBuilder;
+import com.garganttua.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.dsl.DslException;
 import com.garganttua.injection.DiException;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, IMethodBinder<ExecutionReturn>>, Link>
-        extends AbstractLinkedBuilder<Link, IMethodBinder<ExecutionReturn>>
+        extends AbstractAutomaticLinkedBuilder<Builder, Link, IMethodBinder<ExecutionReturn>>
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, IMethodBinder<ExecutionReturn>> {
 
     private IObjectSupplierBuilder<?, ?> supplier;
@@ -398,19 +398,6 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return valid;
     }
 
-    @Override
-    public IMethodBinder<ExecutionReturn> build() throws DslException {
-        log.atTrace().log("[MethodBinderBuilder] Building MethodBinder");
-        Objects.requireNonNull(this.method, "Method is not set");
-        Objects.requireNonNull(this.parameters, "Parameters are not set");
-        Objects.requireNonNull(this.parameterNullableAllowed, "Parameter nullability metadata not initialized");
-        Objects.requireNonNull(this.returnedType, "Returned type cannot be null");
-
-        List<IObjectSupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
-
-        return this.createBinder(builtParameterSuppliers, this.supplier);
-    }
-
     protected MethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
             IObjectSupplierBuilder<?, ?> supplier)
             throws DslException {
@@ -441,5 +428,33 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                     .add(new NullableEnforcingObjectSupplier<>(supplierInstance, allowNull, i, getMethodName()));
         }
         return builtParameterSuppliers;
+    }
+
+    public Method findMethod() throws DiException {
+        if (this.method == null) {
+            throw new DiException("Method is not set");
+        }
+        try {
+            return (Method) this.objectQuery.find(this.method).getLast();
+        } catch (GGReflectionException e) {
+            throw new DiException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    protected IMethodBinder<ExecutionReturn> doBuild() throws DslException {
+        log.atTrace().log("[MethodBinderBuilder] Building MethodBinder");
+        Objects.requireNonNull(this.method, "Method is not set");
+        Objects.requireNonNull(this.parameters, "Parameters are not set");
+        Objects.requireNonNull(this.parameterNullableAllowed, "Parameter nullability metadata not initialized");
+        Objects.requireNonNull(this.returnedType, "Returned type cannot be null");
+
+        List<IObjectSupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
+
+        return this.createBinder(builtParameterSuppliers, this.supplier);
+    }
+
+    protected Class<?>[] getParameterTypes() {
+        return this.parameters.stream().map(IObjectSupplierBuilder::getObjectClass).toArray(Class<?>[]::new);
     }
 }

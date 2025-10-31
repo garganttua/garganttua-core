@@ -1,9 +1,11 @@
 package com.garganttua.injection.supplier.binder;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.injection.DiException;
 import com.garganttua.injection.spec.IDiContext;
@@ -14,52 +16,53 @@ import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 
-public class MethodBinder<Returned> extends ExecutableBinder<IDiContext> implements IMethodBinder<Returned> {
+public class MethodBinder<Returned>
+        extends ExecutableBinder<Returned, IDiContext>
+        implements IMethodBinder<Returned> {
 
-    private Class<Returned> returnedClass;
-    private IObjectSupplier<?> objectSupplier;
-    private GGObjectAddress method;
-    private List<IObjectSupplier<?>> parameterSuppliers;
-    private boolean collection = false;
+    private final Class<Returned> returnedClass;
+    private final IObjectSupplier<?> objectSupplier;
+    private final GGObjectAddress method;
+    private final boolean collection;
 
-    public MethodBinder(IObjectSupplier<?> objectSupplier, GGObjectAddress method,
-            List<IObjectSupplier<?>> parameterSuppliers, Class<Returned> returnedClass) {
+    public MethodBinder(IObjectSupplier<?> objectSupplier,
+            GGObjectAddress method,
+            List<IObjectSupplier<?>> parameterSuppliers,
+            Class<Returned> returnedClass,
+            boolean collection) {
+        super(parameterSuppliers);
+        this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
+        this.method = Objects.requireNonNull(method, "Method cannot be null");
+        this.returnedClass = Objects.requireNonNull(returnedClass, "Returned class cannot be null");
+        this.collection = collection;
+    }
+
+    public MethodBinder(IObjectSupplier<?> objectSupplier,
+            GGObjectAddress method,
+            List<IObjectSupplier<?>> parameterSuppliers,
+            Class<Returned> returnedClass) {
         this(objectSupplier, method, parameterSuppliers, returnedClass, false);
     }
 
-    public MethodBinder(IObjectSupplier<?> objectSupplier, GGObjectAddress method,
-            List<IObjectSupplier<?>> parameterSuppliers, Class<Returned> returnedClass, boolean collection) {
-        this.collection = collection;
-        this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
-        this.method = Objects.requireNonNull(method, "Method cannot be null");
-        this.parameterSuppliers = Objects.requireNonNull(parameterSuppliers, "Parameter suppliers cannot be null");
-        this.returnedClass = Objects.requireNonNull(returnedClass, "Returned class cannot be null");
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "unchecked" })
     @Override
-    public Optional<Returned> execute(IDiContext context)
-            throws DiException {
-
+    public Optional<Returned> execute(IDiContext context) throws DiException {
         Optional<?> target = Optional.ofNullable(Supplier.getObject(this.objectSupplier, context));
         if (target.isEmpty()) {
             throw new DiException("Target object supplier returned empty for method " + method);
         }
 
         try {
-            Object[] args = this.buildArguments(this.parameterSuppliers, context);
+            Object[] args = this.buildArguments(context);
+
             if (collection && Collection.class.isAssignableFrom(target.get().getClass())) {
-                Collection<?> targets = (Collection) target.get();
-                targets.forEach(t -> {
+                ((Collection<?>) target.get()).forEach(t -> {
                     try {
-                        GGObjectQueryFactory.objectQuery(t.getClass())
-                                .invoke(t, this.method, args);
+                        GGObjectQueryFactory.objectQuery(t.getClass()).invoke(t, this.method, args);
                     } catch (GGReflectionException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 });
-
                 return Optional.empty();
             } else {
                 Object result = GGObjectQueryFactory.objectQuery(this.objectSupplier.getObjectClass())
@@ -77,10 +80,4 @@ public class MethodBinder<Returned> extends ExecutableBinder<IDiContext> impleme
             throw new DiException("Error invoking method " + method, e);
         }
     }
-
-    @Override
-    public Optional<Returned> execute() throws DiException {
-        return this.execute(null);
-    }
-
 }

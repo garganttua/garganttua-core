@@ -150,26 +150,27 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
             builtsuppliers.add(nullable);
         }
 
-        Class<?>[] paramTypes = builtsuppliers.stream()
-                .map(IObjectSupplier::getObjectClass)
-                .toArray(Class<?>[]::new);
-
-        Constructor<Constructed> matchedConstructor = findMatchingConstructor(paramTypes);
+        Constructor<Constructed> matchedConstructor = findMatchingConstructor();
         if (matchedConstructor == null) {
             String msg = String.format("No matching constructor found for class %s with parameter types %s",
-                    objectClass.getName(), formatTypes(paramTypes));
+                    objectClass.getName(), formatTypes(this.getParameterTypes()));
             log.atError().log("[ConstructorBinderBuilder] {}", msg);
             throw new DslException(msg);
         }
 
         log.atInfo().log("[ConstructorBinderBuilder] Matched constructor {}({})",
-                objectClass.getSimpleName(), formatTypes(paramTypes));
+                objectClass.getSimpleName(), formatTypes(this.getParameterTypes()));
 
         return new ConstructorBinder<Constructed>(objectClass, matchedConstructor, builtsuppliers);
     }
 
+    protected Class<?>[] getParameterTypes() {
+        return this.parameters.stream().map(IObjectSupplierBuilder::getObjectClass).toArray(Class<?>[]::new);
+    }
+
     @SuppressWarnings("unchecked")
-    private Constructor<Constructed> findMatchingConstructor(Class<?>[] paramTypes) {
+    protected Constructor<Constructed> findMatchingConstructor() {
+        Class<?>[] paramTypes = this.getParameterTypes();
         Constructor<Constructed>[] constructors = (Constructor<Constructed>[]) objectClass.getDeclaredConstructors();
 
         for (Constructor<Constructed> ctor : constructors) {

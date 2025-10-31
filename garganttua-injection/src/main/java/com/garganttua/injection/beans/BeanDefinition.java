@@ -1,19 +1,22 @@
 package com.garganttua.injection.beans;
 
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.injection.spec.supplier.binder.Dependent;
 import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 
 public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<Class<? extends Annotation>> qualifiers,
         Optional<IConstructorBinder<Bean>> constructorBinder,
-        Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders) {
+        Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders,
+        Set<IBeanInjectableFieldBuilder<?, Bean>> injectableFields) implements Dependent {
 
     public String effectiveName() {
-        if( name.isPresent() )
+        if (name.isPresent())
             return name.get();
         return type.getSimpleName();
     }
@@ -70,7 +73,21 @@ public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> stra
     public static <Bean> BeanDefinition<Bean> example(Class<Bean> type, Optional<BeanStrategy> strategy,
             Optional<String> name,
             Set<Class<? extends Annotation>> qualifiers) {
-        return new BeanDefinition<>(type, strategy, name, qualifiers, null, null);
+        return new BeanDefinition<>(type, strategy, name, qualifiers, null, null, null);
+    }
+
+    public Set<Class<?>> getDependencies() {
+        Set<Class<?>> dependencies = new HashSet<>();
+        this.injectableFields.stream().forEach(f -> {
+            dependencies.addAll(f.getDependencies());
+        });
+        this.constructorBinder.ifPresent(c -> {
+            dependencies.addAll(c.getDependencies());
+        });
+        this.postConstructMethodBinderBuilders.stream().forEach(m -> {
+            dependencies.addAll(m.getDependencies());
+        });
+        return dependencies;
     }
 
 }

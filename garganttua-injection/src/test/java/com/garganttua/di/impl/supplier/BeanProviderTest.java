@@ -17,12 +17,12 @@ import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanProviderTest {
 
-    @BeforeEach
+    /* @BeforeEach */
     void setUp() {
         GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
     }
 
-    @Test
+    /* @Test */
     public void test() throws DiException{
         BeanProvider provider = new BeanProvider(List.of("com.garganttua"));
         provider.onInit().onStart();

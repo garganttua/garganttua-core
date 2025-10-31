@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
@@ -18,8 +20,16 @@ import javax.inject.Singleton;
 import com.garganttua.dsl.DslException;
 import com.garganttua.injection.AbstractLifecycle;
 import com.garganttua.injection.DiException;
+import com.garganttua.injection.IInjectableBuilderRegistry;
+import com.garganttua.injection.InjectBuilderFactory;
+import com.garganttua.injection.InjectableBuilderRegistry;
+import com.garganttua.injection.PropertyBuilderFactory;
+import com.garganttua.injection.PrototypeBuilderFactory;
+import com.garganttua.injection.SingletonBuilderFactory;
 import com.garganttua.injection.spec.IBeanProvider;
 import com.garganttua.injection.spec.ILifecycle;
+import com.garganttua.injection.spec.beans.annotation.Property;
+import com.garganttua.injection.spec.beans.annotation.Prototype;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
@@ -41,9 +51,8 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		return BEAN_PROVIDER;
 	}
 
-	@SuppressWarnings("unchecked")
 	private IBeanFactoryBuilder<?> createBeanFactory(List<Class<? extends Annotation>> qualifierAnnotations,
-			Class<?> beanClass)
+			Class<?> beanClass, IInjectableBuilderRegistry registry)
 			throws DslException {
 		Set<Class<? extends Annotation>> classQualifiers = qualifierAnnotations.stream()
 				.filter(qualifier -> beanClass
@@ -51,7 +60,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 				.map(q -> (Class<? extends Annotation>) q)
 				.collect(Collectors.toSet());
 
-		IBeanFactoryBuilder<?> builder = new BeanFactoryBuilder<>(beanClass)
+		IBeanFactoryBuilder<?> builder = new BeanFactoryBuilder<>(beanClass, registry)
 				.autoDetect(true)
 				.qualifiers(classQualifiers);
 
@@ -67,8 +76,9 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public <T> Optional<T> getBean(Class<T> type) throws DiException {
 		ensureInitializedAndStarted();
-		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream().filter(factory -> type.isAssignableFrom(factory.getObjectClass())).findFirst();
-		if( factoryOpt.isPresent() ){
+		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
+				.filter(factory -> type.isAssignableFrom(factory.getObjectClass())).findFirst();
+		if (factoryOpt.isPresent()) {
 			return (Optional<T>) factoryOpt.get().getObject();
 		}
 		return Optional.empty();
@@ -91,7 +101,6 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		return false;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
 		List<T> l = (List<T>) this.beansFactoryBuilders.entrySet().stream()
@@ -116,6 +125,12 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	protected ILifecycle doInit() throws DiException {
 		packages.forEach(package_ -> {
 
+			IInjectableBuilderRegistry registry = new InjectableBuilderRegistry();
+			registry.registerFactory(Prototype.class, new PrototypeBuilderFactory(new HashSet<>()));
+			registry.registerFactory(Singleton.class, new SingletonBuilderFactory(new HashSet<>()));
+			registry.registerFactory(Inject.class, new InjectBuilderFactory(new HashSet<>()));
+			registry.registerFactory(Property.class, new PropertyBuilderFactory());
+
 			// 1. Récupère toutes les classes annotées avec @Qualifier
 			List<Class<? extends Annotation>> qualifierAnnotations = GGObjectReflectionHelper
 					.getClassesWithAnnotation(package_,
@@ -130,7 +145,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 					Singleton.class).forEach(singletonClass -> {
 						try {
 							this.beansFactoryBuilders
-									.put(singletonClass, this.createBeanFactory(qualifierAnnotations, singletonClass)
+									.put(singletonClass, this.createBeanFactory(qualifierAnnotations, singletonClass, registry)
 											.strategy(BeanStrategy.singleton));
 						} catch (DslException e) {
 							e.printStackTrace();
@@ -139,10 +154,10 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 			// 3. Récupère toutes les classes annotées avec @Prototype
 			GGObjectReflectionHelper.getClassesWithAnnotation(package_,
-					Singleton.class).forEach(prototypeClass -> {
+					Prototype.class).forEach(prototypeClass -> {
 						try {
 							this.beansFactoryBuilders
-									.put(prototypeClass, this.createBeanFactory(qualifierAnnotations, prototypeClass)
+									.put(prototypeClass, this.createBeanFactory(qualifierAnnotations, prototypeClass, registry)
 											.strategy(BeanStrategy.prototype));
 						} catch (DslException e) {
 							e.printStackTrace();
@@ -156,7 +171,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 							try {
 								this.beansFactoryBuilders
 										.put(prototypeClass,
-												this.createBeanFactory(qualifierAnnotations, prototypeClass)
+												this.createBeanFactory(qualifierAnnotations, prototypeClass, registry)
 														.strategy(BeanStrategy.singleton));
 							} catch (DslException e) {
 								e.printStackTrace();
@@ -198,8 +213,9 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
 		ensureInitializedAndStarted();
 
-		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream().filter(factory -> factory.matches(definition)).findFirst();
-		if( factoryOpt.isPresent() ){
+		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
+				.filter(factory -> factory.matches(definition)).findFirst();
+		if (factoryOpt.isPresent()) {
 			return (Optional<T>) factoryOpt.get().getObject();
 		}
 		return Optional.empty();

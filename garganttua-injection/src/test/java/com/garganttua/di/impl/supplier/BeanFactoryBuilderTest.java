@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,23 +16,26 @@ import com.garganttua.injection.beans.BeanFactoryBuilder;
 import com.garganttua.injection.beans.BeanStrategy;
 import com.garganttua.injection.beans.IBeanFactoryBuilder;
 import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
+import com.garganttua.reflection.GGReflectionException;
 
 public class BeanFactoryBuilderTest {
 
     @Test
-    public void test() throws DslException, DiException{
+    public void test() throws DslException, DiException, GGReflectionException {
+        String random = UUID.randomUUID().toString();
         IBeanFactoryBuilder<DummyBean> builder = new BeanFactoryBuilder<>(DummyBean.class);
 
         IBeanSupplier<DummyBean> beanSupplier = builder
-        .strategy(BeanStrategy.singleton)
-        .name("aBean")
-        .qualifier(DummyBeanQualifier.class)
-        .constructor()
-        .withParam(FixedObjectSupplierBuilder.of("constructedWithParameter"))
-        .up()
-        .postConstruction().method("markPostConstruct").withReturn(Void.class)
-        .up()
-        .build();
+                .strategy(BeanStrategy.singleton)
+                .name("aBean")
+                .qualifier(DummyBeanQualifier.class)
+                .field(String.class).field("anotherValue").withValue(FixedObjectSupplierBuilder.of(random)).up()
+                .constructor()
+                .withParam(FixedObjectSupplierBuilder.of("constructedWithParameter"))
+                .up()
+                .postConstruction().method("markPostConstruct").withReturn(Void.class)
+                .up()
+                .build();
 
         assertNotNull(beanSupplier);
 
@@ -40,6 +44,9 @@ public class BeanFactoryBuilderTest {
         assertNotNull(bean);
         assertEquals("constructedWithParameter", bean.get().getValue());
         assertTrue(bean.get().isPostConstructCalled());
+        assertEquals(random, bean.get().getAnotherValue());
+
+        assertEquals(1, beanSupplier.getDependencies().size());
     }
 
 }

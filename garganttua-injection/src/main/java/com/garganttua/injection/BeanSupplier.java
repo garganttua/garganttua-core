@@ -2,6 +2,7 @@ package com.garganttua.injection;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.injection.beans.BeanDefinition;
 
@@ -25,5 +26,10 @@ public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
     @Override
     public Class<Bean> getObjectClass() {
         return this.example.type();
+    }
+
+    @Override
+    public Set<Class<?>> getDependencies() {
+        return Set.of();
     }
 }

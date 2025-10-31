@@ -2,6 +2,7 @@ package com.garganttua.injection.beans;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.dsl.DslException;
 import com.garganttua.injection.DiException;
@@ -40,12 +41,20 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	private Bean getBean() throws DiException {
 		Bean bean = createBeanInstance();
-
-		// inject beans
-		// inject values
-
+		this.doInjection(bean);
 		this.invokePostConstructMethods(bean);
 		return bean;
+	}
+
+	private void doInjection(Bean onBean) throws DiException {
+		this.definition.injectableFields().forEach(builder -> {
+			try {
+				builder.build().inject(FixedObjectSupplierBuilder.of(onBean).build());
+			} catch (DslException | DiException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 
 	private Bean createBeanInstance() throws DiException {
@@ -67,7 +76,6 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		return this.definition.constructorBinder().get().execute();
 	}
 
-	@SuppressWarnings("unchecked")
 	private void invokePostConstructMethods(Bean bean) throws DiException {
 		if (this.definition.postConstructMethodBinderBuilders().isEmpty()) {
 			return;
@@ -115,7 +123,17 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	@Override
-	public boolean matches(BeanDefinition<?> definition) {
-		return this.definition.matches(definition);
+	public boolean matches(BeanDefinition<?> example) {
+		return this.definition.matches(example);
+	}
+
+	@Override
+	public BeanDefinition<Bean> getDefinition() {
+		return this.definition;
+	}
+
+	@Override
+	public Set<Class<?>> getDependencies() {
+		return this.definition.getDependencies();
 	}
 }

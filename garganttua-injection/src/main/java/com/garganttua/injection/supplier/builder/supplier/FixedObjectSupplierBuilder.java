@@ -26,7 +26,7 @@ public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuil
         return (Class<Supplied>) this.object.getClass();
     }
 
-    public static FixedObjectSupplierBuilder<?> of(Object object) {
+    public static <Supplied> IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>> of(Supplied object) {
         return new FixedObjectSupplierBuilder<>(object);
     }
 
