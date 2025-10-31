@@ -1,6 +1,7 @@
 package com.garganttua.injection.beans;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -180,7 +181,18 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 			});
 
 		});
+		this.doDependencyCycleDetection();
 		return this;
+	}
+
+	private void doDependencyCycleDetection() throws DiException {
+		DependencyGraph graph = new DependencyGraph();
+		this.beansFactoryBuilders.values().stream().forEach(builder -> {
+			builder.getDependencies().stream().forEach(dep -> {
+				graph.addDependency(builder.getObjectClass(), dep);
+			});
+		});
+		new DependencyCycleDetector().detectCycles(graph);
 	}
 
 	@Override
