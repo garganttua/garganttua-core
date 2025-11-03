@@ -4,9 +4,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.binder.IMethodBinder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 

@@ -3,12 +3,12 @@ package com.garganttua.di.impl.supplier;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.beans.BeanDefinition;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.IDiChildContextFactory;
-import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.IPropertyProvider;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.IDiChildContextFactory;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IPropertyProvider;
 
 public class DummyDiContext implements IDiContext {
 

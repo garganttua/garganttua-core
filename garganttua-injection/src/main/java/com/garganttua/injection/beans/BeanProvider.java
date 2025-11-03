@@ -5,10 +5,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.garganttua.injection.AbstractLifecycle;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.ILifecycle;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.lifecycle.AbstractLifecycle;
+import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {

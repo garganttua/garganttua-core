@@ -14,17 +14,18 @@ import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.IInjectableBuilderRegistry;
+import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.annotations.Prototype;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.dsl.DslException;
 import com.garganttua.injection.beans.BeanFactoryBuilder;
 import com.garganttua.injection.beans.BeanProvider;
-import com.garganttua.injection.beans.BeanStrategy;
-import com.garganttua.injection.beans.IBeanFactoryBuilder;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.IBeanProviderBuilder;
-import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.beans.annotation.Property;
-import com.garganttua.injection.spec.beans.annotation.Prototype;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanProviderBuilder

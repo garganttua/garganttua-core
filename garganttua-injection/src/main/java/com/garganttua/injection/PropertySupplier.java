@@ -3,6 +3,9 @@ package com.garganttua.injection;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IPropertySupplier;
+
 public class PropertySupplier<Property> implements IPropertySupplier<Property>{
 
     private String key;

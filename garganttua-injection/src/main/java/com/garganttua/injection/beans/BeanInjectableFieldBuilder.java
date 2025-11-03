@@ -2,6 +2,8 @@ package com.garganttua.injection.beans;
 
 import java.util.Set;
 
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanInjectableFieldBuilder;
 import com.garganttua.injection.supplier.builder.binder.AbstractInjectableFieldBuilder;
 
 public class BeanInjectableFieldBuilder<FieldType, BeanType> extends AbstractInjectableFieldBuilder<FieldType, BeanType, IBeanFactoryBuilder<BeanType>> implements IBeanInjectableFieldBuilder<FieldType, BeanType> {

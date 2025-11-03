@@ -8,8 +8,12 @@ import java.util.Set;
 
 import javax.inject.Qualifier;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanQuery;
+import com.garganttua.core.injection.IBeanQueryBuilder;
 
 import lombok.NoArgsConstructor;
 

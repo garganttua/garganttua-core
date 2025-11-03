@@ -8,10 +8,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.IInjectableBuilderRegistry;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IInjectableBuilderRegistry;
+import com.garganttua.core.injection.context.dsl.IBeanConstructorBinderBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.builder.binder.AbstractConstructorBinderBuilder;
 
 public class BeanConstructorBinderBuilder<Bean> extends

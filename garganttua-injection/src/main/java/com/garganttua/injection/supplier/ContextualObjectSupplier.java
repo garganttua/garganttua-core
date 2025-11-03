@@ -3,10 +3,10 @@ package com.garganttua.injection.supplier;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
-import com.garganttua.injection.spec.supplier.IContextualObjectSupply;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IContextualObjectSupplier;
+import com.garganttua.core.injection.IContextualObjectSupply;
+import com.garganttua.core.injection.IDiContext;
 
 public class ContextualObjectSupplier<Supplied> implements IContextualObjectSupplier<Supplied, IDiContext> {
 

@@ -6,9 +6,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.beans.BeanDefinition;
-import com.garganttua.injection.beans.BeanStrategy;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.IBeanSupplier;
+import com.garganttua.core.injection.context.dsl.IBeanSupplierBuilder;
 
 public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
 

@@ -3,7 +3,8 @@ package com.garganttua.injection;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.dsl.DslException;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.context.dsl.IPropertyBuilder;
 
 public class PropertyBuilder<PropertyType> implements IPropertyBuilder<PropertyType> {
 

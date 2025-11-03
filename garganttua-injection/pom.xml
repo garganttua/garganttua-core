@@ -15,17 +15,15 @@
     <dependencies>
         <dependency>
             <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-lifecycle</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-supplying</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-dsl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.garganttua.core</groupId>
@@ -35,16 +33,6 @@
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-reflections</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 

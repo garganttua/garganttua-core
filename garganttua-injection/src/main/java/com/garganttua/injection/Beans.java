@@ -2,9 +2,10 @@ package com.garganttua.injection;
 
 import java.util.Optional;
 
-import com.garganttua.injection.beans.BeanDefinition;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.IBeanQueryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanSupplierBuilder;
 import com.garganttua.injection.beans.BeanQueryBuilder;
-import com.garganttua.injection.beans.IBeanQueryBuilder;
 
 public class Beans {
 

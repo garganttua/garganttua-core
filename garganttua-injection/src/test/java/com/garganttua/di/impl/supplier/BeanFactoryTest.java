@@ -11,12 +11,12 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.beans.BeanDefinition;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.reflection.IConstructorBinder;
 import com.garganttua.injection.beans.BeanFactory;
-import com.garganttua.injection.beans.BeanStrategy;
-import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
 
 public class BeanFactoryTest {
 

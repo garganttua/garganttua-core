@@ -11,16 +11,16 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.dsl.DslException;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.DiContext;
-import com.garganttua.injection.DiException;
 import com.garganttua.injection.PropertyBuilderFactory;
 import com.garganttua.injection.PrototypeBuilderFactory;
 import com.garganttua.injection.SingletonBuilderFactory;
 import com.garganttua.injection.beans.Predefined;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class InjectableBuilderFactoryTest {

@@ -3,9 +3,9 @@ package com.garganttua.di.impl.supplier;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.beans.BeanDefinition;
-import com.garganttua.injection.spec.IBeanProvider;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanProvider;
 
 public class DummyBeanProvider implements IBeanProvider {
 

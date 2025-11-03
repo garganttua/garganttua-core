@@ -9,12 +9,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.IInjectableBuilderRegistry;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.binder.IMethodBinder;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.injection.IInjectableBuilderRegistry;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.builder.binder.AbstractMethodBinderBuilder;
 
 public class BeanPostConstructMethodBinderBuilder<Bean> extends

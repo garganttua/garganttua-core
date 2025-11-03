@@ -1,7 +1,7 @@
-package com.garganttua.injection.spec.supplier.builder.supplier;
+package com.garganttua.core.supplying.dsl;
 
-import com.garganttua.dsl.IBuilder;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.core.dsl.IBuilder;
+import com.garganttua.core.supplying.IObjectSupplier;
 
 public interface IObjectSupplierBuilder<Supplied, Built extends IObjectSupplier<Supplied>> extends IBuilder<Built> {
 

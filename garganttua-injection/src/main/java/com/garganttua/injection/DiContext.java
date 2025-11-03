@@ -11,14 +11,16 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.beans.BeanDefinition;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.IDiChildContextFactory;
-import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.ILifecycle;
-import com.garganttua.injection.spec.IPropertyProvider;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.IDiChildContextFactory;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.lifecycle.AbstractLifecycle;
+import com.garganttua.core.lifecycle.ILifecycle;
 
 import lombok.extern.slf4j.Slf4j;
 

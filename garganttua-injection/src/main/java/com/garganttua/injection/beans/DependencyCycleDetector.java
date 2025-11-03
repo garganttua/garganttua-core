@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.injection.DiException;
+import com.garganttua.core.injection.DiException;
 
 public class DependencyCycleDetector {
 

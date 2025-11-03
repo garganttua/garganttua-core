@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.injection.DiException;
 import com.garganttua.injection.beans.BeanProvider;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 

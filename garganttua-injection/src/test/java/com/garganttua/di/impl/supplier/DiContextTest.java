@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.dsl.DslException;
 import com.garganttua.injection.Beans;
 import com.garganttua.injection.DiContext;
-import com.garganttua.injection.DiException;
 import com.garganttua.injection.Properties;
 import com.garganttua.injection.beans.Predefined;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;

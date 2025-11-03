@@ -1,10 +1,10 @@
 package com.garganttua.di.impl.supplier;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.beans.IBeanFactoryBuilder;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.IBeanProviderBuilder;
-import com.garganttua.injection.spec.IDiContextBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 
 public class DummyBeanProviderBuilder implements IBeanProviderBuilder {
 

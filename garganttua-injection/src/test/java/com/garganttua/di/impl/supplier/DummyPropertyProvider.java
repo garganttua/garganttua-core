@@ -3,8 +3,8 @@ package com.garganttua.di.impl.supplier;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IPropertyProvider;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IPropertyProvider;
 
 public class DummyPropertyProvider implements IPropertyProvider {
 

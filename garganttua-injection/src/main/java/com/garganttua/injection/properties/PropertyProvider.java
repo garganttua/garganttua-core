@@ -7,10 +7,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.garganttua.injection.AbstractLifecycle;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.ILifecycle;
-import com.garganttua.injection.spec.IPropertyProvider;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.lifecycle.AbstractLifecycle;
+import com.garganttua.core.lifecycle.ILifecycle;
 
 public class PropertyProvider extends AbstractLifecycle implements IPropertyProvider {
 

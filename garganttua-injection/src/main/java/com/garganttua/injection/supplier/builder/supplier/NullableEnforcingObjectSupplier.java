@@ -3,8 +3,8 @@ package com.garganttua.injection.supplier.builder.supplier;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.supplying.IObjectSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 

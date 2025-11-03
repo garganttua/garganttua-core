@@ -1,8 +1,8 @@
 package com.garganttua.di.impl.supplier;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IDiChildContextFactory;
-import com.garganttua.injection.spec.IDiContext;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IDiChildContextFactory;
+import com.garganttua.core.injection.IDiContext;
 
 public class DummyChildContextFactory implements IDiChildContextFactory<DummyChildContext> {
 

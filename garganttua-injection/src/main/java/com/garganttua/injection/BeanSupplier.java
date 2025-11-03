@@ -4,7 +4,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.injection.beans.BeanDefinition;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanSupplier;
 
 public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
 

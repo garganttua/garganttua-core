@@ -109,6 +109,16 @@
         <artifactId>garganttua-commons</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-lifecycle</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-supplying</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- External Dependencies -->
 
@@ -188,6 +198,24 @@
 
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>
@@ -233,5 +261,7 @@
     <module>garganttua-runtime</module>
     <module>garganttua-bindings</module>
     <module>garganttua-commons</module>
+    <module>garganttua-lifecycle</module>
+    <module>garganttua-supplying</module>
   </modules>
 </project>

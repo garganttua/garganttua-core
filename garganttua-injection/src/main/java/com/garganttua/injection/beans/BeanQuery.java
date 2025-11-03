@@ -3,8 +3,11 @@ package com.garganttua.injection.beans;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanQuery;
+import com.garganttua.core.injection.IBeanQueryBuilder;
 import com.garganttua.injection.DiContext;
-import com.garganttua.injection.DiException;
 
 public class BeanQuery<Bean> implements IBeanQuery<Bean> {
 

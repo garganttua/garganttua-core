@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.binder.IConstructorBinder;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.reflection.IConstructorBinder;
+import com.garganttua.core.supplying.IObjectSupplier;
 
 public class ConstructorBinder<Constructed>
         extends ExecutableBinder<Constructed, IDiContext>

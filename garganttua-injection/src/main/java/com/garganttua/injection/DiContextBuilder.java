@@ -10,15 +10,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.dsl.DslException;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.IDiChildContextFactory;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.injection.beans.Predefined;
-import com.garganttua.injection.spec.IBeanProvider;
-import com.garganttua.injection.spec.IBeanProviderBuilder;
-import com.garganttua.injection.spec.IDiChildContextFactory;
-import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.IPropertyProvider;
-import com.garganttua.injection.spec.IPropertyProviderBuilder;
 
 public class DiContextBuilder implements IDiContextBuilder {
 

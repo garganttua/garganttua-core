@@ -3,8 +3,8 @@ package com.garganttua.injection.supplier;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.supplying.IObjectSupplier;
 
 public class FixedObjectSupplier<Supplied> implements IObjectSupplier<Supplied> {
 

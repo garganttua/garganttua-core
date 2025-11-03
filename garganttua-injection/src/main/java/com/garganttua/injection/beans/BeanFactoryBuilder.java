@@ -16,12 +16,19 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.injection.IInjectableBuilderRegistry;
+import com.garganttua.core.injection.context.dsl.IBeanConstructorBinderBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanInjectableFieldBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.dsl.AbstractAutomaticBuilder;
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.IInjectableBuilderRegistry;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.builder.supplier.NullObjectSupplierBuilder;
 
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>

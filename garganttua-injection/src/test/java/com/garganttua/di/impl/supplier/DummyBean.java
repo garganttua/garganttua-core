@@ -4,9 +4,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.garganttua.injection.spec.beans.annotation.Property;
-import com.garganttua.injection.spec.beans.annotation.Prototype;
-import com.garganttua.injection.spec.beans.annotation.Provider;
+import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.annotations.Prototype;
+import com.garganttua.core.injection.annotations.Provider;
 
 import lombok.Getter;
 

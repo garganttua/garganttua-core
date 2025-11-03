@@ -9,11 +9,11 @@ import java.util.Set;
 
 import javax.inject.Named;
 
-import com.garganttua.injection.beans.BeanDefinition;
-import com.garganttua.injection.beans.BeanStrategy;
-import com.garganttua.injection.spec.beans.annotation.Provider;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.annotations.Provider;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class BeanBuilderFactory {
 

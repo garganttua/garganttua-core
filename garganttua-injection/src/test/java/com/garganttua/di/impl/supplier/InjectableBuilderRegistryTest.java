@@ -13,21 +13,21 @@ import javax.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IInjectableBuilderRegistry;
+import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.dsl.DslException;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.DiContext;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.IInjectableBuilderRegistry;
 import com.garganttua.injection.InjectBuilderFactory;
 import com.garganttua.injection.InjectableBuilderRegistry;
 import com.garganttua.injection.PropertyBuilderFactory;
 import com.garganttua.injection.PrototypeBuilderFactory;
 import com.garganttua.injection.SingletonBuilderFactory;
 import com.garganttua.injection.beans.Predefined;
-import com.garganttua.injection.spec.beans.annotation.Property;
-import com.garganttua.injection.spec.beans.annotation.Prototype;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class InjectableBuilderRegistryTest {

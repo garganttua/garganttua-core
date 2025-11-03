@@ -12,8 +12,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.injection.beans.BeanDefinition;
-import com.garganttua.injection.beans.BeanStrategy;
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanStrategy;
 
 public class BeanDefinitionTest {
 

@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.injection.IInjectableBuilderFactory;
+import com.garganttua.core.injection.IInjectableBuilderRegistry;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class InjectableBuilderRegistry implements IInjectableBuilderRegistry {
 

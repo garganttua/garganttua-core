@@ -4,12 +4,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.ILifecycle;
-import com.garganttua.injection.spec.IPropertyProvider;
-import com.garganttua.injection.spec.IPropertyProviderBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
+import com.garganttua.core.lifecycle.ILifecycle;
 
 public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
 

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import javax.inject.Named;
 
-import com.garganttua.injection.spec.beans.annotation.Prototype;
+import com.garganttua.core.injection.annotations.Prototype;
 
 import lombok.Getter;
 

@@ -5,10 +5,12 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.spec.beans.annotation.Property;
-import com.garganttua.injection.spec.beans.annotation.Provider;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.injection.IInjectableBuilderFactory;
+import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.annotations.Provider;
+import com.garganttua.core.injection.context.dsl.IPropertySupplierBuilder;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class PropertyBuilderFactory implements IInjectableBuilderFactory {
 

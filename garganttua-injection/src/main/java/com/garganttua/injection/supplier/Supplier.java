@@ -1,8 +1,8 @@
 package com.garganttua.injection.supplier;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IContextualObjectSupplier;
+import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.injection.supplier.builder.supplier.NullableEnforcingObjectSupplier;
 
 public class Supplier {

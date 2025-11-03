@@ -6,12 +6,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IPropertyBuilder;
+import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.dsl.DslException;
 import com.garganttua.injection.properties.PropertyProvider;
-import com.garganttua.injection.spec.IDiContextBuilder;
-import com.garganttua.injection.spec.IPropertyProvider;
-import com.garganttua.injection.spec.IPropertyProviderBuilder;
 
 public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IDiContextBuilder, IPropertyProvider> implements IPropertyProviderBuilder {
 

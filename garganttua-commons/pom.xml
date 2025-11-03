@@ -13,7 +13,6 @@
       <artifactId>garganttua-commons</artifactId>
 
       <dependencies>
-
             <dependency>
                   <groupId>org.projectlombok</groupId>
                   <artifactId>lombok</artifactId>
@@ -22,6 +21,11 @@
             <dependency>
                   <groupId>org.slf4j</groupId>
                   <artifactId>slf4j-api</artifactId>
+                  <scope>provided</scope>
+            </dependency>
+            <dependency>
+                  <groupId>org.projectlombok</groupId>
+                  <artifactId>lombok</artifactId>
                   <scope>provided</scope>
             </dependency>
       </dependencies>

@@ -3,9 +3,9 @@ package com.garganttua.injection.supplier;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
-import com.garganttua.injection.spec.supplier.ICustomContextualObjectSupply;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IContextualObjectSupplier;
+import com.garganttua.core.injection.ICustomContextualObjectSupply;
 
 public class CustomContextualObjectSupplier<Supplied, Context> implements IContextualObjectSupplier<Supplied, Context> {
 

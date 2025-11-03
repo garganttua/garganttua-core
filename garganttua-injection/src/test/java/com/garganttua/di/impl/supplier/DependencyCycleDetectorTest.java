@@ -9,7 +9,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.injection.DiException;
+import com.garganttua.core.injection.DiException;
 import com.garganttua.injection.beans.DependencyCycleDetector;
 import com.garganttua.injection.beans.DependencyGraph;
 

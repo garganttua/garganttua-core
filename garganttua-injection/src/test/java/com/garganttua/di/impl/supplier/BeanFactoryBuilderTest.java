@@ -9,14 +9,14 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.IBeanSupplier;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IBeanSupplier;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.reflection.GGReflectionException;
 import com.garganttua.injection.beans.BeanFactoryBuilder;
-import com.garganttua.injection.beans.BeanStrategy;
-import com.garganttua.injection.beans.IBeanFactoryBuilder;
 import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
-import com.garganttua.reflection.GGReflectionException;
 
 public class BeanFactoryBuilderTest {
 

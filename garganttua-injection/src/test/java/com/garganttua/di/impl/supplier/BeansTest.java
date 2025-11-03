@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.dsl.DslException;
 import com.garganttua.injection.Beans;
 import com.garganttua.injection.DiContext;
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.IDiContext;
-import com.garganttua.injection.spec.IDiContextBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

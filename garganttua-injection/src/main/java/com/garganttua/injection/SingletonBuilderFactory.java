@@ -5,9 +5,10 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.injection.beans.BeanStrategy;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.IInjectableBuilderFactory;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class SingletonBuilderFactory extends BeanBuilderFactory
         implements IInjectableBuilderFactory {

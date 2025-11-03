@@ -2,7 +2,7 @@ package com.garganttua.di.impl.supplier;
 
 import java.util.Set;
 
-import com.garganttua.dsl.DslException;
+import com.garganttua.core.dsl.DslException;
 import com.garganttua.injection.supplier.builder.binder.AbstractConstructorBinderBuilder;
 
 public class DummyConstructorBinderBuilder<TargetClass>

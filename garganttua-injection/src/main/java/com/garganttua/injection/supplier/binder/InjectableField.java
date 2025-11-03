@@ -2,12 +2,12 @@ package com.garganttua.injection.supplier.binder;
 
 import java.util.Objects;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.binder.IInjectableField;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.GGReflectionException;
+import com.garganttua.core.reflection.binders.IInjectableField;
+import com.garganttua.core.reflection.query.GGObjectQueryFactory;
+import com.garganttua.core.supplying.IObjectSupplier;
 
 public class InjectableField<OnwerType, FieldType> implements IInjectableField<OnwerType> {
 

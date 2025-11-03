@@ -2,10 +2,10 @@ package com.garganttua.injection.supplier.builder.supplier;
 
 import java.util.Objects;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
-import com.garganttua.injection.spec.supplier.ICustomContextualObjectSupply;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IContextualObjectSupplier;
+import com.garganttua.core.injection.ICustomContextualObjectSupply;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.CustomContextualObjectSupplier;
 
 public class CustomContextualObjectSupplierBuilder<Supplied, Context> implements IObjectSupplierBuilder<Supplied, IContextualObjectSupplier<Supplied, Context>> {

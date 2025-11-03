@@ -9,9 +9,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IContextualObjectSupplier;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IContextualObjectSupplier;
+import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.injection.supplier.Supplier;
 
 class SimpleSupplier implements IObjectSupplier<String> {

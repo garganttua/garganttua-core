@@ -10,8 +10,8 @@ public interface IMapper {
 
 	<destination> destination map(Object source, destination destinationObject) throws MapperException;
 
-	MappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws MapperException;
+	//MappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination) throws MapperException;
 
-	MappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination) throws MapperException;
+	//MappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination) throws MapperException;
 
 }

@@ -2,9 +2,9 @@ package com.garganttua.injection.supplier.builder.supplier;
 
 import java.util.Objects;
 
-import com.garganttua.dsl.DslException;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.FixedObjectSupplier;
 
 public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>>{

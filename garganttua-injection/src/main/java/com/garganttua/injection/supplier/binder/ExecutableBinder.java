@@ -7,9 +7,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.injection.DiException;
-import com.garganttua.injection.spec.supplier.IObjectSupplier;
-import com.garganttua.injection.spec.supplier.binder.IExecutableBinder;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.reflection.binders.IExecutableBinder;
+import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.injection.supplier.Supplier;
 
 public abstract class ExecutableBinder<Constructed, Context> implements IExecutableBinder<Constructed> {
