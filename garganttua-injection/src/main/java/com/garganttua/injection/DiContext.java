@@ -10,12 +10,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import com.garganttua.dsl.DslException;
 import com.garganttua.injection.beans.BeanDefinition;
 import com.garganttua.injection.spec.IBeanProvider;
 import com.garganttua.injection.spec.IDiChildContextFactory;
 import com.garganttua.injection.spec.IDiContext;
+import com.garganttua.injection.spec.IDiContextBuilder;
 import com.garganttua.injection.spec.ILifecycle;
 import com.garganttua.injection.spec.IPropertyProvider;
 
@@ -29,22 +30,22 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     // --- Structures internes ---
     private final Map<String, IBeanProvider> beanProviders;
-    private final List<IPropertyProvider> propertyProviders;
-    private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
+    private final Map<String, IPropertyProvider> propertyProviders;
+    private final List<IDiChildContextFactory<IDiContext>> childContextFactories;
+
+    public static IDiContextBuilder builder() throws DslException{
+        return new DiContextBuilder();
+    }
 
     // --- Constructeur ---
-    public DiContext(List<IBeanProvider> beanProviders,
-            List<IPropertyProvider> propertyProviders,
-            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
+    DiContext(Map<String, IBeanProvider> beanProviders,
+            Map<String, IPropertyProvider> propertyProviders,
+            List<IDiChildContextFactory<IDiContext>> childContextFactories) {
 
-        Objects.requireNonNull(beanProviders, "beanProviders cannot be null");
-        Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null");
+        this.beanProviders = Objects.requireNonNull(beanProviders, "beanProviders cannot be null");
+        this.propertyProviders = Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null");
         Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null");
 
-        // Création de la Map à partir de la liste
-        this.beanProviders = Collections.unmodifiableMap(
-                beanProviders.stream().collect(Collectors.toMap(IBeanProvider::getName, bp -> bp)));
-        this.propertyProviders = Collections.unmodifiableList(propertyProviders);
         this.childContextFactories = Collections.unmodifiableList(childContextFactories);
 
         context = this;
@@ -60,18 +61,18 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public Set<IPropertyProvider> getPropertyProviders() throws DiException {
         ensureInitializedAndStarted();
-        return Collections.unmodifiableSet(new HashSet<>(propertyProviders));
+        return Collections.unmodifiableSet(new HashSet<>(propertyProviders.values()));
     }
 
     @Override
-    public Set<IDiChildContextFactory<? extends IDiContext>> getChildContextFactories() throws DiException {
+    public Set<IDiChildContextFactory<IDiContext>> getChildContextFactories() throws DiException {
         ensureInitializedAndStarted();
         return Collections.unmodifiableSet(new HashSet<>(childContextFactories));
     }
 
     @Override
     public <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException {
-        if(provider.isPresent())
+        if (provider.isPresent())
             return this.getProperty(provider.get(), key, type);
         return this.getProperty(key, type);
     }
@@ -81,7 +82,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         ensureInitializedAndStarted();
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
-        return propertyProviders.stream()
+        return propertyProviders.values().stream()
                 .map(provider -> {
                     try {
                         return provider.getProperty(key, type);
@@ -101,12 +102,12 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
-        return propertyProviders.stream()
-                .filter(provider -> provider.getName().equals(providerName))
+        return propertyProviders.entrySet().stream()
+                .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
-                .flatMap(provider -> {
+                .flatMap(entry -> {
                     try {
-                        return provider.getProperty(key, type);
+                        return entry.getValue().getProperty(key, type);
                     } catch (DiException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -121,12 +122,14 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(value, "Value cannnot be null");
         ensureInitializedAndStarted();
-        propertyProviders.stream()
-                .filter(provider -> provider.getName().equals(providerName))
+        propertyProviders.entrySet().stream()
+                .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
-                .filter(IPropertyProvider::isMutable)
+                .filter(entry -> {
+                    return entry.getValue().isMutable();
+                })
                 .orElseThrow(() -> new DiException("PropertyProvider " + providerName + " not found or immutable"))
-                .setProperty(key, value);
+                .getValue().setProperty(key, value);
     }
 
     @Override
@@ -210,7 +213,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     private List<Object> getAllLifecycleObjects() {
         List<Object> objs = new ArrayList<>();
         objs.addAll(beanProviders.values());
-        objs.addAll(propertyProviders);
+        objs.addAll(propertyProviders.values());
         objs.addAll(childContextFactories);
         return objs;
     }
@@ -245,6 +248,16 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<IBeanProvider> getBeanProvider(String name) {
+        return Optional.ofNullable(this.beanProviders.get(name));
+    }
+
+    @Override
+    public Optional<IPropertyProvider> getPropertyProvider(String name) {
+        return Optional.ofNullable(this.propertyProviders.get(name));
     }
 
 }

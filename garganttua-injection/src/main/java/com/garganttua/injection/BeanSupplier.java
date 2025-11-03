@@ -18,6 +18,9 @@ public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
 
     @Override
     public Optional<Bean> getObject() throws DiException {
+        if( DiContext.context == null ){
+            throw new DiException("Context not built");
+        }
         if (this.provider.isPresent())
             return DiContext.context.queryBean(provider.get(), example);
         return DiContext.context.queryBean(example);

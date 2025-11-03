@@ -1,14 +1,11 @@
 package com.garganttua.di.impl.supplier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,13 +13,12 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiContextBuilder;
+import com.garganttua.injection.DiContext;
 import com.garganttua.injection.DiException;
 import com.garganttua.injection.PropertyBuilderFactory;
 import com.garganttua.injection.PrototypeBuilderFactory;
 import com.garganttua.injection.SingletonBuilderFactory;
-import com.garganttua.injection.beans.BeanProvider;
-import com.garganttua.injection.properties.PropertyProvider;
+import com.garganttua.injection.beans.Predefined;
 import com.garganttua.injection.spec.supplier.IObjectSupplier;
 import com.garganttua.injection.spec.supplier.builder.supplier.IObjectSupplierBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
@@ -32,13 +28,11 @@ public class InjectableBuilderFactoryTest {
     @BeforeEach
     void setUp() throws DiException, DslException {
         GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
-        PropertyProvider provider = new PropertyProvider();
-        new DiContextBuilder()
-                .beanProvider(new BeanProvider(List.of("com.garganttua")))
-                .propertyProvider(provider)
+        DiContext.builder().withPackage("com.garganttua")
+                .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+                .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+                .up()
                 .build().onInit().onStart();
-
-        provider.setProperty("com.garganttua.dummyPropertyInConstructor", "propertyValue");
     }
 
     @SuppressWarnings("unchecked")

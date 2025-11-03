@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
-import com.garganttua.core.reflection.IGGAnnotationScanner;
+import com.garganttua.core.reflection.IAnnotationScanner;
 
-public class ReflectionsAnnotationScanner implements IGGAnnotationScanner {
+public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
 	@Override
 	public List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation) {

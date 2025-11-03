@@ -6,7 +6,6 @@ import java.util.Set;
 import com.garganttua.injection.DiException;
 
 public interface IPropertyProvider extends ILifecycle {
-    String getName();
 
     <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
 

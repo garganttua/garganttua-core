@@ -9,10 +9,9 @@ import com.garganttua.injection.spec.IBeanProvider;
 
 public class DummyBeanProvider implements IBeanProvider {
 
-    private String name;
 
-    public DummyBeanProvider(String name) {
-        this.name = name;
+    public DummyBeanProvider() {
+
     }
 
     @Override
@@ -40,10 +39,6 @@ public class DummyBeanProvider implements IBeanProvider {
         return this;
     }
 
-    @Override
-    public String getName() {
-        return this.name;
-    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -55,12 +50,6 @@ public class DummyBeanProvider implements IBeanProvider {
     public <T> Optional<T> getBean(String name, Class<T> type) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getBean'");
-    }
-
-    @Override
-    public void registerBean(String name, Object bean) throws DiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'registerBean'");
     }
 
     @Override

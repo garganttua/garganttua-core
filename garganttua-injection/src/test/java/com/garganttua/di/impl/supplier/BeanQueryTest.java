@@ -1,21 +1,17 @@
 package com.garganttua.di.impl.supplier;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.dsl.DslException;
-import com.garganttua.injection.DiContextBuilder;
+import com.garganttua.injection.DiContext;
 import com.garganttua.injection.DiException;
-import com.garganttua.injection.beans.BeanProvider;
 import com.garganttua.injection.beans.BeanQuery;
 import com.garganttua.injection.beans.IBeanQueryBuilder;
-import com.garganttua.injection.properties.PropertyProvider;
+import com.garganttua.injection.beans.Predefined;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanQueryTest {
@@ -23,12 +19,10 @@ public class BeanQueryTest {
     @BeforeEach
     void setUp() throws DiException, DslException {
         GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
-        PropertyProvider provider = new PropertyProvider();
-        provider.setProperty("com.garganttua.dummyPropertyInConstructor", "propertyValue");
-
-        new DiContextBuilder()
-                .beanProvider(new BeanProvider(List.of("com.garganttua")))
-                .propertyProvider(provider)
+        DiContext.builder().withPackage("com.garganttua")
+                .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+                .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+                .up()
                 .build().onInit().onStart();
     }
 

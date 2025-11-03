@@ -4,10 +4,18 @@ import com.garganttua.dsl.IBuilder;
 
 public interface IDiContextBuilder extends IBuilder<IDiContext> {
 
-    IDiContextBuilder beanProvider(IBeanProvider provider);
+    IDiContextBuilder withPackage(String packageName);
 
-    IDiContextBuilder propertyProvider(IPropertyProvider provider);
+    IBeanProviderBuilder beanProvider(String scope, IBeanProviderBuilder provider);
 
-    IDiContextBuilder childContextFactory(IDiChildContextFactory<? extends IDiContext> instanciator);
+    IBeanProviderBuilder beanProvider(String provider);
+
+    IPropertyProviderBuilder propertyProvider(String scope, IPropertyProviderBuilder provider);
+
+    IPropertyProviderBuilder propertyProvider(String provider);
+
+    IDiContextBuilder childContextFactory(IDiChildContextFactory<IDiContext> instanciator);
+
+    IDiContextBuilder withPackages(String[] packageNames);
 
 }

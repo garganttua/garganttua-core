@@ -110,4 +110,16 @@ public class DummyDiContext implements IDiContext {
         throw new UnsupportedOperationException("Unimplemented method 'getProperty'");
     }
 
+    @Override
+    public Optional<IBeanProvider> getBeanProvider(String name) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getBeanProvider'");
+    }
+
+    @Override
+    public Optional<IPropertyProvider> getPropertyProvider(String name) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getPropertyProvider'");
+    }
+
 }

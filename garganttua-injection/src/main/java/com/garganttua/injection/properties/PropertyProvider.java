@@ -2,6 +2,7 @@ package com.garganttua.injection.properties;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,11 +14,11 @@ import com.garganttua.injection.spec.IPropertyProvider;
 
 public class PropertyProvider extends AbstractLifecycle implements IPropertyProvider {
 
-    private final Map<String, Object> properties = new ConcurrentHashMap<>();
+    private Map<String, Object> properties = new ConcurrentHashMap<>();
 
-    @Override
-    public String getName() {
-        return "garganttua";
+    public PropertyProvider(Map<String, Object> properties) {
+        Objects.requireNonNull(properties, "Property map cannot be null");
+        this.properties.putAll(properties);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
         if (value == null) {
             return Optional.empty();
         }
-
+ 
         if (!type.isInstance(value)) {
             try {
                 if (type.equals(String.class)) {
@@ -73,7 +74,6 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
 
     @Override
     protected ILifecycle doInit() throws DiException {
-        properties.clear();
         return this;
     }
 
@@ -90,7 +90,6 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
 
     @Override
     protected ILifecycle doStop() throws DiException {
-        properties.clear();
         return this;
     }
 

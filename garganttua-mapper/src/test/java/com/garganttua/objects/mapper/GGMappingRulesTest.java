@@ -1,10 +1,6 @@
 package com.garganttua.objects.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,24 +9,24 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
-import com.garganttua.objects.mapper.annotations.GGObjectMappingRule;
-import com.garganttua.objects.mapper.rules.GGMappingRule;
-import com.garganttua.objects.mapper.rules.GGMappingRules;
+import com.garganttua.core.mapper.MapperException;
+import com.garganttua.core.mapper.MappingRule;
+import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.mapper.annotations.ObjectMappingRule;
 
 class Parent {
-	@GGFieldMappingRule(sourceFieldAddress = "parent")
+	@FieldMappingRule(sourceFieldAddress = "parent")
 	private String parent;
 }
 
 class Inner {
-	@GGFieldMappingRule(sourceFieldAddress = "inner")
+	@FieldMappingRule(sourceFieldAddress = "inner")
 	private String inner;
 }
 
-@GGObjectMappingRule(fromSourceMethod = "from", toSourceMethod = "to")
+@ObjectMappingRule(fromSourceMethod = "from", toSourceMethod = "to")
 class Inner2 {
-	@GGFieldMappingRule(sourceFieldAddress = "inner")
+	@FieldMappingRule(sourceFieldAddress = "inner")
 	private String inner;
 	
 	public void from() {
@@ -42,7 +38,7 @@ class Inner2 {
 }
 
 class Destination extends Parent {
-	@GGFieldMappingRule(sourceFieldAddress = "field")
+	@FieldMappingRule(sourceFieldAddress = "field")
 	private String field;
 	
 	private Inner inner;
@@ -58,10 +54,10 @@ class Destination extends Parent {
 	private Collection<Inner> collection;
 }
 
-@GGObjectMappingRule(fromSourceMethod = "from", toSourceMethod = "to")
+@ObjectMappingRule(fromSourceMethod = "from", toSourceMethod = "to")
 class Destination2 extends Parent {
 	
-	@GGFieldMappingRule(sourceFieldAddress = "field")
+	@FieldMappingRule(sourceFieldAddress = "field")
 	private String field;
 	
 	private List<Inner2> list;
@@ -77,7 +73,7 @@ class Destination2 extends Parent {
 
 class DestinationWithMappingfromFieldThatDoesntExist{
 	
-	@GGFieldMappingRule(sourceFieldAddress = "notExists")
+	@FieldMappingRule(sourceFieldAddress = "notExists")
 	private String field;
 
 }
@@ -88,7 +84,7 @@ class Source {
 
 class DestinationWithIncorrectFromMethod{
 	
-	@GGFieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from")
+	@FieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from")
 	private String field;
 	
 	public String from(String field) {
@@ -97,7 +93,7 @@ class DestinationWithIncorrectFromMethod{
 }
 
 class DestinationWithIncorrectToMethod{
-	@GGFieldMappingRule(sourceFieldAddress = "field", toSourceMethod = "to")
+	@FieldMappingRule(sourceFieldAddress = "field", toSourceMethod = "to")
 	private String field;
 	
 	public String to(String field) {
@@ -106,14 +102,14 @@ class DestinationWithIncorrectToMethod{
 }
 
 class DestinationWithNoToMethod{
-	@GGFieldMappingRule(sourceFieldAddress = "field", toSourceMethod = "to")
+	@FieldMappingRule(sourceFieldAddress = "field", toSourceMethod = "to")
 	private String field;
 
 }
 
 class CorrectDestination {
 	
-	@GGFieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from", toSourceMethod = "to")
+	@FieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from", toSourceMethod = "to")
 	private String field;
 	
 	public String from(int field) {
@@ -125,12 +121,12 @@ class CorrectDestination {
 	}
 }
 
-class GGMappingRulesTest {
+class MappingRulesTest {
 	
 	@Test
-	void testmappingRuleOnField() throws GGMapperException {
+	void testmappingRuleOnField() throws MapperException {
 		
-		List<GGMappingRule> rules = GGMappingRules.parse(Destination.class);
+		List<MappingRule> rules = MappingRules.parse(Destination.class);
 		
 		assertEquals(7, rules.size());
 		
@@ -171,52 +167,52 @@ class GGMappingRulesTest {
 	}
 	
 	@Test
-	public void testMappingRuleOnObject() throws GGMapperException {
-		List<GGMappingRule> rules = GGMappingRules.parse(Destination2.class);
+	public void testMappingRuleOnObject() throws MapperException {
+		List<MappingRule> rules = MappingRules.parse(Destination2.class);
 		
 		assertEquals(3, rules.size());
 	}
 	
 	@Test
-	public void testValidate() throws GGMapperException {
-		List<GGMappingRule> rules = GGMappingRules.parse(CorrectDestination.class);
+	public void testValidate() throws MapperException {
+		List<MappingRule> rules = MappingRules.parse(CorrectDestination.class);
 		assertEquals(1, rules.size());
 		
 		assertDoesNotThrow(() -> {
-			GGMappingRules.validate(Source.class, rules);
+			MappingRules.validate(Source.class, rules);
 		});
 		
-		List<GGMappingRule> rules2 = GGMappingRules.parse(DestinationWithMappingfromFieldThatDoesntExist.class);
+		List<MappingRule> rules2 = MappingRules.parse(DestinationWithMappingfromFieldThatDoesntExist.class);
 		assertEquals(1, rules2.size());
 
-		GGMapperException exception = assertThrows( GGMapperException.class , () -> GGMappingRules.validate(Destination2.class, rules2));
+		MapperException exception = assertThrows( MapperException.class , () -> MappingRules.validate(Destination2.class, rules2));
 		
 		assertNotNull(exception);
-		assertEquals("com.garganttua.reflection.GGReflectionException: Object element notExists not found in class class com.garganttua.objects.mapper.Parent", exception.getMessage());
+		assertEquals("com.garganttua.reflection.ReflectionException: Object element notExists not found in class class com.garganttua.objects.mapper.Parent", exception.getMessage());
 	
-		List<GGMappingRule> rules3 = GGMappingRules.parse(DestinationWithIncorrectFromMethod.class);
+		List<MappingRule> rules3 = MappingRules.parse(DestinationWithIncorrectFromMethod.class);
 		assertEquals(1, rules3.size());
 	
-		GGMapperException exception2 = assertThrows( GGMapperException.class , () -> GGMappingRules.validate(Source.class, rules3));
+		MapperException exception2 = assertThrows( MapperException.class , () -> MappingRules.validate(Source.class, rules3));
 		
 		assertNotNull(exception2);
 		assertEquals("Invalid method from of class DestinationWithIncorrectFromMethod : parameter must be of type int", exception2.getMessage());
 
-		List<GGMappingRule> rules4 = GGMappingRules.parse(DestinationWithIncorrectToMethod.class);
+		List<MappingRule> rules4 = MappingRules.parse(DestinationWithIncorrectToMethod.class);
 		assertEquals(1, rules4.size());
 	
-		GGMapperException exception3 = assertThrows( GGMapperException.class , () -> GGMappingRules.validate(Source.class, rules4));
+		MapperException exception3 = assertThrows( MapperException.class , () -> MappingRules.validate(Source.class, rules4));
 		
 		assertNotNull(exception3);
 		assertEquals("Invalid method to of class DestinationWithIncorrectToMethod : return type must be int", exception3.getMessage());
 		
-		List<GGMappingRule> rules5 = GGMappingRules.parse(DestinationWithNoToMethod.class);
+		List<MappingRule> rules5 = MappingRules.parse(DestinationWithNoToMethod.class);
 		assertEquals(1, rules5.size());
 	
-		GGMapperException exception4 = assertThrows( GGMapperException.class , () -> GGMappingRules.validate(Source.class, rules5));
+		MapperException exception4 = assertThrows( MapperException.class , () -> MappingRules.validate(Source.class, rules5));
 		
 		assertNotNull(exception4);
-		assertEquals("com.garganttua.reflection.GGReflectionException: Object element to not found in class class com.garganttua.objects.mapper.DestinationWithNoToMethod", exception4.getMessage());
+		assertEquals("com.garganttua.reflection.ReflectionException: Object element to not found in class class com.garganttua.objects.mapper.DestinationWithNoToMethod", exception4.getMessage());
 		
 	
 	}

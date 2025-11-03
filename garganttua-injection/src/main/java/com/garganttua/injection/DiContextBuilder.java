@@ -2,54 +2,45 @@ package com.garganttua.injection;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.garganttua.dsl.DslException;
+import com.garganttua.injection.beans.Predefined;
 import com.garganttua.injection.spec.IBeanProvider;
+import com.garganttua.injection.spec.IBeanProviderBuilder;
 import com.garganttua.injection.spec.IDiChildContextFactory;
 import com.garganttua.injection.spec.IDiContext;
 import com.garganttua.injection.spec.IDiContextBuilder;
 import com.garganttua.injection.spec.IPropertyProvider;
+import com.garganttua.injection.spec.IPropertyProviderBuilder;
 
 public class DiContextBuilder implements IDiContextBuilder {
 
-    private final List<IBeanProvider> beanProviders = new ArrayList<>();
-    private final List<IPropertyProvider> propertyProviders = new ArrayList<>();
-    private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories = new ArrayList<>();
+    private final Set<String> packages = new HashSet<>();
+    private final Map<String, IBeanProviderBuilder> beanProviders = new HashMap<>();
+    private final Map<String, IPropertyProviderBuilder> propertyProviders = new HashMap<>();
+    private final List<IDiChildContextFactory<IDiContext>> childContextFactories = new ArrayList<>();
 
-    @Override
-    public IDiContextBuilder beanProvider(IBeanProvider provider) {
-        Objects.requireNonNull(provider, "BeanProvider cannot be null");
+    public static DiContextBuilder builder() throws DslException{
+        return new DiContextBuilder();
+    }
 
-        boolean exists = beanProviders.stream()
-                .anyMatch(s -> s.getName().equals(provider.getName()));
-        if (!exists) {
-            beanProviders.add(provider);
-        }
-        return this;
+    DiContextBuilder() throws DslException {
+        this.beanProviders.put(Predefined.BeanProviders.garganttua.toString(), new BeanProviderBuilder(this).autoDetect(true));
+        this.propertyProviders.put(Predefined.PropertyProviders.garganttua.toString(),
+                new PropertyProviderBuilder(this));
     }
 
     @Override
-    public IDiContextBuilder propertyProvider(IPropertyProvider provider) {
-        Objects.requireNonNull(provider, "PropertyProvider cannot be null");
-
-        boolean exists = propertyProviders.stream()
-                .anyMatch(s -> s.getName().equals(provider.getName()));
-        if (!exists) {
-            propertyProviders.add(provider);
-        }
-        return this;
-    }
-
-    @Override
-    public IDiContextBuilder childContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+    public IDiContextBuilder childContextFactory(IDiChildContextFactory<IDiContext> factory) {
         Objects.requireNonNull(factory, "ChildContextFactory cannot be null");
-
-        boolean exists = childContextFactories.stream()
-                .anyMatch(f -> f.getClass().equals(factory.getClass()));
-
-        if (!exists) {
+        if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
             childContextFactories.add(factory);
         }
         return this;
@@ -58,13 +49,88 @@ public class DiContextBuilder implements IDiContextBuilder {
     @Override
     public IDiContext build() throws DslException {
         if (beanProviders.isEmpty() && propertyProviders.isEmpty()) {
-            throw new DslException("At least one BeanProvider and PropertyProvider must be provided");
+            throw new DslException("At least one BeanProvider or PropertyProvider must be provided");
         }
 
         return new DiContext(
-                Collections.unmodifiableList(new ArrayList<>(beanProviders)),
-                Collections.unmodifiableList(new ArrayList<>(propertyProviders)),
+                this.buildBeanProviders(),
+                this.buildPropertyProviders(),
                 Collections.unmodifiableList(new ArrayList<>(childContextFactories)));
-
     }
+
+    private Map<String, IBeanProvider> buildBeanProviders()
+            throws DslException {
+        return this.beanProviders.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                            try {
+                                return entry.getValue().build();
+                            } catch (DslException e) {
+                                throw new RuntimeException("Error building BeanProvider for scope: " + entry.getKey(),
+                                        e);
+                            }
+                        }));
+    }
+
+    private Map<String, IPropertyProvider> buildPropertyProviders()
+            throws DslException {
+        return this.propertyProviders.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                            try {
+                                return entry.getValue().build();
+                            } catch (DslException e) {
+                                throw new RuntimeException("Error building BeanProvider for scope: " + entry.getKey(),
+                                        e);
+                            }
+                        }));
+    }
+
+    @Override
+    public IBeanProviderBuilder beanProvider(String scope, IBeanProviderBuilder provider) {
+        Objects.requireNonNull(scope, "Scope cannot be null");
+        Objects.requireNonNull(provider, "BeanProvider cannot be null");
+        provider.setUp(this);
+        beanProviders.put(scope, provider);
+        provider.withPackages(this.packages.stream().toArray(String[]::new));
+        return provider;
+    }
+
+    @Override
+    public IBeanProviderBuilder beanProvider(String scope) {
+        Objects.requireNonNull(scope, "Scope cannot be null");
+        return beanProviders.get(scope);
+    }
+
+    @Override
+    public IPropertyProviderBuilder propertyProvider(String scope, IPropertyProviderBuilder provider) {
+        Objects.requireNonNull(scope, "Scope cannot be null");
+        Objects.requireNonNull(provider, "PropertyProvider cannot be null");
+        provider.setUp(this);
+        propertyProviders.put(scope, provider);
+        return provider;
+    }
+
+    @Override
+    public IPropertyProviderBuilder propertyProvider(String scope) {
+        Objects.requireNonNull(scope, "Scope cannot be null");
+        return propertyProviders.get(scope);
+    }
+
+    @Override
+    public IDiContextBuilder withPackages(String[] packageNames) {
+        this.packages.addAll(Set.of(packageNames));
+        this.beanProviders.values().stream().forEach(p -> p.withPackages(packageNames));
+        return this;
+    }
+
+    @Override
+    public IDiContextBuilder withPackage(String packageName) {
+        this.packages.add(packageName);
+        this.beanProviders.values().stream().forEach(p -> p.withPackage(packageName));
+        return this;
+    }
+
 }
