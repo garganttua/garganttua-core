@@ -1,9 +1,6 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -11,9 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-
-import com.garganttua.core.injection.BeanDefinition;
-import com.garganttua.core.injection.BeanStrategy;
 
 public class BeanDefinitionTest {
 

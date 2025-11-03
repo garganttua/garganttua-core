@@ -1,4 +1,4 @@
-package com.garganttua.nativve.image.config.reflection;
+package com.garganttua.core.nativve.image.config.reflection;
 
 import java.io.File;
 import java.io.IOException;

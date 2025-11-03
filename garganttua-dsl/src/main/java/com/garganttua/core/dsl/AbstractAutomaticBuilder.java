@@ -2,9 +2,6 @@ package com.garganttua.core.dsl;
 
 import java.util.Objects;
 
-import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.IAutomaticBuilder;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

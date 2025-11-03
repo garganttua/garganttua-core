@@ -6,12 +6,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IConstructorBinder;
 import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-import com.garganttua.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.injection.supplier.binder.ConstructorBinder;
 import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
 import com.garganttua.injection.supplier.builder.supplier.NullableEnforcingObjectSupplier;

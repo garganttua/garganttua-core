@@ -1,8 +1,6 @@
-package com.garganttua.dsl;
+package com.garganttua.core.dsl;
 
 import java.util.Objects;
-
-import com.garganttua.core.dsl.ILinkedBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

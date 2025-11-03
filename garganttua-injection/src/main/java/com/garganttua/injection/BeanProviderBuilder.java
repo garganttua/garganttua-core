@@ -14,6 +14,7 @@ import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanProvider;
@@ -23,7 +24,6 @@ import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
-import com.garganttua.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.injection.beans.BeanFactoryBuilder;
 import com.garganttua.injection.beans.BeanProvider;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
