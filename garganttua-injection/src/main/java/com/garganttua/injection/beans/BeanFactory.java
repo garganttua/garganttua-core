@@ -11,7 +11,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
+import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;

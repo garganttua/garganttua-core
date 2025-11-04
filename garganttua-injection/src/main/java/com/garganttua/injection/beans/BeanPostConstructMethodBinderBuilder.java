@@ -16,9 +16,9 @@ import com.garganttua.core.injection.IInjectableBuilderRegistry;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-import com.garganttua.injection.supplier.builder.binder.AbstractMethodBinderBuilder;
 
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
         AbstractMethodBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>

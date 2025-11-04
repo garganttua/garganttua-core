@@ -1,4 +1,4 @@
-package com.garganttua.injection.supplier.builder.binder;
+package com.garganttua.core.reflection.binders.dsl;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
@@ -10,12 +10,12 @@ import com.garganttua.core.reflection.GGObjectAddress;
 import com.garganttua.core.reflection.GGReflectionException;
 import com.garganttua.core.reflection.IGGObjectQuery;
 import com.garganttua.core.reflection.binders.IInjectableField;
+import com.garganttua.core.reflection.binders.InjectableField;
 import com.garganttua.core.reflection.binders.dsl.IInjectableFieldBuilder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.GGObjectQueryFactory;
+import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-import com.garganttua.injection.supplier.binder.InjectableField;
-import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

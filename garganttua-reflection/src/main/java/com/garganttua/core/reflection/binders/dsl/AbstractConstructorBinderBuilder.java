@@ -1,4 +1,4 @@
-package com.garganttua.injection.supplier.builder.binder;
+package com.garganttua.core.reflection.binders.dsl;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -8,13 +8,12 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.reflection.IConstructorBinder;
-import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
+import com.garganttua.core.reflection.binders.ConstructorBinder;
+import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.NullableEnforcingObjectSupplier;
+import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-import com.garganttua.injection.supplier.binder.ConstructorBinder;
-import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
-import com.garganttua.injection.supplier.builder.supplier.NullableEnforcingObjectSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 

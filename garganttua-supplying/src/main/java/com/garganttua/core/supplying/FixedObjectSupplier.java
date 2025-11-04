@@ -1,10 +1,7 @@
-package com.garganttua.injection.supplier;
+package com.garganttua.core.supplying;
 
 import java.util.Objects;
 import java.util.Optional;
-
-import com.garganttua.core.injection.DiException;
-import com.garganttua.core.supplying.IObjectSupplier;
 
 public class FixedObjectSupplier<Supplied> implements IObjectSupplier<Supplied> {
 
@@ -15,13 +12,13 @@ public class FixedObjectSupplier<Supplied> implements IObjectSupplier<Supplied> 
     }
 
     @Override
-    public Optional<Supplied> getObject() throws DiException {
+    public Optional<Supplied> supply() throws SupplyException {
         return Optional.of(this.object);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Class<Supplied> getObjectClass() {
+    public Class<Supplied> getSuppliedType() {
         return (Class<Supplied>) this.object.getClass();
     }
 

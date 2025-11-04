@@ -1,20 +1,17 @@
-package com.garganttua.injection.supplier.binder;
+package com.garganttua.core.reflection.binders;
 
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Supplier;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.reflection.GGObjectAddress;
 import com.garganttua.core.reflection.GGReflectionException;
-import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.query.GGObjectQueryFactory;
 import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.injection.supplier.Supplier;
 
 public class MethodBinder<Returned>
         extends ExecutableBinder<Returned, IDiContext>

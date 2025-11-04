@@ -15,8 +15,8 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.reflection.GGReflectionException;
+import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.injection.beans.BeanFactoryBuilder;
-import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
 
 public class BeanFactoryBuilderTest {
 

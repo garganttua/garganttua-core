@@ -1,61 +1,54 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.supplying;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.core.injection.DiException;
-import com.garganttua.core.injection.IContextualObjectSupplier;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.injection.supplier.Supplier;
-
 class SimpleSupplier implements IObjectSupplier<String> {
     @Override
-    public Optional<String> getObject() {
+    public Optional<String> supply() {
         return Optional.of("Hello World");
     }
 
     @Override
-    public Class<String> getObjectClass() {
+    public Class<String> getSuppliedType() {
         return String.class;
     }
 }
 
 class ContextualSupplier implements IContextualObjectSupplier<String, Integer> {
     @Override
-    public Class<Integer> getContextClass() {
+    public Class<Integer> getOwnerContextClass() {
         return Integer.class;
     }
 
     @Override
-    public Optional<String> getObject(Integer context) {
+    public Optional<String> supply(Integer context, Object... contexts) {
         return Optional.of("Value is " + context);
     }
 
     @Override
-    public Class<String> getObjectClass() {
+    public Class<String> getSuppliedType() {
         return String.class;
     }
 }
 
 class FailingSupplier implements IContextualObjectSupplier<String, Double> {
     @Override
-    public Class<Double> getContextClass() {
+    public Class<Double> getOwnerContextClass() {
         return Double.class;
     }
 
     @Override
-    public Optional<String> getObject(Double context) {
+    public Optional<String> supply(Double context, Object... contexts) {
         return Optional.of("Double value: " + context);
     }
 
     @Override
-    public Class<String> getObjectClass() {
+    public Class<String> getSuppliedType() {
         return String.class;
     }
 }
@@ -67,7 +60,7 @@ public class SupplierTest {
     void testSimpleSupplier() throws Exception {
         SimpleSupplier supplier = new SimpleSupplier();
 
-        String result = Supplier.getObject(supplier);
+        String result = Supplier.contextualSupply(supplier);
 
         assertEquals("Hello World", result);
     }
@@ -77,7 +70,7 @@ public class SupplierTest {
     void testContextualSupplierWithContext() throws Exception {
         ContextualSupplier supplier = new ContextualSupplier();
 
-        String result = Supplier.getObject(supplier, "not an int", 42, 3.14);
+        String result = Supplier.contextualSupply(supplier, "not an int", 42, 3.14);
 
         assertEquals("Value is 42", result);
     }
@@ -87,9 +80,9 @@ public class SupplierTest {
     void testContextualSupplierWithoutContext() {
         FailingSupplier supplier = new FailingSupplier();
 
-        DiException ex = assertThrows(
-            DiException.class,
-            () -> Supplier.getObject(supplier, "string", 42)
+        SupplyException ex = assertThrows(
+            SupplyException.class,
+            () -> Supplier.contextualSupply(supplier, "string", 42)
         );
 
         assertTrue(ex.getMessage().contains("No compatible context found"));
@@ -98,7 +91,7 @@ public class SupplierTest {
     @Test
     @DisplayName("should throw DiException when supplier is null")
     void testNullSupplier() {
-        assertThrows(DiException.class, () -> Supplier.getObject(null));
+        assertThrows(SupplyException.class, () -> Supplier.contextualSupply(null));
     }
 }
 

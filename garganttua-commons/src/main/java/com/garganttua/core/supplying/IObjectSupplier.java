@@ -4,8 +4,8 @@ import java.util.Optional;
 
 public interface IObjectSupplier<Supplied> {
 
-    Optional<Supplied> getObject() throws SupplyException;
+    Optional<Supplied> supply() throws SupplyException;
 
-    Class<Supplied> getObjectClass();
+    Class<Supplied> getSuppliedType();
 
 }

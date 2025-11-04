@@ -3,9 +3,9 @@ package com.garganttua.injection.supplier.builder.supplier;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IContextualObjectSupplier;
 import com.garganttua.core.injection.IContextualObjectSupply;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.supplying.IContextualObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.supplier.ContextualObjectSupplier;
 

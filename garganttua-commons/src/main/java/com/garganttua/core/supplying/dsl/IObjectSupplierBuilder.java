@@ -5,6 +5,6 @@ import com.garganttua.core.supplying.IObjectSupplier;
 
 public interface IObjectSupplierBuilder<Supplied, Built extends IObjectSupplier<Supplied>> extends IBuilder<Built> {
 
-    Class<Supplied> getObjectClass();
+    Class<Supplied> getSuppliedType();
 
 }

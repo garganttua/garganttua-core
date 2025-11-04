@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflection.IConstructorBinder;
-import com.garganttua.injection.supplier.builder.binder.AbstractConstructorBinderBuilder;
-import com.garganttua.injection.supplier.builder.supplier.FixedObjectSupplierBuilder;
-import com.garganttua.injection.supplier.builder.supplier.NullObjectSupplierBuilder;
+import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
+import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
+import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
 
 public class ConstructorBinderBuilderTest {
 

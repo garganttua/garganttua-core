@@ -12,9 +12,9 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IInjectableBuilderRegistry;
 import com.garganttua.core.injection.context.dsl.IBeanConstructorBinderBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
+import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-import com.garganttua.injection.supplier.builder.binder.AbstractConstructorBinderBuilder;
 
 public class BeanConstructorBinderBuilder<Bean> extends
         AbstractConstructorBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>

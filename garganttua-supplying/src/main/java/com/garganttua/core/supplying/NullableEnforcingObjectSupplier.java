@@ -1,21 +1,18 @@
-package com.garganttua.injection.supplier.builder.supplier;
+package com.garganttua.core.supplying;
 
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.injection.DiException;
-import com.garganttua.core.supplying.IObjectSupplier;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class NullableEnforcingObjectSupplier<T> implements IObjectSupplier<T> {
-    private final IObjectSupplier<T> delegate;
+public class NullableEnforcingObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType> {
+    private final IObjectSupplier<SuppliedType> delegate;
     private final boolean allowNull;
     private final int index;
     private final String methodName;
 
-    public NullableEnforcingObjectSupplier(IObjectSupplier<T> delegate, boolean allowNull, int index, String methodName) {
+    public NullableEnforcingObjectSupplier(IObjectSupplier<SuppliedType> delegate, boolean allowNull, int index, String methodName) {
         this.delegate = Objects.requireNonNull(delegate);
         this.allowNull = allowNull;
         this.index = index;
@@ -23,20 +20,20 @@ public class NullableEnforcingObjectSupplier<T> implements IObjectSupplier<T> {
     }
 
     @Override
-    public Optional<T> getObject() throws DiException {
-        Optional<T> o = delegate.getObject();
+    public Optional<SuppliedType> supply() throws SupplyException {
+        Optional<SuppliedType> o = delegate.supply();
         if (!allowNull && (o == null || !o.isPresent())) {
             String msg = String.format(
                     "Supplier for parameter %d of method %s returned null but parameter is not nullable", index,
                     methodName);
             log.atError().log("[MethodBinderBuilder] " + msg);
-            throw new DiException(msg);
+            throw new SupplyException(msg);
         }
         return o == null ? Optional.empty() : o;
     }
 
     @Override
-    public Class<T> getObjectClass() {
-        return delegate.getObjectClass();
+    public Class<SuppliedType> getSuppliedType() {
+        return delegate.getSuppliedType();
     }
 }

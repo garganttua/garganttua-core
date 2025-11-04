@@ -3,7 +3,7 @@ package com.garganttua.di.impl.supplier;
 import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.injection.supplier.builder.binder.AbstractConstructorBinderBuilder;
+import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 
 public class DummyConstructorBinderBuilder<TargetClass>
         extends AbstractConstructorBinderBuilder<TargetClass, DummyConstructorBinderBuilder<TargetClass>, Object> {

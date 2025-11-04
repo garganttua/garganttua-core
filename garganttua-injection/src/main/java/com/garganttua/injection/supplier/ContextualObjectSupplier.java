@@ -4,9 +4,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.injection.IContextualObjectSupplier;
 import com.garganttua.core.injection.IContextualObjectSupply;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.supplying.IContextualObjectSupplier;
+import com.garganttua.core.supplying.SupplyException;
 
 public class ContextualObjectSupplier<Supplied> implements IContextualObjectSupplier<Supplied, IDiContext> {
 
@@ -19,7 +20,7 @@ public class ContextualObjectSupplier<Supplied> implements IContextualObjectSupp
     }
 
     @Override
-    public Optional<Supplied> getObject(IDiContext context) throws DiException {
+    public Optional<Supplied> getObject(IDiContext context) throws SupplyException {
         Objects.requireNonNull(context, "Context cannot be null");
         return this.supply.supplyObject(context);
     }

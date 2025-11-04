@@ -1,11 +1,10 @@
-package com.garganttua.injection.supplier.builder.supplier;
+package com.garganttua.core.supplying.dsl;
 
 import java.util.Objects;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supplying.FixedObjectSupplier;
 import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-import com.garganttua.injection.supplier.FixedObjectSupplier;
 
 public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>>{
 
@@ -22,7 +21,7 @@ public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuil
 
     @SuppressWarnings("unchecked")
     @Override
-    public Class<Supplied> getObjectClass() {
+    public Class<Supplied> getSuppliedType() {
         return (Class<Supplied>) this.object.getClass();
     }
 

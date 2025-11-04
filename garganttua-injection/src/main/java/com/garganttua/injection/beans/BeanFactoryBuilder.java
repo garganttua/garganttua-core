@@ -28,8 +28,8 @@ import com.garganttua.core.injection.context.dsl.IBeanInjectableFieldBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
 import com.garganttua.dsl.AbstractAutomaticBuilder;
-import com.garganttua.injection.supplier.builder.supplier.NullObjectSupplierBuilder;
 
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {

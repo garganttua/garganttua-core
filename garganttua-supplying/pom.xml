@@ -12,4 +12,11 @@
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-supplying</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-commons</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

@@ -8,6 +8,4 @@ public interface IExecutableBinder<ExecutionReturn> extends Dependent {
 
     Optional<ExecutionReturn> execute() throws ReflectionException;
 
-    /* Optional<ExecutionReturn> execute(IDiContext context)
-            throws ReflectionException; */
 }
