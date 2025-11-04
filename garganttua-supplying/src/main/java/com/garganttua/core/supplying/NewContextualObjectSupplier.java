@@ -6,23 +6,20 @@ import java.util.Optional;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
 
-public class NewContextualObjectSupplier<SuppliedType, OwnerContextType>
-        implements IContextualObjectSupplier<SuppliedType, OwnerContextType> {
+public class NewContextualObjectSupplier<SuppliedType>
+        implements IContextualObjectSupplier<SuppliedType, Void> {
 
     private Class<SuppliedType> suppliedType;
-    private IContextualConstructorBinder<SuppliedType, OwnerContextType> constructorBinder;
-    private Class<OwnerContextType> ownerContextType;
+    private IContextualConstructorBinder<SuppliedType> constructorBinder;
 
     public NewContextualObjectSupplier(Class<SuppliedType> suppliedType,
-            IContextualConstructorBinder<SuppliedType, OwnerContextType> constructorBinder,
-            Class<OwnerContextType> ownerContextType) {
+            IContextualConstructorBinder<SuppliedType> constructorBinder) {
         this.constructorBinder = constructorBinder;
         this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
-        this.ownerContextType = Objects.requireNonNull(ownerContextType, "Owner context type cannot be null");
     }
 
     @Override
-    public Optional<SuppliedType> supply(OwnerContextType ownerContext, Object... contexts)
+    public Optional<SuppliedType> supply(Void ownerContext, Object... contexts)
             throws SupplyException {
         Objects.requireNonNull(ownerContext, "Owner cannot be null");
         try {
@@ -38,8 +35,9 @@ public class NewContextualObjectSupplier<SuppliedType, OwnerContextType>
     }
 
     @Override
-    public Class<OwnerContextType> getOwnerContextClass() {
-        return this.ownerContextType;
+    public Class<Void> getOwnerContextType() {
+        return Void.class;
     }
+
 
 }

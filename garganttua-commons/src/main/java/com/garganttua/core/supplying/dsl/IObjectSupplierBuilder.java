@@ -7,4 +7,6 @@ public interface IObjectSupplierBuilder<Supplied, Built extends IObjectSupplier<
 
     Class<Supplied> getSuppliedType();
 
+    boolean isContextual();
+
 }

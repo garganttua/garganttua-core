@@ -20,7 +20,7 @@ import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractInjectableFieldBuilder<FieldType, OwnerType, Link>
+public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Link>
         extends
         AbstractLinkedBuilder<Link, IInjectableField<OwnerType>>
         implements IInjectableFieldBuilder<FieldType, OwnerType, Link> {
@@ -44,7 +44,7 @@ public abstract class AbstractInjectableFieldBuilder<FieldType, OwnerType, Link>
 
     protected Class<FieldType> fieldType;
 
-    protected AbstractInjectableFieldBuilder(Link link, Class<OwnerType> ownerType, Class<FieldType> fieldType) {
+    protected AbstractFieldBinderBuilder(Link link, Class<OwnerType> ownerType, Class<FieldType> fieldType) {
         super(link);
         this.ownerType = Objects.requireNonNull(ownerType, "OwnerType Type cannot be null");
         this.fieldType = Objects.requireNonNull(fieldType, "Field Type cannot be null");

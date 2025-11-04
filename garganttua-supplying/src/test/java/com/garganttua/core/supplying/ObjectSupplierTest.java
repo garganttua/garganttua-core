@@ -39,6 +39,12 @@ public class ObjectSupplierTest {
                 return String.class;
             }
 
+            @Override
+            public boolean isContextual() {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException("Unimplemented method 'isContextual'");
+            }
+
         };
 
         IObjectSupplier<String> supplier = (IObjectSupplier<String>) b.build();

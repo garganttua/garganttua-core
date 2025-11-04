@@ -6,7 +6,8 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.supplying.FixedObjectSupplier;
 import com.garganttua.core.supplying.IObjectSupplier;
 
-public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>>{
+public class FixedObjectSupplierBuilder<Supplied>
+        implements IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>> {
 
     private Supplied object;
 
@@ -27,6 +28,11 @@ public class FixedObjectSupplierBuilder<Supplied> implements IObjectSupplierBuil
 
     public static <Supplied> IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>> of(Supplied object) {
         return new FixedObjectSupplierBuilder<>(object);
+    }
+
+    @Override
+    public boolean isContextual() {
+        return false;
     }
 
 }

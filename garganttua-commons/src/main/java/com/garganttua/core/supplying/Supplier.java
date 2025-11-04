@@ -3,8 +3,7 @@ package com.garganttua.core.supplying;
 public class Supplier {
 
     @SuppressWarnings("unchecked")
-    public static <Supplied> Supplied contextualSupply(IObjectSupplier<Supplied> supplier, Object... contexts)
-            throws SupplyException {
+    public static <Supplied> Supplied contextualSupply(IObjectSupplier<Supplied> supplier, Object... contexts) throws SupplyException{
 
         if (supplier == null) {
             throw new SupplyException("Supplier cannot be null");
@@ -18,7 +17,7 @@ public class Supplier {
             Object matchingContext = null;
             if (contexts != null) {
                 for (Object ctx : contexts) {
-                    if (ctx != null && contextual.getOwnerContextClass().isAssignableFrom(ctx.getClass())) {
+                    if (ctx != null && contextual.getOwnerContextType().isAssignableFrom(ctx.getClass())) {
                         matchingContext = ctx;
                         break;
                     }
@@ -27,7 +26,7 @@ public class Supplier {
 
             if (matchingContext == null) {
                 throw new SupplyException(
-                        "No compatible context found for supplier expecting " + contextual.getOwnerContextClass().getName());
+                        "No compatible context found for supplier expecting " + contextual.getOwnerContextType().getName());
             }
 
             obj = contextual.supply(matchingContext, contexts).orElse(null);

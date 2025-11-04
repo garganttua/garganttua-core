@@ -29,4 +29,9 @@ public class ContextualObjectSupplierBuilder<Supplied, Context> implements IObje
         return new ContextualObjectSupplier<>(this.supply, this.suppliedType, this.contextType);
     }
 
+    @Override
+    public boolean isContextual() {
+        return true;
+    }
+
 }

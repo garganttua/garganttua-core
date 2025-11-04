@@ -6,10 +6,10 @@ public interface IContextualObjectSupplier<Supplied, Context> extends IObjectSup
 
     @Override
     default Optional<Supplied> supply() throws SupplyException {
-        throw new SupplyException("Owner context of type "+getOwnerContextClass().getSimpleName()+" required for this supplier");
+        throw new SupplyException("Owner context of type "+getOwnerContextType().getSimpleName()+" required for this supplier");
     }
 
-    Class<Context> getOwnerContextClass();
+    Class<Context> getOwnerContextType();
 
     Optional<Supplied> supply(Context ownerContext, Object... otherContexts) throws SupplyException;
 

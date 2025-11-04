@@ -22,7 +22,7 @@ public class ContextualObjectSupplier<Supplied, Context> implements IContextualO
     }
 
     @Override
-    public Class<Context> getOwnerContextClass() {
+    public Class<Context> getOwnerContextType() {
         return this.contextType;
     }
 

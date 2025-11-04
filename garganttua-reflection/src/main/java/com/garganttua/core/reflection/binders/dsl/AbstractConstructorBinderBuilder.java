@@ -9,10 +9,9 @@ import java.util.Objects;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.ConstructorBinder;
+import com.garganttua.core.reflection.binders.ContextualConstructorBinder;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.NullableEnforcingObjectSupplier;
-import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +34,19 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
 
     protected abstract Builder getBuilder();
 
+    protected abstract IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplier<?> iObjectSupplier,
+            boolean equals, int i, String name);
+
+    protected abstract IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply);
+
+    private boolean buildContextual() {
+        return this.parameters.stream().filter(param -> param.isContextual()).findFirst().isPresent();
+    }
+
     @Override
     public Builder withParam(int i, Object parameter) throws DslException {
         ensureCapacity(i);
-        this.parameters.set(i, new FixedObjectSupplierBuilder<>(parameter));
+        this.parameters.set(i, this.createFixedObjectSupplierBuilder(parameter));
         this.parameterNullableAllowed.set(i, false);
         return this.getBuilder();
     }
@@ -54,7 +62,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     @Override
     public Builder withParam(int i, Object parameter, boolean acceptNullable) throws DslException {
         ensureCapacity(i);
-        this.parameters.set(i, new FixedObjectSupplierBuilder<>(parameter));
+        this.parameters.set(i, this.createFixedObjectSupplierBuilder(parameter));
         this.parameterNullableAllowed.set(i, acceptNullable);
         return this.getBuilder();
     }
@@ -125,7 +133,6 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
             log.atTrace().log("[ConstructorBinderBuilder] No parameters provided, searching for default constructor");
             try {
                 Constructor<Constructed> defaultCtor = objectClass.getDeclaredConstructor();
-                defaultCtor.setAccessible(true);
                 return new ConstructorBinder<Constructed>(objectClass, defaultCtor, Collections.emptyList());
             } catch (NoSuchMethodException e) {
                 throw new DslException(
@@ -140,13 +147,11 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
                 log.atWarn().log("[ConstructorBinderBuilder] Parameter {} not configured", i);
                 throw new DslException("Parameter " + i + " not configured");
             }
-            IObjectSupplier<?> nullable = new NullableEnforcingObjectSupplier<>(
-                    builder.build(),
+
+            builtsuppliers.add(this.createNullableObjectSupplier(builder.build(),
                     Boolean.TRUE.equals(parameterNullableAllowed.get(i)),
                     i,
-                    objectClass.getName());
-
-            builtsuppliers.add(nullable);
+                    objectClass.getName()));
         }
 
         Constructor<Constructed> matchedConstructor = findMatchingConstructor();
@@ -160,14 +165,15 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         log.atInfo().log("[ConstructorBinderBuilder] Matched constructor {}({})",
                 objectClass.getSimpleName(), formatTypes(this.getParameterTypes()));
 
+        if (this.buildContextual())
+            return new ContextualConstructorBinder<Constructed>(objectClass, matchedConstructor, builtsuppliers);
         return new ConstructorBinder<Constructed>(objectClass, matchedConstructor, builtsuppliers);
     }
 
     protected Class<?>[] getParameterTypes() {
-        return this.parameters.stream().map(IObjectSupplierBuilder::getObjectClass).toArray(Class<?>[]::new);
+        return this.parameters.stream().map(IObjectSupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
     }
 
-    @SuppressWarnings("unchecked")
     protected Constructor<Constructed> findMatchingConstructor() {
         Class<?>[] paramTypes = this.getParameterTypes();
         Constructor<Constructed>[] constructors = (Constructor<Constructed>[]) objectClass.getDeclaredConstructors();

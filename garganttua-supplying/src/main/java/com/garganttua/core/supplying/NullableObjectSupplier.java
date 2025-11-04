@@ -6,13 +6,13 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class NullableEnforcingObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType> {
+public class NullableObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType> {
     private final IObjectSupplier<SuppliedType> delegate;
     private final boolean allowNull;
     private final int index;
     private final String methodName;
 
-    public NullableEnforcingObjectSupplier(IObjectSupplier<SuppliedType> delegate, boolean allowNull, int index, String methodName) {
+    public NullableObjectSupplier(IObjectSupplier<SuppliedType> delegate, boolean allowNull, int index, String methodName) {
         this.delegate = Objects.requireNonNull(delegate);
         this.allowNull = allowNull;
         this.index = index;

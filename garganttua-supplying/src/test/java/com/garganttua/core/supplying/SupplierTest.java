@@ -21,7 +21,7 @@ class SimpleSupplier implements IObjectSupplier<String> {
 
 class ContextualSupplier implements IContextualObjectSupplier<String, Integer> {
     @Override
-    public Class<Integer> getOwnerContextClass() {
+    public Class<Integer> getOwnerContextType() {
         return Integer.class;
     }
 
@@ -38,7 +38,7 @@ class ContextualSupplier implements IContextualObjectSupplier<String, Integer> {
 
 class FailingSupplier implements IContextualObjectSupplier<String, Double> {
     @Override
-    public Class<Double> getOwnerContextClass() {
+    public Class<Double> getOwnerContextType() {
         return Double.class;
     }
 

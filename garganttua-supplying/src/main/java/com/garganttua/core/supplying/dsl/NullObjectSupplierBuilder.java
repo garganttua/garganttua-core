@@ -3,7 +3,8 @@ package com.garganttua.core.supplying.dsl;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.supplying.NullObjectSupplier;
 
-public class NullObjectSupplierBuilder<SuppliedType> implements IObjectSupplierBuilder<SuppliedType, NullObjectSupplier<SuppliedType>>{
+public class NullObjectSupplierBuilder<SuppliedType>
+        implements IObjectSupplierBuilder<SuppliedType, NullObjectSupplier<SuppliedType>> {
 
     private Class<SuppliedType> class1;
 
@@ -19,6 +20,11 @@ public class NullObjectSupplierBuilder<SuppliedType> implements IObjectSupplierB
     @Override
     public Class<SuppliedType> getSuppliedType() {
         return this.class1;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return false;
     }
 
 }

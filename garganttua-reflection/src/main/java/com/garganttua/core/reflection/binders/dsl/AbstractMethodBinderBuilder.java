@@ -9,17 +9,16 @@ import java.util.Objects;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.reflection.GGObjectAddress;
-import com.garganttua.core.reflection.GGReflectionException;
-import com.garganttua.core.reflection.IGGObjectQuery;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.binders.ContextualMethodBinder;
+import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
-import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.reflection.methods.MethodResolver;
-import com.garganttua.core.reflection.query.GGObjectQueryFactory;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.NullableEnforcingObjectSupplier;
-import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +29,19 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, IMethodBinder<ExecutionReturn>> {
 
     private IObjectSupplierBuilder<?, ?> supplier;
-    private GGObjectAddress method = null;
+    private ObjectAddress method = null;
     private List<IObjectSupplierBuilder<?, ?>> parameters;
     private List<Boolean> parameterNullableAllowed;
     private Class<?>[] parameterTypes;
 
-    protected abstract Builder getReturned();
+    protected abstract Builder getBuilder();
 
-    private IGGObjectQuery objectQuery;
+    protected abstract IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplier<?> iObjectSupplier,
+            boolean equals, int i, String name);
+
+    protected abstract IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply);
+
+    private IObjectQuery objectQuery;
     private boolean collection = false;
     private Class<ExecutionReturn> returnedType;
 
@@ -52,12 +56,18 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
         this.collection = collection;
         try {
-            this.objectQuery = GGObjectQueryFactory.objectQuery(this.supplier.getObjectClass());
-        } catch (GGReflectionException e) {
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.supplier.getSuppliedType());
+        } catch (ReflectionException e) {
             log.atError().log("[MethodBinderBuilder] Error creating objectQuery for class {}",
-                    this.supplier.getObjectClass(), e);
+                    this.supplier.getSuppliedType(), e);
             throw new DslException(e.getMessage(), e);
         }
+    }
+
+    private boolean buildContextual() {
+        if (this.supplier.isContextual())
+            return true;
+        return this.parameters.stream().filter(param -> param.isContextual()).findFirst().isPresent();
     }
 
     public String getMethodName() {
@@ -68,7 +78,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     public Builder withReturn(Class<ExecutionReturn> returnedType) throws DslException {
         this.returnedType = Objects.requireNonNull(returnedType, "Returned type cannot be null");
 
-        return this.getReturned();
+        return this.getBuilder();
     }
 
     @Override
@@ -76,34 +86,34 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         if (this.method == null) {
             throw new DslException("Method must be set");
         }
-        return this.getReturned();
+        return this.getBuilder();
     }
 
     @Override
     public Builder method(Method method) throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method {} in class {}", method.getName(),
-                this.supplier.getObjectClass());
+                this.supplier.getSuppliedType());
 
         try {
-            this.method = MethodResolver.methodByMethod(method, this.supplier.getObjectClass());
+            this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedType());
             this.initParameters();
-            return this.getReturned();
-        } catch (DiException e) {
+            return this.getBuilder();
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
     }
 
     @Override
-    public Builder method(GGObjectAddress methodAddress) throws DslException {
+    public Builder method(ObjectAddress methodAddress) throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method by address={} in class {}", methodAddress,
-                this.supplier.getObjectClass());
+                this.supplier.getSuppliedType());
 
         try {
             this.method = MethodResolver.methodByAddress(methodAddress, this.objectQuery,
-                    this.supplier.getObjectClass());
+                    this.supplier.getSuppliedType());
             this.initParameters();
-            return this.getReturned();
-        } catch (DiException e) {
+            return this.getBuilder();
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
     }
@@ -111,13 +121,13 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     @Override
     public Builder method(String methodName) throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method by name={} in class {}", methodName,
-                this.supplier.getObjectClass());
+                this.supplier.getSuppliedType());
 
         try {
-            this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getObjectClass());
+            this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getSuppliedType());
             this.initParameters();
-            return this.getReturned();
-        } catch (DiException e) {
+            return this.getBuilder();
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
     }
@@ -126,31 +136,31 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     public Builder method(Method method, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
             throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method {} with returnType={} in class {}",
-                method.getName(), returnType, this.supplier.getObjectClass());
+                method.getName(), returnType, this.supplier.getSuppliedType());
 
         try {
-            this.method = MethodResolver.methodByMethod(method, this.supplier.getObjectClass(), returnType,
+            this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedType(), returnType,
                     parameterTypes);
             this.initParameters();
-            return this.getReturned();
-        } catch (DiException e) {
+            return this.getBuilder();
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
     }
 
     @Override
-    public Builder method(GGObjectAddress methodAddress, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
+    public Builder method(ObjectAddress methodAddress, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
             throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method by address={} with returnType={} in class {}",
-                methodAddress, returnType, this.supplier.getObjectClass());
+                methodAddress, returnType, this.supplier.getSuppliedType());
 
         try {
             this.method = MethodResolver.methodByAddress(methodAddress, this.objectQuery,
-                    this.supplier.getObjectClass(),
+                    this.supplier.getSuppliedType(),
                     returnType, parameterTypes);
             this.initParameters();
-            return this.getReturned();
-        } catch (DiException e) {
+            return this.getBuilder();
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
     }
@@ -159,14 +169,14 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     public Builder method(String methodName, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
             throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method by name={} with returnType={} in class {}",
-                methodName, returnType, this.supplier.getObjectClass());
+                methodName, returnType, this.supplier.getSuppliedType());
 
         try {
-            this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getObjectClass(),
+            this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getSuppliedType(),
                     returnType, parameterTypes);
             this.initParameters();
-            return this.getReturned();
-        } catch (DiException e) {
+            return this.getBuilder();
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
     }
@@ -185,7 +195,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
             log.atInfo().log("[MethodBinderBuilder] Successfully bound method {} with {} parameters",
                     getMethodName(), this.parameterTypes.length);
-        } catch (GGReflectionException e) {
+        } catch (ReflectionException e) {
             log.atError().log("[MethodBinderBuilder] Error initializing parameters for method {}", getMethodName(), e);
             throw new DslException(e.getMessage(), e);
         }
@@ -226,18 +236,18 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                             + " and cannot be assigned a value of type " + object.getClass().getName());
         }
 
-        this.parameters.set(i, new FixedObjectSupplierBuilder<>(object));
+        this.parameters.set(i, this.createFixedObjectSupplierBuilder(object));
 
         this.parameterNullableAllowed.set(i, acceptNullable);
         log.atInfo().log("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
                 object.getClass(), acceptNullable);
-        return this.getReturned();
+        return this.getBuilder();
     }
 
     @Override
     public Builder withParam(int i, IObjectSupplierBuilder<?, ?> object, boolean acceptNullable) throws DslException {
         log.atTrace().log("[MethodBinderBuilder] Binding parameter {} with supplier of type {} (acceptNullable={})", i,
-                object == null ? "null" : object.getObjectClass(), acceptNullable);
+                object == null ? "null" : object.getSuppliedType(), acceptNullable);
         Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
         Objects.requireNonNull(object, "Supplier cannot be null");
 
@@ -247,7 +257,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                     "Method " + getMethodName() + " has only " + this.parameterTypes.length + " parameters");
         }
         // type check using supplier declared class
-        Class<?> suppliedClass = object.getObjectClass();
+        Class<?> suppliedClass = object.getSuppliedType();
         if (suppliedClass == null) {
             log.atWarn().log("[MethodBinderBuilder] Supplier.getObjectClass() returned null for parameter {}", i);
             throw new DslException(
@@ -267,7 +277,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         log.atInfo().log(
                 "[MethodBinderBuilder] Parameter {} bound successfully with supplier type {} (acceptNullable={})", i,
                 suppliedClass, acceptNullable);
-        return this.getReturned();
+        return this.getBuilder();
     }
 
     @Override
@@ -288,7 +298,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         Method m;
         try {
             m = (Method) this.objectQuery.find(this.method).getLast();
-        } catch (GGReflectionException e) {
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
 
@@ -319,7 +329,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         Method m;
         try {
             m = (Method) this.objectQuery.find(this.method).getLast();
-        } catch (GGReflectionException e) {
+        } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
 
@@ -399,13 +409,6 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return valid;
     }
 
-    protected MethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
-            IObjectSupplierBuilder<?, ?> supplier)
-            throws DslException {
-        return new MethodBinder<ExecutionReturn>(supplier.build(), this.method, builtParameterSuppliers,
-                this.returnedType, this.collection);
-    }
-
     protected List<IObjectSupplier<?>> getBuiltParameterSuppliers() throws DslException {
         List<IObjectSupplier<?>> builtParameterSuppliers = new ArrayList<>(this.parameters.size());
         for (int i = 0; i < this.parameters.size(); i++) {
@@ -426,7 +429,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             }
             boolean allowNull = Boolean.TRUE.equals(this.parameterNullableAllowed.get(i));
             builtParameterSuppliers
-                    .add(new NullableEnforcingObjectSupplier<>(supplierInstance, allowNull, i, getMethodName()));
+                    .add(this.createNullableObjectSupplier(supplierInstance, allowNull, i, getMethodName()));
         }
         return builtParameterSuppliers;
     }
@@ -437,7 +440,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         }
         try {
             return (Method) this.objectQuery.find(this.method).getLast();
-        } catch (GGReflectionException e) {
+        } catch (ReflectionException e) {
             throw new DiException(e.getMessage(), e);
         }
     }
@@ -452,10 +455,26 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
         List<IObjectSupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
 
+        if (this.buildContextual())
+            return this.createContextualBinder(builtParameterSuppliers, this.supplier);
         return this.createBinder(builtParameterSuppliers, this.supplier);
     }
 
+    protected IContextualMethodBinder<ExecutionReturn, ?> createContextualBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
+            IObjectSupplierBuilder<?, ?> supplier)
+            throws DslException {
+        return new ContextualMethodBinder<>(supplier.build(), this.method, builtParameterSuppliers,
+                this.returnedType, this.collection);
+    }
+
+    protected IMethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
+            IObjectSupplierBuilder<?, ?> supplier)
+            throws DslException {
+        return new MethodBinder<>(supplier.build(), this.method, builtParameterSuppliers,
+                this.returnedType, this.collection);
+    }
+
     protected Class<?>[] getParameterTypes() {
-        return this.parameters.stream().map(IObjectSupplierBuilder::getObjectClass).toArray(Class<?>[]::new);
+        return this.parameters.stream().map(IObjectSupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
     }
 }
