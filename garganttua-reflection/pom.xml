@@ -21,6 +21,10 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-supplying</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflections</artifactId>
 			<scope>test</scope>
 		</dependency>

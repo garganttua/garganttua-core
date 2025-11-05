@@ -36,11 +36,6 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     protected abstract Builder getBuilder();
 
-    protected abstract IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplier<?> iObjectSupplier,
-            boolean equals, int i, String name);
-
-    protected abstract IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply);
-
     private IObjectQuery objectQuery;
     private boolean collection = false;
     private Class<ExecutionReturn> returnedType;
@@ -236,7 +231,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                             + " and cannot be assigned a value of type " + object.getClass().getName());
         }
 
-        this.parameters.set(i, this.createFixedObjectSupplierBuilder(object));
+        this.parameters.set(i, AbstractConstructorBinderBuilder.createFixedObjectSupplierBuilder(object));
 
         this.parameterNullableAllowed.set(i, acceptNullable);
         log.atInfo().log("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
@@ -419,17 +414,9 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                 throw new DslException(
                         "Parameter " + i + " not configured for method " + getMethodName());
             }
-            IObjectSupplier<?> supplierInstance;
-            try {
-                supplierInstance = builder.build();
-            } catch (DslException e) {
-                log.atError().log("[MethodBinderBuilder] Error building supplier for parameter {} of method {}", i,
-                        getMethodName(), e);
-                throw e;
-            }
             boolean allowNull = Boolean.TRUE.equals(this.parameterNullableAllowed.get(i));
             builtParameterSuppliers
-                    .add(this.createNullableObjectSupplier(supplierInstance, allowNull, i, getMethodName()));
+                    .add(AbstractConstructorBinderBuilder.createNullableObjectSupplier(builder, allowNull, i, getMethodName()));
         }
         return builtParameterSuppliers;
     }

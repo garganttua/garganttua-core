@@ -12,48 +12,44 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
 
     private ObjectAddress address;
     private IObjectSupplier<?> valueSupplier;
-    private Class<OnwerType> ownerType;
-    @SuppressWarnings("unused")
-    private Class<FieldType> fieldType;
+    private IObjectSupplier<OnwerType> ownerSupplier;
 
-    public FieldBinder(Class<FieldType> fieldType, Class<OnwerType> ownerType, ObjectAddress address,
-            IObjectSupplier<?> valueSupplier) {
+    public FieldBinder(IObjectSupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
+            IObjectSupplier<FieldType> valueSupplier) {
         this.address = Objects.requireNonNull(address, "Address cannot be null");
         this.valueSupplier = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
-        this.ownerType = Objects.requireNonNull(ownerType, "Owner type cannot be null");
-        this.fieldType = Objects.requireNonNull(fieldType, "Field type cannot be null");
+        this.ownerSupplier = Objects.requireNonNull(ownerSupplier, "Owner supplier cannot be null");
     }
 
     @Override
-    public void setValue(IObjectSupplier<OnwerType> ownerSupplier) throws ReflectionException {
-        Objects.requireNonNull(ownerSupplier, "Owner supplier cannot be null");
+    public void setValue() throws ReflectionException {
         try {
-            if (ownerSupplier.supply().isEmpty()) {
+            if (this.ownerSupplier.supply().isEmpty()) {
                 throw new ReflectionException("Owner supplier did not supply any object");
             }
             if (this.valueSupplier.supply().isEmpty()) {
                 throw new ReflectionException("Value supplier did not supply any object");
             }
 
-            if (!this.ownerType.isAssignableFrom(ownerSupplier.getSuppliedType())) {
-                throw new ReflectionException("Type mismatch, triing to inject value in owner of type "
-                        + this.ownerType.getSimpleName() + " but owner type "
-                        + ownerSupplier.getSuppliedType().getSimpleName() + " was supplied");
-            }
-
             ObjectQueryFactory.objectQuery(ownerSupplier.supply().get()).setValue(this.address,
                     this.valueSupplier.supply().get());
 
         } catch (SupplyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new ReflectionException(e);
         }
 
     }
 
     @Override
-    public FieldType getValue(IObjectSupplier<OnwerType> ownerSupplier) throws ReflectionException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getValue'");
+    public FieldType getValue() throws ReflectionException {
+        try {
+            if (ownerSupplier.supply().isEmpty()) {
+                throw new ReflectionException("Owner supplier did not supply any object");
+            }
+
+            return (FieldType) ObjectQueryFactory.objectQuery(ownerSupplier.supply().get()).getValue(this.address);
+        } catch (SupplyException e) {
+            throw new ReflectionException(e);
+        }
     }
 }

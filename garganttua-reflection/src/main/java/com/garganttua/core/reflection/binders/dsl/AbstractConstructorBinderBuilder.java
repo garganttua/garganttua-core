@@ -11,7 +11,11 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.ConstructorBinder;
 import com.garganttua.core.reflection.binders.ContextualConstructorBinder;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
+import com.garganttua.core.supplying.IContextualObjectSupplier;
 import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.NullableContextualObjectSupplier;
+import com.garganttua.core.supplying.NullableObjectSupplier;
+import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +38,6 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
 
     protected abstract Builder getBuilder();
 
-    protected abstract IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplier<?> iObjectSupplier,
-            boolean equals, int i, String name);
-
-    protected abstract IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply);
-
     private boolean buildContextual() {
         return this.parameters.stream().filter(param -> param.isContextual()).findFirst().isPresent();
     }
@@ -46,7 +45,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     @Override
     public Builder withParam(int i, Object parameter) throws DslException {
         ensureCapacity(i);
-        this.parameters.set(i, this.createFixedObjectSupplierBuilder(parameter));
+        this.parameters.set(i, createFixedObjectSupplierBuilder(parameter));
         this.parameterNullableAllowed.set(i, false);
         return this.getBuilder();
     }
@@ -62,7 +61,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     @Override
     public Builder withParam(int i, Object parameter, boolean acceptNullable) throws DslException {
         ensureCapacity(i);
-        this.parameters.set(i, this.createFixedObjectSupplierBuilder(parameter));
+        this.parameters.set(i, createFixedObjectSupplierBuilder(parameter));
         this.parameterNullableAllowed.set(i, acceptNullable);
         return this.getBuilder();
     }
@@ -148,7 +147,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
                 throw new DslException("Parameter " + i + " not configured");
             }
 
-            builtsuppliers.add(this.createNullableObjectSupplier(builder.build(),
+            builtsuppliers.add(createNullableObjectSupplier(builder,
                     Boolean.TRUE.equals(parameterNullableAllowed.get(i)),
                     i,
                     objectClass.getName()));
@@ -234,4 +233,16 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return primitive;
     }
 
+    protected static IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplierBuilder<?, ?> supplierBuilder,
+            boolean equals, int i, String name) throws DslException {
+        if (supplierBuilder.isContextual()){
+            IContextualObjectSupplier<?, ?> contextualSupplier = (IContextualObjectSupplier<?, ?>) supplierBuilder.build();
+            return new NullableContextualObjectSupplier<>(contextualSupplier, equals, i, name);
+        }
+        return new NullableObjectSupplier<>(supplierBuilder.build(), equals, i, name);
+    }
+
+    protected static IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply) {
+        return new FixedObjectSupplierBuilder<>(objectToSupply);
+    }
 }
