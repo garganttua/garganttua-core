@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import javax.naming.Context;
+
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
@@ -416,7 +418,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             }
             boolean allowNull = Boolean.TRUE.equals(this.parameterNullableAllowed.get(i));
             builtParameterSuppliers
-                    .add(AbstractConstructorBinderBuilder.createNullableObjectSupplier(builder, allowNull, i, getMethodName()));
+                    .add(AbstractConstructorBinderBuilder.createNullableObjectSupplier(builder, allowNull));
         }
         return builtParameterSuppliers;
     }

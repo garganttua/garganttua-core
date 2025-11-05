@@ -148,9 +148,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
             }
 
             builtsuppliers.add(createNullableObjectSupplier(builder,
-                    Boolean.TRUE.equals(parameterNullableAllowed.get(i)),
-                    i,
-                    objectClass.getName()));
+                    Boolean.TRUE.equals(parameterNullableAllowed.get(i))));
         }
 
         Constructor<Constructed> matchedConstructor = findMatchingConstructor();
@@ -233,13 +231,14 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return primitive;
     }
 
-    protected static IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplierBuilder<?, ?> supplierBuilder,
-            boolean equals, int i, String name) throws DslException {
-        if (supplierBuilder.isContextual()){
-            IContextualObjectSupplier<?, ?> contextualSupplier = (IContextualObjectSupplier<?, ?>) supplierBuilder.build();
-            return new NullableContextualObjectSupplier<>(contextualSupplier, equals, i, name);
+    protected static IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplierBuilder<?,?> builder,
+            boolean allowNullable) throws DslException {
+        if (builder.isContextual()) {
+            IContextualObjectSupplier<?, ?> contextualSupplier = (IContextualObjectSupplier<?, ?>) builder
+                    .build();
+            return new NullableContextualObjectSupplier<>(contextualSupplier, allowNullable);
         }
-        return new NullableObjectSupplier<>(supplierBuilder.build(), equals, i, name);
+        return new NullableObjectSupplier<>(builder.build(), allowNullable);
     }
 
     protected static IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply) {

@@ -27,17 +27,12 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
             if (this.ownerSupplier.supply().isEmpty()) {
                 throw new ReflectionException("Owner supplier did not supply any object");
             }
-            if (this.valueSupplier.supply().isEmpty()) {
-                throw new ReflectionException("Value supplier did not supply any object");
-            }
-
             ObjectQueryFactory.objectQuery(ownerSupplier.supply().get()).setValue(this.address,
                     this.valueSupplier.supply().get());
 
         } catch (SupplyException e) {
             throw new ReflectionException(e);
         }
-
     }
 
     @Override

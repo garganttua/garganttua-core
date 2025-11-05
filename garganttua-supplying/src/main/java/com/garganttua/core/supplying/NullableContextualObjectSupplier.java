@@ -11,15 +11,11 @@ public class NullableContextualObjectSupplier<SuppliedType, ContextType>
 
     private final IContextualObjectSupplier<SuppliedType, ContextType> delegate;
     private final boolean allowNull;
-    private final int index;
-    private final String methodName;
 
     public NullableContextualObjectSupplier(IContextualObjectSupplier<SuppliedType, ContextType> delegate,
-            boolean allowNull, int index, String methodName) {
+            boolean allowNull) {
         this.delegate = Objects.requireNonNull(delegate);
         this.allowNull = allowNull;
-        this.index = index;
-        this.methodName = methodName;
     }
 
     @Override
@@ -37,8 +33,7 @@ public class NullableContextualObjectSupplier<SuppliedType, ContextType>
         Optional<SuppliedType> o = delegate.supply(ownerContext, otherContexts);
         if (!allowNull && (o == null || !o.isPresent())) {
             String msg = String.format(
-                    "Supplier for parameter %d of method %s returned null but parameter is not nullable", index,
-                    methodName);
+                    "Supplier supplied null but is not nullable");
             log.atError().log("[MethodBinderBuilder] " + msg);
             throw new SupplyException(msg);
         }

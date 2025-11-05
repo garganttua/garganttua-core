@@ -10,4 +10,6 @@ public interface IValuableBuilder<Link, Built> extends ILinkedBuilder<Link, Buil
 
     IValuableBuilder<Link, Built> withValue(IObjectSupplierBuilder<?, ?> supplier) throws DslException;
 
+    IValuableBuilder<Link, Built> allowNull(boolean allowNull) throws DslException;
+
 }

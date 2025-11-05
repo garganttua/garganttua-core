@@ -8,6 +8,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supplying.IContextualObjectSupplier;
 import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.Supplier;
 import com.garganttua.core.supplying.SupplyException;
 
 public class ContextualMethodBinder<ReturnedType, OwnerContextType>
@@ -42,7 +43,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
     public Class<OwnerContextType> getOwnerContextType() {
         if (this.objectSupplier instanceof IContextualObjectSupplier<?, ?> contextual) {
             return (Class<OwnerContextType>) contextual.getOwnerContextType();
-        } 
+        }
         return (Class<OwnerContextType>) Void.class;
     }
 
@@ -51,14 +52,11 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
             throws ReflectionException {
 
         Object[] args = this.buildArguments(ownerContext, contexts);
-        Object owner;
 
         try {
-            if( IContextualObjectSupplier.class.isAssignableFrom(objectSupplier.getClass()) ){
-                owner = ((IContextualObjectSupplier<?,OwnerContextType>) objectSupplier).supply(ownerContext, contexts).get();
-            } else {
-                owner = objectSupplier.supply().get();
-            }
+
+            Object owner = Supplier.contextualSupply(null, ownerContext);
+
             return MethodBinder.execute(
                     owner,
                     objectSupplier.getSuppliedType(),

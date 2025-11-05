@@ -9,14 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 public class NullableObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType> {
     private final IObjectSupplier<SuppliedType> delegate;
     private final boolean allowNull;
-    private final int index;
-    private final String methodName;
 
-    public NullableObjectSupplier(IObjectSupplier<SuppliedType> delegate, boolean allowNull, int index, String methodName) {
+    public NullableObjectSupplier(IObjectSupplier<SuppliedType> delegate, boolean allowNull) {
         this.delegate = Objects.requireNonNull(delegate);
         this.allowNull = allowNull;
-        this.index = index;
-        this.methodName = methodName;
     }
 
     @Override
@@ -24,8 +20,7 @@ public class NullableObjectSupplier<SuppliedType> implements IObjectSupplier<Sup
         Optional<SuppliedType> o = delegate.supply();
         if (!allowNull && (o == null || !o.isPresent())) {
             String msg = String.format(
-                    "Supplier for parameter %d of method %s returned null but parameter is not nullable", index,
-                    methodName);
+                    "Supplier supplied null but is not nullable");
             log.atError().log("[MethodBinderBuilder] " + msg);
             throw new SupplyException(msg);
         }
