@@ -13,21 +13,26 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.dummies.AnotherDummyBean;
+import com.garganttua.core.injection.dummies.DummyBean;
+import com.garganttua.core.injection.dummies.DummyOtherBean;
+import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.SupplyException;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.injection.DiContext;
 import com.garganttua.injection.PropertyBuilderFactory;
 import com.garganttua.injection.PrototypeBuilderFactory;
 import com.garganttua.injection.SingletonBuilderFactory;
 import com.garganttua.injection.beans.Predefined;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class InjectableBuilderFactoryTest {
 
     @BeforeEach
-    void setUp() throws DiException, DslException {
-        GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+    void setUp() throws DiException, DslException, LifecycleException {
+        ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
         DiContext.builder().withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
@@ -37,7 +42,7 @@ public class InjectableBuilderFactoryTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testSingleton() throws NoSuchMethodException, SecurityException, DiException, DslException {
+    public void testSingleton() throws NoSuchMethodException, SecurityException, DiException, DslException, SupplyException {
         Constructor<DummyBean> ctor = DummyBean.class.getConstructor(String.class, AnotherDummyBean.class, DummyOtherBean.class);
         Parameter[] params = ctor.getParameters();
 
@@ -48,15 +53,15 @@ public class InjectableBuilderFactoryTest {
 
         assertNotNull(builder);
         assertTrue(builder.isPresent());
-        assertEquals(DummyOtherBean.class, builder.get().getObjectClass());
-        Optional<DummyOtherBean> bean = (Optional<DummyOtherBean>) builder.get().build().getObject();
+        assertEquals(DummyOtherBean.class, builder.get().getSuppliedType());
+        Optional<DummyOtherBean> bean = (Optional<DummyOtherBean>) builder.get().build().supply();
         assertNotNull(bean);
         assertTrue(bean.isPresent());
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testPrototype() throws NoSuchMethodException, SecurityException, DiException, DslException {
+    public void testPrototype() throws NoSuchMethodException, SecurityException, DiException, DslException, SupplyException {
         Constructor<DummyBean> ctor = DummyBean.class.getConstructor(String.class, AnotherDummyBean.class, DummyOtherBean.class);
         Parameter[] params = ctor.getParameters();
 
@@ -67,15 +72,15 @@ public class InjectableBuilderFactoryTest {
 
         assertNotNull(builder);
         assertTrue(builder.isPresent());
-        assertEquals(AnotherDummyBean.class, builder.get().getObjectClass());
-        Optional<AnotherDummyBean> bean = (Optional<AnotherDummyBean>) builder.get().build().getObject();
+        assertEquals(AnotherDummyBean.class, builder.get().getSuppliedType());
+        Optional<AnotherDummyBean> bean = (Optional<AnotherDummyBean>) builder.get().build().supply();
         assertNotNull(bean);
         assertTrue(bean.isPresent());
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testProperty() throws NoSuchMethodException, SecurityException, DiException, DslException {
+    public void testProperty() throws NoSuchMethodException, SecurityException, DiException, DslException, SupplyException {
         Constructor<DummyBean> ctor = DummyBean.class.getConstructor(String.class, AnotherDummyBean.class, DummyOtherBean.class);
         Parameter[] params = ctor.getParameters();
 
@@ -85,8 +90,8 @@ public class InjectableBuilderFactoryTest {
 
         assertNotNull(builder);
         assertTrue(builder.isPresent());
-        assertEquals(String.class, builder.get().getObjectClass());
-        Optional<String> property = (Optional<String>) builder.get().build().getObject();
+        assertEquals(String.class, builder.get().getSuppliedType());
+        Optional<String> property = (Optional<String>) builder.get().build().supply();
         assertNotNull(property);
         assertTrue(property.isPresent());
         assertEquals("propertyValue", property.get());

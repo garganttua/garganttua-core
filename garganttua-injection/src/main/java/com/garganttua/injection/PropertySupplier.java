@@ -5,8 +5,9 @@ import java.util.Optional;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertySupplier;
+import com.garganttua.core.supplying.SupplyException;
 
-public class PropertySupplier<Property> implements IPropertySupplier<Property>{
+public class PropertySupplier<Property> implements IPropertySupplier<Property> {
 
     private String key;
     private Optional<String> provider;
@@ -19,14 +20,18 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property>{
     }
 
     @Override
-    public Optional<Property> getObject() throws DiException {
-        if (this.provider.isPresent())
-            return DiContext.context.getProperty(this.provider.get(), this.key, this.type);
-        return DiContext.context.getProperty(this.key, this.type);
+    public Optional<Property> supply() throws SupplyException {
+        try {
+            if (this.provider.isPresent())
+                return DiContext.context.getProperty(this.provider.get(), this.key, this.type);
+            return DiContext.context.getProperty(this.key, this.type);
+        } catch (DiException e) {
+            throw new SupplyException(e);
+        }
     }
 
     @Override
-    public Class<Property> getObjectClass() {
+    public Class<Property> getSuppliedType() {
         return this.type;
     }
 

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 
+import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanStrategy;
@@ -26,10 +27,10 @@ import com.garganttua.core.injection.context.dsl.IBeanConstructorBinderBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanInjectableFieldBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.reflection.binders.dsl.IValuableBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
-import com.garganttua.dsl.AbstractAutomaticBuilder;
 
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
@@ -96,7 +97,8 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
 
         builder.ifPresent(supplierBuilder -> {
             try {
-                IBeanInjectableFieldBuilder<?, Bean> injectable = (IBeanInjectableFieldBuilder<?, Bean>) new BeanInjectableFieldBuilder<>(this, this.beanClass, field.getType()).field(field).withValue(supplierBuilder);
+                BeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this, field.getType());
+                injectable.field(field).withValue(supplierBuilder);
                 this.injectableFields.add(injectable);
             } catch (DslException e) {
                 // TODO Auto-generated catch block
@@ -214,7 +216,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     }
 
     @Override
-    public Class<Bean> getObjectClass() {
+    public Class<Bean> getSuppliedType() {
         return this.beanClass;
     }
 
@@ -235,7 +237,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     @Override
     public <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(Class<FieldType> fieldType) throws DslException {
         Objects.requireNonNull(fieldType, "Field type cannot be null");
-        IBeanInjectableFieldBuilder<FieldType, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this.beanClass, fieldType);
+        IBeanInjectableFieldBuilder<FieldType, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this, fieldType);
         this.injectableFields.add(injectable);
         return injectable;
     }
@@ -253,6 +255,11 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
             dependencies.addAll(m.getDependencies());
         });
         return dependencies;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return false;
     }
 
 }

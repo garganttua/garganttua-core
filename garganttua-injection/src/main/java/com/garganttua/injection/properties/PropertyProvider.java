@@ -11,6 +11,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.lifecycle.LifecycleException;
 
 public class PropertyProvider extends AbstractLifecycle implements IPropertyProvider {
 
@@ -73,23 +74,23 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
     }
 
     @Override
-    protected ILifecycle doInit() throws DiException {
+    protected ILifecycle doInit() throws LifecycleException {
         return this;
     }
 
     @Override
-    protected ILifecycle doStart() throws DiException {
+    protected ILifecycle doStart() throws LifecycleException {
         return this;
     }
 
     @Override
-    protected ILifecycle doFlush() throws DiException {
+    protected ILifecycle doFlush() throws LifecycleException {
         properties.clear();
         return this;
     }
 
     @Override
-    protected ILifecycle doStop() throws DiException {
+    protected ILifecycle doStop() throws LifecycleException {
         return this;
     }
 

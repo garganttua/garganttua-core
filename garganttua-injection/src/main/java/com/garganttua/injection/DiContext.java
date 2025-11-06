@@ -21,6 +21,7 @@ import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.lifecycle.LifecycleException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,7 +36,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     private final Map<String, IPropertyProvider> propertyProviders;
     private final List<IDiChildContextFactory<IDiContext>> childContextFactories;
 
-    public static IDiContextBuilder builder() throws DslException{
+    public static IDiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
     }
 
@@ -56,19 +57,31 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     // --- Getters ---
     @Override
     public Set<IBeanProvider> getBeanProviders() throws DiException {
-        ensureInitializedAndStarted();
+        try {
+            ensureInitializedAndStarted();
+        } catch (LifecycleException e) {
+            throw new DiException(e);
+        }
         return Collections.unmodifiableSet(new HashSet<>(beanProviders.values()));
     }
 
     @Override
     public Set<IPropertyProvider> getPropertyProviders() throws DiException {
-        ensureInitializedAndStarted();
+        try {
+            ensureInitializedAndStarted();
+        } catch (LifecycleException e) {
+            throw new DiException(e);
+        }
         return Collections.unmodifiableSet(new HashSet<>(propertyProviders.values()));
     }
 
     @Override
     public Set<IDiChildContextFactory<IDiContext>> getChildContextFactories() throws DiException {
-        ensureInitializedAndStarted();
+        try {
+            ensureInitializedAndStarted();
+        } catch (LifecycleException e) {
+            throw new DiException(e);
+        }
         return Collections.unmodifiableSet(new HashSet<>(childContextFactories));
     }
 
@@ -81,7 +94,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
-        ensureInitializedAndStarted();
+        wrapLifecycle(this::ensureInitializedAndStarted);
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
         return propertyProviders.values().stream()
@@ -100,7 +113,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException {
-        ensureInitializedAndStarted();
+        wrapLifecycle(this::ensureInitializedAndStarted);
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
@@ -123,7 +136,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(value, "Value cannnot be null");
-        ensureInitializedAndStarted();
+        wrapLifecycle(this::ensureInitializedAndStarted);
         propertyProviders.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
@@ -138,7 +151,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     public <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass,
             Object... args)
             throws DiException {
-        ensureInitializedAndStarted();
+        wrapLifecycle(this::ensureInitializedAndStarted);
         return childContextFactories.stream()
                 .filter(factory -> {
                     Class<? extends IDiContext> childType = getChildContextType(factory);
@@ -175,7 +188,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     // --- Cycle de vie ---
     @Override
-    protected ILifecycle doInit() throws DiException {
+    protected ILifecycle doInit() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onInit();
@@ -184,7 +197,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected ILifecycle doStart() throws DiException {
+    protected ILifecycle doStart() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onStart();
@@ -193,7 +206,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected ILifecycle doFlush() throws DiException {
+    protected ILifecycle doFlush() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onFlush();
@@ -202,7 +215,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected ILifecycle doStop() throws DiException {
+    protected ILifecycle doStop() throws LifecycleException {
         List<Object> lifecycleObjects = new ArrayList<>(getAllLifecycleObjects());
         Collections.reverse(lifecycleObjects);
         for (Object obj : lifecycleObjects) {
@@ -260,6 +273,19 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public Optional<IPropertyProvider> getPropertyProvider(String name) {
         return Optional.ofNullable(this.propertyProviders.get(name));
+    }
+
+    private void wrapLifecycle(RunnableWithException runnable) throws DiException {
+        try {
+            runnable.run();
+        } catch (LifecycleException e) {
+            throw new DiException(e);
+        }
+    }
+
+    @FunctionalInterface
+    interface RunnableWithException {
+        void run() throws LifecycleException;
     }
 
 }

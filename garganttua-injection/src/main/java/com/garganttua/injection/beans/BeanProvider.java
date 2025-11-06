@@ -11,7 +11,9 @@ import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.supplying.SupplyException;
 
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
@@ -24,26 +26,33 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> getBean(Class<T> type) throws DiException {
-		ensureInitializedAndStarted();
+		wrapLifecycle(this::ensureInitializedAndStarted);
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
-				.filter(factory -> type.isAssignableFrom(factory.getObjectClass())).findFirst();
+				.filter(factory -> type.isAssignableFrom(factory.getSuppliedType())).findFirst();
 		if (factoryOpt.isPresent()) {
-			return (Optional<T>) factoryOpt.get().getObject();
+			try {
+				return (Optional<T>) factoryOpt.get().supply();
+			} catch (SupplyException e) {
+				throw new DiException(e);
+			}
 		}
 		return Optional.empty();
 	}
 
 	@Override
 	public <T> Optional<T> getBean(String name, Class<T> type) throws DiException {
-		ensureInitializedAndStarted();
+		wrapLifecycle(this::ensureInitializedAndStarted);
 		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
 	}
 
-	/* @Override
-	public void registerBean(String name, Object bean) throws DiException {
-		ensureInitializedAndStarted();
-		throw new UnsupportedOperationException("Unimplemented method 'registerBean'");
-	} */
+	/*
+	 * @Override
+	 * public void registerBean(String name, Object bean) throws DiException {
+	 * ensureInitializedAndStarted();
+	 * throw new
+	 * UnsupportedOperationException("Unimplemented method 'registerBean'");
+	 * }
+	 */
 
 	@Override
 	public boolean isMutable() {
@@ -53,11 +62,11 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
 		List<T> l = (List<T>) this.beanFactories.stream()
-				.filter(factory -> GGObjectReflectionHelper.isImplementingInterface(interfasse,
-						factory.getObjectClass()))
+				.filter(factory -> ObjectReflectionHelper.isImplementingInterface(interfasse,
+						factory.getSuppliedType()))
 				.map(factory -> {
 					try {
-						return factory.getObject().orElse(null);
+						return factory.supply().orElse(null);
 					} catch (Exception e) {
 						e.printStackTrace();
 						return null;
@@ -70,8 +79,12 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	protected ILifecycle doInit() throws DiException {
-		this.doDependencyCycleDetection();
+	protected ILifecycle doInit() throws LifecycleException {
+		try {
+			this.doDependencyCycleDetection();
+		} catch (DiException e) {
+			throw new LifecycleException(e);
+		}
 		return this;
 	}
 
@@ -79,38 +92,55 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		DependencyGraph graph = new DependencyGraph();
 		this.beanFactories.stream().forEach(builder -> {
 			builder.getDependencies().stream().forEach(dep -> {
-				graph.addDependency(builder.getObjectClass(), dep);
+				graph.addDependency(builder.getSuppliedType(), dep);
 			});
 		});
 		new DependencyCycleDetector().detectCycles(graph);
 	}
 
 	@Override
-	protected ILifecycle doStart() throws DiException {
+	protected ILifecycle doStart() throws LifecycleException {
 		return this;
 	}
 
 	@Override
-	protected ILifecycle doFlush() throws DiException {
+	protected ILifecycle doFlush() throws LifecycleException {
 		return this;
 	}
 
 	@Override
-	protected ILifecycle doStop() throws DiException {
+	protected ILifecycle doStop() throws LifecycleException {
 		return this;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
-		ensureInitializedAndStarted();
+		wrapLifecycle(this::ensureInitializedAndStarted);
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
 				.filter(factory -> factory.matches(definition)).findFirst();
 		if (factoryOpt.isPresent()) {
-			return (Optional<T>) factoryOpt.get().getObject();
+			try {
+				return (Optional<T>) factoryOpt.get().supply();
+			} catch (SupplyException e) {
+				throw new DiException(e);
+			}
 		}
 		return Optional.empty();
+	}
+
+	private void wrapLifecycle(RunnableWithException runnable) throws DiException {
+		try {
+			runnable.run();
+		} catch (LifecycleException e) {
+			throw new DiException(e);
+		}
+	}
+
+	@FunctionalInterface
+	interface RunnableWithException {
+		void run() throws LifecycleException;
 	}
 
 }

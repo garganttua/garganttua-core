@@ -8,8 +8,12 @@ public class DiException extends Exception {
         super();
     }
 
-    public DiException(String message, Throwable cause) {
+    public DiException(String message, Exception cause) {
         super(message, cause);
+    }
+
+     public DiException(Exception cause) {
+        super(cause);
     }
 
     public DiException(String msg) {

@@ -8,17 +8,19 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanQueryBuilder;
+import com.garganttua.core.injection.dummies.DummyBean;
+import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.injection.DiContext;
 import com.garganttua.injection.beans.BeanQuery;
 import com.garganttua.injection.beans.Predefined;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanQueryTest {
 
     @BeforeEach
-    void setUp() throws DiException, DslException {
-        GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+    void setUp() throws DiException, DslException, LifecycleException {
+        ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
         DiContext.builder().withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")

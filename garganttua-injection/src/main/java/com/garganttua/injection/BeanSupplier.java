@@ -7,6 +7,7 @@ import java.util.Set;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanSupplier;
+import com.garganttua.core.supplying.SupplyException;
 
 public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
 
@@ -19,17 +20,21 @@ public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
     }
 
     @Override
-    public Optional<Bean> getObject() throws DiException {
-        if( DiContext.context == null ){
-            throw new DiException("Context not built");
+    public Optional<Bean> supply() throws SupplyException {
+        if (DiContext.context == null) {
+            throw new SupplyException("Context not built");
         }
-        if (this.provider.isPresent())
-            return DiContext.context.queryBean(provider.get(), example);
-        return DiContext.context.queryBean(example);
+        try {
+            if (this.provider.isPresent())
+                return DiContext.context.queryBean(provider.get(), example);
+            return DiContext.context.queryBean(example);
+        } catch (DiException e) {
+            throw new SupplyException(e);
+        }
     }
 
     @Override
-    public Class<Bean> getObjectClass() {
+    public Class<Bean> getSuppliedType() {
         return this.example.type();
     }
 

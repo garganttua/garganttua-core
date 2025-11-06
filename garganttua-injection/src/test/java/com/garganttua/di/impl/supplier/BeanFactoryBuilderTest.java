@@ -1,8 +1,6 @@
 package com.garganttua.di.impl.supplier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,14 +12,17 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
-import com.garganttua.core.reflection.GGReflectionException;
+import com.garganttua.core.injection.dummies.DummyBean;
+import com.garganttua.core.injection.dummies.DummyBeanQualifier;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.supplying.SupplyException;
 import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.injection.beans.BeanFactoryBuilder;
 
 public class BeanFactoryBuilderTest {
 
     @Test
-    public void test() throws DslException, DiException, GGReflectionException {
+    public void test() throws DslException, DiException, ReflectionException, SupplyException {
         String random = UUID.randomUUID().toString();
         IBeanFactoryBuilder<DummyBean> builder = new BeanFactoryBuilder<>(DummyBean.class);
 
@@ -39,7 +40,7 @@ public class BeanFactoryBuilderTest {
 
         assertNotNull(beanSupplier);
 
-        Optional<DummyBean> bean = beanSupplier.getObject();
+        Optional<DummyBean> bean = beanSupplier.supply();
 
         assertNotNull(bean);
         assertEquals("constructedWithParameter", bean.get().getValue());

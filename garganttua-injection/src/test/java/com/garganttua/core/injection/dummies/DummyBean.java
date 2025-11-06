@@ -1,4 +1,4 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection.dummies;
 
 import javax.inject.Inject;
 import javax.inject.Named;

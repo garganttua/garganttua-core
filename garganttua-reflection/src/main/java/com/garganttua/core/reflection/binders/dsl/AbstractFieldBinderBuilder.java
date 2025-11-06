@@ -44,15 +44,15 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Link>
 
     protected Class<FieldType> fieldType;
 
-    private IObjectSupplierBuilder<OwnerType, IObjectSupplier<OwnerType>> ownerSupplier;
+    protected IObjectSupplierBuilder<OwnerType,? extends IObjectSupplier<OwnerType>> ownerSupplierBuilder;
 
-    private Boolean allowNull;
+    private Boolean allowNull = false;
 
     protected AbstractFieldBinderBuilder(Link link,
-            IObjectSupplierBuilder<OwnerType, IObjectSupplier<OwnerType>> ownerSupplier, Class<FieldType> fieldType) {
+            IObjectSupplierBuilder<OwnerType, ? extends IObjectSupplier<OwnerType>> ownerSupplierBuilder, Class<FieldType> fieldType) {
         super(link);
-        this.ownerSupplier = Objects.requireNonNull(ownerSupplier, "Owner supplier cannot be null");
-        this.ownerType = ownerSupplier.getSuppliedType();
+        this.ownerSupplierBuilder = Objects.requireNonNull(ownerSupplierBuilder, "Owner supplier builder cannot be null");
+        this.ownerType = ownerSupplierBuilder.getSuppliedType();
         this.fieldType = Objects.requireNonNull(fieldType, "Field Type cannot be null");
     }
 
@@ -107,9 +107,9 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Link>
                 .createNullableObjectSupplier(this.valueSupplierBuilder, this.allowNull);
 
         if (this.buildContextual())
-            return new ContextualFieldBinder<>(this.ownerSupplier.build(), this.address, valueSupplier);
+            return new ContextualFieldBinder<>(this.ownerSupplierBuilder.build(), this.address, valueSupplier);
 
-        return new FieldBinder<>(this.ownerSupplier.build(), this.address,
+        return new FieldBinder<>(this.ownerSupplierBuilder.build(), this.address,
                 valueSupplier);
     }
 
@@ -129,7 +129,7 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Link>
     }
 
     private boolean buildContextual() {
-        if (this.ownerSupplier.isContextual())
+        if (this.ownerSupplierBuilder.isContextual())
             return true;
         if (this.valueSupplierBuilder.isContextual())
             return true;

@@ -1,9 +1,6 @@
 package com.garganttua.di.impl.supplier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 import java.util.Set;
@@ -15,7 +12,10 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.reflection.IConstructorBinder;
+import com.garganttua.core.injection.dummies.DummyBean;
+import com.garganttua.core.injection.dummies.DummyConstructorBinderBuilder;
+import com.garganttua.core.reflection.binders.IConstructorBinder;
+import com.garganttua.core.supplying.SupplyException;
 import com.garganttua.injection.beans.BeanFactory;
 
 public class BeanFactoryTest {
@@ -62,8 +62,8 @@ public class BeanFactoryTest {
         }
 
         @Test
-        void testBeanCreationWithoutConstructorBinder() throws DiException {
-                Optional<DummyBean> beanOpt = singletonWithoutConstructorFactory.getObject();
+        void testBeanCreationWithoutConstructorBinder() throws DiException, SupplyException {
+                Optional<DummyBean> beanOpt = singletonWithoutConstructorFactory.supply();
                 assertTrue(beanOpt.isPresent());
                 DummyBean bean = beanOpt.get();
 
@@ -74,8 +74,8 @@ public class BeanFactoryTest {
         }
 
         @Test
-        void testBeanCreationWithConstructorWithNoParamBinder() throws DiException {
-                Optional<DummyBean> beanOpt = singletonWithConstructorWithNoParamFactory.getObject();
+        void testBeanCreationWithConstructorWithNoParamBinder() throws DiException, SupplyException {
+                Optional<DummyBean> beanOpt = singletonWithConstructorWithNoParamFactory.supply();
                 assertTrue(beanOpt.isPresent());
                 DummyBean bean = beanOpt.get();
 
@@ -86,8 +86,8 @@ public class BeanFactoryTest {
         }
 
         @Test
-        void testBeanCreationWithConstructorWithParamBinder() throws DiException {
-                Optional<DummyBean> beanOpt = singletonWithConstructorWithParamFactory.getObject();
+        void testBeanCreationWithConstructorWithParamBinder() throws DiException, SupplyException {
+                Optional<DummyBean> beanOpt = singletonWithConstructorWithParamFactory.supply();
                 assertTrue(beanOpt.isPresent());
                 DummyBean bean = beanOpt.get();
 
@@ -98,18 +98,18 @@ public class BeanFactoryTest {
         }
 
         @Test
-        void testSingletonStrategyReturnsSameInstances() throws DiException {
-                Optional<DummyBean> bean1 = singletonWithoutConstructorFactory.getObject();
-                Optional<DummyBean> bean2 = singletonWithoutConstructorFactory.getObject();
+        void testSingletonStrategyReturnsSameInstances() throws DiException, SupplyException {
+                Optional<DummyBean> bean1 = singletonWithoutConstructorFactory.supply();
+                Optional<DummyBean> bean2 = singletonWithoutConstructorFactory.supply();
 
                 assertSame(bean1.get(), bean2.get(),
                                 "Singleton strategy should return the same bean instance");
         }
 
         @Test
-        void testNewInstanceStrategyReturnsDifferentInstances() throws DiException {
-                Optional<DummyBean> bean1 = newInstanceWithoutConstructorFactory.getObject();
-                Optional<DummyBean> bean2 = newInstanceWithoutConstructorFactory.getObject();
+        void testNewInstanceStrategyReturnsDifferentInstances() throws DiException, SupplyException {
+                Optional<DummyBean> bean1 = newInstanceWithoutConstructorFactory.supply();
+                Optional<DummyBean> bean2 = newInstanceWithoutConstructorFactory.supply();
 
                 assertNotSame(bean1.get(), bean2.get(),
                                 "Singleton strategy should return the same bean instance");

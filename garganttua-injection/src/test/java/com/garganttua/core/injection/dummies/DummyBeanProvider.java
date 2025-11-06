@@ -1,4 +1,4 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection.dummies;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.lifecycle.LifecycleException;
 
 public class DummyBeanProvider implements IBeanProvider {
 
@@ -15,27 +16,27 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public IBeanProvider onStart() throws DiException {
+    public IBeanProvider onStart() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IBeanProvider onStop() throws DiException {
+    public IBeanProvider onStop() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IBeanProvider onFlush() throws DiException {
+    public IBeanProvider onFlush() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IBeanProvider onInit() throws DiException {
+    public IBeanProvider onInit() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IBeanProvider onReload() throws DiException {
+    public IBeanProvider onReload() throws LifecycleException {
         return this;
     }
 

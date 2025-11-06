@@ -1,4 +1,4 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection.dummies;
 
 import java.util.Optional;
 import java.util.Set;
@@ -9,35 +9,36 @@ import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.lifecycle.LifecycleException;
 
 public class DummyDiContext implements IDiContext {
 
     @Override
-    public IDiContext onStart() throws DiException {
+    public IDiContext onStart() throws LifecycleException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onStart'");
     }
 
     @Override
-    public IDiContext onStop() throws DiException {
+    public IDiContext onStop() throws LifecycleException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onStop'");
     }
 
     @Override
-    public IDiContext onFlush() throws DiException {
+    public IDiContext onFlush() throws LifecycleException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onFlush'");
     }
 
     @Override
-    public IDiContext onInit() throws DiException {
+    public IDiContext onInit() throws LifecycleException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onInit'");
     }
 
     @Override
-    public IDiContext onReload() throws DiException {
+    public IDiContext onReload() throws LifecycleException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'onReload'");
     }

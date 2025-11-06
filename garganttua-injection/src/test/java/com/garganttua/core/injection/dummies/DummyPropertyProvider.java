@@ -1,10 +1,11 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection.dummies;
 
 import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.lifecycle.LifecycleException;
 
 public class DummyPropertyProvider implements IPropertyProvider {
 
@@ -12,11 +13,6 @@ public class DummyPropertyProvider implements IPropertyProvider {
 
     public DummyPropertyProvider(String name) {
         this.name = name;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     @Override
@@ -40,27 +36,27 @@ public class DummyPropertyProvider implements IPropertyProvider {
     }
 
     @Override
-    public IPropertyProvider onStart() throws DiException {
+    public IPropertyProvider onStart() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IPropertyProvider onStop() throws DiException {
+    public IPropertyProvider onStop() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IPropertyProvider onFlush() throws DiException {
+    public IPropertyProvider onFlush() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IPropertyProvider onInit() throws DiException {
+    public IPropertyProvider onInit() throws LifecycleException {
         return this;
     }
 
     @Override
-    public IPropertyProvider onReload() throws DiException {
+    public IPropertyProvider onReload() throws LifecycleException {
         return this;
     }
 

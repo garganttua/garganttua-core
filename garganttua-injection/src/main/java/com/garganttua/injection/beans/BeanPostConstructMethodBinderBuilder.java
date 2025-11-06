@@ -52,7 +52,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
     }
 
     @Override
-    protected IBeanPostConstructMethodBinderBuilder<Bean> getReturned() {
+    protected IBeanPostConstructMethodBinderBuilder<Bean> getBuilder() {
         return this;
     }
 

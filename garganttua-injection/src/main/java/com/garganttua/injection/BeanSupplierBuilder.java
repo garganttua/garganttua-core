@@ -58,7 +58,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     }
 
     @Override
-    public Class<Bean> getObjectClass() {
+    public Class<Bean> getSuppliedType() {
         return type;
     }
 
@@ -102,6 +102,11 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     @Override
     public Set<Class<?>> getDependencies() {
         return Set.of();
+    }
+
+    @Override
+    public boolean isContextual() {
+        return false;
     }
 
 }

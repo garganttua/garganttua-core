@@ -1,7 +1,6 @@
 package com.garganttua.injection;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,9 +23,9 @@ import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.injection.beans.BeanFactoryBuilder;
 import com.garganttua.injection.beans.BeanProvider;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BeanProviderBuilder
         extends AbstractAutomaticLinkedBuilder<IBeanProviderBuilder, IDiContextBuilder, IBeanProvider>
@@ -71,7 +70,7 @@ public class BeanProviderBuilder
 			registry.registerFactory(Property.class, new PropertyBuilderFactory());
 
 			// 1. Récupère toutes les classes annotées avec @Qualifier
-			List<Class<? extends Annotation>> qualifierAnnotations = GGObjectReflectionHelper
+			List<Class<? extends Annotation>> qualifierAnnotations = ObjectReflectionHelper
 					.getClassesWithAnnotation(package_,
 							Qualifier.class)
 					.stream()
@@ -80,7 +79,7 @@ public class BeanProviderBuilder
 					.collect(Collectors.toList());
 
 			// 2. Récupère toutes les classes annotées avec @Singleton
-			GGObjectReflectionHelper.getClassesWithAnnotation(package_,
+			ObjectReflectionHelper.getClassesWithAnnotation(package_,
 					Singleton.class).forEach(singletonClass -> {
 						try {
 							this.beanFactoryBuilders
@@ -92,7 +91,7 @@ public class BeanProviderBuilder
 					});
 
 			// 3. Récupère toutes les classes annotées avec @Prototype
-			GGObjectReflectionHelper.getClassesWithAnnotation(package_,
+			ObjectReflectionHelper.getClassesWithAnnotation(package_,
 					Prototype.class).forEach(prototypeClass -> {
 						try {
 							this.beanFactoryBuilders
@@ -105,7 +104,7 @@ public class BeanProviderBuilder
 
 			// 4. Récupère toutes les classes annotées avec les annotation qualifier
 			qualifierAnnotations.forEach(qualifierAnnotation -> {
-				GGObjectReflectionHelper.getClassesWithAnnotation(package_,
+				ObjectReflectionHelper.getClassesWithAnnotation(package_,
 						qualifierAnnotation).forEach(prototypeClass -> {
 							try {
 								this.beanFactoryBuilders

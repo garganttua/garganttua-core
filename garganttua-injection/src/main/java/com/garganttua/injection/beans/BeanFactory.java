@@ -10,9 +10,11 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.supplying.SupplyException;
 import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,9 +55,9 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private void doInjection(Bean onBean) throws DiException {
 		this.definition.injectableFields().forEach(builder -> {
 			try {
-				builder.build().inject(FixedObjectSupplierBuilder.of(onBean).build());
-			} catch (DslException | DiException e) {
-				// TODO Auto-generated catch block
+				builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue();
+			} catch (DslException | ReflectionException e) {
+				//TODO
 				e.printStackTrace();
 			}
 		});
@@ -69,7 +71,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 						() -> new DiException("Constructor binder returned empty for bean of type "
 								+ this.definition.effectiveName()));
 			} else {
-				return GGObjectReflectionHelper.instanciateNewObject(this.definition.type());
+				return ObjectReflectionHelper.instanciateNewObject(this.definition.type());
 			}
 		} catch (Exception e) {
 			throw new DiException("Failed to instantiate bean of type " + this.definition.effectiveName(), e);
@@ -77,7 +79,11 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	private Optional<Bean> executeConstructorBinder() throws DiException {
-		return this.definition.constructorBinder().get().execute();
+		try {
+			return this.definition.constructorBinder().get().execute();
+		} catch (ReflectionException e) {
+			throw new DiException(e);
+		}
 	}
 
 	private void invokePostConstructMethods(Bean bean) throws DiException {
@@ -91,7 +97,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				IMethodBinder<Void> methodBinder = methodBinderBuilder
 						.build((FixedObjectSupplierBuilder<Bean>) FixedObjectSupplierBuilder.of(bean));
 				methodBinder.execute();
-			} catch (DiException | DslException e) {
+			} catch ( DslException | ReflectionException e) {
 				throw new DiException(
 						"Post construct method binder failed for bean of type " + this.definition.effectiveName(), e);
 			}
@@ -99,30 +105,34 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	@Override
-	public Optional<Bean> getObject() throws DiException {
+	public Optional<Bean> supply() throws SupplyException {
 		Bean bean = null;
 		Optional<BeanStrategy> strat = this.definition.strategy();
+		try {
 
 		if (strat.isPresent()) {
 			if (strat.get() == BeanStrategy.prototype) {
-				bean = getBean();
+					bean = getBean();
+				} else {
+					if (this.bean == null) {
+						this.bean = getBean();
+					}
+					bean = this.bean;
+				}
 			} else {
 				if (this.bean == null) {
 					this.bean = getBean();
 				}
 				bean = this.bean;
 			}
-		} else {
-			if (this.bean == null) {
-				this.bean = getBean();
-			}
-			bean = this.bean;
+		} catch (DiException e) {
+			throw new SupplyException(e);
 		}
 		return Optional.ofNullable(bean);
 	}
 
 	@Override
-	public Class<Bean> getObjectClass() {
+	public Class<Bean> getSuppliedType() {
 		return this.definition.type();
 	}
 

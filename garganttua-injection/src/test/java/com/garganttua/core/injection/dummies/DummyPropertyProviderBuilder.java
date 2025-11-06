@@ -1,4 +1,4 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection.dummies;
 
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +10,7 @@ import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.lifecycle.LifecycleException;
 
 public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
 
@@ -60,27 +61,27 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
             }
 
             @Override
-            public ILifecycle onStart() throws DiException {
+            public ILifecycle onStart() throws LifecycleException {
                 return this;
             }
 
             @Override
-            public ILifecycle onStop() throws DiException {
+            public ILifecycle onStop() throws LifecycleException {
                 return this;
             }
 
             @Override
-            public ILifecycle onFlush() throws DiException {
+            public ILifecycle onFlush() throws LifecycleException {
                 return this;
             }
 
             @Override
-            public ILifecycle onInit() throws DiException {
+            public ILifecycle onInit() throws LifecycleException {
                 return this;
             }
 
             @Override
-            public ILifecycle onReload() throws DiException {
+            public ILifecycle onReload() throws LifecycleException {
                 return this;
             }
 

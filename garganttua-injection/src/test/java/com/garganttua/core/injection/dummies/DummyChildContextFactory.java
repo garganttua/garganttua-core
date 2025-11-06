@@ -1,4 +1,4 @@
-package com.garganttua.di.impl.supplier;
+package com.garganttua.core.injection.dummies;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiChildContextFactory;

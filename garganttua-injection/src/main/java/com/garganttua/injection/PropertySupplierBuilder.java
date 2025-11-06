@@ -18,7 +18,7 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
     }
 
     @Override
-    public Class<Property> getObjectClass() {
+    public Class<Property> getSuppliedType() {
         return this.type;
     }
 
@@ -37,6 +37,11 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
     public IPropertySupplierBuilder<Property> provider(String provider) {
         this.provider = Objects.requireNonNull(provider, "Provider cannot be null");
         return this;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return false;
     }
 
 }
