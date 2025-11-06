@@ -11,14 +11,14 @@ import org.junit.jupiter.api.TestMethodOrder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.beans.Beans;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supplying.SupplyException;
-import com.garganttua.injection.Beans;
-import com.garganttua.injection.DiContext;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BeansTest {

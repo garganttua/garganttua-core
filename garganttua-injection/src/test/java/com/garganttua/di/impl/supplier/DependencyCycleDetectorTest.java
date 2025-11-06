@@ -1,8 +1,6 @@
 package com.garganttua.di.impl.supplier;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 
@@ -10,8 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.injection.DiException;
-import com.garganttua.injection.beans.DependencyCycleDetector;
-import com.garganttua.injection.beans.DependencyGraph;
+import com.garganttua.core.injection.context.validation.DependencyCycleDetector;
+import com.garganttua.core.injection.context.validation.DependencyGraph;
 
 class DependencyCycleDetectorTest {
 

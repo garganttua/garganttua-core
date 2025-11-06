@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.injection.dummies.DummyBeanProviderBuilder;
 import com.garganttua.core.injection.dummies.DummyPropertyProviderBuilder;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.injection.DiContext;
-import com.garganttua.injection.beans.Predefined;
 
 public class DiContextBuilderTest {
 

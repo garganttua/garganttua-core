@@ -12,11 +12,11 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.context.beans.BeanFactory;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.injection.dummies.DummyConstructorBinderBuilder;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.supplying.SupplyException;
-import com.garganttua.injection.beans.BeanFactory;
 
 public class BeanFactoryTest {
 
