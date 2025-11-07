@@ -84,6 +84,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
         return this.createBinder(builtParameterSuppliers, supplierBuilder);
     }
 
+
     @Override
     public Set<Class<?>> getDependencies() {
         return new HashSet<>(Arrays.asList(this.getParameterTypes()));

@@ -52,11 +52,6 @@ public class ConstructorBinderBuilderTest {
 
         }
 
-        @Override
-        public Set<Class<?>> getDependencies() {
-            return new HashSet<>();
-        }
-
     }
 
     private ConcreteConstructorBinderBuilder builder;

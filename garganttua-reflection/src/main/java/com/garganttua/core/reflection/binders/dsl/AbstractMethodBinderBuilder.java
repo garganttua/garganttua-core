@@ -2,11 +2,12 @@ package com.garganttua.core.reflection.binders.dsl;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-
-import javax.naming.Context;
+import java.util.Set;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -64,7 +65,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     private boolean buildContextual() {
         if (this.supplier.isContextual())
             return true;
-        return this.parameters.stream().filter(param -> param.isContextual()).findFirst().isPresent();
+        return this.parameters.stream().anyMatch(param -> param.isContextual());
     }
 
     public String getMethodName() {
@@ -449,7 +450,8 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return this.createBinder(builtParameterSuppliers, this.supplier);
     }
 
-    protected IContextualMethodBinder<ExecutionReturn, ?> createContextualBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
+    protected IContextualMethodBinder<ExecutionReturn, ?> createContextualBinder(
+            List<IObjectSupplier<?>> builtParameterSuppliers,
             IObjectSupplierBuilder<?, ?> supplier)
             throws DslException {
         return new ContextualMethodBinder<>(supplier.build(), this.method, builtParameterSuppliers,

@@ -1,15 +1,17 @@
 package com.garganttua.executor.chain;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-public class TestGGExecutorChain {
+import com.garganttua.core.executor.ExecutorException;
+
+public class TestExecutorChain {
 
 	@Test
-	public void testSimpleAdder() throws GGExecutorException {
+	public void testSimpleAdder() throws ExecutorException {
 		int integer = 0;
-		GGExecutorChain<Integer> executorChain = new GGExecutorChain<>();
+		ExecutorChain<Integer> executorChain = new ExecutorChain<>();
 		
 		executorChain.addExecutor((i, chain) -> {
 			i = i+1;
@@ -40,9 +42,9 @@ public class TestGGExecutorChain {
 	}
 	
 	@Test
-	public void testStringConcatenation() throws GGExecutorException {
+	public void testStringConcatenation() throws ExecutorException {
 		StringBuilder stringBuilder = new StringBuilder();
-		GGExecutorChain<StringBuilder> executorChain = new GGExecutorChain<>();
+		ExecutorChain<StringBuilder> executorChain = new ExecutorChain<>();
 		
 		executorChain.addExecutor((st, chain) -> {
 			st.append("This ");
@@ -63,9 +65,9 @@ public class TestGGExecutorChain {
 	}
 	
 	@Test
-	public void testFifo() throws GGExecutorException {
+	public void testFifo() throws ExecutorException {
 		Integer integer = 0;
-		GGExecutorChain<Integer> executorChain = new GGExecutorChain<>();
+		ExecutorChain<Integer> executorChain = new ExecutorChain<>();
 		
 		executorChain.addExecutor((i, chain) -> {
 			i *= 2;

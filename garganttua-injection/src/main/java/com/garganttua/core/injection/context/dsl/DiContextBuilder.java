@@ -40,6 +40,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     private final List<IDiChildContextFactory<IDiContext>> childContextFactories = new ArrayList<>();
     private IInjectableElementResolverBuilder resolvers;
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
+    private Set<IContextBuilderObserver> observers = new HashSet<>();
 
     public static DiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
@@ -63,8 +64,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         return this;
     }
 
-    private Map<String, IBeanProvider> buildBeanProviders()
-            throws DslException {
+    private Map<String, IBeanProvider> buildBeanProviders() {
         return this.beanProviders.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -83,8 +83,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
                         }));
     }
 
-    private Map<String, IPropertyProvider> buildPropertyProviders()
-            throws DslException {
+    private Map<String, IPropertyProvider> buildPropertyProviders() {
         return this.propertyProviders.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -166,13 +165,21 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
             this.resolvers.withResolver(qualifier, new SingletonElementResolver(Set.of()));
         });
 
-        return new DiContext(
+        IDiContext built = new DiContext(
                 this.buildBeanProviders(),
                 this.buildPropertyProviders(),
                 Collections.unmodifiableList(new ArrayList<>(childContextFactories)));
+
+        this.notifyObserver(built);
+        return built;
     }
 
-    public static void setBuiltInResolvers(IInjectableElementResolverBuilder resolvers, Set<Class<? extends Annotation>> qualifiers) {
+    private void notifyObserver(IDiContext built) {
+        this.observers.parallelStream().forEach(observer -> observer.handle(built));
+    }
+
+    public static void setBuiltInResolvers(IInjectableElementResolverBuilder resolvers,
+            Set<Class<? extends Annotation>> qualifiers) {
 
         resolvers.withResolver(Singleton.class, new SingletonElementResolver(qualifiers))
                 .withResolver(Inject.class, new SingletonElementResolver(qualifiers))
@@ -189,6 +196,15 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
                         .filter(clazz -> clazz.getAnnotation(Qualifier.class) != null))
                 .map(clazz -> (Class<? extends Annotation>) clazz)
                 .forEach(this.qualifiers::add);
+    }
+
+    @Override
+    public IDiContextBuilder observer(IContextBuilderObserver observer) {
+        this.observers.add(Objects.requireNonNull(observer, "Observer cannot be null"));
+        if (this.built != null) {
+            Thread.ofVirtual().start(() -> observer.handle(this.built));
+        }
+        return this;
     }
 
 }

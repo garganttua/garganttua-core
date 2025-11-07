@@ -3,7 +3,6 @@ package com.garganttua.core.injection.dummies;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
 

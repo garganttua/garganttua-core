@@ -78,3 +78,5 @@ build/
 
 # Node / Frontend modules (if any)
 node_modules/
+
+**/.VSCodeCounter/

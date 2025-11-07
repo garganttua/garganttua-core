@@ -19,12 +19,14 @@ public interface IDiContextBuilder extends IAutomaticBuilder<IDiContextBuilder, 
 
     IPropertyProviderBuilder propertyProvider(String provider);
 
-    IDiContextBuilder childContextFactory(IDiChildContextFactory<IDiContext> instanciator);
+    IDiContextBuilder childContextFactory(IDiChildContextFactory<IDiContext> factory);
 
     IDiContextBuilder withPackages(String[] packageNames);
 
     IInjectableElementResolverBuilder resolvers();
 
     IDiContextBuilder withQualifier(Class<? extends Annotation> qualifier);
+
+    IDiContextBuilder observer(IContextBuilderObserver observer);
 
 }

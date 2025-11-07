@@ -54,7 +54,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
-		List<T> l = (List<T>) this.beanFactories.stream()
+		return this.beanFactories.stream()
 				.filter(factory -> ObjectReflectionHelper.isImplementingInterface(interfasse,
 						factory.getSuppliedType()))
 				.map(factory -> {
@@ -68,7 +68,6 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 				.filter(Objects::nonNull)
 				.map(interfasse::cast)
 				.collect(Collectors.toList());
-		return l;
 	}
 
 	@Override

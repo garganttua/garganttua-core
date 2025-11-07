@@ -1,6 +1,5 @@
 package com.garganttua.core.injection.context;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -24,8 +23,6 @@ import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,7 +52,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
         this.childContextFactories = Collections.unmodifiableList(childContextFactories);
 
-        context = this;
+        DiContext.context = this;
     }
 
     // --- Getters ---
@@ -99,7 +96,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
         wrapLifecycle(this::ensureInitializedAndStarted);
-        Objects.requireNonNull(key, "Key cannnot be null");
+        Objects.requireNonNull(key, "Key cannot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
         return propertyProviders.values().stream()
                 .map(provider -> {
@@ -221,8 +218,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     protected ILifecycle doStop() throws LifecycleException {
         List<Object> lifecycleObjects = new ArrayList<>(getAllLifecycleObjects());
-        Collections.reverse(lifecycleObjects);
-        for (Object obj : lifecycleObjects) {
+        for (Object obj : lifecycleObjects.reversed()) {
             if (obj instanceof ILifecycle lc)
                 lc.onStop();
         }

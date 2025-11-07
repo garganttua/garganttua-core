@@ -1,7 +1,5 @@
 package com.garganttua.core.injection.dummies;
 
-import java.util.Set;
-
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 
@@ -23,13 +21,6 @@ public class DummyConstructorBinderBuilder<TargetClass>
     protected void doAutoDetection() throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
-    }
-
-
-    @Override
-    public Set<Class<?>> getDependencies() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
     }
 
 }
