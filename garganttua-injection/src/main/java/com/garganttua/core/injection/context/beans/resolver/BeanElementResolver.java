@@ -25,7 +25,8 @@ public class BeanElementResolver {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType, AnnotatedElement parameter,
+    protected Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
+            AnnotatedElement parameter,
             BeanStrategy strategy) {
         Objects.requireNonNull(parameter, "Parameter cannot be null");
         Objects.requireNonNull(elementType, "Element type cannot be null");
@@ -53,10 +54,12 @@ public class BeanElementResolver {
             else if (qualifiers.contains(annotation.getClass())) {
                 paramQualifiers.add(annotation.getClass());
             }
+
         }
 
         IObjectSupplierBuilder beanSupplierBuilder = Beans.bean(Optional.ofNullable(provider),
-                BeanDefinition.example(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name), paramQualifiers));
+                BeanDefinition.example(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
+                        paramQualifiers));
 
         return Optional.of(beanSupplierBuilder);
     }

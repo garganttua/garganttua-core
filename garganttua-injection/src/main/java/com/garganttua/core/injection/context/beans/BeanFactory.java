@@ -52,7 +52,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		return bean;
 	}
 
-	private void doInjection(Bean onBean) throws DiException {
+	private void doInjection(Bean onBean) {
 		this.definition.injectableFields().forEach(builder -> {
 			try {
 				builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue();

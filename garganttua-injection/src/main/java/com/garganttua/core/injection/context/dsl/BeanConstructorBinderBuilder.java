@@ -9,10 +9,14 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+
+import jakarta.annotation.Nullable;
+import lombok.NonNull;
 
 public class BeanConstructorBinderBuilder<Bean> extends
         AbstractConstructorBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
@@ -47,7 +51,7 @@ public class BeanConstructorBinderBuilder<Bean> extends
     @Override
     protected void doAutoDetection() throws DslException {
 
-        if( this.resolver == null ){
+        if (this.resolver == null) {
             throw new DslException("Cannot do auto detection without registry");
         }
 
@@ -57,10 +61,15 @@ public class BeanConstructorBinderBuilder<Bean> extends
 
         for (int i = 0; i < params.length; i++) {
             Class<?> elementType = params[i].getType();
-            Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolver
-                    .resolve(elementType, params[i]);
-            if (builder.isPresent())
-                this.withParam(i, builder.get(), true);
+            Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder;
+            try {
+                builder = this.resolver
+                        .resolve(elementType, params[i]);
+                if (builder.isPresent())
+                    this.withParam(i, builder.get(), BeanPostConstructMethodBinderBuilder.isNullable(params[i]));
+            } catch (DiException e) {
+                throw new DslException(e);
+            }
         }
     }
 

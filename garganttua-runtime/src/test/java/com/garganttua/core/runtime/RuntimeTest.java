@@ -1,13 +1,11 @@
 package com.garganttua.core.runtime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.runtime.executors.RuntimeExecutor;
 import com.garganttua.api.spec.CoreExceptionCode;
-import com.garganttua.core.runtime.RuntimeException;
 import com.garganttua.core.runtime.dsl.RuntimeBuilder;
 import com.garganttua.core.runtime.dsl.RuntimeProcessBuilder;
 

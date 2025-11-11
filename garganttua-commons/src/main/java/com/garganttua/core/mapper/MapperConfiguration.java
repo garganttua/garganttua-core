@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class MapperConfiguration {
 
-	private Map<MapperConfigurationItem, Object> configurations = new HashMap<MapperConfigurationItem, Object>();
+	private Map<MapperConfigurationItem, Object> configurations = new HashMap<>();
 
 	public MapperConfiguration() {
 		this.configurations.put(MapperConfigurationItem.FAIL_ON_ERROR, true);

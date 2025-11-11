@@ -18,6 +18,9 @@ import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import jakarta.annotation.Nullable;
+import lombok.NonNull;
+
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
         AbstractMethodBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
         implements IBeanPostConstructMethodBinderBuilder<Bean> {
@@ -60,21 +63,31 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
             throw new DslException("Cannot do auto detection without registry");
         }
         Method method;
-        try {
-            method = this.findMethod();
+        method = this.findMethod();
 
-            Parameter[] params = method.getParameters();
+        Parameter[] params = method.getParameters();
 
-            for (int i = 0; i < params.length; i++) {
-                Class<?> elementType = params[i].getType();
-                Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolver
+        for (int i = 0; i < params.length; i++) {
+            Class<?> elementType = params[i].getType();
+
+            Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder;
+            try {
+                builder = this.resolver
                         .resolve(elementType, params[i]);
                 if (builder.isPresent())
-                    this.withParam(i, builder.get());
+                    this.withParam(i, builder.get(), isNullable(params[i]));
+            } catch (DiException e) {
+                throw new DslException(e);
             }
-        } catch (DiException e) {
-            throw new DslException(e.getMessage(), e);
         }
+    }
+
+    public static boolean isNullable(Parameter parameter) {
+        if (parameter.getAnnotation(Nullable.class) != null)
+            return true;
+        if (parameter.getAnnotation(NonNull.class) != null)
+            return false;
+        return false;
     }
 
     @Override
@@ -83,7 +96,6 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
         List<IObjectSupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
         return this.createBinder(builtParameterSuppliers, supplierBuilder);
     }
-
 
     @Override
     public Set<Class<?>> getDependencies() {

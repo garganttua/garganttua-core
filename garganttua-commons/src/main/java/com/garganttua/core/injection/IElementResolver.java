@@ -9,6 +9,6 @@ import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 @FunctionalInterface
 public interface IElementResolver {
 
-    Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType, AnnotatedElement element);
+    Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType, AnnotatedElement element) throws DiException;
 
 }

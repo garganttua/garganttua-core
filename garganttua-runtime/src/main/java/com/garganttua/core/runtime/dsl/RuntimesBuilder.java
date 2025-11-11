@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
+import com.garganttua.core.runtime.RuntimeContextFactory;
 
 public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?,?>>>
         implements IRuntimesBuilder {
@@ -19,6 +19,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     private Map<String, IRuntimeBuilder<?,?>> runtimeBuilders = new HashMap<>();
     private IDiContextBuilder contextBuilder;
     private boolean canBuild = false;
+    private IDiContext context = null;
 
     private RuntimesBuilder(Optional<IDiContextBuilder> contextBuilder) {
         Objects.requireNonNull(contextBuilder, "Optional context builder cannot be null");
@@ -36,10 +37,13 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         Objects.requireNonNull(name, "Name cannot be null");
         IRuntimeBuilder<InputType, OutputType> runtimeBuilder;
         if (!this.runtimeBuilders.containsKey(name)) {
-            runtimeBuilder = new RuntimeBuilder<>(this, name);
+            runtimeBuilder = new RuntimeBuilder<>(this, name, inputType, outputType);
             this.runtimeBuilders.put(name, runtimeBuilder);
         } else {
             runtimeBuilder = (IRuntimeBuilder<InputType, OutputType>) this.runtimeBuilders.get(name);
+        }
+        if( this.context != null ){
+            runtimeBuilder.handle(context);
         }
         return runtimeBuilder;
     }
@@ -83,14 +87,15 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     public IRuntimesBuilder context(IDiContextBuilder context) {
         this.contextBuilder = Objects.requireNonNull(context, "Context builder cannot be null");
         this.contextBuilder.observer(this);
-        this.contextBuilder.childContextFactory(this);
+        this.contextBuilder.childContextFactory(new RuntimeContextFactory());
         return this;
     }
 
     @Override
     public void handle(IDiContext context) {
-        Objects.requireNonNull(context, "Context cannot be null");
+        this.context = Objects.requireNonNull(context, "Context cannot be null");
         this.canBuild = true;
+        this.runtimeBuilders.values().forEach(b -> b.handle(context));
     }
 
 }

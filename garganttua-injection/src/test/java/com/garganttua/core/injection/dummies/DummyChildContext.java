@@ -123,4 +123,10 @@ public class DummyChildContext implements IDiContext{
         throw new UnsupportedOperationException("Unimplemented method 'getPropertyProvider'");
     }
 
+    @Override
+    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'registerChildContextFactory'");
+    }
+
 }

@@ -48,6 +48,7 @@
     <spring.framework.version>6.2.1</spring.framework.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
+    <jakarta.annotations.api.version>2.1.1</jakarta.annotations.api.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -81,7 +82,7 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
-        <artifactId>garganttua-executor</artifactId>
+        <artifactId>garganttua-execution</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -122,6 +123,11 @@
 
       <!-- External Dependencies -->
 
+      <dependency>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <version>${jakarta.annotations.api.version}</version> <!-- ou la dernière -->
+      </dependency>
       <dependency>
         <groupId>org.apache.maven.plugin-tools</groupId>
         <artifactId>maven-plugin-annotations</artifactId>
@@ -271,7 +277,7 @@
   <modules>
     <module>garganttua-reflection</module>
     <module>garganttua-mapper</module>
-    <module>garganttua-executor</module>
+    <module>garganttua-execution</module>
     <module>garganttua-crypto</module>
     <module>garganttua-native</module>
     <module>garganttua-native-image-maven-plugin</module>

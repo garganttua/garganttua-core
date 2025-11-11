@@ -16,7 +16,7 @@ import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 
-public class RuntimeBuilderTest {
+class RuntimeBuilderTest {
 
     @BeforeAll
     public static void setup(){
@@ -31,7 +31,7 @@ public class RuntimeBuilderTest {
             DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
             IRuntimesBuilder t = RuntimesBuilder.builder();
             IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true).withPackage("com.garganttua");
-            contextBuilder.build();
+            contextBuilder.build().onInit().onStart();
 
             Map<String, IRuntime<?,?>> runtimes = t.context(contextBuilder).runtime("runtime-1", String.class, String.class)
                     .stage("stage-1")

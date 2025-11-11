@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractLifecycle implements ILifecycle {
 
     // --- États internes du cycle de vie ---
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
-    private final AtomicBoolean started = new AtomicBoolean(false);
-    private final AtomicBoolean flushed = new AtomicBoolean(false);
-    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    protected final AtomicBoolean initialized = new AtomicBoolean(false);
+    protected final AtomicBoolean started = new AtomicBoolean(false);
+    protected final AtomicBoolean flushed = new AtomicBoolean(false);
+    protected final AtomicBoolean stopped = new AtomicBoolean(false);
 
     // --- Méthodes à implémenter par les sous-classes ---
     protected abstract ILifecycle doInit() throws LifecycleException;

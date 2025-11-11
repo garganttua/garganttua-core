@@ -6,4 +6,8 @@ public class RuntimeException extends Exception {
         super(message);
     }
 
+    public RuntimeException(Exception e) {
+        super(e);
+    }
+
 }

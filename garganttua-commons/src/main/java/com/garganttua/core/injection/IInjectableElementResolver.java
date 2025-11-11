@@ -8,6 +8,6 @@ import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public interface IInjectableElementResolver {
 
-    Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType, AnnotatedElement element);
+    Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType, AnnotatedElement element) throws DiException;
 
 }

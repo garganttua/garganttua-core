@@ -1,14 +1,35 @@
 package com.garganttua.core.runtime;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-
-import com.garganttua.core.runtime.IRuntimeStep;
+import java.util.Objects;
 
 public class RuntimeStage implements IRuntimeStage {
 
-    public RuntimeStage(String stageName, Map<String, IRuntimeStep> builtSteps) {
-        //TODO Auto-generated constructor stub
+    private final Map<String, IRuntimeStep> steps = new LinkedHashMap<>();
+    private final String stageName;
+
+    public RuntimeStage(String stageName, Map<String, IRuntimeStep> steps) {
+        this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
+        if (steps != null) {
+            this.steps.putAll(steps);
+        }
     }
 
+    @Override
+    public String getStageName() {
+        return stageName;
+    }
+
+    @Override
+    public IRuntimeStep getStep(String stepName) {
+        return steps.get(stepName);
+    }
+
+    @Override
+    public Map<String, IRuntimeStep> getSteps() {
+        return Collections.unmodifiableMap(steps);
+    }
 
 }

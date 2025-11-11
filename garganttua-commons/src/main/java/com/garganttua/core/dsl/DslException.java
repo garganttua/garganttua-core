@@ -8,8 +8,12 @@ public class DslException extends Exception {
         super(message);
     }
 
-    public DslException(String message, Throwable cause) {
+    public DslException(String message, Exception cause) {
         super(message, cause);
+    }
+
+    public DslException(Exception e) {
+        super(e);
     }
 
 }

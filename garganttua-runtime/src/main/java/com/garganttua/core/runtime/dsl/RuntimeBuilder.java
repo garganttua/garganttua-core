@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.Position;
@@ -21,10 +22,16 @@ public class RuntimeBuilder<InputType, OutputType>
 
     private String name;
     private final Map<String, IRuntimeStageBuilder> stages = new LinkedHashMap<>();
+    private IDiContext context;
+    private Class<InputType> inputType;
+    private Class<OutputType> outputType;
 
-    public RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name) {
+    public RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
+            Class<OutputType> outputType) {
         super(Objects.requireNonNull(runtimesBuilder, "RuntimesBuilder cannot be null"));
         this.name = Objects.requireNonNull(name, "Name cannot be null");
+        this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
+        this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
     }
 
     @Override
@@ -90,6 +97,7 @@ public class RuntimeBuilder<InputType, OutputType>
 
     @Override
     protected IRuntime<InputType, OutputType> doBuild() throws DslException {
+        Objects.requireNonNull(this.context, "Context cannot be null");
         log.info("Building Runtime [{}] with {} stage(s)", name, stages.size());
 
         Map<String, IRuntimeStage> builtStages = new LinkedHashMap<>();
@@ -103,11 +111,16 @@ public class RuntimeBuilder<InputType, OutputType>
             builtStages.put(key, stage);
         }
 
-        return new Runtime<>(name, builtStages);
+        return new Runtime<>(name, builtStages, this.context, this.inputType, this.outputType);
     }
 
     @Override
     protected void doAutoDetection() {
 
+    }
+
+    @Override
+    public void handle(IDiContext context) {
+        this.context = Objects.requireNonNull(context, "Context cannot be null");
     }
 }

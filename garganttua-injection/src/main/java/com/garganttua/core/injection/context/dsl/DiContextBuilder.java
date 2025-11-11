@@ -2,7 +2,6 @@ package com.garganttua.core.injection.context.dsl;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +21,8 @@ import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.annotations.Fixed;
+import com.garganttua.core.injection.annotations.Null;
 import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.DiContext;
@@ -29,6 +30,8 @@ import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;
+import com.garganttua.core.injection.context.resolver.FixedElementResolver;
+import com.garganttua.core.injection.context.resolver.NullElementResolver;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder, IDiContext>
@@ -37,7 +40,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     private final Set<String> packages = new HashSet<>();
     private final Map<String, IBeanProviderBuilder> beanProviders = new HashMap<>();
     private final Map<String, IPropertyProviderBuilder> propertyProviders = new HashMap<>();
-    private final List<IDiChildContextFactory<IDiContext>> childContextFactories = new ArrayList<>();
+    private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories = new ArrayList<>();
     private IInjectableElementResolverBuilder resolvers;
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
     private Set<IContextBuilderObserver> observers = new HashSet<>();
@@ -56,10 +59,13 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     }
 
     @Override
-    public IDiContextBuilder childContextFactory(IDiChildContextFactory<IDiContext> factory) {
+    public IDiContextBuilder childContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
         Objects.requireNonNull(factory, "ChildContextFactory cannot be null");
         if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
             childContextFactories.add(factory);
+        }
+        if( this.built != null ){
+            this.built.registerChildContextFactory(factory);
         }
         return this;
     }
@@ -168,7 +174,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         IDiContext built = new DiContext(
                 this.buildBeanProviders(),
                 this.buildPropertyProviders(),
-                Collections.unmodifiableList(new ArrayList<>(childContextFactories)));
+                new ArrayList<>(childContextFactories));
 
         this.notifyObserver(built);
         return built;
@@ -184,7 +190,9 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         resolvers.withResolver(Singleton.class, new SingletonElementResolver(qualifiers))
                 .withResolver(Inject.class, new SingletonElementResolver(qualifiers))
                 .withResolver(Prototype.class, new PrototypeElementResolver(qualifiers))
-                .withResolver(Property.class, new PropertyElementResolver());
+                .withResolver(Property.class, new PropertyElementResolver())
+                .withResolver(Null.class, new NullElementResolver())
+                .withResolver(Fixed.class, new FixedElementResolver());
     }
 
     @SuppressWarnings("unchecked")

@@ -85,22 +85,35 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     }
 
     private void lookForInjectableFields() {
-        Arrays.stream(this.beanClass.getDeclaredFields()).forEach(this::registerInjectableField);
-    }
-
-    private void registerInjectableField(Field field){
-        Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolver.resolve(field.getType(), field);
-
-        builder.ifPresent(supplierBuilder -> {
+        Arrays.stream(this.beanClass.getDeclaredFields()).forEach(t -> {
             try {
-                BeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this, field.getType());
-                injectable.field(field).withValue(supplierBuilder);
-                this.injectableFields.add(injectable);
+                registerInjectableField(t);
             } catch (DslException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         });
+    }
+
+    private void registerInjectableField(Field field) throws DslException {
+        Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder;
+        try {
+            builder = this.resolver.resolve(field.getType(), field);
+            builder.ifPresent(supplierBuilder -> {
+                try {
+                    BeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
+                            field.getType());
+                    injectable.field(field).withValue(supplierBuilder);
+                    this.injectableFields.add(injectable);
+                } catch (DslException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            });
+        } catch (DiException e) {
+            throw new DslException(e);
+        }
+
     }
 
     private void lookForMethods() {
@@ -112,12 +125,15 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
 
     private boolean isMethodNotAlreadyBound(Method method) {
         return this.postConstructMethodBinderBuilders.stream().noneMatch(builder -> {
+            Method existing;
             try {
-                Method existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).findMethod();
-                return method.equals(existing);
-            } catch (DiException e) {
+                existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).findMethod();
+            } catch (DslException e) {
+                // TODO
+                e.printStackTrace();
                 return false;
             }
+            return method.equals(existing);
         });
     }
 
@@ -231,9 +247,11 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     }
 
     @Override
-    public <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(Class<FieldType> fieldType) throws DslException {
+    public <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(Class<FieldType> fieldType)
+            throws DslException {
         Objects.requireNonNull(fieldType, "Field type cannot be null");
-        IBeanInjectableFieldBuilder<FieldType, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this, fieldType);
+        IBeanInjectableFieldBuilder<FieldType, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
+                fieldType);
         this.injectableFields.add(injectable);
         return injectable;
     }

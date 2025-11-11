@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.supplying.IObjectSupplier;
@@ -20,7 +21,7 @@ public class InjectableElementResolver implements IInjectableElementResolver {
 
     @Override
     public Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
-            AnnotatedElement element) {
+            AnnotatedElement element) throws DiException {
 
         for (Annotation annotation : element.getAnnotations()) {
             Class<? extends Annotation> type = annotation.annotationType();

@@ -13,8 +13,6 @@ public interface IBeanProvider extends ILifecycle {
 
     <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes);
 
-    /* void registerBean(String name, Object bean) throws DiException; */
-
     boolean isMutable();
 
     <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException;

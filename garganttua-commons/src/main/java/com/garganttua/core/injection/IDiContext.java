@@ -36,6 +36,8 @@ public interface IDiContext extends ILifecycle {
         <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass, Object... args)
                         throws DiException;
 
+        void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory);
+
         <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories()
                         throws DiException;
 

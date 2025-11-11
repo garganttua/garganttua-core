@@ -424,14 +424,14 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return builtParameterSuppliers;
     }
 
-    public Method findMethod() throws DiException {
+    public Method findMethod() throws DslException {
         if (this.method == null) {
-            throw new DiException("Method is not set");
+            throw new DslException("Method is not set");
         }
         try {
             return (Method) this.objectQuery.find(this.method).getLast();
         } catch (ReflectionException e) {
-            throw new DiException(e.getMessage(), e);
+            throw new DslException(e.getMessage(), e);
         }
     }
 

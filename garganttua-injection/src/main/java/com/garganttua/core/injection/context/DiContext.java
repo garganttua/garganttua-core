@@ -35,7 +35,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     // --- Structures internes ---
     private final Map<String, IBeanProvider> beanProviders;
     private final Map<String, IPropertyProvider> propertyProviders;
-    private final List<IDiChildContextFactory<IDiContext>> childContextFactories;
+    private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
 
     public static IDiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
@@ -44,13 +44,13 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     // --- Constructeur ---
     public DiContext(Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
-            List<IDiChildContextFactory<IDiContext>> childContextFactories) {
+            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
 
         this.beanProviders = Objects.requireNonNull(beanProviders, "beanProviders cannot be null");
         this.propertyProviders = Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null");
         Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null");
 
-        this.childContextFactories = Collections.unmodifiableList(childContextFactories);
+        this.childContextFactories = childContextFactories;
 
         DiContext.context = this;
     }
@@ -77,7 +77,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public Set<IDiChildContextFactory<IDiContext>> getChildContextFactories() throws DiException {
+    public Set<IDiChildContextFactory<? extends IDiContext>> getChildContextFactories() throws DiException {
         try {
             ensureInitializedAndStarted();
         } catch (LifecycleException e) {
@@ -175,16 +175,24 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             IDiChildContextFactory<? extends IDiContext> factory) {
         Type[] genericInterfaces = factory.getClass().getGenericInterfaces();
         for (Type type : genericInterfaces) {
-            if (type instanceof ParameterizedType pt
-                    && pt.getRawType() instanceof Class<?> raw
-                    && IDiChildContextFactory.class.isAssignableFrom(raw)) {
-                Type actual = pt.getActualTypeArguments()[0];
-                if (actual instanceof Class<?> clazz) {
-                    return (Class<? extends IDiContext>) clazz;
+
+            if ( isParameterizedOf(type, IDiChildContextFactory.class) ) {
+
+                Type actual = ((ParameterizedType) type).getActualTypeArguments()[0];
+
+                if (isParameterizedOf(actual, IDiContext.class)) {
+
+                    return (Class<? extends IDiContext>) ((ParameterizedType) actual).getRawType();
                 }
             }
         }
         return null;
+    }
+
+    private static boolean isParameterizedOf(Type type, Class<?> interfasse){
+        return (type instanceof ParameterizedType parameterizedType
+                    && parameterizedType.getRawType() instanceof Class<?> raw
+                    && interfasse.isAssignableFrom(raw));
     }
 
     // --- Cycle de vie ---
@@ -286,6 +294,26 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @FunctionalInterface
     interface RunnableWithException {
         void run() throws LifecycleException;
+    }
+
+    public Map<String, IBeanProvider> beanProviders() {
+        return this.beanProviders;
+    }
+
+    public Map<String, IPropertyProvider> propertyProviders() {
+        return this.propertyProviders;
+    }
+
+    public List<IDiChildContextFactory<? extends IDiContext>> childContextFactories() {
+        return this.childContextFactories;
+    }
+
+    @Override
+    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+        Objects.requireNonNull(factory, "Factory cannot be null");
+        if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
+            childContextFactories.add(factory);
+        }
     }
 
 }
