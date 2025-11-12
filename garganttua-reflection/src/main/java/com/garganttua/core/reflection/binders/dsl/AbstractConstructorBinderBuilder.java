@@ -26,7 +26,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         implements IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>> {
 
     private final Class<Constructed> objectClass;
-    private final List<IObjectSupplierBuilder<?, ?>> parameters;
+    private final List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> parameters;
     private final List<Boolean> parameterNullableAllowed;
 
     protected AbstractConstructorBinderBuilder(Link Link, Class<Constructed> objectClass) {
@@ -51,7 +51,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(int i, IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+    public Builder withParam(int i, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
         ensureCapacity(i);
         this.parameters.set(i, supplier);
         this.parameterNullableAllowed.set(i, false);
@@ -67,7 +67,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(int i, IObjectSupplierBuilder<?, ?> supplier, boolean acceptNullable) throws DslException {
+    public Builder withParam(int i, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException {
         ensureCapacity(i);
         this.parameters.set(i, supplier);
         this.parameterNullableAllowed.set(i, acceptNullable);
@@ -86,12 +86,12 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+    public Builder withParam(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
         return withParam(supplier, false);
     }
 
     @Override
-    public Builder withParam(IObjectSupplierBuilder<?, ?> supplier, boolean acceptNullable) throws DslException {
+    public Builder withParam(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException {
         int idx = parameters.size();
         return withParam(idx, supplier, acceptNullable);
     }
@@ -102,7 +102,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
@@ -112,7 +112,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ?> supplier, boolean acceptNullable)
+    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable)
             throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }

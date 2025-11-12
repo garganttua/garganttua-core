@@ -9,11 +9,11 @@ import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public interface IRuntimeStepBuilder extends ILinkedBuilder<IRuntimeStageBuilder, IRuntimeStep> {
 
-        <T, ExecutionReturn> IRuntimeOperationStepBuilder<ExecutionReturn> object(
+        <T, ExecutionReturn> IRuntimeStepOperationBuilder<ExecutionReturn> object(
                         IObjectSupplierBuilder<T, IObjectSupplier<T>> objectSupplier, Class<ExecutionReturn> returnType)
                         throws DslException;
 
-        <T, ExecutionReturn> IRuntimeOperationStepBuilder<ExecutionReturn> object(
+        <T, ExecutionReturn> IRuntimeStepOperationBuilder<ExecutionReturn> object(
                         IObjectSupplierBuilder<T, IObjectSupplier<T>> objectSupplier, Class<ExecutionReturn> returnType,
                         RuntimeStepOperationPosition position) throws DslException;
 

@@ -3,11 +3,11 @@ package com.garganttua.core.runtime;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.core.executor.ExecutorException;
-import com.garganttua.core.executor.IExecutorChain;
+import com.garganttua.core.execution.ExecutorChain;
+import com.garganttua.core.execution.ExecutorException;
+import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.executor.chain.ExecutorChain;
 
 public class Runtime<InputType, OutputType> implements IRuntime<InputType, OutputType> {
 

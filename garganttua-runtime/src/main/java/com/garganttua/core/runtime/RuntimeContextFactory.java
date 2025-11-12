@@ -4,7 +4,6 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.runtime.dsl.RuntimeContext;
 
 public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeContext<?,?>> {
 

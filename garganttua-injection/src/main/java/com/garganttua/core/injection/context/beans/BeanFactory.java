@@ -95,7 +95,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				.postConstructMethodBinderBuilders()) {
 			try {
 				IMethodBinder<Void> methodBinder = methodBinderBuilder
-						.build((FixedObjectSupplierBuilder<Bean>) FixedObjectSupplierBuilder.of(bean));
+						.build(FixedObjectSupplierBuilder.of(bean));
 				methodBinder.execute();
 			} catch ( DslException | ReflectionException e) {
 				throw new DiException(

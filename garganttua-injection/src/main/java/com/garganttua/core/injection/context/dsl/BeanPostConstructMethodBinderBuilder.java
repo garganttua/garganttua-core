@@ -17,6 +17,7 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
@@ -74,8 +75,11 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
             try {
                 builder = this.resolver
                         .resolve(elementType, params[i]);
+                boolean nullable = isNullable(params[i]);
                 if (builder.isPresent())
-                    this.withParam(i, builder.get(), isNullable(params[i]));
+                    this.withParam(i, builder.get(), nullable);
+                else
+                    this.withParam(i, new NullObjectSupplierBuilder<>(elementType), nullable);
             } catch (DiException e) {
                 throw new DslException(e);
             }

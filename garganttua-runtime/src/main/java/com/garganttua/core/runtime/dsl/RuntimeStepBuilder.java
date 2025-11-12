@@ -22,7 +22,7 @@ public class RuntimeStepBuilder extends AbstractLinkedBuilder<IRuntimeStageBuild
         implements IRuntimeStepBuilder {
 
     private String stepName;
-    private final Map<Class<?>, IRuntimeOperationStepBuilder<?>> operations = new LinkedHashMap<>();
+    private final Map<Class<?>, IRuntimeStepOperationBuilder<?>> operations = new LinkedHashMap<>();
 
     public RuntimeStepBuilder(RuntimeStageBuilder runtimeStageBuilder, String stepName) {
         super(runtimeStageBuilder);
@@ -34,9 +34,9 @@ public class RuntimeStepBuilder extends AbstractLinkedBuilder<IRuntimeStageBuild
 
         Map<Class<?>, IMethodBinder<?>> builtBinders = new LinkedHashMap<>();
 
-        for (Map.Entry<Class<?>, IRuntimeOperationStepBuilder<?>> entry : operations.entrySet()) {
+        for (Map.Entry<Class<?>, IRuntimeStepOperationBuilder<?>> entry : operations.entrySet()) {
             Class<?> key = entry.getKey();
-            IRuntimeOperationStepBuilder<?> builder = entry.getValue();
+            IRuntimeStepOperationBuilder<?> builder = entry.getValue();
             Objects.requireNonNull(builder, "Binder builder for operation " + key + " cannot be null");
 
             IMethodBinder<?> binder = builder.build();
@@ -47,7 +47,7 @@ public class RuntimeStepBuilder extends AbstractLinkedBuilder<IRuntimeStageBuild
     }
 
     @Override
-    public <T, ExecutionReturn> IRuntimeOperationStepBuilder<ExecutionReturn> object(
+    public <T, ExecutionReturn> IRuntimeStepOperationBuilder<ExecutionReturn> object(
             IObjectSupplierBuilder<T, IObjectSupplier<T>> objectSupplierBuilder, Class<ExecutionReturn> returnType) throws DslException {
         Objects.requireNonNull(objectSupplierBuilder, "Object supplier builder cannot be null");
 
@@ -56,7 +56,7 @@ public class RuntimeStepBuilder extends AbstractLinkedBuilder<IRuntimeStageBuild
             throw new IllegalArgumentException("Operation already exists in step [" + stepName + "]: " + key);
         }
 
-        IRuntimeOperationStepBuilder<ExecutionReturn> operationStepBuilder = new RuntimeOperationStepBuilder<>(this,
+        IRuntimeStepOperationBuilder<ExecutionReturn> operationStepBuilder = new RuntimeOperationStepBuilder<>(this,
                 objectSupplierBuilder);
                 operationStepBuilder.withReturn(returnType);
         operations.put(key, operationStepBuilder);
@@ -66,7 +66,7 @@ public class RuntimeStepBuilder extends AbstractLinkedBuilder<IRuntimeStageBuild
     }
 
     @Override
-    public <T, ExecutionReturn> IRuntimeOperationStepBuilder<ExecutionReturn> object(
+    public <T, ExecutionReturn> IRuntimeStepOperationBuilder<ExecutionReturn> object(
             IObjectSupplierBuilder<T, IObjectSupplier<T>> objectSupplier, Class<ExecutionReturn> returnType, RuntimeStepOperationPosition position)
             throws DslException {
         Objects.requireNonNull(objectSupplier, "Object supplier builder cannot be null");
@@ -77,14 +77,14 @@ public class RuntimeStepBuilder extends AbstractLinkedBuilder<IRuntimeStageBuild
         if (operations.containsKey(key)) {
             throw new IllegalArgumentException("Operation already exists in step [" + stepName + "]: " + key);
         }
-        IRuntimeOperationStepBuilder<ExecutionReturn> operationStepBuilder = new RuntimeOperationStepBuilder<>(this,
+        IRuntimeStepOperationBuilder<ExecutionReturn> operationStepBuilder = new RuntimeOperationStepBuilder<>(this,
                 objectSupplier);
                 operationStepBuilder.withReturn(returnType);
 
-        Map<Class<?>, IRuntimeOperationStepBuilder<?>> reordered = new LinkedHashMap<>();
+        Map<Class<?>, IRuntimeStepOperationBuilder<?>> reordered = new LinkedHashMap<>();
         boolean inserted = false;
 
-        for (Entry<Class<?>, IRuntimeOperationStepBuilder<?>> entry : operations.entrySet()) {
+        for (Entry<Class<?>, IRuntimeStepOperationBuilder<?>> entry : operations.entrySet()) {
             Class<?> existingKey = entry.getKey();
 
             if (position.position() == Position.BEFORE && existingKey.equals(position.element())) {

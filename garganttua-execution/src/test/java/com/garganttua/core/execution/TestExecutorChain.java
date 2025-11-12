@@ -1,10 +1,8 @@
-package com.garganttua.executor.chain;
+package com.garganttua.core.execution;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-
-import com.garganttua.core.executor.ExecutorException;
 
 public class TestExecutorChain {
 

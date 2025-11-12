@@ -1,4 +1,4 @@
-package com.garganttua.core.executor;
+package com.garganttua.core.execution;
 
 public interface IExecutorChain<T> {
 

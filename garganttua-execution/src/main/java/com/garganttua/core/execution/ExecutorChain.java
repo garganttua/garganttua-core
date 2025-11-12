@@ -1,13 +1,8 @@
-package com.garganttua.executor.chain;
+package com.garganttua.core.execution;
 
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Queue;
-
-import com.garganttua.core.executor.ExecutorException;
-import com.garganttua.core.executor.IExecutor;
-import com.garganttua.core.executor.IExecutorChain;
-import com.garganttua.core.executor.IFailBackExecutor;
 
 import lombok.extern.slf4j.Slf4j;
 

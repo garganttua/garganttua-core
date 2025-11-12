@@ -127,7 +127,7 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
 
     @Override
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> withValue(
-            IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+            IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
         Objects.requireNonNull(supplier, "Supplier cannot be null");
         this.valueSupplierBuilder = supplier;
         return this;

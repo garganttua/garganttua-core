@@ -8,6 +8,7 @@ import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.annotations.Provider;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 
 @Singleton
@@ -56,7 +57,7 @@ public class DummyBean {
         return postConstructCalled;
     }
 
-    @Inject
+    @PostConstruct
     public void markPostConstruct() {
         this.postConstructCalled = true;
     }

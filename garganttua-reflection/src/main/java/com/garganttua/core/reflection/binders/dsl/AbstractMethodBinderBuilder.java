@@ -2,16 +2,12 @@ package com.garganttua.core.reflection.binders.dsl;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
@@ -209,7 +205,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder withParam(int i, IObjectSupplierBuilder<?, ?> object) throws DslException {
+    public Builder withParam(int i, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> object) throws DslException {
         return withParam(i, object, false);
     }
 
@@ -243,7 +239,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder withParam(int i, IObjectSupplierBuilder<?, ?> object, boolean acceptNullable) throws DslException {
+    public Builder withParam(int i, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> object, boolean acceptNullable) throws DslException {
         log.atTrace().log("[MethodBinderBuilder] Binding parameter {} with supplier of type {} (acceptNullable={})", i,
                 object == null ? "null" : object.getSuppliedType(), acceptNullable);
         Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
@@ -284,7 +280,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
         return withParam(paramName, supplier, false);
     }
 
@@ -318,7 +314,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ?> supplier, boolean acceptNullable)
+    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable)
             throws DslException {
         Objects.requireNonNull(paramName, "paramName cannot be null");
         Objects.requireNonNull(supplier, "supplier cannot be null");
@@ -354,7 +350,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder withParam(IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+    public Builder withParam(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
         return withParam(supplier, false);
     }
 
@@ -370,7 +366,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder withParam(IObjectSupplierBuilder<?, ?> supplier, boolean acceptNullable) throws DslException {
+    public Builder withParam(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException {
         Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
         Objects.requireNonNull(supplier, "supplier cannot be null");
         int idx = findNextFreeParameterIndex();

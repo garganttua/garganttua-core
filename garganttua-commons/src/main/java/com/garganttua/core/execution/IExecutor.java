@@ -1,4 +1,4 @@
-package com.garganttua.core.executor;
+package com.garganttua.core.execution;
 
 @FunctionalInterface
 public interface IExecutor<T> {

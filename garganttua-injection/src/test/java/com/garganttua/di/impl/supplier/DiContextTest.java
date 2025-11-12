@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.injection.context.beans.Beans;
@@ -25,7 +24,7 @@ public class DiContextTest {
     String propertyValue = UUID.randomUUID().toString();
 
     @BeforeEach
-    void setUp() throws DiException, DslException, LifecycleException {
+    void setUp() throws DslException, LifecycleException {
         ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
         DiContext.builder().withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
@@ -36,7 +35,7 @@ public class DiContextTest {
     }
 
     @Test
-    public void testPropertiesAreLoaded() throws DiException, DslException, SupplyException {
+    public void testPropertiesAreLoaded() throws DslException, SupplyException {
         Optional<String> property = Properties.property(String.class).key("com.garganttua.dummyPropertyInConstructor")
                 .build().supply();
 
@@ -47,7 +46,7 @@ public class DiContextTest {
     }
 
     @Test
-    public void testDummyBeanIsLoaded() throws DiException, DslException, SupplyException {
+    public void testDummyBeanIsLoaded() throws DslException, SupplyException {
         Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
         assertNotNull(bean);
         assertTrue(bean.isPresent());

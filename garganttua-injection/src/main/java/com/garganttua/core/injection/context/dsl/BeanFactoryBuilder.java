@@ -28,6 +28,8 @@ import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
 
+import jakarta.annotation.PostConstruct;
+
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
 
@@ -80,7 +82,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
         if (this.constructorBinderBuilder == null) {
             this.lookForConstructor();
         }
-        this.lookForMethods();
+        this.lookForPostConstructMethods();
         this.lookForInjectableFields();
     }
 
@@ -101,9 +103,8 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
             builder = this.resolver.resolve(field.getType(), field);
             builder.ifPresent(supplierBuilder -> {
                 try {
-                    BeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
-                            field.getType());
-                    injectable.field(field).withValue(supplierBuilder);
+                    IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
+                            field.getType()).field(field).withValue(supplierBuilder).autoDetect(true);
                     this.injectableFields.add(injectable);
                 } catch (DslException e) {
                     // TODO Auto-generated catch block
@@ -116,14 +117,18 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
 
     }
 
-    private void lookForMethods() {
+    private void lookForPostConstructMethods() {
         Arrays.stream(this.beanClass.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Inject.class))
-                .filter(this::isMethodNotAlreadyBound)
-                .forEach(this::registerMethodBinder);
+                .filter(this::isPostConstructMethodNotAlreadyBound)
+                .forEach(this::registerPostConstructMethodBinder);
+        Arrays.stream(this.beanClass.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+                .filter(this::isPostConstructMethodNotAlreadyBound)
+                .forEach(this::registerPostConstructMethodBinder);
     }
 
-    private boolean isMethodNotAlreadyBound(Method method) {
+    private boolean isPostConstructMethodNotAlreadyBound(Method method) {
         return this.postConstructMethodBinderBuilders.stream().noneMatch(builder -> {
             Method existing;
             try {
@@ -137,7 +142,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
         });
     }
 
-    private void registerMethodBinder(Method method) {
+    private void registerPostConstructMethodBinder(Method method) {
         try {
             IBeanPostConstructMethodBinderBuilder<Bean> methodBinderBuilder = new BeanPostConstructMethodBinderBuilder<Bean>(
                     this, this, Optional.ofNullable(this.resolver))
@@ -148,7 +153,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
             for (Parameter parameter : method.getParameters()) {
                 try {
                     Class<?> paramType = parameter.getType();
-                    methodBinderBuilder.withParam(new NullObjectSupplierBuilder<>(paramType), true);
+                    methodBinderBuilder.withParam(new NullObjectSupplierBuilder<>(paramType));
                 } catch (DslException e) {
                     e.printStackTrace();
                 }
@@ -161,7 +166,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
         }
     }
 
-    private void lookForConstructor() throws DslException {
+    private void lookForConstructor() {
         Arrays.stream(this.beanClass.getDeclaredConstructors())
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
                 .findFirst()
@@ -171,7 +176,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
                                 Optional.ofNullable(this.resolver))
                                 .autoDetect(true);
 
-                        Arrays.stream(constructor.getParameters())
+                         Arrays.stream(constructor.getParameters())
                                 .forEach(parameter -> {
                                     try {
                                         Class<?> paramType = parameter.getType();
