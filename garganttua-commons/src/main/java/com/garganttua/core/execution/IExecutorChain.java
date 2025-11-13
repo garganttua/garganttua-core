@@ -6,8 +6,8 @@ public interface IExecutorChain<T> {
 
 	void addExecutor(IExecutor<T> executor);
 
-	void addExecutor(IExecutor<T> executor, IFailBackExecutor<T> failBackExecutor);
+	void addExecutor(IExecutor<T> executor, IFallBackExecutor<T> fallBackExecutor);
 
-	void executeFailBack(T request);
+	void executeFallBack(T request);
 
 }

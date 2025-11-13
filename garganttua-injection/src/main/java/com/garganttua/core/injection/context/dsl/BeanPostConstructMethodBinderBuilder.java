@@ -54,11 +54,6 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
     }
 
     @Override
-    protected IBeanPostConstructMethodBinderBuilder<Bean> getBuilder() {
-        return this;
-    }
-
-    @Override
     protected void doAutoDetection() throws DslException {
         if (this.resolver == null) {
             throw new DslException("Cannot do auto detection without registry");

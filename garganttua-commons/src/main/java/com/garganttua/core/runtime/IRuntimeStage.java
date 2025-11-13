@@ -2,12 +2,14 @@ package com.garganttua.core.runtime;
 
 import java.util.Map;
 
+import com.garganttua.core.reflection.binders.IMethodBinder;
+
 public interface IRuntimeStage {
 
     String getStageName();
 
-    IRuntimeStep getStep(String stepName);
+    IMethodBinder<?> getStep(String stepName);
 
-    Map<String, IRuntimeStep> getSteps();
+    Map<String, IMethodBinder<?>> getSteps();
 
 }

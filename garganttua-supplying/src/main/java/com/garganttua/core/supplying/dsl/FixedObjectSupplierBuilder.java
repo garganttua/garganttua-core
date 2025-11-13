@@ -30,6 +30,13 @@ public class FixedObjectSupplierBuilder<Supplied>
         return new FixedObjectSupplierBuilder<>(object);
     }
 
+    public static <Supplied> IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>> ofNullable(Supplied object, Class<Supplied> type) {
+        if( object != null )
+            return new FixedObjectSupplierBuilder<>(object);
+        
+        return new NullObjectSupplierBuilder<>(type);
+    }
+
     @Override
     public boolean isContextual() {
         return false;

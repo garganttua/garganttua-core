@@ -9,7 +9,7 @@ import com.garganttua.core.runtime.annotations.Code;
 import com.garganttua.core.runtime.annotations.Context;
 import com.garganttua.core.runtime.annotations.Exception;
 import com.garganttua.core.runtime.annotations.ExceptionMessage;
-import com.garganttua.core.runtime.annotations.FailBack;
+import com.garganttua.core.runtime.annotations.FallBack;
 import com.garganttua.core.runtime.annotations.Input;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
@@ -24,16 +24,17 @@ public class DummyRuntimeProcessStep {
     @Output
     @Catch(exception = DiException.class, code = 401, failback = true, abort = true)
     @Variable(name = "method-returned")
+    @Code(201)
     String method(@Input String input, @Fixed(valueString = "input-parameter") String fixedValue,
-            @Variable(name = "variable") String variable, @Context IRuntimeContext<?, ?> context) {
+            @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context) {
         return input + "-processed";
     }
 
-    @FailBack
+    @FallBack
     @Output
     @Variable(name = "failback-returned")
     String failBackMethod(@Fixed(valueString = "input-parameter") String input, @Exception DiException exception,
-            @Code int code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<?, ?> context) {
+            @Code int code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<String, String> context) {
         return input + "-failback";
     }
 }

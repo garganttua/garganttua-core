@@ -1,20 +1,22 @@
 package com.garganttua.core.runtime.dsl;
 
+import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.ILinkedBuilder;
+import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.runtime.IRuntimeStep;
-import com.garganttua.core.runtime.RuntimeStepOperationPosition;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
-public interface IRuntimeStepBuilder extends ILinkedBuilder<IRuntimeStageBuilder, IRuntimeStep> {
+public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType> extends IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType>, IRuntimeStageBuilder<?,?>, IRuntimeStep<ExecutionReturn>>{
 
-        <T, ExecutionReturn> IRuntimeStepOperationBuilder<ExecutionReturn> object(
-                        IObjectSupplierBuilder<T, IObjectSupplier<T>> objectSupplier, Class<ExecutionReturn> returnType)
-                        throws DslException;
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> condition(IConditionBuilder conditionBuilder);
 
-        <T, ExecutionReturn> IRuntimeStepOperationBuilder<ExecutionReturn> object(
-                        IObjectSupplierBuilder<T, IObjectSupplier<T>> objectSupplier, Class<ExecutionReturn> returnType,
-                        RuntimeStepOperationPosition position) throws DslException;
+        IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> method() throws DslException;
+
+        IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallBack() throws DslException;
+
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> variable(String variableName);
+
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> output(boolean output);
+
+        IRuntimeStepCatchBuilder katch(Class<? extends Throwable> exception) throws DslException;
 
 }

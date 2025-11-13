@@ -1,13 +1,15 @@
 package com.garganttua.core.runtime;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
+import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 
-public class RuntimeStep implements IRuntimeStep {
+public class RuntimeStep<ExecutionReturn> implements IRuntimeStep<ExecutionReturn> {
 
     private final String stepName;
     private final Map<Class<?>, IMethodBinder<?>> binders = new LinkedHashMap<>();
@@ -24,7 +26,19 @@ public class RuntimeStep implements IRuntimeStep {
         return stepName;
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
+    public Optional<ExecutionReturn> execute() throws ReflectionException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'execute'");
+    }
+
+    @Override
+    public Set<Class<?>> getDependencies() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
+    }
+
+    /*     @SuppressWarnings("unchecked")
     @Override
     public <T> IMethodBinder<T> getBinder(Class<T> clazz) {
         return (IMethodBinder<T>) binders.get(clazz);
@@ -33,5 +47,5 @@ public class RuntimeStep implements IRuntimeStep {
     @Override
     public Map<Class<?>, IMethodBinder<?>> getBinders() {
         return Collections.unmodifiableMap(binders);
-    }
+    } */
 }

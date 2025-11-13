@@ -67,6 +67,11 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-condition</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-native-image-utils</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -288,5 +293,6 @@
     <module>garganttua-commons</module>
     <module>garganttua-lifecycle</module>
     <module>garganttua-supplying</module>
+    <module>garganttua-condition</module>
   </modules>
 </project>

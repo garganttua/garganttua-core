@@ -27,6 +27,10 @@
             </dependency>
             <dependency>
                   <groupId>com.garganttua.core</groupId>
+                  <artifactId>garganttua-condition</artifactId>
+            </dependency>
+            <dependency>
+                  <groupId>com.garganttua.core</groupId>
                   <artifactId>garganttua-reflections</artifactId>
                   <scope>test</scope>
             </dependency>

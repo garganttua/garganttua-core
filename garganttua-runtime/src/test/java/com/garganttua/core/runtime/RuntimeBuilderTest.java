@@ -8,6 +8,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import static com.garganttua.core.condition.Conditions.*;
+import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
@@ -36,14 +38,20 @@ class RuntimeBuilderTest {
 
             Map<String, IRuntime<?,?>> runtimes = t.context(contextBuilder).runtime("runtime-1", String.class, String.class)
                     .stage("stage-1")
-                    .step("step-1")
-                    .object(FixedObjectSupplierBuilder.of(step), String.class)
-                    .method("method")
+                    .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
+                    .condition(custom(of(10), i -> 1>0))
                     .output(true)
                     .katch(DiException.class).code(401).failback(true).abort(true).up()
                     .variable("method-returned")
+                    .method()
                     .withParam(input(String.class))
+                    .withParam(FixedObjectSupplierBuilder.of("input-parameter"))
                     .withParam(variable("variable", String.class))
+                    .withParam(context()).up()
+                    .fallBack()
+                    .withParam(FixedObjectSupplierBuilder.of("input-parameter"))
+                    .withParam(exception(DiException.class))
+                    .withParam(code())
                     .withParam(context()).up()
                     .up().up().up()
                     .build();
@@ -52,8 +60,8 @@ class RuntimeBuilderTest {
             assertEquals(1, runtimes.size());
 
             IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
-
-            runtime.execute("input");
+            IRuntimeResult<String,String> result = runtime.execute("input");
+            assertEquals("", result.getOutput());
         });
 
     }

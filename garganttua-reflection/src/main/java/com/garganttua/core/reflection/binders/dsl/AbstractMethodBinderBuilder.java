@@ -33,8 +33,6 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     private List<Boolean> parameterNullableAllowed;
     private Class<?>[] parameterTypes;
 
-    protected abstract Builder getBuilder();
-
     private IObjectQuery objectQuery;
     private boolean collection = false;
     private Class<ExecutionReturn> returnedType;
@@ -72,7 +70,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     public Builder withReturn(Class<ExecutionReturn> returnedType) throws DslException {
         this.returnedType = Objects.requireNonNull(returnedType, "Returned type cannot be null");
 
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -80,7 +78,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         if (this.method == null) {
             throw new DslException("Method must be set");
         }
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -91,7 +89,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         try {
             this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedType());
             this.initParameters();
-            return this.getBuilder();
+            return (Builder) this;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
@@ -106,7 +104,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             this.method = MethodResolver.methodByAddress(methodAddress, this.objectQuery,
                     this.supplier.getSuppliedType());
             this.initParameters();
-            return this.getBuilder();
+            return (Builder) this;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
@@ -120,7 +118,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         try {
             this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getSuppliedType());
             this.initParameters();
-            return this.getBuilder();
+            return (Builder) this;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
@@ -136,7 +134,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedType(), returnType,
                     parameterTypes);
             this.initParameters();
-            return this.getBuilder();
+            return (Builder) this;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
@@ -153,7 +151,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                     this.supplier.getSuppliedType(),
                     returnType, parameterTypes);
             this.initParameters();
-            return this.getBuilder();
+            return (Builder) this;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
@@ -169,7 +167,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getSuppliedType(),
                     returnType, parameterTypes);
             this.initParameters();
-            return this.getBuilder();
+            return (Builder) this;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }
@@ -235,7 +233,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         this.parameterNullableAllowed.set(i, acceptNullable);
         log.atInfo().log("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
                 object.getClass(), acceptNullable);
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -271,7 +269,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         log.atInfo().log(
                 "[MethodBinderBuilder] Parameter {} bound successfully with supplier type {} (acceptNullable={})", i,
                 suppliedClass, acceptNullable);
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override

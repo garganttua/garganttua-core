@@ -12,4 +12,10 @@ public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
 
     Optional<InputType> getInput();
 
+    <ExceptionType> Optional<ExceptionType> getException(Class<ExceptionType> exceptionType);
+
+    Optional<Integer> getCode();
+
+    Optional<String> getExceptionMessage();
+
 }
