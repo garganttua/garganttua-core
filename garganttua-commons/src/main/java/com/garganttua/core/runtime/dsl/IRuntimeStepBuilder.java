@@ -13,10 +13,6 @@ public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType> extends IA
 
         IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallBack() throws DslException;
 
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> variable(String variableName);
-
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> output(boolean output);
-
         IRuntimeStepCatchBuilder katch(Class<? extends Throwable> exception) throws DslException;
 
 }

@@ -1,16 +1,20 @@
-package com.garganttua.core.injection.context;
+package com.garganttua.core.injection.context.resolver;
+
+import static com.garganttua.core.injection.IInjectableElementResolver.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.injection.Resolved;
 
 import lombok.AllArgsConstructor;
 
@@ -20,7 +24,7 @@ public class InjectableElementResolver implements IInjectableElementResolver {
     private Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
 
     @Override
-    public Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
+    public Resolved resolve(Class<?> elementType,
             AnnotatedElement element) throws DiException {
 
         for (Annotation annotation : element.getAnnotations()) {
@@ -31,7 +35,15 @@ public class InjectableElementResolver implements IInjectableElementResolver {
             }
         }
 
-        return Optional.empty();
+        return new Resolved(false, elementType, null, isNullable(element));
     }
 
+    @Override
+    public Set<Resolved> resolve(Executable executable) throws DiException {
+        Set<Resolved> paramResolved = new LinkedHashSet<>();
+        for( Parameter parameter: executable.getParameters() ){
+            paramResolved.add(resolve(parameter.getType(), parameter));
+        }
+        return paramResolved;
+    }
 }

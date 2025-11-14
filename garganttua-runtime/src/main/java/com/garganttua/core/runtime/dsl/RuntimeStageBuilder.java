@@ -13,7 +13,6 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.injection.context.dsl.IBeanSupplierBuilder;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStage;

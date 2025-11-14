@@ -5,12 +5,10 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.binders.dsl.AbstractFieldBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
-
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 
 public class BeanInjectableFieldBuilder<FieldType, BeanType>
         extends
@@ -43,10 +41,7 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
             throw new DslException("Field with address " + this.address + " not found in class "
                     + this.ownerSupplierBuilder.getSuppliedType().getSimpleName());
 
-        if (field.getAnnotation(Nullable.class) != null)
-            this.allowNull(true);
-        if (field.getAnnotation(Nonnull.class) != null)
-            this.allowNull(false);
+        this.allowNull(IInjectableElementResolver.isNullable(field));
 
     }
 

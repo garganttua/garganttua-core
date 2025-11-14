@@ -1,23 +1,17 @@
 package com.garganttua.core.injection.context.dsl;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
-
-import jakarta.annotation.Nullable;
-import lombok.NonNull;
 
 public class BeanConstructorBinderBuilder<Bean> extends
         AbstractConstructorBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
@@ -55,26 +49,13 @@ public class BeanConstructorBinderBuilder<Bean> extends
         if (this.resolver == null) {
             throw new DslException("Cannot do auto detection without registry");
         }
+        AtomicInteger counter = new AtomicInteger();
+        Set<Resolved> resolved = this.resolver.resolve(this.findMatchingConstructor());
+        resolved.stream().forEach(r -> {
+            r.ifResolvedOrElse((b,n)->this.withParam(counter.getAndIncrement(), b, n),
+                    n -> this.withParam(counter.getAndIncrement(), new NullObjectSupplierBuilder<>(r.elementType()), n));
+        });
 
-        Constructor<Bean> ctor = this.findMatchingConstructor();
-
-        Parameter[] params = ctor.getParameters();
-
-        for (int i = 0; i < params.length; i++) {
-            Class<?> elementType = params[i].getType();
-            Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder;
-            try {
-                builder = this.resolver
-                        .resolve(elementType, params[i]);
-                boolean nullable = BeanPostConstructMethodBinderBuilder.isNullable(params[i]);
-                if (builder.isPresent())
-                    this.withParam(i, builder.get(), nullable);
-                else
-                    this.withParam(i, new NullObjectSupplierBuilder<>(elementType), nullable);
-            } catch (DiException e) {
-                throw new DslException(e);
-            }
-        }
     }
 
     @Override

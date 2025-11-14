@@ -13,14 +13,31 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> extends
         implements
         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> {
 
+    private String storeReturnInVariable = null;
+    private Boolean output = false;
+
     protected RuntimeStepMethodBuilder(IRuntimeStepBuilder<ExecutionReturn, StepObjectType> up,
-            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier) throws DslException {
+            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier)
+            throws DslException {
         super(up, supplier);
     }
 
     @Override
+    public RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> variable(String variableName) {
+        this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
+        return this;
+    }
+
+    @Override
+    public RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> output(boolean output) {
+        this.output = Objects.requireNonNull(output, "Output cannot be null");
+        return this;
+    }
+
+
+    @Override
     protected void doAutoDetection() throws DslException {
-        
+
     }
 
     @Override

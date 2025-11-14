@@ -14,6 +14,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.injection.context.dsl.DiContextBuilder;
@@ -24,9 +25,7 @@ import com.garganttua.core.injection.dummies.DummyOtherBean;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.SupplyException;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class InjectableElementResolverBuilderTest {
 
@@ -57,14 +56,14 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
-                Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolvers.resolve(
+                Resolved resolved = this.resolvers.resolve(
                                 params[2].getType(),
                                 params[2]);
 
-                assertNotNull(builder);
-                assertTrue(builder.isPresent());
-                assertEquals(DummyOtherBean.class, builder.get().getSuppliedType());
-                Optional<DummyOtherBean> bean = (Optional<DummyOtherBean>) builder.get().build().supply();
+                assertNotNull(resolved);
+                assertTrue(resolved.resolved());
+                assertEquals(DummyOtherBean.class, resolved.elementSupplier().getSuppliedType());
+                Optional<DummyOtherBean> bean = (Optional<DummyOtherBean>) resolved.elementSupplier().build().supply();
                 assertNotNull(bean);
                 assertTrue(bean.isPresent());
         }
@@ -77,14 +76,14 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
-                Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolvers.resolve(
+                Resolved resolved = this.resolvers.resolve(
                                 params[1].getType(),
                                 params[1]);
 
-                assertNotNull(builder);
-                assertTrue(builder.isPresent());
-                assertEquals(AnotherDummyBean.class, builder.get().getSuppliedType());
-                Optional<AnotherDummyBean> bean = (Optional<AnotherDummyBean>) builder.get().build().supply();
+                assertNotNull(resolved);
+                assertTrue(resolved.resolved());
+                assertEquals(AnotherDummyBean.class, resolved.elementSupplier().getSuppliedType());
+                Optional<AnotherDummyBean> bean = (Optional<AnotherDummyBean>) resolved.elementSupplier().build().supply();
                 assertNotNull(bean);
                 assertTrue(bean.isPresent());
         }
@@ -97,14 +96,14 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
-                Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolvers.resolve(
+                Resolved resolved = this.resolvers.resolve(
                                 params[0].getType(),
                                 params[0]);
 
-                assertNotNull(builder);
-                assertTrue(builder.isPresent());
-                assertEquals(String.class, builder.get().getSuppliedType());
-                Optional<String> property = (Optional<String>) builder.get().build().supply();
+                assertNotNull(resolved);
+                assertTrue(resolved.resolved());
+                assertEquals(String.class, resolved.elementSupplier().getSuppliedType());
+                Optional<String> property = (Optional<String>) resolved.elementSupplier().build().supply();
                 assertNotNull(property);
                 assertTrue(property.isPresent());
                 assertEquals("propertyValue", property.get());

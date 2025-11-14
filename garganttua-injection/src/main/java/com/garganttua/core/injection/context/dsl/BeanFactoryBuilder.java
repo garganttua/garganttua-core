@@ -93,11 +93,11 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     private void registerInjectableField(Field field) throws DslException {
         Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder;
         try {
-            builder = this.resolver.resolve(field.getType(), field);
-            builder.ifPresent(supplierBuilder -> {
+            this.resolver.resolve(field.getType(), field).ifResolved((b,n)-> {
                 IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
-                        field.getType()).field(field).withValue(supplierBuilder).autoDetect(true);
+                        field.getType()).field(field).withValue(b).allowNull(n).autoDetect(true);
                 this.injectableFields.add(injectable);
+
             });
         } catch (DiException e) {
             throw new DslException(e);

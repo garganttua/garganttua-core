@@ -15,21 +15,16 @@ public class RuntimeStep<ExecutionReturn> implements IRuntimeStep {
     private Optional<IMethodBinder<ExecutionReturn>> ofNullable;
     private Set<IRuntimeStepCatch> builtCatches;
     private Optional<ICondition> condition;
-    private Optional<String> storeReturnInVariable;
-    private Boolean output;
 
     public RuntimeStep(String stepName, Class<ExecutionReturn> executionReturn,
             IMethodBinder<ExecutionReturn> iMethodBinder, Optional<IMethodBinder<ExecutionReturn>> ofNullable,
-            Set<IRuntimeStepCatch> builtCatches, Optional<ICondition> condition, Optional<String> storeReturnInVariable,
-            Boolean output) {
+            Set<IRuntimeStepCatch> builtCatches, Optional<ICondition> condition) {
                 this.stepName = stepName;
                 this.executionReturn = executionReturn;
                 this.iMethodBinder = iMethodBinder;
                 this.ofNullable = ofNullable;
                 this.builtCatches = builtCatches;
                 this.condition = condition;
-                this.storeReturnInVariable = storeReturnInVariable;
-                this.output = output;
     }
 
     @Override

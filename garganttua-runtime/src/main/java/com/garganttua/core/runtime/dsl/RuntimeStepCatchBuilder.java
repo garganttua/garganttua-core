@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.runtime.RuntimeStepCatch;
+import com.garganttua.core.runtime.annotations.Catch;
 
 public class RuntimeStepCatchBuilder extends AbstractAutomaticLinkedBuilder<IRuntimeStepCatchBuilder, IRuntimeStepBuilder<?, ?>, IRuntimeStepCatch> implements IRuntimeStepCatchBuilder {
 
@@ -12,6 +13,7 @@ public class RuntimeStepCatchBuilder extends AbstractAutomaticLinkedBuilder<IRun
     private Integer code;
     private Boolean fallback;
     private Boolean abort;
+    private Catch catchAnnotationForAutoDetection;
 
     public RuntimeStepCatchBuilder(Class<? extends Throwable> exception, IRuntimeStepMethodBuilder<?,?> method, IRuntimeStepBuilder<?, ?> link) {
         super(link);
@@ -20,6 +22,20 @@ public class RuntimeStepCatchBuilder extends AbstractAutomaticLinkedBuilder<IRun
         if( !method.isThrown(exception) ){
             throw new DslException("Exception "+exception.getSimpleName()+" is not thrown by method");
         }
+    }
+
+    /**
+     * Secondary ctor used only for auto detection
+     * @param exception2
+     * @param methodBuilder
+     * @param runtimeStepBuilder
+     * @param catchAnnotation
+     */
+    public RuntimeStepCatchBuilder(Class<? extends Throwable> exception,
+            RuntimeStepMethodBuilder<?,?> method,
+            RuntimeStepBuilder<?,?> link, Catch catchAnnotation) {
+        this(exception, method, link);
+        this.catchAnnotationForAutoDetection = Objects.requireNonNull(catchAnnotation, "Catch annotation cannot be null");
     }
 
     @Override
@@ -47,7 +63,10 @@ public class RuntimeStepCatchBuilder extends AbstractAutomaticLinkedBuilder<IRun
 
     @Override
     protected void doAutoDetection() throws DslException {
-        
+        Objects.requireNonNull(this.catchAnnotationForAutoDetection, "Catch annotation cannot be null");
+        this.abort = this.catchAnnotationForAutoDetection.abort();
+        this.code = this.catchAnnotationForAutoDetection.code();
+        this.fallback = this.catchAnnotationForAutoDetection.fallback();
     }
 
 }

@@ -5,17 +5,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.core.injection.DiException;
-
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Catch {
 
-    Class<DiException> exception();
+    Class<? extends Throwable> exception();
 
     int code();
 
-    boolean failback();
+    boolean fallback();
 
     boolean abort();
 

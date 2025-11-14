@@ -2,33 +2,39 @@ package com.garganttua.core.injection.context.resolver;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.Objects;
-import java.util.Optional;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class FixedElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
+    public Resolved resolve(Class<?> elementType,
             AnnotatedElement element) throws DiException {
         Objects.requireNonNull(element, "Element cannot be null");
         Objects.requireNonNull(elementType, "ElementType cannot be null");
 
-        if (!elementType.isPrimitive())
-            throw new DiException(
+        if (!elementType.isPrimitive()){
+            log.atWarn().log(
                     "Cannot use @Fixed annotation on not primitive element " + elementType.getSimpleName());
+            return Resolved.notResolved(elementType, element);
+        }
 
         Fixed fixedAnnotation = element.getAnnotation(Fixed.class);
 
         IObjectSupplierBuilder<?, IObjectSupplier<?>> builder = new FixedObjectSupplierBuilder(getFixedValue(fixedAnnotation, elementType));
 
-        return Optional.of(builder);
+        return new Resolved(true, elementType, builder, IInjectableElementResolver.isNullable(element));
     }
 
     @SuppressWarnings("unchecked")

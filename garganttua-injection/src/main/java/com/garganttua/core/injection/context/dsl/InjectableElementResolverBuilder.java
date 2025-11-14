@@ -10,7 +10,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
-import com.garganttua.core.injection.context.InjectableElementResolver;
+import com.garganttua.core.injection.context.resolver.InjectableElementResolver;
 
 public class InjectableElementResolverBuilder
         extends AbstractLinkedBuilder<IDiContextBuilder, IInjectableElementResolver>

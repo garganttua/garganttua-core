@@ -22,7 +22,7 @@ public class DummyRuntimeProcessStep {
 
     @Operation
     @Output
-    @Catch(exception = DiException.class, code = 401, failback = true, abort = true)
+    @Catch(exception = DiException.class, code = 401, fallback = true, abort = true)
     @Variable(name = "method-returned")
     @Code(201)
     String method(@Input String input, @Fixed(valueString = "input-parameter") String fixedValue,
@@ -32,7 +32,7 @@ public class DummyRuntimeProcessStep {
 
     @FallBack
     @Output
-    @Variable(name = "failback-returned")
+    @Variable(name = "fallback-returned")
     String fallbackMethod(@Fixed(valueString = "input-parameter") String input, @Exception DiException exception,
             @Code Integer code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<String, String> context) {
         return input + "-failback";

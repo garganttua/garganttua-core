@@ -8,6 +8,7 @@ import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.annotations.Provider;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 
@@ -24,6 +25,7 @@ public class DummyBean {
     @Named("emailService")
     @DummyBeanQualifier
     @Getter
+    @Nullable
     private DummyOtherBean otherBean;
 
     @Getter
@@ -40,7 +42,7 @@ public class DummyBean {
     }
 
     @Inject
-    public DummyBean(@Provider("garganttua") @Property("com.garganttua.dummyPropertyInConstructor") String value, @Provider("garganttua") @Prototype @Named("AnotherDummyBeanForTest") AnotherDummyBean anotherBean, @Provider("garganttua") @Singleton @Named("emailService") DummyOtherBean otherBean) {
+    public DummyBean(@Provider("garganttua") @Property("com.garganttua.dummyPropertyInConstructor") String value, @Nullable @Provider("garganttua") @Prototype @Named("AnotherDummyBeanForTest") AnotherDummyBean anotherBean, @Nullable @Provider("garganttua") @Singleton @Named("emailService") DummyOtherBean otherBean) {
         this.value = value;
         this.anotherBean = anotherBean;
     }

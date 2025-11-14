@@ -21,6 +21,7 @@ import java.util.Vector;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
+import com.garganttua.core.runtime.annotations.Operation;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ObjectReflectionHelper {
 
 	public static IAnnotationScanner annotationScanner;
-	
+
 	public static Constructor<?> getConstructorWithNoParams(Class<?> classs) {
 		try {
 			return classs.getDeclaredConstructor();
@@ -163,51 +164,73 @@ public class ObjectReflectionHelper {
 	}
 
 	public static List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation) {
-        return ObjectReflectionHelper.annotationScanner.getClassesWithAnnotation(package_, annotation) ;
-    }
+		return ObjectReflectionHelper.annotationScanner.getClassesWithAnnotation(package_, annotation);
+	}
 
-	public static String getMethodAddressAnnotatedWithAndCheckMethodParamsHaveGoodTypes(Class<?> entityClass,
-			Class<? extends Annotation> methodAnnotation, Type returnedType, Type ... methodParameters)
-			throws ReflectionException {
-		String methodAddress = null;
-		for (Method method : entityClass.getDeclaredMethods()) {
-			if (method.isAnnotationPresent(methodAnnotation)) {
-				if (methodAddress != null && !methodAddress.isEmpty()) {
-					throw new ReflectionException("Entity " + entityClass.getSimpleName()
-							+ " has more than one method annotated with @" + methodAnnotation.getSimpleName());
-				}
-				methodAddress = method.getName();
-				Type[] parameters = method.getGenericParameterTypes();
+	public static String getMethodAddressAnnotatedWith(Class<?> entityClass,
+			Class<? extends Annotation> methodAnnotation) throws ReflectionException {
 
-				if (parameters.length != methodParameters.length) {
-					throw new ReflectionException("Entity " + entityClass.getSimpleName() + " has method "
-							+ methodAddress + " but wrong parameters number");
-				}
+		Method found = getMethodAnnotatedWith(entityClass, methodAnnotation);
 
-				for (int i = 0; i < methodParameters.length; i++) {
-					if (!equals(methodParameters[i], parameters[i])) {
-						throw new ReflectionException("Entity " + entityClass.getSimpleName() + " has method "
-								+ methodAddress + " but parameter " + i + " is not of type "
-								+ methodParameters[i].getTypeName());
-					}
-				}
+		if (found != null)
+			return found.getName();
 
-				if (returnedType != null) {
-					if (!method.getReturnType().isAssignableFrom(getClassFromType(returnedType))) {
-						throw new ReflectionException("Entity " + entityClass.getSimpleName() + " has method "
-								+ methodAddress + " but returned type is not " + returnedType.getTypeName() + " but is "
-								+ method.getGenericReturnType());
-					}
-				}
+		return null;
+	}
+
+	public static Method getMethodAnnotatedWith(Class<?> entityClass, Class<? extends Annotation> methodAnnotation) {
+		Method method = null;
+		for (Method m : entityClass.getDeclaredMethods()) {
+			if (m.isAnnotationPresent(methodAnnotation)) {
+				method = m;
+				break;
 			}
 		}
 
-		if (methodAddress == null && entityClass.getSuperclass() != null) {
-			methodAddress = getMethodAddressAnnotatedWithAndCheckMethodParamsHaveGoodTypes(entityClass.getSuperclass(),
-					methodAnnotation, returnedType, methodParameters);
+		if (method == null && entityClass.getSuperclass() != null) {
+			method = getMethodAnnotatedWith(entityClass.getSuperclass(),
+					methodAnnotation);
 		}
-		
-		return methodAddress;
+		return method;
+	}
+
+	public static void checkMethodParamsHaveGoodTypes(Class<?> entityClass, Method method, Type returnedType,
+			Type... methodParameters) throws ReflectionException {
+		Type[] parameters = method.getGenericParameterTypes();
+
+		if (parameters.length != methodParameters.length) {
+			throw new ReflectionException("Entity " + entityClass.getSimpleName() + " has method "
+					+ method.getName() + " but wrong parameters number");
+		}
+
+		for (int i = 0; i < methodParameters.length; i++) {
+			if (!equals(methodParameters[i], parameters[i])) {
+				throw new ReflectionException("Entity " + entityClass.getSimpleName() + " has method "
+						+ method.getName() + " but parameter " + i + " is not of type "
+						+ methodParameters[i].getTypeName());
+			}
+		}
+
+		if (returnedType != null) {
+			if (!method.getReturnType().isAssignableFrom(getClassFromType(returnedType))) {
+				throw new ReflectionException("Entity " + entityClass.getSimpleName() + " has method "
+						+ method.getName() + " but returned type is not " + returnedType.getTypeName() + " but is "
+						+ method.getGenericReturnType());
+			}
+		}
+	}
+
+	public static String getMethodAddressAnnotatedWithAndCheckMethodParamsHaveGoodTypes(Class<?> entityClass,
+			Class<? extends Annotation> methodAnnotation, Type returnedType, Type... methodParameters)
+			throws ReflectionException {
+		Method found = getMethodAnnotatedWith(entityClass, methodAnnotation);
+				
+		if (found != null){
+			checkMethodParamsHaveGoodTypes(entityClass, found, returnedType, methodParameters);
+			return found.getName();
+		}
+
+		return null;
 	}
 
 	static public boolean isMapOfString(Type type) {
@@ -256,7 +279,8 @@ public class ObjectReflectionHelper {
 				} else {
 					throw new ReflectionException(
 							"Entity " + entityClass.getSimpleName() + " has field " + field.getName()
-									+ " with wrong type " + field.getType().getName() + ", should be " + getClassFromType(fieldType));
+									+ " with wrong type " + field.getType().getName() + ", should be "
+									+ getClassFromType(fieldType));
 				}
 			} else {
 				if (Fields.isNotPrimitiveOrInternal(field.getType()) && !entityClass.equals(field.getType())) {
@@ -269,7 +293,8 @@ public class ObjectReflectionHelper {
 		}
 
 		if (fieldAddress == null && entityClass.getSuperclass() != null) {
-			fieldAddress = getFieldAddressAnnotatedWithAndCheckType(entityClass.getSuperclass(), annotationClass, fieldType);
+			fieldAddress = getFieldAddressAnnotatedWithAndCheckType(entityClass.getSuperclass(), annotationClass,
+					fieldType);
 		}
 
 		return fieldAddress;
@@ -279,39 +304,42 @@ public class ObjectReflectionHelper {
 	 * 
 	 * @param entityClass
 	 * @param annotation
-	 * @param linkedAnnotation : check in field objects only if the annotation is found for field
+	 * @param linkedAnnotation : check in field objects only if the annotation is
+	 *                         found for field
 	 * @return
 	 */
-	public static List<String> getFieldAddressesWithAnnotation(Class<?> entityClass, Class<? extends Annotation> annotation, boolean linkedAnnotation) {
+	public static List<String> getFieldAddressesWithAnnotation(Class<?> entityClass,
+			Class<? extends Annotation> annotation, boolean linkedAnnotation) {
 		List<String> fieldsAddresses = new ArrayList<String>();
 		getFieldAddressesWithAnnotation(fieldsAddresses, entityClass, annotation, linkedAnnotation);
-		return fieldsAddresses; 
+		return fieldsAddresses;
 	}
 
 	private static void getFieldAddressesWithAnnotation(List<String> fieldsAddresses, Class<?> entityClass,
 			Class<? extends Annotation> annotation, boolean linkedAnnotation) {
-		for( Field field: entityClass.getDeclaredFields()) {
+		for (Field field : entityClass.getDeclaredFields()) {
 			boolean found = false;
-			if( field.isAnnotationPresent(annotation) ) {
+			if (field.isAnnotationPresent(annotation)) {
 				fieldsAddresses.add(field.getName());
 				found = true;
-			} 
-			if ( ((found && linkedAnnotation) || !linkedAnnotation ) 
-					&& Fields.isNotPrimitiveOrInternal(field.getType()) 
+			}
+			if (((found && linkedAnnotation) || !linkedAnnotation)
+					&& Fields.isNotPrimitiveOrInternal(field.getType())
 					&& !entityClass.equals(field.getType())) {
 				getFieldAddressesWithAnnotation(fieldsAddresses, field.getType(), annotation, linkedAnnotation);
 			}
-			
-			if ( ((found && linkedAnnotation) || !linkedAnnotation ) 
-					&& Fields.isArrayOrMapOrCollectionField(field) ) {
+
+			if (((found && linkedAnnotation) || !linkedAnnotation)
+					&& Fields.isArrayOrMapOrCollectionField(field)) {
 				int i = 0;
-				
-				Class<?> genericType = Fields.getGenericType(field.getType(), i );
-				while( genericType != null ) {
+
+				Class<?> genericType = Fields.getGenericType(field.getType(), i);
+				while (genericType != null) {
 					getFieldAddressesWithAnnotation(fieldsAddresses, genericType, annotation, linkedAnnotation);
 					i++;
-					genericType = Fields.getGenericType(field.getType(), i );
-				};
+					genericType = Fields.getGenericType(field.getType(), i);
+				}
+				;
 			}
 		}
 		if (entityClass.getSuperclass() != null) {
@@ -320,87 +348,88 @@ public class ObjectReflectionHelper {
 	}
 
 	public static Class<?> getClassFromType(Type type) {
-        if (type instanceof Class<?>) {
-            return (Class<?>) type;
-        } else if (type instanceof ParameterizedType) {
-            return (Class<?>) ((ParameterizedType) type).getRawType();
-        } else if (type instanceof GenericArrayType) {
-            Type componentType = ((GenericArrayType) type).getGenericComponentType();
-            Class<?> componentClass = getClassFromType(componentType);
-            return java.lang.reflect.Array.newInstance(componentClass, 0).getClass();
-        } else {
-            throw new IllegalArgumentException("Cannot extract Class<?> from Type: " + type.getTypeName());
-        }
-    }
-	
+		if (type instanceof Class<?>) {
+			return (Class<?>) type;
+		} else if (type instanceof ParameterizedType) {
+			return (Class<?>) ((ParameterizedType) type).getRawType();
+		} else if (type instanceof GenericArrayType) {
+			Type componentType = ((GenericArrayType) type).getGenericComponentType();
+			Class<?> componentClass = getClassFromType(componentType);
+			return java.lang.reflect.Array.newInstance(componentClass, 0).getClass();
+		} else {
+			throw new IllegalArgumentException("Cannot extract Class<?> from Type: " + type.getTypeName());
+		}
+	}
+
 	public static boolean equals(Type type1, Type type2) {
 		boolean equals = false;
 		if (type1 instanceof ParameterizedType && type2 instanceof ParameterizedType) {
 			equals = equalsParameterizedType((ParameterizedType) type1, (ParameterizedType) type2);
 		}
-        if (type1 == type2) {
-        	equals = true;
-        }
-        
-        if( equals == true )
-        	return equals;
-        
-        if (type1 == null || type2 == null) {
-        	equals = false;
-        }
-        if( equals == true )
-        	return equals;
-        
-        if (type1 instanceof Class<?> && type2 instanceof Class<?>) {
-        	equals = type1.equals(type2);
-        }
-        if( equals == true )
-        	return equals;
+		if (type1 == type2) {
+			equals = true;
+		}
 
-        if( equals == true )
-        	return equals;
+		if (equals == true)
+			return equals;
 
-        if (type1 instanceof GenericArrayType && type2 instanceof GenericArrayType) {
-        	equals = equals(((GenericArrayType) type1).getGenericComponentType(),
-                          ((GenericArrayType) type2).getGenericComponentType());
-        }
-        if( equals == true )
-        	return equals;
+		if (type1 == null || type2 == null) {
+			equals = false;
+		}
+		if (equals == true)
+			return equals;
 
-        if (type1 instanceof Class<?> && ((Class<?>) type1).isArray() &&
-            type2 instanceof Class<?> && ((Class<?>) type2).isArray()) {
-        	equals = equals(((Class<?>) type1).getComponentType(), ((Class<?>) type2).getComponentType());
-        }
-        if( equals == true )
-        	return equals;
-        
-        equals = getClassFromType(type1).isAssignableFrom(getClassFromType(type2));
-        if( equals == true )
-        	return equals;
-        
-        equals = getClassFromType(type2).isAssignableFrom(getClassFromType(type1));
-        if( equals == true )
-        	return equals;
+		if (type1 instanceof Class<?> && type2 instanceof Class<?>) {
+			equals = type1.equals(type2);
+		}
+		if (equals == true)
+			return equals;
 
-        return equals;
-    }
+		if (equals == true)
+			return equals;
 
-    private static boolean equalsParameterizedType(ParameterizedType type1, ParameterizedType type2) {
-        if (!equals(type1.getRawType(), type2.getRawType())) {
-            return false;
-        }
+		if (type1 instanceof GenericArrayType && type2 instanceof GenericArrayType) {
+			equals = equals(((GenericArrayType) type1).getGenericComponentType(),
+					((GenericArrayType) type2).getGenericComponentType());
+		}
+		if (equals == true)
+			return equals;
 
-        Type[] args1 = type1.getActualTypeArguments();
-        Type[] args2 = type2.getActualTypeArguments();
-        if (args1.length != args2.length) {
-            return false;
-        }
+		if (type1 instanceof Class<?> && ((Class<?>) type1).isArray() &&
+				type2 instanceof Class<?> && ((Class<?>) type2).isArray()) {
+			equals = equals(((Class<?>) type1).getComponentType(), ((Class<?>) type2).getComponentType());
+		}
+		if (equals == true)
+			return equals;
 
-        for (int i = 0; i < args1.length; i++) {
-            if (!equals(args1[i], args2[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
+		equals = getClassFromType(type1).isAssignableFrom(getClassFromType(type2));
+		if (equals == true)
+			return equals;
+
+		equals = getClassFromType(type2).isAssignableFrom(getClassFromType(type1));
+		if (equals == true)
+			return equals;
+
+		return equals;
+	}
+
+	private static boolean equalsParameterizedType(ParameterizedType type1, ParameterizedType type2) {
+		if (!equals(type1.getRawType(), type2.getRawType())) {
+			return false;
+		}
+
+		Type[] args1 = type1.getActualTypeArguments();
+		Type[] args2 = type2.getActualTypeArguments();
+		if (args1.length != args2.length) {
+			return false;
+		}
+
+		for (int i = 0; i < args1.length; i++) {
+			if (!equals(args1[i], args2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 }

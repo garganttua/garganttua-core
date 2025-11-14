@@ -7,6 +7,8 @@ import java.util.Set;
 
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
@@ -18,8 +20,10 @@ public class PrototypeElementResolver extends BeanElementResolver
     }
 
     @Override
-    public Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
+    public Resolved resolve(Class<?> elementType,
             AnnotatedElement element) {
-        return this.resolve(elementType, element, BeanStrategy.prototype);
+
+        Optional<IObjectSupplierBuilder<?,IObjectSupplier<?>>> builder = this.resolve(elementType, element, BeanStrategy.prototype);
+        return new Resolved(builder.isPresent(),elementType, builder.orElse(null), IInjectableElementResolver.isNullable(element));
     }
 }

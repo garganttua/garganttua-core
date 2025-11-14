@@ -41,9 +41,9 @@ class RuntimeBuilderTest {
                     .stage("stage-1")
                     .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
                     .condition(custom(of(10), i -> 1 > 0))
+                    .method()
                     .output(true)
                     .variable("method-returned")
-                    .method()
                     .method("method")
                     .withParam(input(String.class))
                     .withParam(FixedObjectSupplierBuilder.of("input-parameter"))
@@ -51,6 +51,8 @@ class RuntimeBuilderTest {
                     .withParam(context()).up()
                     .katch(DiException.class).code(401).fallback(true).abort(true).up()
                     .fallBack()
+                    .output(true)
+                    .variable("fallback-returned")
                     .method("fallbackMethod")
                     .withParam(FixedObjectSupplierBuilder.of("input-parameter"))
                     .withParam(exception(DiException.class))
@@ -79,8 +81,6 @@ class RuntimeBuilderTest {
         contextBuilder.build().onInit().onStart();
 
         Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder).autoDetect(true).build();
-
-        
 
     }
 

@@ -3,9 +3,10 @@ package com.garganttua.core.injection.context.properties.resolver;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.util.Objects;
-import java.util.Optional;
 
 import com.garganttua.core.injection.IElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.context.dsl.IPropertySupplierBuilder;
@@ -17,7 +18,7 @@ public class PropertyElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
+    public Resolved resolve(Class<?> elementType,
             AnnotatedElement element) {
         Objects.requireNonNull(element, "Element cannot be null");
         Objects.requireNonNull(elementType, "ElementType cannot be null");
@@ -37,15 +38,15 @@ public class PropertyElementResolver implements IElementResolver {
             }
         }
 
-        IPropertySupplierBuilder<?> beanSupplierBuilder = Properties.property(elementType);
+        IPropertySupplierBuilder<?> propertySupplierBuilder = Properties.property(elementType);
         if (provider != null && !provider.isEmpty()) {
-            beanSupplierBuilder.provider(provider);
+            propertySupplierBuilder.provider(provider);
         }
 
-        beanSupplierBuilder.key(key);
+        propertySupplierBuilder.key(key);
 
-        IObjectSupplierBuilder<?, IObjectSupplier<?>> result = (IObjectSupplierBuilder) beanSupplierBuilder;
+        IObjectSupplierBuilder<?, IObjectSupplier<?>> result = (IObjectSupplierBuilder) propertySupplierBuilder;
 
-        return Optional.of(result);
+        return new Resolved(true, elementType, result, IInjectableElementResolver.isNullable(element));
     }
 }

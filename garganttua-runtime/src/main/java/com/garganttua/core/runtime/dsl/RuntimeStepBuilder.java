@@ -1,5 +1,6 @@
 package com.garganttua.core.runtime.dsl;
 
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,8 +12,12 @@ import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStep;
+import com.garganttua.core.runtime.annotations.Catch;
+import com.garganttua.core.runtime.annotations.FallBack;
+import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
@@ -28,8 +33,6 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
     private IConditionBuilder conditionBuilder;
     private RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> methodBuilder;
     private Class<ExecutionReturn> executionReturn;
-    private String storeReturnInVariable = null;
-    private Boolean output = false;
     private Set<RuntimeStepCatchBuilder> katches = new HashSet<>();
     private RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallbackBuilder;
 
@@ -51,7 +54,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallBack() throws DslException {
-        if( this.katches.isEmpty() )
+        if (this.katches.isEmpty())
             throw new DslException("No katch defined");
         this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(this, supplier);
         this.fallbackBuilder.withReturn(this.executionReturn);
@@ -59,20 +62,44 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
     }
 
     @Override
-    public IRuntimeStepBuilder<ExecutionReturn, StepObjectType> variable(String variableName) {
-        this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
-        return this;
-    }
-
-    @Override
-    public IRuntimeStepBuilder<ExecutionReturn, StepObjectType> output(boolean output) {
-        this.output = Objects.requireNonNull(output, "Output cannot be null");
-        return this;
-    }
-
-    @Override
     protected void doAutoDetection() throws DslException {
-        
+        Class<?> ownerType = supplier.getSuppliedType();
+
+        Method operationMethod = detectOperationMethod(ownerType);
+        method().autoDetect(true).method(operationMethod);
+
+        Catch catchAnnotation = operationMethod.getAnnotation(Catch.class);
+        if (catchAnnotation != null) {
+            handleCatch(ownerType, catchAnnotation);
+        }
+    }
+
+    private Method detectOperationMethod(Class<?> ownerType) throws DslException {
+        Method method = ObjectReflectionHelper.getMethodAnnotatedWith(ownerType, Operation.class);
+        if (method == null) {
+            throw new DslException("Class " + ownerType.getSimpleName() +
+                    " does not declare any @Operation method");
+        }
+        return method;
+    }
+
+    private void handleCatch(Class<?> ownerType, Catch catchAnnotation) {
+        katch(catchAnnotation.exception(), catchAnnotation).autoDetect(true);
+
+        Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(ownerType, FallBack.class);
+
+        if (fallbackMethod != null) {
+            fallBack().autoDetect(true).method(fallbackMethod);
+        }
+    }
+
+    private IRuntimeStepCatchBuilder katch(
+            Class<? extends Throwable> exception, Catch catchAnnotation) throws DslException {
+        Objects.requireNonNull(exception, "Exception cannot be null");
+        Objects.requireNonNull(methodBuilder, "Method is not yet set");
+        RuntimeStepCatchBuilder katch = new RuntimeStepCatchBuilder(exception, methodBuilder, this, catchAnnotation);
+        this.katches.add(katch);
+        return katch;
     }
 
     @Override
@@ -94,16 +121,17 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
     protected IRuntimeStep doBuild() throws DslException {
         IMethodBinder<ExecutionReturn> fallback = null;
         ICondition condition = null;
-        if( this.fallbackBuilder != null ){
+        if (this.fallbackBuilder != null) {
             fallback = this.fallbackBuilder.build();
         }
-        if( this.conditionBuilder != null ){
+        if (this.conditionBuilder != null) {
             condition = this.conditionBuilder.build();
         }
 
         Set<IRuntimeStepCatch> builtCatches = this.katches.stream().map(b -> b.build()).collect(Collectors.toSet());
 
-        return new RuntimeStep<>(stepName, this.executionReturn, this.methodBuilder.build(), Optional.ofNullable(fallback), builtCatches, Optional.ofNullable(condition), Optional.ofNullable(this.storeReturnInVariable), this.output);
+        return new RuntimeStep<>(stepName, this.executionReturn, this.methodBuilder.build(),
+                Optional.ofNullable(fallback), builtCatches, Optional.ofNullable(condition));
     }
 
 }
