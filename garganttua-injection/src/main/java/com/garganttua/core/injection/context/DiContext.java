@@ -99,15 +99,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Objects.requireNonNull(key, "Key cannot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
         return propertyProviders.values().stream()
-                .map(provider -> {
-                    try {
-                        return provider.getProperty(key, type);
-                    } catch (DiException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    return null;
-                })
+                .map(provider -> provider.getProperty(key, type))
                 .flatMap(Optional::stream)
                 .findFirst();
     }
@@ -121,15 +113,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         return propertyProviders.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
-                .flatMap(entry -> {
-                    try {
-                        return entry.getValue().getProperty(key, type);
-                    } catch (DiException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    return null;
-                });
+                .flatMap(entry -> entry.getValue().getProperty(key, type));
     }
 
     @Override
@@ -141,9 +125,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         propertyProviders.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
-                .filter(entry -> {
-                    return entry.getValue().isMutable();
-                })
+                .filter(entry -> entry.getValue().isMutable())
                 .orElseThrow(() -> new DiException("PropertyProvider " + providerName + " not found or immutable"))
                 .getValue().setProperty(key, value);
     }
@@ -159,13 +141,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
                     return childType != null && contextClass.isAssignableFrom(childType);
                 })
                 .findFirst()
-                .map(factory -> {
-                    try {
-                        return contextClass.cast(factory.createChildContext(this, args));
-                    } catch (DiException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .map(factory -> contextClass.cast(factory.createChildContext(this, args)))
                 .orElseThrow(() -> new DiException(
                         "No child context factory registered for context class " + contextClass.getName()));
     }
@@ -274,6 +250,35 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
+    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException {
+        Objects.requireNonNull(provider, "Provider cannot be null");
+        Objects.requireNonNull(definition, "Bean definition cannot be null");
+        if (provider.isPresent())
+            return this.queryBeans(provider.get(), definition);
+        return this.queryBeans(definition);
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException {
+        Objects.requireNonNull(definition, "Bean definition cannot be null");
+
+        List<Bean> beans = new ArrayList<>();
+        for (IBeanProvider provider : this.beanProviders.values()) {
+            beans.addAll(provider.queryBeans(definition)); 
+        }
+        return beans;
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
+        IBeanProvider beanProvider = this.beanProviders.get(provider);
+        if (beanProvider == null)
+            throw new DiException("Invalid bean provider " + provider);
+
+        return beanProvider.queryBeans(definition);
+    }
+
+    @Override
     public Optional<IBeanProvider> getBeanProvider(String name) {
         return Optional.ofNullable(this.beanProviders.get(name));
     }
@@ -315,5 +320,6 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             childContextFactories.add(factory);
         }
     }
+
 
 }

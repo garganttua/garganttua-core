@@ -15,6 +15,7 @@ import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.SupplyException;
 
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
@@ -133,6 +134,18 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@FunctionalInterface
 	interface RunnableWithException {
 		void run() throws LifecycleException;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
+		wrapLifecycle(this::ensureInitializedAndStarted);
+
+		return (List<T>) this.beanFactories.stream()
+				.filter(factory -> factory.matches(definition))
+				.map(IObjectSupplier::supply)
+				.map(Optional::get)
+				.toList();
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.garganttua.core.injection.dummies;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -127,6 +128,24 @@ public class DummyChildContext implements IDiContext{
     public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'registerChildContextFactory'");
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
     }
 
 }

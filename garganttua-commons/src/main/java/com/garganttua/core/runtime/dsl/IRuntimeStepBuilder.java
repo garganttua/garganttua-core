@@ -5,7 +5,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.runtime.IRuntimeStep;
 
-public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType> extends IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType>, IRuntimeStageBuilder<?,?>, IRuntimeStep<ExecutionReturn>>{
+public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType> extends IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType>, IRuntimeStageBuilder<?,?>, IRuntimeStep>{
 
         IRuntimeStepBuilder<ExecutionReturn, StepObjectType> condition(IConditionBuilder conditionBuilder);
 

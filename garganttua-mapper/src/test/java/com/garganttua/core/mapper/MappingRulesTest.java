@@ -194,7 +194,7 @@ class MappingRulesTest {
 		MapperException exception = assertThrows( MapperException.class , () -> MappingRules.validate(Destination2.class, rules2));
 		
 		assertNotNull(exception);
-		assertEquals("com.garganttua.core.reflection.ReflectionException: Object element notExists not found in class class com.garganttua.core.mapper.Parent", exception.getMessage());
+		assertEquals("Object element notExists not found in class class com.garganttua.core.mapper.Parent", exception.getMessage());
 	
 		List<MappingRule> rules3 = MappingRules.parse(DestinationWithIncorrectFromMethod.class);
 		assertEquals(1, rules3.size());
@@ -218,7 +218,7 @@ class MappingRulesTest {
 		MapperException exception4 = assertThrows( MapperException.class , () -> MappingRules.validate(Source.class, rules5));
 		
 		assertNotNull(exception4);
-		assertEquals("com.garganttua.core.reflection.ReflectionException: Object element to not found in class class com.garganttua.core.mapper.DestinationWithNoToMethod", exception4.getMessage());
+		assertEquals("Object element to not found in class class com.garganttua.core.mapper.DestinationWithNoToMethod", exception4.getMessage());
 		
 	
 	}

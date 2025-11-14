@@ -71,4 +71,10 @@ public class DummyBeanProvider implements IBeanProvider {
         throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
     }
 
+    @Override
+    public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
 }

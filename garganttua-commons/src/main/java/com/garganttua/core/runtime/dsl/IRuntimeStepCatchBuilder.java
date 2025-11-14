@@ -6,7 +6,7 @@ public interface IRuntimeStepCatchBuilder extends IAutomaticLinkedBuilder<IRunti
 
     IRuntimeStepCatchBuilder code(int i);
 
-    IRuntimeStepCatchBuilder failback(boolean failback);
+    IRuntimeStepCatchBuilder fallback(boolean failback);
 
     IRuntimeStepCatchBuilder abort(boolean abord);
 

@@ -26,15 +26,15 @@ public class DummyRuntimeProcessStep {
     @Variable(name = "method-returned")
     @Code(201)
     String method(@Input String input, @Fixed(valueString = "input-parameter") String fixedValue,
-            @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context) {
+            @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context) throws DiException {
         return input + "-processed";
     }
 
     @FallBack
     @Output
     @Variable(name = "failback-returned")
-    String failBackMethod(@Fixed(valueString = "input-parameter") String input, @Exception DiException exception,
-            @Code int code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<String, String> context) {
+    String fallbackMethod(@Fixed(valueString = "input-parameter") String input, @Exception DiException exception,
+            @Code Integer code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<String, String> context) {
         return input + "-failback";
     }
 }

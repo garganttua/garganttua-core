@@ -1,24 +1,35 @@
 package com.garganttua.core.runtime;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.runtime.dsl.IRuntimeStepCatch;
 
-public class RuntimeStep<ExecutionReturn> implements IRuntimeStep<ExecutionReturn> {
+public class RuntimeStep<ExecutionReturn> implements IRuntimeStep {
 
     private final String stepName;
-    private final Map<Class<?>, IMethodBinder<?>> binders = new LinkedHashMap<>();
+    private Class<ExecutionReturn> executionReturn;
+    private IMethodBinder<ExecutionReturn> iMethodBinder;
+    private Optional<IMethodBinder<ExecutionReturn>> ofNullable;
+    private Set<IRuntimeStepCatch> builtCatches;
+    private Optional<ICondition> condition;
+    private Optional<String> storeReturnInVariable;
+    private Boolean output;
 
-    public RuntimeStep(String stepName, Map<Class<?>, IMethodBinder<?>> binders) {
-        this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
-        if (binders != null) {
-            this.binders.putAll(binders);
-        }
+    public RuntimeStep(String stepName, Class<ExecutionReturn> executionReturn,
+            IMethodBinder<ExecutionReturn> iMethodBinder, Optional<IMethodBinder<ExecutionReturn>> ofNullable,
+            Set<IRuntimeStepCatch> builtCatches, Optional<ICondition> condition, Optional<String> storeReturnInVariable,
+            Boolean output) {
+                this.stepName = stepName;
+                this.executionReturn = executionReturn;
+                this.iMethodBinder = iMethodBinder;
+                this.ofNullable = ofNullable;
+                this.builtCatches = builtCatches;
+                this.condition = condition;
+                this.storeReturnInVariable = storeReturnInVariable;
+                this.output = output;
     }
 
     @Override
@@ -26,26 +37,4 @@ public class RuntimeStep<ExecutionReturn> implements IRuntimeStep<ExecutionRetur
         return stepName;
     }
 
-    @Override
-    public Optional<ExecutionReturn> execute() throws ReflectionException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'execute'");
-    }
-
-    @Override
-    public Set<Class<?>> getDependencies() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
-    }
-
-    /*     @SuppressWarnings("unchecked")
-    @Override
-    public <T> IMethodBinder<T> getBinder(Class<T> clazz) {
-        return (IMethodBinder<T>) binders.get(clazz);
-    }
-
-    @Override
-    public Map<Class<?>, IMethodBinder<?>> getBinders() {
-        return Collections.unmodifiableMap(binders);
-    } */
 }

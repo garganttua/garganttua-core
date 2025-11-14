@@ -1,13 +1,16 @@
 package com.garganttua.core.supplying;
 
-public class SupplyException extends RuntimeException {
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
+
+public class SupplyException extends CoreException {
 
     public SupplyException(Exception e) {
-        super(e);
+        super(CoreExceptionCode.SUPPLY_ERROR, e);
     }
 
     public SupplyException(String message) {
-        super(message);
+        super(CoreExceptionCode.SUPPLY_ERROR, message);
     }
 
 }

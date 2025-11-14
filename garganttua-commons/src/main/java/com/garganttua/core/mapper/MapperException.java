@@ -1,14 +1,17 @@
 package com.garganttua.core.mapper;
 
-public class MapperException extends Exception {
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
+
+public class MapperException extends CoreException {
     private static final long serialVersionUID = 3629256996026750672L;
 
     public MapperException(String string) {
-        super(string);
+        super(CoreExceptionCode.MAPPER_ERROR, string);
     }
 
     public MapperException(String string, Exception e) {
-        super(string, e);
+        super(CoreExceptionCode.MAPPER_ERROR, string, e);
     }
 
     public MapperException(Exception e) {

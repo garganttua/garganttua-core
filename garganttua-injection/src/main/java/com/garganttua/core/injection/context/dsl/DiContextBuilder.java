@@ -215,4 +215,9 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         return this;
     }
 
+    @Override
+    public String[] getPackages() {
+        return this.packages.toArray(new String[0]);
+    }
+
 }

@@ -17,8 +17,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> extends
 
     @Override
     protected void doAutoDetection() throws DslException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
+        
     }
 
 }

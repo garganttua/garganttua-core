@@ -1,13 +1,16 @@
 package com.garganttua.core.runtime;
 
-public class RuntimeException extends Exception {
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
+
+public class RuntimeException extends CoreException {
 
     public RuntimeException(String message) {
-        super(message);
+        super(CoreExceptionCode.RUNTIME_ERROR, message);
     }
 
     public RuntimeException(Exception e) {
-        super(e);
+        super(CoreExceptionCode.RUNTIME_ERROR, e);
     }
 
 }

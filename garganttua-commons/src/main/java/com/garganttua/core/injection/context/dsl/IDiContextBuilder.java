@@ -29,4 +29,6 @@ public interface IDiContextBuilder extends IAutomaticBuilder<IDiContextBuilder, 
 
     IDiContextBuilder observer(IContextBuilderObserver observer);
 
+    String[] getPackages();
+
 }

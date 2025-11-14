@@ -17,4 +17,6 @@ public interface IBeanProvider extends ILifecycle {
 
     <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException;
 
+    <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException;
+
 }

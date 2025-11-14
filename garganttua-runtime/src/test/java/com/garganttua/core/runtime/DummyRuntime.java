@@ -14,8 +14,8 @@ import com.garganttua.core.runtime.annotations.Variables;
 public class DummyRuntime {
 
     @Stages
-    public Map<String, List<String>> stages = Map.of(
-            "stage-1", List.of("step-1"));
+    public Map<String, List<Class<?>>> stages = Map.of(
+            "stage-1", List.of(DummyRuntimeProcessStep.class));
 
     @Variables 
     public Map<String, Object> presetVariables= Map.of("variable", "preset-variable");

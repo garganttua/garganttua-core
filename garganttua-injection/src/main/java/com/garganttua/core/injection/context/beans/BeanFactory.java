@@ -53,14 +53,9 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	private void doInjection(Bean onBean) {
-		this.definition.injectableFields().forEach(builder -> {
-			try {
-				builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue();
-			} catch (DslException | ReflectionException e) {
-				//TODO
-				e.printStackTrace();
-			}
-		});
+		this.definition.injectableFields().forEach(builder -> 
+				builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue()
+		);
 	}
 
 	private Bean createBeanInstance() throws DiException {

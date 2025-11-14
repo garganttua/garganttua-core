@@ -1,13 +1,16 @@
 package com.garganttua.core.lifecycle;
 
-public class LifecycleException extends Exception {
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
+
+public class LifecycleException extends CoreException {
 
     public LifecycleException(String string) {
-        super(string);
+        super(CoreExceptionCode.LIFECYCLE_ERROR, string);
     }
 
     public LifecycleException(Exception e) {
-        super(e);
+        super(CoreExceptionCode.LIFECYCLE_ERROR, e);
     }
 
 }

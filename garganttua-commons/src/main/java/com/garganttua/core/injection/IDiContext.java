@@ -1,5 +1,6 @@
 package com.garganttua.core.injection;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,6 +18,12 @@ public interface IDiContext extends ILifecycle {
         <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException;
 
         <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException;
+
+        <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException;
+
+        <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException;
+
+        <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException;
 
         // --- Property Scopes ---
         Set<IPropertyProvider> getPropertyProviders() throws DiException;

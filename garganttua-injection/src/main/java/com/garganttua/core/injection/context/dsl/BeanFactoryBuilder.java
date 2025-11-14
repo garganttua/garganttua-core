@@ -87,14 +87,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     }
 
     private void lookForInjectableFields() {
-        Arrays.stream(this.beanClass.getDeclaredFields()).forEach(t -> {
-            try {
-                registerInjectableField(t);
-            } catch (DslException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        });
+        Arrays.stream(this.beanClass.getDeclaredFields()).forEach(t -> registerInjectableField(t));
     }
 
     private void registerInjectableField(Field field) throws DslException {
@@ -102,14 +95,9 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
         try {
             builder = this.resolver.resolve(field.getType(), field);
             builder.ifPresent(supplierBuilder -> {
-                try {
-                    IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
-                            field.getType()).field(field).withValue(supplierBuilder).autoDetect(true);
-                    this.injectableFields.add(injectable);
-                } catch (DslException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+                IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
+                        field.getType()).field(field).withValue(supplierBuilder).autoDetect(true);
+                this.injectableFields.add(injectable);
             });
         } catch (DiException e) {
             throw new DslException(e);
@@ -130,14 +118,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
 
     private boolean isPostConstructMethodNotAlreadyBound(Method method) {
         return this.postConstructMethodBinderBuilders.stream().noneMatch(builder -> {
-            Method existing;
-            try {
-                existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).findMethod();
-            } catch (DslException e) {
-                // TODO
-                e.printStackTrace();
-                return false;
-            }
+            Method existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).findMethod();
             return method.equals(existing);
         });
     }
@@ -171,26 +152,16 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
                 .findFirst()
                 .ifPresent(constructor -> {
-                    try {
-                        this.constructorBinderBuilder = new BeanConstructorBinderBuilder<Bean>(this, this.beanClass,
-                                Optional.ofNullable(this.resolver))
-                                .autoDetect(true);
+                    this.constructorBinderBuilder = new BeanConstructorBinderBuilder<Bean>(this, this.beanClass,
+                            Optional.ofNullable(this.resolver))
+                            .autoDetect(true);
 
-                         Arrays.stream(constructor.getParameters())
-                                .forEach(parameter -> {
-                                    try {
-                                        Class<?> paramType = parameter.getType();
-                                        this.constructorBinderBuilder
-                                                .withParam(new NullObjectSupplierBuilder<>(paramType), true);
-                                    } catch (DslException e) {
-                                        // TODO Auto-generated catch block
-                                        e.printStackTrace();
-                                    }
-                                });
-                    } catch (DslException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
+                    Arrays.stream(constructor.getParameters())
+                            .forEach(parameter -> {
+                                Class<?> paramType = parameter.getType();
+                                this.constructorBinderBuilder
+                                        .withParam(new NullObjectSupplierBuilder<>(paramType), true);
+                            });
                 });
     }
 
