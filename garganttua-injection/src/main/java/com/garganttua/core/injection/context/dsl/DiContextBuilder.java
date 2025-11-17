@@ -19,6 +19,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.annotations.Fixed;
@@ -70,7 +71,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         return this;
     }
 
-    private Map<String, IBeanProvider> buildBeanProviders() {
+    private Map<String, IBeanProvider> buildBeanProviders(IInjectableElementResolver resolvers) {
         return this.beanProviders.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -79,7 +80,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
                                 IBeanProviderBuilder provider = entry.getValue();
                                 if (provider instanceof BeanProviderBuilder bpb) {
                                     bpb.setQualifierAnnotations(this.qualifiers);
-                                    bpb.setResolver(this.resolvers.build());
+                                    bpb.setResolver(resolvers);
                                 }
                                 return provider.build();
                             } catch (DslException e) {
@@ -171,8 +172,11 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
             this.resolvers.withResolver(qualifier, new SingletonElementResolver(Set.of()));
         });
 
+        IInjectableElementResolver builtResolvers = this.resolvers.build();
+
         IDiContext built = new DiContext(
-                this.buildBeanProviders(),
+                builtResolvers,
+                this.buildBeanProviders(builtResolvers),
                 this.buildPropertyProviders(),
                 new ArrayList<>(childContextFactories));
 

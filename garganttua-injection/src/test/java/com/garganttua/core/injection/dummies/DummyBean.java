@@ -20,7 +20,6 @@ public class DummyBean {
 
     private boolean postConstructCalled = false;
 
-    @Inject
     @Provider("garganttua")
     @Named("emailService")
     @DummyBeanQualifier

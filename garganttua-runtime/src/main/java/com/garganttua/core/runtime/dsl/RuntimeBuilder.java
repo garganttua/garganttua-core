@@ -10,6 +10,7 @@ import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
@@ -138,5 +139,6 @@ public class RuntimeBuilder<InputType, OutputType>
     @Override
     public void handle(IDiContext context) {
         this.context = Objects.requireNonNull(context, "Context cannot be null");
+        this.stages.values().stream().forEach(s -> s.handle(context));
     }
 }

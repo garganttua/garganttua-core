@@ -6,7 +6,7 @@ import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
 
-public interface IDiContext extends ILifecycle {
+public interface IDiContext extends ILifecycle, IInjectableElementResolver {
 
         // --- Bean Scopes ---
         Set<IBeanProvider> getBeanProviders() throws DiException;

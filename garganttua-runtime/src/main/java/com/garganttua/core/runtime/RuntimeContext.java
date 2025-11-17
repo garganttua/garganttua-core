@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.supplying.IContextualObjectSupplier;
@@ -18,10 +19,10 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
     private InputType input;
     private Class<OutputType> outputType;
 
-    public RuntimeContext(InputType input, Class<OutputType> outputType, Map<String, IBeanProvider> beanProviders,
+    public RuntimeContext(IInjectableElementResolver resolver, InputType input, Class<OutputType> outputType, Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
             List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
-        super(beanProviders, propertyProviders, childContextFactories);
+        super(resolver, beanProviders, propertyProviders, childContextFactories);
         this.input = input;
         this.outputType = outputType;
         this.initialized.set(true);

@@ -1,4 +1,4 @@
-package com.garganttua.core.runtime.dsl;
+package com.garganttua.core.runtime;
 
 public interface IRuntimeStepCatch {
 

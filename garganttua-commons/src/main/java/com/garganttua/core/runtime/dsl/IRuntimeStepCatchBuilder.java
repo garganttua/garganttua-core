@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+import com.garganttua.core.runtime.IRuntimeStepCatch;
 
 public interface IRuntimeStepCatchBuilder extends IAutomaticLinkedBuilder<IRuntimeStepCatchBuilder, IRuntimeStepBuilder<?, ?>, IRuntimeStepCatch>{
 

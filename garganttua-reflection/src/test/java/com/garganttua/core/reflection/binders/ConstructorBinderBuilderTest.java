@@ -43,11 +43,6 @@ public class ConstructorBinderBuilderTest {
         }
 
         @Override
-        protected ConcreteConstructorBinderBuilder getBuilder() {
-            return this;
-        }
-
-        @Override
         protected void doAutoDetection() throws DslException {
 
         }

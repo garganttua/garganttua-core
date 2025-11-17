@@ -21,7 +21,7 @@ public class BeanQueryTest {
     @BeforeEach
     void setUp() throws DiException, DslException, LifecycleException {
         ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
-        DiContext.builder().withPackage("com.garganttua")
+        DiContext.builder().withPackage("com.garganttua").autoDetect(true)
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
                 .up()

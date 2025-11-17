@@ -11,9 +11,11 @@ import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntimeStep;
+import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.RuntimeStep;
 import com.garganttua.core.runtime.annotations.Catch;
 import com.garganttua.core.runtime.annotations.FallBack;
@@ -35,6 +37,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
     private Class<ExecutionReturn> executionReturn;
     private Set<RuntimeStepCatchBuilder> katches = new HashSet<>();
     private RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallbackBuilder;
+    private IDiContext context;
 
     public RuntimeStepBuilder(RuntimeStageBuilder<?, ?> runtimeStageBuilder, String stepName,
             Class<ExecutionReturn> executionReturn,
@@ -47,7 +50,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
 
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> method() throws DslException {
-        this.methodBuilder = new RuntimeStepMethodBuilder<>(this, supplier);
+        this.methodBuilder = new RuntimeStepMethodBuilder<>(this, this.supplier, this.context);
         this.methodBuilder.withReturn(this.executionReturn);
         return this.methodBuilder;
     }
@@ -56,7 +59,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallBack() throws DslException {
         if (this.katches.isEmpty())
             throw new DslException("No katch defined");
-        this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(this, supplier);
+        this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(this, this.supplier, this.context);
         this.fallbackBuilder.withReturn(this.executionReturn);
         return this.fallbackBuilder;
     }
@@ -66,7 +69,8 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
         Class<?> ownerType = supplier.getSuppliedType();
 
         Method operationMethod = detectOperationMethod(ownerType);
-        method().autoDetect(true).method(operationMethod);
+        method().autoDetect(true).method(operationMethod).handle(context);
+
 
         Catch catchAnnotation = operationMethod.getAnnotation(Catch.class);
         if (catchAnnotation != null) {
@@ -89,7 +93,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
         Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(ownerType, FallBack.class);
 
         if (fallbackMethod != null) {
-            fallBack().autoDetect(true).method(fallbackMethod);
+            fallBack().autoDetect(true).method(fallbackMethod).handle(context);
         }
     }
 
@@ -134,4 +138,14 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
                 Optional.ofNullable(fallback), builtCatches, Optional.ofNullable(condition));
     }
 
+    @Override
+    public void handle(IDiContext context) {
+        this.context = Objects.requireNonNull(context, "Context cannot be null");
+        if( methodBuilder != null ){
+            methodBuilder.handle(context);
+        }
+        if( fallbackBuilder != null ){
+            fallbackBuilder.handle(context);
+        }
+    }
 }

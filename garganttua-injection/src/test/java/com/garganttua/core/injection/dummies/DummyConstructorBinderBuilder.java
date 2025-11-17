@@ -11,11 +11,6 @@ public class DummyConstructorBinderBuilder<TargetClass>
     }
 
 
-    @Override
-    protected DummyConstructorBinderBuilder<TargetClass> getBuilder() {
-        return this;
-    }
-
 
     @Override
     protected void doAutoDetection() throws DslException {

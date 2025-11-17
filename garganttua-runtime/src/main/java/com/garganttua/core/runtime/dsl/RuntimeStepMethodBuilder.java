@@ -4,12 +4,14 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> extends
-        AbstractMethodBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType>>
+        AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType>>
         implements
         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> {
 
@@ -17,9 +19,9 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> extends
     private Boolean output = false;
 
     protected RuntimeStepMethodBuilder(IRuntimeStepBuilder<ExecutionReturn, StepObjectType> up,
-            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier)
+            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier, IInjectableElementResolver resolver)
             throws DslException {
-        super(up, supplier);
+        super(resolver, up, supplier);
     }
 
     @Override
@@ -34,16 +36,16 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> extends
         return this;
     }
 
-
-    @Override
-    protected void doAutoDetection() throws DslException {
-
-    }
-
     @Override
     public boolean isThrown(Class<? extends Throwable> exception) {
         Objects.requireNonNull(exception, "Exception cannot be null");
         return Arrays.stream(this.findMethod().getExceptionTypes()).anyMatch(e -> e.isAssignableFrom(exception));
+    }
+
+    @Override
+    public void handle(IDiContext context) {
+        Objects.requireNonNull(context, "Context cannot be null");
+        this.setResolver(context);
     }
 
 }

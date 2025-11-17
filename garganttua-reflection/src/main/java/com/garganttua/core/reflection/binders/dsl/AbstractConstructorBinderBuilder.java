@@ -36,8 +36,6 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         this.parameterNullableAllowed = new ArrayList<>();
     }
 
-    protected abstract Builder getBuilder();
-
     private boolean buildContextual() {
         return this.parameters.stream().filter(param -> param.isContextual()).findFirst().isPresent();
     }
@@ -47,7 +45,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         ensureCapacity(i);
         this.parameters.set(i, createFixedObjectSupplierBuilder(parameter));
         this.parameterNullableAllowed.set(i, false);
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -55,7 +53,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         ensureCapacity(i);
         this.parameters.set(i, supplier);
         this.parameterNullableAllowed.set(i, false);
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -63,7 +61,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         ensureCapacity(i);
         this.parameters.set(i, createFixedObjectSupplierBuilder(parameter));
         this.parameterNullableAllowed.set(i, acceptNullable);
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -71,7 +69,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         ensureCapacity(i);
         this.parameters.set(i, supplier);
         this.parameterNullableAllowed.set(i, acceptNullable);
-        return this.getBuilder();
+        return (Builder) this;
     }
 
     @Override
@@ -151,7 +149,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
                     Boolean.TRUE.equals(parameterNullableAllowed.get(i))));
         }
 
-        Constructor<Constructed> matchedConstructor = findMatchingConstructor();
+        Constructor<Constructed> matchedConstructor = findConstructor();
         if (matchedConstructor == null) {
             String msg = String.format("No matching constructor found for class %s with parameter types %s",
                     objectClass.getName(), formatTypes(this.getParameterTypes()));
@@ -171,7 +169,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return this.parameters.stream().map(IObjectSupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
     }
 
-    protected Constructor<Constructed> findMatchingConstructor() {
+    protected Constructor<Constructed> findConstructor() {
         Class<?>[] paramTypes = this.getParameterTypes();
         Constructor<Constructed>[] constructors = (Constructor<Constructed>[]) objectClass.getDeclaredConstructors();
 

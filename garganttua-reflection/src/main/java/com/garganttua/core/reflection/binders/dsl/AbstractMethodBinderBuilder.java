@@ -406,7 +406,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         for (int i = 0; i < this.parameters.size(); i++) {
             IObjectSupplierBuilder<?, ?> builder = this.parameters.get(i);
             if (builder == null) {
-                log.atWarn().log("[MethodBinderBuilder] Parameter {} has no supplier configured for method {}", i,
+                log.atWarn().log("Parameter {} has no supplier configured for method {}", i,
                         getMethodName());
                 throw new DslException(
                         "Parameter " + i + " not configured for method " + getMethodName());

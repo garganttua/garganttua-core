@@ -3,6 +3,7 @@ package com.garganttua.core.injection;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.util.Set;
+import java.util.function.Function;
 
 import jakarta.annotation.Nullable;
 import lombok.NonNull;

@@ -1,5 +1,7 @@
 package com.garganttua.core.injection.dummies;
 
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Executable;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -10,6 +12,7 @@ import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.lifecycle.LifecycleException;
 
 public class DummyDiContext implements IDiContext {
@@ -146,6 +149,18 @@ public class DummyDiContext implements IDiContext {
     public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'resolve'");
+    }
+
+    @Override
+    public Set<Resolved> resolve(Executable method) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'resolve'");
     }
 
 }

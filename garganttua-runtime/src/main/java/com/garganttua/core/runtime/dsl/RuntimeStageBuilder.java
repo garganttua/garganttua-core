@@ -85,6 +85,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
     @Override
     public void handle(IDiContext context) {
         this.context = Objects.requireNonNull(context, "Context cannot be null");
+        this.steps.values().forEach(s -> s.handle(context));
     }
 
     @Override
@@ -109,6 +110,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
             IObjectSupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
 
             IRuntimeStepBuilder<?,?> stepBuilder = new RuntimeStepBuilder<>(this, stepName, Void.class, supplierBuilder).autoDetect(true);
+            stepBuilder.handle(context);
             this.steps.put(stepName, stepBuilder);
         });
     }

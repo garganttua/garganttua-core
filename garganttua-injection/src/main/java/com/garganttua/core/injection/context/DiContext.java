@@ -1,5 +1,7 @@
 package com.garganttua.core.injection.context;
 
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -17,7 +19,9 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.DiContextBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
@@ -37,17 +41,20 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     private final Map<String, IPropertyProvider> propertyProviders;
     private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
 
+    private IInjectableElementResolver resolverDelegate;
+
     public static IDiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
     }
 
     // --- Constructeur ---
-    public DiContext(Map<String, IBeanProvider> beanProviders,
+    public DiContext(IInjectableElementResolver resolver, Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
             List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
 
         this.beanProviders = Objects.requireNonNull(beanProviders, "beanProviders cannot be null");
         this.propertyProviders = Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null");
+        this.resolverDelegate = Objects.requireNonNull(resolver, "Resolver cannot be null");
         Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null");
 
         this.childContextFactories = childContextFactories;
@@ -319,6 +326,16 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
             childContextFactories.add(factory);
         }
+    }
+
+    @Override
+    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+        return this.resolverDelegate.resolve(elementType, element);
+    }
+
+    @Override
+    public Set<Resolved> resolve(Executable method) throws DiException {
+        return this.resolverDelegate.resolve(method);
     }
 
 

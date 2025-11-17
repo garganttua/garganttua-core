@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.RuntimeStepCatch;
 import com.garganttua.core.runtime.annotations.Catch;
 

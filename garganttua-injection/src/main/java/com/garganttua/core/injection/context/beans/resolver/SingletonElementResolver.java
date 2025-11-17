@@ -22,7 +22,7 @@ public class SingletonElementResolver extends BeanElementResolver
     @Override
     public Resolved resolve(Class<?> elementType,
             AnnotatedElement element) {
-                Optional<IObjectSupplierBuilder<?,IObjectSupplier<?>>> builder = this.resolve(elementType, element, BeanStrategy.prototype);
+                Optional<IObjectSupplierBuilder<?,IObjectSupplier<?>>> builder = this.resolve(elementType, element, BeanStrategy.singleton);
         return new Resolved(builder.isPresent(),elementType, builder.orElse(null), IInjectableElementResolver.isNullable(element));
     }
 }
