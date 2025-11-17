@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.utils.Copyable;
 
-public interface IBeanProvider extends ILifecycle {
+public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider> {
 
     <T> Optional<T> getBean(Class<T> type) throws DiException;
 

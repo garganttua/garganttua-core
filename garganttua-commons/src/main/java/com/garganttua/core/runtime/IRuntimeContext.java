@@ -8,6 +8,8 @@ public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
 
     IRuntimeResult<InputType, OutputType> getResult();
 
+    <VariableType> void setVariable(String variableName, VariableType variable);
+
     <VariableType> Optional<VariableType> getVariable(String variableName, Class<VariableType> variableType);
 
     Optional<InputType> getInput();

@@ -60,7 +60,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
 
 
             IRuntimeContext<InputType, OutputType> runtimeContext = this.diContext
-                    .newChildContext(IRuntimeContext.class, input, this.outputType);
+                    .newChildContext(IRuntimeContext.class, input, this.outputType, this.presetVariables);
                     
             chain.execute(runtimeContext);
             return runtimeContext.getResult();

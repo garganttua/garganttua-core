@@ -7,12 +7,14 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
@@ -29,6 +31,7 @@ import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.utils.CopyException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -150,7 +153,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
                     return childType != null && contextClass.isAssignableFrom(childType);
                 })
                 .findFirst()
-                .map(factory -> contextClass.cast(factory.createChildContext(this, args)))
+                .map(factory -> contextClass.cast(factory.createChildContext((IDiContext) this.copy().onInit().onStart(), args)))
                 .orElseThrow(() -> new DiException(
                         "No child context factory registered for context class " + contextClass.getName()));
     }
@@ -161,12 +164,9 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Type[] genericInterfaces = factory.getClass().getGenericInterfaces();
         for (Type type : genericInterfaces) {
 
-            if ( isParameterizedOf(type, IDiChildContextFactory.class) ) {
-
+            if (isParameterizedOf(type, IDiChildContextFactory.class)) {
                 Type actual = ((ParameterizedType) type).getActualTypeArguments()[0];
-
                 if (isParameterizedOf(actual, IDiContext.class)) {
-
                     return (Class<? extends IDiContext>) ((ParameterizedType) actual).getRawType();
                 }
             }
@@ -174,10 +174,10 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         return null;
     }
 
-    private static boolean isParameterizedOf(Type type, Class<?> interfasse){
+    private static boolean isParameterizedOf(Type type, Class<?> interfasse) {
         return (type instanceof ParameterizedType parameterizedType
-                    && parameterizedType.getRawType() instanceof Class<?> raw
-                    && interfasse.isAssignableFrom(raw));
+                && parameterizedType.getRawType() instanceof Class<?> raw
+                && interfasse.isAssignableFrom(raw));
     }
 
     // --- Cycle de vie ---
@@ -205,6 +205,8 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             if (obj instanceof ILifecycle lc)
                 lc.onFlush();
         }
+        this.beanProviders.clear();
+        this.propertyProviders.clear();
         return this;
     }
 
@@ -273,7 +275,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
         List<Bean> beans = new ArrayList<>();
         for (IBeanProvider provider : this.beanProviders.values()) {
-            beans.addAll(provider.queryBeans(definition)); 
+            beans.addAll(provider.queryBeans(definition));
         }
         return beans;
     }
@@ -343,5 +345,29 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
         this.resolverDelegate.addResolver(annotation, resolver);
+    }
+
+    @Override
+    public IDiContext copy() throws CopyException {
+        Map<String, IBeanProvider> beanProvidersCopy = this.beanProviders.entrySet().stream()
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().copy()));
+
+        Map<String, IPropertyProvider> propertyProvidersCopy = this.propertyProviders.entrySet().stream()
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().copy()));
+
+        List<IDiChildContextFactory<? extends IDiContext>> childFactoriesCopy =
+            new ArrayList<>(this.childContextFactories);
+
+        return new DiContext(
+                this.resolverDelegate,
+                beanProvidersCopy,
+                propertyProvidersCopy,
+                childFactoriesCopy);
     }
 }

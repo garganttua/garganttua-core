@@ -2,6 +2,7 @@ package com.garganttua.core.runtime;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.injection.IBeanProvider;
@@ -10,7 +11,9 @@ import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.supplying.IContextualObjectSupplier;
+import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.ContextualObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
@@ -18,15 +21,19 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
 
     private InputType input;
     private Class<OutputType> outputType;
+    private Map<String, IObjectSupplier<?>> presetVariables;
 
     public RuntimeContext(IInjectableElementResolver resolver, InputType input, Class<OutputType> outputType, Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
-            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
+            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories, Map<String, IObjectSupplier<?>> presetVariables) {
         super(resolver, beanProviders, propertyProviders, childContextFactories);
-        this.input = input;
-        this.outputType = outputType;
+        this.input = Objects.requireNonNull(input, "Input type cannot be null");
+        this.outputType = Objects.requireNonNull(outputType, "Output type cannot be null");
+        this.presetVariables = Objects.requireNonNull(presetVariables, "Preset variables map cannot be null");
         this.initialized.set(true);
         this.started.set(true);
+
+        this.presetVariables.entrySet().forEach(e -> this.setVariable(e.getKey(), e.getValue()));
     }
 
     @Override
@@ -104,6 +111,11 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
     @Override
     public Optional<String> getExceptionMessage() {
         return Optional.empty();
+    }
+
+    @Override
+    public <VariableType> void setVariable(String variableName, VariableType variable) {
+        this.propertyProviders().get(Predefined.PropertyProviders.garganttua.toString()).setProperty(variableName, variable);
     }
 
 }

@@ -7,6 +7,7 @@ import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.utils.CopyException;
 
 public class DummyBeanProvider implements IBeanProvider {
 
@@ -75,6 +76,12 @@ public class DummyBeanProvider implements IBeanProvider {
     public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public IBeanProvider copy() throws CopyException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 
 }

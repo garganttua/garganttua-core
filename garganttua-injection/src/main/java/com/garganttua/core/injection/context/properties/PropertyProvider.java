@@ -12,6 +12,7 @@ import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.utils.CopyException;
 
 public class PropertyProvider extends AbstractLifecycle implements IPropertyProvider {
 
@@ -85,13 +86,19 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
 
     @Override
     protected ILifecycle doFlush() throws LifecycleException {
-        properties.clear();
+        this.properties.clear();
         return this;
     }
 
     @Override
     protected ILifecycle doStop() throws LifecycleException {
         return this;
+    }
+
+    @Override
+    public IPropertyProvider copy() throws CopyException {
+        Map<String, Object> copiedMap = new ConcurrentHashMap<>(this.properties);
+        return new PropertyProvider(copiedMap);
     }
 
 }

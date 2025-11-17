@@ -1,5 +1,6 @@
 package com.garganttua.core.injection.context.beans;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.utils.CopyException;
 
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
@@ -98,6 +100,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	protected ILifecycle doFlush() throws LifecycleException {
+		this.beanFactories.clear();
 		return this;
 	}
 
@@ -146,6 +149,12 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 				.map(IObjectSupplier::supply)
 				.map(Optional::get)
 				.toList();
+	}
+
+	@Override
+	public IBeanProvider copy() throws CopyException {
+		List<IBeanFactory<?>> copiedFactories = new ArrayList<>(this.beanFactories);
+        return new BeanProvider(copiedFactories);
 	}
 
 }

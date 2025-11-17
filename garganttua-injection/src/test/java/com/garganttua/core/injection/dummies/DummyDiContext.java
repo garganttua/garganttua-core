@@ -16,6 +16,7 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.utils.CopyException;
 
 public class DummyDiContext implements IDiContext {
 
@@ -169,6 +170,12 @@ public class DummyDiContext implements IDiContext {
     public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addResolver'");
+    }
+
+    @Override
+    public IDiContext copy() throws CopyException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 
 }

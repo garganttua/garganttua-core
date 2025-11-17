@@ -11,6 +11,7 @@ import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.utils.CopyException;
 
 public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
 
@@ -88,6 +89,12 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
             @Override
             public Set<String> keys() {
                 return null;
+            }
+
+            @Override
+            public IPropertyProvider copy() throws CopyException {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException("Unimplemented method 'copy'");
             }
         };
     }

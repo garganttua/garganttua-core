@@ -4,7 +4,7 @@ import lombok.Getter;
 
 public enum CoreExceptionCode {
 
-    UNKNOWN_ERROR(000),
+    UNKNOWN_ERROR(-1),
     SUPPLY_ERROR(100),
     RUNTIME_ERROR(200),
     REFLECTION_ERROR(300),
@@ -13,7 +13,7 @@ public enum CoreExceptionCode {
     INJECTION_ERROR(600),
     EXECUTOR_ERROR(700),
     DSL_ERROR(800),
-    CONDITION_ERROR(900)
+    CONDITION_ERROR(900), COPY_ERROR(000)
 
     ;
 

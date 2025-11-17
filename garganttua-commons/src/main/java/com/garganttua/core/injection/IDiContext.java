@@ -5,8 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.utils.Copyable;
 
-public interface IDiContext extends ILifecycle, IInjectableElementResolver {
+public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copyable<IDiContext> {
 
         // --- Bean Scopes ---
         Set<IBeanProvider> getBeanProviders() throws DiException;

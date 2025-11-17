@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.utils.CopyException;
 
 public class DummyPropertyProvider implements IPropertyProvider {
 
@@ -57,6 +58,12 @@ public class DummyPropertyProvider implements IPropertyProvider {
     @Override
     public IPropertyProvider onReload() throws LifecycleException {
         return this;
+    }
+
+    @Override
+    public IPropertyProvider copy() throws CopyException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 
 }

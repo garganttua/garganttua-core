@@ -40,14 +40,12 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     private IDiContextBuilder contextBuilder;
     private boolean canBuild = false;
     private IDiContext context = null;
-    private String[] packages;
 
     private RuntimesBuilder(Optional<IDiContextBuilder> contextBuilder) {
         Objects.requireNonNull(contextBuilder, "Optional context builder cannot be null");
         this.contextBuilder = contextBuilder.orElse(null);
         contextBuilder.ifPresent(c -> c.observer(this));
         contextBuilder.ifPresent(c -> c.childContextFactory(new RuntimeContextFactory()));
-        contextBuilder.ifPresent(c -> this.packages = c.getPackages());
     }
 
     @SuppressWarnings("unchecked")
@@ -121,7 +119,6 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         this.contextBuilder = Objects.requireNonNull(context, "Context builder cannot be null");
         this.contextBuilder.observer(this);
         this.contextBuilder.childContextFactory(new RuntimeContextFactory());
-        this.packages = this.contextBuilder.getPackages();
         this.contextBuilder.resolvers().withResolver(Input.class, new InputElementResolver());
         this.contextBuilder.resolvers().withResolver(Variable.class, new VariableElementResolver());
         this.contextBuilder.resolvers().withResolver(Context.class, new ContextElementResolver());
