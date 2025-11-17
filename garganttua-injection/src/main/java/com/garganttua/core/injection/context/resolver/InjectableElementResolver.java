@@ -19,10 +19,10 @@ import com.garganttua.core.injection.Resolved;
 
 public class InjectableElementResolver implements IInjectableElementResolver {
 
-    private Map<Class<? extends Annotation>, IElementResolver> resolvers;
+    private Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
 
     public InjectableElementResolver(Map<Class<? extends Annotation>, IElementResolver> resolvers){
-        this.resolvers = Objects.requireNonNull(resolvers, "Resolvers map cannot be null");
+        this.resolvers.putAll(Objects.requireNonNull(resolvers, "Resolvers map cannot be null"));
     }
 
     @Override
@@ -47,5 +47,10 @@ public class InjectableElementResolver implements IInjectableElementResolver {
             paramResolved.add(resolve(parameter.getType(), parameter));
         }
         return paramResolved;
+    }
+
+    @Override
+    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+        this.resolvers.put(Objects.requireNonNull(annotation, "Annotation cannot be null"), Objects.requireNonNull(resolver, "Resolver cannot be null"));
     }
 }

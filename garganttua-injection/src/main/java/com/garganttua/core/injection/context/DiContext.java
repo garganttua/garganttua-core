@@ -1,5 +1,6 @@
 package com.garganttua.core.injection.context;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
@@ -19,6 +20,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
@@ -336,5 +338,10 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public Set<Resolved> resolve(Executable method) throws DiException {
         return this.resolverDelegate.resolve(method);
+    }
+
+    @Override
+    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+        this.resolverDelegate.addResolver(annotation, resolver);
     }
 }

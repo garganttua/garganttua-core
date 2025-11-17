@@ -13,11 +13,13 @@ import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.RuntimeStep;
 import com.garganttua.core.runtime.annotations.Catch;
+import com.garganttua.core.runtime.annotations.Condition;
 import com.garganttua.core.runtime.annotations.FallBack;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.supplying.IObjectSupplier;
@@ -66,15 +68,27 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType> extends
 
     @Override
     protected void doAutoDetection() throws DslException {
-        Class<?> ownerType = supplier.getSuppliedType();
-
-        Method operationMethod = detectOperationMethod(ownerType);
+        Method operationMethod = detectOperationMethod(supplier.getSuppliedType());
         method().autoDetect(true).method(operationMethod).handle(context);
-
 
         Catch catchAnnotation = operationMethod.getAnnotation(Catch.class);
         if (catchAnnotation != null) {
-            handleCatch(ownerType, catchAnnotation);
+            handleCatch(supplier.getSuppliedType(), catchAnnotation);
+        }
+
+        detectCondition();
+    }
+
+    private void detectCondition() {
+        Optional<StepObjectType> owner = supplier.build().supply();
+
+        if( owner.isEmpty() )
+            throw new DslException("Owner supplier supplied empty value");
+        String conditionField = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(supplier.getSuppliedType(), Condition.class, IConditionBuilder.class);
+
+        if( conditionField != null ){
+            IConditionBuilder condition = (IConditionBuilder) ObjectQueryFactory.objectQuery(owner.get()).getValue(conditionField);
+            this.condition(condition);
         }
     }
 

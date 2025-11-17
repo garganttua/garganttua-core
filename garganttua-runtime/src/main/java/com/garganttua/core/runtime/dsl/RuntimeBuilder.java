@@ -2,22 +2,28 @@ package com.garganttua.core.runtime.dsl;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
+import com.garganttua.core.reflection.utils.WildcardTypeImpl;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.Runtime;
 import com.garganttua.core.runtime.annotations.Stages;
+import com.garganttua.core.runtime.annotations.Variables;
+import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +40,7 @@ public class RuntimeBuilder<InputType, OutputType>
     private Class<InputType> inputType;
     private Class<OutputType> outputType;
     private Object objectForAutoDetection;
+    private Map<String, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> presetVariables = new HashMap<>();
 
     public RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
             Class<OutputType> outputType) {
@@ -94,7 +101,11 @@ public class RuntimeBuilder<InputType, OutputType>
 
         Map<String, IRuntimeStage> builtStages = this.stages.build();
 
-        return new Runtime<>(name, builtStages, this.context, this.inputType, this.outputType);
+        Map<String, IObjectSupplier<?>> variables = this.presetVariables.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().build()));
+        return new Runtime<>(name, builtStages, this.context, this.inputType, this.outputType, variables);
     }
 
     @Override
@@ -102,11 +113,28 @@ public class RuntimeBuilder<InputType, OutputType>
         Objects.requireNonNull(this.objectForAutoDetection, "objectForAutoDetection cannot be null");
         Objects.requireNonNull(this.context, "Context cannot be null");
         this.collectStages();
+        this.collectPresetVariables();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectPresetVariables() {
+        ParameterizedType mapType = getVariablesMapType();
+        String address = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
+                this.objectForAutoDetection.getClass(), Variables.class, mapType.getRawType());
+
+        if (address == null)
+            return;
+
+        Map<String, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> variables = (Map<String, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>>) ObjectQueryFactory
+                .objectQuery(this.objectForAutoDetection).getValue(address);
+
+        variables.entrySet().stream().forEach(e -> this.variable(e.getKey(), e.getValue()));
+
     }
 
     @SuppressWarnings("unchecked")
     private void collectStages() {
-        ParameterizedType mapType = getMapType();
+        ParameterizedType mapType = getStagesMapType();
 
         String address = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
                 this.objectForAutoDetection.getClass(), Stages.class, mapType.getRawType());
@@ -115,18 +143,40 @@ public class RuntimeBuilder<InputType, OutputType>
             throw new DslException("Runtime Definition " + this.objectForAutoDetection.getClass().getSimpleName()
                     + " does not have any field annotated with @Stages");
 
-        Map<String, List<Class<Object>>> stages = (Map<String, List<Class<Object>>>) ObjectQueryFactory.objectQuery(this.objectForAutoDetection).getValue(address);
+        Map<String, List<Class<Object>>> stages = (Map<String, List<Class<Object>>>) ObjectQueryFactory
+                .objectQuery(this.objectForAutoDetection).getValue(address);
 
         stages.entrySet().stream().forEach(e -> {
             String stageName = e.getKey();
             List<Class<Object>> steps = e.getValue();
-            IRuntimeStageBuilder<InputType, OutputType> stageBuilder = new RuntimeStageBuilder<>(this, stageName, steps).autoDetect(true);
+            IRuntimeStageBuilder<InputType, OutputType> stageBuilder = new RuntimeStageBuilder<>(this, stageName, steps)
+                    .autoDetect(true);
             stageBuilder.handle(this.context);
             this.stages.put(stageName, stageBuilder);
         });
     }
 
-    private ParameterizedType getMapType() {
+    private ParameterizedType getVariablesMapType() {
+        WildcardType wildcardIObjectSupplier = WildcardTypeImpl.extends_(new ParameterizedTypeImpl(
+                IObjectSupplier.class,
+                new Type[] { WildcardTypeImpl.unbounded() }));
+
+        ParameterizedType supplierBuilderType = new ParameterizedTypeImpl(
+                IObjectSupplierBuilder.class,
+                new Type[] {
+                        WildcardTypeImpl.unbounded(),
+                        wildcardIObjectSupplier
+                });
+
+        return new ParameterizedTypeImpl(
+                Map.class,
+                new Type[] {
+                        String.class,
+                        supplierBuilderType
+                });
+    }
+
+    private ParameterizedType getStagesMapType() {
         ParameterizedType listOfClass = new ParameterizedTypeImpl(
                 List.class,
                 new Type[] { Class.class });
@@ -140,5 +190,13 @@ public class RuntimeBuilder<InputType, OutputType>
     public void handle(IDiContext context) {
         this.context = Objects.requireNonNull(context, "Context cannot be null");
         this.stages.values().stream().forEach(s -> s.handle(context));
+    }
+
+    @Override
+    public IRuntimeBuilder<InputType, OutputType> variable(String name,
+            IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> value) {
+        this.presetVariables.put(Objects.requireNonNull(name, "Variable name cannot be null"),
+                Objects.requireNonNull(value, "Value supplier builder cannot be null"));
+        return this;
     }
 }

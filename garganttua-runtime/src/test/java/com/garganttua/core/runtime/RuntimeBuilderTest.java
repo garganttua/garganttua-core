@@ -38,6 +38,7 @@ class RuntimeBuilderTest {
 
             Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder)
                     .runtime("runtime-1", String.class, String.class)
+                    .variable("variable", of("preset-variable"))
                     .stage("stage-1")
                     .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
                     .condition(custom(of(10), i -> 1 > 0))

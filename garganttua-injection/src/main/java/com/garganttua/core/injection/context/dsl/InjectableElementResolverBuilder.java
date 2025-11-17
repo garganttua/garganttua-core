@@ -17,6 +17,7 @@ public class InjectableElementResolverBuilder
         implements IInjectableElementResolverBuilder {
 
     private final Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
+    private InjectableElementResolver built;
 
     public InjectableElementResolverBuilder(IDiContextBuilder link) {
         super(link);
@@ -27,12 +28,17 @@ public class InjectableElementResolverBuilder
             IElementResolver resolver) {
         resolvers.put(Objects.requireNonNull(annotation, "Annotation cannot be null"),
                 Objects.requireNonNull(resolver, "Resolver cannot be null"));
+        if( this.built != null )
+                this.built.addResolver(annotation, resolver);
         return this;
     }
 
     @Override
     public IInjectableElementResolver build() throws DslException {
-        return new InjectableElementResolver(this.resolvers);
+        if( this.built == null )
+            this.built = new InjectableElementResolver(this.resolvers);
+
+        return this.built;
     }
 
 }

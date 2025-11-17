@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime.dsl;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IDiContext;
@@ -21,7 +22,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> extends
             IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier,
             IInjectableElementResolver resolver)
             throws DslException {
-        super(resolver, up, supplier);
+        super(Optional.ofNullable(resolver), up, supplier);
     }
 
     @Override
