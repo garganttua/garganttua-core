@@ -6,6 +6,6 @@ import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 @FunctionalInterface
 public interface ResolvedAction {
 
-    void ifResolved(IObjectSupplierBuilder<?, IObjectSupplier<?>> elementSupplier, boolean nullable);
+    void ifResolved(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> elementSupplier, boolean nullable);
 
 }

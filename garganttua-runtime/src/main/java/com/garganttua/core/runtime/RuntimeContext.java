@@ -53,7 +53,7 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
     }
 
     @SuppressWarnings("unchecked")
-    public static <ExceptionType, InputType, OutputType> IObjectSupplierBuilder<ExceptionType, IContextualObjectSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
+    public static <ExceptionType extends Throwable, InputType, OutputType> IObjectSupplierBuilder<ExceptionType, IContextualObjectSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
             Class<ExceptionType> exceptionType) {
         return new ContextualObjectSupplierBuilder<>((context, others) -> {
             return context.getException(exceptionType);

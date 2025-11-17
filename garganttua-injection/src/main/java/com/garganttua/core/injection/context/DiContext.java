@@ -337,6 +337,4 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     public Set<Resolved> resolve(Executable method) throws DiException {
         return this.resolverDelegate.resolve(method);
     }
-
-
 }

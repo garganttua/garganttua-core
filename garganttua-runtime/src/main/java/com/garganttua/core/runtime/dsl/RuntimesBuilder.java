@@ -19,7 +19,19 @@ import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.RuntimeContextFactory;
+import com.garganttua.core.runtime.annotations.Code;
+import com.garganttua.core.runtime.annotations.Context;
+import com.garganttua.core.runtime.annotations.Exception;
+import com.garganttua.core.runtime.annotations.ExceptionMessage;
+import com.garganttua.core.runtime.annotations.Input;
 import com.garganttua.core.runtime.annotations.RuntimeDefinition;
+import com.garganttua.core.runtime.annotations.Variable;
+import com.garganttua.core.runtime.resolver.CodeElementResolver;
+import com.garganttua.core.runtime.resolver.ContextElementResolver;
+import com.garganttua.core.runtime.resolver.ExceptionElementResolver;
+import com.garganttua.core.runtime.resolver.ExceptionMessageElementResolver;
+import com.garganttua.core.runtime.resolver.InputElementResolver;
+import com.garganttua.core.runtime.resolver.VariableElementResolver;
 
 public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>
         implements IRuntimesBuilder {
@@ -70,6 +82,8 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
 
     @Override
     protected void doAutoDetection() {
+        if (!this.canBuild)
+            throw new DslException("Build is not yet authorized");
         List<?> definitions = this.context
                 .queryBeans(example(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
         definitions.stream().forEach(this::createAutoDetectedRuntime);
@@ -84,7 +98,8 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         if (runtimeNameAnnotation != null) {
             runtimeName = runtimeNameAnnotation.value();
         }
-        IRuntimeBuilder<?,?> runtimeBuilder = new RuntimeBuilder<>(this, runtimeName, input, output, runtimeDefinitionObject).autoDetect(true);
+        IRuntimeBuilder<?, ?> runtimeBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
+                runtimeDefinitionObject).autoDetect(true);
         runtimeBuilder.handle(this.context);
         this.runtimeBuilders.put(runtimeName, runtimeBuilder);
     }
@@ -107,6 +122,12 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         this.contextBuilder.observer(this);
         this.contextBuilder.childContextFactory(new RuntimeContextFactory());
         this.packages = this.contextBuilder.getPackages();
+        this.contextBuilder.resolvers().withResolver(Input.class, new InputElementResolver());
+        this.contextBuilder.resolvers().withResolver(Variable.class, new VariableElementResolver());
+        this.contextBuilder.resolvers().withResolver(Context.class, new ContextElementResolver());
+        this.contextBuilder.resolvers().withResolver(Exception.class, new ExceptionElementResolver());
+        this.contextBuilder.resolvers().withResolver(Code.class, new CodeElementResolver());
+        this.contextBuilder.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
         return this;
     }
 
