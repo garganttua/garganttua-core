@@ -74,7 +74,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	protected ILifecycle doInit() throws LifecycleException {
+	protected synchronized ILifecycle doInit() throws LifecycleException {
 		try {
 			this.doDependencyCycleDetection();
 		} catch (DiException e) {
@@ -94,18 +94,18 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	protected ILifecycle doStart() throws LifecycleException {
+	protected synchronized ILifecycle doStart() throws LifecycleException {
 		return this;
 	}
 
 	@Override
-	protected ILifecycle doFlush() throws LifecycleException {
+	protected synchronized ILifecycle doFlush() throws LifecycleException {
 		this.beanFactories.clear();
 		return this;
 	}
 
 	@Override
-	protected ILifecycle doStop() throws LifecycleException {
+	protected synchronized ILifecycle doStop() throws LifecycleException {
 		return this;
 	}
 

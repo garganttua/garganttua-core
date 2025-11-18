@@ -10,4 +10,12 @@ public interface IRuntimeResult<InputType, OutputType> {
 
     String getPrettyDuration();
 
+    Duration getDurationInMillis();
+
+    long getDurationMillis();
+
+    long getDurationInNanos();
+
+    String getPrettyDurationInNanos();
+
 }

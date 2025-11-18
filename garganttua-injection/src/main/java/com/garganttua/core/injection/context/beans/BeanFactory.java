@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
-	private Bean bean;
+	private volatile Bean bean;
 
 	private BeanDefinition<Bean> definition;
 
@@ -53,9 +53,8 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	private void doInjection(Bean onBean) {
-		this.definition.injectableFields().forEach(builder -> 
-				builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue()
-		);
+		this.definition.injectableFields()
+				.forEach(builder -> builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue());
 	}
 
 	private Bean createBeanInstance() throws DiException {
@@ -92,7 +91,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				IMethodBinder<Void> methodBinder = methodBinderBuilder
 						.build(FixedObjectSupplierBuilder.of(bean));
 				methodBinder.execute();
-			} catch ( DslException | ReflectionException e) {
+			} catch (DslException | ReflectionException e) {
 				throw new DiException(
 						"Post construct method binder failed for bean of type " + this.definition.effectiveName(), e);
 			}
@@ -105,18 +104,22 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		Optional<BeanStrategy> strat = this.definition.strategy();
 		try {
 
-		if (strat.isPresent()) {
-			if (strat.get() == BeanStrategy.prototype) {
+			if (strat.isPresent()) {
+				if (strat.get() == BeanStrategy.prototype) {
 					bean = getBean();
 				} else {
-					if (this.bean == null) {
-						this.bean = getBean();
+					synchronized (this) {
+						if (this.bean == null) {
+							this.bean = getBean();
+						}
 					}
 					bean = this.bean;
 				}
 			} else {
-				if (this.bean == null) {
-					this.bean = getBean();
+				synchronized (this) {
+					if (this.bean == null) {
+						this.bean = getBean();
+					}
 				}
 				bean = this.bean;
 			}

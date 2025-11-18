@@ -33,6 +33,8 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
     private Map<String, IObjectSupplier<?>> presetVariables = new HashMap<>();
     private Instant start;
     private Instant stop;
+    private long startNano;
+    private long stopNano;
     private UUID uuid;
     private Integer code;
 
@@ -54,7 +56,7 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
         if (this.stop == null)
             throw new RuntimeException("Context is not stopped");
 
-        return new RuntimeResult<>(uuid, input, output, start, stop, code);
+        return new RuntimeResult<>(uuid, input, output, start, stop, startNano, stopNano, code);
     }
 
     // Static Supplier Builders
@@ -155,6 +157,7 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
     @Override
     public synchronized ILifecycle onStart() throws LifecycleException {
         this.start = Instant.now();
+        this.startNano = System.nanoTime();
         return super.onStart();
     }
 
@@ -169,6 +172,7 @@ public class RuntimeContext<InputType, OutputType> extends DiContext implements 
     public synchronized ILifecycle onStop() throws LifecycleException {
         super.onStop();
         this.stop = Instant.now();
+        this.stopNano = System.nanoTime();
         return this;
     }
 

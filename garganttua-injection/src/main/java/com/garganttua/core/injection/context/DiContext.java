@@ -39,14 +39,14 @@ import lombok.extern.slf4j.Slf4j;
 public class DiContext extends AbstractLifecycle implements IDiContext {
 
     // --- Singleton public ---
-    public static IDiContext context;
+    public volatile static IDiContext context;
 
     // --- Structures internes ---
     private final Map<String, IBeanProvider> beanProviders;
     private final Map<String, IPropertyProvider> propertyProviders;
     private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
 
-    private IInjectableElementResolver resolverDelegate;
+    private volatile IInjectableElementResolver resolverDelegate;
 
     public static IDiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
@@ -57,12 +57,11 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             Map<String, IPropertyProvider> propertyProviders,
             List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
 
-        this.beanProviders = Objects.requireNonNull(beanProviders, "beanProviders cannot be null");
-        this.propertyProviders = Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null");
-        this.resolverDelegate = Objects.requireNonNull(resolver, "Resolver cannot be null");
-        Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null");
+        this.beanProviders = Collections.synchronizedMap(new HashMap<>(Objects.requireNonNull(beanProviders, "beanProviders cannot be null")));
+        this.propertyProviders = Collections.synchronizedMap(new HashMap<>(Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null")));
+        this.childContextFactories = Collections.synchronizedList(new ArrayList<>(Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null")));
 
-        this.childContextFactories = childContextFactories;
+        this.resolverDelegate = Objects.requireNonNull(resolver, "Resolver cannot be null");
 
         DiContext.context = this;
     }
@@ -182,7 +181,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     // --- Cycle de vie ---
     @Override
-    protected ILifecycle doInit() throws LifecycleException {
+    protected synchronized ILifecycle doInit() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onInit();
@@ -191,7 +190,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected ILifecycle doStart() throws LifecycleException {
+    protected synchronized ILifecycle doStart() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onStart();
@@ -200,7 +199,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected ILifecycle doFlush() throws LifecycleException {
+    protected synchronized ILifecycle doFlush() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onFlush();
@@ -211,7 +210,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected ILifecycle doStop() throws LifecycleException {
+    protected synchronized ILifecycle doStop() throws LifecycleException {
         List<Object> lifecycleObjects = new ArrayList<>(getAllLifecycleObjects());
         for (Object obj : lifecycleObjects.reversed()) {
             if (obj instanceof ILifecycle lc)
@@ -325,7 +324,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+    public synchronized void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
         Objects.requireNonNull(factory, "Factory cannot be null");
         if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
             childContextFactories.add(factory);
@@ -343,7 +342,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+    public synchronized void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
         this.resolverDelegate.addResolver(annotation, resolver);
     }
 
@@ -361,13 +360,13 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
                         Map.Entry::getKey,
                         e -> e.getValue().copy()));
 
-        List<IDiChildContextFactory<? extends IDiContext>> childFactoriesCopy =
-            new ArrayList<>(this.childContextFactories);
+        List<IDiChildContextFactory<? extends IDiContext>> childFactoriesCopy = new ArrayList<>(
+                this.childContextFactories);
 
         return new DiContext(
                 this.resolverDelegate,
-                beanProvidersCopy,
-                propertyProvidersCopy,
-                childFactoriesCopy);
+                new HashMap<>(beanProvidersCopy),
+                new HashMap<>(propertyProvidersCopy),
+                new ArrayList<>(childFactoriesCopy));
     }
 }

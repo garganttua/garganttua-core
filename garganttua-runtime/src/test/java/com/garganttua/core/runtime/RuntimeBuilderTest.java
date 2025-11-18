@@ -1,15 +1,24 @@
 package com.garganttua.core.runtime;
 
+import static com.garganttua.core.condition.Conditions.*;
 import static com.garganttua.core.runtime.RuntimeContext.*;
+import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static com.garganttua.core.condition.Conditions.*;
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
@@ -27,7 +36,7 @@ class RuntimeBuilderTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+    // @Test
     public void simpleRuntimeBuilderTest() {
 
         assertDoesNotThrow(() -> {
@@ -75,8 +84,8 @@ class RuntimeBuilderTest {
     }
 
     @SuppressWarnings("unchecked")
-    //@Test
-    public void testAutoDetectionBuild() {
+    @Test
+    public void testAutoDetectionBuild() throws InterruptedException, ExecutionException {
         IRuntimesBuilder t = RuntimesBuilder.builder();
 
         IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
@@ -85,10 +94,58 @@ class RuntimeBuilderTest {
 
         Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder).autoDetect(true).build();
         IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
+
         IRuntimeResult<String, String> result = runtime.execute("input");
+
         assertEquals("input-processed-fixed-value-in-method-preset-variable", result.output());
 
+        System.out.println(result.output());
         System.out.println(result.getPrettyDuration());
+
+        /*
+         * 
+         */
+
+        int runs = 10;
+        int threads = java.lang.Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+        List<Callable<Long>> tasks = new ArrayList<>();
+        AtomicInteger inte = new AtomicInteger(0);
+
+        for (int i = 0; i < runs; i++) {
+            tasks.add(() -> {
+                IRuntimeResult<String, String> r = runtime.execute("input-" + inte.getAndIncrement());
+                System.out.println(r.output());
+                System.out.println(r.getPrettyDurationInNanos());
+                return r.getDurationInNanos();
+            });
+        }
+
+        List<Future<Long>> futures = executor.invokeAll(tasks);
+        executor.shutdown();
+
+        // Collecte des durations
+        long total = 0;
+        long min = 10000000;
+        long max = 0;
+
+        for (Future<Long> f : futures) {
+            long d = f.get(); // on récupère directement le long
+            total = total + d; // addition au total
+
+            if (d < min)
+                min = d; // mise à jour du min
+            if (d > max)
+                max = d; // mise à jour du max
+        }
+
+        Long avg = total/runs;
+
+        // Affichage pretty-color
+        System.out.println("Moyenne : " + RuntimeResult.prettyNano(avg));
+        System.out.println("Min     : " + RuntimeResult.prettyNano(min));
+        System.out.println("Max     : " + RuntimeResult.prettyNano(max));
 
     }
 

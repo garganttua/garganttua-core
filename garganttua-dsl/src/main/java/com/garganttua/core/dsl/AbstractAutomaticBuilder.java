@@ -48,7 +48,6 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutom
                 log.atDebug().log("Auto-detection completed successfully");
             } catch (DslException e) {
                 log.atWarn().log("Non-blocking issue during auto-detection", e);
-                // Optionally continue to build anyway
             }
         } else {
             log.atDebug().log("Auto-detection is disabled, skipping auto-detection");

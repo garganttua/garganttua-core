@@ -34,6 +34,12 @@ public class DummyRuntimeProcessStep {
     @Code(201)
     String method(@Input String input, @Fixed(valueString = "fixed-value-in-method") String fixedValue,
             @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context) throws DiException {
+                /* try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } */
         return input + "-processed-"+fixedValue+"-"+variable;
     }
 
