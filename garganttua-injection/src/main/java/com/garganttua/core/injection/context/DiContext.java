@@ -153,7 +153,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
                     return childType != null && contextClass.isAssignableFrom(childType);
                 })
                 .findFirst()
-                .map(factory -> contextClass.cast(factory.createChildContext((IDiContext) this.copy().onInit().onStart(), args)))
+                .map(factory -> contextClass.cast(factory.createChildContext((IDiContext) this.copy(), args)))
                 .orElseThrow(() -> new DiException(
                         "No child context factory registered for context class " + contextClass.getName()));
     }

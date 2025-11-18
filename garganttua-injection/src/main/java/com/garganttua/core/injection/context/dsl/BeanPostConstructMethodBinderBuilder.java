@@ -14,7 +14,7 @@ import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
-        AbstractMethodArgInjectBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
+        AbstractMethodArgInjectBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>
         implements IBeanPostConstructMethodBinderBuilder<Bean> {
 
     protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,

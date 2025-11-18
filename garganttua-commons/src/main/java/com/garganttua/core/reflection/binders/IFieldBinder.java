@@ -8,4 +8,6 @@ public interface IFieldBinder<OnwerType, FieldType> {
 
     FieldType getValue() throws ReflectionException;
 
+    String getFieldReference();
+
 }

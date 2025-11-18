@@ -23,9 +23,9 @@ import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, IMethodBinder<ExecutionReturn>>, Link>
-        extends AbstractAutomaticLinkedBuilder<Builder, Link, IMethodBinder<ExecutionReturn>>
-        implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, IMethodBinder<ExecutionReturn>> {
+public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
+        extends AbstractAutomaticLinkedBuilder<Builder, Link, Built>
+        implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
 
     private IObjectSupplierBuilder<?, ?> supplier;
     private ObjectAddress method = null;
@@ -430,7 +430,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    protected IMethodBinder<ExecutionReturn> doBuild() throws DslException {
+    protected Built doBuild() throws DslException {
         log.atTrace().log("[MethodBinderBuilder] Building MethodBinder");
         Objects.requireNonNull(this.method, "Method is not set");
         Objects.requireNonNull(this.parameters, "Parameters are not set");
@@ -444,18 +444,20 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return this.createBinder(builtParameterSuppliers, this.supplier);
     }
 
-    protected IContextualMethodBinder<ExecutionReturn, ?> createContextualBinder(
+    @SuppressWarnings("rawtypes")
+    protected Built createContextualBinder(
             List<IObjectSupplier<?>> builtParameterSuppliers,
             IObjectSupplierBuilder<?, ?> supplier)
             throws DslException {
-        return new ContextualMethodBinder<>(supplier.build(), this.method, builtParameterSuppliers,
+        return (Built) new ContextualMethodBinder(supplier.build(), this.method, builtParameterSuppliers,
                 this.returnedType, this.collection);
     }
 
-    protected IMethodBinder<ExecutionReturn> createBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
+    @SuppressWarnings("rawtypes")
+    protected Built createBinder(List<IObjectSupplier<?>> builtParameterSuppliers,
             IObjectSupplierBuilder<?, ?> supplier)
             throws DslException {
-        return new MethodBinder<>(supplier.build(), this.method, builtParameterSuppliers,
+        return (Built) new MethodBinder(supplier.build(), this.method, builtParameterSuppliers,
                 this.returnedType, this.collection);
     }
 

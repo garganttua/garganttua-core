@@ -32,16 +32,16 @@ public class DummyRuntimeProcessStep {
     @Catch(exception = DiException.class, code = 401, fallback = true, abort = true)
     @Variable(name = "method-returned")
     @Code(201)
-    String method(@Input String input, @Fixed(valueString = "input-parameter") String fixedValue,
+    String method(@Input String input, @Fixed(valueString = "fixed-value-in-method") String fixedValue,
             @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context) throws DiException {
-        return input + "-processed";
+        return input + "-processed-"+fixedValue+"-"+variable;
     }
 
     @FallBack
     @Output
     @Variable(name = "fallback-returned")
-    String fallbackMethod(@Fixed(valueString = "input-parameter") String input, @Exception DiException exception,
+    String fallbackMethod(@Input String input, @Fixed(valueString = "fixed-value-in-fallback") String fixedValue, @Exception DiException exception,
             @Code Integer code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<String, String> context) {
-        return input + "-failback";
+        return input + "-fallback-"+fixedValue+"-"+code+"-"+exceptionMessage;
     }
 }

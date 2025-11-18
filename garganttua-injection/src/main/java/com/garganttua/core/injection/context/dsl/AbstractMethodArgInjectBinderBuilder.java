@@ -16,8 +16,8 @@ import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
 
 import lombok.Setter;
 
-public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, IMethodBinder<ExecutionReturn>>, Link>
-        extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link> {
+public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
+        extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
 
     @Setter
     private IInjectableElementResolver resolver;

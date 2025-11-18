@@ -1,11 +1,14 @@
 package com.garganttua.core.reflection.binders;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.methods.Methods;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supplying.IContextualObjectSupplier;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.Supplier;
@@ -55,7 +58,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
 
         try {
 
-            Object owner = Supplier.contextualSupply(null, ownerContext);
+            Object owner = Supplier.contextualSupply(this.objectSupplier, ownerContext);
 
             return MethodBinder.execute(
                     owner,
@@ -67,6 +70,11 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         } catch (SupplyException e) {
             throw new ReflectionException(e);
         }
+    }
+
+    @Override
+    public String getExecutableReference() {
+        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedType()).find(this.method).getLast());
     }
 
 }

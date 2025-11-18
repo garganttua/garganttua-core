@@ -2,12 +2,12 @@ package com.garganttua.core.runtime;
 
 import java.util.Map;
 
-public interface IRuntimeStage {
+public interface IRuntimeStage<InputType, OutputType> {
 
     String getStageName();
 
-    IRuntimeStep getStep(String stepName);
+    IRuntimeStep<?, InputType, OutputType> getStep(String stepName);
 
-    Map<String, IRuntimeStep> getSteps();
+    Map<String, IRuntimeStep<?, InputType, OutputType>> getSteps();
 
 }

@@ -6,14 +6,17 @@ import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.runtime.IRuntimeStep;
 
-public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType> extends IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType>, IRuntimeStageBuilder<?,?>, IRuntimeStep>, IContextBuilderObserver {
+public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
+                IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>,
+                IContextBuilderObserver {
 
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> condition(IConditionBuilder conditionBuilder);
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> condition(
+                        IConditionBuilder conditionBuilder);
 
-        IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType> method() throws DslException;
+        IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> method() throws DslException;
 
-        IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType> fallBack() throws DslException;
+        IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallBack() throws DslException;
 
-        IRuntimeStepCatchBuilder katch(Class<? extends Throwable> exception) throws DslException;
+        IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch(Class<? extends Throwable> exception) throws DslException;
 
 }

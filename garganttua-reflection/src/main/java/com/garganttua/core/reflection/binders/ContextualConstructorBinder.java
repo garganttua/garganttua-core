@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.constructors.Constructors;
 import com.garganttua.core.supplying.IObjectSupplier;
 
 public class ContextualConstructorBinder<Constructed>
@@ -37,5 +38,10 @@ public class ContextualConstructorBinder<Constructed>
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new ReflectionException("Error creating new instance of type " + objectClass.getSimpleName(), e);
         }
+    }
+
+    @Override
+    public String getExecutableReference() {
+        return Constructors.prettyColored(constructor);
     }
 }

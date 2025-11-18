@@ -13,15 +13,14 @@ import com.garganttua.core.supplying.IObjectSupplier;
 
 public class Runtime<InputType, OutputType> implements IRuntime<InputType, OutputType> {
 
-    
     private String name;
     private IDiContext diContext;
     private Class<InputType> inputType;
     private Class<OutputType> outputType;
-    private Map<String, IRuntimeStage> stages;
+    private Map<String, IRuntimeStage<InputType, OutputType>> stages;
     private Map<String, IObjectSupplier<?>> presetVariables = new HashMap<>();
 
-    public Runtime(String name, Map<String, IRuntimeStage> stages, IDiContext diContext, Class<InputType> inputType,
+    public Runtime(String name, Map<String, IRuntimeStage<InputType, OutputType>> stages, IDiContext diContext, Class<InputType> inputType,
             Class<OutputType> outputType, Map<String, IObjectSupplier<?>> variables) {
         this.stages = Objects.requireNonNull(stages, "Name cannot be null");
         this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
@@ -35,35 +34,26 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
     @Override
     public IRuntimeResult<InputType, OutputType> execute(InputType input) throws RuntimeException {
         try {
+            IRuntimeContext<InputType, OutputType> runtimeContext = this.diContext
+                    .newChildContext(IRuntimeContext.class, input, this.outputType, this.presetVariables);
 
+            runtimeContext.onInit().onStart();
             IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>();
 
             this.stages.values().stream().forEach(
                 stage -> {
                     stage.getSteps().values().stream().forEach(step -> {
-                        //step.
+                        step.defineExecutionStep(chain);
                     });
                 }
             );
-           // chain.
 
-
-
-
-
-
-
-
-
-
-
-
-
-            IRuntimeContext<InputType, OutputType> runtimeContext = this.diContext
-                    .newChildContext(IRuntimeContext.class, input, this.outputType, this.presetVariables);
-                    
             chain.execute(runtimeContext);
-            return runtimeContext.getResult();
+
+            runtimeContext.onStop();
+            IRuntimeResult<InputType,OutputType> result = runtimeContext.getResult();
+            runtimeContext.onFlush();
+            return result;
         } catch (DiException | ExecutorException e) {
             throw new RuntimeException(e);
         }

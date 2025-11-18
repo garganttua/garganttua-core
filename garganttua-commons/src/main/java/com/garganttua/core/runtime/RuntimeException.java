@@ -13,4 +13,8 @@ public class RuntimeException extends CoreException {
         super(CoreExceptionCode.RUNTIME_ERROR, e);
     }
 
+    public RuntimeException(String string, Exception e) {
+        super(CoreExceptionCode.RUNTIME_ERROR, string, e);
+    }
+
 }

@@ -8,6 +8,7 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Fixed;
+import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
@@ -24,7 +25,7 @@ public class FixedElementResolver implements IElementResolver {
         Objects.requireNonNull(element, "Element cannot be null");
         Objects.requireNonNull(elementType, "ElementType cannot be null");
 
-        if (!elementType.isPrimitive()){
+        if (Fields.isNotPrimitive(elementType)){
             log.atWarn().log(
                     "Cannot use @Fixed annotation on not primitive element " + elementType.getSimpleName());
             return Resolved.notResolved(elementType, element);

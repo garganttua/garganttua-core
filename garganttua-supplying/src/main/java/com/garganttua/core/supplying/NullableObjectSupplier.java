@@ -20,7 +20,7 @@ public class NullableObjectSupplier<SuppliedType> implements IObjectSupplier<Sup
         Optional<SuppliedType> o = delegate.supply();
         if (!allowNull && (o == null || !o.isPresent())) {
             String msg = String.format(
-                    "Supplier for type "+this.delegate.getSuppliedType()+" supplied null but is not nullable");
+                    "Supplier for type "+this.delegate.getSuppliedType().getSimpleName()+" supplied null value but is not nullable");
             log.atError().log("[MethodBinderBuilder] " + msg);
             throw new SupplyException(msg);
         }

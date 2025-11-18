@@ -7,10 +7,10 @@ import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 
-public interface IRuntimeStageBuilder<InputType, OutputType> extends IAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage>, IContextBuilderObserver {
+public interface IRuntimeStageBuilder<InputType, OutputType> extends IAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType> >, IContextBuilderObserver {
 
-    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType> step(String string, IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
+    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
 
-    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType> step(String string, OrderedMapPosition<String> position, IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
+    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, OrderedMapPosition<String> position, IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
 
 }

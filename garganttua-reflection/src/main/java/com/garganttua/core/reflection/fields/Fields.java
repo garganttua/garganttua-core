@@ -37,6 +37,14 @@ public class Fields {
 		}
 	}
 
+	public static String prettyColored(Field f) {
+		return "\u001B[36m" + f.getDeclaringClass().getSimpleName() + "\u001B[0m"
+				+ "."
+				+ "\u001B[32m" + f.getName() + "\u001B[0m"
+				+ " : "
+				+ "\u001B[33m" + f.getType().getSimpleName() + "\u001B[0m";
+	}
+
 	static public Class<?> getGenericType(Field field, int genericTypeIndex) {
 		return getGenericType(field.getGenericType(), genericTypeIndex);
 	}

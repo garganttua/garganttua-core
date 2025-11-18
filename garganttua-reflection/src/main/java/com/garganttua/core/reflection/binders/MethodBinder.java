@@ -1,5 +1,6 @@
 package com.garganttua.core.reflection.binders;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -7,6 +8,7 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.SupplyException;
@@ -86,6 +88,11 @@ public class MethodBinder<Returned>
         } catch (SupplyException e) {
             throw new ReflectionException(e);
         }
+    }
+
+    @Override
+    public String getExecutableReference() {
+        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedType()).find(this.method).getLast());
     }
 
 }

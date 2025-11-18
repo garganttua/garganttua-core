@@ -39,15 +39,15 @@ public abstract class ContextualExecutableBinder<ReturnedType, Context>
         if (parameterSuppliers.isEmpty()) {
             return new Object[0];
         }
-
+        int i = 0;
         try {
             Object[] args = new Object[parameterSuppliers.size()];
-            for (int i = 0; i < parameterSuppliers.size(); i++) {
+            for (i = 0; i < parameterSuppliers.size(); i++) {
                 args[i] = Supplier.contextualSupply(parameterSuppliers.get(i), contexts);
             }
             return args;
         } catch (SupplyException e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException("Error on paramerer " + i, e);
         }
     }
 
@@ -57,5 +57,4 @@ public abstract class ContextualExecutableBinder<ReturnedType, Context>
                 .collect(Collectors.toSet()));
     }
 
-    
 }

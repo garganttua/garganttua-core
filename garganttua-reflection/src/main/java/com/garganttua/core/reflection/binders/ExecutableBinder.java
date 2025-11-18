@@ -22,15 +22,15 @@ public abstract class ExecutableBinder<ReturnedType> implements IExecutableBinde
         if (parameterSuppliers.isEmpty()) {
             return new Object[0];
         }
-
+        int i = 0;
         try {
             Object[] args = new Object[parameterSuppliers.size()];
-            for (int i = 0; i < parameterSuppliers.size(); i++) {
+            for (i = 0; i < parameterSuppliers.size(); i++) {
                 args[i] = parameterSuppliers.get(i).supply().orElse(null);
             }
             return args;
         } catch (SupplyException e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException("Error on parameter "+i, e);
         }
     }
 

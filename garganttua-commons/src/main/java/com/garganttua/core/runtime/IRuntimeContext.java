@@ -20,4 +20,12 @@ public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
 
     Optional<String> getExceptionMessage();
 
+    void setOutput(OutputType output);
+
+    boolean isOfOutputType(Class<?> class1);
+
+    Class<?> getOutputType();
+
+    void setCode(int i);
+
 }

@@ -23,52 +23,56 @@ import com.garganttua.core.utils.OrderedMapPosition;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Builder d’un stage dans un runtime.
- * Contient une séquence ordonnée de steps.
- */
 @Slf4j
 public class RuntimeStageBuilder<InputType, OutputType>
         extends
-        AbstractAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage>
+        AbstractAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>>
         implements IRuntimeStageBuilder<InputType, OutputType> {
 
     private final String stageName;
-    private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?>, IRuntimeStep> steps = new OrderedMapBuilder<>();
+    private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?,InputType, OutputType>> steps = new OrderedMapBuilder<>();
     private IDiContext context;
     private List<Class<Object>> stepsForAutoDetection;
+    private String runtimeName;
 
-    protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String stageName) {
+    protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String runtimeName, String stageName) {
         super(Objects.requireNonNull(up, "Parent RuntimeBuilder cannot be null"));
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
+        this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
     }
 
     /**
      * Secondary ctor used only for auto detection
+     * 
      * @param up
      * @param stageName
      * @param stepsForAutoDetection
      */
-    protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String stageName, List<Class<Object>> stepsForAutoDetection) {
-        this(up, stageName);
-        this.stepsForAutoDetection = Objects.requireNonNull(stepsForAutoDetection, "stepsForAutoDetection name cannot be null");
+    protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String runtimeName, String stageName,
+            List<Class<Object>> stepsForAutoDetection) {
+        this(up, runtimeName, stageName);
+        this.stepsForAutoDetection = Objects.requireNonNull(stepsForAutoDetection,
+                "stepsForAutoDetection name cannot be null");
     }
 
     @Override
-    public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType> step(String stepName,
+    public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
+            String stepName,
             IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier,
             Class<ExecutionReturn> returnType) {
         Objects.requireNonNull(stepName, "Step name cannot be null");
         Objects.requireNonNull(returnType, "Return type cannot be null");
         Objects.requireNonNull(objectSupplier, "Object supplier builder cannot be null");
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> stepBuilder = new RuntimeStepBuilder<>(this, stepName,
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(
+                this, runtimeName, stageName, stepName,
                 returnType, objectSupplier);
         this.steps.put(stepName, stepBuilder);
         return stepBuilder;
     }
 
     @Override
-    public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType> step(String stepName,
+    public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
+            String stepName,
             OrderedMapPosition<String> position,
             IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier,
             Class<ExecutionReturn> returnType) {
@@ -76,7 +80,8 @@ public class RuntimeStageBuilder<InputType, OutputType>
         Objects.requireNonNull(returnType, "Return type cannot be null");
         Objects.requireNonNull(objectSupplier, "Object supplier builder cannot be null");
         Objects.requireNonNull(position, "RuntimeStepPosition cannot be null");
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType> stepBuilder = new RuntimeStepBuilder<>(this, stepName,
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(
+                this, runtimeName, stageName, stepName,
                 returnType, objectSupplier);
         this.steps.putAt(stepName, stepBuilder, position);
         return stepBuilder;
@@ -89,10 +94,10 @@ public class RuntimeStageBuilder<InputType, OutputType>
     }
 
     @Override
-    protected IRuntimeStage doBuild() throws DslException {
+    protected IRuntimeStage<InputType, OutputType> doBuild() throws DslException {
         log.info("Building stage [{}] with {} step(s)", stageName, steps.size());
-        OrderedMap<String, IRuntimeStep> builtSteps = this.steps.build();
-        return new RuntimeStage(this.stageName, builtSteps);
+        OrderedMap<String, IRuntimeStep<?,InputType, OutputType>> builtSteps = this.steps.build();
+        return new RuntimeStage<>(this.stageName, builtSteps);
     }
 
     @Override
@@ -102,14 +107,17 @@ public class RuntimeStageBuilder<InputType, OutputType>
 
         this.stepsForAutoDetection.stream().forEach(c -> {
             String stepName = UUID.randomUUID().toString();
-            
+
             Named stepNamedAnnotation = c.getAnnotation(Named.class);
-            if( stepNamedAnnotation != null ){
+            if (stepNamedAnnotation != null) {
                 stepName = stepNamedAnnotation.value();
             }
             IObjectSupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
 
-            IRuntimeStepBuilder<?,?> stepBuilder = new RuntimeStepBuilder<>(this, stepName, Void.class, supplierBuilder).autoDetect(true);
+            IRuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this,
+                    runtimeName, stageName, stepName,
+                    Void.class,
+                    supplierBuilder).autoDetect(true);
             stepBuilder.handle(context);
             this.steps.put(stepName, stepBuilder);
         });

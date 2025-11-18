@@ -1,9 +1,11 @@
 package com.garganttua.core.reflection.binders;
 
+import java.lang.reflect.Field;
 import java.util.Objects;
 
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.SupplyException;
@@ -46,5 +48,11 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         } catch (SupplyException e) {
             throw new ReflectionException(e);
         }
+    }
+
+    @Override
+    public String getFieldReference() {
+        return Fields.prettyColored(
+                (Field) ObjectQueryFactory.objectQuery(ownerSupplier.getSuppliedType()).find(address).getLast());
     }
 }

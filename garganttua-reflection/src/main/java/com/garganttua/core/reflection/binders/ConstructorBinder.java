@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.constructors.Constructors;
 import com.garganttua.core.reflection.utils.ConstructorAccessManager;
 import com.garganttua.core.supplying.IObjectSupplier;
 
@@ -38,6 +39,11 @@ public class ConstructorBinder<Constructed>
     @Override
     public Class<Constructed> getConstructedType() {
         return this.objectClass;
+    }
+
+    @Override
+    public String getExecutableReference() {
+        return Constructors.prettyColored(constructor);
     }
 
 }

@@ -21,7 +21,6 @@ import java.util.Vector;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
-import com.garganttua.core.runtime.annotations.Operation;
 
 import lombok.extern.slf4j.Slf4j;
 

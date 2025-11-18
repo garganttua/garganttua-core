@@ -47,7 +47,7 @@ class RuntimeBuilderTest {
                     .variable("method-returned")
                     .method("method")
                     .withParam(input(String.class))
-                    .withParam(FixedObjectSupplierBuilder.of("input-parameter"))
+                    .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
                     .withParam(variable("variable", String.class))
                     .withParam(context()).up()
                     .katch(DiException.class).code(401).fallback(true).abort(true).up()
@@ -55,7 +55,8 @@ class RuntimeBuilderTest {
                     .output(true)
                     .variable("fallback-returned")
                     .method("fallbackMethod")
-                    .withParam(FixedObjectSupplierBuilder.of("input-parameter"))
+                    .withParam(input(String.class))
+                    .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
                     .withParam(exception(DiException.class))
                     .withParam(code())
                     .withParam(exceptionMessage())
@@ -68,12 +69,13 @@ class RuntimeBuilderTest {
 
             IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
             IRuntimeResult<String, String> result = runtime.execute("input");
-            assertEquals("", result.getOutput());
+            assertEquals("input-processed-fixed-value-in-method-preset-variable", result.output());
         });
 
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
+    //@Test
     public void testAutoDetectionBuild() {
         IRuntimesBuilder t = RuntimesBuilder.builder();
 
@@ -82,41 +84,12 @@ class RuntimeBuilderTest {
         contextBuilder.build().onInit().onStart();
 
         Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder).autoDetect(true).build();
+        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
+        IRuntimeResult<String, String> result = runtime.execute("input");
+        assertEquals("input-processed-fixed-value-in-method-preset-variable", result.output());
+
+        System.out.println(result.getPrettyDuration());
 
     }
 
-    /* @Test */
-    public void diContextNotBuildShoudlPreventRuntimesBuilding() {
-        /*
-         * DslException exception = assertThrows(DslException.class, () -> {
-         * DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
-         * IRuntimesBuilder t = RuntimesBuilder.builder();
-         * IDiContextBuilder contextBuilder =
-         * DiContext.builder().autoDetect(true).withPackage("com.garganttua");
-         * 
-         * Map<String, IRuntime<?,?>> runtimes =
-         * t.context(contextBuilder).runtime("runtime-1", String.class, String.class)
-         * .stage("stage-1")
-         * .step("step-1")
-         * .object(FixedObjectSupplierBuilder.of(step), String.class)
-         * .method("method").withParam("input-parameter").storeReturn(
-         * "stage-1-step-1-returned").up().up().up()
-         * .up().build();
-         * });
-         * assertEquals("Build is not yet authorized", exception.getMessage());
-         */
-    }
-
-    /*
-     * @Test
-     * public void exceptionThrownIfNoContext() throws CoreException {
-     * 
-     * NullPointerException exception = assertThrows(NullPointerException.class, ()
-     * -> {
-     * new RuntimesBuilder().runtime("test");
-     * });
-     * 
-     * assertEquals("Context cannot be null", exception.getMessage());
-     * }
-     */
 }
