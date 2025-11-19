@@ -17,6 +17,10 @@
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-commons</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-reflection</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

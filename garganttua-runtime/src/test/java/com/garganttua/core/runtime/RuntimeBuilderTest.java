@@ -36,7 +36,7 @@ class RuntimeBuilderTest {
     }
 
     @SuppressWarnings("unchecked")
-    // @Test
+    @Test
     public void simpleRuntimeBuilderTest() {
 
         assertDoesNotThrow(() -> {
@@ -106,7 +106,7 @@ class RuntimeBuilderTest {
          * 
          */
 
-        int runs = 10;
+        int runs = 10000;
         int threads = java.lang.Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
@@ -125,7 +125,6 @@ class RuntimeBuilderTest {
         List<Future<Long>> futures = executor.invokeAll(tasks);
         executor.shutdown();
 
-        // Collecte des durations
         long total = 0;
         long min = 10000000;
         long max = 0;
@@ -146,6 +145,8 @@ class RuntimeBuilderTest {
         System.out.println("Moyenne : " + RuntimeResult.prettyNano(avg));
         System.out.println("Min     : " + RuntimeResult.prettyNano(min));
         System.out.println("Max     : " + RuntimeResult.prettyNano(max));
+
+        System.out.println("Total   : " + RuntimeResult.prettyNano(total));
 
     }
 

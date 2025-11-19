@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.ReflectionException;
@@ -29,12 +31,70 @@ public class ObjectReflectionHelper {
 
 	public static IAnnotationScanner annotationScanner;
 
+	private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<>();
+	static {
+		PRIMITIVE_TO_WRAPPER.put(boolean.class, Boolean.class);
+		PRIMITIVE_TO_WRAPPER.put(byte.class, Byte.class);
+		PRIMITIVE_TO_WRAPPER.put(char.class, Character.class);
+		PRIMITIVE_TO_WRAPPER.put(short.class, Short.class);
+		PRIMITIVE_TO_WRAPPER.put(int.class, Integer.class);
+		PRIMITIVE_TO_WRAPPER.put(long.class, Long.class);
+		PRIMITIVE_TO_WRAPPER.put(float.class, Float.class);
+		PRIMITIVE_TO_WRAPPER.put(double.class, Double.class);
+		PRIMITIVE_TO_WRAPPER.put(void.class, Void.class);
+	}
+
 	public static Constructor<?> getConstructorWithNoParams(Class<?> classs) {
 		try {
 			return classs.getDeclaredConstructor();
 		} catch (NoSuchMethodException | SecurityException e) {
 			return null;
 		}
+	}
+
+	public static Constructor<?> getConstructor(Class<?> classs, Class<?>... params) {
+		for (Constructor<?> ctor : classs.getDeclaredConstructors()) {
+			Class<?>[] pts = ctor.getParameterTypes();
+			if (pts.length != params.length)
+				continue;
+
+			boolean ok = true;
+			for (int i = 0; i < pts.length; i++) {
+				Class<?> formal = pts[i];
+				Class<?> actual = params[i];
+
+				if (actual == null) {
+					if (formal.isPrimitive()) {
+						ok = false;
+						break;
+					}
+				} else {
+					if (!isAssignable(formal, actual)) {
+						ok = false;
+						break;
+					}
+				}
+			}
+			if (ok)
+				return ctor;
+		}
+		return null;
+	}
+
+	private static boolean isAssignable(Class<?> formal, Class<?> actual) {
+		if (formal.isAssignableFrom(actual))
+			return true;
+
+		if (formal.isPrimitive()) {
+			Class<?> wrap = PRIMITIVE_TO_WRAPPER.get(formal);
+			return wrap != null && wrap.equals(actual);
+		}
+
+		if (actual.isPrimitive()) {
+			Class<?> wrapActual = PRIMITIVE_TO_WRAPPER.get(actual);
+			return wrapActual != null && formal.isAssignableFrom(wrapActual);
+		}
+		return false;
 	}
 
 	public static Field getField(Class<?> objectClass, String fieldName) {
@@ -61,7 +121,28 @@ public class ObjectReflectionHelper {
 		return null;
 	}
 
-	public static <destination> destination instanciateNewObject(Class<?> clazz) throws ReflectionException {
+	public static <destination> destination instanciateNewObject(Class<destination> clazz, Object... params)
+			throws ReflectionException {
+		if (params == null || params.length == 0)
+			instanciateNewObject(clazz);
+
+		Class<Object>[] paramTypes = (Class<Object>[]) Arrays.stream(params).map(p -> p.getClass())
+				.collect(Collectors.toList()).toArray(new Class<?>[1]);
+		Constructor<?> ctor = ObjectReflectionHelper.getConstructor(clazz, paramTypes);
+		if (ctor != null) {
+			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {
+				return (destination) ctor.newInstance(params);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				throw new ReflectionException(e);
+			}
+		}
+
+		throw new ReflectionException(
+				"Class " + clazz.getSimpleName() + " does not have constructor with params " + params);
+	}
+
+	public static <destination> destination instanciateNewObject(Class<destination> clazz) throws ReflectionException {
 		Constructor<?> ctor = ObjectReflectionHelper.getConstructorWithNoParams(clazz);
 		if (ctor != null) {
 			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {
@@ -223,8 +304,8 @@ public class ObjectReflectionHelper {
 			Class<? extends Annotation> methodAnnotation, Type returnedType, Type... methodParameters)
 			throws ReflectionException {
 		Method found = getMethodAnnotatedWith(entityClass, methodAnnotation);
-				
-		if (found != null){
+
+		if (found != null) {
 			checkMethodParamsHaveGoodTypes(entityClass, found, returnedType, methodParameters);
 			return found.getName();
 		}

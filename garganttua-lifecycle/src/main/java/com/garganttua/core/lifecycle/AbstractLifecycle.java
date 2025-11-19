@@ -2,15 +2,15 @@ package com.garganttua.core.lifecycle;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+
 public abstract class AbstractLifecycle implements ILifecycle {
 
-    // --- États internes du cycle de vie ---
     protected final AtomicBoolean initialized = new AtomicBoolean(false);
     protected final AtomicBoolean started = new AtomicBoolean(false);
     protected final AtomicBoolean flushed = new AtomicBoolean(false);
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    // --- Méthodes à implémenter par les sous-classes ---
     protected abstract ILifecycle doInit() throws LifecycleException;
 
     protected abstract ILifecycle doStart() throws LifecycleException;
@@ -19,127 +19,179 @@ public abstract class AbstractLifecycle implements ILifecycle {
 
     protected abstract ILifecycle doStop() throws LifecycleException;
 
-    // --- Méthodes publiques du cycle de vie ---
-    @Override
-    public synchronized ILifecycle onInit() throws LifecycleException {
-        ensureNotInitialized();
-        doInit();
-        initialized.set(true);
-        stopped.set(false);
-        return this;
-    }
+    protected final Object lifecycleMutex = new Object();
 
-    @Override
-    public synchronized ILifecycle onStart() throws LifecycleException {
-        ensureInitialized();
-        ensureNotStarted();
-        doStart();
-        started.set(true);
-        return this;
-    }
-
-    @Override
-    public synchronized ILifecycle onFlush() throws LifecycleException {
-        ensureStopped();
-        doFlush();
-        flushed.set(true);
-        return this;
-    }
-
-    @Override
-    public synchronized ILifecycle onStop() throws LifecycleException {
-        ensureInitialized();
-        if (!started.get()) {
-            // déjà arrêté
-            return this;
+    protected <T extends Exception> void  wrapLifecycle(RunnableWithException runnable, Class<T> exceptionType) throws T {
+        try {
+            runnable.run();
+        } catch (LifecycleException e) {
+            throw ObjectReflectionHelper.instanciateNewObject(exceptionType, e);
         }
-        doStop();
-        started.set(false);
-        stopped.set(true);
+    }
+
+    @FunctionalInterface
+    public interface RunnableWithException {
+        void run() throws LifecycleException;
+    }
+
+    @Override
+    public ILifecycle onInit() throws LifecycleException {
+        synchronized (this.lifecycleMutex) {
+            ensureNotInitialized();
+            doInit();
+            initialized.set(true);
+            stopped.set(false);
+        }
         return this;
     }
 
     @Override
-    public synchronized ILifecycle onReload() throws LifecycleException {
-        if (!initialized.get() && !started.get()) {
-            throw new LifecycleException("Lifecycle not initialized or started");
+    public ILifecycle onStart() throws LifecycleException {
+        synchronized (this.lifecycleMutex) {
+            ensureInitialized();
+            ensureNotStarted();
+            doStart();
+            started.set(true);
         }
-
-        this.onStop();  // stop
-        this.onFlush(); // flush
-        this.initialized.set(false); // reset init flag
-        this.onInit();  // re-init
-        this.onStart(); // re-start
-
         return this;
     }
 
-    // --- Vérifications d’état ---
+    @Override
+    public ILifecycle onFlush() throws LifecycleException {
+        synchronized (this.lifecycleMutex) {
+            ensureStopped();
+            doFlush();
+            flushed.set(true);
+        }
+        return this;
+    }
+
+    @Override
+    public ILifecycle onStop() throws LifecycleException {
+        synchronized (this.lifecycleMutex) {
+            ensureInitialized();
+            if (!started.get()) {
+                return this;
+            }
+            doStop();
+            started.set(false);
+            stopped.set(true);
+        }
+        return this;
+    }
+
+    @Override
+    public ILifecycle onReload() throws LifecycleException {
+        synchronized (this.lifecycleMutex) {
+            if (!initialized.get() && !started.get()) {
+                throw new LifecycleException("Lifecycle not initialized or started");
+            }
+
+            this.onStop();
+            this.onFlush();
+            this.initialized.set(false);
+            this.onInit();
+            this.onStart();
+        }
+        return this;
+    }
+
     protected void ensureInitializedAndStarted() throws LifecycleException {
-        if (!initialized.get()) {
-            throw new LifecycleException("Lifecycle not initialized");
-        }
-        if (!started.get()) {
-            throw new LifecycleException("Lifecycle not started");
+        synchronized (this.lifecycleMutex) {
+            if (!initialized.get()) {
+                throw new LifecycleException("Lifecycle not initialized");
+            }
+            if (!started.get()) {
+                throw new LifecycleException("Lifecycle not started");
+            }
         }
     }
 
     protected void ensureInitialized() throws LifecycleException {
-        if (!initialized.get()) {
-            throw new LifecycleException("Lifecycle not initialized");
+        synchronized (this.lifecycleMutex) {
+            if (!initialized.get()) {
+                throw new LifecycleException("Lifecycle not initialized");
+            }
         }
     }
 
     protected void ensureNotInitialized() throws LifecycleException {
-        if (initialized.get()) {
-            throw new LifecycleException("Lifecycle already initialized");
+        synchronized (this.lifecycleMutex) {
+            if (initialized.get()) {
+                throw new LifecycleException("Lifecycle already initialized");
+            }
         }
     }
 
     protected void ensureStarted() throws LifecycleException {
-        if (!started.get()) {
-            throw new LifecycleException("Lifecycle not started");
+        synchronized (this.lifecycleMutex) {
+            if (!started.get()) {
+                throw new LifecycleException("Lifecycle not started");
+            }
         }
     }
 
     protected void ensureNotStarted() throws LifecycleException {
-        if (started.get()) {
-            throw new LifecycleException("Lifecycle already started");
+        synchronized (this.lifecycleMutex) {
+            if (started.get()) {
+                throw new LifecycleException("Lifecycle already started");
+            }
         }
     }
 
     protected void ensureNotStopped() throws LifecycleException {
-        if (stopped.get()) {
-            throw new LifecycleException("Lifecycle already stopped");
+        synchronized (this.lifecycleMutex) {
+            if (stopped.get()) {
+                throw new LifecycleException("Lifecycle already stopped");
+            }
         }
     }
 
     protected void ensureFlushed() throws LifecycleException {
-        if (!flushed.get()) {
-            throw new LifecycleException("Lifecycle not flushed");
+        synchronized (this.lifecycleMutex) {
+            if (flushed.get()) {
+                throw new LifecycleException("Lifecycle not flushed");
+            }
         }
     }
 
     protected void ensureStopped() throws LifecycleException {
-        if (!stopped.get()) {
-            throw new LifecycleException("Lifecycle not flushed");
+        synchronized (this.lifecycleMutex) {
+            if (!stopped.get()) {
+                throw new LifecycleException("Lifecycle not stopped");
+            }
         }
     }
 
-    // --- Getters d’état (utile pour les tests ou les diagnostics) ---
+    protected void ensureNotFlushed() throws LifecycleException {
+        synchronized (this.lifecycleMutex) {
+            if (flushed.get()) {
+                throw new LifecycleException("Lifecycle flushed");
+            }
+        }
+    }
+
     public boolean isInitialized() {
-        return initialized.get();
+        synchronized (this.lifecycleMutex) {
+            return initialized.get();
+        }
     }
 
     public boolean isStarted() {
-        return started.get();
+        synchronized (this.lifecycleMutex) {
+            return started.get();
+        }
     }
 
     public boolean isFlushed() {
-        return flushed.get();
+        synchronized (this.lifecycleMutex) {
+            return flushed.get();
+        }
     }
 
     public boolean isStopped() {
-        return stopped.get();
+        synchronized (this.lifecycleMutex) {
+            return stopped.get();
+        }
     }
 }

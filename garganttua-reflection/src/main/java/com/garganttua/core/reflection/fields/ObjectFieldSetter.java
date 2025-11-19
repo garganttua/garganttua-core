@@ -112,7 +112,7 @@ public class ObjectFieldSetter {
 			throws ReflectionException {
 		if (Map.class.isAssignableFrom(field.getType())) {
 			
-			Map<?,?> collectionTarget = (Map<?,?>) temp;
+			Map<Object,Object> collectionTarget = (Map<Object,Object>) temp;
 			List<?> collectionSource = ((List<?>) value);
 
 			if (collectionSource.size() != collectionTarget.size()) {
@@ -191,7 +191,7 @@ public class ObjectFieldSetter {
 			throws ReflectionException {
 		if (Collection.class.isAssignableFrom(field.getType())) {
 			
-			Collection<?> collectionTarget = (Collection<?>) temp;
+			Collection<Object> collectionTarget = (Collection<Object>) temp;
 			List<?> collectionSource = ((List<?>) value);
 
 			if (collectionSource.size() != collectionTarget.size()) {

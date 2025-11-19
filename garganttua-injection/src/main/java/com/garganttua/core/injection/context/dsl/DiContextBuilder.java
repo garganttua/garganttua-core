@@ -174,7 +174,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
 
         IInjectableElementResolver builtResolvers = this.resolvers.build();
 
-        IDiContext built = new DiContext(
+        IDiContext built = DiContext.master(
                 builtResolvers,
                 this.buildBeanProviders(builtResolvers),
                 this.buildPropertyProviders(),

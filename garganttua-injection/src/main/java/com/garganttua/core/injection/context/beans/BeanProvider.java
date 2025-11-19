@@ -1,6 +1,7 @@
 package com.garganttua.core.injection.context.beans;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,14 +25,17 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	private List<IBeanFactory<?>> beanFactories;
 
+	private final Object copyMutex = new Object();
+
 	public BeanProvider(List<IBeanFactory<?>> beanFactories) {
-		this.beanFactories = Objects.requireNonNull(beanFactories, "Bean factories cannot be null");
+		this.beanFactories = Collections
+				.synchronizedList(Objects.requireNonNull(beanFactories, "Bean factories cannot be null"));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> getBean(Class<T> type) throws DiException {
-		wrapLifecycle(this::ensureInitializedAndStarted);
+		wrapLifecycle(this::ensureInitializedAndStarted,DiException.class);
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
 				.filter(factory -> type.isAssignableFrom(factory.getSuppliedType())).findFirst();
 		if (factoryOpt.isPresent()) {
@@ -46,7 +50,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	public <T> Optional<T> getBean(String name, Class<T> type) throws DiException {
-		wrapLifecycle(this::ensureInitializedAndStarted);
+		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
 	}
 
@@ -74,7 +78,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	protected synchronized ILifecycle doInit() throws LifecycleException {
+	protected ILifecycle doInit() throws LifecycleException {
 		try {
 			this.doDependencyCycleDetection();
 		} catch (DiException e) {
@@ -94,25 +98,25 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	protected synchronized ILifecycle doStart() throws LifecycleException {
+	protected ILifecycle doStart() throws LifecycleException {
 		return this;
 	}
 
 	@Override
-	protected synchronized ILifecycle doFlush() throws LifecycleException {
+	protected ILifecycle doFlush() throws LifecycleException {
 		this.beanFactories.clear();
 		return this;
 	}
 
 	@Override
-	protected synchronized ILifecycle doStop() throws LifecycleException {
+	protected ILifecycle doStop() throws LifecycleException {
 		return this;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
-		wrapLifecycle(this::ensureInitializedAndStarted);
+		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
 				.filter(factory -> factory.matches(definition)).findFirst();
@@ -126,23 +130,10 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		return Optional.empty();
 	}
 
-	private void wrapLifecycle(RunnableWithException runnable) throws DiException {
-		try {
-			runnable.run();
-		} catch (LifecycleException e) {
-			throw new DiException(e);
-		}
-	}
-
-	@FunctionalInterface
-	interface RunnableWithException {
-		void run() throws LifecycleException;
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
-		wrapLifecycle(this::ensureInitializedAndStarted);
+		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
 		return (List<T>) this.beanFactories.stream()
 				.filter(factory -> factory.matches(definition))
@@ -153,8 +144,10 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	public IBeanProvider copy() throws CopyException {
-		List<IBeanFactory<?>> copiedFactories = new ArrayList<>(this.beanFactories);
-        return new BeanProvider(copiedFactories);
+		synchronized (this.copyMutex) {
+			List<IBeanFactory<?>> copiedFactories = new ArrayList<>(this.beanFactories);
+			return new BeanProvider(copiedFactories);
+		}
 	}
 
 }

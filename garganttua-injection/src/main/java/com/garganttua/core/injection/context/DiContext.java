@@ -38,62 +38,76 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DiContext extends AbstractLifecycle implements IDiContext {
 
-    // --- Singleton public ---
-    public volatile static IDiContext context;
+    public volatile static IDiContext context = null;
 
-    // --- Structures internes ---
     private final Map<String, IBeanProvider> beanProviders;
     private final Map<String, IPropertyProvider> propertyProviders;
     private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
 
-    private volatile IInjectableElementResolver resolverDelegate;
+    private IInjectableElementResolver resolverDelegate;
+
+    private final Object mutex = new Object();
+    private final Object copyMutex = new Object();
+    private final Object singletonMutex = new Object();
 
     public static IDiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
     }
 
-    // --- Constructeur ---
-    public DiContext(IInjectableElementResolver resolver, Map<String, IBeanProvider> beanProviders,
+    public static IDiContext master(IInjectableElementResolver resolver,
+            Map<String, IBeanProvider> beanProviders,
+            Map<String, IPropertyProvider> propertyProviders,
+            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
+        return new DiContext(true, resolver, beanProviders, propertyProviders, childContextFactories);
+    }
+
+    public static IDiContext child(IInjectableElementResolver resolver,
+            Map<String, IBeanProvider> beanProviders,
+            Map<String, IPropertyProvider> propertyProviders,
+            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
+        return new DiContext(false, resolver, beanProviders, propertyProviders, childContextFactories);
+    }
+
+    protected DiContext(Boolean masterContext, IInjectableElementResolver resolver,
+            Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
             List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
 
-        this.beanProviders = Collections.synchronizedMap(new HashMap<>(Objects.requireNonNull(beanProviders, "beanProviders cannot be null")));
-        this.propertyProviders = Collections.synchronizedMap(new HashMap<>(Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null")));
-        this.childContextFactories = Collections.synchronizedList(new ArrayList<>(Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null")));
+        this.beanProviders = Collections
+                .synchronizedMap(new HashMap<>(Objects.requireNonNull(beanProviders, "beanProviders cannot be null")));
+        this.propertyProviders = Collections.synchronizedMap(
+                new HashMap<>(Objects.requireNonNull(propertyProviders, "propertyProviders cannot be null")));
+        this.childContextFactories = Collections.synchronizedList(
+                new ArrayList<>(Objects.requireNonNull(childContextFactories, "childContextFactories cannot be null")));
 
         this.resolverDelegate = Objects.requireNonNull(resolver, "Resolver cannot be null");
 
-        DiContext.context = this;
+        if (masterContext)
+            setupMasterContextSingleton();
+    }
+
+    private void setupMasterContextSingleton() {
+        synchronized (this.singletonMutex) {
+            DiContext.context = this;
+        }
     }
 
     // --- Getters ---
     @Override
     public Set<IBeanProvider> getBeanProviders() throws DiException {
-        try {
-            ensureInitializedAndStarted();
-        } catch (LifecycleException e) {
-            throw new DiException(e);
-        }
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return Collections.unmodifiableSet(new HashSet<>(beanProviders.values()));
     }
 
     @Override
     public Set<IPropertyProvider> getPropertyProviders() throws DiException {
-        try {
-            ensureInitializedAndStarted();
-        } catch (LifecycleException e) {
-            throw new DiException(e);
-        }
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return Collections.unmodifiableSet(new HashSet<>(propertyProviders.values()));
     }
 
     @Override
     public Set<IDiChildContextFactory<? extends IDiContext>> getChildContextFactories() throws DiException {
-        try {
-            ensureInitializedAndStarted();
-        } catch (LifecycleException e) {
-            throw new DiException(e);
-        }
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return Collections.unmodifiableSet(new HashSet<>(childContextFactories));
     }
 
@@ -106,7 +120,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
-        wrapLifecycle(this::ensureInitializedAndStarted);
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(key, "Key cannot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
         return propertyProviders.values().stream()
@@ -117,7 +131,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException {
-        wrapLifecycle(this::ensureInitializedAndStarted);
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
@@ -132,7 +146,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(value, "Value cannnot be null");
-        wrapLifecycle(this::ensureInitializedAndStarted);
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         propertyProviders.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
@@ -145,16 +159,18 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     public <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass,
             Object... args)
             throws DiException {
-        wrapLifecycle(this::ensureInitializedAndStarted);
-        return childContextFactories.stream()
-                .filter(factory -> {
-                    Class<? extends IDiContext> childType = getChildContextType(factory);
-                    return childType != null && contextClass.isAssignableFrom(childType);
-                })
-                .findFirst()
-                .map(factory -> contextClass.cast(factory.createChildContext((IDiContext) this.copy(), args)))
-                .orElseThrow(() -> new DiException(
-                        "No child context factory registered for context class " + contextClass.getName()));
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        synchronized (this.mutex) {
+            return childContextFactories.stream()
+                    .filter(factory -> {
+                        Class<? extends IDiContext> childType = getChildContextType(factory);
+                        return childType != null && contextClass.isAssignableFrom(childType);
+                    })
+                    .findFirst()
+                    .map(factory -> contextClass.cast(factory.createChildContext((IDiContext) this.copy(), args)))
+                    .orElseThrow(() -> new DiException(
+                            "No child context factory registered for context class " + contextClass.getName()));
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -181,7 +197,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     // --- Cycle de vie ---
     @Override
-    protected synchronized ILifecycle doInit() throws LifecycleException {
+    protected ILifecycle doInit() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onInit();
@@ -190,7 +206,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected synchronized ILifecycle doStart() throws LifecycleException {
+    protected ILifecycle doStart() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onStart();
@@ -199,7 +215,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected synchronized ILifecycle doFlush() throws LifecycleException {
+    protected ILifecycle doFlush() throws LifecycleException {
         for (Object obj : getAllLifecycleObjects()) {
             if (obj instanceof ILifecycle lc)
                 lc.onFlush();
@@ -210,7 +226,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    protected synchronized ILifecycle doStop() throws LifecycleException {
+    protected ILifecycle doStop() throws LifecycleException {
         List<Object> lifecycleObjects = new ArrayList<>(getAllLifecycleObjects());
         for (Object obj : lifecycleObjects.reversed()) {
             if (obj instanceof ILifecycle lc)
@@ -230,6 +246,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     @Override
     public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanDefinition<Bean> definition)
             throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(provider, "Provider cannot be null");
         Objects.requireNonNull(definition, "Bean definition cannot be null");
         if (provider.isPresent())
@@ -239,6 +256,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         IBeanProvider beanProvider = this.beanProviders.get(provider);
         if (beanProvider == null)
             throw new DiException("Invalid bean provider " + provider);
@@ -248,6 +266,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(definition, "Bean definition cannot be null");
 
         for (IBeanProvider provider : this.beanProviders.values()) {
@@ -261,6 +280,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(provider, "Provider cannot be null");
         Objects.requireNonNull(definition, "Bean definition cannot be null");
         if (provider.isPresent())
@@ -270,6 +290,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(definition, "Bean definition cannot be null");
 
         List<Bean> beans = new ArrayList<>();
@@ -281,6 +302,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         IBeanProvider beanProvider = this.beanProviders.get(provider);
         if (beanProvider == null)
             throw new DiException("Invalid bean provider " + provider);
@@ -290,83 +312,86 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
 
     @Override
     public Optional<IBeanProvider> getBeanProvider(String name) {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return Optional.ofNullable(this.beanProviders.get(name));
     }
 
     @Override
     public Optional<IPropertyProvider> getPropertyProvider(String name) {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return Optional.ofNullable(this.propertyProviders.get(name));
     }
 
-    private void wrapLifecycle(RunnableWithException runnable) throws DiException {
-        try {
-            runnable.run();
-        } catch (LifecycleException e) {
-            throw new DiException(e);
-        }
-    }
-
-    @FunctionalInterface
-    interface RunnableWithException {
-        void run() throws LifecycleException;
-    }
-
     public Map<String, IBeanProvider> beanProviders() {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return this.beanProviders;
     }
 
     public Map<String, IPropertyProvider> propertyProviders() {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return this.propertyProviders;
     }
 
     public List<IDiChildContextFactory<? extends IDiContext>> childContextFactories() {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return this.childContextFactories;
     }
 
     @Override
-    public synchronized void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
-        Objects.requireNonNull(factory, "Factory cannot be null");
-        if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
-            childContextFactories.add(factory);
+    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+        wrapLifecycle(this::ensureInitialized, DiException.class);
+        synchronized (this.mutex) {
+            Objects.requireNonNull(factory, "Factory cannot be null");
+            if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
+                childContextFactories.add(factory);
+            }
         }
     }
 
     @Override
     public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return this.resolverDelegate.resolve(elementType, element);
     }
 
     @Override
     public Set<Resolved> resolve(Executable method) throws DiException {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return this.resolverDelegate.resolve(method);
     }
 
     @Override
-    public synchronized void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
-        this.resolverDelegate.addResolver(annotation, resolver);
+    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        synchronized (this.mutex) {
+            this.resolverDelegate.addResolver(annotation, resolver);
+        }
     }
 
     @Override
     public IDiContext copy() throws CopyException {
-        Map<String, IBeanProvider> beanProvidersCopy = this.beanProviders.entrySet().stream()
-                .filter(e -> e.getValue() != null)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().copy()));
+        wrapLifecycle(this::ensureInitializedAndStarted, CopyException.class);
+        synchronized (this.copyMutex) {
+            Map<String, IBeanProvider> beanProvidersCopy = this.beanProviders.entrySet().stream()
+                    .filter(e -> e.getValue() != null)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().copy()));
 
-        Map<String, IPropertyProvider> propertyProvidersCopy = this.propertyProviders.entrySet().stream()
-                .filter(e -> e.getValue() != null)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().copy()));
+            Map<String, IPropertyProvider> propertyProvidersCopy = this.propertyProviders.entrySet().stream()
+                    .filter(e -> e.getValue() != null)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().copy()));
 
-        List<IDiChildContextFactory<? extends IDiContext>> childFactoriesCopy = new ArrayList<>(
-                this.childContextFactories);
+            List<IDiChildContextFactory<? extends IDiContext>> childFactoriesCopy = new ArrayList<>(
+                    this.childContextFactories);
 
-        return new DiContext(
-                this.resolverDelegate,
-                new HashMap<>(beanProvidersCopy),
-                new HashMap<>(propertyProvidersCopy),
-                new ArrayList<>(childFactoriesCopy));
+            return DiContext.child(
+                    this.resolverDelegate,
+                    new HashMap<>(beanProvidersCopy),
+                    new HashMap<>(propertyProvidersCopy),
+                    new ArrayList<>(childFactoriesCopy));
+        }
     }
 }

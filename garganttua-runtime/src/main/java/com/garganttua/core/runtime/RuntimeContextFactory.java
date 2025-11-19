@@ -5,7 +5,6 @@ import java.util.Map;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.supplying.IObjectSupplier;
 
 public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeContext<?, ?>> {
@@ -17,8 +16,7 @@ public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeCon
         Class<?> outputType = (Class<?>) args[1];
         Map<String, IObjectSupplier<?>> presetVariables = (Map<String, IObjectSupplier<?>>) args[2];
 
-        return new RuntimeContext<>(parent, input, outputType, ((DiContext) parent).beanProviders(),
-                ((DiContext) parent).propertyProviders(), (((DiContext) parent).childContextFactories()), presetVariables);
+        return new RuntimeContext<>(parent, input, outputType, presetVariables);
     }
 
 }

@@ -25,6 +25,8 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	private BeanDefinition<Bean> definition;
 
+	private final Object beanMutex = new Object();
+
 	public BeanFactory(BeanDefinition<Bean> definition) {
 		this.definition = Objects.requireNonNull(definition, "Bean definition cannot be null");
 	}
@@ -108,7 +110,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				if (strat.get() == BeanStrategy.prototype) {
 					bean = getBean();
 				} else {
-					synchronized (this) {
+					synchronized (this.beanMutex) {
 						if (this.bean == null) {
 							this.bean = getBean();
 						}
@@ -116,7 +118,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 					bean = this.bean;
 				}
 			} else {
-				synchronized (this) {
+				synchronized (this.beanMutex) {
 					if (this.bean == null) {
 						this.bean = getBean();
 					}

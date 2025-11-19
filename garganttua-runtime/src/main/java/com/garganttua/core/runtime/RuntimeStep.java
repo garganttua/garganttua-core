@@ -43,10 +43,15 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
             throws RuntimeException {
         try {
             if ((condition.isPresent() && condition.get().evaluate()) || condition.isEmpty()) {
-                return operationBinder.execute(context);
+                Optional<ExecutionReturn> returned;
+                
+                    returned = operationBinder.execute(context);
+
+                return returned;
             }
         } catch (ReflectionException e) {
-            throw new RuntimeException(logLineHeader()+" Step operation "+operationBinder.getExecutableReference()+" execution failed",e);
+            throw new RuntimeException(logLineHeader() + " Step operation " + operationBinder.getExecutableReference()
+                    + " execution failed", e);
         }
         return Optional.empty();
     }
@@ -63,11 +68,13 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
                 if (this.operationBinder.isOutput()) {
                     if (returned.isEmpty())
                         throw new ExecutorException(
-                                logLineHeader()+ "is defined to be output but did not returned any value");
+                                logLineHeader() + "is defined to be output but did not returned any value");
 
                     if (!c.isOfOutputType(returned.get().getClass()))
                         throw new ExecutorException(
-                                logLineHeader()+"is defined to be output, but returned type "+returned.get().getClass().getSimpleName()+" is not output type "+c.getOutputType().getSimpleName());
+                                logLineHeader() + "is defined to be output, but returned type "
+                                        + returned.get().getClass().getSimpleName() + " is not output type "
+                                        + c.getOutputType().getSimpleName());
 
                     c.setOutput((OutputType) returned.get());
 
@@ -89,7 +96,7 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
     }
 
     private String logLineHeader() {
-        return "[Runtime "+runtimeName+"][Stage "+stageName+"][Step "+stepName+"] ";
+        return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "] ";
     }
 
 }
