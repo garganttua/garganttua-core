@@ -12,7 +12,6 @@ import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
-import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
 import com.garganttua.core.reflection.methods.MethodResolver;

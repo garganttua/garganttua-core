@@ -1,26 +1,16 @@
 package com.garganttua.core.runtime.dsl;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import com.garganttua.core.condition.ICondition;
-import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntimeStep;
-import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.RuntimeStep;
-import com.garganttua.core.runtime.annotations.Catch;
-import com.garganttua.core.runtime.annotations.Code;
-import com.garganttua.core.runtime.annotations.Condition;
 import com.garganttua.core.runtime.annotations.FallBack;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
@@ -39,10 +29,8 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     private String stageName;
     private String runtimeName;
     private IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier;
-    private IConditionBuilder conditionBuilder;
     private IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> methodBuilder;
     private Class<ExecutionReturn> executionReturn;
-    private Set<RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>> katches = new HashSet<>();
     private IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallbackBuilder;
     private IDiContext context;
 
@@ -62,7 +50,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> method()
             throws DslException {
         if (this.methodBuilder == null) {
-            this.methodBuilder = new RuntimeStepMethodBuilder<>(this, this.supplier, this.context);
+            this.methodBuilder = new RuntimeStepMethodBuilder<>(this.runtimeName, this.stageName, this.stepName, this, this.supplier, this.context);
             this.methodBuilder.withReturn(this.executionReturn);
         }
         return this.methodBuilder;
@@ -72,75 +60,21 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallBack()
             throws DslException {
-        if (this.katches.isEmpty())
-            throw new DslException("No katch defined");
         if (this.fallbackBuilder == null) {
-            this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(this, this.supplier, this.context);
+            this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(this.runtimeName, this.stageName, this.stepName, this, this.supplier, this.context);
             this.fallbackBuilder.withReturn(this.executionReturn);
         }
         return this.fallbackBuilder;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void doAutoDetection() throws DslException {
-        Method operationMethod = detectOperationMethod(supplier.getSuppliedType());
-        this.executionReturn = (Class<ExecutionReturn>) operationMethod.getReturnType();
-
-        method().autoDetect(true).method(operationMethod).withReturn(executionReturn).handle(context);
-
-        if (operationMethod.getAnnotation(Output.class) != null) {
-            method().output(true);
-        }
-
-        Variable variable = operationMethod.getAnnotation(Variable.class);
-
-        if (variable != null) {
-            method().variable(variable.name());
-        }
-
-        Code code = operationMethod.getAnnotation(Code.class);
-
-        if (code != null) {
-            method().code(code.value());
-        }
-
-        Catch catchAnnotation = operationMethod.getAnnotation(Catch.class);
-        if (catchAnnotation != null) {
-            handleCatch(supplier.getSuppliedType(), catchAnnotation);
-        }
-
-        detectCondition();
+        detectOperationMethod();
+        detectFallback();
     }
 
-    private void detectCondition() {
-        Optional<StepObjectType> owner = supplier.build().supply();
-
-        if (owner.isEmpty())
-            throw new DslException("Owner supplier supplied empty value");
-        String conditionField = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
-                supplier.getSuppliedType(), Condition.class, IConditionBuilder.class);
-
-        if (conditionField != null) {
-            IConditionBuilder condition = (IConditionBuilder) ObjectQueryFactory.objectQuery(owner.get())
-                    .getValue(conditionField);
-            this.condition(condition);
-        }
-    }
-
-    private Method detectOperationMethod(Class<?> ownerType) throws DslException {
-        Method method = ObjectReflectionHelper.getMethodAnnotatedWith(ownerType, Operation.class);
-        if (method == null) {
-            throw new DslException("Class " + ownerType.getSimpleName() +
-                    " does not declare any @Operation method");
-        }
-        return method;
-    }
-
-    private void handleCatch(Class<?> ownerType, Catch catchAnnotation) {
-        katch(catchAnnotation.exception(), catchAnnotation).autoDetect(true);
-
-        Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(ownerType, FallBack.class);
+    private void detectFallback() {
+        Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedType(), FallBack.class);
 
         if (fallbackMethod != null) {
             fallBack().autoDetect(true).method(fallbackMethod).withReturn(executionReturn).handle(context);
@@ -157,50 +91,30 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         }
     }
 
-    private IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch(
-            Class<? extends Throwable> exception, Catch catchAnnotation) throws DslException {
-        Objects.requireNonNull(exception, "Exception cannot be null");
-        Objects.requireNonNull(methodBuilder, "Method is not yet set");
-        RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch = new RuntimeStepCatchBuilder<>(
-                exception, methodBuilder, this, catchAnnotation);
-        this.katches.add(katch);
-        return katch;
-    }
+    @SuppressWarnings("unchecked")
+    private Method detectOperationMethod() throws DslException {
+        Method method = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedType(), Operation.class);
+        if (method == null) {
+            throw new DslException("Class " + supplier.getSuppliedType().getSimpleName() +
+                    " does not declare any @Operation method");
+        }
+        this.executionReturn = (Class<ExecutionReturn>) method.getReturnType();
 
-    @Override
-    public IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch(
-            Class<? extends Throwable> exception) throws DslException {
-        Objects.requireNonNull(exception, "Exception cannot be null");
-        Objects.requireNonNull(methodBuilder, "Method is not yet set");
-        RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch = new RuntimeStepCatchBuilder<>(
-                exception, methodBuilder, this);
-        this.katches.add(katch);
-        return katch;
-    }
-
-    @Override
-    public IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> condition(
-            IConditionBuilder conditionBuilder) {
-        this.conditionBuilder = Objects.requireNonNull(conditionBuilder, "Condition builder cannot be null");
-        return this;
+        method().autoDetect(true).method(method).withReturn(executionReturn).handle(context);
+        return method;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     protected IRuntimeStep<ExecutionReturn, InputType, OutputType> doBuild() throws DslException {
         IMethodBinder<ExecutionReturn> fallback = null;
-        ICondition condition = null;
+
         if (this.fallbackBuilder != null) {
             fallback = this.fallbackBuilder.build();
         }
-        if (this.conditionBuilder != null) {
-            condition = this.conditionBuilder.build();
-        }
-
-        Set<IRuntimeStepCatch> builtCatches = this.katches.stream().map(b -> b.build()).collect(Collectors.toSet());
 
         return new RuntimeStep(runtimeName, stageName, stepName, this.executionReturn, this.methodBuilder.build(),
-                Optional.ofNullable(fallback), builtCatches, Optional.ofNullable(condition));
+                Optional.ofNullable(fallback));
     }
 
     @Override

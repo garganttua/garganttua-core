@@ -13,41 +13,54 @@ import com.garganttua.core.runtime.annotations.Exception;
 import com.garganttua.core.runtime.annotations.ExceptionMessage;
 import com.garganttua.core.runtime.annotations.FallBack;
 import com.garganttua.core.runtime.annotations.Input;
+import com.garganttua.core.runtime.annotations.OnException;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Step;
 import com.garganttua.core.runtime.annotations.Variable;
+
+import jakarta.annotation.Nullable;
+
 import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
 import static com.garganttua.core.condition.Conditions.*;
 
 @Step
 @Named("step-1")
 public class DummyRuntimeProcessStep {
-    
+
     @Condition
     IConditionBuilder condition = custom(of(10), i -> 1 > 0);
 
     @Operation
     @Output
-    @Catch(exception = DiException.class, code = 401, fallback = true, abort = true)
+    @Catch(exception = DiException.class, code = 401)
     @Variable(name = "method-returned")
     @Code(201)
+    @Nullable
     String method(@Input String input, @Fixed(valueString = "fixed-value-in-method") String fixedValue,
-            @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context) throws DiException {
-                /* try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } */
-        return input + "-processed-"+fixedValue+"-"+variable;
+            @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context)
+            throws DiException, CustomException {
+
+        if (variable.equals("di-exception")) {
+            throw new DiException(input + "-processed-" + fixedValue + "-" + variable);
+        }
+
+        if (variable.equals("custom-exception")) {
+            throw new CustomException(input + "-processed-" + fixedValue + "-" + variable);
+        }
+
+        return input + "-processed-" + fixedValue + "-" + variable;
     }
 
     @FallBack
     @Output
+    @Nullable
+    @OnException(exception = DiException.class)
     @Variable(name = "fallback-returned")
-    String fallbackMethod(@Input String input, @Fixed(valueString = "fixed-value-in-fallback") String fixedValue, @Exception DiException exception,
-            @Code Integer code, @ExceptionMessage String exceptionMessage, @Context IRuntimeContext<String, String> context) {
-        return input + "-fallback-"+fixedValue+"-"+code+"-"+exceptionMessage;
+    String fallbackMethod(@Input String input, @Fixed(valueString = "fixed-value-in-fallback") String fixedValue,
+            @Exception DiException exception,
+            @Code Integer code, @ExceptionMessage String exceptionMessage,
+            @Context IRuntimeContext<String, String> context) {
+        return input + "-fallback-" + fixedValue + "-" + code + "-" + exceptionMessage;
     }
 }

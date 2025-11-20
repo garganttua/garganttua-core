@@ -11,29 +11,29 @@ public record RuntimeResult<InputType, OutputType>(UUID uuid, InputType input, O
         Integer code) implements IRuntimeResult<InputType, OutputType> {
 
     @Override
-    public Duration getDuration() {
+    public Duration duration() {
         return Duration.between(start, stop);
     }
 
     @Override
-    public Duration getDurationInMillis() {
-        return Duration.ofMillis(getDurationMillis());
+    public Duration durationInMillis() {
+        return Duration.ofMillis(durationMillis());
     }
 
     @Override
-    public long getDurationMillis() {
+    public long durationMillis() {
         return Duration.between(start, stop).toMillis();
     }
 
     @Override
-    public long getDurationInNanos() {
+    public long durationInNanos() {
         return stopNano - startNano;
     }
 
     // --- Pretty print ---
     @Override
-    public String getPrettyDuration() {
-        return prettyDurationColor(getDuration());
+    public String prettyDuration() {
+        return prettyDurationColor(duration());
     }
 
     public static String prettyDurationColor(Duration duration) {
@@ -71,8 +71,8 @@ public record RuntimeResult<InputType, OutputType>(UUID uuid, InputType input, O
     }
 
     @Override
-    public String getPrettyDurationInNanos() {
-        return prettyNano(getDurationInNanos());
+    public String prettyDurationInNanos() {
+        return prettyNano(durationInNanos());
     }
 
 }

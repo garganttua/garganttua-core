@@ -5,16 +5,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.garganttua.core.runtime.IRuntime;
+
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Catch {
 
     Class<? extends Throwable> exception();
 
-    int code();
-
-    boolean fallback();
-
-    boolean abort();
+    int code() default IRuntime.GENERIC_RUNTIME_ERROR_CODE;
 
 }

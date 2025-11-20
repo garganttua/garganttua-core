@@ -14,4 +14,7 @@ public class ExecutorException extends CoreException {
 	public ExecutorException(String string) {
 		super(CoreExceptionCode.EXECUTOR_ERROR, string);
 	}
+	public ExecutorException(String string, Throwable t) {
+		super(CoreExceptionCode.EXECUTOR_ERROR, string, t);
+	}
 }

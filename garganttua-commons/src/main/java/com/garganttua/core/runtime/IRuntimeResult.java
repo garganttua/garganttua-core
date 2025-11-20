@@ -6,16 +6,18 @@ public interface IRuntimeResult<InputType, OutputType> {
 
     OutputType output();
 
-    Duration getDuration();
+    Duration duration();
 
-    String getPrettyDuration();
+    String prettyDuration();
 
-    Duration getDurationInMillis();
+    Duration durationInMillis();
 
-    long getDurationMillis();
+    long durationMillis();
 
-    long getDurationInNanos();
+    long durationInNanos();
 
-    String getPrettyDurationInNanos();
+    String prettyDurationInNanos();
+
+    Integer code();
 
 }

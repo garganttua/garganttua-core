@@ -28,4 +28,8 @@ public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
 
     void setCode(int i);
 
+    void recordException(RuntimeExceptionRecord runtimeExceptionRecord);
+
+    RuntimeExceptionRecord findException(RuntimeExceptionRecord pattern);
+
 }

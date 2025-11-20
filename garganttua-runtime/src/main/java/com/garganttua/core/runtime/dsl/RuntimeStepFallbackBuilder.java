@@ -1,7 +1,11 @@
 package com.garganttua.core.runtime.dsl;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IDiContext;
@@ -9,29 +13,41 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.runtime.IRuntimeContext;
-import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
-import com.garganttua.core.runtime.RuntimeStepMethodBinder;
+import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
+import com.garganttua.core.runtime.RuntimeStepFallbackBinder;
+import com.garganttua.core.runtime.annotations.OnException;
+import com.garganttua.core.runtime.annotations.Output;
+import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
-        AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>>
+        AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
         implements
         IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
     private String storeReturnInVariable = null;
     private Boolean output = false;
-    private Integer code = RuntimeStepMethodBinder.GENERIC_RUNTIME_ERROR_CODE;
+    private List<IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>> onExceptions = new ArrayList<>();
+    private String stepName;
+    private String stageName;
+    private String runtimeName;
 
-    protected RuntimeStepFallbackBuilder(IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
+    protected RuntimeStepFallbackBuilder(String runtimeName,
+            String stageName, String stepName,
+            IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
             IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier,
             IInjectableElementResolver resolver)
             throws DslException {
         super(Optional.ofNullable(resolver), up, supplier);
+        this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
+        this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
+        this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
     }
 
     @Override
-    public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(String variableName) {
+    public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(
+            String variableName) {
         this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
         return this;
     }
@@ -49,9 +65,61 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     }
 
     @Override
-    public IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> build() throws DslException {
+    public IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> build()
+            throws DslException {
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
-        return new RuntimeStepMethodBinder<ExecutionReturn, InputType, OutputType>(binder, Optional.ofNullable(this.storeReturnInVariable), this.output, this.code);
+        return new RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
+                this.stepName, binder,
+                Optional.ofNullable(this.storeReturnInVariable), this.output,
+                this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()));
     }
 
+    @Override
+    public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
+            Class<? extends Throwable> exception) throws DslException {
+        IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
+                this, Objects.requireNonNull(exception, "Exception cannot be null"));
+        this.onExceptions.add(onException);
+        return onException;
+    }
+
+    public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
+            Class<? extends Throwable> exception, OnException oneException) throws DslException {
+        IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
+                this, Objects.requireNonNull(exception, "Exception cannot be null"),
+                Objects.requireNonNull(oneException, "On exception annotation cannot be null"));
+        this.onExceptions.add(onException);
+        return onException;
+    }
+
+    @Override
+    protected void doAutoDetection() throws DslException {
+        super.doAutoDetection();
+
+        Method method = this.findMethod();
+        detectOutput(method);
+        detectVariable(method);
+        detectOnExceptions(method);
+
+    }
+
+    private void detectOnExceptions(Method method) {
+        OnException[] onExceptionAnnotations = method.getAnnotationsByType(OnException.class);
+        for (OnException onExceptionAnnotation : onExceptionAnnotations) {
+            onException(onExceptionAnnotation.exception(), onExceptionAnnotation).autoDetect(true);
+        }
+    }
+
+    private void detectVariable(Method operationMethod) {
+        Variable variable = operationMethod.getAnnotation(Variable.class);
+        if (variable != null) {
+            method().variable(variable.name());
+        }
+    }
+
+    private void detectOutput(Method operationMethod) {
+        if (operationMethod.getAnnotation(Output.class) != null) {
+            method().output(true);
+        }
+    }
 }

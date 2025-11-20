@@ -318,4 +318,16 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         return this;
     }
 
+    @Override
+    public void recordException(RuntimeExceptionRecord runtimeExceptionRecord) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'recordException'");
+    }
+
+    @Override
+    public RuntimeExceptionRecord findException(RuntimeExceptionRecord pattern) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'findException'");
+    }
+
 }
