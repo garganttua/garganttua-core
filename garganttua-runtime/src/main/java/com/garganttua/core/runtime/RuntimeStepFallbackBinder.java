@@ -1,25 +1,30 @@
 package com.garganttua.core.runtime;
 
+import static com.garganttua.core.runtime.RuntimeStepExecutionTools.*;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 
-public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType> implements IRuntimeStepFallbackBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
+public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType> implements
+        IRuntimeStepFallbackBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
 
-    private String runtimeName;
-    private String stageName;
-    private String stepName;
-    private IContextualMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>> delegate;
-    private Optional<String> variable;
-    private Boolean isOutput;
+    private final String runtimeName;
+    private final String stageName;
+    private final String stepName;
+    private final IContextualMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>> delegate;
+    private final Optional<String> variable;
+    private final Boolean isOutput;
+    private final List<IRuntimeStepOnException> onExceptions;
 
     public RuntimeStepFallbackBinder(String runtimeName, String stageName, String stepName,
-            IContextualMethodBinder<ExecutionReturned,IRuntimeContext<InputType,OutputType>> delegate,
+            IContextualMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>> delegate,
             Optional<String> variable, Boolean isOutput, List<IRuntimeStepOnException> onExceptions) {
         this.runtimeName = Objects.requireNonNull(runtimeName, "runtimeName cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "stageName cannot be null");
@@ -27,6 +32,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         this.delegate = Objects.requireNonNull(delegate, "Delegate cannot be null");
         this.variable = Objects.requireNonNull(variable, "Variable optional cannot be null");
         this.isOutput = Objects.requireNonNull(isOutput, "Is output cannot be null");
+        this.onExceptions = List.copyOf(Objects.requireNonNull(onExceptions, "OnException list cannot be null"));
     }
 
     @Override
@@ -70,10 +76,52 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void fallBack(IRuntimeContext<InputType, OutputType> request,
+    public void fallBack(IRuntimeContext<InputType, OutputType> context,
             IExecutorChain<IRuntimeContext<InputType, OutputType>> nextExecutor) {
-        nextExecutor.executeFallBack(request);
+
+        Optional<String> variable = variable();
+        ExecutionReturned returned = null;
+        Optional<RuntimeExceptionRecord> abortingException = context.findAbortingExceptionReport();
+
+        if( abortingException.isEmpty() ){
+            handleException(this.runtimeName, this.stageName, this.stepName, context, new ExecutorException(
+                            logLineHeader()
+                                    + "Fallback method is executed but no aborting exception found !"), true,
+                    this.getExecutableReference(), null, logLineHeader());
+
+            nextExecutor.executeFallBack(context);
+            return;
+        }
+
+        if (this.findMatchingOnException(abortingException.get()).isEmpty()){
+            nextExecutor.executeFallBack(context);
+            return;
+        }
+
+        try {
+            returned = execute(context).orElse(null);
+        } catch (Exception e) {
+            handleException(this.runtimeName, this.stageName, this.stepName, context, e, false,
+                    this.getExecutableReference(), null, logLineHeader());
+        }
+
+        if (isOutput()) {
+            validateReturnedForOutput(this.runtimeName, this.stageName, this.stepName, returned, context, nullable(),
+                    logLineHeader(), getExecutableReference());
+            context.setOutput((OutputType) returned);
+        }
+
+        if (variable.isPresent())
+            validateAndStoreReturnedValueInVariable(this.runtimeName, this.stageName, this.stepName, variable.get(),
+                    returned, context, nullable(), logLineHeader(), getExecutableReference());
+
+        nextExecutor.executeFallBack(context);
+    }
+
+    private Optional<IRuntimeStepOnException> findMatchingOnException(RuntimeExceptionRecord abortingExceptionReport) {
+        return this.onExceptions.stream().filter(o -> abortingExceptionReport.matches(o)).findFirst();
     }
 
     private String logLineHeader() {

@@ -9,13 +9,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExecutorChain<T> implements IExecutorChain<T> {
 
-	private Queue<Entry<IExecutor<T>, IFallBackExecutor<T>>> executors;
+	private final Queue<Entry<IExecutor<T>, IFallBackExecutor<T>>> executors;
 
-	private Queue<IFallBackExecutor<T>> fallBackExecutors;
+	private final Queue<IFallBackExecutor<T>> fallBackExecutors;
+
+	private final boolean rethrow;
 
 	public ExecutorChain() {
+		this(true);
+	}
+
+	public ExecutorChain(boolean rethrow) {
 		this.executors = new LinkedList<>();
 		this.fallBackExecutors = new LinkedList<>();
+		this.rethrow = rethrow;
 	}
 
 	@Override
@@ -53,7 +60,8 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 					log.atInfo().log("Executing Falling back executors");
 					this.executeFallBack(request);
 				}
-				throw e;
+				if( this.rethrow )
+					throw e;
 			}
 		}
 	}

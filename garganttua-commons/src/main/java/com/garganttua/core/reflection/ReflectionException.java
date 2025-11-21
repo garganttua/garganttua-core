@@ -1,5 +1,7 @@
 package com.garganttua.core.reflection;
 
+import java.util.Optional;
+
 import com.garganttua.core.CoreException;
 import com.garganttua.core.CoreExceptionCode;
 
@@ -18,5 +20,19 @@ public class ReflectionException extends CoreException {
 	}
 
 	private static final long serialVersionUID = 2732095843634378815L;
+
+	@SuppressWarnings("unchecked")
+    public static <E extends Throwable> Optional<E> findFirstInException(ReflectionException exception,
+            Class<E> type) {
+        Throwable cause = exception.getCause();
+        while (cause != null) {
+            if (CoreException.class.isAssignableFrom(type) ) {
+                return Optional.of((E) cause);
+            }
+            cause = cause.getCause();
+        }
+        return Optional.empty();
+
+    }
 
 }

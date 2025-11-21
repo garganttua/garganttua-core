@@ -78,7 +78,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
             Class<? extends Throwable> exception) throws DslException {
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
-                this, Objects.requireNonNull(exception, "Exception cannot be null"));
+                this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"));
         this.onExceptions.add(onException);
         return onException;
     }
@@ -86,7 +86,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
             Class<? extends Throwable> exception, OnException oneException) throws DslException {
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
-                this, Objects.requireNonNull(exception, "Exception cannot be null"),
+                this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"),
                 Objects.requireNonNull(oneException, "On exception annotation cannot be null"));
         this.onExceptions.add(onException);
         return onException;

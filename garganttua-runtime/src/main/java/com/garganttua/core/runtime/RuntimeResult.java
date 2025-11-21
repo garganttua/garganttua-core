@@ -2,13 +2,20 @@ package com.garganttua.core.runtime;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
-public record RuntimeResult<InputType, OutputType>(UUID uuid, InputType input, OutputType output, Instant start,
+public record RuntimeResult<InputType, OutputType>(
+        UUID uuid,
+        InputType input,
+        OutputType output,
+        Instant start,
         Instant stop,
         long startNano,
         long stopNano,
-        Integer code) implements IRuntimeResult<InputType, OutputType> {
+        Integer code,
+        Set<RuntimeExceptionRecord> recordedException
+) implements IRuntimeResult<InputType, OutputType> {
 
     @Override
     public Duration duration() {
@@ -30,7 +37,10 @@ public record RuntimeResult<InputType, OutputType>(UUID uuid, InputType input, O
         return stopNano - startNano;
     }
 
-    // --- Pretty print ---
+    // =======================================
+    //  DURATIONS — COLOR
+    // =======================================
+
     @Override
     public String prettyDuration() {
         return prettyDurationColor(duration());
@@ -50,7 +60,27 @@ public record RuntimeResult<InputType, OutputType>(UUID uuid, InputType input, O
                 ms, duration.toMillisPart(), reset);
     }
 
-    public static String prettyNano(long nanos) {
+    // =======================================
+    //  DURATIONS — PLAIN (NO COLORS)
+    // =======================================
+
+    public String prettyDurationPlain() {
+        return prettyDurationPlain(duration());
+    }
+
+    public static String prettyDurationPlain(Duration duration) {
+        return String.format("%dh %dm %ds %dms",
+                duration.toHours(),
+                duration.toMinutesPart(),
+                duration.toSecondsPart(),
+                duration.toMillisPart());
+    }
+
+    // =======================================
+    //  NANOS — COLOR
+    // =======================================
+
+    public static String prettyNanoColor(long nanos) {
         String nsColor = "\u001B[36m";
         String usColor = "\u001B[35m";
         String msColor = "\u001B[32m";
@@ -72,7 +102,27 @@ public record RuntimeResult<InputType, OutputType>(UUID uuid, InputType input, O
 
     @Override
     public String prettyDurationInNanos() {
-        return prettyNano(durationInNanos());
+        return prettyNanoColor(durationInNanos());
     }
 
+    // =======================================
+    //  NANOS — PLAIN (NO COLORS)
+    // =======================================
+
+    public static String prettyNano(long nanos) {
+        if (nanos < 1_000) {
+            return String.format("%d ns", nanos);
+        } else if (nanos < 1_000_000) {
+            long us = nanos / 1_000;
+            return String.format("%d ns (%d us)", nanos, us);
+        } else {
+            long us = nanos / 1_000;
+            long ms = nanos / 1_000_000;
+            return String.format("%d ns (%d us, %d ms)", nanos, us, ms);
+        }
+    }
+
+    public String prettyDurationInNanosPlain() {
+        return prettyNano(durationInNanos());
+    }
 }

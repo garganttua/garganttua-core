@@ -37,8 +37,11 @@ public class DummyRuntimeProcessStep {
     @Variable(name = "method-returned")
     @Code(201)
     @Nullable
-    String method(@Input String input, @Fixed(valueString = "fixed-value-in-method") String fixedValue,
-            @Variable(name = "variable") String variable, @Context IRuntimeContext<String, String> context)
+    String method(
+            @Input String input,
+            @Fixed(valueString = "fixed-value-in-method") String fixedValue,
+            @Variable(name = "variable") String variable,
+            @Context IRuntimeContext<String, String> context)
             throws DiException, CustomException {
 
         if (variable.equals("di-exception")) {
@@ -57,9 +60,12 @@ public class DummyRuntimeProcessStep {
     @Nullable
     @OnException(exception = DiException.class)
     @Variable(name = "fallback-returned")
-    String fallbackMethod(@Input String input, @Fixed(valueString = "fixed-value-in-fallback") String fixedValue,
+    String fallbackMethod(
+            @Input String input,
+            @Fixed(valueString = "fixed-value-in-fallback") String fixedValue,
             @Exception DiException exception,
-            @Code Integer code, @ExceptionMessage String exceptionMessage,
+            @Code Integer code,
+            @Nullable @ExceptionMessage String exceptionMessage,
             @Context IRuntimeContext<String, String> context) {
         return input + "-fallback-" + fixedValue + "-" + code + "-" + exceptionMessage;
     }

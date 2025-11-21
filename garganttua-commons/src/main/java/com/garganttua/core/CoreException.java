@@ -1,8 +1,7 @@
 package com.garganttua.core;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
-
-import com.garganttua.core.reflection.ReflectionException;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -65,10 +64,14 @@ public class CoreException extends RuntimeException {
             Class<E> type) {
         Throwable cause = exception.getCause();
         while (cause != null) {
-            if (CoreException.class.isAssignableFrom(type) ) {
+            if (cause.getClass().isAssignableFrom(type) ) {
                 return Optional.of((E) cause);
             }
-            cause = cause.getCause();
+            if( cause instanceof InvocationTargetException inv ){
+                cause = inv.getTargetException(); 
+            } else {
+                cause = cause.getCause();
+            }
         }
         return Optional.empty();
 

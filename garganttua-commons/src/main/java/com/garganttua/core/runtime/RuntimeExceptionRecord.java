@@ -1,6 +1,6 @@
 package com.garganttua.core.runtime;
 
-public record RuntimeExceptionRecord(String runtimeName, String stageName, String stepName, Throwable exception, Integer code, Boolean hasAborted) {
+public record RuntimeExceptionRecord(String runtimeName, String stageName, String stepName, Class<? extends Throwable> exceptionType, Throwable exception, Integer code, Boolean hasAborted, String executableReference) {
 
     public boolean matches(RuntimeExceptionRecord pattern) {
         if (pattern == null) return false;
@@ -14,11 +14,11 @@ public record RuntimeExceptionRecord(String runtimeName, String stageName, Strin
         if (pattern.stepName != null && !pattern.stepName.equals(this.stepName))
             return false;
 
-        if (pattern.exception != null) {
-            if (this.exception == null) return false;
+        if (pattern.exceptionType != null) {
+            if (this.exceptionType == null) return false;
 
-            Class<?> expected = pattern.exception.getClass();
-            Class<?> actual = this.exception.getClass();
+            Class<?> expected = pattern.exceptionType;
+            Class<?> actual = this.exceptionType;
 
             if (!expected.isAssignableFrom(actual))
                 return false;
@@ -31,6 +31,14 @@ public record RuntimeExceptionRecord(String runtimeName, String stageName, Strin
             return false;
 
         return true;
+    }
+
+    public boolean matches(IRuntimeStepOnException onException) {
+        return this.matches(new RuntimeExceptionRecord(onException.runtimeName(), onException.fromStage(), onException.fromStep(), onException.exception(), null, null, true, null));
+    }
+
+    public String exceptionMessage() {
+        return this.exception.getMessage();
     }
 
 }

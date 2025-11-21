@@ -30,6 +30,8 @@ public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
 
     void recordException(RuntimeExceptionRecord runtimeExceptionRecord);
 
-    RuntimeExceptionRecord findException(RuntimeExceptionRecord pattern);
+    Optional<RuntimeExceptionRecord> findException(RuntimeExceptionRecord pattern);
+
+    Optional<RuntimeExceptionRecord> findAbortingExceptionReport();
 
 }

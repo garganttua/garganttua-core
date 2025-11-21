@@ -5,6 +5,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,26 +36,29 @@ import lombok.Getter;
 public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         implements IRuntimeContext<InputType, OutputType> {
 
-    private InputType input;
+    private final InputType input;
     @Getter
-    private Class<OutputType> outputType;
+    private final Class<OutputType> outputType;
     private OutputType output;
-    private Map<String, IObjectSupplier<?>> presetVariables = new HashMap<>();
+    private final Map<String, IObjectSupplier<?>> presetVariables = new HashMap<>();
     private Instant start;
     private Instant stop;
     private long startNano;
     private long stopNano;
-    private UUID uuid;
+    private final UUID uuid;
     private Integer code;
-    private IDiContext delegateContext;
+    private final IDiContext delegateContext;
 
     private final Object lifecycleMutex = new Object();
+    private final Set<RuntimeExceptionRecord> recordedException = new HashSet<>();
 
-    public RuntimeContext(IDiContext parent, InputType input, Class<OutputType> outputType, Map<String, IObjectSupplier<?>> presetVariables) {
+    public RuntimeContext(IDiContext parent, InputType input, Class<OutputType> outputType,
+            Map<String, IObjectSupplier<?>> presetVariables) {
         this.delegateContext = Objects.requireNonNull(parent, "Parent context cannot be null");
         this.input = Objects.requireNonNull(input, "Input type cannot be null");
         this.outputType = Objects.requireNonNull(outputType, "Output type cannot be null");
-        this.presetVariables.putAll(Objects.requireNonNull(presetVariables, "Preset variables map cannot be null"));
+        this.presetVariables
+                .putAll(Map.copyOf(Objects.requireNonNull(presetVariables, "Preset variables map cannot be null")));
         this.uuid = UUID.randomUUID();
     }
 
@@ -63,7 +67,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         wrapLifecycle(this::ensureStopped, RuntimeException.class);
         wrapLifecycle(this::ensureNotFlushed, RuntimeException.class);
 
-        return new RuntimeResult<>(uuid, input, output, start, stop, startNano, stopNano, code);
+        return new RuntimeResult<>(uuid, input, output, start, stop, startNano, stopNano, code, this.recordedException);
     }
 
     @SuppressWarnings("unchecked")
@@ -119,9 +123,16 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
                 .getProperty(Predefined.PropertyProviders.garganttua.toString(), variableName, variableType);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <ExceptionType> Optional<ExceptionType> getException(Class<ExceptionType> exceptionType) {
         wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        Optional<RuntimeExceptionRecord> report = this.findAbortingExceptionReport();
+        if (report.isPresent()) {
+            if( exceptionType.isAssignableFrom(report.get().exceptionType()) ){
+                return (Optional<ExceptionType>) Optional.of(report.get().exception());
+            }
+        }
         return Optional.empty();
     }
 
@@ -134,13 +145,20 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public Optional<Integer> getCode() {
         wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
-        return Optional.empty();
+        return Optional.of(this.code);
     }
 
     @Override
     public Optional<String> getExceptionMessage() {
         wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
-        return Optional.empty();
+
+        String message = null;
+        Optional<RuntimeExceptionRecord> report = this.findAbortingExceptionReport();
+        if (report.isPresent()) {
+            message = report.get().exceptionMessage();
+        }
+
+        return Optional.ofNullable(message);
     }
 
     @Override
@@ -320,14 +338,17 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     @Override
     public void recordException(RuntimeExceptionRecord runtimeExceptionRecord) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'recordException'");
+        this.recordedException.add(runtimeExceptionRecord);
     }
 
     @Override
-    public RuntimeExceptionRecord findException(RuntimeExceptionRecord pattern) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findException'");
+    public Optional<RuntimeExceptionRecord> findException(RuntimeExceptionRecord pattern) {
+        return this.recordedException.stream().filter(e -> e.matches(pattern)).findAny();
+    }
+
+    @Override
+    public Optional<RuntimeExceptionRecord> findAbortingExceptionReport() {
+        return this.recordedException.stream().filter(e -> e.hasAborted()).findAny();
     }
 
 }

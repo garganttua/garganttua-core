@@ -16,12 +16,15 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
     private String stageName = null;
     private String stepName = null;
     private OnException onExceptionForAutoDetection;
+    private String runtimeName;
 
     protected RuntimeStepOnExceptionBuilder(
             IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> link,
+            String runtimeName,
             Class<? extends Throwable> exception) {
         super(link);
         this.exception = Objects.requireNonNull(exception, "Exception cannot be null");
+        this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
     }
 
     /**
@@ -33,8 +36,9 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
      */
     protected RuntimeStepOnExceptionBuilder(
             IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> link,
+            String runtimeName,
             Class<? extends Throwable> exception, OnException onException) {
-        this(link, exception);
+        this(link, runtimeName, exception);
         this.onExceptionForAutoDetection = Objects.requireNonNull(onException, "OnException annotation cannot be null");
     }
 
@@ -54,7 +58,7 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
 
     @Override
     protected IRuntimeStepOnException doBuild() throws DslException {
-        return new RuntimeStepOnException(exception, this.stageName, this.stepName);
+        return new RuntimeStepOnException(exception, this.runtimeName, this.stageName, this.stepName);
     }
 
     @Override

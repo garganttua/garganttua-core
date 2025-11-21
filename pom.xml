@@ -49,6 +49,7 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <jakarta.annotations.api.version>2.1.1</jakarta.annotations.api.version>
+    <logback.classic.version>1.5.16</logback.classic.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -206,7 +207,12 @@
         <version>${spring.framework.version}</version>
         <scope>provided</scope>
       </dependency>
-
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.classic.version}</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

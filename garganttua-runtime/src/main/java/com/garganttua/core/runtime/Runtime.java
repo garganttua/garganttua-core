@@ -3,11 +3,10 @@ package com.garganttua.core.runtime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.core.execution.ExecutorChain;
-import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.supplying.IObjectSupplier;
 
@@ -35,16 +34,16 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
 
     @SuppressWarnings("unchecked")
     @Override
-    public IRuntimeResult<InputType, OutputType> execute(InputType input) throws RuntimeException {
+    public Optional<IRuntimeResult<InputType, OutputType>> execute(InputType input) throws RuntimeException {
+        IRuntimeContext<InputType, OutputType> runtimeContext = null;
+        IRuntimeResult<InputType, OutputType> result = null;
         try {
-            IRuntimeContext<InputType, OutputType> runtimeContext = null;
-
             runtimeContext = this.diContext
                     .newChildContext(IRuntimeContext.class, input, this.outputType, this.presetVariables);
 
             runtimeContext.onInit().onStart();
 
-            IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>();
+            IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>(false);
 
             this.stages.values().stream().forEach(
                     stage -> {
@@ -54,15 +53,16 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
                     });
 
             chain.execute(runtimeContext);
-
-            runtimeContext.onStop();
-            IRuntimeResult<InputType, OutputType> result = runtimeContext.getResult();
-            runtimeContext.onFlush();
-
-            return result;
-
-        } catch (DiException | ExecutorException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e, Optional.ofNullable(runtimeContext));
+        } finally {
+            if( runtimeContext != null ){
+                runtimeContext.onStop();
+                result = runtimeContext.getResult();
+                runtimeContext.onFlush();
+            }
         }
+
+        return Optional.ofNullable(result);
     }
 }

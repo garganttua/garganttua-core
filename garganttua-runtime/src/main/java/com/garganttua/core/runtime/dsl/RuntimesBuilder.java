@@ -74,7 +74,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
             throw new DslException("Build is not yet authorized");
 
         return this.runtimeBuilders.entrySet().stream().collect(Collectors.toMap(
-                e -> e.getKey().toLowerCase(),
+                e -> e.getKey(),
                 e -> e.getValue().build()));
     }
 
@@ -88,13 +88,15 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     }
 
     private void createAutoDetectedRuntime(Object runtimeDefinitionObject) {
-        String runtimeName = UUID.randomUUID().toString();
+        String runtimeName = null;
         RuntimeDefinition runtimeDefinition = runtimeDefinitionObject.getClass().getAnnotation(RuntimeDefinition.class);
         Class<?> input = runtimeDefinition.input();
         Class<?> output = runtimeDefinition.output();
         Named runtimeNameAnnotation = runtimeDefinitionObject.getClass().getAnnotation(Named.class);
         if (runtimeNameAnnotation != null) {
             runtimeName = runtimeNameAnnotation.value();
+        } else {
+            runtimeName = runtimeDefinitionObject.getClass().getSimpleName();
         }
         IRuntimeBuilder<?, ?> runtimeBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
                 runtimeDefinitionObject).autoDetect(true);
