@@ -38,12 +38,11 @@ public class RuntimeStepExecutionTools {
             throws ExecutorException {
 
         Throwable reportException = exception;
-        int reportCode = -1;
+        int reportCode = IRuntime.GENERIC_RUNTIME_ERROR_CODE;
         boolean aborted = forceAbort;
 
         try {
             if (forceAbort) {
-                reportCode = IRuntime.GENERIC_RUNTIME_ERROR_CODE;
                 aborted = true;
                 throw new ExecutorException(logLineHeader + "Error during step execution", exception);
             }
@@ -52,7 +51,6 @@ public class RuntimeStepExecutionTools {
                 reportException = findExceptionForReport(exception, matchedCatch);
                 reportCode = matchedCatch.code();
                 aborted = true;
-                context.setCode(reportCode);
 
                 throw new ExecutorException(logLineHeader + "Error during step execution", exception);
             }
@@ -62,8 +60,8 @@ public class RuntimeStepExecutionTools {
                     runtimeName,
                     stageName,
                     stepName,
-                    reportException.getClass(),
-                    reportException,
+                    reportException.getCause().getClass(),
+                    reportException.getCause(),
                     reportCode,
                     aborted, executableReference));
             if (aborted) {

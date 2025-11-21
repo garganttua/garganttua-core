@@ -196,7 +196,7 @@ public class ObjectReflectionHelper {
 			return method.invoke(object, args);
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new ReflectionException(
-					"Cannot invoke method " + methodName + " of object " + object.getClass().getName(), e);
+					"Cannot invoke method " + methodName + " of object " + object.getClass().getName(), e.getCause());
 		}
 	}
 

@@ -1,6 +1,8 @@
 package com.garganttua.core.runtime;
 
 import java.time.Duration;
+import java.util.Optional;
+import java.util.Set;
 
 public interface IRuntimeResult<InputType, OutputType> {
 
@@ -19,5 +21,11 @@ public interface IRuntimeResult<InputType, OutputType> {
     String prettyDurationInNanos();
 
     Integer code();
+
+    Set<RuntimeExceptionRecord> getExceptions();
+
+    Optional<RuntimeExceptionRecord> getAbortingException();
+
+    boolean hasAborted();
 
 }

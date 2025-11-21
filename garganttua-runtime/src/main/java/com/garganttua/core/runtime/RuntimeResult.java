@@ -2,6 +2,7 @@ package com.garganttua.core.runtime;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -14,8 +15,22 @@ public record RuntimeResult<InputType, OutputType>(
         long startNano,
         long stopNano,
         Integer code,
-        Set<RuntimeExceptionRecord> recordedException
-) implements IRuntimeResult<InputType, OutputType> {
+        Set<RuntimeExceptionRecord> recordedExceptions) implements IRuntimeResult<InputType, OutputType> {
+
+    @Override
+    public boolean hasAborted(){
+        return this.getAbortingException().isPresent();
+    }
+
+    @Override
+    public Optional<RuntimeExceptionRecord> getAbortingException() {
+        return this.recordedExceptions.stream().filter(e -> e.hasAborted()).findFirst();
+    }
+
+    @Override
+    public Set<RuntimeExceptionRecord> getExceptions() {
+        return this.recordedExceptions;
+    }
 
     @Override
     public Duration duration() {
@@ -38,7 +53,7 @@ public record RuntimeResult<InputType, OutputType>(
     }
 
     // =======================================
-    //  DURATIONS — COLOR
+    // DURATIONS — COLOR
     // =======================================
 
     @Override
@@ -61,7 +76,7 @@ public record RuntimeResult<InputType, OutputType>(
     }
 
     // =======================================
-    //  DURATIONS — PLAIN (NO COLORS)
+    // DURATIONS — PLAIN (NO COLORS)
     // =======================================
 
     public String prettyDurationPlain() {
@@ -77,7 +92,7 @@ public record RuntimeResult<InputType, OutputType>(
     }
 
     // =======================================
-    //  NANOS — COLOR
+    // NANOS — COLOR
     // =======================================
 
     public static String prettyNanoColor(long nanos) {
@@ -106,7 +121,7 @@ public record RuntimeResult<InputType, OutputType>(
     }
 
     // =======================================
-    //  NANOS — PLAIN (NO COLORS)
+    // NANOS — PLAIN (NO COLORS)
     // =======================================
 
     public static String prettyNano(long nanos) {

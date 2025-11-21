@@ -33,6 +33,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -62,7 +63,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 
 @Execution(ExecutionMode.CONCURRENT)
-// @Disabled("Performances tests, too heavy for standard build")
+@Disabled("Performances tests, too heavy for standard build")
 public class PerformancesTest {
 
         @BeforeAll

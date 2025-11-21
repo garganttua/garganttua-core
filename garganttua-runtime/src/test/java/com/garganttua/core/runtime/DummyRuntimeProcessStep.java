@@ -31,7 +31,7 @@ public class DummyRuntimeProcessStep {
     @Condition
     IConditionBuilder condition = custom(of(10), i -> 1 > 0);
 
-    @Operation
+    @Operation(abortOnUncatchedException=true)
     @Output
     @Catch(exception = DiException.class, code = 401)
     @Variable(name = "method-returned")

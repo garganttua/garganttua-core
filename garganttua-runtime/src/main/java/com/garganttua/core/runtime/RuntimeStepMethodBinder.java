@@ -27,11 +27,12 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     private final String stageName;
     private final String stepName;
     private final Optional<ICondition> condition;
+    private final Boolean abortOnUncatchedException;
 
     public RuntimeStepMethodBinder(String runtimeName, String stageName, String stepName,
             IContextualMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>> delegate,
             Optional<String> variable, boolean isOutput, Integer successCode, Set<IRuntimeStepCatch> catches,
-            Optional<ICondition> condition) {
+            Optional<ICondition> condition, Boolean abortOnUncatchedException) {
         this.runtimeName = Objects.requireNonNull(runtimeName, "runtimeName cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "stageName cannot be null");
         this.stepName = Objects.requireNonNull(stepName, "stepName cannot be null");
@@ -41,6 +42,8 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         this.code = Objects.requireNonNull(successCode, "Success code cannot be null");
         this.catches = Set.copyOf(Objects.requireNonNull(catches, "Catches cannot be null"));
         this.condition = Objects.requireNonNull(condition, "Condition optional cannot be null");
+        this.abortOnUncatchedException = Objects.requireNonNull(abortOnUncatchedException,
+                "abortOnUncatchedException cannot be null");
     }
 
     @Override
@@ -93,7 +96,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     public void execute(IRuntimeContext<InputType, OutputType> context,
             IExecutorChain<IRuntimeContext<InputType, OutputType>> next) throws ExecutorException {
 
-        if (!condition.map(ICondition::evaluate).orElse(true)){
+        if (!condition.map(ICondition::evaluate).orElse(true)) {
             next.execute(context);
             return;
         }
@@ -103,22 +106,23 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             returned = execute(context).orElse(null);
+            if (isOutput()) {
+                validateReturnedForOutput(this.runtimeName, this.stageName, this.stepName, returned, context,
+                        nullable(),
+                        logLineHeader(), getExecutableReference());
+                context.setOutput((OutputType) returned);
+                setCode(context);
+            }
+
+            if (variable.isPresent())
+                validateAndStoreReturnedValueInVariable(this.runtimeName, this.stageName, this.stepName, variable.get(),
+                        returned, context, nullable(), logLineHeader(), getExecutableReference());
         } catch (Exception e) {
             IRuntimeStepCatch matchedCatch = findMatchingCatch(e);
-            handleException(this.runtimeName, this.stageName, this.stepName, context, e, false,
+            handleException(this.runtimeName, this.stageName, this.stepName, context, e,
+                    e == null && this.abortOnUncatchedException || e != null,
                     this.getExecutableReference(), matchedCatch, logLineHeader());
         }
-
-        if (isOutput()) {
-            validateReturnedForOutput(this.runtimeName, this.stageName, this.stepName, returned, context, nullable(),
-                    logLineHeader(), getExecutableReference());
-            context.setOutput((OutputType) returned);
-            setCode(context);
-        }
-
-        if (variable.isPresent())
-            validateAndStoreReturnedValueInVariable(this.runtimeName, this.stageName, this.stepName, variable.get(),
-                    returned, context, nullable(), logLineHeader(), getExecutableReference());
 
         next.execute(context);
     }

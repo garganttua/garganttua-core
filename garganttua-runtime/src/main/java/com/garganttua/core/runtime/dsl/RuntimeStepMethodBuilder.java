@@ -26,6 +26,7 @@ import com.garganttua.core.runtime.RuntimeStepMethodBinder;
 import com.garganttua.core.runtime.annotations.Catch;
 import com.garganttua.core.runtime.annotations.Code;
 import com.garganttua.core.runtime.annotations.Condition;
+import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supplying.IObjectSupplier;
@@ -45,6 +46,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     private String stageName;
     private String runtimeName;
     private IConditionBuilder conditionBuilder;
+    private Boolean abortOnUncatchedException = false;
 
     protected RuntimeStepMethodBuilder(String runtimeName,
             String stageName, String stepName,
@@ -128,7 +130,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
         return new RuntimeStepMethodBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
                 this.stepName, binder,
-                Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, builtCatches, Optional.ofNullable(condition));
+                Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, builtCatches, Optional.ofNullable(condition), abortOnUncatchedException);
     }
 
     @Override
@@ -142,11 +144,17 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         super.doAutoDetection();
 
         Method method = this.findMethod();
+        detectAbortOnUncatchedException(method);
         detectCatches(method);
         detectCondition();
         detectOutput(method);
         detectVariable(method);
         detectCode(method);
+    }
+
+    private void detectAbortOnUncatchedException(Method method) {
+        Operation operation = method.getAnnotation(Operation.class);
+        this.abortOnUncatchedException = operation.abortOnUncatchedException();
     }
 
     private void detectCatches(Method method) {
@@ -191,5 +199,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         if (operationMethod.getAnnotation(Output.class) != null) {
             method().output(true);
         }
+    }
+
+    @Override
+    public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> abortOnUncatchedException(
+            boolean abort) {
+        this.abortOnUncatchedException = Objects.requireNonNull(abort, "Abort cannot be null");
+        return this;
     }
 }
