@@ -51,11 +51,15 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
         log.atInfo().log("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Optional<IRuntimeResult<InputType, OutputType>> execute(InputType input) throws RuntimeException {
+        return this.execute(UuidCreator.getTimeOrderedEpoch(), input);
+    }
 
-        UUID uuid = UuidCreator.getTimeOrderedEpoch();
+    @SuppressWarnings("unchecked")
+    @Override
+    public Optional<IRuntimeResult<InputType, OutputType>> execute(UUID uuid, InputType input) throws RuntimeException {
+                
         MDC.put("uuid", uuid.toString());
 
         log.atInfo()
@@ -127,6 +131,9 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
 
             log.atInfo()
                     .log("Runtime execution finished");
+
+            MDC.remove("uuid");
+            MDC.clear();
         }
 
         return Optional.ofNullable(result);
