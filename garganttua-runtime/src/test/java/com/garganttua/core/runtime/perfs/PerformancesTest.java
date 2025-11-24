@@ -315,11 +315,12 @@ public class PerformancesTest {
                 tableTitle.setSpacingAfter(10);
                 document.add(tableTitle);
 
-                PdfPTable table = new PdfPTable(6);
+                PdfPTable table = new PdfPTable(7);
                 table.setWidthPercentage(100);
-                table.setWidths(new float[] { 10f, 20f, 20f, 20f, 20f, 30f });
+                table.setWidths(new float[] { 10f, 10f, 20f, 20f, 20f, 20f, 30f });
 
                 addCellHeader(table, "Runs");
+                addCellHeader(table, "Loss");
                 addCellHeader(table, "Avg (ns)");
                 addCellHeader(table, "Min (ns)");
                 addCellHeader(table, "Max (ns)");
@@ -328,6 +329,7 @@ public class PerformancesTest {
 
                 for (TestPerfReport r : reports) {
                         table.addCell(String.valueOf(r.runs()));
+                        table.addCell(String.valueOf(r.lossRate()));
                         table.addCell(RuntimeResult.prettyNano(r.avg()));
                         table.addCell(RuntimeResult.prettyNano(r.min()));
                         table.addCell(RuntimeResult.prettyNano(r.max()));
@@ -463,6 +465,6 @@ public class PerformancesTest {
 
                 Instant stop = Instant.now();
 
-                return new TestPerfReport(runs, avg, min, max, total, Duration.between(start, stop));
+                return new TestPerfReport(runs, futures.size(), avg, min, max, total, Duration.between(start, stop));
         }
 }

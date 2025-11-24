@@ -19,7 +19,7 @@ import com.garganttua.core.runtime.dsl.IRuntimeStepBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 
-class RuntimeBuilderTest {
+class OneStepRuntimeTest {
 
     @BeforeAll
     static void setup() {
@@ -80,7 +80,7 @@ class RuntimeBuilderTest {
                 .withParam(code())
                 .withParam(exceptionMessage())
                 .withParam(context())
-                .up(); // end fallback, step, stage
+                .up();
     }
 
     // -------------------------------------------------------------------------
