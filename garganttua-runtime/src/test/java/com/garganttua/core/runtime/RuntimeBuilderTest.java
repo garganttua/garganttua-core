@@ -204,7 +204,7 @@ class RuntimeBuilderTest {
             assertEquals(1, result.get().getExceptions().size());
             assertTrue(result.get().hasAborted());
             assertTrue(result.get().getAbortingException().isPresent());
-            assertEquals("input-processed-fixed-value-in-method-custom-exception", result.get().getAbortingException().get().exceptionMessage());
+            assertEquals("input-processed-fixed-value-in-method-di-exception", result.get().getAbortingException().get().exceptionMessage());
         });
 
     }

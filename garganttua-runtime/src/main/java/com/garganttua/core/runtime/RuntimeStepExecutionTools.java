@@ -37,31 +37,30 @@ public class RuntimeStepExecutionTools {
             boolean forceAbort, String executableReference, IRuntimeStepCatch matchedCatch, String logLineHeader)
             throws ExecutorException {
 
-        Throwable reportException = exception;
+        Throwable reportException = findExceptionForReport(exception, matchedCatch);
         int reportCode = IRuntime.GENERIC_RUNTIME_ERROR_CODE;
         boolean aborted = forceAbort;
 
         try {
-            if (forceAbort) {
-                aborted = true;
-                throw new ExecutorException(logLineHeader + "Error during step execution", exception);
-            }
 
             if (matchedCatch != null) {
-                reportException = findExceptionForReport(exception, matchedCatch);
                 reportCode = matchedCatch.code();
                 aborted = true;
 
                 throw new ExecutorException(logLineHeader + "Error during step execution", exception);
             }
 
+            if (forceAbort) {
+                aborted = true;
+                throw new ExecutorException(logLineHeader + "Error during step execution", exception);
+            }
         } finally {
             context.recordException(new RuntimeExceptionRecord(
                     runtimeName,
                     stageName,
                     stepName,
-                    reportException.getCause().getClass(),
-                    reportException.getCause(),
+                    reportException.getClass(),
+                    reportException,
                     reportCode,
                     aborted, executableReference));
             if (aborted) {
@@ -72,12 +71,15 @@ public class RuntimeStepExecutionTools {
 
     static public Throwable findExceptionForReport(Throwable exception, IRuntimeStepCatch matchedCatch) {
         Throwable reportException;
-        Optional<? extends Throwable> found = CoreException
-                .findFirstInException(exception, matchedCatch.exception());
+        Optional<? extends Throwable> found = Optional.empty();
+        if (matchedCatch != null)
+            found = CoreException
+                    .findFirstInException(exception, matchedCatch.exception());
+
         if (found.isPresent()) {
             reportException = found.get();
         } else {
-            reportException = exception;
+            reportException = exception.getCause();
         }
         return reportException;
     }
