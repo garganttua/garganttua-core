@@ -4,11 +4,15 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.MDC;
 
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.supplying.IObjectSupplier;
+import com.github.f4b6a3.uuid.UuidCreator;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,6 +55,9 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
     @Override
     public Optional<IRuntimeResult<InputType, OutputType>> execute(InputType input) throws RuntimeException {
 
+        UUID uuid = UuidCreator.getTimeOrderedEpoch();
+        MDC.put("uuid", uuid.toString());
+
         log.atInfo()
                 .log("Starting runtime execution");
 
@@ -67,7 +74,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
                     .log("Creating runtime context");
 
             runtimeContext = this.diContext
-                    .newChildContext(IRuntimeContext.class, input, this.outputType, this.presetVariables);
+                    .newChildContext(IRuntimeContext.class, input, this.outputType, this.presetVariables, uuid);
 
             runtimeContext.onInit().onStart();
 

@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime;
 
 import java.util.Map;
+import java.util.UUID;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiChildContextFactory;
@@ -20,9 +21,10 @@ public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeCon
         Object input = args[0];
         Class<?> outputType = (Class<?>) args[1];
         Map<String, IObjectSupplier<?>> presetVariables = (Map<String, IObjectSupplier<?>>) args[2];
+        UUID uuid = (UUID) args[3];
 
         log.atDebug().log("[RuntimeContextFactory.createChildContext] Creating RuntimeContext with input={}, outputType={}, presetVariables={}", input, outputType, presetVariables);
-        IRuntimeContext<?, ?> context = new RuntimeContext<>(parent, input, outputType, presetVariables);
+        IRuntimeContext<?, ?> context = new RuntimeContext<>(parent, input, outputType, presetVariables, uuid);
         log.atInfo().log("[RuntimeContextFactory.createChildContext] RuntimeContext created with uuid={}", context.uuid());
 
         return context;
