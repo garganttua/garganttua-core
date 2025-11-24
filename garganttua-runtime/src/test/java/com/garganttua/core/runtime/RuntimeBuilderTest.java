@@ -6,8 +6,6 @@ import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,332 +15,176 @@ import com.garganttua.core.injection.context.DiContext;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.runtime.dsl.IRuntimeStepBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
-import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
 
 class RuntimeBuilderTest {
 
     @BeforeAll
-    public static void setup() {
+    static void setup() {
         ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
     }
 
-    @Test
-    public void builtAutoDetectedRuntimesShouldContain() {
-        IRuntimesBuilder t = RuntimesBuilder.builder();
-
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
+    private IDiContextBuilder contextBuilder() {
+        return DiContext.builder()
+                .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
+    }
 
-        assertTrue(t.context(contextBuilder).autoDetect(true).build().containsKey("runtime-1"));
-        assertTrue(t.context(contextBuilder).autoDetect(true).build()
-                .containsKey("RuntimeWithCatchedExceptionAndHandledByFallback"));
+    private IRuntimesBuilder builder() {
+        IDiContextBuilder ctx = contextBuilder();
+        ctx.build().onInit().onStart();
+        return RuntimesBuilder.builder().context(ctx);
+    }
+
+    private IRuntime<String, String> get(IRuntimesBuilder b) {
+        Map<String, IRuntime<?, ?>> runtimes = b.build();
+        assertEquals(1, runtimes.size());
+        return cast(runtimes.get("runtime-1"));
     }
 
     @SuppressWarnings("unchecked")
-    @Test
-    public void simpleRuntimeBuilderTest() {
+    private <T> T cast(Object o) {
+        return (T) o;
+    }
 
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
-        IRuntimesBuilder t = RuntimesBuilder.builder();
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
-
-        Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder)
-                .runtime("runtime-1", String.class, String.class)
-                .variable("variable", of("preset-variable"))
+    private IRuntimeStepBuilder<String, DummyRuntimeProcessStep, String, String> baseRuntime(IRuntimesBuilder b,
+            DummyRuntimeProcessStep step) {
+        return b.runtime("runtime-1", String.class, String.class)
                 .stage("stage-1")
-                .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
+                .step("step-1", of(step), String.class)
                 .method()
-                .condition(custom(of(10), i -> 1 > 0))
+                .condition(custom(of(10), i -> true))
                 .output(true)
                 .variable("method-returned")
                 .method("method")
-                .katch(DiException.class).code(401).up()
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(variable("variable", String.class))
-                .withParam(context()).up()
-                .fallBack()
-                .onException(DiException.class).up()
-                .output(true)
-                .variable("fallback-returned")
-                .method("fallbackMethod")
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(exception(DiException.class))
-                .withParam(code())
-                .withParam(exceptionMessage())
-                .withParam(context()).up()
-                .up().up().up()
-                .build();
-
-        assertNotNull(runtimes);
-        assertEquals(1, runtimes.size());
-
-        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
-
-        assertDoesNotThrow(() -> {
-            Optional<IRuntimeResult<String, String>> result = runtime.execute("input");
-            assertEquals("input-processed-fixed-value-in-method-preset-variable", result.get().output());
-
-            System.out.println(result.get().output());
-            System.out.println(result.get().prettyDuration());
-        });
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testNotCatchedExceptionThrownByStepAndNotHandledByFallback_abortOnUncatchedException_true() {
-
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
-        IRuntimesBuilder t = RuntimesBuilder.builder();
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
-
-        Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder)
-                .runtime("runtime-1", String.class, String.class)
-                .variable("variable", of("custom-exception"))
-                .stage("stage-1")
-                .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
-                .method()
-                .condition(custom(of(10), i -> 1 > 0))
-                .output(true)
-                .variable("method-returned")
-                .method("method")
-                .katch(DiException.class).code(401).up()
-                .abortOnUncatchedException(true)
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(variable("variable", String.class))
-                .withParam(context()).up()
-                .fallBack()
-                .onException(DiException.class).up()
-                .output(true)
-                .variable("fallback-returned")
-                .method("fallbackMethod")
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(exception(DiException.class))
-                .withParam(code())
-                .withParam(exceptionMessage())
-                .withParam(context()).up()
-                .up().up().up()
-                .build();
-
-        assertNotNull(runtimes);
-        assertEquals(1, runtimes.size());
-
-        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
-
-        assertDoesNotThrow(() -> {
-            Optional<IRuntimeResult<String, String>> result = runtime.execute("input");
-
-            assertEquals(1, result.get().getExceptions().size());
-            assertTrue(result.get().hasAborted());
-            assertTrue(result.get().getAbortingException().isPresent());
-            assertEquals("input-processed-fixed-value-in-method-custom-exception", result.get().getAbortingException().get().exceptionMessage());
-            assertEquals(IRuntime.GENERIC_RUNTIME_ERROR_CODE, result.get().code());
-        });
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testNotCatchedExceptionThrownByStepAndNotHandledByFallback_abortOnUncatchedException_false_step_return_not_nullable() {
-
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
-        IRuntimesBuilder t = RuntimesBuilder.builder();
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
-
-        Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder)
-                .runtime("runtime-1", String.class, String.class)
-                .variable("variable", of("custom-exception"))
-                .stage("stage-1")
-                .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
-                .method()
-                .condition(custom(of(10), i -> 1 > 0))
-                .output(true)
-                .variable("method-returned")
                 .code(201)
-                .method("method")
                 .katch(DiException.class).code(401).up()
-                .abortOnUncatchedException(false)
                 .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
+                .withParam(of("fixed-value-in-method"))
                 .withParam(variable("variable", String.class))
-                .withParam(context()).up()
-                .fallBack()
+                .withParam(context()).up();
+    }
+
+    private IRuntimeStepBuilder<String, DummyRuntimeProcessStep, String, String> baseFallback(
+            IRuntimeStepBuilder<String, DummyRuntimeProcessStep, String, String> b) {
+        return b.fallBack()
                 .onException(DiException.class).up()
                 .output(true)
                 .variable("fallback-returned")
                 .method("fallbackMethod")
                 .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
+                .withParam(of("fixed-value-in-method"))
                 .withParam(exception(DiException.class))
                 .withParam(code())
                 .withParam(exceptionMessage())
-                .withParam(context()).up()
-                .up().up().up()
-                .build();
-
-        assertNotNull(runtimes);
-        assertEquals(1, runtimes.size());
-
-        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
-
-        assertDoesNotThrow(() -> {
-            Optional<IRuntimeResult<String, String>> result = runtime.execute("input");
-
-            assertEquals(2, result.get().getExceptions().size());
-            assertTrue(result.get().hasAborted());
-            assertTrue(result.get().getAbortingException().isPresent());
-            assertEquals(IRuntime.GENERIC_RUNTIME_ERROR_CODE, result.get().code());
-        });
-
+                .withParam(context())
+                .up(); // end fallback, step, stage
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testNotCatchedExceptionThrownByStepAndNotHandledByFallback_abortOnUncatchedException_false_step_return_nullable() {
+    // -------------------------------------------------------------------------
+    // TESTS
+    // -------------------------------------------------------------------------
 
+    @Test
+    void builtAutoDetectedRuntimesShouldContain() {
+        IRuntimesBuilder t = builder();
+        Map<String, IRuntime<?, ?>> runtimes = t.autoDetect(true).build();
+
+        assertTrue(runtimes.containsKey("runtime-1"));
+        assertTrue(runtimes.containsKey("RuntimeWithCatchedExceptionAndHandledByFallback"));
+    }
+
+    @Test
+    void simpleRuntimeBuilderTest() {
         DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
-        IRuntimesBuilder t = RuntimesBuilder.builder();
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
 
-        Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder)
-                .runtime("runtime-1", String.class, String.class)
-                .variable("variable", of("custom-exception"))
-                .stage("stage-1")
-                .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
-                .method()
-                .condition(custom(of(10), i -> 1 > 0))
-                .output(true)
-                .variable("method-returned")
-                .code(201)
-                .nullable(true)
-                .method("method")
-                .katch(DiException.class).code(401).up()
-                .abortOnUncatchedException(false)
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(variable("variable", String.class))
-                .withParam(context()).up()
-                .fallBack()
-                .onException(DiException.class).up()
-                .output(true)
-                .variable("fallback-returned")
-                .nullable(true)
-                .method("fallbackMethod")
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(exception(DiException.class))
-                .withParam(code())
-                .withParam(exceptionMessage())
-                .withParam(context()).up()
-                .up().up().up()
-                .build();
+        IRuntimesBuilder b = baseFallback(
+                baseRuntime(builder(), step)).up().up().variable("variable", of("preset-variable")).up();
 
-        assertNotNull(runtimes);
-        assertEquals(1, runtimes.size());
-
-        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
+        IRuntime<String, String> runtime = get(b);
 
         assertDoesNotThrow(() -> {
-            Optional<IRuntimeResult<String, String>> result = runtime.execute("input");
-
-            assertEquals(1, result.get().getExceptions().size());
-            assertFalse(result.get().hasAborted());
-            assertFalse(result.get().getAbortingException().isPresent());
-            assertEquals(201, result.get().code());
+            var result = runtime.execute("input").orElseThrow();
+            assertEquals("input-processed-fixed-value-in-method-preset-variable", result.output());
         });
-
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testCatchedExceptionThrownByStepAndHandledByFallback() {
-
+    void uncatchedException_abort_true() {
         DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
-        IRuntimesBuilder t = RuntimesBuilder.builder();
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
 
-        Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder)
-                .runtime("runtime-1", String.class, String.class)
-                .variable("variable", of("di-exception"))
-                .stage("stage-1")
-                .step("step-1", FixedObjectSupplierBuilder.of(step), String.class)
-                .method()
-                .condition(custom(of(10), i -> 1 > 0))
-                .output(true)
-                .variable("method-returned")
-                .method("method")
-                .katch(DiException.class).code(401).up()
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(variable("variable", String.class))
-                .withParam(context()).up()
-                .fallBack()
-                .onException(DiException.class).up()
-                .output(true)
-                .variable("fallback-returned")
-                .method("fallbackMethod")
-                .withParam(input(String.class))
-                .withParam(FixedObjectSupplierBuilder.of("fixed-value-in-method"))
-                .withParam(exception(DiException.class))
-                .withParam(code())
-                .withParam(exceptionMessage())
-                .withParam(context()).up()
-                .up().up().up()
-                .build();
+        IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
+                .abortOnUncatchedException(true).up()).up().up().variable("variable", of("custom-exception")).up();
 
-        assertNotNull(runtimes);
-        assertEquals(1, runtimes.size());
+        IRuntime<String, String> runtime = get(b);
 
-        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
+        var r = runtime.execute("input").orElseThrow();
 
-        assertDoesNotThrow(() -> {
-            Optional<IRuntimeResult<String, String>> result = runtime.execute("input");
-            assertEquals("input-fallback-fixed-value-in-method-401-input-processed-fixed-value-in-method-di-exception",
-                    result.get().output());
-
-            assertEquals(1, result.get().getExceptions().size());
-            assertTrue(result.get().hasAborted());
-            assertTrue(result.get().getAbortingException().isPresent());
-            assertEquals("input-processed-fixed-value-in-method-di-exception", result.get().getAbortingException().get().exceptionMessage());
-        });
-
+        assertEquals(1, r.getExceptions().size());
+        assertTrue(r.hasAborted());
+        assertTrue(r.getAbortingException().isPresent());
+        assertEquals(IRuntime.GENERIC_RUNTIME_ERROR_CODE, r.code());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testAutoDetectionBuild() throws InterruptedException, ExecutionException {
+    void uncatchedException_abort_false_stepNotNullable() {
+        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
 
-        IRuntimesBuilder t = RuntimesBuilder.builder();
+        IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
+                .abortOnUncatchedException(false).up()).up().up().variable("variable", of("custom-exception"))
+                .up();
 
-        IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
-        contextBuilder.build().onInit().onStart();
+        IRuntime<String, String> runtime = get(b);
 
-        Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder).autoDetect(true).build();
-        IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
+        var r = runtime.execute("input").orElseThrow();
 
-        Optional<IRuntimeResult<String, String>> result = runtime.execute("input");
-
-        assertEquals("input-processed-fixed-value-in-method-preset-variable", result.get().output());
-        assertEquals(201, result.get().code());
-
+        assertEquals(2, r.getExceptions().size());
+        assertTrue(r.hasAborted());
     }
 
+    @Test
+    void uncatchedException_abort_false_stepNullable() {
+        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+
+        IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
+                .nullable(true).abortOnUncatchedException(false).up()).up().up().variable("variable", of("custom-exception"))
+                .up();
+
+        IRuntime<String, String> runtime = get(b);
+
+        var r = runtime.execute("input").orElseThrow();
+
+        assertEquals(1, r.getExceptions().size());
+        assertFalse(r.hasAborted());
+        assertEquals(201, r.code());
+    }
+
+    @Test
+    void catchedExceptionHandledByFallback() {
+        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+
+        IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step)).up().up().variable("variable", of("di-exception")).up();
+
+        IRuntime<String, String> runtime = get(b);
+
+        var r = runtime.execute("input").orElseThrow();
+
+        assertEquals(1, r.getExceptions().size());
+        assertTrue(r.hasAborted());
+        assertTrue(r.getAbortingException().isPresent());
+    }
+
+    @Test
+    void autodetectionBuild() throws Exception {
+        IRuntimesBuilder t = builder();
+        Map<String, IRuntime<?, ?>> runtimes = t.autoDetect(true).build();
+
+        IRuntime<String, String> runtime = cast(runtimes.get("runtime-1"));
+        var r = runtime.execute("input").orElseThrow();
+
+        assertEquals("input-processed-fixed-value-in-method-preset-variable", r.output());
+        assertEquals(201, r.code());
+    }
 }
