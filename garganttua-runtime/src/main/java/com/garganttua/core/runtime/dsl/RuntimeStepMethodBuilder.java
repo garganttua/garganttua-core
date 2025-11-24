@@ -32,6 +32,8 @@ import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import jakarta.annotation.Nullable;
+
 public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
         implements
@@ -47,6 +49,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     private String runtimeName;
     private IConditionBuilder conditionBuilder;
     private Boolean abortOnUncatchedException = false;
+    private Boolean nullable = false;
 
     protected RuntimeStepMethodBuilder(String runtimeName,
             String stageName, String stepName,
@@ -130,7 +133,8 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
         return new RuntimeStepMethodBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
                 this.stepName, binder,
-                Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, builtCatches, Optional.ofNullable(condition), abortOnUncatchedException);
+                Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, builtCatches,
+                Optional.ofNullable(condition), this.abortOnUncatchedException, this.nullable);
     }
 
     @Override
@@ -150,6 +154,15 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         detectOutput(method);
         detectVariable(method);
         detectCode(method);
+        detectNullable(method);
+    }
+
+    private void detectNullable(Method operationMethod) {
+        Nullable nullable = operationMethod.getAnnotation(Nullable.class);
+
+        if (nullable != null) {
+            this.nullable = true;
+        }
     }
 
     private void detectAbortOnUncatchedException(Method method) {
@@ -159,7 +172,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
 
     private void detectCatches(Method method) {
         Catch[] catchAnnotations = method.getAnnotationsByType(Catch.class);
-        for (Catch catchAnnotation: catchAnnotations) {
+        for (Catch catchAnnotation : catchAnnotations) {
             katch(catchAnnotation.exception(), catchAnnotation).autoDetect(true);
         }
     }
@@ -205,6 +218,13 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> abortOnUncatchedException(
             boolean abort) {
         this.abortOnUncatchedException = Objects.requireNonNull(abort, "Abort cannot be null");
+        return this;
+    }
+
+    @Override
+    public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
+            boolean nullable) {
+        this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
         return this;
     }
 }

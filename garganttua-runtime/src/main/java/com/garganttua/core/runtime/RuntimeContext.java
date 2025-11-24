@@ -46,7 +46,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     private long startNano;
     private long stopNano;
     private final UUID uuid;
-    private Integer code;
+    private Integer code = IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
     private final IDiContext delegateContext;
 
     private final Object lifecycleMutex = new Object();

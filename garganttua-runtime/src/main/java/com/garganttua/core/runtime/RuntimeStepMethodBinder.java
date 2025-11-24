@@ -28,11 +28,12 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     private final String stepName;
     private final Optional<ICondition> condition;
     private final Boolean abortOnUncatchedException;
+    private final Boolean nullable;
 
     public RuntimeStepMethodBinder(String runtimeName, String stageName, String stepName,
             IContextualMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>> delegate,
             Optional<String> variable, boolean isOutput, Integer successCode, Set<IRuntimeStepCatch> catches,
-            Optional<ICondition> condition, Boolean abortOnUncatchedException) {
+            Optional<ICondition> condition, Boolean abortOnUncatchedException, Boolean nullable) {
         this.runtimeName = Objects.requireNonNull(runtimeName, "runtimeName cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "stageName cannot be null");
         this.stepName = Objects.requireNonNull(stepName, "stepName cannot be null");
@@ -44,6 +45,8 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         this.condition = Objects.requireNonNull(condition, "Condition optional cannot be null");
         this.abortOnUncatchedException = Objects.requireNonNull(abortOnUncatchedException,
                 "abortOnUncatchedException cannot be null");
+        this.nullable = Objects.requireNonNull(nullable,
+                "nullable cannot be null");
     }
 
     @Override
@@ -89,10 +92,9 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
     @Override
     public boolean nullable() {
-        return false;
+        return this.nullable;
     }
 
-    @SuppressWarnings("unchecked")
     public void execute(IRuntimeContext<InputType, OutputType> context,
             IExecutorChain<IRuntimeContext<InputType, OutputType>> next) throws ExecutorException {
 
@@ -106,25 +108,32 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             returned = execute(context).orElse(null);
-            if (isOutput()) {
-                validateReturnedForOutput(this.runtimeName, this.stageName, this.stepName, returned, context,
-                        nullable(),
-                        logLineHeader(), getExecutableReference());
-                context.setOutput((OutputType) returned);
-                setCode(context);
-            }
-
-            if (variable.isPresent())
-                validateAndStoreReturnedValueInVariable(this.runtimeName, this.stageName, this.stepName, variable.get(),
-                        returned, context, nullable(), logLineHeader(), getExecutableReference());
+            processExecutionReturn(context, variable, returned);
         } catch (Exception e) {
             IRuntimeStepCatch matchedCatch = findMatchingCatch(e);
+            boolean forceAbort = matchedCatch == null && this.abortOnUncatchedException || matchedCatch != null;
             handleException(this.runtimeName, this.stageName, this.stepName, context, e,
-                    e == null && this.abortOnUncatchedException || e != null,
+                    forceAbort,
                     this.getExecutableReference(), matchedCatch, logLineHeader());
+            if (!forceAbort)
+                processExecutionReturn(context, variable, returned);
         }
 
         next.execute(context);
+    }
+
+    private void processExecutionReturn(IRuntimeContext<InputType, OutputType> context, Optional<String> variable,
+            ExecutionReturned returned) {
+        if (isOutput()) {
+            validateReturnedForOutput(this.runtimeName, this.stageName, this.stepName, returned, context,
+                    nullable(),
+                    logLineHeader(), getExecutableReference());
+            setCode(context);
+        }
+
+        if (variable.isPresent())
+            validateAndStoreReturnedValueInVariable(this.runtimeName, this.stageName, this.stepName, variable.get(),
+                    returned, context, nullable(), logLineHeader(), getExecutableReference());
     }
 
     private IRuntimeStepCatch findMatchingCatch(Throwable exception) {

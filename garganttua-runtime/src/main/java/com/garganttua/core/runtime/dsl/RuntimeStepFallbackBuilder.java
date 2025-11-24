@@ -21,6 +21,8 @@ import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import jakarta.annotation.Nullable;
+
 public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
         implements
@@ -32,6 +34,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     private String stepName;
     private String stageName;
     private String runtimeName;
+    private Boolean nullable = false;
 
     protected RuntimeStepFallbackBuilder(String runtimeName,
             String stageName, String stepName,
@@ -71,7 +74,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         return new RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
                 this.stepName, binder,
                 Optional.ofNullable(this.storeReturnInVariable), this.output,
-                this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()));
+                this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()), this.nullable);
     }
 
     @Override
@@ -100,7 +103,16 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         detectOutput(method);
         detectVariable(method);
         detectOnExceptions(method);
+        detectNullable(method);
 
+    }
+
+    private void detectNullable(Method method) {
+        Nullable nullable = method.getAnnotation(Nullable.class);
+
+        if (nullable != null) {
+            this.nullable = true;
+        }
     }
 
     private void detectOnExceptions(Method method) {
@@ -121,5 +133,12 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         if (operationMethod.getAnnotation(Output.class) != null) {
             method().output(true);
         }
+    }
+
+    @Override
+    public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
+            boolean nullable) {
+        this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
+        return this;
     }
 }

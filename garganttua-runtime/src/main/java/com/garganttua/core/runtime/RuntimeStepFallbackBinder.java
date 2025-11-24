@@ -22,10 +22,11 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     private final Optional<String> variable;
     private final Boolean isOutput;
     private final List<IRuntimeStepOnException> onExceptions;
+    private final Boolean nullable;
 
     public RuntimeStepFallbackBinder(String runtimeName, String stageName, String stepName,
             IContextualMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>> delegate,
-            Optional<String> variable, Boolean isOutput, List<IRuntimeStepOnException> onExceptions) {
+            Optional<String> variable, Boolean isOutput, List<IRuntimeStepOnException> onExceptions, Boolean nullable) {
         this.runtimeName = Objects.requireNonNull(runtimeName, "runtimeName cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "stageName cannot be null");
         this.stepName = Objects.requireNonNull(stepName, "stepName cannot be null");
@@ -33,6 +34,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         this.variable = Objects.requireNonNull(variable, "Variable optional cannot be null");
         this.isOutput = Objects.requireNonNull(isOutput, "Is output cannot be null");
         this.onExceptions = List.copyOf(Objects.requireNonNull(onExceptions, "OnException list cannot be null"));
+        this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
     }
 
     @Override
@@ -73,7 +75,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
 
     @Override
     public boolean nullable() {
-        return false;
+        return nullable;
     }
 
     @SuppressWarnings("unchecked")

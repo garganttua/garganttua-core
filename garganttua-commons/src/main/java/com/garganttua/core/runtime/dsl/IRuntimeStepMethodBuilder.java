@@ -27,4 +27,7 @@ public interface IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, Inpu
 
         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> abortOnUncatchedException(
                         boolean abort);
+
+        IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
+                        boolean nullable);
 }

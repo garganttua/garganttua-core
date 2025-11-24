@@ -28,7 +28,8 @@ public class RuntimeStepExecutionTools {
             return;
         }
 
-        context.setVariable(variableName, returned);
+        if (returned != null)
+            context.setVariable(variableName, returned);
     }
 
     static public void handleException(String runtimeName, String stageName, String stepName,
@@ -46,7 +47,6 @@ public class RuntimeStepExecutionTools {
             if (matchedCatch != null) {
                 reportCode = matchedCatch.code();
                 aborted = true;
-
                 throw new ExecutorException(logLineHeader + "Error during step execution", exception);
             }
 
@@ -79,14 +79,17 @@ public class RuntimeStepExecutionTools {
         if (found.isPresent()) {
             reportException = found.get();
         } else {
-            reportException = exception.getCause();
+            reportException = exception.getCause() == null ? exception : exception.getCause();
         }
         return reportException;
     }
 
-    static public void validateReturnedForOutput(String runtimeName, String stageName, String stepName,
-            Object returned,
-            IRuntimeContext<?, ?> context, boolean nullable, String logLineHeader, String executableReference)
+    @SuppressWarnings("unchecked")
+    static public <InputType, OutputType, ExecutionReturned> void validateReturnedForOutput(String runtimeName,
+            String stageName, String stepName,
+            ExecutionReturned returned,
+            IRuntimeContext<InputType, OutputType> context, boolean nullable, String logLineHeader,
+            String executableReference)
             throws ExecutorException {
 
         if (returned == null && !nullable) {
@@ -116,6 +119,9 @@ public class RuntimeStepExecutionTools {
                                     + context.getOutputType().getSimpleName()),
                     true, executableReference, null, logLineHeader);
         }
+
+        if (returned != null)
+            context.setOutput((OutputType) returned);
     }
 
 }
