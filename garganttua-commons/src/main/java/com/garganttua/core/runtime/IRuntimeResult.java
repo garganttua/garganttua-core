@@ -28,4 +28,6 @@ public interface IRuntimeResult<InputType, OutputType> {
 
     boolean hasAborted();
 
+    Object uuid();
+
 }

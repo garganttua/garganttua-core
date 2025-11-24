@@ -10,13 +10,27 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class InputElementResolver implements IElementResolver {
 
     @Override
     public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
-                IObjectSupplierBuilder<?,?> s = input(elementType);
 
-        return new Resolved(true, elementType, s, isNullable(element));
+        log.atTrace()
+                .log("Resolving input element");
+
+        log.atDebug()
+                .log("Preparing input supplier");
+
+        IObjectSupplierBuilder<?, ?> s = input(elementType);
+
+        boolean nullable = isNullable(element);
+
+        log.atInfo()
+                .log("Resolved input element successfully");
+
+        return new Resolved(true, elementType, s, nullable);
     }
-
 }

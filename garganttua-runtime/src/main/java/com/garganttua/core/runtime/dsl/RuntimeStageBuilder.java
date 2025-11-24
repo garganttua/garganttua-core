@@ -30,7 +30,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
         implements IRuntimeStageBuilder<InputType, OutputType> {
 
     private final String stageName;
-    private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?,InputType, OutputType>> steps = new OrderedMapBuilder<>();
+    private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> steps = new OrderedMapBuilder<>();
     private IDiContext context;
     private List<Class<Object>> stepsForAutoDetection;
     private String runtimeName;
@@ -39,20 +39,16 @@ public class RuntimeStageBuilder<InputType, OutputType>
         super(Objects.requireNonNull(up, "Parent RuntimeBuilder cannot be null"));
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
+
+        log.atInfo().log(logLineHeader() + "RuntimeStageBuilder initialized");
     }
 
-    /**
-     * Secondary ctor used only for auto detection
-     * 
-     * @param up
-     * @param stageName
-     * @param stepsForAutoDetection
-     */
     protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String runtimeName, String stageName,
             List<Class<Object>> stepsForAutoDetection) {
         this(up, runtimeName, stageName);
         this.stepsForAutoDetection = Objects.requireNonNull(stepsForAutoDetection,
-                "stepsForAutoDetection name cannot be null");
+                "stepsForAutoDetection cannot be null");
+        log.atInfo().log(logLineHeader() + "RuntimeStageBuilder initialized for auto-detection");
     }
 
     @Override
@@ -60,13 +56,21 @@ public class RuntimeStageBuilder<InputType, OutputType>
             String stepName,
             IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier,
             Class<ExecutionReturn> returnType) {
+
+        log.atTrace()
+                .log(logLineHeader() + "Entering step() method");
+
         Objects.requireNonNull(stepName, "Step name cannot be null");
         Objects.requireNonNull(returnType, "Return type cannot be null");
         Objects.requireNonNull(objectSupplier, "Object supplier builder cannot be null");
+
         IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(
-                this, runtimeName, stageName, stepName,
-                returnType, objectSupplier);
+                this, runtimeName, stageName, stepName, returnType, objectSupplier);
+
         this.steps.put(stepName, stepBuilder);
+        log.atInfo().log(logLineHeader() + "Added step");
+
+        log.atTrace().log(logLineHeader() + "Exiting step() method");
         return stepBuilder;
     }
 
@@ -76,51 +80,88 @@ public class RuntimeStageBuilder<InputType, OutputType>
             OrderedMapPosition<String> position,
             IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier,
             Class<ExecutionReturn> returnType) {
+
+        log.atTrace()
+                .log(logLineHeader() + "Entering step() with position method");
+
         Objects.requireNonNull(stepName, "Step name cannot be null");
         Objects.requireNonNull(returnType, "Return type cannot be null");
         Objects.requireNonNull(objectSupplier, "Object supplier builder cannot be null");
         Objects.requireNonNull(position, "RuntimeStepPosition cannot be null");
+
         IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(
-                this, runtimeName, stageName, stepName,
-                returnType, objectSupplier);
+                this, runtimeName, stageName, stepName, returnType, objectSupplier);
+
         this.steps.putAt(stepName, stepBuilder, position);
+        log.atInfo()
+                .log(logLineHeader() + "Added step at specified position");
+
+        log.atTrace().log(logLineHeader() + "Exiting step() with position method");
         return stepBuilder;
     }
 
     @Override
     public void handle(IDiContext context) {
+        log.atTrace().log(logLineHeader() + "Entering handle() method");
+
         this.context = Objects.requireNonNull(context, "Context cannot be null");
-        this.steps.values().forEach(s -> s.handle(context));
+        this.steps.values().forEach(s -> {
+            log.atDebug().log(logLineHeader() + "Handling individual step");
+            s.handle(context);
+        });
+        log.atInfo().log(logLineHeader() + "Context handled for stage");
+
+        log.atTrace().log(logLineHeader() + "Exiting handle() method");
     }
 
     @Override
     protected IRuntimeStage<InputType, OutputType> doBuild() throws DslException {
-        log.info("Building stage [{}] with {} step(s)", stageName, steps.size());
-        OrderedMap<String, IRuntimeStep<?,InputType, OutputType>> builtSteps = this.steps.build();
-        return new RuntimeStage<>(this.stageName, builtSteps);
+        log.atTrace().log(logLineHeader() + "Entering doBuild() method");
+        log.atInfo().log(logLineHeader() + "Building stage");
+
+        OrderedMap<String, IRuntimeStep<?, InputType, OutputType>> builtSteps = this.steps.build();
+        IRuntimeStage<InputType, OutputType> stage = new RuntimeStage<>(this.stageName, builtSteps);
+
+        log.atTrace()
+                .log(logLineHeader() + "Exiting doBuild() method");
+        return stage;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
+        log.atTrace().log(logLineHeader() + "Entering doAutoDetection() method");
+
         Objects.requireNonNull(this.context, "Context cannot be null");
         Objects.requireNonNull(this.stepsForAutoDetection, "stepsForAutoDetection cannot be null");
 
-        this.stepsForAutoDetection.stream().forEach(c -> {
-            String stepName = UUID.randomUUID().toString();
+        log.atInfo()
+                .log(logLineHeader() + "Performing auto-detection of steps");
 
+        this.stepsForAutoDetection.forEach(c -> {
+            String stepName = UUID.randomUUID().toString();
             Named stepNamedAnnotation = c.getAnnotation(Named.class);
             if (stepNamedAnnotation != null) {
                 stepName = stepNamedAnnotation.value();
             }
-            IObjectSupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
 
-            IRuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this,
-                    runtimeName, stageName, stepName,
-                    Void.class,
-                    supplierBuilder).autoDetect(true);
+            log.atDebug()
+                    .log(logLineHeader() + "Creating auto-detected step");
+
+            IObjectSupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
+            IRuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this, runtimeName,
+                    stageName, stepName, Void.class, supplierBuilder)
+                    .autoDetect(true);
+
             stepBuilder.handle(context);
             this.steps.put(stepName, stepBuilder);
+
+            log.atInfo().log(logLineHeader() + "Auto-detected step registered");
         });
+
+        log.atTrace().log(logLineHeader() + "Exiting doAutoDetection() method");
     }
 
+    private String logLineHeader() {
+        return "[Runtime " + runtimeName + "][Stage " + stageName + "] ";
+    }
 }

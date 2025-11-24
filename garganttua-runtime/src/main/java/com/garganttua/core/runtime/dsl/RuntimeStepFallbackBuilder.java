@@ -22,11 +22,12 @@ import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
-        implements
-        IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
+        implements IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
     private String storeReturnInVariable = null;
     private Boolean output = false;
@@ -46,18 +47,21 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
+        log.atTrace().log("{} Initialized RuntimeStepFallbackBuilder", logLineHeader());
     }
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(
             String variableName) {
         this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
+        log.atInfo().log("{} Variable set for fallback", logLineHeader());
         return this;
     }
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         this.output = Objects.requireNonNull(output, "Output cannot be null");
+        log.atInfo().log("{} Output flag set for fallback", logLineHeader());
         return this;
     }
 
@@ -65,16 +69,22 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public void handle(IDiContext context) {
         Objects.requireNonNull(context, "Context cannot be null");
         this.setResolver(context);
+        log.atTrace().log("{} Context handled for fallback builder", logLineHeader());
     }
 
     @Override
     public IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> build()
             throws DslException {
+        log.atTrace().log("{} Entering build() method", logLineHeader());
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
-        return new RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
-                this.stepName, binder,
-                Optional.ofNullable(this.storeReturnInVariable), this.output,
+        RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType> fallbackBinder = new RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType>(
+                this.runtimeName, this.stageName,
+                this.stepName, binder, Optional.ofNullable(this.storeReturnInVariable), this.output,
                 this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()), this.nullable);
+        log.atInfo()
+                .log("{} RuntimeStepFallbackBinder built successfully", logLineHeader());
+        log.atTrace().log("{} Exiting build() method", logLineHeader());
+        return fallbackBinder;
     }
 
     @Override
@@ -83,6 +93,8 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
                 this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"));
         this.onExceptions.add(onException);
+        log.atInfo()
+                .log("{} Added onException handler", logLineHeader());
         return onException;
     }
 
@@ -92,11 +104,14 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
                 this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"),
                 Objects.requireNonNull(oneException, "On exception annotation cannot be null"));
         this.onExceptions.add(onException);
+        log.atInfo()
+                .log("{} Added onException handler with annotation", logLineHeader());
         return onException;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
+        log.atTrace().log("{} Starting auto-detection for fallback builder", logLineHeader());
         super.doAutoDetection();
 
         Method method = this.findMethod();
@@ -104,14 +119,14 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         detectVariable(method);
         detectOnExceptions(method);
         detectNullable(method);
-
+        log.atTrace().log("{} Finished auto-detection for fallback builder", logLineHeader());
     }
 
     private void detectNullable(Method method) {
         Nullable nullable = method.getAnnotation(Nullable.class);
-
         if (nullable != null) {
             this.nullable = true;
+            log.atDebug().log("{} Nullable detected for fallback", logLineHeader());
         }
     }
 
@@ -119,6 +134,8 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         OnException[] onExceptionAnnotations = method.getAnnotationsByType(OnException.class);
         for (OnException onExceptionAnnotation : onExceptionAnnotations) {
             onException(onExceptionAnnotation.exception(), onExceptionAnnotation).autoDetect(true);
+            log.atDebug()
+                    .log("{} Auto-detected onException", logLineHeader());
         }
     }
 
@@ -126,12 +143,15 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         Variable variable = operationMethod.getAnnotation(Variable.class);
         if (variable != null) {
             method().variable(variable.name());
+            log.atDebug()
+                    .log("{} Auto-detected variable for fallback", logLineHeader());
         }
     }
 
     private void detectOutput(Method operationMethod) {
         if (operationMethod.getAnnotation(Output.class) != null) {
             method().output(true);
+            log.atDebug().log("{} Auto-detected output for fallback", logLineHeader());
         }
     }
 
@@ -139,6 +159,11 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
             boolean nullable) {
         this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
+        log.atInfo().log("{} Nullable flag set manually", logLineHeader());
         return this;
+    }
+
+    private String logLineHeader() {
+        return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "][Fallback] ";
     }
 }

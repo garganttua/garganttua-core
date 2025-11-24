@@ -7,16 +7,25 @@ import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.supplying.IObjectSupplier;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeContext<?, ?>> {
 
     @SuppressWarnings("unchecked")
     @Override
     public IRuntimeContext<?, ?> createChildContext(IDiContext parent, Object... args) throws DiException {
+        log.atTrace().log("[RuntimeContextFactory.createChildContext] Entering createChildContext with parent={} and args={}", parent, args);
+
         Object input = args[0];
         Class<?> outputType = (Class<?>) args[1];
         Map<String, IObjectSupplier<?>> presetVariables = (Map<String, IObjectSupplier<?>>) args[2];
 
-        return new RuntimeContext<>(parent, input, outputType, presetVariables);
+        log.atDebug().log("[RuntimeContextFactory.createChildContext] Creating RuntimeContext with input={}, outputType={}, presetVariables={}", input, outputType, presetVariables);
+        IRuntimeContext<?, ?> context = new RuntimeContext<>(parent, input, outputType, presetVariables);
+        log.atInfo().log("[RuntimeContextFactory.createChildContext] RuntimeContext created with uuid={}", context.uuid());
+
+        return context;
     }
 
 }

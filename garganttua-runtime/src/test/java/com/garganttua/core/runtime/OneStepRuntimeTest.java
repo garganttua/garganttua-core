@@ -18,6 +18,7 @@ import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.dsl.IRuntimeStepBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
+import com.garganttua.core.runtime.runtimes.onestep.DummyRuntimeProcessOutputStep;
 
 class OneStepRuntimeTest {
 
@@ -29,7 +30,8 @@ class OneStepRuntimeTest {
     private IDiContextBuilder contextBuilder() {
         return DiContext.builder()
                 .autoDetect(true)
-                .withPackage("com.garganttua.core.runtime");
+                .withPackage("com.garganttua.core.runtime.annotations")
+                .withPackage("com.garganttua.core.runtime.runtimes.onestep");
     }
 
     private IRuntimesBuilder builder() {
@@ -49,8 +51,8 @@ class OneStepRuntimeTest {
         return (T) o;
     }
 
-    private IRuntimeStepBuilder<String, DummyRuntimeProcessStep, String, String> baseRuntime(IRuntimesBuilder b,
-            DummyRuntimeProcessStep step) {
+    private IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> baseRuntime(IRuntimesBuilder b,
+            DummyRuntimeProcessOutputStep step) {
         return b.runtime("runtime-1", String.class, String.class)
                 .stage("stage-1")
                 .step("step-1", of(step), String.class)
@@ -67,8 +69,8 @@ class OneStepRuntimeTest {
                 .withParam(context()).up();
     }
 
-    private IRuntimeStepBuilder<String, DummyRuntimeProcessStep, String, String> baseFallback(
-            IRuntimeStepBuilder<String, DummyRuntimeProcessStep, String, String> b) {
+    private IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> baseFallback(
+            IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> b) {
         return b.fallBack()
                 .onException(DiException.class).up()
                 .output(true)
@@ -92,13 +94,13 @@ class OneStepRuntimeTest {
         IRuntimesBuilder t = builder();
         Map<String, IRuntime<?, ?>> runtimes = t.autoDetect(true).build();
 
+        assertEquals(1, runtimes.size());
         assertTrue(runtimes.containsKey("runtime-1"));
-        assertTrue(runtimes.containsKey("RuntimeWithCatchedExceptionAndHandledByFallback"));
     }
 
     @Test
     void simpleRuntimeBuilderTest() {
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+        DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(
                 baseRuntime(builder(), step)).up().up().variable("variable", of("preset-variable")).up();
@@ -113,7 +115,7 @@ class OneStepRuntimeTest {
 
     @Test
     void uncatchedException_abort_true() {
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+        DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
                 .abortOnUncatchedException(true).up()).up().up().variable("variable", of("custom-exception")).up();
@@ -130,7 +132,7 @@ class OneStepRuntimeTest {
 
     @Test
     void uncatchedException_abort_false_stepNotNullable() {
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+        DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
                 .abortOnUncatchedException(false).up()).up().up().variable("variable", of("custom-exception"))
@@ -146,7 +148,7 @@ class OneStepRuntimeTest {
 
     @Test
     void uncatchedException_abort_false_stepNullable() {
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+        DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
                 .nullable(true).abortOnUncatchedException(false).up()).up().up().variable("variable", of("custom-exception"))
@@ -163,7 +165,7 @@ class OneStepRuntimeTest {
 
     @Test
     void catchedExceptionHandledByFallback() {
-        DummyRuntimeProcessStep step = new DummyRuntimeProcessStep();
+        DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step)).up().up().variable("variable", of("di-exception")).up();
 

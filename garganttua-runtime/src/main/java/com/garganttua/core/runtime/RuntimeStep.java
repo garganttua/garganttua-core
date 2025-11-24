@@ -4,6 +4,9 @@ import java.util.Optional;
 
 import com.garganttua.core.execution.IExecutorChain;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         implements IRuntimeStep<ExecutionReturn, InputType, OutputType> {
 
@@ -17,25 +20,38 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
     public RuntimeStep(String runtimeName, String stageName, String stepName, Class<ExecutionReturn> executionReturn,
             IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> operationBinder,
             Optional<IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> fallbackBinder) {
+
+        log.atTrace().log("[RuntimeStep.<init>] Initializing RuntimeStep: runtime={}, stage={}, step={}, executionReturn={}, hasFallback={}",
+                runtimeName, stageName, stepName, executionReturn, fallbackBinder.isPresent());
+
         this.runtimeName = runtimeName;
         this.stageName = stageName;
         this.stepName = stepName;
         this.executionReturn = executionReturn;
         this.operationBinder = operationBinder;
         this.fallbackBinder = fallbackBinder;
+
+        log.atInfo().log("{}Initialized RuntimeStep with executionReturn={}, fallbackPresent={}", 
+                logLineHeader(), executionReturn, fallbackBinder.isPresent());
     }
 
     @Override
     public String getStepName() {
+        log.atTrace().log("{}Returning step name: {}", logLineHeader(), stepName);
         return stepName;
     }
 
     @Override
     public void defineExecutionStep(IExecutorChain<IRuntimeContext<InputType, OutputType>> chain) {
-        if (this.fallbackBinder.isPresent())
+        log.atDebug().log("{}Defining execution step in chain. Fallback present: {}", logLineHeader(), fallbackBinder.isPresent());
+
+        if (this.fallbackBinder.isPresent()) {
+            log.atInfo().log("{}Adding executor with fallback", logLineHeader());
             chain.addExecutor(operationBinder, fallbackBinder.get());
-        else
+        } else {
+            log.atInfo().log("{}Adding executor without fallback", logLineHeader());
             chain.addExecutor(operationBinder);
+        }
     }
 
     private String logLineHeader() {

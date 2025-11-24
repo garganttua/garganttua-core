@@ -12,15 +12,33 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supplying.IContextualObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class ContextElementResolver implements IElementResolver {
 
     @Override
     public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
-        if (!IRuntimeContext.class.isAssignableFrom(elementType))
+
+        log.atTrace()
+                .log("Resolving context element");
+
+        if (!IRuntimeContext.class.isAssignableFrom(elementType)) {
+            log.atError()
+                    .log("Injectable is not an IRuntimeContext, throwing exception");
             throw new DiException("Injectable is not a IRuntimeContext : " + elementType.getSimpleName());
+        }
+
+        log.atDebug()
+                .log("Element type is valid IRuntimeContext, preparing supplier");
+
         IObjectSupplierBuilder<IRuntimeContext<Object, Object>, IContextualObjectSupplier<IRuntimeContext<Object, Object>, IRuntimeContext<Object, Object>>> s = context();
 
-        return new Resolved(true, elementType, s, isNullable(element));
-    }
+        boolean nullable = isNullable(element);
 
+        log.atInfo()
+                .log("Resolved context element successfully");
+
+        return new Resolved(true, elementType, s, nullable);
+    }
 }

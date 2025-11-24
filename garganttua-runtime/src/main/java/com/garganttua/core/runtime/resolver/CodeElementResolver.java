@@ -12,17 +12,33 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supplying.IContextualObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class CodeElementResolver implements IElementResolver {
 
     @Override
     public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
 
-        if( !Integer.class.isAssignableFrom(elementType) )
-            throw new DiException("Injectable is not an Integer : "+elementType.getSimpleName());
+        log.atTrace()
+                .log("Resolving code element");
 
-        IObjectSupplierBuilder<Integer,IContextualObjectSupplier<Integer,IRuntimeContext<Object,Object>>> s = code();
+        if (!Integer.class.isAssignableFrom(elementType)) {
+            log.atError()
+                    .log("Injectable is not an Integer, throwing exception");
+            throw new DiException("Injectable is not an Integer : " + elementType.getSimpleName());
+        }
 
-        return new Resolved(true, elementType, s, isNullable(element));
+        log.atDebug()
+                .log("Element type is valid Integer, preparing supplier");
+
+        IObjectSupplierBuilder<Integer, IContextualObjectSupplier<Integer, IRuntimeContext<Object, Object>>> s = code();
+
+        boolean nullable = isNullable(element);
+
+        log.atInfo()
+                .log("Resolved code element successfully");
+
+        return new Resolved(true, elementType, s, nullable);
     }
-
 }

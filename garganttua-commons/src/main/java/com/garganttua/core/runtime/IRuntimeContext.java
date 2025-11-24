@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import com.garganttua.core.injection.IDiContext;
 
@@ -33,5 +34,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
     Optional<RuntimeExceptionRecord> findException(RuntimeExceptionRecord pattern);
 
     Optional<RuntimeExceptionRecord> findAbortingExceptionReport();
+
+    UUID uuid();
 
 }

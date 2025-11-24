@@ -1,10 +1,14 @@
-package com.garganttua.core.runtime;
+package com.garganttua.core.runtime.runtimes.onestep;
+
+import static com.garganttua.core.condition.Conditions.*;
+import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
 
 import javax.inject.Named;
 
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.annotations.Fixed;
+import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.annotations.Catch;
 import com.garganttua.core.runtime.annotations.Code;
 import com.garganttua.core.runtime.annotations.Condition;
@@ -21,12 +25,9 @@ import com.garganttua.core.runtime.annotations.Variable;
 
 import jakarta.annotation.Nullable;
 
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
-import static com.garganttua.core.condition.Conditions.*;
-
 @Step
-@Named("step-1")
-public class DummyRuntimeProcessStep {
+@Named("output-step")
+public class DummyRuntimeProcessOutputStep {
 
     @Condition
     IConditionBuilder condition = custom(of(10), i -> 1 > 0);
