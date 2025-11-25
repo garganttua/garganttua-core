@@ -20,4 +20,6 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider> {
 
     <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException;
 
+    int size();
+
 }

@@ -191,4 +191,9 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 			return copy;
 		}
 	}
+
+	@Override
+	public int size() {
+		return this.beanFactories.size();
+	}
 }

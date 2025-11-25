@@ -14,10 +14,11 @@ import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
 import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Builder extends IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>>, Link>
-        extends
-        AbstractConstructorBinderBuilder<Constructed, Builder, Link> {
+        extends AbstractConstructorBinderBuilder<Constructed, Builder, Link> {
 
     @Setter
     private IInjectableElementResolver resolver;
@@ -25,30 +26,52 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
     protected AbstractConstructorArgInjectBinderBuilder(IInjectableElementResolver resolver, Link link,
             Class<Constructed> construcetd) {
         super(link, construcetd);
-        this.resolver = Objects.requireNonNull(resolver,
-                "Injectable builder Registry cannot be null");
+        log.atTrace().log(
+                "Entering AbstractConstructorArgInjectBinderBuilder constructor with resolver: {}, link: {}, constructed class: {}",
+                resolver, link, construcetd);
+        this.resolver = Objects.requireNonNull(resolver, "Injectable builder Registry cannot be null");
+        log.atInfo().log("AbstractConstructorArgInjectBinderBuilder initialized with resolver: {}", resolver);
+        log.atTrace().log("Exiting constructor");
     }
 
     protected AbstractConstructorArgInjectBinderBuilder(Optional<IInjectableElementResolver> resolver, Link link,
             Class<Constructed> construcetd) {
         super(link, construcetd);
-        Objects.requireNonNull(resolver,
-                "Injectable builder Registry cannot be null");
+        log.atTrace().log(
+                "Entering AbstractConstructorArgInjectBinderBuilder constructor with optional resolver: {}, link: {}, constructed class: {}",
+                resolver, link, construcetd);
+        Objects.requireNonNull(resolver, "Injectable builder Registry cannot be null");
         this.resolver = resolver.orElse(null);
+        log.atInfo().log("AbstractConstructorArgInjectBinderBuilder initialized with resolver: {}", this.resolver);
+        log.atTrace().log("Exiting constructor");
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
+        log.atTrace().log("Entering doAutoDetection");
         if (this.resolver == null) {
+            log.atError().log("Cannot do auto detection without resolver");
             throw new DslException("Cannot do auto detection without resolver");
         }
+
         AtomicInteger counter = new AtomicInteger();
         Set<Resolved> resolved = this.resolver.resolve(this.findConstructor());
-        resolved.stream().forEach(r -> {
-            r.ifResolvedOrElse((b, n) -> this.withParam(counter.getAndIncrement(), b, n),
-                    n -> this.withParam(counter.getAndIncrement(), new NullObjectSupplierBuilder<>(r.elementType()),
-                            n));
-        });
-    }
+        log.atDebug().log("Resolved elements found: {}", resolved);
 
+        resolved.stream().forEach(r -> {
+            r.ifResolvedOrElse(
+                    (b, n) -> {
+                        log.atInfo().log("Resolved constructor parameter {} with builder: {}", counter.get(), b);
+                        this.withParam(counter.getAndIncrement(), b, n);
+                    },
+                    n -> {
+                        log.atWarn().log(
+                                "Constructor parameter {} not resolved, using NullObjectSupplierBuilder for type: {}",
+                                counter.get(), r.elementType());
+                        this.withParam(counter.getAndIncrement(), new NullObjectSupplierBuilder<>(r.elementType()), n);
+                    });
+        });
+
+        log.atTrace().log("Exiting doAutoDetection");
+    }
 }

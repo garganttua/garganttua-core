@@ -84,4 +84,10 @@ public class DummyBeanProvider implements IBeanProvider {
         throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 
+    @Override
+    public int size() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'size'");
+    }
+
 }

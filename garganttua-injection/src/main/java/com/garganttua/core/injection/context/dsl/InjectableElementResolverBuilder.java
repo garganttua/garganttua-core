@@ -12,6 +12,9 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.resolver.InjectableElementResolver;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class InjectableElementResolverBuilder
         extends AbstractLinkedBuilder<IDiContextBuilder, IInjectableElementResolver>
         implements IInjectableElementResolverBuilder {
@@ -21,23 +24,40 @@ public class InjectableElementResolverBuilder
 
     public InjectableElementResolverBuilder(IDiContextBuilder link) {
         super(link);
+        log.atTrace().log("Entering InjectableElementResolverBuilder constructor with link={}", link);
+        log.atTrace().log("Exiting InjectableElementResolverBuilder constructor");
     }
 
     @Override
     public IInjectableElementResolverBuilder withResolver(Class<? extends Annotation> annotation,
             IElementResolver resolver) {
-        resolvers.put(Objects.requireNonNull(annotation, "Annotation cannot be null"),
-                Objects.requireNonNull(resolver, "Resolver cannot be null"));
-        if( this.built != null )
-                this.built.addResolver(annotation, resolver);
+        log.atTrace().log("Entering withResolver(annotation={}, resolver={})", annotation, resolver);
+        Objects.requireNonNull(annotation, "Annotation cannot be null");
+        Objects.requireNonNull(resolver, "Resolver cannot be null");
+
+        resolvers.put(annotation, resolver);
+        log.atInfo().log("Added resolver for annotation: {}", annotation);
+
+        if (this.built != null) {
+            this.built.addResolver(annotation, resolver);
+            log.atDebug().log("Added resolver to already built InjectableElementResolver for annotation: {}",
+                    annotation);
+        }
+
+        log.atTrace().log("Exiting withResolver");
         return this;
     }
 
     @Override
     public IInjectableElementResolver build() throws DslException {
-        if( this.built == null )
+        log.atTrace().log("Entering build()");
+        if (this.built == null) {
             this.built = new InjectableElementResolver(this.resolvers);
-
+            log.atInfo().log("Built new InjectableElementResolver with {} resolvers", this.resolvers.size());
+        } else {
+            log.atDebug().log("Returning existing built InjectableElementResolver");
+        }
+        log.atTrace().log("Exiting build()");
         return this.built;
     }
 

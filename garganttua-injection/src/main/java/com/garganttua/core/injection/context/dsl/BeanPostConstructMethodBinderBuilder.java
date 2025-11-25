@@ -13,41 +13,50 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
         AbstractMethodArgInjectBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>
         implements IBeanPostConstructMethodBinderBuilder<Bean> {
 
     protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,
             IObjectSupplierBuilder<Bean, IBeanFactory<Bean>> supplier,
-            IInjectableElementResolver resolver)
-            throws DslException {
+            IInjectableElementResolver resolver) throws DslException {
         super(resolver, up, supplier);
+        log.atTrace().log("Initialized BeanPostConstructMethodBinderBuilder for beanClass: {}", up.getSuppliedType());
     }
 
     protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,
             IObjectSupplierBuilder<Bean, IBeanFactory<Bean>> supplier,
-            Optional<IInjectableElementResolver> resolver)
-            throws DslException {
+            Optional<IInjectableElementResolver> resolver) throws DslException {
         super(resolver, up, supplier);
-
+        log.atTrace().log("Initialized BeanPostConstructMethodBinderBuilder with optional resolver for beanClass: {}",
+                up.getSuppliedType());
     }
 
     protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,
-            IObjectSupplierBuilder<Bean, IBeanFactory<Bean>> supplier)
-            throws DslException {
+            IObjectSupplierBuilder<Bean, IBeanFactory<Bean>> supplier) throws DslException {
         super(Optional.empty(), up, supplier);
+        log.atTrace().log("Initialized BeanPostConstructMethodBinderBuilder without resolver for beanClass: {}",
+                up.getSuppliedType());
     }
 
     @Override
     public IMethodBinder<Void> build(IObjectSupplierBuilder<Bean, IObjectSupplier<Bean>> supplierBuilder)
             throws DslException {
+        log.atTrace().log("Building method binder for beanClass: {}", supplierBuilder.getSuppliedType());
         List<IObjectSupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
-        return this.createBinder(builtParameterSuppliers, supplierBuilder);
+        log.atDebug().log("Built parameter suppliers count: {}", builtParameterSuppliers.size());
+        IMethodBinder<Void> binder = this.createBinder(builtParameterSuppliers, supplierBuilder);
+        log.atInfo().log("Method binder successfully built for beanClass: {}", supplierBuilder.getSuppliedType());
+        return binder;
     }
 
     @Override
     public Set<Class<?>> getDependencies() {
-        return new HashSet<>(Arrays.asList(this.getParameterTypes()));
+        Set<Class<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));
+        log.atTrace().log("Dependencies for BeanPostConstructMethodBinderBuilder: {}", dependencies);
+        return dependencies;
     }
-
 }
