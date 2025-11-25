@@ -20,28 +20,45 @@ public class FixedElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public Resolved resolve(Class<?> elementType,
-            AnnotatedElement element) throws DiException {
-        Objects.requireNonNull(element, "Element cannot be null");
-        Objects.requireNonNull(elementType, "ElementType cannot be null");
+    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+        log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
 
-        if (Fields.isNotPrimitive(elementType)){
-            log.atWarn().log(
-                    "Cannot use @Fixed annotation on not primitive element " + elementType.getSimpleName());
-            return Resolved.notResolved(elementType, element);
+        Objects.requireNonNull(element, "Element cannot be null");
+        log.atDebug().log("Element is not null: {}", element);
+
+        Objects.requireNonNull(elementType, "ElementType cannot be null");
+        log.atDebug().log("ElementType is not null: {}", elementType);
+
+        if (Fields.isNotPrimitive(elementType)) {
+            log.atWarn().log("Cannot use @Fixed annotation on non-primitive element: {}", elementType.getSimpleName());
+            Resolved notResolved = Resolved.notResolved(elementType, element);
+            log.atTrace().log("Exiting resolve with Resolved: {}", notResolved);
+            return notResolved;
         }
 
         Fixed fixedAnnotation = element.getAnnotation(Fixed.class);
+        log.atDebug().log("Retrieved @Fixed annotation: {}", fixedAnnotation);
 
-        IObjectSupplierBuilder<?, IObjectSupplier<?>> builder = new FixedObjectSupplierBuilder(getFixedValue(fixedAnnotation, elementType));
+        Object fixedValue = getFixedValue(fixedAnnotation, elementType);
+        log.atInfo().log("Computed fixed value {} for elementType: {}", fixedValue, elementType.getSimpleName());
 
-        return new Resolved(true, elementType, builder, IInjectableElementResolver.isNullable(element));
+        IObjectSupplierBuilder<?, IObjectSupplier<?>> builder = new FixedObjectSupplierBuilder(fixedValue);
+        log.atInfo().log("Created FixedObjectSupplierBuilder for elementType: {}", elementType.getSimpleName());
+
+        Resolved resolved = new Resolved(true, elementType, builder, IInjectableElementResolver.isNullable(element));
+        log.atTrace().log("Exiting resolve with Resolved: {}", resolved);
+
+        return resolved;
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T getFixedValue(Fixed annotation, Class<T> targetType) throws DiException {
-        if (annotation == null || targetType == null)
+        log.atTrace().log("Entering getFixedValue with annotation: {} and targetType: {}", annotation, targetType);
+
+        if (annotation == null || targetType == null) {
+            log.atDebug().log("Annotation or targetType is null, returning null");
             return null;
+        }
 
         Object value;
 
@@ -64,10 +81,11 @@ public class FixedElementResolver implements IElementResolver {
         } else if (targetType == char.class || targetType == Character.class) {
             value = annotation.valueChar();
         } else {
+            log.atError().log("Unsupported type for @Fixed: {}", targetType.getName());
             throw new DiException("Unsupported type for @Fixed: " + targetType.getName());
         }
 
+        log.atTrace().log("Exiting getFixedValue with value: {}", value);
         return (T) value;
     }
-
 }
