@@ -22,78 +22,97 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	private volatile Bean bean;
-
 	private BeanDefinition<Bean> definition;
-
 	private final Object beanMutex = new Object();
 
 	public BeanFactory(BeanDefinition<Bean> definition) {
+		log.atTrace().log("Entering BeanFactory constructor with definition: {}", definition);
 		this.definition = Objects.requireNonNull(definition, "Bean definition cannot be null");
+		log.atInfo().log("BeanFactory initialized for definition: {}", definition);
+		log.atTrace().log("Exiting BeanFactory constructor");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object o) {
+		log.atTrace().log("Entering equals method comparing with object: {}", o);
 		if (this == o)
 			return true;
 		if (o == null || getClass() != o.getClass())
 			return false;
 		BeanFactory<Bean> that = (BeanFactory<Bean>) o;
-		return Objects.equals(this.definition, that.definition);
+		boolean result = Objects.equals(this.definition, that.definition);
+		log.atTrace().log("Exiting equals method with result: {}", result);
+		return result;
 	}
 
 	@Override
 	public int hashCode() {
+		log.atTrace().log("Calculating hashCode for definition: {}", definition);
 		return this.definition.hashCode();
 	}
 
 	private Bean getBean() throws DiException {
+		log.atTrace().log("Creating new bean instance for definition: {}", definition);
 		Bean bean = createBeanInstance();
-		this.doInjection(bean);
-		this.invokePostConstructMethods(bean);
+		doInjection(bean);
+		invokePostConstructMethods(bean);
+		log.atInfo().log("Bean instance created: {}", bean);
 		return bean;
 	}
 
 	private void doInjection(Bean onBean) {
+		log.atTrace().log("Performing field injection for bean: {}", onBean);
 		this.definition.injectableFields()
 				.forEach(builder -> builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue());
+		log.atDebug().log("Field injection completed for bean: {}", onBean);
 	}
 
 	private Bean createBeanInstance() throws DiException {
+		log.atTrace().log("Instantiating bean of type: {}", definition.type());
 		try {
 			if (this.definition.constructorBinder().isPresent()) {
 				Optional<Bean> constructed = executeConstructorBinder();
-				return constructed.orElseThrow(
-						() -> new DiException("Constructor binder returned empty for bean of type "
-								+ this.definition.effectiveName()));
+				return constructed.orElseThrow(() -> new DiException(
+						"Constructor binder returned empty for bean of type " + this.definition.effectiveName()));
 			} else {
 				return ObjectReflectionHelper.instanciateNewObject(this.definition.type());
 			}
 		} catch (Exception e) {
+			log.atError().log("Failed to instantiate bean of type {}: {}", this.definition.effectiveName(),
+					e.getMessage());
 			throw new DiException("Failed to instantiate bean of type " + this.definition.effectiveName(), e);
 		}
 	}
 
 	private Optional<Bean> executeConstructorBinder() throws DiException {
+		log.atTrace().log("Executing constructor binder for definition: {}", definition);
 		try {
-			return this.definition.constructorBinder().get().execute();
+			Optional<Bean> result = this.definition.constructorBinder().get().execute();
+			log.atDebug().log("Constructor binder result: {}", result.orElse(null));
+			return result;
 		} catch (ReflectionException e) {
+			log.atError().log("Constructor binder failed for definition {}: {}", definition, e.getMessage());
 			throw new DiException(e);
 		}
 	}
 
 	private void invokePostConstructMethods(Bean bean) throws DiException {
+		log.atTrace().log("Invoking post construct methods for bean: {}", bean);
 		if (this.definition.postConstructMethodBinderBuilders().isEmpty()) {
+			log.atDebug().log("No post construct methods to invoke for bean: {}", bean);
 			return;
 		}
 
 		for (IBeanPostConstructMethodBinderBuilder<Bean> methodBinderBuilder : this.definition
 				.postConstructMethodBinderBuilders()) {
 			try {
-				IMethodBinder<Void> methodBinder = methodBinderBuilder
-						.build(FixedObjectSupplierBuilder.of(bean));
+				IMethodBinder<Void> methodBinder = methodBinderBuilder.build(FixedObjectSupplierBuilder.of(bean));
 				methodBinder.execute();
+				log.atDebug().log("Post construct method executed for bean: {}", bean);
 			} catch (DslException | ReflectionException e) {
+				log.atError().log("Post construct method binder failed for bean {}: {}",
+						this.definition.effectiveName(), e.getMessage());
 				throw new DiException(
 						"Post construct method binder failed for bean of type " + this.definition.effectiveName(), e);
 			}
@@ -102,16 +121,18 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	@Override
 	public Optional<Bean> supply() throws SupplyException {
+		log.atTrace().log("Supplying bean for definition: {}", definition);
 		Bean bean = null;
 		Optional<BeanStrategy> strat = this.definition.strategy();
 		try {
-
 			if (strat.isPresent()) {
 				if (strat.get() == BeanStrategy.prototype) {
+					log.atDebug().log("Using prototype strategy for bean");
 					bean = getBean();
 				} else {
 					synchronized (this.beanMutex) {
 						if (this.bean == null) {
+							log.atDebug().log("Singleton bean not initialized, creating bean");
 							this.bean = getBean();
 						}
 					}
@@ -120,34 +141,43 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 			} else {
 				synchronized (this.beanMutex) {
 					if (this.bean == null) {
+						log.atDebug().log("No strategy defined, creating singleton bean");
 						this.bean = getBean();
 					}
 				}
 				bean = this.bean;
 			}
+			log.atInfo().log("Bean supplied: {}", bean);
+			return Optional.ofNullable(bean);
 		} catch (DiException e) {
+			log.atError().log("Failed to supply bean for definition {}: {}", definition, e.getMessage());
 			throw new SupplyException(e);
 		}
-		return Optional.ofNullable(bean);
 	}
 
 	@Override
 	public Class<Bean> getSuppliedType() {
+		log.atTrace().log("Returning supplied type: {}", definition.type());
 		return this.definition.type();
 	}
 
 	@Override
 	public boolean matches(BeanDefinition<?> example) {
-		return this.definition.matches(example);
+		log.atTrace().log("Checking matches for definition: {} against example: {}", definition, example);
+		boolean match = this.definition.matches(example);
+		log.atDebug().log("Match result: {}", match);
+		return match;
 	}
 
 	@Override
 	public BeanDefinition<Bean> getDefinition() {
+		log.atTrace().log("Returning bean definition: {}", definition);
 		return this.definition;
 	}
 
 	@Override
 	public Set<Class<?>> getDependencies() {
+		log.atTrace().log("Returning dependencies for definition: {}", definition);
 		return this.definition.getDependencies();
 	}
 }

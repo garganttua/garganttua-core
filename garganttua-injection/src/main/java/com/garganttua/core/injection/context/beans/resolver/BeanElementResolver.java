@@ -16,18 +16,27 @@ import com.garganttua.core.injection.context.beans.Beans;
 import com.garganttua.core.supplying.IObjectSupplier;
 import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class BeanElementResolver {
 
     private Set<Class<? extends Annotation>> qualifiers;
 
     protected BeanElementResolver(Set<Class<? extends Annotation>> qualifiers) {
+        log.atTrace().log("Entering BeanElementResolver constructor with qualifiers: {}", qualifiers);
         this.qualifiers = Objects.requireNonNull(qualifiers, "Qualifiers cannot be null");
+        log.atInfo().log("BeanElementResolver initialized with qualifiers: {}", qualifiers);
+        log.atTrace().log("Exiting BeanElementResolver constructor");
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     protected Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
             AnnotatedElement parameter,
             BeanStrategy strategy) {
+        log.atTrace().log("Entering resolve with elementType: {}, parameter: {}, strategy: {}", elementType, parameter,
+                strategy);
+
         Objects.requireNonNull(parameter, "Parameter cannot be null");
         Objects.requireNonNull(elementType, "Element type cannot be null");
 
@@ -36,32 +45,35 @@ public class BeanElementResolver {
         Set<Class<? extends Annotation>> paramQualifiers = new HashSet<>();
 
         for (Annotation annotation : parameter.getAnnotations()) {
+            log.atDebug().log("Inspecting annotation: {}", annotation);
 
             if (annotation.annotationType().equals(Named.class)) {
                 Named named = (Named) annotation;
                 if (named.value() != null && !named.value().isBlank()) {
                     name = named.value();
+                    log.atDebug().log("Named annotation found with value: {}", name);
                 }
-            }
-
-            else if (annotation.annotationType().equals(Provider.class)) {
+            } else if (annotation.annotationType().equals(Provider.class)) {
                 Provider prov = (Provider) annotation;
                 if (prov.value() != null && !prov.value().isBlank()) {
                     provider = prov.value();
+                    log.atDebug().log("Provider annotation found with value: {}", provider);
                 }
-            }
-
-            else if (qualifiers.contains(annotation.getClass())) {
+            } else if (qualifiers.contains(annotation.getClass())) {
                 paramQualifiers.add(annotation.getClass());
+                log.atDebug().log("Qualifier annotation found: {}", annotation.getClass());
             }
-
         }
 
-        IObjectSupplierBuilder beanSupplierBuilder = Beans.bean(Optional.ofNullable(provider),
+        IObjectSupplierBuilder beanSupplierBuilder = Beans.bean(
+                Optional.ofNullable(provider),
                 BeanDefinition.example(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
                         paramQualifiers));
 
+        log.atInfo().log("Bean supplier builder created for elementType: {} with provider: {} and name: {}",
+                elementType, provider, name);
+        log.atTrace().log("Exiting resolve with builder: {}", beanSupplierBuilder);
+
         return Optional.of(beanSupplierBuilder);
     }
-
 }
