@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.DiContext;
@@ -20,7 +22,15 @@ import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.runtime.runtimes.onestep.DummyRuntimeProcessOutputStep;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 class OneStepRuntimeTest {
+
+    @BeforeEach
+    void logTestStart(TestInfo testInfo) {
+        log.atInfo().log("Executing test method: {}", testInfo.getTestMethod().get().getName());
+    }
 
     @BeforeAll
     static void setup() {

@@ -1,5 +1,7 @@
 package com.garganttua.core.runtime.dsl;
 
+import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
@@ -228,6 +230,23 @@ public class RuntimeBuilder<InputType, OutputType>
                                 Objects.requireNonNull(value, "Value supplier builder cannot be null"));
                 log.atDebug().log("{} Variable [{}] registered", logLineHeader(), name);
                 log.atTrace().log("{} Exiting variable registration for [{}]", logLineHeader(), name);
+                return this;
+        }
+
+        @Override
+        public IRuntimeBuilder<InputType, OutputType> variable(String name, Object value) {
+                log.atTrace().log("{} Entering variable registration for [{}]", logLineHeader(), name);
+                this.presetVariables.put(Objects.requireNonNull(name, "Variable name cannot be null"),
+                                of(Objects.requireNonNull(value, "Value  cannot be null")));
+                log.atDebug().log("{} Variable [{}] registered", logLineHeader(), name);
+                log.atTrace().log("{} Exiting variable registration for [{}]", logLineHeader(), name);
+                return this;
+        }
+
+        public IRuntimeBuilder<InputType, OutputType> setObjectForAutoDetection(
+                        Object runtimeDefinitionObject) {
+                this.objectForAutoDetection = Objects.requireNonNull(runtimeDefinitionObject,
+                                "runtimeDefinitionObject cannot be null");
                 return this;
         }
 }

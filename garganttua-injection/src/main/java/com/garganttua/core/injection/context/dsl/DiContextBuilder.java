@@ -46,7 +46,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
     private Set<IContextBuilderObserver> observers = new HashSet<>();
 
-    public static DiContextBuilder builder() throws DslException {
+    public static IDiContextBuilder builder() throws DslException {
         return new DiContextBuilder();
     }
 
@@ -214,7 +214,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     public IDiContextBuilder observer(IContextBuilderObserver observer) {
         this.observers.add(Objects.requireNonNull(observer, "Observer cannot be null"));
         if (this.built != null) {
-            Thread.ofVirtual().start(() -> observer.handle(this.built));
+            observer.handle(this.built);
         }
         return this;
     }
@@ -223,5 +223,4 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     public String[] getPackages() {
         return this.packages.toArray(new String[0]);
     }
-
 }

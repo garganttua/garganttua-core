@@ -51,7 +51,6 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         contextBuilder.ifPresent(c -> c.childContextFactory(new RuntimeContextFactory()));
 
         log.atInfo()
-                .addKeyValue("hasContextBuilder", contextBuilder.isPresent())
                 .log("RuntimesBuilder initialized");
     }
 
@@ -62,35 +61,31 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
             Class<OutputType> outputType) {
 
         log.atTrace()
-                .addKeyValue("method", "runtime")
-                .addKeyValue("runtimeName", name)
-                .log("Entering runtime() method");
+                .log("Entering runtime({}, {}, {}) method", name, inputType.getSimpleName(),
+                        outputType.getSimpleName());
 
         Objects.requireNonNull(this.contextBuilder, "Context builder cannot be null");
         Objects.requireNonNull(name, "Name cannot be null");
 
         log.atTrace()
-                .addKeyValue("inputType", inputType.getSimpleName())
-                .addKeyValue("outputType", outputType.getSimpleName())
-                .log("Validated runtime input parameters");
+                .log("Validated runtime input parameters", name);
 
         IRuntimeBuilder<InputType, OutputType> runtimeBuilder;
         if (!this.runtimeBuilders.containsKey(name)) {
             runtimeBuilder = new RuntimeBuilder<>(this, name, inputType, outputType);
             this.runtimeBuilders.put(name, runtimeBuilder);
-            log.atInfo().addKeyValue("runtimeName", name).log("Created new runtime builder");
+            log.atInfo().log("Created new runtime builder {}", name);
         } else {
             runtimeBuilder = (IRuntimeBuilder<InputType, OutputType>) this.runtimeBuilders.get(name);
-            log.atDebug().addKeyValue("runtimeName", name).log("Reusing existing runtime builder");
+            log.atDebug().log("Reusing existing runtime builder {}", name);
         }
 
         if (this.context != null) {
             runtimeBuilder.handle(context);
-            log.atDebug().addKeyValue("runtimeName", name).log("Runtime builder handled with context");
+            log.atDebug().log("Runtime builder {} handled with context", name);
         }
 
         log.atTrace()
-                .addKeyValue("runtimeName", name)
                 .log("Exiting runtime() method");
 
         return runtimeBuilder;
@@ -105,16 +100,16 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
             throw new DslException("Build is not yet authorized");
         }
 
-        log.atInfo().addKeyValue("runtimeCount", runtimeBuilders.size()).log("Building all runtimes");
+        log.atInfo().log("Building all runtimes");
 
         Map<String, IRuntime<?, ?>> result = this.runtimeBuilders.entrySet().stream().collect(Collectors.toMap(
                 e -> e.getKey(),
                 e -> {
-                    log.atDebug().addKeyValue("runtimeName", e.getKey()).log("Building individual runtime");
+                    log.atDebug().log("Building individual runtime");
                     return e.getValue().build();
                 }));
 
-        log.atTrace().addKeyValue("builtCount", result.size()).log("Exiting doBuild() method");
+        log.atTrace().log("Exiting doBuild() method");
         return result;
     }
 
@@ -130,7 +125,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         List<?> definitions = this.context
                 .queryBeans(example(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
 
-        log.atInfo().addKeyValue("foundDefinitions", definitions.size()).log("Auto-detecting runtimes");
+        log.atInfo().log("Auto-detecting runtimes");
 
         definitions.forEach(this::createAutoDetectedRuntime);
 
@@ -148,18 +143,21 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         Class<?> output = runtimeDefinition.output();
 
         log.atDebug()
-                .addKeyValue("runtimeName", runtimeName)
-                .addKeyValue("inputType", input.getSimpleName())
-                .addKeyValue("outputType", output.getSimpleName())
-                .log("Creating auto-detected runtime builder");
+                .log("Creating auto-detected runtime builder {} input={}, output={}", runtimeName,
+                        input.getSimpleName(), output.getSimpleName());
 
-        IRuntimeBuilder<?, ?> runtimeBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
-                runtimeDefinitionObject).autoDetect(true);
+        IRuntimeBuilder<?, ?> runtimeBuilder = this.runtimeBuilders.get(runtimeName);
+        if ( runtimeBuilder == null) {
+            runtimeBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
+                    runtimeDefinitionObject).autoDetect(true);
+            this.runtimeBuilders.put(runtimeName, runtimeBuilder);
+        } else {
+            ((RuntimeBuilder<?, ?>) runtimeBuilder).setObjectForAutoDetection(runtimeDefinitionObject).autoDetect(true);
+        }
 
         runtimeBuilder.handle(this.context);
-        this.runtimeBuilders.put(runtimeName, runtimeBuilder);
 
-        log.atInfo().addKeyValue("runtimeName", runtimeName).log("Auto-detected runtime registered");
+        log.atInfo().log("Auto-detected runtime {} registered", runtimeName);
     }
 
     public static IRuntimesBuilder builder() {
@@ -211,7 +209,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         this.context = Objects.requireNonNull(context, "Context cannot be null");
         this.canBuild = true;
 
-        log.atInfo().addKeyValue("runtimeCount", runtimeBuilders.size())
+        log.atInfo()
                 .log("Handling all runtime builders with context");
 
         this.runtimeBuilders.values().forEach(b -> {
@@ -221,4 +219,5 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
 
         log.atTrace().log("Exiting handle() method");
     }
+
 }

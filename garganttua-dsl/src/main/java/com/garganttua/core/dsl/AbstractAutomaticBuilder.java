@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutomaticBuilder<Builder, Built> {
 
-    private Boolean autoDetect;
+    protected Boolean autoDetect;
     protected Built built;
 
     protected AbstractAutomaticBuilder() {
@@ -43,12 +43,12 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutom
 
         if (this.autoDetect) {
             log.atInfo().log("Auto-detection is enabled, performing auto-detection");
-            try {
+            //try {
                 this.doAutoDetection();
                 log.atDebug().log("Auto-detection completed successfully");
-            } catch (DslException e) {
+            /* } catch (DslException e) {
                 log.atWarn().log("Non-blocking issue during auto-detection", e);
-            }
+            } */
         } else {
             log.atDebug().log("Auto-detection is disabled, skipping auto-detection");
         }

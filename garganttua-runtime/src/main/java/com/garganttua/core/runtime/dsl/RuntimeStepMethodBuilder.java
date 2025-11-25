@@ -149,17 +149,16 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     public IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> build()
             throws DslException {
         log.atTrace().log("Entering build method");
-        Set<IRuntimeStepCatch> builtCatches = this.katches.entrySet().stream().map(b -> b.getValue().build())
-                .collect(Collectors.toSet());
+        IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
         ICondition condition = null;
         if (this.conditionBuilder != null) {
             condition = this.conditionBuilder.build();
         }
-        IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
         log.atInfo().log("Building RuntimeStepMethodBinder for step '{}'", this.stepName);
         return new RuntimeStepMethodBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
                 this.stepName, binder,
-                Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, builtCatches,
+                Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, this.katches.entrySet().stream().map(b -> b.getValue().build())
+                .collect(Collectors.toSet()),
                 Optional.ofNullable(condition), this.abortOnUncatchedException, this.nullable);
     }
 

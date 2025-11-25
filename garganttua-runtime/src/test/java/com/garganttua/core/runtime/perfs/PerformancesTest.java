@@ -62,7 +62,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 
-@Execution(ExecutionMode.CONCURRENT)
+//@Execution(ExecutionMode.CONCURRENT)
 @Disabled("Performances tests, too heavy for standard build")
 public class PerformancesTest {
 
@@ -79,12 +79,12 @@ public class PerformancesTest {
                 Map<Instant, Long> usedMemorySamples = new HashMap<>();
                 Map<Instant, Long> totalMemorySamples = new HashMap<>();
 
-                deactivateLogs();
                 ScheduledExecutorService monitor = startSystemPolling(cpuSamples, usedMemorySamples,
                                 totalMemorySamples);
 
                 Document document = this.initializeReport();
                 Map<String, IRuntime<?, ?>> runtimes = getRuntimes();
+                deactivateLogs();
                 Instant start = Instant.now();
 
                 exportPerfReportPdf(this.testRuntimeWithStringInput(runtimes.get("runtime-1"), threads * 5), document,
@@ -237,6 +237,7 @@ public class PerformancesTest {
                 IRuntimesBuilder t = RuntimesBuilder.builder();
 
                 IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
+                                .withPackage("com.garganttua.core.runtime.annotations")
                                 .withPackage("com.garganttua.core.runtime");
                 contextBuilder.build().onInit().onStart();
 

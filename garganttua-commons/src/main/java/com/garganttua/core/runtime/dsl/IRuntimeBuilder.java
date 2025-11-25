@@ -9,6 +9,8 @@ import com.garganttua.core.utils.OrderedMapPosition;
 
 public interface IRuntimeBuilder<InputType, OutputType> extends IAutomaticLinkedBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>, IContextBuilderObserver {
 
+    IRuntimeBuilder<InputType, OutputType> variable(String name, Object value);
+
     IRuntimeBuilder<InputType, OutputType> variable(String name, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> value);
 
     IRuntimeStageBuilder<InputType, OutputType> stage(String string);
