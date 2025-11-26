@@ -2,9 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
-import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
 
 public class ConstructorBinderBuilderTest {
 

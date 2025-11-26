@@ -2,7 +2,7 @@ package com.garganttua.core.runtime;
 
 import static com.garganttua.core.condition.Conditions.*;
 import static com.garganttua.core.runtime.RuntimeContext.*;
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;

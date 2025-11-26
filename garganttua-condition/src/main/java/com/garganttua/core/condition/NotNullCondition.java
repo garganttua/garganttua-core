@@ -2,7 +2,7 @@ package com.garganttua.core.condition;
 
 import java.util.Objects;
 
-import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 
 public class NotNullCondition implements ICondition {
 

@@ -3,6 +3,10 @@ package com.garganttua.core.supplying;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IContextualObjectSupply;
+import com.garganttua.core.supply.SupplyException;
+
 public class ContextualObjectSupplier<Supplied, Context> implements IContextualObjectSupplier<Supplied, Context> {
 
     private IContextualObjectSupply<Supplied, Context> supply;

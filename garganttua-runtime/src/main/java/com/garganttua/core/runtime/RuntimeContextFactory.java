@@ -6,7 +6,7 @@ import java.util.UUID;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 

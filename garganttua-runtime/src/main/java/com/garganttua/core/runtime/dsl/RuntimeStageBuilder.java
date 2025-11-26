@@ -16,8 +16,8 @@ import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStage;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.utils.OrderedMap;
 import com.garganttua.core.utils.OrderedMapPosition;
 

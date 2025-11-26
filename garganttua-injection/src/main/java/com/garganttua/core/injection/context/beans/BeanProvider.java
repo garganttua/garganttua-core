@@ -19,8 +19,8 @@ import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.utils.CopyException;
 
 import lombok.extern.slf4j.Slf4j;

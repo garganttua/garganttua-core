@@ -3,9 +3,10 @@ package com.garganttua.core.supplying.dsl;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IContextualObjectSupply;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.supplying.ContextualObjectSupplier;
-import com.garganttua.core.supplying.IContextualObjectSupplier;
-import com.garganttua.core.supplying.IContextualObjectSupply;
 
 public class ContextualObjectSupplierBuilder<Supplied, Context> implements IObjectSupplierBuilder<Supplied, IContextualObjectSupplier<Supplied, Context>> {
 

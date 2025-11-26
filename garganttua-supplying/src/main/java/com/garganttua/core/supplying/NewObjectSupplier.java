@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.SupplyException;
 
 public class NewObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType> {
 

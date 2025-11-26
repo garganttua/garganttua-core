@@ -1,4 +1,4 @@
-package com.garganttua.core.supplying;
+package com.garganttua.core.supply;
 
 public class Supplier {
 

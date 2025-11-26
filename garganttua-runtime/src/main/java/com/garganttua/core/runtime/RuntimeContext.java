@@ -13,8 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.slf4j.MDC;
-
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
@@ -27,10 +25,10 @@ import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.supplying.IContextualObjectSupplier;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.ContextualObjectSupplierBuilder;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.ContextualObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.utils.CopyException;
 
 import lombok.Getter;

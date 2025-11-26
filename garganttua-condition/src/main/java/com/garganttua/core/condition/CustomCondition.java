@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 
 public class CustomCondition<T> implements ICondition  {
 

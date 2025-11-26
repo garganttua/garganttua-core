@@ -7,10 +7,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.reflection.ReflectionException;
-import com.garganttua.core.supplying.IContextualObjectSupplier;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.Supplier;
-import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.Supplier;
+import com.garganttua.core.supply.SupplyException;
 
 public abstract class ContextualExecutableBinder<ReturnedType, Context>
         implements IContextualExecutableBinder<ReturnedType, Context> {

@@ -7,6 +7,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.Supplier;
+import com.garganttua.core.supply.SupplyException;
+
 class SimpleSupplier implements IObjectSupplier<String> {
     @Override
     public Optional<String> supply() {

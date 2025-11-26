@@ -7,7 +7,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.reflection.binders.Dependent;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public interface IBeanFactoryBuilder<Bean> extends IObjectSupplierBuilder<Bean, IBeanFactory<Bean>>, Dependent {
 

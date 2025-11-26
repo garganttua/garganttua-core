@@ -11,8 +11,8 @@ import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.context.dsl.IPropertySupplierBuilder;
 import com.garganttua.core.injection.context.properties.Properties;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

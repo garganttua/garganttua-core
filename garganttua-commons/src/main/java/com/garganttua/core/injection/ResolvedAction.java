@@ -1,7 +1,7 @@
 package com.garganttua.core.injection;
 
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 @FunctionalInterface
 public interface ResolvedAction {

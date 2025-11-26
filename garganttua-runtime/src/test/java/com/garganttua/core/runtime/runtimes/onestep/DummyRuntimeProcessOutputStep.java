@@ -1,7 +1,7 @@
 package com.garganttua.core.runtime.runtimes.onestep;
 
 import static com.garganttua.core.condition.Conditions.*;
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
 
 import javax.inject.Named;
 

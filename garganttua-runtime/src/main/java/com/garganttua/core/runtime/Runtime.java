@@ -11,7 +11,7 @@ import org.slf4j.MDC;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import lombok.extern.slf4j.Slf4j;

@@ -16,8 +16,8 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
 import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

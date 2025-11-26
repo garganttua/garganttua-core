@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.SupplyException;
 
 public class NewContextualObjectSupplier<SuppliedType>
         implements IContextualObjectSupplier<SuppliedType, Void> {

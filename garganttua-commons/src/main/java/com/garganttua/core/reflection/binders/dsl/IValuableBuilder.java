@@ -2,8 +2,8 @@ package com.garganttua.core.reflection.binders.dsl;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public interface IValuableBuilder<Builder, Link, Built> extends IAutomaticLinkedBuilder<Builder, Link, Built> {
 

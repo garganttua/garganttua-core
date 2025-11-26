@@ -1,7 +1,7 @@
 package com.garganttua.core.injection.context.dsl;
 
 import com.garganttua.core.injection.IPropertySupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public interface IPropertySupplierBuilder<Property> extends IObjectSupplierBuilder<Property, IPropertySupplier<Property>>  {
 

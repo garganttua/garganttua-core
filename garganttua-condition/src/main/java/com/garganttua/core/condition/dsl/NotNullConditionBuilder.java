@@ -5,8 +5,8 @@ import java.util.Objects;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.NotNullCondition;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public class NotNullConditionBuilder<T> implements IConditionBuilder {
 

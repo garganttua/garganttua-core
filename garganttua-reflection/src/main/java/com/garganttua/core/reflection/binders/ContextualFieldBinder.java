@@ -7,10 +7,10 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supplying.IContextualObjectSupplier;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.Supplier;
-import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.Supplier;
+import com.garganttua.core.supply.SupplyException;
 
 public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, FieldContextType>
         implements IContextualFieldBinder<OnwerType, FieldType, OwnerContextType, FieldContextType> {

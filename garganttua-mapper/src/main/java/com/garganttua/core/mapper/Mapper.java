@@ -102,7 +102,7 @@ public class Mapper implements IMapper {
 		return this;
 	}
 
-	//@Override
+	@Override
 	public MappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination)
 			throws MapperException {
 		if (log.isDebugEnabled()) {
@@ -116,8 +116,16 @@ public class Mapper implements IMapper {
 				destinationRules, mappingDirection);
 
 		try {
-			if (this.configuration.doValidation())
-				configuration.validate();
+			if (this.configuration.doValidation()) {
+				if (log.isDebugEnabled()) {
+					log.debug("Validating configuration " + toString());
+				}
+
+				if (mappingDirection == MappingDirection.REVERSE)
+					MappingRules.validate(destination, destinationRules);
+				if (mappingDirection == MappingDirection.REGULAR)
+					MappingRules.validate(source, sourceRules);
+			}
 		} catch (MapperException e) {
 			if (this.configuration.failOnError()) {
 				if (log.isDebugEnabled()) {
@@ -137,7 +145,7 @@ public class Mapper implements IMapper {
 		return configuration;
 	}
 
-	//@Override
+	@Override
 	public MappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination)
 			throws MapperException {
 		MappingConfiguration lookup = new MappingConfiguration(source, destination, null, null, null);

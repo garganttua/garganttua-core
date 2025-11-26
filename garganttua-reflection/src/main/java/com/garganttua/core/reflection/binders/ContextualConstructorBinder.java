@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.constructors.Constructors;
-import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 
 public class ContextualConstructorBinder<Constructed>
         extends ContextualExecutableBinder<Constructed, Void>

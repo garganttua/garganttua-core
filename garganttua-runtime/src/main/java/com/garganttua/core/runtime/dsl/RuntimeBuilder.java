@@ -1,6 +1,6 @@
 package com.garganttua.core.runtime.dsl;
 
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -24,8 +24,8 @@ import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.Runtime;
 import com.garganttua.core.runtime.annotations.Stages;
 import com.garganttua.core.runtime.annotations.Variables;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 
 import lombok.extern.slf4j.Slf4j;

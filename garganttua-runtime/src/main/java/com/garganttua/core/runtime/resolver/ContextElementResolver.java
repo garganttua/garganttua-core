@@ -9,8 +9,8 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.runtime.IRuntimeContext;
-import com.garganttua.core.supplying.IContextualObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

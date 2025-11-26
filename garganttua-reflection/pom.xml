@@ -21,7 +21,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-supplying</artifactId>
+			<artifactId>garganttua-supply</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>

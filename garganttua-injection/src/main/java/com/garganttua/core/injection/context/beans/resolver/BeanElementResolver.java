@@ -13,8 +13,8 @@ import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.context.beans.Beans;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

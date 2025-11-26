@@ -18,7 +18,7 @@ import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.supply.SupplyException;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BeansTest {

@@ -123,7 +123,7 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
-        <artifactId>garganttua-supplying</artifactId>
+        <artifactId>garganttua-supply</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -305,7 +305,7 @@
     <module>garganttua-bindings</module>
     <module>garganttua-commons</module>
     <module>garganttua-lifecycle</module>
-    <module>garganttua-supplying</module>
+    <module>garganttua-supply</module>
     <module>garganttua-condition</module>
   </modules>
 </project>

@@ -7,8 +7,8 @@ import java.util.Set;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.binders.dsl.AbstractFieldBinderBuilder;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

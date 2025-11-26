@@ -14,7 +14,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 |:--|:--|
 | [**garganttua-reflection**](./garganttua-reflection/README.md) | Dynamic inspection and manipulation of classes, methods, and annotations. |
 | [**garganttua-mapper**](./garganttua-mapper/README.md) | Flexible and declarative object-to-object mapping engine. |
-| [**garganttua-executor**](./garganttua-executor/README.md) | Execution management, including synchronous and asynchronous task orchestration. |
+| [**garganttua-executor**](./garganttua-executor/README.md) | Execution management, including methods and fallbacks task orchestration. |
 | [**garganttua-crypto**](./garganttua-crypto/README.md) | Encryption, hashing, and secure key management utilities. |
 | [**garganttua-native**](./garganttua-native/README.md) | Native integrations and abstraction layer for low-level operations. |
 | [**garganttua-native-image-maven-plugin**](./garganttua-native-image-maven-plugin/README.md) | Custom Maven plugin to build native images (GraalVM support). |
@@ -55,3 +55,6 @@ graph TD
     runtime --> executor
     bindings --> runtime
     bindings --> injection
+
+## License
+MIT License

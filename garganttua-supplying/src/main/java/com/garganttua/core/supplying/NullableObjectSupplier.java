@@ -3,6 +3,9 @@ package com.garganttua.core.supplying;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.SupplyException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

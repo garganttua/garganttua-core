@@ -1,6 +1,6 @@
 package com.garganttua.core.runtime.perfs.runtimes;
 
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
 
 import java.util.List;
 import java.util.Map;
@@ -11,8 +11,8 @@ import com.garganttua.core.runtime.annotations.RuntimeDefinition;
 import com.garganttua.core.runtime.annotations.Stages;
 import com.garganttua.core.runtime.annotations.Variables;
 import com.garganttua.core.runtime.runtimes.onestep.DummyRuntimeProcessOutputStep;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 @RuntimeDefinition(input=String.class, output=String.class)
 @Named("RuntimeWithCatchedExceptionAndHandledByFallback")

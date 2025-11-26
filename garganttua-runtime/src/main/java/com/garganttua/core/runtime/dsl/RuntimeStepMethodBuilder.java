@@ -29,8 +29,8 @@ import com.garganttua.core.runtime.annotations.Condition;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Variable;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;

@@ -47,16 +47,4 @@ public record MappingConfiguration(
 				", mappingDirection=" + mappingDirection +
 				'}';
 	}
-
-	public void validate() throws MapperException {
-		if (log.isDebugEnabled()) {
-			log.debug("Validating configuration " + toString());
-		}
-
-		if (mappingDirection == MappingDirection.REVERSE)
-			MappingRules.validate(destination, destinationRules);
-		if (mappingDirection == MappingDirection.REGULAR)
-			MappingRules.validate(source, sourceRules);
-
-	}
 }

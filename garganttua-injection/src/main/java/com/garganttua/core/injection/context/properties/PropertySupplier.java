@@ -6,7 +6,7 @@ import java.util.Optional;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertySupplier;
 import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 

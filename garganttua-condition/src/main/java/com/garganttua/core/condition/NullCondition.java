@@ -3,7 +3,7 @@ package com.garganttua.core.condition;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.supplying.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 
 public class NullCondition implements ICondition {
 

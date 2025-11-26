@@ -9,9 +9,9 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.reflection.fields.Fields;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 

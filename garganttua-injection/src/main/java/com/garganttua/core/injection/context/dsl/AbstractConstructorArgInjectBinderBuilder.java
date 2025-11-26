@@ -11,7 +11,7 @@ import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
-import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;

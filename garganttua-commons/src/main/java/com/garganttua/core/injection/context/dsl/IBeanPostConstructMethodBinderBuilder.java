@@ -4,8 +4,8 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public interface IBeanPostConstructMethodBinderBuilder<Bean> extends
         IMethodBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>, Dependent {

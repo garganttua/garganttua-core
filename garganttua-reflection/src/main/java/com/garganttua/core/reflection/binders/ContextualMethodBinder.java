@@ -9,10 +9,10 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supplying.IContextualObjectSupplier;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.Supplier;
-import com.garganttua.core.supplying.SupplyException;
+import com.garganttua.core.supply.IContextualObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.Supplier;
+import com.garganttua.core.supply.SupplyException;
 
 public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         extends ContextualExecutableBinder<ReturnedType, OwnerContextType>

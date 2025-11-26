@@ -48,8 +48,6 @@ public class ObjectAddressTest {
         assertThrows(IllegalArgumentException.class, () -> address.getElement(-1));
         assertThrows(IllegalArgumentException.class, () -> address.getElement(3));
     }
-
-	
 }
 
 	

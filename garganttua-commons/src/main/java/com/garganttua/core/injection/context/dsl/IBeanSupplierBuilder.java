@@ -5,7 +5,7 @@ import java.lang.annotation.Annotation;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.reflection.binders.Dependent;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public interface IBeanSupplierBuilder<Bean> extends IObjectSupplierBuilder<Bean, IBeanSupplier<Bean>>, Dependent {
 

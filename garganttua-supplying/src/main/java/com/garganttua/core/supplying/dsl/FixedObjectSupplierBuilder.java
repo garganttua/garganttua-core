@@ -3,8 +3,9 @@ package com.garganttua.core.supplying.dsl;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 import com.garganttua.core.supplying.FixedObjectSupplier;
-import com.garganttua.core.supplying.IObjectSupplier;
 
 public class FixedObjectSupplierBuilder<Supplied>
         implements IObjectSupplierBuilder<Supplied, IObjectSupplier<Supplied>> {

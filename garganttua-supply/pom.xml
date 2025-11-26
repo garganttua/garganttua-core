@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>com.garganttua.core</groupId>
-    <artifactId>garganttua-supplying</artifactId>
+    <artifactId>garganttua-supply</artifactId>
 
     <dependencies>
         <dependency>

@@ -23,7 +23,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.beans.BeanFactory;
-import com.garganttua.core.supplying.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

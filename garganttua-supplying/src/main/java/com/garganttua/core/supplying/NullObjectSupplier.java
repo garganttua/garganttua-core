@@ -2,6 +2,9 @@ package com.garganttua.core.supplying;
 
 import java.util.Optional;
 
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.SupplyException;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

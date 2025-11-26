@@ -15,9 +15,9 @@ import com.garganttua.core.condition.dsl.NotNullConditionBuilder;
 import com.garganttua.core.condition.dsl.NullConditionBuilder;
 import com.garganttua.core.condition.dsl.OrConditionBuilder;
 import com.garganttua.core.condition.dsl.XorConditionBuilder;
-import com.garganttua.core.supplying.IObjectSupplier;
-import com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supplying.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 public class Conditions {
 
