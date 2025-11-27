@@ -13,6 +13,8 @@
       <artifactId>garganttua-bindings</artifactId>
       <packaging>pom</packaging>
 
+      <description>Modules providing bindings to external libs and frameworks.</description>
+
       <modules>
             <module>garganttua-spring</module>
             <module>garganttua-reflections</module>

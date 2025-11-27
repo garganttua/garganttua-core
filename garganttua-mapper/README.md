@@ -186,4 +186,4 @@ Once a mapping is done, the configuration is recorded in the Mapper, that reuses
 - Enable `FAIL_ON_ERROR` during development to catch misconfigurations early.
 
 ## License
-MIT License
+This module is distributed under the MIT License.

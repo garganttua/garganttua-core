@@ -12,6 +12,8 @@
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-spring</artifactId>
 
+	<description>Spring framework integration for Garganttua Core modules.</description>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework</groupId>

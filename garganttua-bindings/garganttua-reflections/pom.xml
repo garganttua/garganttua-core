@@ -12,6 +12,8 @@
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-reflections</artifactId>
 
+    <description>Annotation scanner implementation based on org.reflections:reflections</description>
+
     <dependencies>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>

@@ -9,6 +9,7 @@
 	</parent>
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-reflection</artifactId>
+	<description>Advanced reflection utilities for classes, methods, and annotations.</description>
 
 	<dependencies>
 		<dependency>

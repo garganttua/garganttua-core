@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-crypto</artifactId>
-
+	<description>Encryption, hashing, and secure key management utilities.</description>
 	<dependencies>
 	</dependencies>
 </project>

@@ -9,6 +9,7 @@
 	</parent>
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-native</artifactId>
+	<description>Low-level native integrations and system abstractions.</description>
 
 	<dependencies>
 		<dependency>

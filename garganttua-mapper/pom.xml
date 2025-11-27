@@ -9,6 +9,7 @@
 	</parent>
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-mapper</artifactId>
+	<description>Declarative object-to-object mapping engine.</description>
 
 	<dependencies>
 		<dependency>

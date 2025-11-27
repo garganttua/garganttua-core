@@ -1,7 +1,7 @@
 # Garganttua Condition
 
 ## Description
-The **garganttua-condition** module provides a declarative DSL to build, compose, and evaluate runtime conditions on dynamically supplied objects.  
+The **garganttua-condition** module provides a declarative DSL to build, compose, and evaluate runtime conditions on dynamically [supplied](../garganttua-supply/README.md) objects.
 It allows developers to chain logical operators, create custom predicate-based conditions, and integrate conditions with object suppliers within the garganttua-core ecosystem.
 
 ## Installation
@@ -29,96 +29,88 @@ It allows developers to chain logical operators, create custom predicate-based c
 
 ## Core Concepts
 
-ConditionBuilder — A fluent builder used to construct conditions.
-Suppliers — Provide objects at evaluation time. See [**here**](../garganttua-supplying/README.md) 
-Logical operators — Compose multiple conditions (AND, OR, XOR, etc.).
-Custom predicates — Create fully customized conditions from functional interfaces.
-Exception handling — Validation and type mismatch errors are surfaced via DslException or ConditionException.
+### ConditionBuilder
+
+A fluent builder used to construct declarative runtime conditions.
+
+### Suppliers
+
+Suppliers defer object retrieval until evaluation.
+See the garganttua-supply module.
+
+### Logical operators
+
+Compose multiple conditions (AND, OR, XOR, NOR, NAND).
+
+### Custom predicates
+
+Define domain-specific conditions using functional interfaces.
+
+### Exception handling
+
+Errors such as type mismatches or invalid predicates are surfaced via:
+ - `DslException`
+ - `ConditionException`
 
 ## Usage
 
 ### Basic usage
-
-Conditions are created using the DSL from Conditions.*.
-
+```java
 import static com.garganttua.core.condition.Conditions.*;
-import static com.garganttua.core.supplying.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
 
-All conditions must be finished with .build().evaluate().
-
-### Available operators
-
-Null checks
-
-isNull(supplier)
-
-isNotNull(supplier)
-
-Equality
-
-equals(leftSupplier, rightSupplier)
-
-notEquals(leftSupplier, rightSupplier)
-
-Logical operators
-
-and(cond1, cond2, ...)
-
-or(cond1, cond2, ...)
-
-nor(cond1, cond2, ...)
-
-nand(cond1, cond2, ...)
-
-xor(cond1, cond2, ...)
-
-Custom condition
-
-custom(supplier, predicate)
-
-custom(supplier, transformer, predicate)
-
-These allow full custom evaluation logic, including mapping the value before checking.
-
-Example
 boolean result =
     and(
         isNotNull(of("hello")),
         custom(of(10), v -> v > 5)
     )
     .build()
-    .evaluate();
-
-Tips and best practices
-
-Use suppliers (of(...)) to defer object retrieval until evaluation.
-
-Combine multiple lightweight conditions using logical operators for readability.
-
-Prefer custom(...) when encoding domain-specific rules.
-
-Always handle DslException for type mismatches in equality checks.
-
-License
-
-This module is distributed under the MIT License.
-<!-- AUTO-GENERATED-START -->
-### Installation with Maven
-```xml
-<dependency>
-    <groupId>com.garganttua.core</groupId>
-    <artifactId>garganttua-condition</artifactId>
-    <version>2.0.0-ALPHA01</version>
-</dependency>
+    .evaluate(); // True
 ```
 
-### Actual version
-2.0.0-ALPHA01
+### Available operators
 
-### Dependencies
- - `com.garganttua.core:garganttua-commons`
- - `com.garganttua.core:garganttua-dsl`
- - `com.garganttua.core:garganttua-supply`
- - `com.garganttua.core:garganttua-reflections:test`
+#### Null checks
+```java
+isNull(supplier);
+isNotNull(supplier);
+```
+#### Equality
+```java
+equals(leftSupplier, rightSupplier);
+notEquals(leftSupplier, rightSupplier);
+```
+#### Logical operators
+```java
+and(cond1, cond2, ...);
+or(cond1, cond2, ...);
+nor(cond1, cond2, ...);
+nand(cond1, cond2, ...);
+xor(cond1, cond2, ...);
+```
+#### Custom conditions
+```java
+custom(supplier, predicate);
+custom(supplier, accessor, predicate);
+```
+Example:
+```java
+boolean result =
+    custom(of("hello"), String::length, len -> len > 3)
+        .build()
+        .evaluate(); // True
+```
+## Tips and best practices
 
-<!-- AUTO-GENERATED-END -->
+ - **Always use suppliers (of(...))** to delay value retrieval until evaluation.
+ - **Chain several small conditions** instead of creating monolithic predicate blocks.
+ - **Use custom(...)** when encoding domain-specific business rules.
+ - **Check for type mismatches** when comparing values using equals(...) or notEquals(...).
+ - **Prefer logical operators** for clarity instead of nested custom predicates.
+ - **Catch DslException** to detect invalid supplier or operator usage.
+ - **Use static import** to improve readability and consision
+
+## License
+
+This module is distributed under the MIT License.
+

@@ -11,6 +11,7 @@
 
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-supply</artifactId>
+    <description>Object suppliers and contextual provisioning utilities.</description>
 
     <dependencies>
         <dependency>

@@ -9,6 +9,7 @@
 	</parent>
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-execution</artifactId>
+	<description>Task execution, orchestration, and fallback handling engine.</description>
 
 	<dependencies>
 		<dependency>

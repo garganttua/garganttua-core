@@ -10,6 +10,7 @@
 	<groupId>com.garganttua.core</groupId>
 	<artifactId>garganttua-native-image-maven-plugin</artifactId>
 	<packaging>maven-plugin</packaging>
+	<description>Maven plugin to build native images (GraalVM support).</description>
 
 	<dependencies>
 		<dependency>
