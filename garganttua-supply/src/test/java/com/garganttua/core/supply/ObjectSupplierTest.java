@@ -7,10 +7,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.IContextualObjectSupply;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.ContextualObjectSupplierBuilder;
 import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
 import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;

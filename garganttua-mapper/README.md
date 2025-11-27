@@ -6,13 +6,24 @@ It allows mapping data between objects, supporting simple fields, collections, m
 The mapper is **reversible**, meaning you can map from source to destination or from destination back to source.
 
 ## Installation
+
+<!-- AUTO-GENERATED-START -->
+### Installation with Maven
 ```xml
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-mapper</artifactId>
-    <version>${version}</version> 
+    <version>2.0.0-ALPHA01</version>
 </dependency>
 ```
+
+### Actual version
+2.0.0-ALPHA01
+
+### Dependencies
+ - `com.garganttua.core:garganttua-reflection`
+
+<!-- AUTO-GENERATED-END -->
 
 ## Core Concepts
 

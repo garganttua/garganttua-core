@@ -5,15 +5,27 @@ The **garganttua-condition** module provides a declarative DSL to build, compose
 It allows developers to chain logical operators, create custom predicate-based conditions, and integrate conditions with object suppliers within the garganttua-core ecosystem.
 
 ## Installation
-Add the module to your project:
 
+<!-- AUTO-GENERATED-START -->
+### Installation with Maven
 ```xml
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-condition</artifactId>
-    <version>LATEST</version>
+    <version>2.0.0-ALPHA01</version>
 </dependency>
 ```
+
+### Actual version
+2.0.0-ALPHA01
+
+### Dependencies
+ - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-dsl`
+ - `com.garganttua.core:garganttua-supply`
+ - `com.garganttua.core:garganttua-reflections:test`
+
+<!-- AUTO-GENERATED-END -->
 
 ## Core Concepts
 
@@ -90,3 +102,23 @@ Always handle DslException for type mismatches in equality checks.
 License
 
 This module is distributed under the MIT License.
+<!-- AUTO-GENERATED-START -->
+### Installation with Maven
+```xml
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-condition</artifactId>
+    <version>2.0.0-ALPHA01</version>
+</dependency>
+```
+
+### Actual version
+2.0.0-ALPHA01
+
+### Dependencies
+ - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-dsl`
+ - `com.garganttua.core:garganttua-supply`
+ - `com.garganttua.core:garganttua-reflections:test`
+
+<!-- AUTO-GENERATED-END -->

@@ -4,7 +4,25 @@
 It provides modular, low-level building blocks for reflection, dependency injection, execution, mapping, encryption, and runtime management —  
 all designed for high performance, interoperability, and simplicity.
 
----
+<!-- AUTO-GENERATED-START -->
+### Installation with Maven
+```xml
+<dependency>
+    <groupId>com.garganttua</groupId>
+    <artifactId>garganttua-core</artifactId>
+    <version>2.0.0-ALPHA01</version>
+</dependency>
+```
+
+### Actual version
+2.0.0-ALPHA01
+
+### Dependencies
+ - `org.junit.jupiter:junit-jupiter-engine:test`
+ - `org.slf4j:slf4j-api:provided`
+ - `org.projectlombok:lombok:provided`
+
+<!-- AUTO-GENERATED-END -->
 
 ## 🧠 Architecture Overview
 

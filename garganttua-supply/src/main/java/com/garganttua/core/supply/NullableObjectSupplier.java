@@ -31,4 +31,12 @@ public class NullableObjectSupplier<SuppliedType> implements IObjectSupplier<Sup
     public Class<SuppliedType> getSuppliedType() {
         return delegate.getSuppliedType();
     }
+
+    public boolean isNullable() {
+        return this.allowNull;
+    }
+
+    public IObjectSupplier<SuppliedType> getDelegate() {
+        return this.delegate;
+    }
 }

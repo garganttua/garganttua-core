@@ -39,4 +39,12 @@ public class NullableContextualObjectSupplier<SuppliedType, ContextType>
         }
         return o == null ? Optional.empty() : o;
     }
+
+    public boolean isNullable() {
+        return this.allowNull;
+    }
+
+    public IObjectSupplier<SuppliedType> getDelegate() {
+        return this.delegate;
+    }
 }
