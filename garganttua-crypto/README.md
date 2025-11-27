@@ -1,4 +1,4 @@
-# Garganttua Module
+# Garganttua Crypto
 
 ## Description
 
