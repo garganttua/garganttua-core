@@ -225,124 +225,37 @@ Exception Classes:
 ### Dependency Injection Example
 
 ```java
-// Create a DI context
-IDiContext context = new DiContextBuilder()
-    .addBean(MyService.class)
-    .addBean(MyRepository.class)
-    .addProperty("app.name", "MyApp")
-    .build();
-
-// Retrieve beans
-MyService service = context.getBean(MyService.class);
-
-// Lifecycle management
-context.onStart();
-// ... use context
-context.onStop();
+// Quick example under construction
 ```
 
 ### Condition Evaluation
 
 ```java
-// Define a condition
-ICondition ageCondition = new ConditionBuilder()
-    .field("age")
-    .greaterThan(18)
-    .build();
-
-// Evaluate
-boolean isAdult = ageCondition.evaluate(person);
+// Quick example under construction
 ```
 
 ### Executor Chain Pattern
 
 ```java
-// Create an executor chain
-ExecutorChain<Order> chain = new ExecutorChain<>();
-
-chain.addExecutor((order, nextChain) -> {
-    // Validate order
-    validateOrder(order);
-    nextChain.execute(order);
-});
-
-chain.addExecutor((order, nextChain) -> {
-    // Process payment
-    processPayment(order);
-    nextChain.execute(order);
-}, (order, nextChain) -> {
-    // Fallback: refund
-    refundPayment(order);
-});
-
-// Execute
-chain.execute(myOrder);
+// Quick example under construction
 ```
 
 ### Object Mapping
 
 ```java
-@ObjectMappingRule(source = UserDTO.class, target = User.class)
-public class UserMapper {
-
-    @FieldMappingRule(sourceField = "fullName", targetField = "name")
-    public void mapName(UserDTO dto, User user) {
-        user.setName(dto.getFullName().toUpperCase());
-    }
-}
-
-// Use mapper
-IMapper<UserDTO, User> mapper = new Mapper<>(UserMapper.class);
-User user = mapper.map(userDTO);
+// Quick example under construction
 ```
 
 ### Runtime Workflow
 
 ```java
-@RuntimeDefinition(input = OrderRequest.class, output = OrderResult.class)
-@Stages({
-    @Stage(name = "validation", steps = {
-        @Step(method = "validateOrder")
-    }),
-    @Stage(name = "processing", steps = {
-        @Step(method = "processPayment"),
-        @Step(method = "shipOrder")
-    })
-})
-public class OrderRuntime {
-
-    public void validateOrder(@Input OrderRequest request) {
-        if (request.getAmount() <= 0) {
-            throw new RuntimeException("Invalid amount");
-        }
-    }
-
-    @FallBack
-    public void handleFailure(@Exception Throwable ex) {
-        // Handle failure
-    }
-}
+// Quick example under construction
 ```
 
 ### Reflection Utilities
 
 ```java
-// Scan for annotations
-IAnnotationScanner scanner = new AnnotationScanner();
-Set<Class<?>> classes = scanner.scan("com.myapp", MyAnnotation.class);
-
-// Bind and invoke method
-IMethodBinder binder = new MethodBinderBuilder()
-    .target(myObject)
-    .method("processData")
-    .parameter(String.class, "input")
-    .build();
-
-Object result = binder.call();
-
-// Navigate object graph
-ObjectAddress address = ObjectAddress.parse("user.address.city");
-String city = address.getValue(myUser);
+// Quick example under construction
 ```
 
 ## Tips and best practices
