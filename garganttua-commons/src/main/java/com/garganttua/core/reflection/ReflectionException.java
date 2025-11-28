@@ -1,16 +1,15 @@
 package com.garganttua.core.reflection;
 
 import com.garganttua.core.CoreException;
-import com.garganttua.core.CoreExceptionCode;
 
 public class ReflectionException extends CoreException {
 
 	public ReflectionException(String string) {
-		super(CoreExceptionCode.REFLECTION_ERROR, string);
+		super(CoreException.REFLECTION_ERROR, string);
 	}
 
 	public ReflectionException(String string, Throwable e) {
-		super(CoreExceptionCode.REFLECTION_ERROR, string, e);
+		super(CoreException.REFLECTION_ERROR, string, e);
 	}
 
 	public ReflectionException(Throwable e) {

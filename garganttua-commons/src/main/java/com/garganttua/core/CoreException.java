@@ -9,22 +9,34 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CoreException extends RuntimeException {
 
+    public static final int UNKNOWN_ERROR = -1;
+    public static final int SUPPLY_ERROR = 1;
+    public static final int RUNTIME_ERROR = 2;
+    public static final int REFLECTION_ERROR = 3;
+    public static final int MAPPER_ERROR = 4;
+    public static final int LIFECYCLE_ERROR = 5;
+    public static final int INJECTION_ERROR = 6;
+    public static final int EXECUTOR_ERROR = 7;
+    public static final int DSL_ERROR = 8;
+    public static final int CONDITION_ERROR = 9;
+    public static final int COPY_ERROR = 10;
+
     private static final long serialVersionUID = 7855765591949705798L;
 
     @Getter
-    protected CoreExceptionCode code = CoreExceptionCode.UNKNOWN_ERROR;
+    protected int code = CoreException.UNKNOWN_ERROR;
 
-    protected CoreException(CoreExceptionCode code, String message) {
+    protected CoreException(int code, String message) {
         super(message);
         this.code = code;
     }
 
-    protected CoreException(CoreExceptionCode code, String message, Throwable exception) {
+    protected CoreException(int code, String message, Throwable exception) {
         super(message, exception);
         this.code = code;
     }
 
-    protected CoreException(CoreExceptionCode code, Throwable exception) {
+    protected CoreException(int code, Throwable exception) {
         super(exception.getMessage(), exception);
         this.code = code;
     }
@@ -34,14 +46,14 @@ public class CoreException extends RuntimeException {
         if (CoreException.class.isAssignableFrom(exception.getClass())) {
             this.code = ((CoreException) exception).getCode();
         } else {
-            this.code = CoreExceptionCode.UNKNOWN_ERROR;
+            this.code = CoreException.UNKNOWN_ERROR;
         }
     }
 
     public static Optional<CoreException> findFirstInException(Throwable exception) {
         Throwable cause = exception.getCause();
         while (cause != null) {
-            if (CoreException.class.isAssignableFrom(cause.getClass()) ) {
+            if (CoreException.class.isAssignableFrom(cause.getClass())) {
                 return Optional.of((CoreException) cause);
             }
             cause = cause.getCause();
@@ -55,7 +67,7 @@ public class CoreException extends RuntimeException {
         if (coreException.isPresent()) {
             throw coreException.get();
         } else {
-            throw new CoreException(CoreExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
+            throw new CoreException(CoreException.UNKNOWN_ERROR, e.getMessage(), e);
         }
     }
 
@@ -64,11 +76,11 @@ public class CoreException extends RuntimeException {
             Class<E> type) {
         Throwable cause = exception.getCause();
         while (cause != null) {
-            if (cause.getClass().isAssignableFrom(type) ) {
+            if (cause.getClass().isAssignableFrom(type)) {
                 return Optional.of((E) cause);
             }
-            if( cause instanceof InvocationTargetException inv ){
-                cause = inv.getTargetException(); 
+            if (cause instanceof InvocationTargetException inv) {
+                cause = inv.getTargetException();
             } else {
                 cause = cause.getCause();
             }
