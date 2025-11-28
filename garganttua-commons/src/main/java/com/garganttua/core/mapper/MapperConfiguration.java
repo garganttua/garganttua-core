@@ -1,11 +1,11 @@
 package com.garganttua.core.mapper;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MapperConfiguration {
 
-	private Map<MapperConfigurationItem, Object> configurations = new HashMap<>();
+	private final Map<MapperConfigurationItem, Object> configurations = new ConcurrentHashMap<>();
 
 	public MapperConfiguration() {
 		this.configurations.put(MapperConfigurationItem.FAIL_ON_ERROR, true);

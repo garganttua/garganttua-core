@@ -1,18 +1,29 @@
 package com.garganttua.core.mapper;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Mapper implements IMapper {
 
-	protected Set<MappingConfiguration> mappingConfigurations = new HashSet<MappingConfiguration>();
+	protected final Map<MappingKey, MappingConfiguration> mappingConfigurations = new ConcurrentHashMap<>();
 
-	private MapperConfiguration configuration = new MapperConfiguration();
+	private final MapperConfiguration configuration = new MapperConfiguration();
+
+	/**
+	 * Thread-safe key for mapping configuration lookup.
+	 * Uses source and destination classes as composite key.
+	 */
+	private static record MappingKey(Class<?> source, Class<?> destination) {
+		private MappingKey {
+			Objects.requireNonNull(source, "Source class cannot be null");
+			Objects.requireNonNull(destination, "Destination class cannot be null");
+		}
+	}
 
 	@Override
 	public <destination> destination map(Object source, destination destination) throws MapperException {
@@ -102,11 +113,14 @@ public class Mapper implements IMapper {
 		return this;
 	}
 
-	@Override
-	public MappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination)
+	/**
+	 * Creates a mapping configuration without storing it in the map.
+	 * Used internally by computeIfAbsent to avoid recursive update.
+	 */
+	private MappingConfiguration createMappingConfiguration(Class<?> source, Class<?> destination)
 			throws MapperException {
 		if (log.isDebugEnabled()) {
-			log.debug("Recording mapping configuration from " + source.getSimpleName() + " to "
+			log.debug("Creating mapping configuration from " + source.getSimpleName() + " to "
 					+ destination.getSimpleName());
 		}
 		List<MappingRule> destinationRules = MappingRules.parse(destination);
@@ -137,7 +151,18 @@ public class Mapper implements IMapper {
 			}
 		}
 
-		this.mappingConfigurations.add(configuration);
+		if (log.isDebugEnabled()) {
+			log.debug("Created mapping configuration " + configuration);
+		}
+		return configuration;
+	}
+
+	@Override
+	public MappingConfiguration recordMappingConfiguration(Class<?> source, Class<?> destination)
+			throws MapperException {
+		MappingConfiguration configuration = createMappingConfiguration(source, destination);
+		MappingKey key = new MappingKey(source, destination);
+		this.mappingConfigurations.put(key, configuration);
 
 		if (log.isDebugEnabled()) {
 			log.debug("Recorded mapping configuration " + configuration);
@@ -148,14 +173,32 @@ public class Mapper implements IMapper {
 	@Override
 	public MappingConfiguration getMappingConfiguration(Class<?> source, Class<?> destination)
 			throws MapperException {
-		MappingConfiguration lookup = new MappingConfiguration(source, destination, null, null, null);
-		Optional<MappingConfiguration> found = this.mappingConfigurations.parallelStream().filter(configuration -> {
-			return configuration.equals(lookup);
-		}).findFirst();
-		if (found.isPresent()) {
-			return found.get();
-		} else {
-			return this.recordMappingConfiguration(source, destination);
+		MappingKey key = new MappingKey(source, destination);
+
+		// Thread-safe compute-if-absent pattern to avoid race conditions
+		// computeIfAbsent automatically stores the returned value, so we must NOT call put() inside
+		try {
+			return this.mappingConfigurations.computeIfAbsent(key, k -> {
+				try {
+					return this.createMappingConfiguration(source, destination);
+				} catch (MapperException e) {
+					// Wrap checked exception in unchecked for computeIfAbsent
+					throw new MapperRuntimeException("Failed to create mapping configuration", e);
+				}
+			});
+		} catch (MapperRuntimeException e) {
+			// Unwrap and rethrow original MapperException
+			throw (MapperException) e.getCause();
+		}
+	}
+
+	/**
+	 * Runtime exception wrapper for use in computeIfAbsent lambda.
+	 * Unwrapped in calling code.
+	 */
+	private static class MapperRuntimeException extends RuntimeException {
+		public MapperRuntimeException(String message, MapperException cause) {
+			super(message, cause);
 		}
 	}
 }
