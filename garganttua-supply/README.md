@@ -2,10 +2,23 @@
 
 ## Description
 
-The **garganttua-supply** module provides a flexible, type-safe object
-supplying system used throughout the garganttua-core ecosystem.\
-It supports fixed suppliers, contextual suppliers, and a unified API to
-resolve objects dynamically at runtime.
+Garganttua Supply is a **flexible, type-safe object supplying framework** that provides dynamic object instantiation and dependency resolution at runtime. It offers a unified API for creating suppliers with varying complexity levels—from fixed values to context-aware factory patterns—making it a foundational component for dependency injection, factory patterns, and dynamic object creation throughout the Garganttua ecosystem.
+
+The Supply framework enables you to define **declarative object suppliers** that can produce values in multiple ways: fixed values, null values, new instances via constructor bindings, or context-aware instances resolved from external systems. It seamlessly integrates with Garganttua Reflection for constructor parameter injection and supports both simple and contextual supplier patterns.
+
+**Key Features:**
+- **Type-Safe API** - Generic `<Supplied>` type parameters for compile-time safety
+- **Multiple Supplier Types** - Fixed, null, new instance, and contextual suppliers
+- **Fluent Builder DSL** - Intuitive API for supplier definition with static factory methods
+- **Null Safety** - Declarative nullable/non-nullable value enforcement
+- **Constructor Binding** - Integration with Garganttua Reflection for parameter injection
+- **Context-Aware Suppliers** - Dynamic object resolution from external contexts (DI containers, Spring, etc.)
+- **Wrapper Pattern** - Automatic nullable wrapping for runtime validation
+- **Optional-Based API** - Consistent use of `Optional<T>` for null handling
+- **Exception Handling** - Dedicated `SupplyException` for supply failures
+- **Unified Interface** - Single `IObjectSupplier<T>` interface for all supplier types
+- **Static Import Support** - Concise syntax with static factory methods
+- **Flexible Configuration** - Mix and match supplier capabilities as needed
 
 ## Installation
 
@@ -29,114 +42,544 @@ resolve objects dynamically at runtime.
 
 ## Core Concepts
 
-usage of DSL and builder to build a usefull object supplier at runtime
+### Object Supplier
 
-Simple suppliers
- - `FixedObjectSupplier` : Creates suppliers that always
-    return a fixed object.
- - `NullObjectSupplier` : Creates suppliers that always
-    return a null object.
+An `IObjectSupplier<Supplied>` is the core abstraction representing a source of objects of type `Supplied`. All suppliers implement this interface and provide:
+- **supply()** - Produces an `Optional<Supplied>` value
+- **getSuppliedType()** - Returns the `Class<Supplied>` of supplied objects
 
-Complex suppliers : these suppliers offer more complex features
- - `NewObjectSupplier` : Creates suppliers that always create a new Object
- - `NullableObjectSupplier` : Wrapper that manages null values
+Suppliers are **reusable** - they can be invoked multiple times to produce values. The behavior depends on the supplier type (fixed value vs. new instance).
 
-Contextual suppliers : these suppliers are able to use a given context to supply the object. It's particularely usefull if the construction of an object depends on other objects managed by an external system, such as Spring Context for example.
- - `ContextualObjectSupplier`: Create suppliers that request the given context to supply the appropriate object
- - `NewContextualObjectSupplier` : Creates suppliers that always create a new Object regarding to the given context
-- `NullableContextualObjectSupplier` : Wrapper that manages null values
+### Fixed Object Supplier
 
-`NewObjectSupplier` and `NewContextualSupplier` need a `IConstructorBinder` or `IContextualConstructorBinder` to work properly. These binder are responsible to do the injection of constructors parameters. More infos here(garganttua-reflexion).
-`garganttua-reflexion` module offers usefull classes to create and manage constructor binders. 
+A `FixedObjectSupplier<Supplied>` always returns the same object instance. It stores a reference to a pre-existing object and returns it on every `supply()` call.
+
+**Characteristics:**
+- Immutable reference to supplied object
+- Same instance returned on every call
+- Cannot supply null (constructor validates non-null)
+- Use for constants, configuration values, singletons
+
+### Null Object Supplier
+
+A `NullObjectSupplier<Supplied>` always returns `Optional.empty()`. It represents the absence of a value in a type-safe manner.
+
+**Characteristics:**
+- Always returns empty Optional
+- Type-safe null representation
+- Useful for optional dependencies
+- No state beyond type information
+
+### New Object Supplier
+
+A `NewObjectSupplier<Supplied>` creates a new instance on every `supply()` call using an `IConstructorBinder<Supplied>`. The constructor binder handles parameter injection and instantiation.
+
+**Characteristics:**
+- Fresh instance on each call
+- Delegates to `IConstructorBinder` for instantiation
+- Returns empty Optional if constructor binding fails
+- Supports complex constructor parameter injection
+
+### Contextual Object Supplier
+
+An `IContextualObjectSupplier<Supplied, Context>` extends `IObjectSupplier` to require a context object for supply. It has two supply methods:
+- **supply()** - Throws exception (context required)
+- **supply(Context, Object...)** - Supplies object using provided context
+
+**Characteristics:**
+- Requires external context for object resolution
+- Supports owner context + additional contexts
+- Type-safe context parameter
+- Useful for DI container integration
+
+### Contextual Implementations
+
+**ContextualObjectSupplier**: Delegates to an `IContextualObjectSupply<Supplied, Context>` function to resolve the object from context.
+
+**NewContextualObjectSupplier**: Creates new instances using an `IContextualConstructorBinder<Supplied>` that can access context during construction.
+
+### Nullable Wrapper Suppliers
+
+**NullableObjectSupplier**: Wraps an `IObjectSupplier<Supplied>` and validates null values according to the `allowNull` flag. If `allowNull=false` and the delegate returns empty/null, throws `SupplyException`.
+
+**NullableContextualObjectSupplier**: Same concept but wraps `IContextualObjectSupplier<Supplied, Context>`.
+
+**Purpose**: Enforce null contracts declaratively at the supplier level rather than at call sites.
+
+### Supplier Builder
+
+The `SupplierBuilder<Supplied>` provides a fluent DSL for constructing suppliers with automatic type selection. Based on configuration, it automatically creates the appropriate supplier implementation:
+
+- **withValue()** → `FixedObjectSupplier`
+- **withConstructor()** → `NewObjectSupplier`
+- **withContext()** → `ContextualObjectSupplier`
+- **withConstructor() + contextType** → `NewContextualObjectSupplier`
+- **No configuration** → `NullObjectSupplier`
+
+All built suppliers are automatically wrapped in nullable wrappers based on the `nullable()` setting.
+
+**Static Factory Methods:**
+- `fixed(Class<T>, T)` - Fixed value supplier
+- `newObject(Class<T>, IConstructorBinder<T>)` - New instance supplier
+- `nullObject(Class<T>)` - Null supplier
+- `contextual(Class<T>, Class<C>, IContextualObjectSupply<T,C>)` - Contextual supplier
+- `newContextual(Class<T>, Class<C>, IContextualConstructorBinder<T>)` - New contextual instance supplier
 
 ## Usage
 
-### Simple object suppliers
+### 1. Fixed Value Supplier
 
-**Example: Using the builder**
-Use the `SupplierBuilder` to autmatically construct a supplier that matches the need. It automatically creates the appropriate supplier regarding the given parameters.
-
-```java
-IConstructorBinder<String> ctorBinder = ...;
-
-new SupplierBuilder(String.class)
-    .withValue("Hello") //Define a fixed value to supply
-    .nullable(true) //Indicate if the supplied value can be null or not. Supplier will throw an exception if a null value is supplied but is indicated as not nullable
-    .withContext(Context.class) //Indicate that a context object is needed to complete the value supplying
-    .withConstructor(ctorBinder) //Indicate a constructor to use to supply a new object. Must be of type IContextualConstructorBinder in case of context type is declared.
-    .build() //Build the supplier
-    .supply() //Supply the object according to the parameters given to the builder
-    .get(); //Get the supplied object from the returned Optional. 
-```
-
-The built supplier is automatically wrapped in an `NullableObjectSupplier` or `NullableContextualObjectSupplier` in order to throw an exception if the supplied value is indicated as not nullable.
-
-**Example: Using the static methods**
-
-Use the set of predefined methods that construct the appropriate supplier.
+Supply the same value on every call:
 
 ```java
-import static com.garganttua.core.supply.dsl.supplierBuilder.*;
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
 
-String value = fixed(String.class, "Hello").build().supply().get(); // "Hello"
-```
-```java
-IConstructorBinder<String> ctorBinder = ...;
-String value = newObject(String.class, ctorBinder).build().supply().get(); // new String 
-```
-```java
-String value = nullObject(String.class).build().supply().get(); // null
-```
-```java
-StringContext context = ...;
-String value = contextual(String.class, StringContext.class, c -> c.newString("Hello")).build().supply(context).get(); // "Hello"
-```
-```java
-IContextualConstructorBinder<String> ctorBinder = ...;
-StringContext context = ...;
-String value = newContextual(String.class, StringContext.class, ctorBinder).build().supply(context).get(); // new instance of String according to context
+// Using static factory method
+IObjectSupplier<String> supplier = fixed(String.class, "Hello World")
+    .build();
 
+String value1 = supplier.supply().get(); // "Hello World"
+String value2 = supplier.supply().get(); // Same instance
 ```
 
-#### Fixed object supplier
+### 2. Null Value Supplier
 
-Use `FixedObjectSupplierBuilder` to create suppliers that always return
-the same object.
-
-**Example: fixed object supplier**
-
-``` java
-FixedObjectSupplierBuilder<String> builder = new FixedObjectSupplierBuilder<>("hello"); //creates a builder
-FixedObjectSupplierBuilder<String> builder = FixedObjectSupplierBuilder.of("hello"); //creates a builder
-IObjectSupplier<String> supplier = builder.build(); //Build the supplier
-String value = supplier.supply().get(); // "hello"
-```
-
-**Example: fixed object supplier from static import**
-
-``` java
-import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
-...
-String value = of("hello").build().supply().get(); // "hello"
-```
-
-#### Null object supplier
-
-Use `NullObjectSupplierBuilder` to create suppliers that always return null.
+Represent optional values that are absent:
 
 ```java
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
 
+IObjectSupplier<String> supplier = nullObject(String.class)
+    .build();
+
+Optional<String> result = supplier.supply();
+assert result.isEmpty(); // true
 ```
 
-## Tips and best practices
+### 3. New Instance Supplier
 
--   Favor contextual suppliers for dynamic runtime evaluation.
--   When possible, expose strongly typed suppliers instead of using raw
-    contexts.
--   Wrap complex supplier logic using builders for clarity and
-    reusability.
--   Always handle `SupplyException` and `DslException` during supplier
-    creation or evaluation.
+Create fresh instances using constructor binding:
+
+```java
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
+import com.garganttua.core.reflection.binders.ConstructorBinder;
+
+// Assuming User has constructor User(String name, int age)
+IConstructorBinder<User> ctorBinder = ConstructorBinder.of(User.class)
+    .withParameter(() -> "Alice")
+    .withParameter(() -> 30)
+    .build();
+
+IObjectSupplier<User> supplier = newObject(User.class, ctorBinder)
+    .build();
+
+User user1 = supplier.supply().get(); // new User("Alice", 30)
+User user2 = supplier.supply().get(); // Another new instance
+assert user1 != user2; // Different instances
+```
+
+### 4. Contextual Supplier
+
+Resolve objects from external context:
+
+```java
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
+
+// Define context type
+class AppContext {
+    public String getMessage() {
+        return "Hello from context";
+    }
+}
+
+// Create contextual supplier
+IObjectSupplier<String> supplier = contextual(
+    String.class,
+    AppContext.class,
+    (context, otherContexts) -> Optional.of(context.getMessage())
+).build();
+
+// Supply with context
+AppContext context = new AppContext();
+String message = ((IContextualObjectSupplier<String, AppContext>) supplier)
+    .supply(context)
+    .get(); // "Hello from context"
+```
+
+### 5. New Contextual Instance Supplier
+
+Create instances using context-aware constructor binding:
+
+```java
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
+
+// Assuming contextual constructor binder that uses DI context
+IContextualConstructorBinder<DatabaseService> ctorBinder = ...;
+
+IObjectSupplier<DatabaseService> supplier = newContextual(
+    DatabaseService.class,
+    DiContext.class,
+    ctorBinder
+).build();
+
+// Supply with DI context
+DiContext diContext = new DiContext();
+DatabaseService service = ((IContextualObjectSupplier<DatabaseService, DiContext>) supplier)
+    .supply(diContext)
+    .get();
+```
+
+### 6. Nullable Validation
+
+Enforce non-null contracts declaratively:
+
+```java
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
+
+// Non-nullable supplier - will throw if null
+IObjectSupplier<String> nonNull = new SupplierBuilder<>(String.class)
+    .withValue("Valid")
+    .nullable(false)  // Enforce non-null
+    .build();
+
+String value = nonNull.supply().get(); // OK
+
+// Nullable supplier - allows null
+IObjectSupplier<String> nullable = new SupplierBuilder<>(String.class)
+    .nullable(true)
+    .build();
+
+Optional<String> result = nullable.supply(); // Empty Optional, no exception
+```
+
+### 7. Builder Pattern - Full Configuration
+
+Use the builder for complex supplier configuration:
+
+```java
+IConstructorBinder<Service> ctorBinder = ...;
+
+IObjectSupplier<Service> supplier = new SupplierBuilder<>(Service.class)
+    .withConstructor(ctorBinder)
+    .nullable(false)
+    .build();
+
+Service service = supplier.supply().get();
+```
+
+### 8. Integration with Dependency Injection
+
+Supply beans from DI context:
+
+```java
+import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
+
+// Contextual supplier that resolves from DI
+IObjectSupplier<UserService> supplier = contextual(
+    UserService.class,
+    IDiContext.class,
+    (diContext, others) -> diContext.getBean(UserService.class)
+).build();
+
+// Use in runtime
+IDiContext diContext = new DiContext();
+diContext.registerBean(new UserService());
+
+UserService service = ((IContextualObjectSupplier<UserService, IDiContext>) supplier)
+    .supply(diContext)
+    .get();
+```
+
+### 9. Factory Pattern Implementation
+
+Implement factory with suppliers:
+
+```java
+public class UserFactory {
+    private IObjectSupplier<User> userSupplier;
+
+    public UserFactory(IConstructorBinder<User> ctorBinder) {
+        this.userSupplier = newObject(User.class, ctorBinder).build();
+    }
+
+    public User createUser() {
+        return userSupplier.supply()
+            .orElseThrow(() -> new RuntimeException("Failed to create user"));
+    }
+}
+```
+
+### 10. Supplier Composition
+
+Combine suppliers for complex scenarios:
+
+```java
+public class ConfigurableService {
+    private IObjectSupplier<String> configSupplier;
+    private IObjectSupplier<Logger> loggerSupplier;
+
+    public ConfigurableService(
+        IObjectSupplier<String> config,
+        IObjectSupplier<Logger> logger) {
+
+        this.configSupplier = config;
+        this.loggerSupplier = logger;
+    }
+
+    public void initialize() {
+        String config = configSupplier.supply().orElse("default");
+        Logger logger = loggerSupplier.supply().orElseThrow();
+
+        logger.info("Initialized with config: {}", config);
+    }
+}
+```
+
+### 11. Dynamic Supplier Selection
+
+Choose supplier implementation at runtime:
+
+```java
+public IObjectSupplier<Database> createDatabaseSupplier(Environment env) {
+    if (env.isProduction()) {
+        // Use fixed instance in production (singleton)
+        return fixed(Database.class, ProductionDatabase.getInstance())
+            .build();
+    } else {
+        // Create new instance for each test
+        IConstructorBinder<Database> binder = ...;
+        return newObject(Database.class, binder)
+            .build();
+    }
+}
+```
+
+### 12. Error Handling
+
+Handle supply failures gracefully:
+
+```java
+IObjectSupplier<Service> supplier = newObject(Service.class, ctorBinder)
+    .build();
+
+try {
+    Optional<Service> result = supplier.supply();
+
+    if (result.isPresent()) {
+        Service service = result.get();
+        // Use service
+    } else {
+        // Handle absence
+        log.warn("Service could not be supplied");
+    }
+} catch (SupplyException e) {
+    log.error("Supply failed", e);
+    // Handle exception
+}
+```
+
+## Advanced Patterns
+
+### Custom Supplier Implementation
+
+Create custom suppliers for specialized needs:
+
+```java
+public class LazyObjectSupplier<T> implements IObjectSupplier<T> {
+    private final Class<T> type;
+    private final Supplier<T> factory;
+    private volatile T instance;
+
+    public LazyObjectSupplier(Class<T> type, Supplier<T> factory) {
+        this.type = type;
+        this.factory = factory;
+    }
+
+    @Override
+    public Optional<T> supply() {
+        if (instance == null) {
+            synchronized (this) {
+                if (instance == null) {
+                    instance = factory.get();
+                }
+            }
+        }
+        return Optional.ofNullable(instance);
+    }
+
+    @Override
+    public Class<T> getSuppliedType() {
+        return type;
+    }
+}
+```
+
+### Supplier Chain Pattern
+
+Chain suppliers for fallback behavior:
+
+```java
+public class FallbackSupplier<T> implements IObjectSupplier<T> {
+    private final IObjectSupplier<T> primary;
+    private final IObjectSupplier<T> fallback;
+
+    public FallbackSupplier(
+        IObjectSupplier<T> primary,
+        IObjectSupplier<T> fallback) {
+
+        this.primary = primary;
+        this.fallback = fallback;
+    }
+
+    @Override
+    public Optional<T> supply() throws SupplyException {
+        try {
+            Optional<T> result = primary.supply();
+            if (result.isPresent()) {
+                return result;
+            }
+        } catch (SupplyException e) {
+            // Log and continue to fallback
+        }
+
+        return fallback.supply();
+    }
+
+    @Override
+    public Class<T> getSuppliedType() {
+        return primary.getSuppliedType();
+    }
+}
+```
+
+### Supplier Registry Pattern
+
+Manage multiple suppliers with a registry:
+
+```java
+public class SupplierRegistry {
+    private final Map<String, IObjectSupplier<?>> suppliers = new ConcurrentHashMap<>();
+
+    public <T> void register(String name, IObjectSupplier<T> supplier) {
+        suppliers.put(name, supplier);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> IObjectSupplier<T> get(String name, Class<T> type) {
+        IObjectSupplier<?> supplier = suppliers.get(name);
+        if (supplier != null && type.isAssignableFrom(supplier.getSuppliedType())) {
+            return (IObjectSupplier<T>) supplier;
+        }
+        throw new IllegalArgumentException("No supplier found for: " + name);
+    }
+
+    public <T> T supply(String name, Class<T> type) throws SupplyException {
+        return get(name, type).supply()
+            .orElseThrow(() -> new SupplyException("Failed to supply: " + name));
+    }
+}
+```
+
+## Performance
+
+### Supply Overhead
+
+The framework introduces minimal overhead for object supplying:
+
+- **FixedObjectSupplier**: ~0.1-0.5ns (field access)
+- **NullObjectSupplier**: ~0.1-0.5ns (constant return)
+- **NewObjectSupplier**: Depends on constructor binding (~1-10µs typically)
+- **ContextualObjectSupplier**: Depends on context resolution (~1-50µs typically)
+- **NullableWrapper**: ~0.5-2ns additional overhead (null check + delegation)
+
+**Total Framework Overhead**: Negligible (<1µs) for simple suppliers, dominated by constructor/context resolution for complex suppliers.
+
+### Optimization Strategies
+
+1. **Reuse Suppliers** - Create suppliers once, reuse for all invocations
+2. **Cache Suppliers** - Store suppliers in final fields or singletons
+3. **Fixed Over New** - Prefer `FixedObjectSupplier` for singleton patterns
+4. **Avoid Unnecessary Wrapping** - Only use nullable wrapping when needed
+5. **Lazy Initialization** - Create suppliers lazily if rarely used
+6. **Batch Operations** - Resolve multiple values in single context access
+7. **Profile Constructor Bindings** - Optimize expensive constructor parameter resolution
+8. **Type Caching** - Cache `Class<?>` objects to avoid repeated lookups
+
+## Tips and Best Practices
+
+### Supplier Design
+
+1. **Type Safety First** - Always use specific generic types, avoid raw `IObjectSupplier`
+2. **Meaningful Types** - Use specific classes, not `Object` or overly generic types
+3. **Reusability** - Design suppliers to be reusable across multiple invocations
+4. **Immutability** - Prefer immutable suppliers that don't change behavior
+5. **Single Responsibility** - Each supplier should have one clear supplying strategy
+
+### Builder Usage
+
+6. **Static Imports** - Use static factory methods for concise syntax
+7. **Explicit Types** - Always specify `Class<T>` explicitly for type safety
+8. **Nullable Declaration** - Explicitly set `nullable(true/false)` for clarity
+9. **Builder Reuse** - Don't reuse builder instances; create new for each supplier
+10. **Validation** - Validate builder state before `build()` if implementing custom builders
+
+### Contextual Suppliers
+
+11. **Context Types** - Use specific context types, not generic `Object`
+12. **Context Validation** - Validate context type compatibility at supply time
+13. **Context Lifecycle** - Understand context lifecycle (session, request, singleton)
+14. **Context Threading** - Be aware of thread-safety in concurrent contexts
+15. **Context Fallback** - Provide fallback for missing context values
+
+### Null Handling
+
+16. **Optional Consistently** - Always return `Optional<T>`, never return null
+17. **Nullable Wrappers** - Use nullable wrappers to enforce contracts
+18. **Empty vs Exception** - Decide whether absence is normal (empty) or error (exception)
+19. **Non-Null Enforcement** - Use `nullable(false)` for required values
+20. **Document Nullability** - Clearly document whether supplier can return empty
+
+### Exception Handling
+
+21. **Catch SupplyException** - Always handle `SupplyException` at call sites
+22. **Fail Fast** - Throw exceptions early for invalid configurations
+23. **Meaningful Messages** - Provide clear exception messages with context
+24. **Don't Swallow Exceptions** - Log or rethrow, don't silently fail
+25. **Exception Wrapping** - Wrap underlying exceptions in `SupplyException`
+
+### Integration
+
+26. **DI Integration** - Use contextual suppliers for DI container integration
+27. **Factory Pattern** - Implement factories using `NewObjectSupplier`
+28. **Singleton Pattern** - Use `FixedObjectSupplier` for singletons
+29. **Prototype Pattern** - Use `NewObjectSupplier` for prototype beans
+30. **Service Locator** - Combine with registry pattern for service location
+
+### Testing
+
+31. **Mock Suppliers** - Create mock suppliers for testing
+32. **Fixed Suppliers in Tests** - Use `FixedObjectSupplier` for predictable test values
+33. **Test Null Cases** - Test both present and empty Optional cases
+34. **Test Exceptions** - Verify exception handling for supply failures
+35. **Test Context Validation** - Test contextual suppliers with wrong context types
+
+### Performance
+
+36. **Prefer Fixed** - Use `FixedObjectSupplier` when value doesn't change
+37. **Lazy Construction** - Delay supplier creation until first use if expensive
+38. **Cache Results** - Cache supplied values if appropriate for use case
+39. **Avoid Recreating Suppliers** - Create once, store in fields
+40. **Profile Complex Suppliers** - Measure performance of constructor bindings
+
+### Common Pitfalls to Avoid
+
+41. **Don't Create Per Call** - Don't create new suppliers on every supply call
+42. **Don't Ignore Empty** - Always check `Optional.isPresent()` or use `orElse()`
+43. **Don't Mix Concerns** - Keep supplier logic separate from business logic
+44. **Don't Hardcode Values** - Use configuration or parameters, not literals in suppliers
+45. **Don't Skip Type Parameters** - Always specify generic type parameters
+46. **Don't Assume Non-Null** - Use nullable wrappers instead of assuming non-null
+47. **Version Compatibility** - Ensure all Garganttua modules are same version
 
 ## License
 
