@@ -12,10 +12,6 @@ public class MapperConfiguration {
 		this.configurations.put(MapperConfigurationItem.DO_VALIDATION, true);
 	}
 
-	public MapperConfiguration(Class<?> fromClass, Class<?> toClass) {
-		// TODO Auto-generated constructor stub
-	}
-
 	public void configure(MapperConfigurationItem element, Object value) {
 		this.configurations.put(element, value);
 	}

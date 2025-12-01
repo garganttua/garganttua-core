@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 
 	private final ReflectConfigEntry entry;
@@ -119,8 +122,7 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 				}
 			}
 		} catch (SecurityException | ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.atWarn().log("Error", e);
 		}
 		return this;
 	}
@@ -134,8 +136,7 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 				}
 			}
 		} catch (SecurityException | ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.atWarn().log("Error", e);
 		}
 		return this;
 	}

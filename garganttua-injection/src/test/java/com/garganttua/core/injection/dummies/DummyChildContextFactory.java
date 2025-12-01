@@ -8,7 +8,6 @@ public class DummyChildContextFactory implements IDiChildContextFactory<DummyChi
 
     @Override
     public DummyChildContext createChildContext(IDiContext parent, Object... args) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'createChildContext'");
     }
 

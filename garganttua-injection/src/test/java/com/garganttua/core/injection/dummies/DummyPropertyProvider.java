@@ -62,7 +62,6 @@ public class DummyPropertyProvider implements IPropertyProvider {
 
     @Override
     public IPropertyProvider copy() throws CopyException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 

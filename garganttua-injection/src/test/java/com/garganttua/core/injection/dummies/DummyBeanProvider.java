@@ -50,43 +50,36 @@ public class DummyBeanProvider implements IBeanProvider {
 
     @Override
     public <T> Optional<T> getBean(String name, Class<T> type) {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getBean'");
     }
 
     @Override
     public boolean isMutable() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'isMutable'");
     }
 
     @Override
     public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getBeansImplementingInterface'");
     }
 
     @Override
     public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
     }
 
     @Override
     public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
     }
 
     @Override
     public IBeanProvider copy() throws CopyException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'size'");
     }
 

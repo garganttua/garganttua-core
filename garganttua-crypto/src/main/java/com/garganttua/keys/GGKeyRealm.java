@@ -128,7 +128,6 @@ public class GGKeyRealm implements IGGKeyRealm {
 	
 	@Override
 	public boolean equals(IGGKeyRealm object) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	

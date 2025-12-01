@@ -22,25 +22,21 @@ class SupplierBuilderTest {
 
         @Override
         public String getExecutableReference() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getExecutableReference'");
         }
 
         @Override
         public Optional<T> execute() throws ReflectionException {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'execute'");
         }
 
         @Override
         public Set<Class<?>> getDependencies() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 
         @Override
         public Class<T> getConstructedType() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getConstructedType'");
         }
     }
@@ -50,31 +46,26 @@ class SupplierBuilderTest {
 
         @Override
         public Class<T> getConstructedType() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getConstructedType'");
         }
 
         @Override
         public String getExecutableReference() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getExecutableReference'");
         }
 
         @Override
         public Set<Class<?>> getDependencies() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 
         @Override
         public Class<?>[] getParametersContextTypes() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getParametersContextTypes'");
         }
 
         @Override
         public Optional<T> execute(Void ownerContext, Object... contexts) throws ReflectionException {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'execute'");
         }
     }
@@ -84,7 +75,6 @@ class SupplierBuilderTest {
 
         @Override
         public Optional<T> supplyObject(C context, Object... otherContexts) {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'supplyObject'");
         }
     }

@@ -41,7 +41,6 @@ public class ObjectSupplierTest {
 
             @Override
             public boolean isContextual() {
-                // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'isContextual'");
             }
 
