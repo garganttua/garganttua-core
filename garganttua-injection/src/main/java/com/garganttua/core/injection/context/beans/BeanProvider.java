@@ -1,12 +1,11 @@
 package com.garganttua.core.injection.context.beans;
 
-import static com.garganttua.core.lifecycle.AbstractLifecycle.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.injection.BeanDefinition;
@@ -18,6 +17,7 @@ import com.garganttua.core.injection.context.validation.DependencyGraph;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.IObjectSupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -195,5 +195,10 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public int size() {
 		return this.beanFactories.size();
+	}
+
+	@Override
+	public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
+		return this.beanFactories.stream().map(f -> f.nativeEntry()).collect(Collectors.toSet());
 	}
 }

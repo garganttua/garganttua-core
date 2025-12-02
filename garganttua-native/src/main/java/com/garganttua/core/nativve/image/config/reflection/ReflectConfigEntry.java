@@ -5,9 +5,13 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT) 
-public class ReflectConfigEntry {
+import lombok.NoArgsConstructor;
+
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@NoArgsConstructor
+public class ReflectConfigEntry implements IReflectionConfigurationEntry {
 
     private String name;
     private boolean queryAllDeclaredConstructors = false;
@@ -25,19 +29,16 @@ public class ReflectConfigEntry {
     private boolean allDeclaredMethods = false;
     private List<Field> fields;
     private List<Method> methods;
-    
+
     public ReflectConfigEntry(String name) {
-    	this.name = name;
-    }
-    
-    public ReflectConfigEntry() {
+        this.name = name;
     }
 
     @JsonIgnore
-    public Class<?> getEntryClass() throws ClassNotFoundException{
-    	return Class.forName(this.name);
+    public Class<?> getEntryClass() throws ClassNotFoundException {
+        return Class.forName(this.name);
     }
-    
+
     public String getName() {
         return name;
     }
@@ -49,7 +50,7 @@ public class ReflectConfigEntry {
     public void setQueryAllConstructors(boolean queryAllConstructors) {
         this.queryAllConstructors = queryAllConstructors;
     }
-    
+
     public boolean isQueryAllMethods() {
         return queryAllMethods;
     }
@@ -57,7 +58,7 @@ public class ReflectConfigEntry {
     public void setQueryAllMethods(boolean queryAllMethods) {
         this.queryAllMethods = queryAllMethods;
     }
-    
+
     public boolean isAllDeclaredMethods() {
         return allDeclaredMethods;
     }
@@ -164,87 +165,32 @@ public class ReflectConfigEntry {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ReflectConfigEntry that = (ReflectConfigEntry) o;
-//        return queryAllDeclaredConstructors == that.queryAllDeclaredConstructors &&
-//                queryAllPublicConstructors == that.queryAllPublicConstructors &&
-//                queryAllDeclaredMethods == that.queryAllDeclaredMethods &&
-//                queryAllPublicMethods == that.queryAllPublicMethods &&
-//                allDeclaredClasses == that.allDeclaredClasses &&
-//                allDeclaredFields == that.allDeclaredFields &&
-//                allPublicFields == that.allPublicFields &&
-//                allPublicClasses == that.allPublicClasses &&
-//                allDeclaredConstructors == that.allDeclaredConstructors &&
-//                allConstructors == that.allConstructors &&
-               return Objects.equals(name, that.name) ;//&&
-//                Objects.equals(fields, that.fields) &&
-//                Objects.equals(methods, that.methods);
+        // return queryAllDeclaredConstructors == that.queryAllDeclaredConstructors &&
+        // queryAllPublicConstructors == that.queryAllPublicConstructors &&
+        // queryAllDeclaredMethods == that.queryAllDeclaredMethods &&
+        // queryAllPublicMethods == that.queryAllPublicMethods &&
+        // allDeclaredClasses == that.allDeclaredClasses &&
+        // allDeclaredFields == that.allDeclaredFields &&
+        // allPublicFields == that.allPublicFields &&
+        // allPublicClasses == that.allPublicClasses &&
+        // allDeclaredConstructors == that.allDeclaredConstructors &&
+        // allConstructors == that.allConstructors &&
+        return Objects.equals(name, that.name);// &&
+        // Objects.equals(fields, that.fields) &&
+        // Objects.equals(methods, that.methods);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, queryAllDeclaredConstructors, queryAllPublicConstructors, queryAllDeclaredMethods, queryAllPublicMethods,
-                allDeclaredClasses, allDeclaredFields, allPublicFields, allPublicClasses, allDeclaredConstructors, allConstructors, fields, methods);
+        return Objects.hash(name, queryAllDeclaredConstructors, queryAllPublicConstructors, queryAllDeclaredMethods,
+                queryAllPublicMethods,
+                allDeclaredClasses, allDeclaredFields, allPublicFields, allPublicClasses, allDeclaredConstructors,
+                allConstructors, fields, methods);
     }
 
-    public static class Field {
-        private String name;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Field field = (Field) o;
-            return Objects.equals(name, field.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(name);
-        }
-    }
-
-    public static class Method {
-        private String name;
-        private List<String> parameterTypes;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public List<String> getParameterTypes() {
-            return parameterTypes;
-        }
-
-        public void setParameterTypes(List<String> parameterTypes) {
-            this.parameterTypes = parameterTypes;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Method method = (Method) o;
-            return Objects.equals(name, method.name) &&
-                    Objects.equals(parameterTypes, method.parameterTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(name, parameterTypes);
-        }
-    }
 }

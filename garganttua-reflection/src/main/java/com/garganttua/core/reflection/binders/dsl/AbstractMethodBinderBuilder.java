@@ -73,11 +73,8 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     @Override
-    public Builder method() throws DslException {
-        if (this.method == null) {
-            throw new DslException("Method must be set");
-        }
-        return (Builder) this;
+    public Method method() throws DslException {
+        return this.findMethod();
     }
 
     @Override

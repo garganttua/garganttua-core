@@ -14,20 +14,14 @@ public class NativeImageConfig {
         ensureDirectoryExists(nativeImageDir);
 
         File reflectConfigFile = new File(nativeImageDir, REFLECT_CONFIG_FILE);
-//        if (!reflectConfigFile.exists()) {
-//            throw new IOException("reflect-config.json not found in " + nativeImageDir.getAbsolutePath());
-//        }
         return reflectConfigFile;
     }
- 
+
     public static File getResourceConfigFile(String baseDir) throws IOException {
         File nativeImageDir = new File(baseDir, NATIVE_IMAGE_DIR);
         ensureDirectoryExists(nativeImageDir);
 
         File resourceConfigFile = new File(nativeImageDir, RESOURCE_CONFIG_FILE);
-//        if (!resourceConfigFile.exists()) {
-//            throw new IOException("resource-config.json not found in " + nativeImageDir.getAbsolutePath());
-//        }
         return resourceConfigFile;
     }
 

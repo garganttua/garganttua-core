@@ -1155,6 +1155,23 @@ public class ApiClient {
 }
 ```
 
+### Building a native application
+
+More info [here](../garganttua-native/README.md)
+
+Your beans must be in the reflect configuration in order to be loaded at native runtime. 
+There are two ways of doind this : 
+
+#### Dynamic configuration 
+Based on a real context loaded
+
+### Static configuration 
+Based on static code analysis
+
+### Manual configuration 
+
+
+
 ## Tips and best practices
 
 ### General Principles

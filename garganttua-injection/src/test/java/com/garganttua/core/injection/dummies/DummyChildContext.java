@@ -3,6 +3,7 @@ package com.garganttua.core.injection.dummies;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,6 +17,7 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyChildContext implements IDiContext{
@@ -151,5 +153,11 @@ public class DummyChildContext implements IDiContext{
     public IDiContext copy() throws CopyException {
         throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
+
+    @Override
+    public Collection<IReflectionConfigurationEntry> nativeConfiguration() {
+        throw new UnsupportedOperationException("Unimplemented method 'nativeConfiguration'");
+    }
+
 
 }

@@ -234,7 +234,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         log.atTrace().log("Detecting code annotation on method {}", operationMethod.getName());
         Code code = operationMethod.getAnnotation(Code.class);
         if (code != null) {
-            method().code(code.value());
+            this.code(code.value());
             log.atDebug().log("Code annotation detected with value {}", code.value());
         }
     }
@@ -243,7 +243,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         log.atTrace().log("Detecting variable annotation on method {}", operationMethod.getName());
         Variable variable = operationMethod.getAnnotation(Variable.class);
         if (variable != null) {
-            method().variable(variable.name());
+            this.variable(variable.name());
             log.atDebug().log("Variable annotation detected with name {}", variable.name());
         }
     }
@@ -251,7 +251,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     private void detectOutput(Method operationMethod) {
         log.atTrace().log("Detecting output annotation on method {}", operationMethod.getName());
         if (operationMethod.getAnnotation(Output.class) != null) {
-            method().output(true);
+            this.output(true);
             log.atDebug().log("Output annotation detected and set to true");
         }
     }

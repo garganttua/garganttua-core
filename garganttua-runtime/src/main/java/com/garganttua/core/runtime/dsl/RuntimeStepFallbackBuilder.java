@@ -142,7 +142,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     private void detectVariable(Method operationMethod) {
         Variable variable = operationMethod.getAnnotation(Variable.class);
         if (variable != null) {
-            method().variable(variable.name());
+            this.variable(variable.name());
             log.atDebug()
                     .log("{} Auto-detected variable for fallback", logLineHeader());
         }
@@ -150,7 +150,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
 
     private void detectOutput(Method operationMethod) {
         if (operationMethod.getAnnotation(Output.class) != null) {
-            method().output(true);
+            this.output(true);
             log.atDebug().log("{} Auto-detected output for fallback", logLineHeader());
         }
     }

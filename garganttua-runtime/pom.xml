@@ -33,7 +33,12 @@
             <dependency>
                   <groupId>com.garganttua.core</groupId>
                   <artifactId>garganttua-reflections</artifactId>
-                  <scope>test</scope>
+                  <scope>provided</scope>
+            </dependency>
+            <dependency>
+                  <groupId>com.garganttua.core</groupId>
+                  <artifactId>garganttua-native</artifactId>
+                  <scope>provided</scope>
             </dependency>
             <dependency>
                   <groupId>ch.qos.logback</groupId>
@@ -59,5 +64,31 @@
                   <scope>test</scope>
             </dependency>
       </dependencies>
+
+      <build>
+            <plugins>
+                  <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                              <execution>
+                                    <goals>
+                                          <goal>java</goal>
+                                    </goals>
+                                    <phase>process-classes</phase>
+                                    <configuration>
+                                          <classpathScope>compile</classpathScope>
+                                          <mainClass>
+                                                com.garganttua.core.runtime.nativve.NativeImageConfigBuilder</mainClass>
+                                          <arguments>
+                                                <argument>${project.build.outputDirectory}</argument>
+                                          </arguments>
+                                    </configuration>
+                              </execution>
+                        </executions>
+                  </plugin>
+            </plugins>
+      </build>
 
 </project>

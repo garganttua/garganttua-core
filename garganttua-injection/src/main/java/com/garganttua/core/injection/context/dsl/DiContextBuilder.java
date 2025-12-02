@@ -34,11 +34,13 @@ import com.garganttua.core.injection.context.beans.resolver.SingletonElementReso
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;
 import com.garganttua.core.injection.context.resolver.FixedElementResolver;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
+import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@NativeConfigurationBuilder
 public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder, IDiContext>
         implements IDiContextBuilder {
 
@@ -62,7 +64,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         this.beanProviders.put(Predefined.BeanProviders.garganttua.toString(),
                 new BeanProviderBuilder(this).autoDetect(true));
         this.propertyProviders.put(Predefined.PropertyProviders.garganttua.toString(),
-                new PropertyProviderBuilder(this));
+                new PropertyProviderBuilder(this).autoDetect(false));
 
         this.resolvers = new InjectableElementResolverBuilder(this);
         log.atDebug().log("Initialized default bean and property providers and resolver");

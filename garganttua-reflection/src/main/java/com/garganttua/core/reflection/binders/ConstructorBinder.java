@@ -46,4 +46,9 @@ public class ConstructorBinder<Constructed>
         return Constructors.prettyColored(constructor);
     }
 
+    @Override
+    public Constructor<?> constructor() {
+        return this.constructor;
+    }
+
 }

@@ -2,6 +2,7 @@ package com.garganttua.core.supply;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Constructor;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,6 +40,11 @@ class SupplierBuilderTest {
         public Class<T> getConstructedType() {
             throw new UnsupportedOperationException("Unimplemented method 'getConstructedType'");
         }
+
+        @Override
+        public Constructor<?> constructor() {
+            throw new UnsupportedOperationException("Unimplemented method 'constructor'");
+        }
     }
 
     static class FakeContextualConstructorBinder<T>
@@ -67,6 +73,11 @@ class SupplierBuilderTest {
         @Override
         public Optional<T> execute(Void ownerContext, Object... contexts) throws ReflectionException {
             throw new UnsupportedOperationException("Unimplemented method 'execute'");
+        }
+
+        @Override
+        public Constructor<?> constructor() {
+            throw new UnsupportedOperationException("Unimplemented method 'constructor'");
         }
     }
 

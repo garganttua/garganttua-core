@@ -22,7 +22,6 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
         addResource(resourceConfigFile, classPath);
     }
 
-    @SuppressWarnings("unchecked")
 	public static void addResource(File resourceConfigFile, String resource)
 			throws IOException, StreamReadException, DatabindException, StreamWriteException {
 		String newPattern = "\\Q" + resource + "\\E";
@@ -53,7 +52,6 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
         removeResource(resourceConfigFile, classPath);
     }
 
-    @SuppressWarnings("unchecked")
 	public static void removeResource(File resourceConfigFile, String resource)
 			throws IOException, StreamReadException, DatabindException, StreamWriteException {
 		String patternToRemove = "\\Q" + resource + "\\E";

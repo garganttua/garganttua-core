@@ -22,26 +22,26 @@ import org.codehaus.plexus.util.io.InputStreamFacade;
 import com.garganttua.core.nativve.image.config.NativeImageConfig;
 import com.garganttua.core.nativve.image.config.resources.ResourceConfig;
 
-/**
- * Maven Plugin to copy META-INF/native-image files from dependencies.
- */
 @Mojo(name = "copy-native-image", defaultPhase = LifecyclePhase.PROCESS_RESOURCES, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class CopyNativeImageMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project.build.directory}", readonly = true)
 	private File buildDirectory;
-	
+
 	@Parameter(defaultValue = "${project.build.outputDirectory}", readonly = true)
 	private String buildOutputDirectory;
 
 	@Parameter(defaultValue = "${project.artifacts}", readonly = true)
 	private Set<Artifact> artifacts;
-	
+
 	@Parameter(defaultValue = "${basedir}", readonly = true)
 	private String baseDir;
 
 	@Parameter(property = "resources")
 	private List<String> resources;
+
+	@Parameter(property = "packages")
+	private List<String> pack;
 
 	@Parameter(property = "dependencies")
 	private List<Dependency> dependencies;
@@ -63,34 +63,33 @@ public class CopyNativeImageMojo extends AbstractMojo {
 		}
 
 		getLog().info("Native-image files copied successfully to: " + outputDir.getAbsolutePath());
-		
+
 		try {
 			this.validateFiles(resources);
 		} catch (IOException e) {
 			throw new MojoExecutionException(e.getMessage());
 		}
 	}
-	
+
 	public void validateFiles(List<String> filePaths) throws IOException {
 		File resourceConfigFile = NativeImageConfig.getResourceConfigFile(buildOutputDirectory);
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
-		
-        String resourcesPath = baseDir+"/src/main/resources/";
 
-        for (String filePath : filePaths) {
-        	getLog().debug("Native-image adding resource "+filePath);
-            File file = new File(resourcesPath + filePath);
-            if( file.exists() ) {
-            	ResourceConfig.addResource(resourceConfigFile, filePath);
-            } else {
-            	throw new IOException("Native-image resource "+filePath+" does not exist in "+resourcesPath);
-            }
-            
-            getLog().info("Native-image resource added "+filePath);
-        }
-    }
+		String resourcesPath = baseDir + "/src/main/resources/";
 
+		for (String filePath : filePaths) {
+			getLog().debug("Native-image adding resource " + filePath);
+			File file = new File(resourcesPath + filePath);
+			if (file.exists()) {
+				ResourceConfig.addResource(resourceConfigFile, filePath);
+			} else {
+				throw new IOException("Native-image resource " + filePath + " does not exist in " + resourcesPath);
+			}
+
+			getLog().info("Native-image resource added " + filePath);
+		}
+	}
 
 	private void processArtifact(Artifact artifact, File outputDir) throws IOException {
 		File artifactFile = artifact.getFile();
@@ -102,7 +101,7 @@ public class CopyNativeImageMojo extends AbstractMojo {
 		try (ZipFile zipFile = new ZipFile(artifactFile)) {
 			ZipEntry nativeImageDir = zipFile.getEntry("META-INF/native-image/");
 			if (nativeImageDir == null) {
-				return; // No native-image directory in this artifact
+				return;
 			}
 
 			getLog().info("Native-image files detected into: " + artifact.getArtifactId());

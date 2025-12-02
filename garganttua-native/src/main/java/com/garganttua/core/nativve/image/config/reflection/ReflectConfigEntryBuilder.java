@@ -5,72 +5,87 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import com.garganttua.core.dsl.AbstractAutomaticBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.nativve.annotations.Native;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
+public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflectionConfigurationEntryBuilder, IReflectionConfigurationEntry> implements IReflectionConfigurationEntryBuilder {
 
-	private final ReflectConfigEntry entry;
+	private final IReflectionConfigurationEntry entry;
+	private Class<?> type;
 
-	private ReflectConfigEntryBuilder(Class<?> clazz) {
-		this.entry = new ReflectConfigEntry(clazz.getName());
+	public ReflectConfigEntryBuilder(Class<?> type) {
+		this.type = Objects.requireNonNull(type, "Type cannot be null");
+		this.entry = new ReflectConfigEntry(type.getName());
 		this.entry.setFields(new ArrayList<>());
 		this.entry.setMethods(new ArrayList<>());
 	}
 
-	private ReflectConfigEntryBuilder(ReflectConfigEntry entry) {
+	public ReflectConfigEntryBuilder(IReflectionConfigurationEntry entry) throws DslException {
 		this.entry = entry;
+		try {
+			this.type = entry.getEntryClass();
+		} catch (ClassNotFoundException e) {
+			throw new DslException(e);
+		}
 	}
 
-	public static IReflectConfigEntryBuilder builder(Class<?> clazz) {
+	public static IReflectionConfigurationEntryBuilder builder(Class<?> clazz) {
 		return new ReflectConfigEntryBuilder(clazz);
 	}
 
-	public static IReflectConfigEntryBuilder builder(ReflectConfigEntry entry) {
+	public static IReflectionConfigurationEntryBuilder builder(ReflectConfigEntry entry) throws DslException {
 		return new ReflectConfigEntryBuilder(entry);
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder queryAllDeclaredConstructors(boolean value) {
+	public IReflectionConfigurationEntryBuilder queryAllDeclaredConstructors(boolean value) {
 		entry.setQueryAllDeclaredConstructors(value);
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder queryAllPublicConstructors(boolean value) {
+	public IReflectionConfigurationEntryBuilder queryAllPublicConstructors(boolean value) {
 		entry.setQueryAllPublicConstructors(value);
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder queryAllDeclaredMethods(boolean value) {
+	public IReflectionConfigurationEntryBuilder queryAllDeclaredMethods(boolean value) {
 		entry.setQueryAllDeclaredMethods(value);
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder queryAllPublicMethods(boolean value) {
+	public IReflectionConfigurationEntryBuilder queryAllPublicMethods(boolean value) {
 		entry.setQueryAllPublicMethods(value);
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder allDeclaredClasses(boolean value) {
+	public IReflectionConfigurationEntryBuilder allDeclaredClasses(boolean value) {
 		entry.setAllDeclaredClasses(value);
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder allPublicClasses(boolean value) {
+	public IReflectionConfigurationEntryBuilder allPublicClasses(boolean value) {
 		entry.setAllPublicClasses(value);
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder field(String fieldName) {
+	public IReflectionConfigurationEntryBuilder field(String fieldName) {
 		if (entry.getFields().stream().noneMatch(field -> field.getName().equals(fieldName))) {
 			ReflectConfigEntry.Field field = new ReflectConfigEntry.Field();
 			field.setName(fieldName);
@@ -80,12 +95,12 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder field(Field field) {
+	public IReflectionConfigurationEntryBuilder field(Field field) {
 		return field(field.getName());
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder method(String methodName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder method(String methodName, Class<?>... parameterTypes) {
 		List<String> paramNames = List.of(parameterTypes).stream().map(Class::getName).collect(Collectors.toList());
 
 		if (entry.getMethods().stream()
@@ -99,22 +114,22 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder method(Method method) {
+	public IReflectionConfigurationEntryBuilder method(Method method) {
 		return method(method.getName(), method.getParameterTypes());
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder constructor(String constructorName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder constructor(String constructorName, Class<?>... parameterTypes) {
 		return method("<init>", parameterTypes);
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder constructor(Constructor<?> ctor) {
+	public IReflectionConfigurationEntryBuilder constructor(Constructor<?> ctor) {
 		return constructor("<init>", ctor.getParameterTypes());
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder fieldsAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder fieldsAnnotatedWith(Class<? extends Annotation> annotation) {
 		try {
 			for (Field field : this.entry.getEntryClass().getDeclaredFields()) {
 				if (field.isAnnotationPresent(annotation)) {
@@ -128,7 +143,7 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder methodsAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder methodsAnnotatedWith(Class<? extends Annotation> annotation) {
 		try {
 			for (Method method : this.entry.getEntryClass().getDeclaredMethods()) {
 				if (method.isAnnotationPresent(annotation)) {
@@ -142,19 +157,19 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeField(String fieldName) {
+	public IReflectionConfigurationEntryBuilder removeField(String fieldName) {
 		entry.setFields(entry.getFields().stream().filter(field -> !field.getName().equals(fieldName))
 				.collect(Collectors.toList()));
 		return this;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeField(Field field) {
+	public IReflectionConfigurationEntryBuilder removeField(Field field) {
 		return removeField(field.getName());
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeMethod(String methodName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder removeMethod(String methodName, Class<?>... parameterTypes) {
 		entry.setMethods(entry.getMethods().stream().filter(method -> !method.getName().equals(methodName)
 				|| !method.getParameterTypes().equals(List.of(parameterTypes).stream().map(Class::getName).toList()))
 				.collect(Collectors.toList()));
@@ -162,22 +177,22 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeMethod(Method method) {
+	public IReflectionConfigurationEntryBuilder removeMethod(Method method) {
 		return removeMethod(method.getName(), method.getParameterTypes());
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeConstructor(String constructorName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder removeConstructor(String constructorName, Class<?>... parameterTypes) {
 		return removeMethod("<init>", parameterTypes);
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeConstructor(Constructor<?> ctor) {
+	public IReflectionConfigurationEntryBuilder removeConstructor(Constructor<?> ctor) {
 		return removeConstructor("<init>", ctor.getParameterTypes());
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeFieldsAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder removeFieldsAnnotatedWith(Class<? extends Annotation> annotation) {
 		entry.setFields(entry.getFields().stream().filter(field -> {
 			try {
 				Field f = this.entry.getEntryClass().getDeclaredField(field.getName());
@@ -190,7 +205,7 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder removeMethodAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder removeMethodAnnotatedWith(Class<? extends Annotation> annotation) {
 		entry.setMethods(entry.getMethods().stream().filter(method -> {
 			try {
 				Method m = this.entry.getEntryClass().getDeclaredMethod(method.getName());
@@ -203,13 +218,30 @@ public class ReflectConfigEntryBuilder implements IReflectConfigEntryBuilder {
 	}
 
 	@Override
-	public ReflectConfigEntry build() {
+	public IReflectionConfigurationEntryBuilder allDeclaredFields(boolean value) {
+		entry.setAllDeclaredFields(value);
+		return this;
+	}
+
+	@Override
+	protected IReflectionConfigurationEntry doBuild() throws DslException {
 		return entry;
 	}
 
 	@Override
-	public IReflectConfigEntryBuilder allDeclaredFields(boolean value) {
-		entry.setAllDeclaredFields(value);
-		return this;
+	protected void doAutoDetection() throws DslException {
+		Native n = this.type.getAnnotation(Native.class);
+		if (n != null && n.allDeclaredClasses()) this.entry.setAllDeclaredClasses(true);
+		if (n != null && n.allDeclaredFields()) this.entry.setAllDeclaredFields(true);
+		if (n != null && n.allPublicClasses()) this.entry.setAllPublicClasses(true);
+		if (n != null && n.queryAllDeclaredConstructors()) this.entry.setQueryAllDeclaredConstructors(true);
+		if (n != null && n.queryAllDeclaredMethods()) this.entry.setQueryAllDeclaredMethods(true);
+		if (n != null && n.queryAllPublicConstructors()) this.entry.setQueryAllPublicConstructors(true);
+		if (n != null && n.queryAllPublicMethods()) this.entry.setQueryAllPublicMethods(false);
+
+		Arrays.stream(this.type.getDeclaredFields()).filter(f -> f.getAnnotation(Native.class)!=null).forEach(this::field);
+		Arrays.stream(this.type.getDeclaredConstructors()).filter(c -> c.getAnnotation(Native.class)!=null).forEach(this::constructor);
+		Arrays.stream(this.type.getDeclaredMethods()).filter(m -> m.getAnnotation(Native.class)!=null).forEach(this::method);
 	}
+
 }

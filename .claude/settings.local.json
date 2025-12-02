@@ -7,7 +7,8 @@
       "Bash(git push:*)",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(/tmp/analyze_packages.sh)"
+      "Bash(/tmp/analyze_packages.sh)",
+      "Bash(mvn javadoc:javadoc:*)"
     ],
     "deny": [],
     "ask": []

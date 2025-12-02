@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.supply.IContextualObjectSupplier;
 import com.garganttua.core.supply.IObjectSupplier;
 import com.garganttua.core.supply.dsl.ContextualObjectSupplierBuilder;
@@ -424,6 +426,11 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public UUID uuid() {
         return this.uuid;
+    }
+
+    @Override
+    public Collection<IReflectionConfigurationEntry> nativeConfiguration() {
+        return this.delegateContext.nativeConfiguration();
     }
 
 }

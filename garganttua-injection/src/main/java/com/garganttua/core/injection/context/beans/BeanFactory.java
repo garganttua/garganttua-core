@@ -10,6 +10,9 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
@@ -64,7 +67,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private void doInjection(Bean onBean) {
 		log.atTrace().log("Performing field injection for bean: {}", onBean);
 		this.definition.injectableFields()
-				.forEach(builder -> builder.setBean(new FixedObjectSupplierBuilder<>(onBean)).build().setValue());
+				.forEach(builder -> builder.valueSupplier(new FixedObjectSupplierBuilder<>(onBean)).build().setValue());
 		log.atDebug().log("Field injection completed for bean: {}", onBean);
 	}
 
@@ -179,5 +182,27 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	public Set<Class<?>> getDependencies() {
 		log.atTrace().log("Returning dependencies for definition: {}", definition);
 		return this.definition.getDependencies();
+	}
+
+	@Override
+	public IReflectionConfigurationEntryBuilder nativeEntry() {
+		ReflectConfigEntryBuilder eb = new ReflectConfigEntryBuilder(definition.type());
+
+		//Constructor
+		definition.constructorBinder().ifPresentOrElse(c -> eb.constructor(c.constructor()), () -> {
+			try {
+				eb.constructor(definition.type().getDeclaredConstructor());
+			} catch (NoSuchMethodException | SecurityException e) {
+				log.atWarn().log("Error adding default constructor for type {}: {}", definition.type(), e.getMessage());
+			}
+		});
+
+		//Fields
+		definition.injectableFields().forEach(f -> eb.field(f.field()));
+
+		//Methods
+		definition.postConstructMethodBinderBuilders().forEach(m -> eb.method(m.method()));
+
+		return eb;
 	}
 }

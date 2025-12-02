@@ -44,4 +44,9 @@ public class ContextualConstructorBinder<Constructed>
     public String getExecutableReference() {
         return Constructors.prettyColored(constructor);
     }
+
+    @Override
+    public Constructor<?> constructor() {
+        return this.constructor;
+    }
 }

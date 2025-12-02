@@ -31,6 +31,7 @@ import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.utils.CopyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -496,5 +497,12 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             log.atInfo().log("DiContext copied successfully");
             return copy;
         }
+    }
+
+    @Override
+    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
+                return this.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
+            .map(IBeanProvider::nativeConfiguration)
+            .orElse(Collections.emptySet());
     }
 }

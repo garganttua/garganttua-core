@@ -32,11 +32,11 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
     }
 
     @Override
-    public IBeanInjectableFieldBuilder<FieldType, BeanType> setBean(
-            IObjectSupplierBuilder<BeanType, ? extends IObjectSupplier<BeanType>> beanSupplier) {
-        this.ownerSupplierBuilder = Objects.requireNonNull(beanSupplier, "Bean supplier cannot be null");
-        log.atInfo().log("Set bean supplier for fieldType: {} in beanClass: {}", this.fieldType,
-                beanSupplier.getSuppliedType());
+    public IBeanInjectableFieldBuilder<FieldType, BeanType> valueSupplier(
+            IObjectSupplierBuilder<BeanType, ? extends IObjectSupplier<BeanType>> valueSupplier) {
+        this.ownerSupplierBuilder = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
+        log.atInfo().log("Set value supplier for fieldType: {} in beanClass: {}", this.fieldType,
+                valueSupplier.getSuppliedType());
         return this;
     }
 
@@ -56,5 +56,10 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
         boolean nullable = IInjectableElementResolver.isNullable(field);
         this.allowNull(nullable);
         log.atInfo().log("Field {} auto-detected. Nullable: {}", field.getName(), nullable);
+    }
+
+    @Override
+    public Field field() {
+        return this.findField();
     }
 }
