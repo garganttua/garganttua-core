@@ -57,7 +57,7 @@ package com.garganttua.core.lifecycle;
  *     {@literal @}Override
  *     public ILifecycle onStop() throws LifecycleException {
  *         try {
- *             if (connection != null && !connection.isClosed()) {
+ *             if (connection != null {@literal &&} !connection.isClosed()) {
  *                 connection.close();
  *             }
  *             System.out.println("Database connection stopped");

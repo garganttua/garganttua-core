@@ -56,11 +56,11 @@ public class MapperConfiguration {
 	 * Creates a new MapperConfiguration with default settings.
 	 * <p>
 	 * Default settings:
+	 * </p>
 	 * <ul>
 	 *   <li>FAIL_ON_ERROR: true</li>
 	 *   <li>DO_VALIDATION: true</li>
 	 * </ul>
-	 * </p>
 	 */
 	public MapperConfiguration() {
 		this.configurations.put(MapperConfigurationItem.FAIL_ON_ERROR, true);

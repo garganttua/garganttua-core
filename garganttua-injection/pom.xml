@@ -45,25 +45,57 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>com.garganttua.core</groupId>
+                <artifactId>garganttua-native-image-maven-plugin</artifactId>
+                <version>${project.version}</version>
                 <executions>
                     <execution>
                         <goals>
-                            <goal>java</goal>
+                            <goal>native-config</goal>
                         </goals>
-                        <phase>process-classes</phase>
-                        <configuration>
-                            <classpathScope>compile</classpathScope>
-                            <mainClass>
-                                com.garganttua.core.injection.nativve.NativeImageConfigBuilder</mainClass>
-                            <arguments>
-                                <argument>${project.build.outputDirectory}</argument>
-                            </arguments>
-                        </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <resources>
+                    </resources>
+                    <packages>
+                        <package>com.garganttua.core.injection</package>
+                    </packages>
+                    <reflections>
+                        <reflection>
+                            <name>javax.inject.Inject</name>
+                            <allPublicClasses>true</allPublicClasses>
+                            <allDeclaredClasses>true</allDeclaredClasses>
+                            <allDeclaredFields>true</allDeclaredFields>
+                            <queryAllDeclaredMethods>true</queryAllDeclaredMethods>
+                            <queryAllDeclaredConstructors>true</queryAllDeclaredConstructors>
+                        </reflection>
+                        <reflection>
+                            <name>javax.inject.Singleton</name>
+                            <allPublicClasses>true</allPublicClasses>
+                            <allDeclaredClasses>true</allDeclaredClasses>
+                            <allDeclaredFields>true</allDeclaredFields>
+                            <queryAllDeclaredMethods>true</queryAllDeclaredMethods>
+                            <queryAllDeclaredConstructors>true</queryAllDeclaredConstructors>
+                        </reflection>
+                        <reflection>
+                            <name>javax.inject.Qualifier</name>
+                            <allPublicClasses>true</allPublicClasses>
+                            <allDeclaredClasses>true</allDeclaredClasses>
+                            <allDeclaredFields>true</allDeclaredFields>
+                            <queryAllDeclaredMethods>true</queryAllDeclaredMethods>
+                            <queryAllDeclaredConstructors>true</queryAllDeclaredConstructors>
+                        </reflection>
+                        <reflection>
+                            <name>jakarta.annotation.Nullable</name>
+                            <allPublicClasses>true</allPublicClasses>
+                            <allDeclaredClasses>true</allDeclaredClasses>
+                            <allDeclaredFields>true</allDeclaredFields>
+                            <queryAllDeclaredMethods>true</queryAllDeclaredMethods>
+                            <queryAllDeclaredConstructors>true</queryAllDeclaredConstructors>
+                        </reflection>
+                    </reflections>
+                </configuration>
             </plugin>
         </plugins>
     </build>

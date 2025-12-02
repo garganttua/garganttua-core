@@ -1,11 +1,9 @@
 package com.garganttua.core.nativve;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
-import javax.annotation.Nonnull;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -26,23 +24,17 @@ public class NativeConfigurationBuilder
     private final Set<String> resources = new HashSet<>();
     private String resourcesPath = null;
     private String reflectionPath = null;
-    private Set<INativeBuilder<?,?>> nativeConfigurationBuilder = new HashSet<>();    
+    private Set<INativeBuilder<?,?>> nativeConfigurationBuilder = new HashSet<>();
 
     @Override
     public INativeConfigurationBuilder withPackages(String[] packageNames) {
-        log.atTrace().log("Entering withPackages(packageNames={})", (Object) packageNames);
         this.packages.addAll(Set.of(packageNames));
-        log.atInfo().log("Added packages: {}", Arrays.toString(packageNames));
-        log.atTrace().log("Exiting withPackages");
         return this;
     }
 
     @Override
     public INativeConfigurationBuilder withPackage(String packageName) {
-        log.atTrace().log("Entering withPackage(packageName={})", packageName);
         this.packages.add(packageName);
-        log.atInfo().log("Added package: {}", packageName);
-        log.atTrace().log("Exiting withPackage");
         return this;
     }
 
@@ -53,14 +45,15 @@ public class NativeConfigurationBuilder
 
     @Override
     protected INativeConfiguration doBuild() throws DslException {
-
         Objects.requireNonNull(this.reflectionPath, "Reflection path cannot be null");
         Objects.requireNonNull(this.resourcesPath, "Resouces path cannot be null");
 
-
-
-
-        return null;
+        return new NativeConfiguration(
+                this.mode,
+                this.reflectionEntries.stream().map(e -> e.build()).collect(Collectors.toSet()),
+                this.resources,
+                this.resourcesPath,
+                this.reflectionPath);
     }
 
     @Override
@@ -77,7 +70,7 @@ public class NativeConfigurationBuilder
                                 INativeBuilder<?, ?> nativeBuilder = (INativeBuilder<?, ?>) ObjectReflectionHelper
                                         .instanciateNewObject(c);
                                 nativeBuilder.withPackages(getPackages());
-                                INativeConfiguration nativeConfiguration = nativeBuilder.build();
+                                INativeReflectionConfiguration nativeConfiguration = nativeBuilder.build();
                                 reflectionEntries.addAll(nativeConfiguration.nativeConfiguration());
                             }
                         }));
@@ -118,7 +111,7 @@ public class NativeConfigurationBuilder
 
     @Override
     public INativeConfigurationBuilder resource(Class<?> resource) {
-        this.resources.add(Objects.requireNonNull(resource, "ressource cannot be null").getName().replace('.', '/') + ".class");
+        this.resource(Objects.requireNonNull(resource, "ressource cannot be null").getName().replace('.', '/') + ".class");
         return this;
     }
 
@@ -138,6 +131,17 @@ public class NativeConfigurationBuilder
     public INativeConfigurationBuilder mode(NativeConfigurationMode mode) {
         this.mode = Objects.requireNonNull(mode, "Mode cannot be null");
         return this;
+    }
+
+	public static INativeConfigurationBuilder builder() {
+		return new NativeConfigurationBuilder();
+	}
+
+    @Override
+    public IReflectionConfigurationEntryBuilder reflectionEntry(IReflectionConfigurationEntry entry) {
+        IReflectionConfigurationEntryBuilder builder = new ReflectConfigEntryBuilder(entry);
+        this.reflectionEntries.add(builder);
+        return builder;
     }
 
 }

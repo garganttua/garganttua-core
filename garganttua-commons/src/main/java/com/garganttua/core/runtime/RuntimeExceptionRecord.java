@@ -85,7 +85,7 @@ public record RuntimeExceptionRecord(String runtimeName, String stageName, Strin
      * the pattern's exception type is assignable from this record's exception type.
      * </p>
      *
-     * <h2>Matching Rules</h2>
+     * <p><b>Matching Rules:</b></p>
      * <ul>
      *   <li><b>null pattern</b> - Returns false</li>
      *   <li><b>null field in pattern</b> - Treated as wildcard, always matches</li>

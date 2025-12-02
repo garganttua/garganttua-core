@@ -8,11 +8,11 @@
  * Java's standard cryptography libraries.
  * </p>
  *
- * <h2>Core Interfaces</h2>
+ * <h2>Core Concepts</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.crypto.IEncryption} - Encryption/decryption operations</li>
- *   <li>{@link com.garganttua.core.crypto.IHash} - Secure hashing algorithms</li>
- *   <li>{@link com.garganttua.core.crypto.IKeyManager} - Key generation and storage</li>
+ *   <li><b>IEncryption</b> - Encryption/decryption operations (provided by implementations)</li>
+ *   <li><b>IHash</b> - Secure hashing algorithms (provided by implementations)</li>
+ *   <li><b>IKeyManager</b> - Key generation and storage (provided by implementations)</li>
  * </ul>
  *
  * <h2>Features</h2>
@@ -103,7 +103,5 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.crypto.IEncryption
- * @see com.garganttua.core.crypto.IHash
  */
 package com.garganttua.core.crypto;

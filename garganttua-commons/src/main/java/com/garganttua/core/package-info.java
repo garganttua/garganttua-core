@@ -52,7 +52,5 @@
  *
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.injection.IDiContext
- * @see com.garganttua.core.runtime.IRuntime
- * @see com.garganttua.core.reflection.IBinder
  */
 package com.garganttua.core;

@@ -12,7 +12,7 @@
  * <ul>
  *   <li>{@link com.garganttua.core.execution.IExecutor} - Single executor in the chain</li>
  *   <li>{@link com.garganttua.core.execution.IExecutorChain} - Chain of executors</li>
- *   <li>{@link com.garganttua.core.execution.IExecutorContext} - Shared execution context</li>
+ *   <li><b>IExecutorContext</b> - Shared execution context (provided by implementations)</li>
  * </ul>
  *
  * <h2>Usage Example</h2>

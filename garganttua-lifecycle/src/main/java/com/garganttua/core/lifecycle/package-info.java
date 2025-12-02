@@ -119,12 +119,12 @@
  *
  * <h2>State Transitions</h2>
  * <pre>
- * NEW -> STARTING -> STARTED
+ * NEW {@literal ->} STARTING {@literal ->} STARTED
  *  |                    |
  *  |                    v
- *  |                STOPPING -> STOPPED
+ *  |                STOPPING {@literal ->} STOPPED
  *  |                    |
- *  +-----> FAILED <-----+
+ *  {@literal +}------{@literal >} FAILED {@literal <}-----{@literal +}
  * </pre>
  *
  * <h2>Features</h2>

@@ -6,6 +6,7 @@ import com.garganttua.core.CoreException;
  * Exception thrown when an error occurs during lifecycle operations.
  * <p>
  * This exception indicates failures in lifecycle management, such as:
+ * </p>
  * <ul>
  *   <li>Component initialization failures</li>
  *   <li>Startup errors</li>
@@ -13,7 +14,6 @@ import com.garganttua.core.CoreException;
  *   <li>Resource allocation or cleanup failures</li>
  *   <li>Configuration reload errors</li>
  * </ul>
- * </p>
  *
  * <h2>Usage Example:</h2>
  * <pre>

@@ -127,6 +127,7 @@ public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> stra
      * <p>
      * This method performs a partial match where the query definition's criteria
      * are checked against this definition's properties:
+     * </p>
      * <ul>
      * <li>Type: The query type must be assignable from this definition's type</li>
      * <li>Name: The effective names must match if a name is specified in the
@@ -134,7 +135,6 @@ public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> stra
      * <li>Strategy: The strategies must match if specified in the query</li>
      * <li>Qualifiers: All query qualifiers must be present in this definition</li>
      * </ul>
-     * </p>
      *
      * @param def the query definition to match against
      * @return {@code true} if this definition matches the query, {@code false}

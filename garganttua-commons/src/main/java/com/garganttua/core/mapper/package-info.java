@@ -11,8 +11,8 @@
  * <h2>Core Interfaces</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.mapper.IMapper} - Main mapper interface</li>
- *   <li>{@link com.garganttua.core.mapper.IMappingRule} - Mapping rule definition</li>
- *   <li>{@link com.garganttua.core.mapper.IFieldMapping} - Field-to-field mapping</li>
+ *   <li><b>IMappingRule</b> - Mapping rule definition (provided by implementations)</li>
+ *   <li><b>IFieldMapping</b> - Field-to-field mapping (provided by implementations)</li>
  * </ul>
  *
  * <h2>Annotation-Based Mapping</h2>

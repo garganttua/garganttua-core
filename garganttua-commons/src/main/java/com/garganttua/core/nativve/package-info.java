@@ -10,9 +10,9 @@
  *
  * <h2>Core Interfaces</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.nativve.INativeImageConfig} - Native image configuration</li>
- *   <li>{@link com.garganttua.core.nativve.IReflectionConfig} - Reflection metadata</li>
- *   <li>{@link com.garganttua.core.nativve.IResourceConfig} - Resource bundle configuration</li>
+ *   <li>{@link com.garganttua.core.nativve.INativeConfiguration} - Native image configuration</li>
+ *   <li>{@link com.garganttua.core.nativve.INativeReflectionConfiguration} - Reflection metadata</li>
+ *   <li><b>IResourceConfig</b> - Resource bundle configuration (provided by implementations)</li>
  * </ul>
  *
  * <h2>Features</h2>
@@ -46,6 +46,6 @@
  * </p>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.nativve.INativeImageConfig
+ * @see com.garganttua.core.nativve.INativeConfiguration
  */
 package com.garganttua.core.nativve;

@@ -10,10 +10,9 @@
  *
  * <h2>Core Interfaces</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.reflection.IBinder} - Base interface for reflection binding</li>
- *   <li>{@link com.garganttua.core.reflection.IFieldBinder} - Type-safe field access and modification</li>
- *   <li>{@link com.garganttua.core.reflection.IMethodBinder} - Type-safe method invocation</li>
- *   <li>{@link com.garganttua.core.reflection.IConstructorBinder} - Type-safe constructor invocation</li>
+ *   <li>{@link com.garganttua.core.reflection.binders.IFieldBinder} - Type-safe field access and modification</li>
+ *   <li>{@link com.garganttua.core.reflection.binders.IMethodBinder} - Type-safe method invocation</li>
+ *   <li>{@link com.garganttua.core.reflection.binders.IConstructorBinder} - Type-safe constructor invocation</li>
  *   <li>{@link com.garganttua.core.reflection.IAnnotationScanner} - Annotation discovery</li>
  * </ul>
  *
@@ -101,8 +100,8 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.reflection.IBinder
- * @see com.garganttua.core.reflection.IFieldBinder
- * @see com.garganttua.core.reflection.IMethodBinder
+ * @see com.garganttua.core.reflection.binders.IFieldBinder
+ * @see com.garganttua.core.reflection.binders.IMethodBinder
+ * @see com.garganttua.core.reflection.binders.IConstructorBinder
  */
 package com.garganttua.core.reflection;

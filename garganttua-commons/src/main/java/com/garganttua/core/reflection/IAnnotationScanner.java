@@ -66,7 +66,7 @@ public interface IAnnotationScanner {
 	 * both direct annotations and meta-annotations (annotations on annotations).
 	 * </p>
 	 *
-	 * <h3>Scanning Behavior</h3>
+	 * <p><b>Scanning Behavior:</b></p>
 	 * <ul>
 	 *   <li>Scans recursively through all sub-packages</li>
 	 *   <li>Includes both public and package-private classes</li>

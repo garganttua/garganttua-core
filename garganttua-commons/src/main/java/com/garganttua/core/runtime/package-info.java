@@ -22,8 +22,8 @@
  *   <li>{@link com.garganttua.core.runtime.IRuntime} - Main workflow orchestrator</li>
  *   <li>{@link com.garganttua.core.runtime.IRuntimeContext} - Execution context with shared state</li>
  *   <li>{@link com.garganttua.core.runtime.IRuntimeResult} - Result of runtime execution</li>
- *   <li>{@link com.garganttua.core.runtime.IStage} - Stage definition</li>
- *   <li>{@link com.garganttua.core.runtime.IStep} - Step definition</li>
+ *   <li>{@link com.garganttua.core.runtime.IRuntimeStage} - Stage definition</li>
+ *   <li>{@link com.garganttua.core.runtime.IRuntimeStep} - Step definition</li>
  * </ul>
  *
  * <h2>Annotation-Based Definition</h2>

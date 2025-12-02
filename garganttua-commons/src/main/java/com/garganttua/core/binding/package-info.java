@@ -8,11 +8,11 @@
  * dependency resolution and component wiring.
  * </p>
  *
- * <h2>Core Interfaces</h2>
+ * <h2>Core Concepts</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.binding.IBinder} - Base binder interface</li>
- *   <li>{@link com.garganttua.core.binding.IBindingResolver} - Resolves bindings dynamically</li>
- *   <li>{@link com.garganttua.core.binding.IBindingContext} - Context for binding operations</li>
+ *   <li><b>IBinder</b> - Base binder interface (provided by implementations)</li>
+ *   <li><b>IBindingResolver</b> - Resolves bindings dynamically (provided by implementations)</li>
+ *   <li><b>IBindingContext</b> - Context for binding operations (provided by implementations)</li>
  * </ul>
  *
  * <h2>Use Cases</h2>
@@ -30,6 +30,5 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.binding.IBinder
  */
 package com.garganttua.core.binding;

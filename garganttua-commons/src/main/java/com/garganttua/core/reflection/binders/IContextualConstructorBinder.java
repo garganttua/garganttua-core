@@ -48,6 +48,7 @@ package com.garganttua.core.reflection.binders;
  * <h2>Dependency Injection Pattern</h2>
  * <p>
  * This interface is fundamental to constructor-based dependency injection:
+ * </p>
  * <ol>
  *   <li>Analyze constructor parameters to determine dependencies</li>
  *   <li>Validate that all dependencies are available in the context</li>
@@ -55,7 +56,6 @@ package com.garganttua.core.reflection.binders;
  *   <li>Invoke the constructor with resolved parameters</li>
  *   <li>Return the newly created instance</li>
  * </ol>
- * </p>
  *
  * <h2>Thread Safety</h2>
  * <p>

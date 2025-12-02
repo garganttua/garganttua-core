@@ -11,8 +11,8 @@
  * <h2>Core Interfaces</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.condition.ICondition} - Base condition interface</li>
- *   <li>{@link com.garganttua.core.condition.IConditionEvaluator} - Evaluates conditions</li>
- *   <li>{@link com.garganttua.core.condition.IConditionBuilder} - Builder for condition composition</li>
+ *   <li><b>IConditionEvaluator</b> - Evaluates conditions (provided by implementations)</li>
+ *   <li><b>IConditionBuilder</b> - Builder for condition composition (in dsl subpackage)</li>
  * </ul>
  *
  * <h2>Condition Types</h2>

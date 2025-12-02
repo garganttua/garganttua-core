@@ -65,30 +65,28 @@
             </dependency>
       </dependencies>
 
+
       <build>
             <plugins>
                   <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <groupId>com.garganttua.core</groupId>
+                        <artifactId>garganttua-native-image-maven-plugin</artifactId>
+                        <version>${project.version}</version>
                         <executions>
                               <execution>
                                     <goals>
-                                          <goal>java</goal>
+                                          <goal>native-config</goal>
                                     </goals>
-                                    <phase>process-classes</phase>
-                                    <configuration>
-                                          <classpathScope>compile</classpathScope>
-                                          <mainClass>
-                                                com.garganttua.core.runtime.nativve.NativeImageConfigBuilder</mainClass>
-                                          <arguments>
-                                                <argument>${project.build.outputDirectory}</argument>
-                                          </arguments>
-                                    </configuration>
                               </execution>
                         </executions>
+                        <configuration>
+                              <resources>
+                              </resources>
+                              <packages>
+                                    <package>com.garganttua.core.runtime</package>
+                              </packages>
+                        </configuration>
                   </plugin>
             </plugins>
       </build>
-
 </project>

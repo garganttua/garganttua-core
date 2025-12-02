@@ -45,7 +45,7 @@ import java.util.Optional;
  * @param <Context> the type of the primary context required for creation
  * @since 2.0.0-ALPHA01
  * @see IContextualObjectSupplier
- * @see ISupplierBuilder#withContext(Class, IContextualObjectSupply)
+ * @see com.garganttua.core.supply.dsl.ISupplierBuilder#withContext(Class, IContextualObjectSupply)
  */
 @FunctionalInterface
 public interface IContextualObjectSupply<Supplied, Context> {

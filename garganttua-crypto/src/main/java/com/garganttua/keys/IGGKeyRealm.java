@@ -10,29 +10,29 @@ public interface IGGKeyRealm {
 
 	/**
 	 * Actually returns a public key, or a secret key
-	 * @return
-	 * @throws GGAPIException
+	 * @return the key for decryption
+	 * @throws GGKeyException if key retrieval fails
 	 */
 	IGGKey getKeyForDecryption() throws GGKeyException;
 
 	/**
 	 * Actually returns a private key, or a secret key
-	 * @return
-	 * @throws GGAPIException
+	 * @return the key for encryption
+	 * @throws GGKeyException if key retrieval fails
 	 */
 	IGGKey getKeyForEncryption() throws GGKeyException;
-	
+
 	/**
 	 * Returns a private key for signing
-	 * @return
-	 * @throws GGAPIException
+	 * @return the key for signing
+	 * @throws GGKeyException if key retrieval fails
 	 */
 	IGGKey getKeyForSigning() throws GGKeyException;
-	
+
 	/**
 	 * Returns a public key for signature verification
-	 * @return
-	 * @throws GGAPIException
+	 * @return the key for signature verification
+	 * @throws GGKeyException if key retrieval fails
 	 */
 	IGGKey getKeyForSignatureVerification() throws GGKeyException;
 

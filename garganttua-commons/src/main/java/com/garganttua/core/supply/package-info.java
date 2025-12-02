@@ -12,7 +12,6 @@
  * <ul>
  *   <li>{@link com.garganttua.core.supply.IObjectSupplier} - Basic object supplier</li>
  *   <li>{@link com.garganttua.core.supply.IContextualObjectSupplier} - Context-aware supplier</li>
- *   <li>{@link com.garganttua.core.supply.ISupplierFactory} - Factory for creating suppliers</li>
  * </ul>
  *
  * <h2>Supplier Types</h2>

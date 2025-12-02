@@ -42,8 +42,8 @@ import java.lang.annotation.Target;
  * </p>
  *
  * @since 2.0.0-ALPHA01
- * @see INativeConfiguration
- * @see IReflectionConfigurationEntryBuilder
+ * @see com.garganttua.core.nativve.INativeConfiguration
+ * @see com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

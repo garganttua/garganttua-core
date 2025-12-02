@@ -46,6 +46,9 @@ import com.garganttua.core.CoreException;
  */
 public class RuntimeException extends CoreException {
 
+    /**
+     * Optional reference to the runtime context where this exception occurred.
+     */
     private Optional<IRuntimeContext<?, ?>> context;
 
     /**

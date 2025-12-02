@@ -3,12 +3,14 @@ package com.garganttua.core.injection.dummies;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyBeanProvider implements IBeanProvider {
@@ -86,8 +88,9 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public Collection<IReflectionConfigurationEntry> nativeConfiguration() {
+    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
         throw new UnsupportedOperationException("Unimplemented method 'nativeConfiguration'");
     }
+
 
 }

@@ -41,6 +41,12 @@ package com.garganttua.core.supply;
 public class Supplier {
 
     /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private Supplier() {
+    }
+
+    /**
      * Supplies an object from the given supplier, automatically matching contexts if needed.
      *
      * <p>
@@ -51,11 +57,11 @@ public class Supplier {
      * For standard {@link IObjectSupplier} instances, it simply calls {@link IObjectSupplier#supply()}.
      * </p>
      *
-     * <h3>Behavior</h3>
+     * <p><b>Behavior:</b></p>
      * <ul>
      *   <li>If supplier is contextual: Searches for matching context, throws exception if not found</li>
      *   <li>If supplier is non-contextual: Calls {@code supply()} directly, ignoring contexts</li>
-     *   <li>Returns {@code null} if the supplier returns {@link Optional#empty()}</li>
+     *   <li>Returns {@code null} if the supplier returns an empty Optional</li>
      * </ul>
      *
      * @param <Supplied> the type of object to be supplied

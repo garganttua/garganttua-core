@@ -6,6 +6,7 @@ import com.garganttua.core.CoreException;
  * Exception thrown when an error occurs during object mapping operations.
  * <p>
  * This exception indicates failures in the mapping process, such as:
+ * </p>
  * <ul>
  *   <li>Invalid mapping configuration</li>
  *   <li>Type conversion failures</li>
@@ -13,7 +14,6 @@ import com.garganttua.core.CoreException;
  *   <li>Instantiation errors</li>
  *   <li>Custom mapping rule execution failures</li>
  * </ul>
- * </p>
  *
  * <h2>Usage Example:</h2>
  * <pre>

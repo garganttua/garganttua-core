@@ -70,7 +70,7 @@ package com.garganttua.core.condition;
  * </p>
  *
  * @since 2.0.0-ALPHA01
- * @see IConditionBuilder
+ * @see com.garganttua.core.condition.dsl.IConditionBuilder
  * @see com.garganttua.core.runtime.annotations.Condition
  */
 @FunctionalInterface

@@ -70,13 +70,13 @@ import com.garganttua.core.reflection.binders.IFieldBinder;
  * <h2>Field Injection Pattern</h2>
  * <p>
  * Field binders are commonly used for field-based dependency injection:
+ * </p>
  * <ol>
  *   <li>Identify fields requiring injection (via annotations or configuration)</li>
  *   <li>Create field binders for each injectable field</li>
  *   <li>Configure value suppliers (often context-aware)</li>
  *   <li>Execute binders to inject values into target instances</li>
  * </ol>
- * </p>
  *
  * <h2>Private Field Access</h2>
  * <p>

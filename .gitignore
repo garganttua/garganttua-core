@@ -80,3 +80,5 @@ build/
 node_modules/
 
 **/.VSCodeCounter/
+
+.claude/

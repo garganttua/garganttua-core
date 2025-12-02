@@ -87,12 +87,12 @@ public @interface FieldMappingRule {
 	 * <p>
 	 * This can be a simple field name or a nested field path using dot notation.
 	 * Examples:
+	 * </p>
 	 * <ul>
 	 *   <li>"email" - direct field mapping</li>
 	 *   <li>"address.street" - nested field mapping</li>
 	 *   <li>"contact.phoneNumbers[0]" - indexed field mapping</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * @return the source field address
 	 */

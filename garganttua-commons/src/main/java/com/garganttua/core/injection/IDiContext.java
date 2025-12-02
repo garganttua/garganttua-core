@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.nativve.INativeConfiguration;
+import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.utils.Copyable;
 
 /**
@@ -50,7 +51,7 @@ import com.garganttua.core.utils.Copyable;
  * @see IInjectableElementResolver
  * @see ILifecycle
  */
-public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copyable<IDiContext>, INativeConfiguration {
+public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copyable<IDiContext>, INativeReflectionConfiguration {
 
         // --- Bean Scopes ---
 

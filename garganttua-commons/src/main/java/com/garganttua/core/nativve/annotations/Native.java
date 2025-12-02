@@ -48,7 +48,7 @@ import java.lang.annotation.Target;
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
- * @see IReflectionConfigurationEntry
+ * @see com.garganttua.core.nativve.IReflectionConfigurationEntry
  * @see NativeConfigurationBuilder
  */
 @Target({ ElementType.TYPE, ElementType.FIELD, ElementType.CONSTRUCTOR, ElementType.METHOD })

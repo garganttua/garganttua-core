@@ -36,10 +36,12 @@ import com.garganttua.core.reflection.ReflectionException;
  * <h2>Dual Context Model</h2>
  * <p>
  * This interface uses a dual context model:
+ * </p>
  * <ul>
  *   <li><b>Owner Context</b>: Provides or identifies the target instance that owns the field</li>
  *   <li><b>Value Context</b>: Provides the value to be injected into the field</li>
  * </ul>
+ * <p>
  * In many scenarios, both contexts may be the same (e.g., a DI container providing
  * both the target instance and the field value).
  * </p>
@@ -47,6 +49,7 @@ import com.garganttua.core.reflection.ReflectionException;
  * <h2>Field Injection Pattern</h2>
  * <p>
  * Common usage in dependency injection:
+ * </p>
  * <ol>
  *   <li>Create or retrieve the target instance</li>
  *   <li>Identify fields that require injection (via annotations or configuration)</li>
@@ -54,7 +57,6 @@ import com.garganttua.core.reflection.ReflectionException;
  *   <li>Resolve field values from the context</li>
  *   <li>Inject resolved values using {@link #setValue(Object, Object)}</li>
  * </ol>
- * </p>
  *
  * <h2>Thread Safety</h2>
  * <p>

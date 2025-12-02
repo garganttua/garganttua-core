@@ -32,6 +32,6 @@ import com.garganttua.core.dsl.IPackageableBuilder;
  * @see IPackageableBuilder
  * @see IAutomaticBuilder
  */
-public interface INativeBuilder<B, C extends INativeConfiguration> extends IPackageableBuilder<B, C>, IAutomaticBuilder<B, C>{
+public interface INativeBuilder<B, C extends INativeReflectionConfiguration> extends IPackageableBuilder<B, C>, IAutomaticBuilder<B, C>{
 
 }

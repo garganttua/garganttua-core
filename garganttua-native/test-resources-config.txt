@@ -1,0 +1,9 @@
+{
+  "resources" : {
+    "includes" : [ {
+      "pattern" : "resource1"
+    }, {
+      "pattern" : "resource2"
+    } ]
+  }
+}

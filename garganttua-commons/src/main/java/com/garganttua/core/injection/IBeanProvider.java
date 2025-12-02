@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.nativve.INativeConfiguration;
+import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.utils.Copyable;
 
 /**
@@ -50,7 +51,7 @@ import com.garganttua.core.utils.Copyable;
  * @see ILifecycle
  * @see Copyable
  */
-public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INativeConfiguration {
+public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INativeReflectionConfiguration {
 
     /**
      * Retrieves a bean instance by its type.

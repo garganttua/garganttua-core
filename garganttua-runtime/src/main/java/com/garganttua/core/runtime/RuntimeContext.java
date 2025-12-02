@@ -27,6 +27,7 @@ import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.supply.IContextualObjectSupplier;
 import com.garganttua.core.supply.IObjectSupplier;
 import com.garganttua.core.supply.dsl.ContextualObjectSupplierBuilder;
@@ -429,8 +430,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public Collection<IReflectionConfigurationEntry> nativeConfiguration() {
+    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
         return this.delegateContext.nativeConfiguration();
     }
-
 }

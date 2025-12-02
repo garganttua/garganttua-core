@@ -71,6 +71,12 @@ public class OrderedMap<K, V> implements Map<K, V> {
     private final Map<K, V> internalMap = new LinkedHashMap<>();
 
     /**
+     * Creates a new empty OrderedMap with default initial capacity.
+     */
+    public OrderedMap() {
+    }
+
+    /**
      * Associates the specified value with the specified key in this map.
      *
      * <p>

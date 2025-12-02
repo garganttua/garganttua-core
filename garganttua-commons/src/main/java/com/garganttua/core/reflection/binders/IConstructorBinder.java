@@ -74,6 +74,28 @@ public interface IConstructorBinder<Constructed> extends IExecutableBinder<Const
      */
     Class<Constructed> getConstructedType();
 
+    /**
+     * Returns the underlying Java constructor that this binder will invoke.
+     *
+     * <p>
+     * This method provides direct access to the {@link Constructor} object that
+     * will be used for object instantiation. This is useful for:
+     * </p>
+     * <ul>
+     *   <li>Inspecting constructor metadata (annotations, modifiers, parameter types)</li>
+     *   <li>Performing additional validation or security checks</li>
+     *   <li>Integrating with other reflection-based frameworks</li>
+     *   <li>Debugging and diagnostic purposes</li>
+     * </ul>
+     *
+     * <p>
+     * The returned constructor is the one that was resolved during binder
+     * configuration based on the specified parameter types.
+     * </p>
+     *
+     * @return the {@link Constructor} object that will be invoked during execution
+     * @since 2.0.0-ALPHA01
+     */
     Constructor<?> constructor();
 
 }

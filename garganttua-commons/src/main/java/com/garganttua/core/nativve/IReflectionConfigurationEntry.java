@@ -53,10 +53,26 @@ public interface IReflectionConfigurationEntry {
     public static class Field {
         private String name;
 
+        /**
+         * Creates a new Field instance with default settings.
+         */
+        public Field() {
+        }
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return the field name
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * Sets the name of the field.
+         *
+         * @param name the field name
+         */
         public void setName(String name) {
             this.name = name;
         }
@@ -91,18 +107,44 @@ public interface IReflectionConfigurationEntry {
         private String name;
         private List<String> parameterTypes;
 
+        /**
+         * Creates a new Method instance with default settings.
+         */
+        public Method() {
+        }
+
+        /**
+         * Returns the name of the method.
+         *
+         * @return the method name
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * Sets the name of the method.
+         *
+         * @param name the method name
+         */
         public void setName(String name) {
             this.name = name;
         }
 
+        /**
+         * Returns the list of parameter types for the method.
+         *
+         * @return the list of fully qualified parameter type names
+         */
         public List<String> getParameterTypes() {
             return parameterTypes;
         }
 
+        /**
+         * Sets the list of parameter types for the method.
+         *
+         * @param parameterTypes the list of fully qualified parameter type names
+         */
         public void setParameterTypes(List<String> parameterTypes) {
             this.parameterTypes = parameterTypes;
         }

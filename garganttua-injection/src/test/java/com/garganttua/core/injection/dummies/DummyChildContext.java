@@ -18,6 +18,7 @@ import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyChildContext implements IDiContext{
@@ -155,9 +156,11 @@ public class DummyChildContext implements IDiContext{
     }
 
     @Override
-    public Collection<IReflectionConfigurationEntry> nativeConfiguration() {
+    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
         throw new UnsupportedOperationException("Unimplemented method 'nativeConfiguration'");
     }
+
+
 
 
 }
