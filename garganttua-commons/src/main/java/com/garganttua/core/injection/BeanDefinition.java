@@ -72,27 +72,10 @@ import com.garganttua.core.reflection.binders.IConstructorBinder;
  * @see IBeanFactory
  * @see Dependent
  */
-public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
-        Set<Class<? extends Annotation>> qualifiers,
+public record BeanDefinition<Bean>(BeanReference<Bean> reference,
         Optional<IConstructorBinder<Bean>> constructorBinder,
         Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders,
         Set<IBeanInjectableFieldBuilder<?, Bean>> injectableFields) implements Dependent {
-
-    /**
-     * Returns the effective name of the bean.
-     *
-     * <p>
-     * If a name is explicitly specified, it is returned. Otherwise, the simple
-     * name of the bean type is used as the effective name.
-     * </p>
-     *
-     * @return the effective bean name
-     */
-    public String effectiveName() {
-        if (name.isPresent())
-            return name.get();
-        return type.getSimpleName();
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -100,93 +83,18 @@ public record BeanDefinition<Bean>(Class<Bean> type, Optional<BeanStrategy> stra
             return true;
         if (!(o instanceof BeanDefinition<?> other))
             return false;
-        return Objects.equals(type, other.type) &&
-                Objects.equals(strategy, other.strategy) &&
-                Objects.equals(effectiveName(), other.effectiveName()) &&
-                Objects.equals(qualifiers, other.qualifiers);
+        return Objects.equals(reference, other.reference);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, strategy, effectiveName(), qualifiers);
+        return reference.hashCode();
     }
 
     @Override
     public String toString() {
-        return "BeanDefinition{" +
-                "type=" + type.getName() +
-                ", strategy=" + strategy +
-                ", name='" + effectiveName() + '\'' +
-                ", qualifiers=" + qualifiers +
-                '}';
+        return reference.toString();
     }
-
-    /**
-     * Checks if this bean definition matches the provided query definition.
-     *
-     * <p>
-     * This method performs a partial match where the query definition's criteria
-     * are checked against this definition's properties:
-     * </p>
-     * <ul>
-     * <li>Type: The query type must be assignable from this definition's type</li>
-     * <li>Name: The effective names must match if a name is specified in the
-     * query</li>
-     * <li>Strategy: The strategies must match if specified in the query</li>
-     * <li>Qualifiers: All query qualifiers must be present in this definition</li>
-     * </ul>
-     *
-     * @param def the query definition to match against
-     * @return {@code true} if this definition matches the query, {@code false}
-     *         otherwise
-     * @throws NullPointerException if def is null
-     */
-    public boolean matches(BeanDefinition<?> def) {
-        Objects.requireNonNull(def, "BeanDefinition to match cannot be null");
-
-        if (def.type() != null && !def.type().isAssignableFrom(this.type)) {
-            return false;
-        }
-
-        if (def.name().isPresent() && !def.effectiveName().equals(this.effectiveName())) {
-            return false;
-        }
-
-        if (def.strategy().isPresent() && !def.strategy().equals(this.strategy)) {
-            return false;
-        }
-
-        if (def.qualifiers() != null && !def.qualifiers().isEmpty() && !this.qualifiers.containsAll(def.qualifiers())) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Creates a partial bean definition example for query purposes.
-     *
-     * <p>
-     * This factory method creates a lightweight bean definition without
-     * construction
-     * information (constructor binder, fields, post-construct methods). It is
-     * intended
-     * for use as a query criteria when searching for beans.
-     * </p>
-     *
-     * @param <Bean>     the bean type
-     * @param type       the class of the bean
-     * @param strategy   the bean strategy, or empty for any strategy
-     * @param name       the bean name, or empty for any name
-     * @param qualifiers the required qualifier annotations
-     * @return a bean definition example for querying
-     */
-    public static <Bean> BeanDefinition<Bean> example(Class<Bean> type, Optional<BeanStrategy> strategy,
-            Optional<String> name,
-            Set<Class<? extends Annotation>> qualifiers) {
-        return new BeanDefinition<>(type, strategy, name, qualifiers, null, null, null);
-    }
-
     /**
      * Returns all dependency types required by this bean definition.
      *

@@ -9,7 +9,7 @@ import java.util.Set;
 import javax.inject.Qualifier;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanQuery;
@@ -47,7 +47,7 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
         try {
             query = new BeanQuery<>(
                     Optional.ofNullable(this.provider),
-                    BeanDefinition.example(
+                    new BeanReference<>(
                             this.type,
                             Optional.ofNullable(this.strategy),
                             Optional.ofNullable(this.name),

@@ -72,68 +72,68 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
         Optional<IBeanProvider> getBeanProvider(String name);
 
         /**
-         * Queries for a single bean matching the definition from a specific provider.
+         * Queries for a single bean matching the query from a specific provider.
          *
          * @param <Bean> the bean type
          * @param provider the provider name (empty to search all providers)
-         * @param definition the bean definition to match
+         * @param query the bean reference to match
          * @return an {@link Optional} containing the bean if found, or empty otherwise
          * @throws DiException if an error occurs during query or bean instantiation
          */
-        <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException;
+        <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanReference<Bean> query) throws DiException;
 
         /**
-         * Queries for a single bean matching the definition from all providers.
+         * Queries for a single bean matching the query from all providers.
          *
          * @param <Bean> the bean type
-         * @param definition the bean definition to match
+         * @param query the bean reference to match
          * @return an {@link Optional} containing the bean if found, or empty otherwise
          * @throws DiException if an error occurs during query or bean instantiation
          */
-        <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException;
+        <Bean> Optional<Bean> queryBean(BeanReference<Bean> query) throws DiException;
 
         /**
-         * Queries for a single bean matching the definition from a named provider.
+         * Queries for a single bean matching the query from a named provider.
          *
          * @param <Bean> the bean type
          * @param provider the provider name
-         * @param definition the bean definition to match
+         * @param query the bean reference to match
          * @return an {@link Optional} containing the bean if found, or empty otherwise
          * @throws DiException if an error occurs during query or bean instantiation
          */
-        <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException;
+        <Bean> Optional<Bean> queryBean(String provider, BeanReference<Bean> query) throws DiException;
 
         /**
-         * Queries for all beans matching the definition from a specific provider.
+         * Queries for all beans matching the query from a specific provider.
          *
          * @param <Bean> the bean type
          * @param provider the provider name (empty to search all providers)
-         * @param definition the bean definition to match
+         * @param query the bean reference to match
          * @return a list of all matching beans (never {@code null}, may be empty)
          * @throws DiException if an error occurs during query or bean instantiation
          */
-        <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException;
+        <Bean> List<Bean> queryBeans(Optional<String> provider, BeanReference<Bean> query) throws DiException;
 
         /**
-         * Queries for all beans matching the definition from all providers.
+         * Queries for all beans matching the query from all providers.
          *
          * @param <Bean> the bean type
-         * @param definition the bean definition to match
+         * @param query the bean reference to match
          * @return a list of all matching beans (never {@code null}, may be empty)
          * @throws DiException if an error occurs during query or bean instantiation
          */
-        <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException;
+        <Bean> List<Bean> queryBeans(BeanReference<Bean> query) throws DiException;
 
         /**
-         * Queries for all beans matching the definition from a named provider.
+         * Queries for all beans matching the query from a named provider.
          *
          * @param <Bean> the bean type
          * @param provider the provider name
-         * @param definition the bean definition to match
+         * @param query the bean reference to match
          * @return a list of all matching beans (never {@code null}, may be empty)
          * @throws DiException if an error occurs during query or bean instantiation
          */
-        <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException;
+        <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException;
 
         // --- Property Scopes ---
 

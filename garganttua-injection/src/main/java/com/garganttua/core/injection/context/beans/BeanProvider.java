@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IBeanProvider;
@@ -142,42 +143,42 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
-		log.atTrace().log("Querying single bean with definition: {}", definition);
+	public <T> Optional<T> queryBean(BeanReference<T> query) throws DiException {
+		log.atTrace().log("Querying single bean with query: {}", query);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
-				.filter(factory -> factory.matches(definition))
+				.filter(factory -> factory.matches(query))
 				.findFirst();
 
 		if (factoryOpt.isPresent()) {
 			try {
 				Optional<T> result = (Optional<T>) factoryOpt.get().supply();
-				log.atInfo().log("Bean found for definition {}: {}", definition, result.orElse(null));
+				log.atInfo().log("Bean found for query {}: {}", query, result.orElse(null));
 				return result;
 			} catch (SupplyException e) {
-				log.atError().log("Failed to supply bean for definition {}: {}", definition, e.getMessage());
+				log.atError().log("Failed to supply bean for query {}: {}", query, e.getMessage());
 				throw new DiException(e);
 			}
 		}
 
-		log.atWarn().log("No bean found for definition {}", definition);
+		log.atWarn().log("No bean found for definition {}", query);
 		return Optional.empty();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
-		log.atTrace().log("Querying multiple beans with definition: {}", definition);
+	public <T> List<T> queryBeans(BeanReference<T> query) throws DiException {
+		log.atTrace().log("Querying multiple beans with query: {}", query);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
 		List<T> result = (List<T>) this.beanFactories.stream()
-				.filter(factory -> factory.matches(definition))
+				.filter(factory -> factory.matches(query))
 				.map(IObjectSupplier::supply)
 				.map(Optional::get)
 				.toList();
 
-		log.atInfo().log("Beans found for definition {}: {}", definition, result.size());
+		log.atInfo().log("Beans found for query {}: {}", query, result.size());
 		return result;
 	}
 
@@ -194,11 +195,15 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	public int size() {
+		log.atTrace().log("Returning BeanProvider size: {}", this.beanFactories.size());
 		return this.beanFactories.size();
 	}
 
 	@Override
 	public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
-		return this.beanFactories.stream().map(f -> f.nativeEntry()).collect(Collectors.toSet());
+		log.atTrace().log("Building native configuration from {} bean factories", this.beanFactories.size());
+		Set<IReflectionConfigurationEntryBuilder> result = this.beanFactories.stream().map(f -> f.nativeEntry()).collect(Collectors.toSet());
+		log.atDebug().log("Native configuration built with {} entries", result.size());
+		return result;
 	}
 }

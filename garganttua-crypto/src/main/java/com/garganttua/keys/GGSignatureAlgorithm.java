@@ -1,5 +1,8 @@
 package com.garganttua.keys;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public enum GGSignatureAlgorithm {
 	// SHA-based signature algorithms
     SHA1("SHA1"),
@@ -68,6 +71,7 @@ public enum GGSignatureAlgorithm {
     }
 
     public String getName() {
+        log.atTrace().log("Getting signature algorithm name: {}", this.name);
         return name;
     }
 

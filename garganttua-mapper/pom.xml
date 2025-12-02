@@ -1,50 +1,48 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.garganttua</groupId>
-		<artifactId>garganttua-core</artifactId>
-		<version>2.0.0-ALPHA01</version>
-	</parent>
-	<groupId>com.garganttua.core</groupId>
-	<artifactId>garganttua-mapper</artifactId>
-	<description>Declarative object-to-object mapping engine.</description>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.garganttua</groupId>
+        <artifactId>garganttua-core</artifactId>
+        <version>2.0.0-ALPHA01</version>
+    </parent>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-mapper</artifactId>
+    <description>Declarative object-to-object mapping engine.</description>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-reflection</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-native</artifactId>
-			<scope>provided</scope>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-reflection</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-native</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
-	<build>
+    <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>com.garganttua.core</groupId>
+                <artifactId>garganttua-native-image-maven-plugin</artifactId>
+                <version>${project.version}</version>
                 <executions>
                     <execution>
                         <goals>
-                            <goal>java</goal>
+                            <goal>native-config</goal>
                         </goals>
-                        <phase>process-classes</phase>
-                        <configuration>
-                            <classpathScope>compile</classpathScope>
-                            <mainClass>
-                                com.garganttua.core.mapper.nativve.NativeImageConfigBuilder</mainClass>
-                            <arguments>
-                                <argument>${project.build.outputDirectory}</argument>
-                            </arguments>
-                        </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <resources>
+                    </resources>
+                    <packages>
+                        <package>com.garganttua.core.mapper</package>
+                    </packages>
+                </configuration>
             </plugin>
         </plugins>
     </build>

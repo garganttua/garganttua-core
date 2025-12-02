@@ -16,6 +16,9 @@ import com.garganttua.core.supply.NullObjectSupplier;
 import com.garganttua.core.supply.NullableContextualObjectSupplier;
 import com.garganttua.core.supply.NullableObjectSupplier;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class SupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied> {
 

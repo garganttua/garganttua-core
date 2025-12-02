@@ -18,6 +18,7 @@ import javax.inject.Qualifier;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
@@ -73,10 +74,10 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
         log.atTrace().log("Entering doBuild for beanClass: {}", this.beanClass);
         BeanFactoryBuilder.removeDuplicatesByHashCode(this.injectableFields);
         BeanDefinition<Bean> definition = new BeanDefinition<>(
-                this.beanClass,
-                Optional.ofNullable(this.strategy),
-                Optional.ofNullable(this.name),
-                this.qualifiers,
+                new BeanReference<>(this.beanClass,
+                        Optional.ofNullable(this.strategy),
+                        Optional.ofNullable(this.name),
+                        this.qualifiers),
                 this.constructorBinderBuilder != null ? Optional.of(this.constructorBinderBuilder.build())
                         : Optional.empty(),
                 this.postConstructMethodBinderBuilders,

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
@@ -309,70 +310,70 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanDefinition<Bean> definition)
+    public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanReference<Bean> query)
             throws DiException {
-        log.atTrace().log("Querying bean with Optional provider: {}, definition: {}", provider, definition);
+        log.atTrace().log("Querying bean with Optional provider: {}, query: {}", provider, query);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(provider, "Provider cannot be null");
-        Objects.requireNonNull(definition, "Bean definition cannot be null");
+        Objects.requireNonNull(query, "Bean query cannot be null");
         Optional<Bean> result = provider.isPresent()
-                ? this.queryBean(provider.get(), definition)
-                : this.queryBean(definition);
+                ? this.queryBean(provider.get(), query)
+                : this.queryBean(query);
         log.atDebug().log("Bean query result: {}", result);
         return result;
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("Querying bean from provider: {}, definition: {}", provider, definition);
+    public <Bean> Optional<Bean> queryBean(String provider, BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("Querying bean from provider: {}, query: {}", provider, query);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         IBeanProvider beanProvider = this.beanProviders.get(provider);
         if (beanProvider == null) {
             log.atError().log("Invalid bean provider: {}", provider);
             throw new DiException("Invalid bean provider " + provider);
         }
-        Optional<Bean> result = beanProvider.queryBean(definition);
+        Optional<Bean> result = beanProvider.queryBean(query);
         log.atDebug().log("Bean obtained from provider {}: {}", provider, result);
         return result;
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("Querying bean from all providers, definition: {}", definition);
+    public <Bean> Optional<Bean> queryBean(BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("Querying bean from all providers, query: {}", query);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
-        Objects.requireNonNull(definition, "Bean definition cannot be null");
+        Objects.requireNonNull(query, "Bean query cannot be null");
         for (IBeanProvider provider : this.beanProviders.values()) {
-            Optional<Bean> bean = provider.queryBean(definition);
+            Optional<Bean> bean = provider.queryBean(query);
             if (bean.isPresent()) {
                 log.atDebug().log("Bean found in provider {}: {}", provider, bean);
                 return bean;
             }
         }
-        log.atDebug().log("No bean found for definition {}", definition);
+        log.atDebug().log("No bean found for query {}", query);
         return Optional.empty();
     }
 
     @Override
-    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("Querying beans with Optional provider: {}, definition: {}", provider, definition);
+    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("Querying beans with Optional provider: {}, query: {}", provider, query);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(provider, "Provider cannot be null");
-        Objects.requireNonNull(definition, "Bean definition cannot be null");
+        Objects.requireNonNull(query, "Bean query cannot be null");
         List<Bean> result = provider.isPresent()
-                ? this.queryBeans(provider.get(), definition)
-                : this.queryBeans(definition);
+                ? this.queryBeans(provider.get(), query)
+                : this.queryBeans(query);
         log.atDebug().log("Beans query result: {} items", result.size());
         return result;
     }
 
     @Override
-    public <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("Querying beans from all providers, definition: {}", definition);
+    public <Bean> List<Bean> queryBeans(BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("Querying beans from all providers, query: {}", query);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
-        Objects.requireNonNull(definition, "Bean definition cannot be null");
+        Objects.requireNonNull(query, "Bean query cannot be null");
         List<Bean> beans = new ArrayList<>();
         for (IBeanProvider provider : this.beanProviders.values()) {
-            List<Bean> providerBeans = provider.queryBeans(definition);
+            List<Bean> providerBeans = provider.queryBeans(query);
             beans.addAll(providerBeans);
             log.atDebug().log("Found {} beans in provider {}", providerBeans.size(), provider);
         }
@@ -381,15 +382,15 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("Querying beans from provider: {}, definition: {}", provider, definition);
+    public <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("Querying beans from provider: {}, query: {}", provider, query);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         IBeanProvider beanProvider = this.beanProviders.get(provider);
         if (beanProvider == null) {
             log.atError().log("Invalid bean provider: {}", provider);
             throw new DiException("Invalid bean provider " + provider);
         }
-        List<Bean> result = beanProvider.queryBeans(definition);
+        List<Bean> result = beanProvider.queryBeans(query);
         log.atDebug().log("Beans obtained from provider {}: {} items", provider, result.size());
         return result;
     }

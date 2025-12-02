@@ -21,30 +21,41 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
     public BeanInjectableFieldBuilder(IBeanFactoryBuilder<BeanType> link,
             IBeanFactoryBuilder<BeanType> beanSupplierBuilder, Class<FieldType> fieldType) throws DslException {
         super(link, beanSupplierBuilder, fieldType);
-        log.atTrace().log("Initialized BeanInjectableFieldBuilder for fieldType: {} in beanClass: {}", fieldType,
+        log.atTrace().log("Entering BeanInjectableFieldBuilder constructor with link: {}, beanSupplierBuilder: {}, fieldType: {}",
+                link, beanSupplierBuilder, fieldType);
+        log.atInfo().log("BeanInjectableFieldBuilder initialized for fieldType: {} in beanClass: {}", fieldType,
                 link.getSuppliedType());
+        log.atTrace().log("Exiting BeanInjectableFieldBuilder constructor");
     }
 
     @Override
     public Set<Class<?>> getDependencies() {
-        log.atTrace().log("Getting dependencies for injectable field of type: {}", this.fieldType);
-        return Set.of(this.fieldType);
+        log.atTrace().log("Entering getDependencies() for injectable field of type: {}", this.fieldType);
+        Set<Class<?>> dependencies = Set.of(this.fieldType);
+        log.atDebug().log("Dependencies for injectable field: {}", dependencies);
+        log.atTrace().log("Exiting getDependencies()");
+        return dependencies;
     }
 
     @Override
     public IBeanInjectableFieldBuilder<FieldType, BeanType> valueSupplier(
             IObjectSupplierBuilder<BeanType, ? extends IObjectSupplier<BeanType>> valueSupplier) {
+        log.atTrace().log("Entering valueSupplier() with valueSupplier: {}", valueSupplier);
         this.ownerSupplierBuilder = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
-        log.atInfo().log("Set value supplier for fieldType: {} in beanClass: {}", this.fieldType,
+        log.atDebug().log("Set ownerSupplierBuilder for fieldType: {} to supplier of type: {}", this.fieldType,
                 valueSupplier.getSuppliedType());
+        log.atInfo().log("Value supplier set for fieldType: {} in beanClass: {}", this.fieldType,
+                valueSupplier.getSuppliedType());
+        log.atTrace().log("Exiting valueSupplier()");
         return this;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("Starting auto-detection for fieldType: {} in beanClass: {}", this.fieldType,
+        log.atTrace().log("Entering doAutoDetection() for fieldType: {} in beanClass: {}", this.fieldType,
                 this.ownerSupplierBuilder.getSuppliedType());
 
+        log.atDebug().log("Finding field with address: {}", this.address);
         Field field = this.findField();
         if (field == null) {
             String message = "Field with address " + this.address + " not found in class "
@@ -53,13 +64,19 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
             throw new DslException(message);
         }
 
+        log.atDebug().log("Found field: {} in class: {}", field.getName(), field.getDeclaringClass().getSimpleName());
         boolean nullable = IInjectableElementResolver.isNullable(field);
         this.allowNull(nullable);
         log.atInfo().log("Field {} auto-detected. Nullable: {}", field.getName(), nullable);
+        log.atTrace().log("Exiting doAutoDetection()");
     }
 
     @Override
     public Field field() {
-        return this.findField();
+        log.atTrace().log("Entering field() for fieldType: {}", this.fieldType);
+        Field foundField = this.findField();
+        log.atDebug().log("Retrieved field: {}", foundField != null ? foundField.getName() : "null");
+        log.atTrace().log("Exiting field()");
+        return foundField;
     }
 }

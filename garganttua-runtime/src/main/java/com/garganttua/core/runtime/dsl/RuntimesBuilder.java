@@ -14,6 +14,7 @@ import javax.inject.Named;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
@@ -123,7 +124,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         }
 
         List<?> definitions = this.context
-                .queryBeans(example(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
+                .queryBeans(new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
 
         log.atInfo().log("Auto-detecting runtimes");
 

@@ -1,5 +1,8 @@
 package com.garganttua.keys;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public enum GGEncryptionPaddingMode {
 
 	NO_PADDING("NoPadding"),
@@ -16,7 +19,8 @@ public enum GGEncryptionPaddingMode {
     }
 
     public String getPadding() {
+        log.atTrace().log("Getting padding mode: {}", this.padding);
         return padding;
     }
-	
+
 }

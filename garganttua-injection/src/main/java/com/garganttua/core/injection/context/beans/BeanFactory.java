@@ -6,11 +6,11 @@ import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
-import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.core.reflection.ReflectionException;
@@ -72,19 +72,19 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	private Bean createBeanInstance() throws DiException {
-		log.atTrace().log("Instantiating bean of type: {}", definition.type());
+		log.atTrace().log("Instantiating bean of type: {}", definition.reference().type());
 		try {
 			if (this.definition.constructorBinder().isPresent()) {
 				Optional<Bean> constructed = executeConstructorBinder();
 				return constructed.orElseThrow(() -> new DiException(
-						"Constructor binder returned empty for bean of type " + this.definition.effectiveName()));
+						"Constructor binder returned empty for bean of type " + this.definition.reference().effectiveName()));
 			} else {
-				return ObjectReflectionHelper.instanciateNewObject(this.definition.type());
+				return ObjectReflectionHelper.instanciateNewObject(this.definition.reference().type());
 			}
 		} catch (Exception e) {
-			log.atError().log("Failed to instantiate bean of type {}: {}", this.definition.effectiveName(),
+			log.atError().log("Failed to instantiate bean of type {}: {}", this.definition.reference().effectiveName(),
 					e.getMessage());
-			throw new DiException("Failed to instantiate bean of type " + this.definition.effectiveName(), e);
+			throw new DiException("Failed to instantiate bean of type " + this.definition.reference().effectiveName(), e);
 		}
 	}
 
@@ -115,9 +115,9 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				log.atDebug().log("Post construct method executed for bean: {}", bean);
 			} catch (DslException | ReflectionException e) {
 				log.atError().log("Post construct method binder failed for bean {}: {}",
-						this.definition.effectiveName(), e.getMessage());
+						this.definition.reference().effectiveName(), e.getMessage());
 				throw new DiException(
-						"Post construct method binder failed for bean of type " + this.definition.effectiveName(), e);
+						"Post construct method binder failed for bean of type " + this.definition.reference().effectiveName(), e);
 			}
 		}
 	}
@@ -126,7 +126,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	public Optional<Bean> supply() throws SupplyException {
 		log.atTrace().log("Supplying bean for definition: {}", definition);
 		Bean bean = null;
-		Optional<BeanStrategy> strat = this.definition.strategy();
+		Optional<BeanStrategy> strat = this.definition.reference().strategy();
 		try {
 			if (strat.isPresent()) {
 				if (strat.get() == BeanStrategy.prototype) {
@@ -160,14 +160,14 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	@Override
 	public Class<Bean> getSuppliedType() {
-		log.atTrace().log("Returning supplied type: {}", definition.type());
-		return this.definition.type();
+		log.atTrace().log("Returning supplied type: {}", definition.reference().type());
+		return this.definition.reference().type();
 	}
 
 	@Override
-	public boolean matches(BeanDefinition<?> example) {
-		log.atTrace().log("Checking matches for definition: {} against example: {}", definition, example);
-		boolean match = this.definition.matches(example);
+	public boolean matches(BeanReference<?> query) {
+		log.atTrace().log("Checking matches for definition: {} against example: {}", definition, query);
+		boolean match = this.definition.reference().matches(query);
 		log.atDebug().log("Match result: {}", match);
 		return match;
 	}
@@ -186,23 +186,31 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	@Override
 	public IReflectionConfigurationEntryBuilder nativeEntry() {
-		ReflectConfigEntryBuilder eb = new ReflectConfigEntryBuilder(definition.type());
+		log.atTrace().log("Building native configuration entry for definition: {}", definition);
+		ReflectConfigEntryBuilder eb = new ReflectConfigEntryBuilder(definition.reference().type());
 
 		//Constructor
-		definition.constructorBinder().ifPresentOrElse(c -> eb.constructor(c.constructor()), () -> {
+		definition.constructorBinder().ifPresentOrElse(c -> {
+			log.atDebug().log("Adding constructor binder to native entry for type: {}", definition.reference().type());
+			eb.constructor(c.constructor());
+		}, () -> {
 			try {
-				eb.constructor(definition.type().getDeclaredConstructor());
+				log.atDebug().log("Adding default constructor to native entry for type: {}", definition.reference().type());
+				eb.constructor(definition.reference().type().getDeclaredConstructor());
 			} catch (NoSuchMethodException | SecurityException e) {
-				log.atWarn().log("Error adding default constructor for type {}: {}", definition.type(), e.getMessage());
+				log.atWarn().log("Error adding default constructor for type {}: {}", definition.reference().type(), e.getMessage());
 			}
 		});
 
 		//Fields
+		log.atDebug().log("Adding {} injectable fields to native entry", definition.injectableFields().size());
 		definition.injectableFields().forEach(f -> eb.field(f.field()));
 
 		//Methods
+		log.atDebug().log("Adding {} post construct methods to native entry", definition.postConstructMethodBinderBuilders().size());
 		definition.postConstructMethodBinderBuilders().forEach(m -> eb.method(m.method()));
 
+		log.atInfo().log("Native configuration entry built for type: {}", definition.reference().type());
 		return eb;
 	}
 }

@@ -8,7 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @NoArgsConstructor
 public class ReflectConfigEntry implements IReflectionConfigurationEntry {
@@ -31,11 +33,13 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
     private List<Method> methods;
 
     public ReflectConfigEntry(String name) {
+        log.atTrace().log("Creating ReflectConfigEntry for: {}", name);
         this.name = name;
     }
 
     @JsonIgnore
     public Class<?> getEntryClass() throws ClassNotFoundException {
+        log.atTrace().log("Getting entry class for: {}", this.name);
         return Class.forName(this.name);
     }
 

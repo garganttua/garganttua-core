@@ -7,8 +7,10 @@ import javax.inject.Named;
 
 import com.garganttua.core.runtime.annotations.RuntimeDefinition;
 import com.garganttua.core.runtime.annotations.Stages;
+import com.garganttua.core.runtime.annotations.Synchronized;
 
 @RuntimeDefinition(input = String.class, output = String.class)
+@Synchronized(bean="garganttua:redis-synchronizaion", mutex="two-steps-runtime-mutex")
 @Named("two-steps-runtime")
 public class TwoStepsRuntimeDefinition {
 

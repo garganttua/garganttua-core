@@ -21,34 +21,23 @@ public class BeanDefinitionTest {
         static class AnotherBean {
         }
 
+        private BeanReference<MyBean> makeReference(Class<MyBean> type, BeanStrategy strategy, String name,
+                        Set<Class<? extends java.lang.annotation.Annotation>> qualifiers) {
+                return new BeanReference<>(type, Optional.ofNullable(strategy), Optional.ofNullable(name), qualifiers);
+        }
+
         @Test
         void testEqualsAndHashCode() {
-                BeanDefinition<MyBean> def1 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.of("myBean"),
-                                Set.of(TestQualifier.class),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
+                BeanReference<MyBean> ref1 = makeReference(MyBean.class, BeanStrategy.singleton, "myBean",
+                                Set.of(TestQualifier.class));
+                BeanReference<MyBean> ref2 = makeReference(MyBean.class, BeanStrategy.singleton, "myBean",
+                                Set.of(TestQualifier.class));
+                BeanReference<MyBean> ref3 = makeReference(MyBean.class, BeanStrategy.prototype, "myBean",
+                                Set.of(TestQualifier.class));
 
-                BeanDefinition<MyBean> def2 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.of("myBean"),
-                                Set.of(TestQualifier.class),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
-
-                BeanDefinition<MyBean> def3 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.prototype),
-                                Optional.of("myBean"),
-                                Set.of(TestQualifier.class),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
+                BeanDefinition<MyBean> def1 = new BeanDefinition<>(ref1, Optional.empty(), Set.of(), Set.of());
+                BeanDefinition<MyBean> def2 = new BeanDefinition<>(ref2, Optional.empty(), Set.of(), Set.of());
+                BeanDefinition<MyBean> def3 = new BeanDefinition<>(ref3, Optional.empty(), Set.of(), Set.of());
 
                 assertEquals(def1, def2);
                 assertEquals(def1.hashCode(), def2.hashCode());
@@ -58,48 +47,25 @@ public class BeanDefinitionTest {
 
         @Test
         void testEffectiveName() {
-                BeanDefinition<MyBean> def1 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.empty(),
-                                Set.of(),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
+                BeanReference<MyBean> ref = makeReference(MyBean.class, BeanStrategy.singleton, null, Set.of());
+                BeanDefinition<MyBean> def = new BeanDefinition<>(ref, Optional.empty(), Set.of(), Set.of());
 
-                assertEquals("MyBean", def1.effectiveName());
+                assertEquals("MyBean", def.reference().effectiveName());
         }
 
         @Test
         void testMatches() {
-                BeanDefinition<MyBean> def1 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.of("bean1"),
-                                Set.of(TestQualifier.class),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
+                BeanReference<MyBean> ref1 = makeReference(MyBean.class, BeanStrategy.singleton, "bean1",
+                                Set.of(TestQualifier.class));
+                BeanReference<MyBean> ref2 = makeReference(MyBean.class, BeanStrategy.singleton, "bean1",
+                                Set.of(TestQualifier.class));
+                BeanReference<MyBean> ref3 = makeReference(MyBean.class, BeanStrategy.singleton, "bean2", Set.of());
 
-                BeanDefinition<MyBean> def2 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.of("bean1"),
-                                Set.of(TestQualifier.class),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
+                BeanDefinition<MyBean> def1 = new BeanDefinition<>(ref1, Optional.empty(), Set.of(), Set.of());
+                BeanDefinition<MyBean> def2 = new BeanDefinition<>(ref2, Optional.empty(), Set.of(), Set.of());
+                BeanDefinition<MyBean> def3 = new BeanDefinition<>(ref3, Optional.empty(), Set.of(), Set.of());
 
-                BeanDefinition<MyBean> def3 = new BeanDefinition<>(
-                                MyBean.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.of("bean2"),
-                                Set.of(),
-                                Optional.empty(),
-                                Set.of(),
-                                Set.of());
-
-                assertTrue(def1.matches(def2));
-                assertFalse(def1.matches(def3));
+                assertTrue(def1.reference().matches(def2.reference()));
+                assertFalse(def1.reference().matches(def3.reference()));
         }
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
@@ -85,22 +86,6 @@ public class DummyDiContext implements IDiContext {
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(Optional<String> ofNullable, BeanDefinition<Bean> definition)
-            throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
-    }
-
-    @Override
-    public <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
-    }
-
-    @Override
-    public <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
-    }
-
-    @Override
     public <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'getProperty'");
     }
@@ -118,21 +103,6 @@ public class DummyDiContext implements IDiContext {
     @Override
     public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
         throw new UnsupportedOperationException("Unimplemented method 'registerChildContextFactory'");
-    }
-
-    @Override
-    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
-    }
-
-    @Override
-    public <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
-    }
-
-    @Override
-    public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
     }
 
     @Override
@@ -157,8 +127,37 @@ public class DummyDiContext implements IDiContext {
 
     @Override
     public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'nativeConfiguration'");
+    }
+
+    @Override
+    public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanReference<Bean> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
+    }
+
+    @Override
+    public <Bean> Optional<Bean> queryBean(BeanReference<Bean> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
+    }
+
+    @Override
+    public <Bean> Optional<Bean> queryBean(String provider, BeanReference<Bean> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanReference<Bean> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(BeanReference<Bean> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
     }
 
 

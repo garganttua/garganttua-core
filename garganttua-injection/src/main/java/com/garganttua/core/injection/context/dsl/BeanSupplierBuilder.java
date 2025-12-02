@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.context.beans.BeanSupplier;
@@ -30,53 +31,53 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         log.atTrace().log("Exiting BeanSupplierBuilder constructor");
     }
 
-    public BeanSupplierBuilder(Optional<String> provider, BeanDefinition<Bean> example) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with Optional provider: {} and example: {}",
-                provider, example);
-        Objects.requireNonNull(example, "Example cannot be null");
-        log.atDebug().log("Example provided: {}", example);
+    public BeanSupplierBuilder(Optional<String> provider, BeanReference<Bean> query) {
+        log.atTrace().log("Entering BeanSupplierBuilder constructor with Optional provider: {} and query: {}",
+                provider, query);
+        Objects.requireNonNull(query, "Query cannot be null");
+        log.atDebug().log("Query provided: {}", query);
 
         if (provider != null && provider.isPresent()) {
-            initFromExample(example);
+            initFromQuery(query);
             this.provider = provider.get();
             log.atDebug().log("Provider set from Optional: {}", this.provider);
         } else {
-            initFromExample(example);
+            initFromQuery(query);
         }
         log.atTrace().log("Exiting BeanSupplierBuilder constructor");
     }
 
-    public BeanSupplierBuilder(BeanDefinition<Bean> example) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with example: {}", example);
-        Objects.requireNonNull(example, "Example cannot be null");
-        initFromExample(example);
+    public BeanSupplierBuilder(BeanReference<Bean> query) {
+        log.atTrace().log("Entering BeanSupplierBuilder constructor with query: {}", query);
+        Objects.requireNonNull(query, "query cannot be null");
+        initFromQuery(query);
         log.atTrace().log("Exiting BeanSupplierBuilder constructor");
     }
 
-    public BeanSupplierBuilder(String provider, BeanDefinition<Bean> example) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with provider: {} and example: {}", provider,
-                example);
+    public BeanSupplierBuilder(String provider, BeanReference<Bean> query) {
+        log.atTrace().log("Entering BeanSupplierBuilder constructor with provider: {} and query: {}", provider,
+                query);
         Objects.requireNonNull(provider, "Provider cannot be null");
-        Objects.requireNonNull(example, "Example cannot be null");
+        Objects.requireNonNull(query, "query cannot be null");
 
-        initFromExample(example);
+        initFromQuery(query);
         this.provider = provider;
         log.atDebug().log("Provider set to: {}", this.provider);
         log.atTrace().log("Exiting BeanSupplierBuilder constructor");
     }
 
-    private void initFromExample(BeanDefinition<Bean> example) {
-        log.atTrace().log("Initializing BeanSupplierBuilder from example: {}", example);
-        this.type = example.type();
-        this.name = example.name().orElse(null);
-        this.strategy = example.strategy().orElse(BeanStrategy.singleton);
-        if (!example.qualifiers().isEmpty()) {
-            this.qualifier = example.qualifiers().iterator().next();
-            log.atDebug().log("Qualifier set from example: {}", this.qualifier.getSimpleName());
+    private void initFromQuery(BeanReference<Bean> query) {
+        log.atTrace().log("Initializing BeanSupplierBuilder from query: {}", query);
+        this.type = query.type();
+        this.name = query.name().orElse(null);
+        this.strategy = query.strategy().orElse(BeanStrategy.singleton);
+        if (!query.qualifiers().isEmpty()) {
+            this.qualifier = query.qualifiers().iterator().next();
+            log.atDebug().log("Qualifier set from query: {}", this.qualifier.getSimpleName());
         }
-        log.atDebug().log("Initialization from example complete. Type: {}, Name: {}, Strategy: {}, Qualifier: {}",
+        log.atDebug().log("Initialization from query complete. Type: {}, Name: {}, Strategy: {}, Qualifier: {}",
                 this.type.getSimpleName(), this.name, this.strategy, this.qualifier);
-        log.atTrace().log("Exiting initFromExample method");
+        log.atTrace().log("Exiting initFromQuery method");
     }
 
     @Override
@@ -101,7 +102,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         }
 
         IBeanSupplier<Bean> supplier = new BeanSupplier<>(Optional.ofNullable(this.provider),
-                BeanDefinition.example(this.type, Optional.ofNullable(this.strategy),
+                new BeanReference<>(this.type, Optional.ofNullable(this.strategy),
                         Optional.ofNullable(this.name), qualifiers));
         log.atInfo().log("BeanSupplier built successfully for type: {}, provider: {}, name: {}",
                 this.type.getSimpleName(), this.provider, this.name);

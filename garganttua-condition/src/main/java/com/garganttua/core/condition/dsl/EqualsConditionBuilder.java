@@ -8,6 +8,9 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.supply.IObjectSupplier;
 import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class EqualsConditionBuilder<T> implements IConditionBuilder {
 
     private IObjectSupplierBuilder<T, IObjectSupplier<T>> supplier1;
@@ -15,16 +18,29 @@ public class EqualsConditionBuilder<T> implements IConditionBuilder {
 
     public EqualsConditionBuilder(IObjectSupplierBuilder<T, IObjectSupplier<T>> supplier1,
             IObjectSupplierBuilder<T, IObjectSupplier<T>> supplier2) {
+        log.atTrace().log("Entering EqualsConditionBuilder constructor");
         this.supplier1 = Objects.requireNonNull(supplier1, "Object supplier builder 1 cannot be null");
         this.supplier2 = Objects.requireNonNull(supplier2, "Object supplier builder 2 cannot be null");
-        if (!this.supplier1.getSuppliedType().equals(this.supplier2.getSuppliedType()))
+        if (!this.supplier1.getSuppliedType().equals(this.supplier2.getSuppliedType())) {
+            log.atError().log("Type mismatch: {} VS {}",
+                this.supplier1.getSuppliedType().getSimpleName(),
+                this.supplier2.getSuppliedType().getSimpleName());
             throw new DslException("Type mismatch " + this.supplier1.getSuppliedType().getSimpleName() + " VS "
                     + this.supplier2.getSuppliedType().getSimpleName());
+        }
+        log.atTrace().log("Exiting EqualsConditionBuilder constructor");
     }
 
     @Override
     public ICondition build() throws DslException {
-        return new EqualsCondition<>(supplier1.build(), supplier2.build());
+        log.atTrace().log("Entering build() for EqualsConditionBuilder");
+        log.atDebug().log("Building EQUALS condition from supplier builders");
+
+        ICondition condition = new EqualsCondition<>(supplier1.build(), supplier2.build());
+
+        log.atDebug().log("EQUALS condition built successfully");
+        log.atTrace().log("Exiting build()");
+        return condition;
     }
 
 }

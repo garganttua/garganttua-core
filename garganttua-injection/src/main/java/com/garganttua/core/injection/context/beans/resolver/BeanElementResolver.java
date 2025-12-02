@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.inject.Named;
 
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.context.beans.Beans;
@@ -67,7 +68,7 @@ public class BeanElementResolver {
 
         IObjectSupplierBuilder beanSupplierBuilder = Beans.bean(
                 Optional.ofNullable(provider),
-                BeanDefinition.example(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
+                new BeanReference<>(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
                         paramQualifiers));
 
         log.atInfo().log("Bean supplier builder created for elementType: {} with provider: {} and name: {}",

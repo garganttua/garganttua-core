@@ -46,19 +46,19 @@ import com.garganttua.core.nativve.INativeElement;
 public interface IBeanFactory<Bean> extends IBeanSupplier<Bean>, INativeElement {
 
     /**
-     * Checks if this factory's bean definition matches the provided example definition.
+     * Checks if this factory's bean reference matches the provided query reference.
      *
      * <p>
      * This method determines if the bean produced by this factory satisfies the criteria
-     * specified in the example definition, including type compatibility, name, strategy,
+     * specified in the query reference, including type compatibility, name, strategy,
      * and qualifiers. This is used for bean query and resolution operations.
      * </p>
      *
-     * @param example the bean definition to match against
+     * @param example the bean reference to match against
      * @return {@code true} if this factory matches the example, {@code false} otherwise
-     * @see BeanDefinition#matches(BeanDefinition)
+     * @see BeanReference#matches(BeanReference)
      */
-    boolean matches(BeanDefinition<?> example);
+    boolean matches(BeanReference<?> query);
 
     /**
      * Returns the complete bean definition managed by this factory.

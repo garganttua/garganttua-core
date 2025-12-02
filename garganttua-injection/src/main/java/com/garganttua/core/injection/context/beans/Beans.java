@@ -2,7 +2,7 @@ package com.garganttua.core.injection.context.beans;
 
 import java.util.Optional;
 
-import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.IBeanQueryBuilder;
 import com.garganttua.core.injection.context.dsl.BeanQueryBuilder;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
@@ -13,16 +13,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Beans {
 
-    public static <Bean> IBeanSupplierBuilder<Bean> bean(Optional<String> provider, BeanDefinition<Bean> example) {
-        log.atTrace().log("Creating BeanSupplierBuilder with provider: {} and example: {}", provider, example);
-        IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(provider, example);
+    public static <Bean> IBeanSupplierBuilder<Bean> bean(Optional<String> provider, BeanReference<Bean> query) {
+        log.atTrace().log("Creating BeanSupplierBuilder with provider: {} and query: {}", provider, query);
+        IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(provider, query);
         log.atInfo().log("BeanSupplierBuilder created: {}", builder);
         return builder;
     }
 
-    public static <Bean> IBeanSupplierBuilder<Bean> bean(BeanDefinition<Bean> example) {
-        log.atTrace().log("Creating BeanSupplierBuilder with example: {}", example);
-        IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(example);
+    public static <Bean> IBeanSupplierBuilder<Bean> bean(BeanReference<Bean> query) {
+        log.atTrace().log("Creating BeanSupplierBuilder with query: {}", query);
+        IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(query);
         log.atInfo().log("BeanSupplierBuilder created: {}", builder);
         return builder;
     }

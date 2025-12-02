@@ -45,14 +45,19 @@ public class ObjectReflectionHelper {
 	}
 
 	public static Constructor<?> getConstructorWithNoParams(Class<?> classs) {
+		log.atTrace().log("Getting no-param constructor for class: {}", classs.getName());
 		try {
-			return classs.getDeclaredConstructor();
+			Constructor<?> ctor = classs.getDeclaredConstructor();
+			log.atDebug().log("Found no-param constructor for class: {}", classs.getName());
+			return ctor;
 		} catch (NoSuchMethodException | SecurityException e) {
+			log.atDebug().log("No no-param constructor found for class: {}", classs.getName());
 			return null;
 		}
 	}
 
 	public static Constructor<?> getConstructor(Class<?> classs, Class<?>... params) {
+		log.atTrace().log("Getting constructor for class: {} with {} parameters", classs.getName(), params.length);
 		for (Constructor<?> ctor : classs.getDeclaredConstructors()) {
 			Class<?>[] pts = ctor.getParameterTypes();
 			if (pts.length != params.length)
@@ -75,9 +80,12 @@ public class ObjectReflectionHelper {
 					}
 				}
 			}
-			if (ok)
+			if (ok) {
+				log.atDebug().log("Found matching constructor for class: {}", classs.getName());
 				return ctor;
+			}
 		}
+		log.atDebug().log("No matching constructor found for class: {}", classs.getName());
 		return null;
 	}
 
@@ -98,31 +106,38 @@ public class ObjectReflectionHelper {
 	}
 
 	public static Field getField(Class<?> objectClass, String fieldName) {
+		log.atTrace().log("Getting field {} from class: {}", fieldName, objectClass.getName());
 		for (Field f : objectClass.getDeclaredFields()) {
 			if (f.getName().equals(fieldName)) {
+				log.atDebug().log("Found field {} in class: {}", fieldName, objectClass.getName());
 				return f;
 			}
 		}
 		if (objectClass.getSuperclass() != null) {
 			return ObjectReflectionHelper.getField(objectClass.getSuperclass(), fieldName);
 		}
+		log.atDebug().log("Field {} not found in class: {}", fieldName, objectClass.getName());
 		return null;
 	}
 
 	public static Method getMethod(Class<?> objectClass, String methodName) {
+		log.atTrace().log("Getting method {} from class: {}", methodName, objectClass.getName());
 		for (Method f : objectClass.getDeclaredMethods()) {
 			if (f.getName().equals(methodName)) {
+				log.atDebug().log("Found method {} in class: {}", methodName, objectClass.getName());
 				return f;
 			}
 		}
 		if (objectClass.getSuperclass() != null) {
 			return getMethod(objectClass.getSuperclass(), methodName);
 		}
+		log.atDebug().log("Method {} not found in class: {}", methodName, objectClass.getName());
 		return null;
 	}
 
 	public static <destination> destination instanciateNewObject(Class<destination> clazz, Object... params)
 			throws ReflectionException {
+		log.atTrace().log("Instantiating new object of class: {} with {} params", clazz.getName(), params != null ? params.length : 0);
 		if (params == null || params.length == 0)
 			instanciateNewObject(clazz);
 
@@ -131,47 +146,62 @@ public class ObjectReflectionHelper {
 		Constructor<?> ctor = ObjectReflectionHelper.getConstructor(clazz, paramTypes);
 		if (ctor != null) {
 			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {
-				return (destination) ctor.newInstance(params);
+				destination result = (destination) ctor.newInstance(params);
+				log.atInfo().log("Successfully instantiated new object of class: {}", clazz.getName());
+				return result;
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
+				log.atError().log("Error instantiating object of class: {}", clazz.getName(), e);
 				throw new ReflectionException(e);
 			}
 		}
 
+		log.atError().log("Class {} does not have constructor with provided params", clazz.getName());
 		throw new ReflectionException(
 				"Class " + clazz.getSimpleName() + " does not have constructor with params " + params);
 	}
 
 	public static <destination> destination instanciateNewObject(Class<destination> clazz) throws ReflectionException {
+		log.atTrace().log("Instantiating new object of class: {} with no params", clazz.getName());
 		Constructor<?> ctor = ObjectReflectionHelper.getConstructorWithNoParams(clazz);
 		if (ctor != null) {
 			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {
-				return (destination) ctor.newInstance();
+				destination result = (destination) ctor.newInstance();
+				log.atInfo().log("Successfully instantiated new object of class: {}", clazz.getName());
+				return result;
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
+				log.atError().log("Error instantiating object of class: {}", clazz.getName(), e);
 				throw new ReflectionException(e);
 			}
 		}
+		log.atError().log("Class {} does not have constructor with no params", clazz.getName());
 		throw new ReflectionException("Class " + clazz.getSimpleName() + " does not have constructor with no params");
 	}
 
 	static public void setObjectFieldValue(Object entity, Field field, Object value) throws ReflectionException {
+		log.atTrace().log("Setting field {} on object of type {}", field != null ? field.getName() : "null", entity.getClass().getName());
 		if (field == null) {
+			log.atError().log("Cannot set null field of object {}", entity.getClass().getName());
 			throw new ReflectionException(
 					"Cannot set null field of object " + entity.getClass().getName() + " with value " + value);
 		}
 
 		try (FieldAccessManager manager = new FieldAccessManager(field)) {
 			field.set(entity, value);
+			log.atDebug().log("Successfully set field {} on object of type {}", field.getName(), entity.getClass().getName());
 		} catch (IllegalArgumentException | IllegalAccessException e) {
+			log.atError().log("Cannot set field {} of object {}", field.getName(), entity.getClass().getName(), e);
 			throw new ReflectionException("Cannot set field " + field.getName() + " of object "
 					+ entity.getClass().getName() + " with value " + value, e);
 		}
 	}
 
 	public static Object getObjectFieldValue(Object entity, String fieldName) throws ReflectionException {
+		log.atTrace().log("Getting field {} from object of type {}", fieldName, entity.getClass().getName());
 		Field field = ObjectReflectionHelper.getField(entity.getClass(), fieldName);
 		if (field == null) {
+			log.atError().log("Cannot get field {} of object {}", fieldName, entity.getClass().getName());
 			throw new ReflectionException(
 					"Cannot get field " + fieldName + " of object " + entity.getClass().getName());
 		}
@@ -180,9 +210,13 @@ public class ObjectReflectionHelper {
 	}
 
 	public static Object getObjectFieldValue(Object entity, Field field) throws ReflectionException {
+		log.atTrace().log("Getting field {} from object of type {}", field.getName(), entity.getClass().getName());
 		try (FieldAccessManager manager = new FieldAccessManager(field)) {
-			return field.get(entity);
+			Object value = field.get(entity);
+			log.atDebug().log("Successfully got field {} value from object of type {}", field.getName(), entity.getClass().getName());
+			return value;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
+			log.atError().log("Cannot get field {} of object {}", field.getName(), entity.getClass().getName(), e);
 			throw new ReflectionException(
 					"Cannot get field " + field.getName() + " of object " + entity.getClass().getName(), e);
 		}
@@ -190,11 +224,15 @@ public class ObjectReflectionHelper {
 
 	public static Object invokeMethod(Object object, String methodName, Method method, Object... args)
 			throws ReflectionException {
+		log.atTrace().log("Invoking method {} on object of type {} with {} args", methodName, object.getClass().getName(), args.length);
 		ObjectReflectionHelper.checkMethodAndParams(method, args);
 
 		try (MethodAccessManager manager = new MethodAccessManager(method)) {
-			return method.invoke(object, args);
+			Object result = method.invoke(object, args);
+			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName, object.getClass().getName());
+			return result;
 		} catch (IllegalAccessException | InvocationTargetException e) {
+			log.atError().log("Cannot invoke method {} of object {}", methodName, object.getClass().getName(), e);
 			throw new ReflectionException(
 					"Cannot invoke method " + methodName + " of object " + object.getClass().getName(), e.getCause());
 		}

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -68,16 +69,6 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public <T> Optional<T> queryBean(BeanDefinition<T> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
-    }
-
-    @Override
-    public <T> List<T> queryBeans(BeanDefinition<T> definition) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
-    }
-
-    @Override
     public IBeanProvider copy() throws CopyException {
         throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
@@ -90,6 +81,16 @@ public class DummyBeanProvider implements IBeanProvider {
     @Override
     public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
         throw new UnsupportedOperationException("Unimplemented method 'nativeConfiguration'");
+    }
+
+    @Override
+    public <T> Optional<T> queryBean(BeanReference<T> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
+    }
+
+    @Override
+    public <T> List<T> queryBeans(BeanReference<T> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
     }
 
 

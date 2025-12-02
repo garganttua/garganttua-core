@@ -5,9 +5,13 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class Constructors {
 
     public static String prettyColored(Constructor<?> c) {
+        log.atTrace().log("Creating pretty colored representation for constructor: {}", c);
         String className = "\u001B[36m" + c.getDeclaringClass().getSimpleName() + "\u001B[0m";
         String params = Arrays.stream(c.getParameters())
                 .map(p -> "\u001B[33m" + p.getType().getSimpleName() + "\u001B[0m " +

@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IDiChildContextFactory;
@@ -26,7 +25,6 @@ import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.supply.IContextualObjectSupplier;
 import com.garganttua.core.supply.IObjectSupplier;
@@ -278,44 +276,44 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanDefinition<Bean> definition)
+    public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanReference<Bean> query)
             throws DiException {
-        log.atTrace().log("[RuntimeContext.queryBean] Querying bean with provider={} definition={}", provider,
-                definition);
-        return this.delegateContext.queryBean(provider, definition);
+        log.atTrace().log("[RuntimeContext.queryBean] Querying bean with provider={} query={}", provider,
+                query);
+        return this.delegateContext.queryBean(provider, query);
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("[RuntimeContext.queryBean] Querying bean with definition={}", definition);
-        return this.delegateContext.queryBean(definition);
+    public <Bean> Optional<Bean> queryBean(BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("[RuntimeContext.queryBean] Querying bean with query={}", query);
+        return this.delegateContext.queryBean(query);
     }
 
     @Override
-    public <Bean> Optional<Bean> queryBean(String provider, BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("[RuntimeContext.queryBean] Querying bean with provider={} definition={}", provider,
-                definition);
-        return this.delegateContext.queryBean(provider, definition);
+    public <Bean> Optional<Bean> queryBean(String provider, BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("[RuntimeContext.queryBean] Querying bean with provider={} query={}", provider,
+                query);
+        return this.delegateContext.queryBean(provider, query);
     }
 
     @Override
-    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("[RuntimeContext.queryBeans] Querying beans with provider={} definition={}", provider,
-                definition);
-        return this.delegateContext.queryBeans(provider, definition);
+    public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("[RuntimeContext.queryBeans] Querying beans with provider={} query={}", provider,
+                query);
+        return this.delegateContext.queryBeans(provider, query);
     }
 
     @Override
-    public <Bean> List<Bean> queryBeans(BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("[RuntimeContext.queryBeans] Querying beans with definition={}", definition);
-        return this.delegateContext.queryBeans(definition);
+    public <Bean> List<Bean> queryBeans(BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("[RuntimeContext.queryBeans] Querying beans with query={}", query);
+        return this.delegateContext.queryBeans(query);
     }
 
     @Override
-    public <Bean> List<Bean> queryBeans(String provider, BeanDefinition<Bean> definition) throws DiException {
-        log.atTrace().log("[RuntimeContext.queryBeans] Querying beans with provider={} definition={}", provider,
-                definition);
-        return this.delegateContext.queryBeans(provider, definition);
+    public <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException {
+        log.atTrace().log("[RuntimeContext.queryBeans] Querying beans with provider={} query={}", provider,
+                query);
+        return this.delegateContext.queryBeans(provider, query);
     }
 
     @Override

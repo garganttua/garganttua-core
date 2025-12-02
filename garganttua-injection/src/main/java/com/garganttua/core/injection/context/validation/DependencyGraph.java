@@ -6,20 +6,32 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class DependencyGraph {
 
     private final Map<Class<?>, Set<Class<?>>> adjacencyList = new LinkedHashMap<>();
 
     public void addDependency(Class<?> bean, Class<?> dependency) {
+        log.atTrace().log("Entering addDependency(bean={}, dependency={})", bean, dependency);
         adjacencyList.computeIfAbsent(bean, k -> new LinkedHashSet<>()).add(dependency);
+        log.atDebug().log("Added dependency {} to bean {}", dependency.getSimpleName(), bean.getSimpleName());
+        log.atTrace().log("Exiting addDependency");
     }
 
     public Set<Class<?>> getDependencies(Class<?> bean) {
-        return adjacencyList.getOrDefault(bean, Set.of());
+        log.atTrace().log("Entering getDependencies(bean={})", bean);
+        Set<Class<?>> dependencies = adjacencyList.getOrDefault(bean, Set.of());
+        log.atTrace().log("Exiting getDependencies with {} dependencies", dependencies.size());
+        return dependencies;
     }
 
     public Set<Class<?>> getAllBeans() {
-        return adjacencyList.keySet();
+        log.atTrace().log("Entering getAllBeans()");
+        Set<Class<?>> beans = adjacencyList.keySet();
+        log.atTrace().log("Exiting getAllBeans with {} beans", beans.size());
+        return beans;
     }
 
     @Override

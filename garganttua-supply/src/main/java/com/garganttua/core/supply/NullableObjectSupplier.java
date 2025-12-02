@@ -11,20 +11,30 @@ public class NullableObjectSupplier<SuppliedType> implements IObjectSupplier<Sup
     private final boolean allowNull;
 
     public NullableObjectSupplier(IObjectSupplier<SuppliedType> delegate, boolean allowNull) {
+        log.atTrace().log("Entering NullableObjectSupplier constructor with allowNull: {}", allowNull);
         this.delegate = Objects.requireNonNull(delegate);
         this.allowNull = allowNull;
+        log.atTrace().log("Exiting NullableObjectSupplier constructor");
     }
 
     @Override
     public Optional<SuppliedType> supply() throws SupplyException {
+        log.atTrace().log("Entering supply method");
+        log.atDebug().log("Supplying nullable object for type {}, allowNull: {}", this.delegate.getSuppliedType().getSimpleName(), this.allowNull);
+
         Optional<SuppliedType> o = delegate.supply();
+
         if (!allowNull && (o == null || !o.isPresent())) {
             String msg = String.format(
                     "Supplier for type "+this.delegate.getSuppliedType().getSimpleName()+" supplied null value but is not nullable");
-            log.atError().log("[MethodBinderBuilder] " + msg);
+            log.atError().log("Supply failed: {}", msg);
             throw new SupplyException(msg);
         }
-        return o == null ? Optional.empty() : o;
+
+        Optional<SuppliedType> result = o == null ? Optional.empty() : o;
+        log.atInfo().log("Supply completed for nullable object of type {}, result present: {}", this.delegate.getSuppliedType().getSimpleName(), result.isPresent());
+        log.atTrace().log("Exiting supply method");
+        return result;
     }
 
     @Override
