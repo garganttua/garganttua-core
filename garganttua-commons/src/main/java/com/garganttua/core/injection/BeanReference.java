@@ -8,7 +8,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lombok.extern.slf4j.Slf4j;
+
 /*Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
+@Slf4j
 public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<Class<? extends Annotation>> qualifiers) {
 
@@ -23,9 +26,15 @@ public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strat
      * @return the effective bean name
      */
     public String effectiveName() {
-        if (name.isPresent())
-            return name.get();
-        return type.getSimpleName();
+        log.atTrace().log("Entering effectiveName");
+        String result;
+        if (name.isPresent()) {
+            result = name.get();
+        } else {
+            result = type.getSimpleName();
+        }
+        log.atTrace().log("Exiting effectiveName with result={}", result);
+        return result;
     }
 
     public String toReference() {

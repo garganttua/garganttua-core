@@ -2,6 +2,8 @@ package com.garganttua.core.supply;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when errors occur during object supply operations.
  *
@@ -38,6 +40,7 @@ import com.garganttua.core.CoreException;
  * @see IObjectSupplier
  * @see IContextualObjectSupplier
  */
+@Slf4j
 public class SupplyException extends CoreException {
 
     /**
@@ -47,6 +50,7 @@ public class SupplyException extends CoreException {
      */
     public SupplyException(Exception e) {
         super(CoreException.SUPPLY_ERROR, e);
+        log.atTrace().log("Exiting SupplyException constructor");
     }
 
     /**
@@ -56,6 +60,7 @@ public class SupplyException extends CoreException {
      */
     public SupplyException(String message) {
         super(CoreException.SUPPLY_ERROR, message);
+        log.atTrace().log("Exiting SupplyException constructor");
     }
 
 }

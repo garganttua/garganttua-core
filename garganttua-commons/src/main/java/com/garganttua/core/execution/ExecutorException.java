@@ -2,6 +2,8 @@ package com.garganttua.core.execution;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when an error occurs during executor execution.
  * <p>
@@ -27,6 +29,7 @@ import com.garganttua.core.CoreException;
  *
  * @since 2.0.0-ALPHA01
  */
+@Slf4j
 public class ExecutorException extends CoreException {
 
 	private static final long serialVersionUID = 4089999852587836549L;
@@ -38,6 +41,7 @@ public class ExecutorException extends CoreException {
 	 */
 	public ExecutorException(Exception t) {
 		super(CoreException.EXECUTOR_ERROR, t);
+		log.atTrace().log("Exiting ExecutorException constructor");
 	}
 
 	/**
@@ -47,6 +51,7 @@ public class ExecutorException extends CoreException {
 	 */
 	public ExecutorException(String string) {
 		super(CoreException.EXECUTOR_ERROR, string);
+		log.atTrace().log("Exiting ExecutorException constructor");
 	}
 
 	/**
@@ -57,5 +62,6 @@ public class ExecutorException extends CoreException {
 	 */
 	public ExecutorException(String string, Throwable t) {
 		super(CoreException.EXECUTOR_ERROR, string, t);
+		log.atTrace().log("Exiting ExecutorException constructor");
 	}
 }

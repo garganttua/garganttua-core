@@ -182,6 +182,9 @@ public class CoreException extends RuntimeException {
      */
     public static final int NATIVE_ERROR = 10;
 
+
+    public static final int MUTEX_ERROR = 11;
+
     private static final long serialVersionUID = 7855765591949705798L;
 
     /**

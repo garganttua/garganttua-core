@@ -2,6 +2,8 @@ package com.garganttua.core.lifecycle;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when an error occurs during lifecycle operations.
  * <p>
@@ -54,6 +56,7 @@ import com.garganttua.core.CoreException;
  *
  * @since 2.0.0-ALPHA01
  */
+@Slf4j
 public class LifecycleException extends CoreException {
 
     /**
@@ -63,6 +66,7 @@ public class LifecycleException extends CoreException {
      */
     public LifecycleException(String string) {
         super(CoreException.LIFECYCLE_ERROR, string);
+        log.atTrace().log("Exiting LifecycleException constructor");
     }
 
     /**
@@ -72,6 +76,7 @@ public class LifecycleException extends CoreException {
      */
     public LifecycleException(Exception e) {
         super(CoreException.LIFECYCLE_ERROR, e);
+        log.atTrace().log("Exiting LifecycleException constructor");
     }
 
 }

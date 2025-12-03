@@ -2,6 +2,8 @@ package com.garganttua.core.utils;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when an error occurs during a copy operation.
  *
@@ -48,6 +50,7 @@ import com.garganttua.core.CoreException;
  * @see Copyable
  * @see CoreException
  */
+@Slf4j
 public class CopyException extends CoreException {
 
     /**
@@ -57,6 +60,7 @@ public class CopyException extends CoreException {
      */
     public CopyException(String string) {
         super(CoreException.COPY_ERROR, string);
+        log.atTrace().log("Exiting CopyException constructor");
     }
 
     /**
@@ -66,6 +70,7 @@ public class CopyException extends CoreException {
      */
     public CopyException(Exception e) {
         super(CoreException.COPY_ERROR, e);
+        log.atTrace().log("Exiting CopyException constructor");
     }
 
 }

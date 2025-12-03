@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;

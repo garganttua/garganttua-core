@@ -2,6 +2,8 @@ package com.garganttua.core.mapper;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when an error occurs during object mapping operations.
  * <p>
@@ -36,6 +38,7 @@ import com.garganttua.core.CoreException;
  *
  * @since 2.0.0-ALPHA01
  */
+@Slf4j
 public class MapperException extends CoreException {
     private static final long serialVersionUID = 3629256996026750672L;
 
@@ -46,6 +49,7 @@ public class MapperException extends CoreException {
      */
     public MapperException(String string) {
         super(CoreException.MAPPER_ERROR, string);
+        log.atTrace().log("Exiting MapperException constructor");
     }
 
     /**
@@ -56,6 +60,7 @@ public class MapperException extends CoreException {
      */
     public MapperException(String string, Exception e) {
         super(CoreException.MAPPER_ERROR, string, e);
+        log.atTrace().log("Exiting MapperException constructor");
     }
 
     /**
@@ -65,5 +70,6 @@ public class MapperException extends CoreException {
      */
     public MapperException(Exception e) {
         super(e);
+        log.atTrace().log("Exiting MapperException constructor");
     }
 }

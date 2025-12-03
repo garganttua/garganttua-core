@@ -2,6 +2,8 @@ package com.garganttua.core.condition;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when a condition evaluation fails or encounters an error.
  *
@@ -52,6 +54,7 @@ import com.garganttua.core.CoreException;
  * @see ICondition
  * @see CoreException
  */
+@Slf4j
 public class ConditionException extends CoreException {
 
     /**
@@ -61,6 +64,7 @@ public class ConditionException extends CoreException {
      */
     public ConditionException(String message) {
         super(CoreException.CONDITION_ERROR, message);
+        log.atTrace().log("Exiting ConditionException constructor");
     }
 
 }

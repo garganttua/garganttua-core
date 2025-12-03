@@ -19,6 +19,7 @@ import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
 import com.garganttua.core.reflection.utils.WildcardTypeImpl;
+import com.garganttua.core.runtime.IMutex;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.Runtime;
@@ -248,5 +249,12 @@ public class RuntimeBuilder<InputType, OutputType>
                 this.objectForAutoDetection = Objects.requireNonNull(runtimeDefinitionObject,
                                 "runtimeDefinitionObject cannot be null");
                 return this;
+        }
+
+        @Override
+        public IRuntimeBuilder<InputType, OutputType> mutex(
+                        IObjectSupplierBuilder<? extends IMutex, ? extends IObjectSupplier<? extends IMutex>> mutex) {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException("Unimplemented method 'mutex'");
         }
 }

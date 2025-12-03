@@ -9,6 +9,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.runtime.IMutex;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStep;
 import com.garganttua.core.runtime.annotations.FallBack;
@@ -176,5 +177,12 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
 
     private String logLineHeader() {
         return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "] ";
+    }
+
+    @Override
+    public IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> mutex(
+            IObjectSupplierBuilder<? extends IMutex, ? extends IObjectSupplier<? extends IMutex>> mutex) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'mutex'");
     }
 }

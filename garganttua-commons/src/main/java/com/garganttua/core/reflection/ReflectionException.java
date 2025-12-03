@@ -2,6 +2,8 @@ package com.garganttua.core.reflection;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when errors occur during reflection operations.
  *
@@ -39,6 +41,7 @@ import com.garganttua.core.CoreException;
  * @see CoreException
  * @see IObjectQuery
  */
+@Slf4j
 public class ReflectionException extends CoreException {
 
 	/**
@@ -48,6 +51,7 @@ public class ReflectionException extends CoreException {
 	 */
 	public ReflectionException(String string) {
 		super(CoreException.REFLECTION_ERROR, string);
+		log.atTrace().log("Exiting ReflectionException constructor");
 	}
 
 	/**
@@ -58,6 +62,7 @@ public class ReflectionException extends CoreException {
 	 */
 	public ReflectionException(String string, Throwable e) {
 		super(CoreException.REFLECTION_ERROR, string, e);
+		log.atTrace().log("Exiting ReflectionException constructor");
 	}
 
 	/**
@@ -67,6 +72,7 @@ public class ReflectionException extends CoreException {
 	 */
 	public ReflectionException(Throwable e) {
 		super(e);
+		log.atTrace().log("Exiting ReflectionException constructor");
 	}
 
 	private static final long serialVersionUID = 2732095843634378815L;

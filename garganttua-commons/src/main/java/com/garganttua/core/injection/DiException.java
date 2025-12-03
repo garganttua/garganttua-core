@@ -2,6 +2,8 @@ package com.garganttua.core.injection;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when dependency injection operations fail.
  *
@@ -49,6 +51,7 @@ import com.garganttua.core.CoreException;
  * @see IDiContext
  * @see IBeanFactory
  */
+@Slf4j
 public class DiException extends CoreException {
 
     private static final long serialVersionUID = 1L;
@@ -61,6 +64,7 @@ public class DiException extends CoreException {
      */
     public DiException(String message, Exception cause) {
         super(CoreException.INJECTION_ERROR, message, cause);
+        log.atTrace().log("Exiting DiException constructor");
     }
 
     /**
@@ -74,6 +78,7 @@ public class DiException extends CoreException {
      */
      public DiException(Exception cause) {
         super(CoreException.INJECTION_ERROR, cause);
+        log.atTrace().log("Exiting DiException constructor");
     }
 
     /**
@@ -83,6 +88,7 @@ public class DiException extends CoreException {
      */
     public DiException(String msg) {
         super(CoreException.INJECTION_ERROR, msg);
+        log.atTrace().log("Exiting DiException constructor");
     }
 
 }

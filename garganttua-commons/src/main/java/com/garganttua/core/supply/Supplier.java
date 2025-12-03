@@ -1,5 +1,7 @@
 package com.garganttua.core.supply;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Utility class providing helper methods for working with object suppliers.
  *
@@ -38,6 +40,7 @@ package com.garganttua.core.supply;
  * @see IObjectSupplier
  * @see IContextualObjectSupplier
  */
+@Slf4j
 public class Supplier {
 
     /**
@@ -73,14 +76,17 @@ public class Supplier {
      */
     @SuppressWarnings("unchecked")
     public static <Supplied> Supplied contextualSupply(IObjectSupplier<Supplied> supplier, Object... contexts) throws SupplyException{
+        log.atTrace().log("Entering contextualSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
 
         if (supplier == null) {
+            log.atError().log("Supplier cannot be null");
             throw new SupplyException("Supplier cannot be null");
         }
 
         Supplied obj = null;
 
         if (supplier instanceof IContextualObjectSupplier<?, ?> contextualRaw) {
+            log.atDebug().log("Supplier is contextual, searching for matching context");
             IContextualObjectSupplier<Supplied, Object> contextual = (IContextualObjectSupplier<Supplied, Object>) contextualRaw;
 
             Object matchingContext = null;
@@ -88,21 +94,27 @@ public class Supplier {
                 for (Object ctx : contexts) {
                     if (ctx != null && contextual.getOwnerContextType().isAssignableFrom(ctx.getClass())) {
                         matchingContext = ctx;
+                        log.atDebug().log("Found matching context of type {}", ctx.getClass().getName());
                         break;
                     }
                 }
             }
 
             if (matchingContext == null) {
+                log.atError().log("No compatible context found for supplier expecting {}", contextual.getOwnerContextType().getName());
                 throw new SupplyException(
                         "No compatible context found for supplier expecting " + contextual.getOwnerContextType().getName());
             }
 
             obj = contextual.supply(matchingContext, contexts).orElse(null);
+            log.atInfo().log("Contextual supply completed, result is {}", obj != null ? "present" : "null");
         } else {
+            log.atDebug().log("Supplier is non-contextual, calling supply() directly");
             obj = supplier.supply().orElse(null);
+            log.atInfo().log("Non-contextual supply completed, result is {}", obj != null ? "present" : "null");
         }
 
+        log.atTrace().log("Exiting contextualSupply");
         return obj;
     }
 

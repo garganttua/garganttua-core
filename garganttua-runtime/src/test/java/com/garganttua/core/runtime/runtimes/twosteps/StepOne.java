@@ -9,6 +9,7 @@ import com.garganttua.core.runtime.annotations.Input;
 import com.garganttua.core.runtime.annotations.OnException;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Step;
+import com.garganttua.core.runtime.annotations.Synchronized;
 import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.runtime.runtimes.onestep.CustomException;
 
@@ -16,6 +17,7 @@ import jakarta.annotation.Nullable;
 
 @Step
 @Named("step-one")
+@Synchronized(bean="garganttua::redis-synchronizaion", mutex="two-steps-runtime-mutex")
 public class StepOne {
 
     @Operation(abortOnUncatchedException = false)

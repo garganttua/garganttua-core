@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import com.garganttua.core.CoreException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Exception thrown when a critical error occurs during runtime workflow execution.
  *
@@ -44,6 +46,7 @@ import com.garganttua.core.CoreException;
  * @see IRuntimeContext
  * @see CoreException
  */
+@Slf4j
 public class RuntimeException extends CoreException {
 
     /**
@@ -58,6 +61,7 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(String message) {
         super(CoreException.RUNTIME_ERROR, message);
+        log.atTrace().log("Exiting RuntimeException constructor");
     }
 
     /**
@@ -67,6 +71,7 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(Exception e) {
         super(CoreException.RUNTIME_ERROR, e);
+        log.atTrace().log("Exiting RuntimeException constructor");
     }
 
     /**
@@ -77,6 +82,7 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(String string, Throwable e) {
         super(CoreException.RUNTIME_ERROR, string, e);
+        log.atTrace().log("Exiting RuntimeException constructor");
     }
 
     /**
@@ -94,7 +100,9 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(Exception e, Optional<IRuntimeContext<?,?>> context) {
         this(e);
+        log.atTrace().log("Setting context");
         this.context = Objects.requireNonNull(context, "Context cannot be null");
+        log.atTrace().log("Exiting RuntimeException constructor");
     }
 
 }

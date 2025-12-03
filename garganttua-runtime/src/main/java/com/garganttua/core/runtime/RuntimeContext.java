@@ -81,6 +81,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         return result;
     }
 
+    @Supplier(name="variable", contextual=true, contextType=IRuntimeContext.class, description="Supplies a runtime variable attached to the context by name" )
     @SuppressWarnings("unchecked")
     public static <VariableType, InputType, OutputType> IObjectSupplierBuilder<VariableType, IContextualObjectSupplier<VariableType, IRuntimeContext<InputType, OutputType>>> variable(
             String variableName, Class<VariableType> variableType) {
@@ -91,6 +92,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, variableType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
+    @Supplier(name="input", contextual=true, contextType=IRuntimeContext.class, description="Supplies the runtime input attached to the context" )
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> IObjectSupplierBuilder<InputType, IContextualObjectSupplier<InputType, IRuntimeContext<InputType, OutputType>>> input(
             Class<InputType> inputType) {
@@ -100,6 +102,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, inputType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
+    @Supplier(name="exception", contextual=true, contextType=IRuntimeContext.class, description="Supplies the eventually throwned exception during runtime attached to the context" )
     @SuppressWarnings("unchecked")
     public static <ExceptionType extends Throwable, InputType, OutputType> IObjectSupplierBuilder<ExceptionType, IContextualObjectSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
             Class<ExceptionType> exceptionType) {
@@ -109,6 +112,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, exceptionType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
+    @Supplier(name="exception", contextual=true, contextType=IRuntimeContext.class, description="Supplies the returned code of the runtime attached to the context" )
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> IObjectSupplierBuilder<Integer, IContextualObjectSupplier<Integer, IRuntimeContext<InputType, OutputType>>> code() {
         log.atTrace().log("[RuntimeContext.code] Creating code supplier");
@@ -117,6 +121,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, Integer.class, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
+    @Supplier(name="exceptionMessage", contextual=true, contextType=IRuntimeContext.class, description="Supplies the eventually throwned exception message during runtime attached to the context" )
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> IObjectSupplierBuilder<String, IContextualObjectSupplier<String, IRuntimeContext<InputType, OutputType>>> exceptionMessage() {
         log.atTrace().log("[RuntimeContext.exceptionMessage] Creating exceptionMessage supplier");
