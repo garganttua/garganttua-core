@@ -118,6 +118,56 @@ public class Supplier {
         return obj;
     }
 
+    /**
+     * Supplies an object from the given supplier, recursively resolving nested suppliers.
+     *
+     * <p>
+     * This method extends {@link #contextualSupply(ISupplier, Object...)} to handle cases
+     * where a supplier returns another supplier. It recursively resolves the chain of
+     * suppliers until a non-supplier value is obtained or {@code null} is returned.
+     * </p>
+     *
+     * <p><b>Behavior:</b></p>
+     * <ul>
+     *   <li>If the result is an {@link ISupplier}, recursively calls this method</li>
+     *   <li>If the result is not a supplier, returns it directly</li>
+     *   <li>Returns {@code null} if any supplier in the chain returns {@code null}</li>
+     * </ul>
+     *
+     * <p><b>Example:</b></p>
+     * <pre>{@code
+     * // Supplier that returns another supplier
+     * ISupplier<ISupplier<String>> nestedSupplier = ...;
+     *
+     * // Automatically resolves the nested structure
+     * String result = Supplier.contextualRecursiveSupply(nestedSupplier, contexts);
+     * }</pre>
+     *
+     * @param <Supplied> the type of object to be supplied
+     * @param supplier the supplier to invoke (must not be {@code null})
+     * @param contexts zero or more context objects that may be required by suppliers
+     * @return the supplied object after recursive resolution, or {@code null} if any supplier returns null
+     * @throws SupplyException if the supplier is null, no compatible context is found for a
+     *                        contextual supplier, or an error occurs during supply
+     */
+    public static Object contextualRecursiveSupply(ISupplier<?> supplier, Object... contexts) throws SupplyException {
+        log.atTrace().log("Entering contextualRecursiveSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
+
+        Object result = contextualSupply(supplier, contexts);
+
+        if (result == null) {
+            log.atDebug().log("Supplier returned null, ending recursion");
+            return null;
+        }
+
+        if (result instanceof ISupplier<?>) {
+            log.atDebug().log("Result is a supplier, recursively resolving");
+            return contextualRecursiveSupply((ISupplier<?>) result, contexts);
+        }
+
+        log.atTrace().log("Exiting contextualRecursiveSupply with non-supplier result");
+        return result;
+    }
 
 
 }

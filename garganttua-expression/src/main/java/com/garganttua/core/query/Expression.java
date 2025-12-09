@@ -12,9 +12,9 @@ import com.garganttua.core.supply.ISupplier;
 
 public class Expression<R> implements IExpression<R, ISupplier<R>> {
 
-    private IExpressionNode<R, ISupplier<R>> leaf;
+    private IExpressionNode<R, ? extends ISupplier<R>> leaf;
 
-    public Expression(IExpressionNode<R, ISupplier<R>> leaf) {
+    public Expression(IExpressionNode<R, ? extends ISupplier<R>> leaf) {
         this.leaf = Objects.requireNonNull(leaf, "Leaf expression cannot be null");
     }
 

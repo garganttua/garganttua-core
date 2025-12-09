@@ -2,15 +2,24 @@ package com.garganttua.core.query;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.expression.IExpressionContext;
+import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.query.NodeTest.StringConcatenator;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
+import com.garganttua.core.reflection.binders.MethodBinder;
 import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
+import com.garganttua.core.supply.SupplyException;
 
 public class NodeTest {
 
@@ -98,176 +107,278 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node3);
                 assertDoesNotThrow(exp::evaluate);
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualSupply(exp.evaluate(), new ExpressionContext()));
+                                Supplier.contextualRecursiveSupply(exp.evaluate(), new ExpressionContext()));
 
         }
 
-        /*
-         * @Test
-         * public void testContextualEvaluationWithinContextualExpressionNode() throws
-         * Exception {
-         * 
-         * IExpressionNode<String> node1 = new ContextualExpressionNode<String>("", (c,
-         * params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * new FixedSupplier<String>("Hello from node 1"),
-         * new FixedSupplier<String>("")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return mb.execute(c);
-         * }, String.class);
-         * 
-         * IExpressionNode<String> node2 = new ContextualExpressionNode<String>("", (c,
-         * params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * params[0],
-         * new FixedSupplier<String>(" node 2")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return mb.execute(c);
-         * }, List.of(node1), String.class);
-         * 
-         * IExpressionNode<String> node3 = new ContextualExpressionNode<String>("", (c,
-         * params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * params[0],
-         * new FixedSupplier<String>(" node 3")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return mb.execute(c);
-         * }, List.of(node2), String.class);
-         * 
-         * IExpression<String> exp = new Expression<>(node3);
-         * 
-         * assertEquals("Hello from node 1 node 2 node 3", exp.evaluate().get());
-         * }
-         */
+        @Test
+        public void testContextualEvaluationWithinContextualExpressionNode() throws Exception {
 
-        /*
-         * @Test
-         * public void testMixedEvaluation() throws Exception {
-         * 
-         * IExpressionNode<String, ISupplier<String>> node1 = new
-         * ContextualExpressionNode<>("", (c, params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * new FixedSupplier<String>("Hello from node 1"),
-         * new FixedSupplier<String>("")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return Optional.of(mb);
-         * }, String.class);
-         * 
-         * IExpressionNode<String, ISupplier<String>> node2 = new
-         * ExpressionNode<>("", (params) -> {
-         * MethodBinder<String> mb = new MethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * params[0],
-         * new FixedSupplier<String>(" node 2")),
-         * String.class);
-         * 
-         * return Optional.of(mb);
-         * }, List.of(node1), String.class);
-         * 
-         * IExpressionNode<String, ISupplier<String>> node3 = new
-         * ContextualExpressionNode<>("", (c, params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * params[0],
-         * new FixedSupplier<String>(" node 3")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return Optional.of(mb);
-         * }, List.of(node2), String.class);
-         * 
-         * IExpression<String> exp = new Expression<>(node3);
-         * 
-         * assertEquals("Hello from node 1 node 2 node 3", exp.evaluate().get());
-         * }
-         * 
-         * @Test
-         * public void testReturningDirectlyMethodBinders() throws Exception {
-         * 
-         * IExpressionNode<String> node1 = new ContextualExpressionNode<String>("", (c,
-         * params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * new FixedSupplier<String>("Hello from node 1"),
-         * new FixedSupplier<String>("")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return mb;
-         * }, String.class);
-         * 
-         * IExpressionNode<String> node2 = new ExpressionNode<String>("", (params) -> {
-         * MethodBinder<String> mb = new MethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * params[0],
-         * new FixedSupplier<String>(" node 2")),
-         * String.class);
-         * 
-         * return mb.execute();
-         * }, List.of(node1), String.class);
-         * 
-         * IExpressionNode<String> node3 = new ContextualExpressionNode<String>("", (c,
-         * params) -> {
-         * ContextualMethodBinder<String, ExpressionContext> mb = new
-         * ContextualMethodBinder<>(
-         * new FixedSupplier<>(
-         * new StringConcatenator()),
-         * new ObjectAddress("concatenate"),
-         * List.of(
-         * params[0],
-         * new FixedSupplier<String>(" node 3")),
-         * String.class,
-         * ExpressionContext.class);
-         * 
-         * return mb.execute(c);
-         * }, List.of(node2), String.class);
-         * 
-         * IExpression<String> exp = new Expression<>(node3);
-         * 
-         * assertEquals("Hello from node 1 node 2 node 3", exp.evaluate().get());
-         * }
-         */
+                IExpressionNode<String, ? extends ISupplier<String>> node1 = new ContextualExpressionNode<String>("",
+                                (c,
+                                                params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new FixedSupplier<>(
+                                                                        new StringConcatenator()),
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        new FixedSupplier<String>("Hello from node 1"),
+                                                                        new FixedSupplier<String>("")),
+                                                        String.class);
+
+                                        return mb;
+                                }, String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node2 = new ContextualExpressionNode<String>("",
+                                (c,
+                                                params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new FixedSupplier<>(
+                                                                        new StringConcatenator()),
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        params[0],
+                                                                        new FixedSupplier<String>(" node 2")),
+                                                        String.class);
+
+                                        return mb;
+                                }, List.of(node1), String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node3 = new ContextualExpressionNode<String>("",
+                                (c,
+                                                params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new FixedSupplier<>(
+                                                                        new StringConcatenator()),
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        params[0],
+                                                                        new FixedSupplier<String>(" node 3")),
+                                                        String.class);
+
+                                        return mb;
+                                }, List.of(node2), String.class);
+
+                Expression<String> exp = new Expression<>(node3);
+
+                assertEquals("Hello from node 1 node 2 node 3",
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext()));
+        }
+
+        @Test
+        public void testMixedEvaluation() throws Exception {
+
+                IExpressionNode<String, ? extends ISupplier<String>> node1 = new ContextualExpressionNode<>("",
+                                (c, params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new FixedSupplier<>(
+                                                                        new StringConcatenator()),
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        new FixedSupplier<String>("Hello from node 1"),
+                                                                        new FixedSupplier<String>("")),
+                                                        String.class);
+
+                                        return mb;
+                                }, String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
+                        MethodBinder<String> mb = new MethodBinder<>(
+                                        new FixedSupplier<>(
+                                                        new StringConcatenator()),
+                                        new ObjectAddress("concatenate"),
+                                        List.of(
+                                                        params[0],
+                                                        new FixedSupplier<String>(" node 2")),
+                                        String.class);
+
+                        return mb;
+                }, List.of(node1), String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node3 = new ContextualExpressionNode<>("",
+                                (c, params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new FixedSupplier<>(
+                                                                        new StringConcatenator()),
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        params[0],
+                                                                        new FixedSupplier<String>(" node 3")),
+                                                        String.class);
+
+                                        return mb;
+                                }, List.of(node2), String.class);
+
+                Expression<String> exp = new Expression<>(node3);
+
+                assertEquals("Hello from node 1 node 2 node 3",
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext()));
+        }
+
+        @Test
+        public void testContextualSupplierForMethodParameter() throws Exception {
+
+                IExpressionNode<String, ? extends ISupplier<String>> node1 = new ContextualExpressionNode<>("",
+                                (c, params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new FixedSupplier<>(
+                                                                        new StringConcatenator()),
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        new FixedSupplier<String>("Hello from node 1"),
+                                                                        new FixedSupplier<String>("")),
+                                                        String.class);
+
+                                        return mb;
+                                }, String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
+                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                        new FixedSupplier<>(
+                                                        new StringConcatenator()),
+                                        new ObjectAddress("concatenate"),
+                                        List.of(
+                                                        params[0],
+                                                        new IContextualSupplier<String, String>() {
+
+                                                                @Override
+                                                                public Type getSuppliedType() {
+                                                                        return String.class;
+                                                                }
+
+                                                                @Override
+                                                                public Class<String> getOwnerContextType() {
+                                                                        return String.class;
+                                                                }
+
+                                                                @Override
+                                                                public Optional<String> supply(String ownerContext,
+                                                                                Object... otherContexts)
+                                                                                throws SupplyException {
+                                                                        return Optional.of(ownerContext);
+                                                                }
+                                                        }),
+                                        String.class);
+
+                        return mb;
+                }, List.of(node1), String.class);
+
+                Expression<String> exp = new Expression<>(node2);
+
+                assertEquals("Hello from node 1 node 2",
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(), " node 2"));
+        }
+
+        @Test
+        @DisplayName("This test checks that an exception is thrown when leaf node is not contextual but parent nodes are. In this case, the contexts are not propagated to the parent nodes. ")
+        public void testContextualSupplierForMethodOwner_error() throws Exception {
+
+                IExpressionNode<String, ? extends ISupplier<String>> node1 = new ContextualExpressionNode<>("",
+                                (c, params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new IContextualSupplier<StringConcatenator, StringConcatenator>() {
+
+                                                                @Override
+                                                                public Type getSuppliedType() {
+                                                                        return StringConcatenator.class;
+                                                                }
+
+                                                                @Override
+                                                                public Class<StringConcatenator> getOwnerContextType() {
+                                                                        return StringConcatenator.class;
+                                                                }
+
+                                                                @Override
+                                                                public Optional<StringConcatenator> supply(
+                                                                                StringConcatenator ownerContext,
+                                                                                Object... otherContexts)
+                                                                                throws SupplyException {
+                                                                        return Optional.of(ownerContext);
+                                                                }
+                                                        },
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        new FixedSupplier<String>("Hello from node 1"),
+                                                                        new FixedSupplier<String>("")),
+                                                        String.class);
+
+                                        return mb;
+                                }, String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
+                        MethodBinder<String> mb = new MethodBinder<>(
+                                        new FixedSupplier<>(
+                                                        new StringConcatenator()),
+                                        new ObjectAddress("concatenate"),
+                                        List.of(
+                                                        params[0],
+                                                        new FixedSupplier<String>(" node 2")),
+                                        String.class);
+
+                        return mb;
+                }, List.of(node1), String.class);
+
+                Expression<String> exp = new Expression<>(node2);
+
+                SupplyException exception = assertThrows(SupplyException.class,
+                                () -> Supplier.contextualRecursiveSupply(exp, new ExpressionContext(),
+                                                new StringConcatenator()));
+
+                assertEquals("Error on parameter 0", exception.getMessage());
+        }
+
+        @Test
+        public void testContextualSupplierForMethodOwner_success() throws Exception {
+
+                IExpressionNode<String, ? extends ISupplier<String>> node1 = new ContextualExpressionNode<>("",
+                                (c, params) -> {
+                                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                                        new IContextualSupplier<StringConcatenator, StringConcatenator>() {
+
+                                                                @Override
+                                                                public Type getSuppliedType() {
+                                                                        return StringConcatenator.class;
+                                                                }
+
+                                                                @Override
+                                                                public Class<StringConcatenator> getOwnerContextType() {
+                                                                        return StringConcatenator.class;
+                                                                }
+
+                                                                @Override
+                                                                public Optional<StringConcatenator> supply(
+                                                                                StringConcatenator ownerContext,
+                                                                                Object... otherContexts)
+                                                                                throws SupplyException {
+                                                                        return Optional.of(ownerContext);
+                                                                }
+                                                        },
+                                                        new ObjectAddress("concatenate"),
+                                                        List.of(
+                                                                        new FixedSupplier<String>("Hello from node 1"),
+                                                                        new FixedSupplier<String>("")),
+                                                        String.class);
+
+                                        return mb;
+                                }, String.class);
+
+                IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
+                        ContextualMethodBinder<String, IExpressionContext> mb = new ContextualMethodBinder<>(
+                                        new FixedSupplier<>(
+                                                        new StringConcatenator()),
+                                        new ObjectAddress("concatenate"),
+                                        List.of(
+                                                        params[0],
+                                                        new FixedSupplier<String>(" node 2")),
+                                        String.class);
+
+                        return mb;
+                }, List.of(node1), String.class);
+
+                Expression<String> exp = new Expression<>(node2);
+
+                assertEquals("Hello from node 1 node 2",
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(), new StringConcatenator()));
+        }
 
 }

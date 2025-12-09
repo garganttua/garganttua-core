@@ -33,12 +33,14 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
             Class<ReturnedType> returnedClass,
             boolean collection) {
         super(parameterSuppliers);
-        log.atTrace().log("Creating ContextualMethodBinder: method={}, returnedClass={}, collection={}", method, returnedClass, collection);
+        log.atTrace().log("Creating ContextualMethodBinder: method={}, returnedClass={}, collection={}", method,
+                returnedClass, collection);
         this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         this.returnedClass = Objects.requireNonNull(returnedClass, "Returned class cannot be null");
         this.collection = collection;
-        log.atDebug().log("ContextualMethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
+        log.atDebug().log("ContextualMethodBinder created for method {} with {} parameters", method,
+                parameterSuppliers.size());
     }
 
     public ContextualMethodBinder(ISupplier<?> objectSupplier,
@@ -60,7 +62,12 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
     public Optional<ReturnedType> execute(OwnerContextType ownerContext, Object... contexts)
             throws ReflectionException {
         log.atTrace().log("Executing contextual method binder for method {}", method);
-        Object[] args = this.buildArguments(ownerContext, contexts);
+
+        Object[] mergedContexts = new Object[contexts.length + 1];
+        mergedContexts[0] = ownerContext;
+        System.arraycopy(contexts, 0, mergedContexts, 1, contexts.length);
+
+        Object[] args = this.buildArguments(mergedContexts);
 
         try {
 
@@ -84,7 +91,8 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
 
     @Override
     public String getExecutableReference() {
-        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedClass()).find(this.method).getLast());
+        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedClass())
+                .find(this.method).getLast());
     }
 
     @Override

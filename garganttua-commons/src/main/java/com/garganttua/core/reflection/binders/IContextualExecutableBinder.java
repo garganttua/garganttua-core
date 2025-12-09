@@ -4,19 +4,27 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.SupplyException;
 
 /**
- * Context-aware executable binder for methods and constructors that require runtime context.
+ * Context-aware executable binder for methods and constructors that require
+ * runtime context.
  *
  * <p>
- * {@code IContextualExecutableBinder} extends {@link IExecutableBinder} to support
- * context-dependent execution. This is essential for dependency injection scenarios
- * where method or constructor parameters must be resolved from a runtime context
- * (such as a DI container, request scope, or parent object). The binder requires
- * an owner context and optionally accepts additional contexts for parameter resolution.
+ * {@code IContextualExecutableBinder} extends {@link IExecutableBinder} to
+ * support
+ * context-dependent execution. This is essential for dependency injection
+ * scenarios
+ * where method or constructor parameters must be resolved from a runtime
+ * context
+ * (such as a DI container, request scope, or parent object). The binder
+ * requires
+ * an owner context and optionally accepts additional contexts for parameter
+ * resolution.
  * </p>
  *
  * <h2>Usage Example</h2>
+ * 
  * <pre>{@code
  * // Constructor binder requiring DiContext for parameter resolution
  * IContextualExecutableBinder<UserService, DiContext> constructor =
@@ -46,7 +54,8 @@ import com.garganttua.core.supply.IContextualSupplier;
  * <p>
  * The owner context is the primary context required for execution. Additional
  * contexts can be provided to resolve complex parameter hierarchies. The binder
- * implementation is responsible for matching parameter types to available contexts
+ * implementation is responsible for matching parameter types to available
+ * contexts
  * and extracting the required values.
  * </p>
  *
@@ -56,7 +65,7 @@ import com.garganttua.core.supply.IContextualSupplier;
  * that context objects are thread-safe if the binder is used concurrently.
  * </p>
  *
- * @param <ExecutionReturn> the return type of the executable element
+ * @param <ExecutionReturn>  the return type of the executable element
  * @param <OwnerContextType> the type of the required owner context
  * @since 2.0.0-ALPHA01
  * @see IExecutableBinder
@@ -104,13 +113,16 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          * the required values for execution.
          * </p>
          *
-         * @param ownerContext the primary context required for execution (never {@code null})
-         * @param contexts additional optional contexts for parameter resolution
-         * @return an {@link Optional} containing the execution result, or empty for void
+         * @param ownerContext the primary context required for execution (never
+         *                     {@code null})
+         * @param contexts     additional optional contexts for parameter resolution
+         * @return an {@link Optional} containing the execution result, or empty for
+         *         void
          *         methods or when no result is produced
          * @throws ReflectionException if the execution fails due to illegal access,
-         *                            invocation target exceptions, parameter resolution
-         *                            failures, or instantiation errors
+         *                             invocation target exceptions, parameter
+         *                             resolution
+         *                             failures, or instantiation errors
          */
         Optional<ExecutionReturn> execute(OwnerContextType ownerContext, Object... contexts)
                         throws ReflectionException;
@@ -129,9 +141,11 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          */
         @Override
         default Optional<ExecutionReturn> execute() throws ReflectionException {
-                throw new ReflectionException(
-                                "Owner context of type " + getOwnerContextType().getSimpleName()
-                                                + " required for this supplier");
+                if (getOwnerContextType() != Void.class)
+                        throw new SupplyException("Owner context of type " + getOwnerContextType().getSimpleName()
+                                        + " required for this supplier");
+
+                return execute(null);
         }
 
 }

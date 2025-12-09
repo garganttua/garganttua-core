@@ -78,7 +78,10 @@ public interface IContextualSupplier<Supplied, Context> extends ISupplier<Suppli
      */
     @Override
     default Optional<Supplied> supply() throws SupplyException {
-        throw new SupplyException("Owner context of type "+getOwnerContextType().getSimpleName()+" required for this supplier");
+        if( getOwnerContextType() != Void.class)
+            throw new SupplyException("Owner context of type "+getOwnerContextType().getSimpleName()+" required for this supplier");
+
+        return supply(null);
     }
 
     /**

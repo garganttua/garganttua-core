@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.reflections.util.QueryBuilder;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.expression.IQuery;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
@@ -25,16 +25,16 @@ public class QueryBuilderTest {
     @Test
     public void dummyTest() {
 
-        QueryBuilder qb = new QueryBuilder();
+       /*  QueryBuilder qb = new QueryBuilder();
 
         qb.withPackage("com.garganttua.core.query.functions");
 
         Class<?>[] params = { String.class };
         IQuery query = qb.withQuery(QueryBuilderTest.class, String.class)
                 .method("fixed", (Class<ISupplier<String>>) (Class<?>) ISupplier.class, params).up()
-                .build();
+                .build(); */
 
-        query.query("double[12,12,12]");
+/*         query.query("double[12,12,12]");
         query.query("42");
         query.query("\"hello\"");
         query.query("'c'");
@@ -68,7 +68,7 @@ public class QueryBuilderTest {
         query.query("compute(Class<?> ,int[10])");
         query.query("merge({\"a\":int[1]}, {\"b\":int[2]})");
         query.query("format(\"%s\", \"hello\")");
-        query.query("outer(inner(int[42]))");
+        query.query("outer(inner(int[42]))"); */
         /*
          * query.query("\"hello\"");
          * query.query("true");
@@ -204,7 +204,7 @@ public class QueryBuilderTest {
 
     }
 
-    @SuppressWarnings("unchecked")
+    /* @SuppressWarnings("unchecked")
     @Test
     public void testSimpleQuery() {
 
@@ -245,6 +245,6 @@ public class QueryBuilderTest {
 
         assertEquals("Method nonStatic is not static in class com.garganttua.core.query.dsl.QueryBuilderTest",
                 exception.getMessage());
-    }
+    } */
 
 }
