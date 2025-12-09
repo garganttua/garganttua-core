@@ -14,7 +14,6 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
 import com.garganttua.core.supply.dsl.ICommonSupplierBuilder;
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.SupplierBuilder;
 
 class SupplierBuilderTest {
@@ -108,10 +107,10 @@ class SupplierBuilderTest {
     }
 
     static class FakeContextualSupply<T, C>
-            implements IContextualObjectSupply<T, C> {
+            implements IContextualSupply<T, C> {
 
         @Override
-        public Optional<T> supplyObject(C context, Object... otherContexts) {
+        public Optional<T> supply(C context, Object... otherContexts) {
             throw new UnsupportedOperationException("Unimplemented method 'supplyObject'");
         }
     }

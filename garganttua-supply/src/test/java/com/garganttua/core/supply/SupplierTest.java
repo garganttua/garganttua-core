@@ -64,10 +64,10 @@ public class SupplierTest {
     @Test
     public void testApplicationContextObjectSupplier() throws DslException, SupplyException {
 
-        IContextualObjectSupply<String, Object> supply = new IContextualObjectSupply<String, Object>() {
+        IContextualSupply<String, Object> supply = new IContextualSupply<String, Object>() {
 
             @Override
-            public Optional<String> supplyObject(Object context, Object... contexts) {
+            public Optional<String> supply(Object context, Object... contexts) {
                 return Optional.of("hello from context");
             }
 
@@ -85,7 +85,7 @@ public class SupplierTest {
     @Test
     void testApplicationContextObjectLambdaSupplier() throws DslException, SupplyException {
 
-        IContextualObjectSupply<String, Object> supply = (context, contexts) -> Optional.of("hello from context");
+        IContextualSupply<String, Object> supply = (context, contexts) -> Optional.of("hello from context");
 
         ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
                 supply, String.class, Object.class);
@@ -98,7 +98,7 @@ public class SupplierTest {
     @Test
     void testCustomContextObjectLambdaSupplier() throws DslException, SupplyException {
 
-        IContextualObjectSupply<String, String> supply = (context, contexts) -> Optional
+        IContextualSupply<String, String> supply = (context, contexts) -> Optional
                 .of("hello from context " + context);
 
         ContextualSupplierBuilder<String, String> builder = new ContextualSupplierBuilder<String, String>(

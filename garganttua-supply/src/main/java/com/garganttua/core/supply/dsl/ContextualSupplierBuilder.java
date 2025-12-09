@@ -6,18 +6,18 @@ import java.util.Objects;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.supply.ContextualSupplier;
 import com.garganttua.core.supply.IContextualSupplier;
-import com.garganttua.core.supply.IContextualObjectSupply;
+import com.garganttua.core.supply.IContextualSupply;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ContextualSupplierBuilder<Supplied, Context> implements ISupplierBuilder<Supplied, IContextualSupplier<Supplied, Context>> {
 
-    private IContextualObjectSupply<Supplied, Context> supply;
+    private IContextualSupply<Supplied, Context> supply;
     private Class<Supplied> suppliedType;
     private Class<Context> contextType;
 
-    public ContextualSupplierBuilder(IContextualObjectSupply<Supplied, Context> supply, Class<Supplied> suppliedType, Class<Context> contextType) {
+    public ContextualSupplierBuilder(IContextualSupply<Supplied, Context> supply, Class<Supplied> suppliedType, Class<Context> contextType) {
         log.atTrace().log("Entering ContextualSupplierBuilder constructor with suppliedType: {}, contextType: {}", suppliedType, contextType);
         this.supply = Objects.requireNonNull(supply, "Contextual supply cannot be null");
         this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");

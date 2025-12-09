@@ -48,7 +48,7 @@ import java.util.Optional;
  * @see com.garganttua.core.supply.dsl.ISupplierBuilder#withContext(Class, IContextualObjectSupply)
  */
 @FunctionalInterface
-public interface IContextualObjectSupply<Supplied, Context> {
+public interface IContextualSupply<Supplied, Context> {
 
     /**
      * Creates an object instance using the provided context.
@@ -64,6 +64,6 @@ public interface IContextualObjectSupply<Supplied, Context> {
      * @param otherContexts additional optional contexts that may assist in object creation
      * @return an {@link Optional} containing the created instance, or empty if unavailable
      */
-    Optional<Supplied> supplyObject(Context context, Object... otherContexts);
+    Optional<Supplied> supply(Context context, Object... otherContexts);
 
 }

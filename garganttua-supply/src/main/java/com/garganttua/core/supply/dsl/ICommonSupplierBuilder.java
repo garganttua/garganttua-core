@@ -2,7 +2,7 @@ package com.garganttua.core.supply.dsl;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
-import com.garganttua.core.supply.IContextualObjectSupply;
+import com.garganttua.core.supply.IContextualSupply;
 import com.garganttua.core.supply.ISupplier;
 
 public interface ICommonSupplierBuilder<Supplied> extends ISupplierBuilder<Supplied, ISupplier<Supplied>>{
@@ -37,7 +37,7 @@ public interface ICommonSupplierBuilder<Supplied> extends ISupplierBuilder<Suppl
      * @throws DslException if a supply strategy has already been configured, or if the
      *                     context type or supply logic is invalid
      */
-    <ContextType> ICommonSupplierBuilder<Supplied> withContext(Class<ContextType> contextType, IContextualObjectSupply<Supplied, ContextType> supply) throws DslException;
+    <ContextType> ICommonSupplierBuilder<Supplied> withContext(Class<ContextType> contextType, IContextualSupply<Supplied, ContextType> supply) throws DslException;
 
     /**
      * Configures the supplier to return a fixed value.

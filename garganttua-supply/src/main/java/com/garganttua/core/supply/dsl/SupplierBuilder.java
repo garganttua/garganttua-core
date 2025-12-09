@@ -9,7 +9,7 @@ import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
 import com.garganttua.core.supply.ContextualSupplier;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.IContextualSupplier;
-import com.garganttua.core.supply.IContextualObjectSupply;
+import com.garganttua.core.supply.IContextualSupply;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.NewContextualSupplier;
 import com.garganttua.core.supply.NewSupplier;
@@ -24,7 +24,7 @@ public class SupplierBuilder<Supplied>
         implements ICommonSupplierBuilder<Supplied> {
 
     private Class<?> contextType;
-    private IContextualObjectSupply<Supplied, ?> supply;
+    private IContextualSupply<Supplied, ?> supply;
     private Supplied value;
     private IConstructorBinder<Supplied> constructorBinder;
     private boolean nullable = false;
@@ -109,7 +109,7 @@ public class SupplierBuilder<Supplied>
     @Override
     public <ContextType> ICommonSupplierBuilder<Supplied> withContext(
             Class<ContextType> contextType,
-            IContextualObjectSupply<Supplied, ContextType> supply) throws DslException {
+            IContextualSupply<Supplied, ContextType> supply) throws DslException {
         log.atTrace().log("Entering withContext with contextType={}", contextType);
         this.contextType = Objects.requireNonNull(contextType, "Context type cannot be null");
         this.supply = Objects.requireNonNull(supply, "Supply cannot be null");
@@ -167,7 +167,7 @@ public class SupplierBuilder<Supplied>
     public static <T, C> ICommonSupplierBuilder<T> contextual(
             Class<T> type,
             Class<C> contextType,
-            IContextualObjectSupply<T, C> supply) throws DslException {
+            IContextualSupply<T, C> supply) throws DslException {
         log.atTrace().log("Creating contextual supplier builder for type {} with contextType={}", type, contextType);
         return new SupplierBuilder<>(type).withContext(contextType, supply);
     }

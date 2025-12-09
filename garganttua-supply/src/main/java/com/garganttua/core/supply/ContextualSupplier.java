@@ -9,11 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ContextualSupplier<Supplied, Context> implements IContextualSupplier<Supplied, Context> {
 
-    private IContextualObjectSupply<Supplied, Context> supply;
+    private IContextualSupply<Supplied, Context> supply;
     private Class<Supplied> suppliedType;
     private Class<Context> contextType;
 
-    public ContextualSupplier(IContextualObjectSupply<Supplied, Context> supply,
+    public ContextualSupplier(IContextualSupply<Supplied, Context> supply,
             Class<Supplied> suppliedType, Class<Context> contextType) {
         log.atTrace().log("Entering ContextualSupplier constructor with suppliedType: {}, contextType: {}", suppliedType, contextType);
         this.supply = Objects.requireNonNull(supply, "Contextual supply cannot be null");
@@ -43,7 +43,7 @@ public class ContextualSupplier<Supplied, Context> implements IContextualSupplie
                     + ownerContext.getClass().getSimpleName() + " provided");
         }
 
-        Optional<Supplied> result = this.supply.supplyObject(ownerContext, otherContexts);
+        Optional<Supplied> result = this.supply.supply(ownerContext, otherContexts);
         log.atInfo().log("Supply completed for type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
         log.atTrace().log("Exiting supply method");
         return result;

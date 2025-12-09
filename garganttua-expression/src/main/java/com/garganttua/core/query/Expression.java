@@ -1,5 +1,6 @@
 package com.garganttua.core.query;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 
 import com.garganttua.core.expression.ExpressionException;
@@ -19,7 +20,7 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
 
     @Override
     public Type getSuppliedType() {
-        return null;
+        return this.leaf.getSuppliedType();
     }
 
     @SuppressWarnings("unchecked")

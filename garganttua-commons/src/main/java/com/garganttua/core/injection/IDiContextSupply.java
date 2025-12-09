@@ -1,6 +1,6 @@
 package com.garganttua.core.injection;
 
-import com.garganttua.core.supply.IContextualObjectSupply;
+import com.garganttua.core.supply.IContextualSupply;
 
 /**
  * Functional interface for supplying objects within a dependency injection context.
@@ -40,6 +40,6 @@ import com.garganttua.core.supply.IContextualObjectSupply;
  * @see IDiContext
  */
 @FunctionalInterface
-public interface IDiContextObjectSupply<Supplied> extends IContextualObjectSupply<Supplied, IDiContext> {
+public interface IDiContextSupply<Supplied> extends IContextualSupply<Supplied, IDiContext> {
 
 }
