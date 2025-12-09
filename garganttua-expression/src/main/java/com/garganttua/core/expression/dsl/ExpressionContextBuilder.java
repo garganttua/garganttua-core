@@ -34,13 +34,13 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class ExpressionBuilder
+public class ExpressionContextBuilder
         extends AbstractAutomaticBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
 
     private List<String> packages = new ArrayList<>();
 
-    protected ExpressionBuilder() {
+    protected ExpressionContextBuilder() {
         super();
         log.atTrace().log("Entering ExpressionBuilder constructor");
         log.atTrace().log("Exiting ExpressionBuilder constructor");
@@ -51,15 +51,17 @@ public class ExpressionBuilder
      *
      * @return a new ExpressionBuilder instance
      */
-    public static ExpressionBuilder create() {
+    public static ExpressionContextBuilder create() {
         log.atTrace().log("Creating new ExpressionBuilder");
-        return new ExpressionBuilder();
+        return new ExpressionContextBuilder();
     }
 
     @Override
     public <T> IExpressionMethodBinderBuilder<T> withExpression(Class<?> methodOwner, Class<T> supplied) {
         log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwner={}, supplied={}",
                 methodOwner, supplied);
+        Objects.requireNonNull(methodOwner, "Method owner cannot be null");
+        Objects.requireNonNull(supplied, "Supplied type cannot be null");
         return new ExpressionMethodBinderBuilder<>(this, methodOwner, supplied);
     }
 
