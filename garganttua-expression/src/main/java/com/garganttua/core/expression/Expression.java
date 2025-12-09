@@ -1,4 +1,4 @@
-package com.garganttua.core.query;
+package com.garganttua.core.expression;
 
 import java.lang.reflect.Type;
 import java.util.Objects;

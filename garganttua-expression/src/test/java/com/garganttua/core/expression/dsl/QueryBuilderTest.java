@@ -1,4 +1,4 @@
-package com.garganttua.core.query.dsl;
+package com.garganttua.core.expression.dsl;
 
 import static org.junit.jupiter.api.Assertions.*;
 

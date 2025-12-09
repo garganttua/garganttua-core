@@ -1,4 +1,4 @@
-package com.garganttua.core.query;
+package com.garganttua.core.expression;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,6 +9,10 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.expression.ContextualExpressionNode;
+import com.garganttua.core.expression.Expression;
+import com.garganttua.core.expression.ExpressionContext;
+import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionContext;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.ObjectAddress;

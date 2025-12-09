@@ -1,4 +1,4 @@
-package com.garganttua.core.query.functions;
+package com.garganttua.core.expression.functions;
 
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
