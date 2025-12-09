@@ -138,7 +138,8 @@ public class ObjectReflectionHelper {
 
 	public static <destination> destination instanciateNewObject(Class<destination> clazz, Object... params)
 			throws ReflectionException {
-		log.atTrace().log("Instantiating new object of class: {} with {} params", clazz.getName(), params != null ? params.length : 0);
+		log.atTrace().log("Instantiating new object of class: {} with {} params", clazz.getName(),
+				params != null ? params.length : 0);
 		if (params == null || params.length == 0)
 			instanciateNewObject(clazz);
 
@@ -181,7 +182,8 @@ public class ObjectReflectionHelper {
 	}
 
 	static public void setObjectFieldValue(Object entity, Field field, Object value) throws ReflectionException {
-		log.atTrace().log("Setting field {} on object of type {}", field != null ? field.getName() : "null", entity.getClass().getName());
+		log.atTrace().log("Setting field {} on object of type {}", field != null ? field.getName() : "null",
+				entity.getClass().getName());
 		if (field == null) {
 			log.atError().log("Cannot set null field of object {}", entity.getClass().getName());
 			throw new ReflectionException(
@@ -190,7 +192,8 @@ public class ObjectReflectionHelper {
 
 		try (FieldAccessManager manager = new FieldAccessManager(field)) {
 			field.set(entity, value);
-			log.atDebug().log("Successfully set field {} on object of type {}", field.getName(), entity.getClass().getName());
+			log.atDebug().log("Successfully set field {} on object of type {}", field.getName(),
+					entity.getClass().getName());
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			log.atError().log("Cannot set field {} of object {}", field.getName(), entity.getClass().getName(), e);
 			throw new ReflectionException("Cannot set field " + field.getName() + " of object "
@@ -198,40 +201,39 @@ public class ObjectReflectionHelper {
 		}
 	}
 
+	/**
+	 * Helper method to extract a Class from a Type.
+	 *
+	 * @param type the Type to extract from
+	 * @return the extracted Class
+	 */
+	public static Class<?> extractClass(Type type) {
+		if (type instanceof Class<?>) {
+			return (Class<?>) type;
+		}
 
-    /**
-     * Helper method to extract a Class from a Type.
-     *
-     * @param type the Type to extract from
-     * @return the extracted Class
-     */
-    public static Class<?> extractClass(Type type) {
-        if (type instanceof Class<?>) {
-            return (Class<?>) type;
-        }
+		if (type instanceof ParameterizedType) {
+			return extractClass(((ParameterizedType) type).getRawType());
+		}
 
-        if (type instanceof ParameterizedType) {
-            return extractClass(((ParameterizedType) type).getRawType());
-        }
+		if (type instanceof GenericArrayType) {
+			Type componentType = ((GenericArrayType) type).getGenericComponentType();
+			Class<?> componentClass = extractClass(componentType);
+			return java.lang.reflect.Array.newInstance(componentClass, 0).getClass();
+		}
 
-        if (type instanceof GenericArrayType) {
-            Type componentType = ((GenericArrayType) type).getGenericComponentType();
-            Class<?> componentClass = extractClass(componentType);
-            return java.lang.reflect.Array.newInstance(componentClass, 0).getClass();
-        }
+		if (type instanceof TypeVariable) {
+			Type[] bounds = ((TypeVariable<?>) type).getBounds();
+			return bounds.length == 0 ? Object.class : extractClass(bounds[0]);
+		}
 
-        if (type instanceof TypeVariable) {
-            Type[] bounds = ((TypeVariable<?>) type).getBounds();
-            return bounds.length == 0 ? Object.class : extractClass(bounds[0]);
-        }
+		if (type instanceof WildcardType) {
+			Type[] upperBounds = ((WildcardType) type).getUpperBounds();
+			return upperBounds.length == 0 ? Object.class : extractClass(upperBounds[0]);
+		}
 
-        if (type instanceof WildcardType) {
-            Type[] upperBounds = ((WildcardType) type).getUpperBounds();
-            return upperBounds.length == 0 ? Object.class : extractClass(upperBounds[0]);
-        }
-
-        throw new IllegalArgumentException("Impossible de convertir en Class<?> : " + type);
-    }
+		throw new IllegalArgumentException("Impossible de convertir en Class<?> : " + type);
+	}
 
 	public static Object getObjectFieldValue(Object entity, String fieldName) throws ReflectionException {
 		log.atTrace().log("Getting field {} from object of type {}", fieldName, entity.getClass().getName());
@@ -249,7 +251,8 @@ public class ObjectReflectionHelper {
 		log.atTrace().log("Getting field {} from object of type {}", field.getName(), entity.getClass().getName());
 		try (FieldAccessManager manager = new FieldAccessManager(field)) {
 			Object value = field.get(entity);
-			log.atDebug().log("Successfully got field {} value from object of type {}", field.getName(), entity.getClass().getName());
+			log.atDebug().log("Successfully got field {} value from object of type {}", field.getName(),
+					entity.getClass().getName());
 			return value;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			log.atError().log("Cannot get field {} of object {}", field.getName(), entity.getClass().getName(), e);
@@ -260,12 +263,15 @@ public class ObjectReflectionHelper {
 
 	public static Object invokeMethod(Object object, String methodName, Method method, Object... args)
 			throws ReflectionException {
-		log.atTrace().log("Invoking method {} on object of type {} with {} args", methodName, object.getClass().getName(), args.length);
+		log.atTrace().log("Invoking method {} on object of type {} with {} args", methodName,
+				object != null ? object.getClass().getName() : "null",
+				args != null ? args.length : 0);
 		ObjectReflectionHelper.checkMethodAndParams(method, args);
 
 		try (MethodAccessManager manager = new MethodAccessManager(method)) {
 			Object result = method.invoke(object, args);
-			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName, object.getClass().getName());
+			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName,
+					object != null ? object.getClass().getName() : "null");
 			return result;
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			log.atError().log("Cannot invoke method {} of object {}", methodName, object.getClass().getName(), e);

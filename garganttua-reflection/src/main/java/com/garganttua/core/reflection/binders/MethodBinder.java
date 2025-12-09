@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.Methods;
@@ -32,7 +33,8 @@ public class MethodBinder<Returned>
             Class<Returned> returnedClass,
             boolean collection) {
         super(parameterSuppliers);
-        log.atTrace().log("Creating MethodBinder: method={}, returnedClass={}, collection={}", method, returnedClass, collection);
+        log.atTrace().log("Creating MethodBinder: method={}, returnedClass={}, collection={}", method, returnedClass,
+                collection);
         this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         this.returnedClass = Objects.requireNonNull(returnedClass, "Returned class cannot be null");
@@ -55,28 +57,42 @@ public class MethodBinder<Returned>
             boolean collectionTarget,
             Object[] args) throws ReflectionException {
 
-        log.atTrace().log("Executing static method: owner={}, ownerType={}, method={}, collectionTarget={}", owner, ownerType, method, collectionTarget);
-        Objects.requireNonNull(owner, "Owner cannot be null");
+        log.atTrace().log("Executing static method execute: owner={}, ownerType={}, method={}, collectionTarget={}",
+                owner, ownerType, method, collectionTarget);
+        Boolean methodStatic = Methods.isStatic(ownerType, method);
+        if (!methodStatic)
+            Objects.requireNonNull(owner, "Owner cannot be null");
         Objects.requireNonNull(ownerType, "Owner type cannot be null");
         Objects.requireNonNull(method, "Method cannot be null");
         Objects.requireNonNull(returnedClass, "Returned class cannot be null");
         Objects.requireNonNull(collectionTarget, "Collection target cannot be null");
 
+        IObjectQuery query = null;
+        if (owner != null)
+            query = ObjectQueryFactory.objectQuery(ownerType, owner);
+        else
+            query = ObjectQueryFactory.objectQuery(ownerType);
+
         if (collectionTarget && owner instanceof Collection<?> col) {
             log.atDebug().log("Executing method {} on collection with {} elements", method, col.size());
             for (Object element : col) {
-                ObjectQueryFactory.objectQuery(owner).invoke(element, method, args);
+                query.invoke(element, method, args);
             }
             log.atInfo().log("Executed method {} on collection successfully", method);
             return Optional.empty();
         }
 
         log.atDebug().log("Invoking method {} on owner of type {}", method, ownerType);
-        Object result = ObjectQueryFactory.objectQuery(owner)
-                .invoke(owner, method, args);
+        Object result = null;
+        
+        if( !methodStatic )
+            result = query.invoke(owner, method, args);
+        else 
+            result = query.invokeStatic(method, args);
 
         if (result != null && !returnedClass.isInstance(result)) {
-            log.atError().log("Method {} returned type {} but expected {}", method, result.getClass().getName(), returnedClass.getName());
+            log.atError().log("Method {} returned type {} but expected {}", method, result.getClass().getName(),
+                    returnedClass.getName());
             throw new ReflectionException("Method " + method + " returned type "
                     + result.getClass().getName() + " but expected " + returnedClass.getName());
         }
@@ -92,7 +108,7 @@ public class MethodBinder<Returned>
         Object[] args = this.buildArguments();
         try {
             Optional<Returned> result = execute(
-                    objectSupplier.supply().get(),
+                    objectSupplier.supply().orElse(null),
                     objectSupplier.getSuppliedClass(),
                     method,
                     returnedClass,
@@ -109,7 +125,8 @@ public class MethodBinder<Returned>
     @Override
     public String getExecutableReference() {
         log.atTrace().log("Getting executable reference for method {}", method);
-        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedClass()).find(this.method).getLast());
+        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedClass())
+                .find(this.method).getLast());
     }
 
     @Override

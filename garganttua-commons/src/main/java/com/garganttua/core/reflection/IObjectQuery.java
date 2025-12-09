@@ -253,6 +253,12 @@ public interface IObjectQuery {
 	 */
 	Object invoke(ObjectAddress methodAddress, Object ...args) throws ReflectionException;
 
+
+	Object invokeStatic(String methodAddress, Object ...args) throws ReflectionException;
+
+
+	Object invokeStatic(ObjectAddress methodAddress, Object ...args) throws ReflectionException;
+
 	/**
 	 * Invokes a method on the specified object using an ObjectAddress.
 	 *

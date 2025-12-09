@@ -5,10 +5,23 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Methods {
+
+        public static boolean isStatic(Class<?> methodOwner, ObjectAddress methodAddress) {
+                Method method = getMethod(methodOwner, methodAddress);
+                return Modifier.isStatic(method.getModifiers());
+        }
+
+        private static Method getMethod(Class<?> methodOwner, ObjectAddress methodAddress) {
+                Method method = (Method) ObjectQueryFactory.objectQuery(methodOwner).find(methodAddress).getLast();
+                return method;
+        }
 
         public static boolean isStatic(Method method) {
                 return Modifier.isStatic(method.getModifiers());

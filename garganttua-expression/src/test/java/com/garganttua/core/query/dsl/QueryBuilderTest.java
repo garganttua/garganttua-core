@@ -21,7 +21,6 @@ public class QueryBuilderTest {
         return new FixedSupplierBuilder<String>(value).build();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void dummyTest() {
 

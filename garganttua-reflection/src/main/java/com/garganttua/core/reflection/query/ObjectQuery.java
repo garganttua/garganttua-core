@@ -19,7 +19,6 @@ import com.garganttua.core.reflection.IObjectQuery;
 
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j
 public class ObjectQuery implements IObjectQuery {
 
@@ -89,11 +88,15 @@ public class ObjectQuery implements IObjectQuery {
         }
 
         Field field = ObjectReflectionHelper.getField(clazz, element);
-        Method method = (index == address.length() - 1 && field == null) ? ObjectReflectionHelper.getMethod(clazz, element) : null;
+        Method method = (index == address.length() - 1 && field == null)
+                ? ObjectReflectionHelper.getMethod(clazz, element)
+                : null;
 
         if (field == null && method == null) {
-            if (clazz.getSuperclass() != null && !Object.class.equals(clazz.getSuperclass()) && !Fields.BlackList.isBlackListed(clazz.getSuperclass())) {
-                log.atTrace().log("Element '{}' not found in {}, checking superclass {}", element, clazz, clazz.getSuperclass());
+            if (clazz.getSuperclass() != null && !Object.class.equals(clazz.getSuperclass())
+                    && !Fields.BlackList.isBlackListed(clazz.getSuperclass())) {
+                log.atTrace().log("Element '{}' not found in {}, checking superclass {}", element, clazz,
+                        clazz.getSuperclass());
                 return findRecursively(clazz.getSuperclass(), address, index, list);
             }
         } else if (field != null && method == null) {
@@ -118,8 +121,10 @@ public class ObjectQuery implements IObjectQuery {
                     Class<?> keyType = Fields.getGenericType(field, 0);
                     return findRecursively(keyType, address, index + 2, list);
                 } else {
-                    log.atError().log("Map field '{}' address element must indicate key or value, got '{}'", field.getName(), nextElement);
-                    throw new ReflectionException("Field " + element + " is a map, so address must indicate key or value");
+                    log.atError().log("Map field '{}' address element must indicate key or value, got '{}'",
+                            field.getName(), nextElement);
+                    throw new ReflectionException(
+                            "Field " + element + " is a map, so address must indicate key or value");
                 }
             } else {
                 return findRecursively(fieldType, address, index + 1, list);
@@ -145,11 +150,13 @@ public class ObjectQuery implements IObjectQuery {
 
     private ObjectAddress address(Class<?> objectClass, String elementName, ObjectAddress address)
             throws ReflectionException {
-        log.atTrace().log("Resolving address element='{}', class={}, baseAddress={}", elementName, objectClass, address);
+        log.atTrace().log("Resolving address element='{}', class={}, baseAddress={}", elementName, objectClass,
+                address);
         Field field = null;
         try {
             field = objectClass.getDeclaredField(elementName);
-        } catch (NoSuchFieldException | SecurityException ignored) {}
+        } catch (NoSuchFieldException | SecurityException ignored) {
+        }
 
         Method method = ObjectReflectionHelper.getMethod(objectClass, elementName);
         if (method != null) {
@@ -161,20 +168,29 @@ public class ObjectQuery implements IObjectQuery {
             return new ObjectAddress(address == null ? elementName : address + "." + elementName, true);
         }
 
-        if (objectClass.getSuperclass() != null && !Object.class.equals(objectClass.getSuperclass()) && !Fields.BlackList.isBlackListed(objectClass.getSuperclass())) {
+        if (objectClass.getSuperclass() != null && !Object.class.equals(objectClass.getSuperclass())
+                && !Fields.BlackList.isBlackListed(objectClass.getSuperclass())) {
             address = address(objectClass.getSuperclass(), elementName, address);
-            if( address != null ) {
-				return address;
-			}
+            if (address != null) {
+                return address;
+            }
         }
 
         for (Field f : objectClass.getDeclaredFields()) {
-            if (Fields.isNotPrimitive(f.getType()) /* && !Fields.BlackList.isBlackListed(f.getType()) && !Object.class.equals(f.getType()) && !"serialPersistentFields".equalsIgnoreCase(f.getName()) */) {
+            if (Fields.isNotPrimitive(f.getType()) /*
+                                                    * && !Fields.BlackList.isBlackListed(f.getType()) &&
+                                                    * !Object.class.equals(f.getType()) &&
+                                                    * !"serialPersistentFields".equalsIgnoreCase(f.getName())
+                                                    */) {
                 ObjectAddress a;
-                if ((a = doIfIsCollection(f, elementName, address)) != null) return a;
-                if ((a = doIfIsMap(f, elementName, address)) != null) return a;
-                if ((a = doIfIsArray(f, elementName, address)) != null) return a;
-                if ((a = doIfNotEnum(f, elementName, address)) != null) return a;
+                if ((a = doIfIsCollection(f, elementName, address)) != null)
+                    return a;
+                if ((a = doIfIsMap(f, elementName, address)) != null)
+                    return a;
+                if ((a = doIfIsArray(f, elementName, address)) != null)
+                    return a;
+                if ((a = doIfNotEnum(f, elementName, address)) != null)
+                    return a;
             }
         }
 
@@ -185,13 +201,15 @@ public class ObjectQuery implements IObjectQuery {
     // --- setValue / getValue ---
     @Override
     public Object setValue(Object object, String fieldAddress, Object fieldValue) throws ReflectionException {
-        log.atDebug().log("setValue(String) called for field='{}', value={}, on object={}", fieldAddress, fieldValue, object);
+        log.atDebug().log("setValue(String) called for field='{}', value={}, on object={}", fieldAddress, fieldValue,
+                object);
         return setValue(object, new ObjectAddress(fieldAddress, true), fieldValue);
     }
 
     @Override
     public Object setValue(Object object, ObjectAddress fieldAddress, Object fieldValue) throws ReflectionException {
-        log.atDebug().log("setValue(ObjectAddress) called for fieldAddress={}, value={}, object={}", fieldAddress, fieldValue, object);
+        log.atDebug().log("setValue(ObjectAddress) called for fieldAddress={}, value={}, object={}", fieldAddress,
+                fieldValue, object);
         List<Object> fieldStructure = find(fieldAddress);
         return new ObjectFieldSetter(object.getClass(), fieldStructure, fieldAddress).setValue(object, fieldValue);
     }
@@ -268,8 +286,20 @@ public class ObjectQuery implements IObjectQuery {
     }
 
     @Override
+    public Object invokeStatic(String methodAddress, Object... args) throws ReflectionException {
+        return this.invokeStatic(new ObjectAddress(methodAddress, true), args);
+    }
+
+    @Override
+    public Object invokeStatic(ObjectAddress methodAddress, Object... args) throws ReflectionException {
+        List<Object> fieldStructure = find(methodAddress);
+        return new ObjectMethodInvoker(this.objectClass, fieldStructure, methodAddress).invokeStatic(args);
+    }
+
+    @Override
     public Object invoke(Object object, ObjectAddress methodAddress, Object... args) throws ReflectionException {
-        log.atDebug().log("invoke called on object={} for methodAddress={} with args={}", object, methodAddress, Arrays.toString(args));
+        log.atDebug().log("invoke called on object={} for methodAddress={} with args={}", object, methodAddress,
+                Arrays.toString(args));
         List<Object> fieldStructure = find(methodAddress);
         return new ObjectMethodInvoker(object.getClass(), fieldStructure, methodAddress).invoke(object, args);
     }
@@ -280,16 +310,20 @@ public class ObjectQuery implements IObjectQuery {
             Class<?> keyClass = Fields.getGenericType(f, 0);
             Class<?> valueClass = Fields.getGenericType(f, 1);
             if (Fields.isNotPrimitive(keyClass) && !Fields.BlackList.isBlackListed(keyClass)) {
-                ObjectAddress keyAddress = address == null ? new ObjectAddress(f.getName(), true) : address.clone().addElement(f.getName());
+                ObjectAddress keyAddress = address == null ? new ObjectAddress(f.getName(), true)
+                        : address.clone().addElement(f.getName());
                 keyAddress.addElement(ObjectAddress.MAP_KEY_INDICATOR);
                 ObjectAddress a = address(keyClass, elementName, keyAddress);
-                if (a != null) return a;
+                if (a != null)
+                    return a;
             }
             if (Fields.isNotPrimitive(valueClass) && !Fields.BlackList.isBlackListed(valueClass)) {
-                ObjectAddress valueAddress = address == null ? new ObjectAddress(f.getName(), true) : address.clone().addElement(f.getName());
+                ObjectAddress valueAddress = address == null ? new ObjectAddress(f.getName(), true)
+                        : address.clone().addElement(f.getName());
                 valueAddress.addElement(ObjectAddress.MAP_VALUE_INDICATOR);
                 ObjectAddress a = address(valueClass, elementName, valueAddress);
-                if (a != null) return a;
+                if (a != null)
+                    return a;
             }
         }
         return null;
@@ -299,17 +333,20 @@ public class ObjectQuery implements IObjectQuery {
         if (f.getType().isArray()) {
             log.atTrace().log("doIfIsArray checking array field '{}' for element '{}'", f.getName(), elementName);
             Class<?> componentType = f.getType().getComponentType();
-            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true) : address.clone().addElement(f.getName());
+            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
+                    : address.clone().addElement(f.getName());
             return address(componentType, elementName, newAddress);
         }
         return null;
     }
 
-    private ObjectAddress doIfIsCollection(Field f, String elementName, ObjectAddress address) throws ReflectionException {
+    private ObjectAddress doIfIsCollection(Field f, String elementName, ObjectAddress address)
+            throws ReflectionException {
         if (Collection.class.isAssignableFrom(f.getType())) {
             log.atTrace().log("doIfIsCollection checking field '{}' for element '{}'", f.getName(), elementName);
             Class<?> t = Fields.getGenericType(f, 0);
-            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true) : address.clone().addElement(f.getName());
+            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
+                    : address.clone().addElement(f.getName());
             return address(t, elementName, newAddress);
         }
         return null;
@@ -318,7 +355,8 @@ public class ObjectQuery implements IObjectQuery {
     private ObjectAddress doIfNotEnum(Field f, String elementName, ObjectAddress address) throws ReflectionException {
         if (!f.getType().isEnum()) {
             log.atTrace().log("doIfNotEnum checking field '{}' for element '{}'", f.getName(), elementName);
-            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true) : address.clone().addElement(f.getName());
+            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
+                    : address.clone().addElement(f.getName());
             return address(f.getType(), elementName, newAddress);
         }
         return null;

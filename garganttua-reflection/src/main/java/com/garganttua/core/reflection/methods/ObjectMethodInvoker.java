@@ -44,15 +44,23 @@ public class ObjectMethodInvoker {
 		log.atDebug().log("ObjectMethodInvoker initialized for class={}, address={}", clazz.getName(), address);
 	}
 
+	public Object invokeStatic(Object... args) throws ReflectionException {
+        return this.invoke(null, true, args);
+    }
+
 	public Object invoke(Object object, Object... args) throws ReflectionException {
+		return this.invoke(object, false, args);
+	}
+
+	public Object invoke(Object object, Boolean statix, Object... args) throws ReflectionException {
 		log.atTrace().log("invoke entry: object={}, class={}, address={}, args count={}", object, this.clazz, this.address, args != null ? args.length : 0);
 		log.atDebug().log("Invoking method: class={}, address={}, parameters count={}", this.clazz.getName(), this.address, args != null ? args.length : 0);
 
-		if (object == null) {
+		if (object == null && !statix) {
 			log.atError().log("object parameter is null");
 			throw new ReflectionException("object is null");
 		}
-		if (!object.getClass().isAssignableFrom(this.clazz)) {
+		if (!statix && !object.getClass().isAssignableFrom(this.clazz)) {
 			log.atError().log("object type {} is not assignable from {}", object.getClass(), this.clazz);
 			throw new ReflectionException("object is not of type " + this.clazz);
 		}
@@ -139,7 +147,6 @@ public class ObjectMethodInvoker {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private void doIfIsMap(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
 			List<Object> returned, Object[] args) throws ReflectionException {
 		if (Map.class.isAssignableFrom(field.getType())) {
@@ -172,7 +179,6 @@ public class ObjectMethodInvoker {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private void doIfIsCollection(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
 			List<Object> returned, Object... args)
 			throws ReflectionException {
@@ -190,4 +196,5 @@ public class ObjectMethodInvoker {
 			}
 		}
 	}
+
 }
