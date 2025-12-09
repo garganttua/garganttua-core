@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.IExpressionContext;
 import com.garganttua.core.expression.IExpressionNode;
-import com.garganttua.core.query.NodeTest.StringConcatenator;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
@@ -23,7 +22,7 @@ import com.garganttua.core.supply.SupplyException;
 
 public class NodeTest {
 
-        class StringConcatenator {
+        static class StringConcatenator {
                 String concatenate(String string, String string2) {
                         return string + "" + string2;
                 }
