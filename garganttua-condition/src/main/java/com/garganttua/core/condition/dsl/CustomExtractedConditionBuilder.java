@@ -7,19 +7,19 @@ import java.util.function.Predicate;
 import com.garganttua.core.condition.CustomExtractedCondition;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CustomExtractedConditionBuilder<T, R> implements IConditionBuilder {
 
-    private final IObjectSupplierBuilder<T, ? extends IObjectSupplier<T>> builder;
+    private final ISupplierBuilder<T, ? extends ISupplier<T>> builder;
     private final Function<T, R> extractor;
     private final Predicate<R> predicate;
 
-    public CustomExtractedConditionBuilder(IObjectSupplierBuilder<T, ? extends IObjectSupplier<T>> builder,
+    public CustomExtractedConditionBuilder(ISupplierBuilder<T, ? extends ISupplier<T>> builder,
             Function<T, R> extractor,
             Predicate<R> predicate) {
         log.atTrace().log("Entering CustomExtractedConditionBuilder constructor");
@@ -34,11 +34,18 @@ public class CustomExtractedConditionBuilder<T, R> implements IConditionBuilder 
         log.atTrace().log("Entering build() for CustomExtractedConditionBuilder");
         log.atDebug().log("Building CUSTOM EXTRACTED condition from supplier builder, extractor, and predicate");
 
-        ICondition condition = new CustomExtractedCondition<>(this.builder.build(), this.extractor, this.predicate);
+        ICondition condition = null;
+        if (!isContextual())
+            condition = new CustomExtractedCondition<>(this.builder.build(), this.extractor, this.predicate);
 
         log.atDebug().log("CUSTOM EXTRACTED condition built successfully");
         log.atTrace().log("Exiting build()");
         return condition;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return this.builder.isContextual();
     }
 
 }

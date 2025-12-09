@@ -1,5 +1,7 @@
 package com.garganttua.core.reflection.binders;
 
+import com.garganttua.core.supply.IContextualSupplier;
+
 /**
  * Context-aware method binder for reflective method invocation with runtime context resolution.
  *

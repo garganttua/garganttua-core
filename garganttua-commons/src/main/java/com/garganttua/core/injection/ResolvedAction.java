@@ -1,7 +1,7 @@
 package com.garganttua.core.injection;
 
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Functional interface for handling successfully resolved dependencies.
@@ -43,7 +43,7 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * @since 2.0.0-ALPHA01
  * @see Resolved
  * @see NotResolvedAction
- * @see IObjectSupplierBuilder
+ * @see ISupplierBuilder
  */
 @FunctionalInterface
 public interface ResolvedAction {
@@ -60,6 +60,6 @@ public interface ResolvedAction {
      * @param elementSupplier the supplier builder for obtaining the resolved element
      * @param nullable {@code true} if the element accepts null values, {@code false} if required
      */
-    void ifResolved(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> elementSupplier, boolean nullable);
+    void ifResolved(ISupplierBuilder<?, ? extends ISupplier<?>> elementSupplier, boolean nullable);
 
 }

@@ -1,6 +1,7 @@
 package com.garganttua.core.reflection.binders;
 
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.supply.IContextualSupplier;
 
 /**
  * Context-aware field binder for reflective field access with runtime value resolution.
@@ -73,7 +74,7 @@ import com.garganttua.core.reflection.ReflectionException;
  * @see IFieldBinder
  */
 public interface IContextualFieldBinder<OnwerType, FieldType, OwnerContextType, FieldContextType>
-        extends IFieldBinder<OnwerType, FieldType> {
+        extends IFieldBinder<OnwerType, FieldType>, IContextualSupplier<FieldType, OwnerContextType> {
 
     /**
      * Returns the owner context type for this field binder.

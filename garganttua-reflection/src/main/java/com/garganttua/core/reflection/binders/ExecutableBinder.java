@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.reflection.ReflectionException;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class ExecutableBinder<ReturnedType> implements IExecutableBinder<ReturnedType> {
 
-    protected final List<IObjectSupplier<?>> parameterSuppliers;
+    protected final List<ISupplier<?>> parameterSuppliers;
 
-    protected ExecutableBinder(List<IObjectSupplier<?>> parameterSuppliers) {
+    protected ExecutableBinder(List<ISupplier<?>> parameterSuppliers) {
         log.atTrace().log("Creating ExecutableBinder with {} parameter suppliers", parameterSuppliers.size());
         this.parameterSuppliers = Objects.requireNonNull(parameterSuppliers, "Parameter suppliers cannot be null");
     }
@@ -46,7 +46,7 @@ public abstract class ExecutableBinder<ReturnedType> implements IExecutableBinde
     @Override
     public Set<Class<?>> getDependencies() {
         log.atTrace().log("Getting dependencies from parameter suppliers");
-        Set<Class<?>> dependencies = new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedType())
+        Set<Class<?>> dependencies = new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedClass())
                 .collect(Collectors.toSet()));
         log.atDebug().log("Found {} dependencies", dependencies.size());
         return dependencies;

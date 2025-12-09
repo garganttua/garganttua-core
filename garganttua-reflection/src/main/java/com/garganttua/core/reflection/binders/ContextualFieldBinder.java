@@ -1,14 +1,16 @@
 package com.garganttua.core.reflection.binders;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -19,11 +21,11 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
         implements IContextualFieldBinder<OnwerType, FieldType, OwnerContextType, FieldContextType> {
 
     private ObjectAddress address;
-    private IObjectSupplier<FieldType> valueSupplier;
-    private IObjectSupplier<OnwerType> ownerSupplier;
+    private ISupplier<FieldType> valueSupplier;
+    private ISupplier<OnwerType> ownerSupplier;
 
-    public ContextualFieldBinder(IObjectSupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
-            IObjectSupplier<FieldType> valueSupplier) {
+    public ContextualFieldBinder(ISupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
+            ISupplier<FieldType> valueSupplier) {
         log.atTrace().log("Creating ContextualFieldBinder for fieldAddress={}", fieldAddress);
         this.address = Objects.requireNonNull(address, "Address cannot be null");
         this.valueSupplier = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
@@ -33,7 +35,7 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
 
     @Override
     public Class<OwnerContextType> getOwnerContextType() {
-        if (this.ownerSupplier instanceof IContextualObjectSupplier<?, ?> contextual) {
+        if (this.ownerSupplier instanceof IContextualSupplier<?, ?> contextual) {
             return (Class<OwnerContextType>) contextual.getOwnerContextType();
         }
         return (Class<OwnerContextType>) Void.class;
@@ -41,7 +43,7 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
 
     @Override
     public Class<FieldContextType> getValueContextType() {
-        if (this.valueSupplier instanceof IContextualObjectSupplier<?, ?> contextual) {
+        if (this.valueSupplier instanceof IContextualSupplier<?, ?> contextual) {
             return (Class<FieldContextType>) contextual.getOwnerContextType();
         }
         return (Class<FieldContextType>) Void.class;
@@ -93,7 +95,16 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
     @Override
     public String getFieldReference() {
         return Fields.prettyColored(
-                (Field) ObjectQueryFactory.objectQuery(ownerSupplier.getSuppliedType()).find(address).getLast());
+                (Field) ObjectQueryFactory.objectQuery(ownerSupplier.getSuppliedClass()).find(address).getLast());
     }
 
+    @Override
+    public Type getSuppliedType() {
+        return (Class<FieldType>) valueSupplier.getSuppliedClass();
+    }
+
+    @Override
+    public Optional<FieldType> supply(OwnerContextType ownerContext, Object... otherContexts) throws SupplyException {
+        return this.supply(ownerContext, otherContexts);
+    }
 }

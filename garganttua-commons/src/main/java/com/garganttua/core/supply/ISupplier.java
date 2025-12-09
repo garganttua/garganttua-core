@@ -1,12 +1,19 @@
 package com.garganttua.core.supply;
 
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Optional;
+
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Supplier interface for providing object instances on demand.
  *
  * <p>
- * {@code IObjectSupplier} defines a contract for objects that can provide instances
+ * {@code ISupplier} defines a contract for objects that can provide instances
  * of a specific type. Unlike standard Java suppliers, this interface supports optional
  * return values, exception handling, and type introspection. Suppliers can be stateless
  * (returning new instances each time) or stateful (caching and reusing instances).
@@ -15,7 +22,7 @@ import java.util.Optional;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Simple supplier implementation
- * IObjectSupplier<DatabaseConnection> supplier = new IObjectSupplier<>() {
+ * ISupplier<DatabaseConnection> supplier = new ISupplier<>() {
  *     @Override
  *     public Optional<DatabaseConnection> supply() throws SupplyException {
  *         try {
@@ -26,7 +33,7 @@ import java.util.Optional;
  *     }
  *
  *     @Override
- *     public Class<DatabaseConnection> getSuppliedType() {
+ *     public Type getSuppliedType() {
  *         return DatabaseConnection.class;
  *     }
  * };
@@ -46,10 +53,10 @@ import java.util.Optional;
  *
  * @param <Supplied> the type of object this supplier provides
  * @since 2.0.0-ALPHA01
- * @see IContextualObjectSupplier
+ * @see IContextualSupplier
  * @see Supplier
  */
-public interface IObjectSupplier<Supplied> {
+public interface ISupplier<Supplied> {
 
     /**
      * Supplies an instance of the specified type.
@@ -73,8 +80,25 @@ public interface IObjectSupplier<Supplied> {
      * an actual instance to be created.
      * </p>
      *
+     * @return the {@link Type} representing the supplied type
+     */
+    Type getSuppliedType();
+
+    /**
+     * Returns the runtime class of objects supplied by this supplier.
+     *
+     * <p>
+     * This method extracts the raw {@link Class} from the {@link Type} returned
+     * by {@link #getSuppliedType()}. It handles parameterized types, arrays,
+     * type variables, and wildcards.
+     * </p>
+     *
      * @return the {@link Class} object representing the supplied type
      */
-    Class<Supplied> getSuppliedType();
+    @SuppressWarnings("unchecked")
+    default Class<Supplied> getSuppliedClass() {
+        Type type = this.getSuppliedType();
+        return (Class<Supplied>) ISupplierBuilder.extractClass(type);
+    }
 
 }

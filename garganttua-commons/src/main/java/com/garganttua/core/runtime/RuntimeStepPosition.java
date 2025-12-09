@@ -37,7 +37,7 @@ package com.garganttua.core.runtime;
  * @since 2.0.0-ALPHA01
  * @see Position
  * @see RuntimeStagePosition
- * @see com.garganttua.core.runtime.dsl.IRuntimeStageBuilder#step(String, com.garganttua.core.utils.OrderedMapPosition, com.garganttua.core.supply.dsl.IObjectSupplierBuilder, Class)
+ * @see com.garganttua.core.runtime.dsl.IRuntimeStageBuilder#step(String, com.garganttua.core.utils.OrderedMapPosition, com.garganttua.core.supply.dsl.ISupplierBuilder, Class)
  */
 public record RuntimeStepPosition (Position position,
         String elementName) {

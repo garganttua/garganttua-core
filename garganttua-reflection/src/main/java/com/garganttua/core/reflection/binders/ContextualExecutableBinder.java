@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.reflection.ReflectionException;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -18,9 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class ContextualExecutableBinder<ReturnedType, Context>
         implements IContextualExecutableBinder<ReturnedType, Context> {
 
-    protected final List<IObjectSupplier<?>> parameterSuppliers;
+    protected final List<ISupplier<?>> parameterSuppliers;
 
-    protected ContextualExecutableBinder(List<IObjectSupplier<?>> parameterSuppliers) {
+    protected ContextualExecutableBinder(List<ISupplier<?>> parameterSuppliers) {
         log.atTrace().log("Creating ContextualExecutableBinder with {} parameter suppliers", parameterSuppliers.size());
         this.parameterSuppliers = Objects.requireNonNull(parameterSuppliers, "Parameter suppliers cannot be null");
     }
@@ -32,7 +32,7 @@ public abstract class ContextualExecutableBinder<ReturnedType, Context>
         }
 
         return (Class<?>[]) this.parameterSuppliers.stream().map(supplier -> {
-            if (supplier instanceof IContextualObjectSupplier<?, ?> contextual) {
+            if (supplier instanceof IContextualSupplier<?, ?> contextual) {
                 return contextual.getOwnerContextType();
             }
             return null;
@@ -62,7 +62,7 @@ public abstract class ContextualExecutableBinder<ReturnedType, Context>
 
     @Override
     public Set<Class<?>> getDependencies() {
-        return new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedType())
+        return new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedClass())
                 .collect(Collectors.toSet()));
     }
 

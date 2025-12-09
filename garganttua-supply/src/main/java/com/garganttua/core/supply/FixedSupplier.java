@@ -1,19 +1,20 @@
 package com.garganttua.core.supply;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FixedObjectSupplier<Supplied> implements IObjectSupplier<Supplied> {
+public class FixedSupplier<Supplied> implements ISupplier<Supplied> {
 
     private Supplied object;
 
-    public FixedObjectSupplier(Supplied object) {
-        log.atTrace().log("Entering FixedObjectSupplier constructor with object type: {}", object.getClass().getSimpleName());
+    public FixedSupplier(Supplied object) {
+        log.atTrace().log("Entering FixedSupplier constructor with object type: {}", object.getClass().getSimpleName());
         this.object = Objects.requireNonNull(object, "Fixed object cannot be null");
-        log.atTrace().log("Exiting FixedObjectSupplier constructor");
+        log.atTrace().log("Exiting FixedSupplier constructor");
     }
 
     @Override
@@ -28,7 +29,7 @@ public class FixedObjectSupplier<Supplied> implements IObjectSupplier<Supplied> 
 
     @SuppressWarnings("unchecked")
     @Override
-    public Class<Supplied> getSuppliedType() {
+    public Type getSuppliedType() {
         return (Class<Supplied>) this.object.getClass();
     }
 

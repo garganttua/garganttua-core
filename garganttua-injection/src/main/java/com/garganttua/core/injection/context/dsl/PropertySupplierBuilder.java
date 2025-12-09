@@ -1,5 +1,6 @@
 package com.garganttua.core.injection.context.dsl;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,7 +25,7 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
     }
 
     @Override
-    public Class<Property> getSuppliedType() {
+    public Type getSuppliedType() {
         log.atTrace().log("getSuppliedType() called, returning type={}", this.type);
         return this.type;
     }

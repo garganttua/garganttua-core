@@ -6,7 +6,7 @@ import java.util.UUID;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IDiChildContextFactory;
 import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,7 +20,7 @@ public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeCon
 
         Object input = args[0];
         Class<?> outputType = (Class<?>) args[1];
-        Map<String, IObjectSupplier<?>> presetVariables = (Map<String, IObjectSupplier<?>>) args[2];
+        Map<String, ISupplier<?>> presetVariables = (Map<String, ISupplier<?>>) args[2];
         UUID uuid = (UUID) args[3];
 
         log.atDebug().log("[RuntimeContextFactory.createChildContext] Creating RuntimeContext with input={}, outputType={}, presetVariables={}", input, outputType, presetVariables);

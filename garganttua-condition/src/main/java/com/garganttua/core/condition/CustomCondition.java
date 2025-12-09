@@ -4,17 +4,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CustomCondition<T> implements ICondition  {
 
-    private IObjectSupplier<T> supplier;
+    private ISupplier<T> supplier;
     private Predicate<T> predicate;
 
-    public CustomCondition(IObjectSupplier<T> supplier,
+    public CustomCondition(ISupplier<T> supplier,
             Predicate<T> predicate) {
         log.atTrace().log("Entering CustomCondition constructor");
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
@@ -22,8 +23,11 @@ public class CustomCondition<T> implements ICondition  {
         log.atTrace().log("Exiting CustomCondition constructor");
     }
 
+    /*
+        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
+    */
     @Override
-    public boolean evaluate() throws ConditionException {
+    public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for CustomCondition");
         log.atDebug().log("Evaluating CUSTOM condition - applying predicate to supplied value");
 
@@ -39,6 +43,6 @@ public class CustomCondition<T> implements ICondition  {
 
         log.atInfo().log("CUSTOM condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return result;
+        return new FixedSupplier<Boolean>(result);
     }
 }

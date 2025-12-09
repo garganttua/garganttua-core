@@ -1,6 +1,7 @@
 package com.garganttua.core.reflections;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,6 +29,26 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
         log.atInfo().log("Found {} classes annotated with '{}' in package {}", annotatedClasses.size(), annotation.getName(), package_);
 
         List<Class<?>> result = annotatedClasses.stream().collect(Collectors.toList());
+
+        log.atTrace().log("Exiting getClassesWithAnnotation(package={}, annotation={})", package_, annotation);
+        return result;
+    }
+
+
+    public List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation) {
+        log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", package_, annotation);
+
+        log.atDebug().log("Initializing Reflections scanner for package '{}'", package_);
+        Reflections reflections = new Reflections(package_, Scanners.TypesAnnotated);
+
+        log.atDebug().log("Fetching annotated methods for annotation '{}' in package {}", annotation.getName(), package_);
+        Set<Method> annotatedMethods = reflections.getMethodsAnnotatedWith(annotation);
+
+        log.atInfo().log("Found {} methods annotated with '{}' in package {}", annotatedMethods.size(), annotation.getName(), package_);
+
+        List<Method> result = annotatedMethods.stream().collect(Collectors.toList());
+
+        
 
         log.atTrace().log("Exiting getClassesWithAnnotation(package={}, annotation={})", package_, annotation);
         return result;

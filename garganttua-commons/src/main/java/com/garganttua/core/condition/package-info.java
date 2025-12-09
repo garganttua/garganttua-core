@@ -27,7 +27,7 @@
  *
  * <h3>Simple Conditions</h3>
  * <pre>{@code
- * IObjectSupplier<User> userSupplier = () -> currentUser;
+ * ISupplier<User> userSupplier = () -> currentUser;
  *
  * // Check if user is not null
  * ICondition userExists = isNotNull(userSupplier).build();

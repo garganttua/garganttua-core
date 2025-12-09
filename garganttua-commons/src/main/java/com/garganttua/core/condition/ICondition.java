@@ -1,5 +1,11 @@
 package com.garganttua.core.condition;
 
+import java.lang.reflect.Type;
+
+import com.garganttua.core.expression.ExpressionException;
+import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.supply.ISupplier;
+
 /**
  * Represents a boolean condition that can be evaluated to true or false.
  *
@@ -73,27 +79,17 @@ package com.garganttua.core.condition;
  * @see com.garganttua.core.condition.dsl.IConditionBuilder
  * @see com.garganttua.core.runtime.annotations.Condition
  */
-@FunctionalInterface
-public interface ICondition {
+//@FunctionalInterface
+public interface ICondition extends IExpressionNode<Boolean, ISupplier<Boolean>> {
 
-    /**
-     * Evaluates this condition and returns the boolean result.
-     *
-     * <p>
-     * This method executes the condition's logic and returns true if the condition is satisfied,
-     * false otherwise. Implementations may query external state, perform calculations, or
-     * evaluate nested sub-conditions.
-     * </p>
-     *
-     * <p>
-     * Implementations should be idempotent when possible - calling evaluate() multiple times
-     * with the same external state should produce the same result.
-     * </p>
-     *
-     * @return true if the condition is satisfied, false otherwise
-     * @throws ConditionException if an error occurs during evaluation (e.g., missing required data,
-     *         invalid state, or failed external service call)
-     */
-    boolean evaluate() throws ConditionException;
+    @SuppressWarnings("unchecked")
+    @Override
+    default Type getSuppliedType() {
+        return (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class;
+    }
+
+    default Boolean fullEvaluate() throws ExpressionException {
+        return this.evaluate().supply().get();
+    }
 
 }

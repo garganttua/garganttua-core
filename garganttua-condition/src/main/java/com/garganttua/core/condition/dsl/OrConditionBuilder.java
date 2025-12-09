@@ -31,11 +31,18 @@ public class OrConditionBuilder implements IConditionBuilder {
         log.atTrace().log("Entering build() for OrConditionBuilder");
         log.atDebug().log("Building OR condition from {} condition builders", conditions.length);
 
-        ICondition condition = new OrCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
+        ICondition condition = null;
+        if (!isContextual())
+            condition = new OrCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
         log.atDebug().log("OR condition built successfully");
         log.atTrace().log("Exiting build()");
         return condition;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return Arrays.stream(this.conditions).anyMatch(IConditionBuilder::isContextual);
     }
 
 }

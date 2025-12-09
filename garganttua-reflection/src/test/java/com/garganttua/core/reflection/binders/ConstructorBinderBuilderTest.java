@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
-import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 public class ConstructorBinderBuilderTest {
 
@@ -63,7 +63,7 @@ public class ConstructorBinderBuilderTest {
         IConstructorBinder<TargetClass> binder = builder.build();
         assertNotNull(binder, "Binder should not be null");
 
-        Optional<TargetClass> obj = binder.execute();
+        Optional<? extends TargetClass> obj = binder.execute();
         assertTrue(obj.isPresent(), "Object should be created");
         assertInstanceOf(TargetClass.class, obj.get());
         TargetClass tc = (TargetClass) obj.get();
@@ -74,8 +74,8 @@ public class ConstructorBinderBuilderTest {
     @Test
     void testBuildWithMatchingConstructorUsingSuppliers() throws DslException, ReflectionException {
         builder
-                .withParam(new FixedObjectSupplierBuilder<>("Dynamic"))
-                .withParam(new FixedObjectSupplierBuilder<>(999));
+                .withParam(new FixedSupplierBuilder<>("Dynamic"))
+                .withParam(new FixedSupplierBuilder<>(999));
 
         IConstructorBinder<TargetClass> binder = builder.build();
         TargetClass tc = binder.execute().get();
@@ -101,7 +101,7 @@ public class ConstructorBinderBuilderTest {
 
     @Test
     void testNullableParameterAccepted() throws DslException, ReflectionException {
-        builder.withParam(0, new NullObjectSupplierBuilder<String>(String.class), true);
+        builder.withParam(0, new NullSupplierBuilder<String>(String.class), true);
         builder.withParam(1, 77);
 
         IConstructorBinder<TargetClass> binder = builder.build();

@@ -1,5 +1,6 @@
 package com.garganttua.core.injection.context.beans;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
     }
 
     @Override
-    public Class<Bean> getSuppliedType() {
+    public Type getSuppliedType() {
         log.atTrace().log("Returning supplied type for query {}: {}", query, query.type());
         return this.query.type();
     }

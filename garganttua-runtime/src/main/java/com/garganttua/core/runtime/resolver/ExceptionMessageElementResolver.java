@@ -8,13 +8,16 @@ import java.lang.reflect.AnnotatedElement;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.runtime.IRuntimeContext;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.runtime.annotations.ExceptionMessage;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Resolver(annotations={ExceptionMessage.class})
 public class ExceptionMessageElementResolver implements IElementResolver {
 
     @Override
@@ -32,7 +35,7 @@ public class ExceptionMessageElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Element type is valid String, preparing supplier");
 
-        IObjectSupplierBuilder<String, IContextualObjectSupplier<String, IRuntimeContext<Object, Object>>> s = exceptionMessage();
+        ISupplierBuilder<String, IContextualSupplier<String, IRuntimeContext<Object, Object>>> s = exceptionMessage();
 
         boolean nullable = isNullable(element);
 

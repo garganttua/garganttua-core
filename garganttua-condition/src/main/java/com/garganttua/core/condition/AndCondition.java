@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.ISupplier;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -17,22 +20,25 @@ public class AndCondition implements ICondition {
         log.atTrace().log("Exiting AndCondition constructor");
     }
 
+    /*
+        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
+    */
     @Override
-    public boolean evaluate() throws ConditionException {
+    public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for AndCondition with {} conditions", conditions.size());
         log.atDebug().log("Evaluating AND condition - all {} conditions must be true", conditions.size());
 
-        List<Boolean> results = conditions.stream().map(c -> c.evaluate()).toList();
+        List<ISupplier<Boolean>> results = conditions.stream().map(c -> c.evaluate()).toList();
         log.atDebug().log("Individual condition results: {}", results);
 
-        boolean result = true;
-        for (Boolean b : results) {
-            result &= b;
+        Boolean result = true;
+        for (ISupplier<Boolean> b : results) {
+            result &= b.supply().get();
         }
 
         log.atInfo().log("AND condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return result;
+        return new FixedSupplier<Boolean>(result);
     }
 
 }

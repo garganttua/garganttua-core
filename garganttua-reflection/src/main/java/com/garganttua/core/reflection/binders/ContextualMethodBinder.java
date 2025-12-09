@@ -1,6 +1,7 @@
 package com.garganttua.core.reflection.binders;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,8 +10,8 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -22,13 +23,13 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         implements IContextualMethodBinder<ReturnedType, OwnerContextType> {
 
     private final Class<ReturnedType> returnedClass;
-    private final IObjectSupplier<?> objectSupplier;
+    private final ISupplier<?> objectSupplier;
     private final ObjectAddress method;
     private final boolean collection;
 
-    public ContextualMethodBinder(IObjectSupplier<?> objectSupplier,
+    public ContextualMethodBinder(ISupplier<?> objectSupplier,
             ObjectAddress method,
-            List<IObjectSupplier<?>> parameterSuppliers,
+            List<ISupplier<?>> parameterSuppliers,
             Class<ReturnedType> returnedClass,
             boolean collection) {
         super(parameterSuppliers);
@@ -40,16 +41,16 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         log.atDebug().log("ContextualMethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
     }
 
-    public ContextualMethodBinder(IObjectSupplier<?> objectSupplier,
+    public ContextualMethodBinder(ISupplier<?> objectSupplier,
             ObjectAddress method,
-            List<IObjectSupplier<?>> parameterSuppliers,
+            List<ISupplier<?>> parameterSuppliers,
             Class<ReturnedType> returnedClass) {
         this(objectSupplier, method, parameterSuppliers, returnedClass, false);
     }
 
     @Override
     public Class<OwnerContextType> getOwnerContextType() {
-        if (this.objectSupplier instanceof IContextualObjectSupplier<?, ?> contextual) {
+        if (this.objectSupplier instanceof IContextualSupplier<?, ?> contextual) {
             return (Class<OwnerContextType>) contextual.getOwnerContextType();
         }
         return (Class<OwnerContextType>) Void.class;
@@ -64,11 +65,11 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         try {
 
             Object owner = Supplier.contextualSupply(this.objectSupplier, ownerContext);
-            log.atDebug().log("Executing method {} on owner of type {}", method, objectSupplier.getSuppliedType());
+            log.atDebug().log("Executing method {} on owner of type {}", method, objectSupplier.getSuppliedClass());
 
             Optional<ReturnedType> result = MethodBinder.execute(
                     owner,
-                    objectSupplier.getSuppliedType(),
+                    objectSupplier.getSuppliedClass(),
                     method,
                     returnedClass,
                     collection,
@@ -83,7 +84,18 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
 
     @Override
     public String getExecutableReference() {
-        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedType()).find(this.method).getLast());
+        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedClass()).find(this.method).getLast());
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return this.returnedClass;
+    }
+
+    @Override
+    public Optional<ReturnedType> supply(OwnerContextType ownerContext, Object... otherContexts)
+            throws SupplyException {
+        return this.execute(ownerContext, otherContexts);
     }
 
 }

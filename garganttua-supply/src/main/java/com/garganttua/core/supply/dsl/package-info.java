@@ -11,12 +11,12 @@
  * <h2>Usage Example: Supplier Builder</h2>
  * <pre>{@code
  * // Build fixed value supplier
- * IObjectSupplier<String> supplier = new ObjectSupplierBuilder<String>()
+ * ISupplier<String> supplier = new ObjectSupplierBuilder<String>()
  *     .value("default-value")
  *     .build();
  *
  * // Build property supplier
- * IObjectSupplier<String> urlSupplier = new ObjectSupplierBuilder<String>()
+ * ISupplier<String> urlSupplier = new ObjectSupplierBuilder<String>()
  *     .property("api.url")
  *     .defaultValue("http://localhost:8080")
  *     .build();
@@ -25,7 +25,7 @@
  * <h2>Usage Example: Custom Supplier Builder</h2>
  * <pre>{@code
  * // Build supplier with custom logic
- * IObjectSupplier<String> timestampSupplier =
+ * ISupplier<String> timestampSupplier =
  *     new ObjectSupplierBuilder<String>()
  *         .custom(() -> {
  *             LocalDateTime now = LocalDateTime.now();

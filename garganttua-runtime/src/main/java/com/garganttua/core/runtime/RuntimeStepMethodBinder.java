@@ -1,5 +1,6 @@
 package com.garganttua.core.runtime;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -10,6 +11,8 @@ import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
+import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -109,7 +112,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
         log.atInfo().log("{}Starting method execution", logLineHeader());
 
-        if (!condition.map(ICondition::evaluate).orElse(true)) {
+        if (!condition.map(ICondition::evaluate).orElse(new FixedSupplier<Boolean>(true)).supply().get()) {
             log.atTrace().log("{}Condition not met, skipping step", logLineHeader());
             next.execute(context);
             return;
@@ -173,5 +176,16 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     private String logLineHeader() {
         return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "][Method "
                 + this.delegate.getExecutableReference() + "] ";
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return this.delegate.getSuppliedClass();
+    }
+
+    @Override
+    public Optional<ExecutionReturned> supply(IRuntimeContext<InputType, OutputType> ownerContext,
+            Object... otherContexts) throws SupplyException {
+        return this.execute(ownerContext, otherContexts);
     }
 }

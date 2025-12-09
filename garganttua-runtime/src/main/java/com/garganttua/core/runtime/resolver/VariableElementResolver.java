@@ -8,12 +8,14 @@ import java.lang.reflect.AnnotatedElement;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.runtime.annotations.Variable;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Resolver(annotations={Variable.class})
 public class VariableElementResolver implements IElementResolver {
 
     @Override
@@ -34,7 +36,7 @@ public class VariableElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Preparing variable supplier");
 
-        IObjectSupplierBuilder<?, ?> s = variable(name, elementType);
+        ISupplierBuilder<?, ?> s = variable(name, elementType);
 
         boolean nullable = isNullable(element);
 

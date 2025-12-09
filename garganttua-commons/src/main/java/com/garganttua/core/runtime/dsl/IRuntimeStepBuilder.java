@@ -5,8 +5,8 @@ import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.runtime.IMutex;
 import com.garganttua.core.runtime.IRuntimeStep;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder for configuring a runtime step.
@@ -65,7 +65,7 @@ public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType,
                 IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>,
                 IContextBuilderObserver {
 
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> mutex(IObjectSupplierBuilder<? extends IMutex, ? extends IObjectSupplier<? extends IMutex>> mutex);
+        IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex);
 
         /**
          * Begins configuration of the main method for this step.

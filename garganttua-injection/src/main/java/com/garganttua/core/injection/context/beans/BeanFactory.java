@@ -1,5 +1,6 @@
 package com.garganttua.core.injection.context.beans;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -17,7 +18,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.SupplyException;
-import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,7 +68,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private void doInjection(Bean onBean) {
 		log.atTrace().log("Performing field injection for bean: {}", onBean);
 		this.definition.injectableFields()
-				.forEach(builder -> builder.valueSupplier(new FixedObjectSupplierBuilder<>(onBean)).build().setValue());
+				.forEach(builder -> builder.valueSupplier(new FixedSupplierBuilder<>(onBean)).build().setValue());
 		log.atDebug().log("Field injection completed for bean: {}", onBean);
 	}
 
@@ -88,10 +89,11 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private Optional<Bean> executeConstructorBinder() throws DiException {
 		log.atTrace().log("Executing constructor binder for definition: {}", definition);
 		try {
-			Optional<Bean> result = this.definition.constructorBinder().get().execute();
+			Optional<Bean> result = (Optional<Bean>) this.definition.constructorBinder().get().execute();
 			log.atDebug().log("Constructor binder result: {}", result.orElse(null));
 			return result;
 		} catch (ReflectionException e) {
@@ -110,7 +112,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		for (IBeanPostConstructMethodBinderBuilder<Bean> methodBinderBuilder : this.definition
 				.postConstructMethodBinderBuilders()) {
 			try {
-				IMethodBinder<Void> methodBinder = methodBinderBuilder.build(FixedObjectSupplierBuilder.of(bean));
+				IMethodBinder<Void> methodBinder = methodBinderBuilder.build(FixedSupplierBuilder.of(bean));
 				methodBinder.execute();
 				log.atDebug().log("Post construct method executed for bean: {}", bean);
 			} catch (DslException | ReflectionException e) {
@@ -159,7 +161,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	@Override
-	public Class<Bean> getSuppliedType() {
+	public Type getSuppliedType() {
 		log.atTrace().log("Returning supplied type: {}", definition.reference().type());
 		return this.definition.reference().type();
 	}

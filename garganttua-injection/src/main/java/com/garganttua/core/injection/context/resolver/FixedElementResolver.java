@@ -8,14 +8,16 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Fixed;
+import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.reflection.fields.Fields;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Resolver(annotations={Fixed.class})
 public class FixedElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -42,8 +44,8 @@ public class FixedElementResolver implements IElementResolver {
         Object fixedValue = getFixedValue(fixedAnnotation, elementType);
         log.atInfo().log("Computed fixed value {} for elementType: {}", fixedValue, elementType.getSimpleName());
 
-        IObjectSupplierBuilder<?, IObjectSupplier<?>> builder = new FixedObjectSupplierBuilder(fixedValue);
-        log.atInfo().log("Created FixedObjectSupplierBuilder for elementType: {}", elementType.getSimpleName());
+        ISupplierBuilder<?, ISupplier<?>> builder = new FixedSupplierBuilder(fixedValue);
+        log.atInfo().log("Created FixedSupplierBuilder for elementType: {}", elementType.getSimpleName());
 
         Resolved resolved = new Resolved(true, elementType, builder, IInjectableElementResolver.isNullable(element));
         log.atTrace().log("Exiting resolve with Resolved: {}", resolved);

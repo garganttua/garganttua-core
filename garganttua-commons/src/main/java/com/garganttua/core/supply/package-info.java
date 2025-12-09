@@ -10,8 +10,8 @@
  *
  * <h2>Core Interfaces</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.supply.IObjectSupplier} - Basic object supplier</li>
- *   <li>{@link com.garganttua.core.supply.IContextualObjectSupplier} - Context-aware supplier</li>
+ *   <li>{@link com.garganttua.core.supply.ISupplier} - Basic object supplier</li>
+ *   <li>{@link com.garganttua.core.supply.IContextualSupplier} - Context-aware supplier</li>
  * </ul>
  *
  * <h2>Supplier Types</h2>
@@ -27,7 +27,7 @@
  * <h3>Fixed Supplier</h3>
  * <pre>{@code
  * User user = new User("John");
- * IObjectSupplier<User> supplier = FixedObjectSupplierBuilder
+ * ISupplier<User> supplier = FixedSupplierBuilder
  *     .create(user)
  *     .build();
  *
@@ -36,7 +36,7 @@
  *
  * <h3>Factory Supplier</h3>
  * <pre>{@code
- * IObjectSupplier<UUID> uuidSupplier = FactoryObjectSupplierBuilder
+ * ISupplier<UUID> uuidSupplier = FactoryObjectSupplierBuilder
  *     .create(UUID::randomUUID, UUID.class)
  *     .build();
  *
@@ -46,7 +46,7 @@
  *
  * <h3>Contextual Supplier</h3>
  * <pre>{@code
- * IContextualObjectSupplier<User> userSupplier = ContextualObjectSupplierBuilder
+ * IContextualSupplier<User> userSupplier = ContextualSupplierBuilder
  *     .create(ctx -> {
  *         String userId = ctx.getProperty("userId");
  *         return userRepository.findById(userId);
@@ -81,7 +81,7 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.supply.IObjectSupplier
- * @see com.garganttua.core.supply.IContextualObjectSupplier
+ * @see com.garganttua.core.supply.ISupplier
+ * @see com.garganttua.core.supply.IContextualSupplier
  */
 package com.garganttua.core.supply;

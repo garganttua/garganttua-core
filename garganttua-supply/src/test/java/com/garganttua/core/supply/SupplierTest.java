@@ -2,96 +2,111 @@ package com.garganttua.core.supply;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Type;
 import java.util.Optional;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class SimpleSupplier implements IObjectSupplier<String> {
-    @Override
-    public Optional<String> supply() {
-        return Optional.of("Hello World");
-    }
-
-    @Override
-    public Class<String> getSuppliedType() {
-        return String.class;
-    }
-}
-
-class ContextualSupplier implements IContextualObjectSupplier<String, Integer> {
-    @Override
-    public Class<Integer> getOwnerContextType() {
-        return Integer.class;
-    }
-
-    @Override
-    public Optional<String> supply(Integer context, Object... contexts) {
-        return Optional.of("Value is " + context);
-    }
-
-    @Override
-    public Class<String> getSuppliedType() {
-        return String.class;
-    }
-}
-
-class FailingSupplier implements IContextualObjectSupplier<String, Double> {
-    @Override
-    public Class<Double> getOwnerContextType() {
-        return Double.class;
-    }
-
-    @Override
-    public Optional<String> supply(Double context, Object... contexts) {
-        return Optional.of("Double value: " + context);
-    }
-
-    @Override
-    public Class<String> getSuppliedType() {
-        return String.class;
-    }
-}
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class SupplierTest {
 
     @Test
-    @DisplayName("should get object from simple supplier")
-    void testSimpleSupplier() throws Exception {
-        SimpleSupplier supplier = new SimpleSupplier();
+    public void testSimpleFixedStringSupplier() throws DslException, SupplyException {
 
-        String result = Supplier.contextualSupply(supplier);
+        ISupplierBuilder<String, ISupplier<String>> b = new ISupplierBuilder<String, ISupplier<String>>() {
 
-        assertEquals("Hello World", result);
+            @Override
+            public ISupplier<String> build() throws DslException {
+                return new ISupplier<String>() {
+
+                    @Override
+                    public Optional<String> supply() throws SupplyException {
+                        return Optional.of("Hello");
+                    }
+
+                    @Override
+                    public Type getSuppliedType() {
+                        return String.class;
+                    }
+                };
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return String.class;
+            }
+
+            @Override
+            public boolean isContextual() {
+                throw new UnsupportedOperationException("Unimplemented method 'isContextual'");
+            }
+
+        };
+
+        ISupplier<String> supplier = (ISupplier<String>) b.build();
+
+        assertEquals("Hello", supplier.supply().get());
     }
 
     @Test
-    @DisplayName("should get object from contextual supplier with matching context")
-    void testContextualSupplierWithContext() throws Exception {
-        ContextualSupplier supplier = new ContextualSupplier();
+    public void testFixedObjectSupplier() throws SupplyException, DslException {
+        FixedSupplierBuilder<String> builder = new FixedSupplierBuilder<String>("hello");
 
-        String result = Supplier.contextualSupply(supplier, "not an int", 42, 3.14);
+        ISupplier<String> supplier = builder.build();
 
-        assertEquals("Value is 42", result);
+        assertEquals("hello", supplier.supply().get());
     }
 
     @Test
-    @DisplayName("should throw DiException when no compatible context found")
-    void testContextualSupplierWithoutContext() {
-        FailingSupplier supplier = new FailingSupplier();
+    public void testApplicationContextObjectSupplier() throws DslException, SupplyException {
 
-        SupplyException ex = assertThrows(
-            SupplyException.class,
-            () -> Supplier.contextualSupply(supplier, "string", 42)
-        );
+        IContextualObjectSupply<String, Object> supply = new IContextualObjectSupply<String, Object>() {
 
-        assertTrue(ex.getMessage().contains("No compatible context found"));
+            @Override
+            public Optional<String> supplyObject(Object context, Object... contexts) {
+                return Optional.of("hello from context");
+            }
+
+        };
+
+        ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
+                supply, String.class, Object.class);
+
+        IContextualSupplier<String, Object> supplier = builder.build();
+
+        assertEquals("hello from context", supplier.supply(new Object()).get());
+
     }
 
     @Test
-    @DisplayName("should throw DiException when supplier is null")
-    void testNullSupplier() {
-        assertThrows(SupplyException.class, () -> Supplier.contextualSupply(null));   
+    void testApplicationContextObjectLambdaSupplier() throws DslException, SupplyException {
+
+        IContextualObjectSupply<String, Object> supply = (context, contexts) -> Optional.of("hello from context");
+
+        ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
+                supply, String.class, Object.class);
+
+        IContextualSupplier<String, Object> supplier = builder.build();
+
+        assertEquals("hello from context", supplier.supply(new Object()).get());
     }
+
+    @Test
+    void testCustomContextObjectLambdaSupplier() throws DslException, SupplyException {
+
+        IContextualObjectSupply<String, String> supply = (context, contexts) -> Optional
+                .of("hello from context " + context);
+
+        ContextualSupplierBuilder<String, String> builder = new ContextualSupplierBuilder<String, String>(
+                supply, String.class, String.class);
+
+        IContextualSupplier<String, String> supplier = builder.build();
+
+        assertEquals("hello from context string context", supplier.supply("string context").get());
+    }
+
 }
-

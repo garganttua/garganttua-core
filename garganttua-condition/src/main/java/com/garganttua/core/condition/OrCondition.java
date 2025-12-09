@@ -3,6 +3,9 @@ package com.garganttua.core.condition;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.ISupplier;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -16,25 +19,28 @@ public class OrCondition implements ICondition {
         log.atTrace().log("Exiting OrCondition constructor");
     }
 
+    /*
+        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
+    */
     @Override
-    public boolean evaluate() throws ConditionException {
+    public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for OrCondition with {} conditions", conditions.size());
         log.atDebug().log("Evaluating OR condition - at least one of {} conditions must be true", conditions.size());
 
         int conditionIndex = 0;
         for (ICondition c : conditions) {
-            boolean conditionResult = c.evaluate();
+            boolean conditionResult = c.fullEvaluate();
             log.atDebug().log("Condition {} result: {}", conditionIndex++, conditionResult);
             if (conditionResult) {
                 log.atInfo().log("OR condition evaluation complete: true (short-circuited)");
                 log.atTrace().log("Exiting evaluate() with result: true");
-                return true;
+                return new FixedSupplier<Boolean>(true);
             }
         }
 
         log.atInfo().log("OR condition evaluation complete: false");
         log.atTrace().log("Exiting evaluate() with result: false");
-        return false;
+        return new FixedSupplier<Boolean>(false);
     }
 
 }

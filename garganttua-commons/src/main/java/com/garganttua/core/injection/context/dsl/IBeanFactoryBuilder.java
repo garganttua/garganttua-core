@@ -7,7 +7,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.reflection.binders.Dependent;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for constructing bean factories with complete bean metadata and dependencies.
@@ -49,10 +49,10 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * @since 2.0.0-ALPHA01
  * @see IBeanFactory
  * @see BeanStrategy
- * @see IObjectSupplierBuilder
+ * @see ISupplierBuilder
  * @see Dependent
  */
-public interface IBeanFactoryBuilder<Bean> extends IObjectSupplierBuilder<Bean, IBeanFactory<Bean>>, Dependent {
+public interface IBeanFactoryBuilder<Bean> extends ISupplierBuilder<Bean, IBeanFactory<Bean>>, Dependent {
 
     /**
      * Specifies the bean strategy (scope) for this factory.

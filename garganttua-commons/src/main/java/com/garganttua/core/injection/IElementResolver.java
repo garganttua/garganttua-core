@@ -18,7 +18,7 @@ import java.lang.reflect.AnnotatedElement;
  * IElementResolver propertyResolver = (elementType, element) -> {
  *     Property annotation = element.getAnnotation(Property.class);
  *     String key = annotation.value();
- *     IObjectSupplierBuilder<?, ?> supplier = ...;
+ *     ISupplierBuilder<?, ?> supplier = ...;
  *     return new Resolved(true, elementType, supplier, false);
  * };
  *

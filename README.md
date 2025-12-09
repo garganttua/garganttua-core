@@ -198,7 +198,7 @@ IRuntimeResult<OrderResult> result = runtime.execute(myOrder);
 
 ```java
 import static com.garganttua.core.condition.Conditions.*;
-import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.*;
 
 // Define complex business rule
 ICondition eligibilityCondition = and(

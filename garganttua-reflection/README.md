@@ -439,9 +439,9 @@ class Config {
 }
 
 // Create suppliers
-IObjectSupplier<Config> configSupplier = () -> Optional.of(new Config());
-IObjectSupplier<String> envSupplier = () -> Optional.of("production");
-IObjectSupplier<Integer> maxConnSupplier = () -> Optional.of(100);
+ISupplier<Config> configSupplier = () -> Optional.of(new Config());
+ISupplier<String> envSupplier = () -> Optional.of("production");
+ISupplier<Integer> maxConnSupplier = () -> Optional.of(100);
 
 // Create binders
 FieldBinder<Config, String> envBinder = new FieldBinder<>(

@@ -345,7 +345,7 @@ public class OrderProcessingRuntime {
     );
 
     @Variables
-    private Map<String, IObjectSupplierBuilder<?, ?>> variables = Map.of(
+    private Map<String, ISupplierBuilder<?, ?>> variables = Map.of(
         "timeout", of(30000)
     );
 }

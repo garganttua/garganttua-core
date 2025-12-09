@@ -31,11 +31,18 @@ public class NandConditionBuilder implements IConditionBuilder {
         log.atTrace().log("Entering build() for NandConditionBuilder");
         log.atDebug().log("Building NAND condition from {} condition builders", conditions.length);
 
-        ICondition condition = new NandCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
+        ICondition condition = null;
+        if (!isContextual())
+            condition = new NandCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
         log.atDebug().log("NAND condition built successfully");
         log.atTrace().log("Exiting build()");
         return condition;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return Arrays.stream(this.conditions).anyMatch(IConditionBuilder::isContextual);
     }
 
 }

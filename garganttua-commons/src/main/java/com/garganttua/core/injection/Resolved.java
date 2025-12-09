@@ -2,8 +2,8 @@ package com.garganttua.core.injection;
 
 import java.lang.reflect.AnnotatedElement;
 
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Represents the result of resolving an injectable element in the dependency injection system.
@@ -19,7 +19,7 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Create a resolved result
- * IObjectSupplierBuilder<?, ?> supplierBuilder = ...;
+ * ISupplierBuilder<?, ?> supplierBuilder = ...;
  * Resolved resolved = new Resolved(true, MyService.class, supplierBuilder, false);
  *
  * // Use conditional actions
@@ -48,7 +48,7 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * @see ResolvedAction
  * @see NotResolvedAction
  */
-public record Resolved(boolean resolved, Class<?> elementType, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> elementSupplier, boolean nullable) {
+public record Resolved(boolean resolved, Class<?> elementType, ISupplierBuilder<?, ? extends ISupplier<?>> elementSupplier, boolean nullable) {
 
     /**
      * Creates a not-resolved result for an element.

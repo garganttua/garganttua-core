@@ -1,6 +1,8 @@
 package com.garganttua.core.reflection.binders;
 
+import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.supply.ISupplier;
 
 /**
  * Binder interface for reflective field access and modification.
@@ -54,7 +56,7 @@ import com.garganttua.core.reflection.ReflectionException;
  * @since 2.0.0-ALPHA01
  * @see IContextualFieldBinder
  */
-public interface IFieldBinder<OnwerType, FieldType> {
+public interface IFieldBinder<OnwerType, FieldType> extends ISupplier<FieldType> {
 
     /**
      * Sets the field value on the target instance.

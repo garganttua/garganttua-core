@@ -1,12 +1,12 @@
 package com.garganttua.core.injection;
 
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 
 /**
  * Represents a supplier capable of providing property values in the dependency injection system.
  *
  * <p>
- * An {@code IPropertySupplier} extends {@link IObjectSupplier} to provide property values
+ * An {@code IPropertySupplier} extends {@link ISupplier} to provide property values
  * with context-aware resolution. This interface is used internally by property providers
  * to lazily resolve and supply property values, enabling dynamic property resolution and
  * transformation.
@@ -29,9 +29,9 @@ import com.garganttua.core.supply.IObjectSupplier;
  *
  * @param <Property> the type of property value this supplier provides
  * @since 2.0.0-ALPHA01
- * @see IObjectSupplier
+ * @see ISupplier
  * @see IPropertyProvider
  */
-public interface IPropertySupplier<Property> extends IObjectSupplier<Property>  {
+public interface IPropertySupplier<Property> extends ISupplier<Property>  {
 
 }

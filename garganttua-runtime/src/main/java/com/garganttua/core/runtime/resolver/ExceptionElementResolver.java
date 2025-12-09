@@ -8,11 +8,13 @@ import java.lang.reflect.AnnotatedElement;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Resolver(annotations={com.garganttua.core.runtime.annotations.Exception.class})
 public class ExceptionElementResolver implements IElementResolver {
 
     @SuppressWarnings("unchecked")
@@ -32,7 +34,7 @@ public class ExceptionElementResolver implements IElementResolver {
                 .log("Element type is valid Throwable, preparing supplier");
 
         Class<? extends Throwable> exceptionType = (Class<? extends Throwable>) elementType;
-        IObjectSupplierBuilder<? extends Throwable, ?> s = exception(exceptionType);
+        ISupplierBuilder<? extends Throwable, ?> s = exception(exceptionType);
 
         boolean nullable = isNullable(element);
 

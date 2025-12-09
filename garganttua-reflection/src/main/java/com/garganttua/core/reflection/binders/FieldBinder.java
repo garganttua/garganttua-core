@@ -1,13 +1,14 @@
 package com.garganttua.core.reflection.binders;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.Objects;
 
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType, FieldType> {
 
     private ObjectAddress address;
-    private IObjectSupplier<?> valueSupplier;
-    private IObjectSupplier<OnwerType> ownerSupplier;
+    private ISupplier<?> valueSupplier;
+    private ISupplier<OnwerType> ownerSupplier;
 
-    public FieldBinder(IObjectSupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
-            IObjectSupplier<FieldType> valueSupplier) {
+    public FieldBinder(ISupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
+            ISupplier<FieldType> valueSupplier) {
         log.atTrace().log("Creating FieldBinder: fieldAddress={}", fieldAddress);
         this.address = Objects.requireNonNull(fieldAddress, "Address cannot be null");
         this.valueSupplier = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
@@ -69,6 +70,20 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
     public String getFieldReference() {
         log.atTrace().log("Getting field reference for {}", address);
         return Fields.prettyColored(
-                (Field) ObjectQueryFactory.objectQuery(ownerSupplier.getSuppliedType()).find(address).getLast());
+                (Field) ObjectQueryFactory.objectQuery(ownerSupplier.getSuppliedClass()).find(address).getLast());
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return (Class<FieldType>) valueSupplier.getSuppliedClass();
+    }
+
+    @Override
+    public java.util.Optional<FieldType> supply() throws SupplyException {
+        try {
+            return java.util.Optional.ofNullable(this.getValue());
+        } catch (ReflectionException e) {
+            throw new SupplyException(e);
+        }
     }
 }

@@ -3,6 +3,9 @@ package com.garganttua.core.condition;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.ISupplier;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -16,8 +19,11 @@ public class XorCondition implements ICondition {
         log.atTrace().log("Exiting XorCondition constructor");
     }
 
+    /*
+        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
+    */
     @Override
-    public boolean evaluate() throws ConditionException {
+    public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for XorCondition with {} conditions", conditions.size());
         log.atDebug().log("Evaluating XOR condition - odd number of conditions must be true");
 
@@ -26,7 +32,7 @@ public class XorCondition implements ICondition {
         int conditionIndex = 0;
 
         for (ICondition condition : conditions) {
-            boolean conditionResult = condition.evaluate();
+            boolean conditionResult = condition.fullEvaluate();
             log.atDebug().log("Condition {} result: {}", conditionIndex++, conditionResult);
             if (conditionResult) {
                 result = !result;
@@ -37,7 +43,7 @@ public class XorCondition implements ICondition {
         log.atDebug().log("Total true conditions: {}", trueCount);
         log.atInfo().log("XOR condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return result;
+        return new FixedSupplier<Boolean>(result);
     }
 
 }

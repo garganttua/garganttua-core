@@ -3,6 +3,7 @@ package com.garganttua.core.supply;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,6 +13,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
+import com.garganttua.core.supply.dsl.ICommonSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.SupplierBuilder;
 
@@ -44,6 +46,18 @@ class SupplierBuilderTest {
         @Override
         public Constructor<?> constructor() {
             throw new UnsupportedOperationException("Unimplemented method 'constructor'");
+        }
+
+        @Override
+        public Optional<T> supply() throws SupplyException {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'supply'");
+        }
+
+        @Override
+        public Type getSuppliedType() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
         }
     }
 
@@ -79,6 +93,18 @@ class SupplierBuilderTest {
         public Constructor<?> constructor() {
             throw new UnsupportedOperationException("Unimplemented method 'constructor'");
         }
+
+        @Override
+        public Type getSuppliedType() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
+        }
+
+        @Override
+        public Optional<T> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'supply'");
+        }
     }
 
     static class FakeContextualSupply<T, C>
@@ -91,7 +117,7 @@ class SupplierBuilderTest {
     }
 
     // Helpers to build SupplierBuilder
-    private <T> ISupplierBuilder<T> builder(Class<T> type) {
+    private <T> ICommonSupplierBuilder<T> builder(Class<T> type) {
         return new SupplierBuilder<>(type);
     }
 
@@ -103,16 +129,16 @@ class SupplierBuilderTest {
     void testValueSupplier() throws DslException {
         var b = builder(String.class).withValue("hello");
         var s = b.build();
-        assertTrue(s instanceof NullableObjectSupplier);
-        assertTrue(((NullableObjectSupplier<?>) s).getDelegate() instanceof FixedObjectSupplier);
+        assertTrue(s instanceof NullableSupplier);
+        assertTrue(((NullableSupplier<?>) s).getDelegate() instanceof FixedSupplier);
     }
 
     @Test
     void testValueNullable() throws DslException {
         var b = builder(String.class).withValue("hello").nullable(true);
         var s = b.build();
-        assertTrue(s instanceof NullableObjectSupplier);
-        assertTrue(((NullableObjectSupplier<?>) s).isNullable());
+        assertTrue(s instanceof NullableSupplier);
+        assertTrue(((NullableSupplier<?>) s).isNullable());
     }
 
     // ----------------------------------------------------------------------
@@ -126,8 +152,8 @@ class SupplierBuilderTest {
                 .withConstructor(new FakeContextualConstructorBinder<>());
 
         var s = b.build();
-        assertTrue(s instanceof NullableContextualObjectSupplier);
-        assertTrue(((NullableContextualObjectSupplier<?, ?>) s).getDelegate() instanceof NewContextualObjectSupplier);
+        assertTrue(s instanceof NullableContextualSupplier);
+        assertTrue(((NullableContextualSupplier<?, ?>) s).getDelegate() instanceof NewContextualSupplier);
     }
 
     @Test
@@ -138,8 +164,8 @@ class SupplierBuilderTest {
                 .nullable(true);
 
         var s = b.build();
-        assertTrue(s instanceof NullableContextualObjectSupplier);
-        assertTrue(((NullableContextualObjectSupplier<?, ?>) s).isNullable());
+        assertTrue(s instanceof NullableContextualSupplier);
+        assertTrue(((NullableContextualSupplier<?, ?>) s).isNullable());
     }
 
     // ----------------------------------------------------------------------
@@ -152,8 +178,8 @@ class SupplierBuilderTest {
                 .withContext(Integer.class, new FakeContextualSupply<>());
 
         var s = b.build();
-        assertTrue(s instanceof NullableContextualObjectSupplier);
-        assertTrue(((NullableContextualObjectSupplier<?, ?>) s).getDelegate() instanceof ContextualObjectSupplier);
+        assertTrue(s instanceof NullableContextualSupplier);
+        assertTrue(((NullableContextualSupplier<?, ?>) s).getDelegate() instanceof ContextualSupplier);
     }
 
     @Test
@@ -163,8 +189,8 @@ class SupplierBuilderTest {
                 .nullable(true);
 
         var s = b.build();
-        assertTrue(s instanceof NullableContextualObjectSupplier);
-        assertTrue(((NullableContextualObjectSupplier<?, ?>) s).isNullable());
+        assertTrue(s instanceof NullableContextualSupplier);
+        assertTrue(((NullableContextualSupplier<?, ?>) s).isNullable());
     }
 
     // ----------------------------------------------------------------------
@@ -177,8 +203,8 @@ class SupplierBuilderTest {
                 .withConstructor(new FakeConstructorBinder<>());
 
         var s = b.build();
-        assertTrue(s instanceof NullableObjectSupplier);
-        assertTrue(((NullableObjectSupplier<?>) s).getDelegate() instanceof NewObjectSupplier);
+        assertTrue(s instanceof NullableSupplier);
+        assertTrue(((NullableSupplier<?>) s).getDelegate() instanceof NewSupplier);
     }
 
     @Test
@@ -188,20 +214,20 @@ class SupplierBuilderTest {
                 .nullable(true);
 
         var s = b.build();
-        assertTrue(s instanceof NullableObjectSupplier);
-        assertTrue(((NullableObjectSupplier<?>) s).isNullable());
+        assertTrue(s instanceof NullableSupplier);
+        assertTrue(((NullableSupplier<?>) s).isNullable());
     }
 
     // ----------------------------------------------------------------------
-    // 5) NOTHING DEFINED → NullObjectSupplier
+    // 5) NOTHING DEFINED → NullSupplier
     // ----------------------------------------------------------------------
 
     @Test
     void testDefaultNullSupplier() throws DslException {
         var b = builder(String.class);
         var s = b.build();
-        assertTrue(s instanceof NullableObjectSupplier);
-        assertTrue(((NullableObjectSupplier<?>) s).getDelegate() instanceof NullObjectSupplier);
+        assertTrue(s instanceof NullableSupplier);
+        assertTrue(((NullableSupplier<?>) s).getDelegate() instanceof NullSupplier);
     }
 
     @Test
@@ -209,8 +235,8 @@ class SupplierBuilderTest {
         var b = builder(String.class).nullable(true);
         var s = b.build();
 
-        assertTrue(s instanceof NullableObjectSupplier);
-        assertTrue(((NullableObjectSupplier<?>) s).isNullable());
+        assertTrue(s instanceof NullableSupplier);
+        assertTrue(((NullableSupplier<?>) s).isNullable());
     }
 
     // ----------------------------------------------------------------------

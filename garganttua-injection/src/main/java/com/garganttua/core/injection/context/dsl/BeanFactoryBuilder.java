@@ -3,6 +3,7 @@ package com.garganttua.core.injection.context.dsl;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,7 +25,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.beans.BeanFactory;
-import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -156,7 +157,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
             Arrays.stream(method.getParameters()).forEach(parameter -> {
                 try {
                     Class<?> paramType = parameter.getType();
-                    methodBinderBuilder.withParam(new NullObjectSupplierBuilder<>(paramType));
+                    methodBinderBuilder.withParam(new NullSupplierBuilder<>(paramType));
                     log.atDebug().log("Added parameter {} to post construct method {}", paramType, method.getName());
                 } catch (DslException e) {
                     log.atWarn().log("Failed to add parameter to post construct method {}: {}", method.getName(),
@@ -187,7 +188,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
                                 Class<?> paramType = parameter.getType();
                                 try {
                                     this.constructorBinderBuilder
-                                            .withParam(new NullObjectSupplierBuilder<>(paramType), true);
+                                            .withParam(new NullSupplierBuilder<>(paramType), true);
                                     log.atDebug().log("Added constructor parameter: {}", paramType);
                                 } catch (DslException e) {
                                     log.atWarn().log("Failed to add constructor parameter {}: {}", paramType,
@@ -243,7 +244,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     }
 
     @Override
-    public Class<Bean> getSuppliedType() {
+    public Type getSuppliedType() {
         return this.beanClass;
     }
 

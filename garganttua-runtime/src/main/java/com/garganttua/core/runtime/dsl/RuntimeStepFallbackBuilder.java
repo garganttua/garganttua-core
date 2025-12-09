@@ -18,8 +18,8 @@ import com.garganttua.core.runtime.RuntimeStepFallbackBinder;
 import com.garganttua.core.runtime.annotations.OnException;
 import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Variable;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     protected RuntimeStepFallbackBuilder(String runtimeName,
             String stageName, String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
-            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier,
+            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier,
             IInjectableElementResolver resolver)
             throws DslException {
         super(Optional.ofNullable(resolver), up, supplier);

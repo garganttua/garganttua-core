@@ -6,7 +6,7 @@ import java.util.Optional;
  * Contextual supplier interface for providing object instances based on runtime context.
  *
  * <p>
- * {@code IContextualObjectSupplier} extends {@link IObjectSupplier} to support context-aware
+ * {@code IContextualSupplier} extends {@link ISupplier} to support context-aware
  * object creation. This is essential for dependency injection scenarios where the created
  * object depends on runtime information such as the owning container, request scope, or
  * parent objects. The supplier requires a primary context (owner) and optionally accepts
@@ -16,8 +16,8 @@ import java.util.Optional;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Supplier that requires a DiContext to resolve dependencies
- * IContextualObjectSupplier<UserService, DiContext> supplier =
- *     new IContextualObjectSupplier<>() {
+ * IContextualSupplier<UserService, DiContext> supplier =
+ *     new IContextualSupplier<>() {
  *         @Override
  *         public Class<DiContext> getOwnerContextType() {
  *             return DiContext.class;
@@ -33,7 +33,7 @@ import java.util.Optional;
  *         }
  *
  *         @Override
- *         public Class<UserService> getSuppliedType() {
+ *         public Type getSuppliedType() {
  *             return UserService.class;
  *         }
  *     };
@@ -45,7 +45,7 @@ import java.util.Optional;
  *
  * <h2>Context Resolution</h2>
  * <p>
- * The {@link Supplier#contextualSupply(IObjectSupplier, Object...)} utility method
+ * The {@link Supplier#contextualSupply(ISupplier, Object...)} utility method
  * automatically matches the required context type from the provided contexts array,
  * simplifying context-aware instantiation.
  * </p>
@@ -59,10 +59,10 @@ import java.util.Optional;
  * @param <Supplied> the type of object this supplier provides
  * @param <Context> the type of the required owner context
  * @since 2.0.0-ALPHA01
- * @see IObjectSupplier
- * @see Supplier#contextualSupply(IObjectSupplier, Object...)
+ * @see ISupplier
+ * @see Supplier#contextualSupply(ISupplier, Object...)
  */
-public interface IContextualObjectSupplier<Supplied, Context> extends IObjectSupplier<Supplied> {
+public interface IContextualSupplier<Supplied, Context> extends ISupplier<Supplied> {
 
     /**
      * Throws an exception indicating that context is required.

@@ -16,8 +16,8 @@ import com.garganttua.core.runtime.annotations.FallBack;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Variable;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +30,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     private String stepName;
     private String stageName;
     private String runtimeName;
-    private IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier;
+    private ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier;
     private IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> methodBuilder;
     private Class<ExecutionReturn> executionReturn;
     private IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallbackBuilder;
@@ -39,7 +39,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     public RuntimeStepBuilder(RuntimeStageBuilder<InputType, OutputType> runtimeStageBuilder, String runtimeName,
             String stageName, String stepName,
             Class<ExecutionReturn> executionReturn,
-            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier) {
+            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier) {
         super(runtimeStageBuilder);
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
@@ -48,7 +48,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         this.supplier = Objects.requireNonNull(supplier, "Supplier builder cannot be null");
 
         log.atTrace().log("{} Initialized RuntimeStepBuilder", logLineHeader());
-        log.atDebug().log("{} Supplier type: {}", logLineHeader(), supplier.getSuppliedType());
+        log.atDebug().log("{} Supplier type: {}", logLineHeader(), supplier.getSuppliedClass());
     }
 
     @Override
@@ -93,7 +93,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
 
     private void detectFallback() {
         log.atTrace().log("{} Detecting fallback method", logLineHeader());
-        Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedType(),
+        Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedClass(),
                 FallBack.class);
         if (fallbackMethod != null) {
             try {
@@ -121,11 +121,11 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     @SuppressWarnings("unchecked")
     private Method detectOperationMethod() throws DslException {
         log.atTrace().log("{} Detecting operation method", logLineHeader());
-        Method method = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedType(), Operation.class);
+        Method method = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedClass(), Operation.class);
         if (method == null) {
             log.atError().log("{} No @Operation method found in class {}", logLineHeader(),
-                    supplier.getSuppliedType().getSimpleName());
-            throw new DslException("Class " + supplier.getSuppliedType().getSimpleName() +
+                    supplier.getSuppliedClass().getSimpleName());
+            throw new DslException("Class " + supplier.getSuppliedClass().getSimpleName() +
                     " does not declare any @Operation method");
         }
         this.executionReturn = (Class<ExecutionReturn>) method.getReturnType();
@@ -181,7 +181,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
 
     @Override
     public IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> mutex(
-            IObjectSupplierBuilder<? extends IMutex, ? extends IObjectSupplier<? extends IMutex>> mutex) {
+            ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'mutex'");
     }

@@ -31,11 +31,18 @@ public class AndConditionBuilder implements IConditionBuilder {
         log.atTrace().log("Entering build() for AndConditionBuilder");
         log.atDebug().log("Building AND condition from {} condition builders", conditions.length);
 
-        ICondition condition = new AndCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
+        ICondition condition = null;
+        if( !isContextual() )
+            condition = new AndCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
         log.atDebug().log("AND condition built successfully");
         log.atTrace().log("Exiting build()");
         return condition;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return Arrays.stream(this.conditions).anyMatch(IConditionBuilder::isContextual);
     }
 
 }

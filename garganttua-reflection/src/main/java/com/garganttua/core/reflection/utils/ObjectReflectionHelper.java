@@ -8,6 +8,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Vector;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.reflection.IAnnotationScanner;
@@ -196,6 +197,41 @@ public class ObjectReflectionHelper {
 					+ entity.getClass().getName() + " with value " + value, e);
 		}
 	}
+
+
+    /**
+     * Helper method to extract a Class from a Type.
+     *
+     * @param type the Type to extract from
+     * @return the extracted Class
+     */
+    public static Class<?> extractClass(Type type) {
+        if (type instanceof Class<?>) {
+            return (Class<?>) type;
+        }
+
+        if (type instanceof ParameterizedType) {
+            return extractClass(((ParameterizedType) type).getRawType());
+        }
+
+        if (type instanceof GenericArrayType) {
+            Type componentType = ((GenericArrayType) type).getGenericComponentType();
+            Class<?> componentClass = extractClass(componentType);
+            return java.lang.reflect.Array.newInstance(componentClass, 0).getClass();
+        }
+
+        if (type instanceof TypeVariable) {
+            Type[] bounds = ((TypeVariable<?>) type).getBounds();
+            return bounds.length == 0 ? Object.class : extractClass(bounds[0]);
+        }
+
+        if (type instanceof WildcardType) {
+            Type[] upperBounds = ((WildcardType) type).getUpperBounds();
+            return upperBounds.length == 0 ? Object.class : extractClass(upperBounds[0]);
+        }
+
+        throw new IllegalArgumentException("Impossible de convertir en Class<?> : " + type);
+    }
 
 	public static Object getObjectFieldValue(Object entity, String fieldName) throws ReflectionException {
 		log.atTrace().log("Getting field {} from object of type {}", fieldName, entity.getClass().getName());

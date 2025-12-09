@@ -1,28 +1,29 @@
 package com.garganttua.core.supply;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ContextualObjectSupplier<Supplied, Context> implements IContextualObjectSupplier<Supplied, Context> {
+public class ContextualSupplier<Supplied, Context> implements IContextualSupplier<Supplied, Context> {
 
     private IContextualObjectSupply<Supplied, Context> supply;
     private Class<Supplied> suppliedType;
     private Class<Context> contextType;
 
-    public ContextualObjectSupplier(IContextualObjectSupply<Supplied, Context> supply,
+    public ContextualSupplier(IContextualObjectSupply<Supplied, Context> supply,
             Class<Supplied> suppliedType, Class<Context> contextType) {
-        log.atTrace().log("Entering ContextualObjectSupplier constructor with suppliedType: {}, contextType: {}", suppliedType, contextType);
+        log.atTrace().log("Entering ContextualSupplier constructor with suppliedType: {}, contextType: {}", suppliedType, contextType);
         this.supply = Objects.requireNonNull(supply, "Contextual supply cannot be null");
         this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
         this.contextType = Objects.requireNonNull(contextType, "Context type cannot be null");
-        log.atTrace().log("Exiting ContextualObjectSupplier constructor");
+        log.atTrace().log("Exiting ContextualSupplier constructor");
     }
 
     @Override
-    public Class<Supplied> getSuppliedType() {
+    public Type getSuppliedType() {
         return this.suppliedType;
     }
 

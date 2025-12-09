@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.condition.ICondition;
@@ -20,7 +19,6 @@ import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeContext;
-import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
 import com.garganttua.core.runtime.RuntimeStepMethodBinder;
 import com.garganttua.core.runtime.annotations.Catch;
@@ -29,8 +27,8 @@ import com.garganttua.core.runtime.annotations.Condition;
 import com.garganttua.core.runtime.annotations.Operation;
 import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Variable;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +43,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     private Boolean output = false;
     private Integer successCode = IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
     private Map<Class<? extends Throwable>, IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>> katches = new HashMap<>();
-    private IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier;
+    private ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier;
     private String stepName;
     private String stageName;
     private String runtimeName;
@@ -56,7 +54,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     protected RuntimeStepMethodBuilder(String runtimeName,
             String stageName, String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
-            IObjectSupplierBuilder<StepObjectType, ? extends IObjectSupplier<StepObjectType>> supplier,
+            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier,
             IInjectableElementResolver resolver)
             throws DslException {
         super(Optional.ofNullable(resolver), up, supplier);
@@ -220,7 +218,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             throw new DslException("Owner supplier supplied empty value");
         }
         String conditionField = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
-                supplier.getSuppliedType(), Condition.class, IConditionBuilder.class);
+                supplier.getSuppliedClass(), Condition.class, IConditionBuilder.class);
 
         if (conditionField != null) {
             IConditionBuilder condition = (IConditionBuilder) ObjectQueryFactory.objectQuery(owner.get())

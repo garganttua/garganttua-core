@@ -3,8 +3,8 @@ package com.garganttua.core.runtime.dsl;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.runtime.IRuntimeStage;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 
 /**
@@ -64,7 +64,7 @@ public interface IRuntimeStageBuilder<InputType, OutputType> extends IAutomaticL
      * @return a builder for configuring the step
      * @see IRuntimeStepBuilder
      */
-    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
+    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
 
     /**
      * Creates a new step at a specific position relative to existing steps.
@@ -83,6 +83,6 @@ public interface IRuntimeStageBuilder<InputType, OutputType> extends IAutomaticL
      * @return a builder for configuring the step
      * @see com.garganttua.core.runtime.RuntimeStepPosition
      */
-    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, OrderedMapPosition<String> position, IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
+    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, OrderedMapPosition<String> position, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
 
 }

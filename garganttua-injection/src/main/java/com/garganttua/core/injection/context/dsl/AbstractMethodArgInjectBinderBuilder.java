@@ -11,8 +11,8 @@ import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
-import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
     private IInjectableElementResolver resolver;
 
     protected AbstractMethodArgInjectBinderBuilder(IInjectableElementResolver resolver, Link up,
-            IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+            ISupplierBuilder<?, ?> supplier) throws DslException {
         super(up, supplier);
         log.atTrace().log("Entering constructor with resolver: {}, link: {}, supplier: {}", resolver, up, supplier);
         this.resolver = Objects.requireNonNull(resolver, "Resolver cannot be null");
@@ -34,7 +34,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
     }
 
     protected AbstractMethodArgInjectBinderBuilder(IInjectableElementResolver resolver, Link up,
-            IObjectSupplierBuilder<?, ?> supplier, boolean collection) throws DslException {
+            ISupplierBuilder<?, ?> supplier, boolean collection) throws DslException {
         super(up, supplier, collection);
         log.atTrace().log("Entering constructor with resolver: {}, link: {}, supplier: {}, collection: {}", resolver,
                 up, supplier, collection);
@@ -44,7 +44,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
     }
 
     protected AbstractMethodArgInjectBinderBuilder(Optional<IInjectableElementResolver> resolver, Link up,
-            IObjectSupplierBuilder<?, ?> supplier) throws DslException {
+            ISupplierBuilder<?, ?> supplier) throws DslException {
         super(up, supplier);
         log.atTrace().log("Entering constructor with optional resolver: {}, link: {}, supplier: {}", resolver, up,
                 supplier);
@@ -55,7 +55,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
     }
 
     protected AbstractMethodArgInjectBinderBuilder(Optional<IInjectableElementResolver> resolver, Link up,
-            IObjectSupplierBuilder<?, ?> supplier, boolean collection) throws DslException {
+            ISupplierBuilder<?, ?> supplier, boolean collection) throws DslException {
         super(up, supplier, collection);
         log.atTrace().log("Entering constructor with optional resolver: {}, link: {}, supplier: {}, collection: {}",
                 resolver, up, supplier, collection);
@@ -85,9 +85,9 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
                     },
                     n -> {
                         log.atWarn().log(
-                                "Method parameter {} not resolved, using NullObjectSupplierBuilder for type: {}",
+                                "Method parameter {} not resolved, using NullSupplierBuilder for type: {}",
                                 counter.get(), r.elementType());
-                        this.withParam(counter.getAndIncrement(), new NullObjectSupplierBuilder<>(r.elementType()), n);
+                        this.withParam(counter.getAndIncrement(), new NullSupplierBuilder<>(r.elementType()), n);
                     });
         });
 

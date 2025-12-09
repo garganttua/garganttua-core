@@ -4,8 +4,8 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for configuring post-construction methods to be invoked after bean instantiation.
@@ -81,6 +81,6 @@ public interface IBeanPostConstructMethodBinderBuilder<Bean> extends
      * @return the configured method binder
      * @throws DslException if the method binder cannot be built
      */
-    IMethodBinder<Void> build(IObjectSupplierBuilder<Bean, IObjectSupplier<Bean>> bean) throws DslException;
+    IMethodBinder<Void> build(ISupplierBuilder<Bean, ISupplier<Bean>> bean) throws DslException;
 
 }

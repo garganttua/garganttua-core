@@ -67,14 +67,14 @@ boolean result = condition.evaluate();
 
 ### Object Suppliers
 
-Conditions operate on values provided by `IObjectSupplier<T>` implementations. Suppliers defer object retrieval until `evaluate()` is called, enabling:
+Conditions operate on values provided by `ISupplier<T>` implementations. Suppliers defer object retrieval until `evaluate()` is called, enabling:
 - **Lazy evaluation** - Values are fetched only when needed
 - **Dynamic values** - Conditions can work with changing data
 - **Integration** - Seamless connection with the supply module
 
 Common supplier types:
-- `FixedObjectSupplierBuilder.of(value)` - Supplies a fixed value
-- `NullObjectSupplierBuilder.of(Type.class)` - Supplies null
+- `FixedSupplierBuilder.of(value)` - Supplies a fixed value
+- `NullSupplierBuilder.of(Type.class)` - Supplies null
 - Custom suppliers for database queries, API calls, etc.
 
 ### Logical Operators
@@ -120,7 +120,7 @@ Both extend the framework's exception hierarchy for consistent error handling.
 
 ```java
 import static com.garganttua.core.condition.Conditions.*;
-import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.*;
 
 // Simple null check
 boolean isPresent = isNotNull(of("hello")).build().evaluate(); // true
@@ -144,7 +144,7 @@ isNull(of("present")).build().evaluate(); // false
 
 // Check if value is not null
 isNotNull(of("hello")).build().evaluate(); // true
-isNotNull(NullObjectSupplierBuilder.of(String.class)).build().evaluate(); // false
+isNotNull(NullSupplierBuilder.of(String.class)).build().evaluate(); // false
 ```
 
 ### Equality Checks
@@ -355,10 +355,10 @@ boolean isValidProduct = and(
 
 1. **Always use suppliers** - Use `of(...)` or custom suppliers to delay value retrieval until evaluation. This enables lazy evaluation and dynamic conditions.
 
-2. **Use static imports** - Import `Conditions.*` and `FixedObjectSupplierBuilder.*` statically for cleaner, more readable code:
+2. **Use static imports** - Import `Conditions.*` and `FixedSupplierBuilder.*` statically for cleaner, more readable code:
    ```java
    import static com.garganttua.core.condition.Conditions.*;
-   import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
+   import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.*;
    ```
 
 3. **Chain small conditions** - Break complex logic into smaller, composable conditions instead of monolithic predicate blocks. This improves readability and reusability.
@@ -424,7 +424,7 @@ boolean isValidProduct = and(
 
 13. **Create domain helpers** - Wrap common condition patterns in helper methods:
     ```java
-    public static IConditionBuilder isAdult(IObjectSupplierBuilder<User, ?> user) {
+    public static IConditionBuilder isAdult(ISupplierBuilder<User, ?> user) {
         return custom(user, User::getAge, age -> age >= 18);
     }
     ```

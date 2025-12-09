@@ -16,8 +16,8 @@ import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStage;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMap;
 import com.garganttua.core.utils.OrderedMapPosition;
 
@@ -54,7 +54,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
     @Override
     public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
             String stepName,
-            IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier,
+            ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier,
             Class<ExecutionReturn> returnType) {
 
         log.atTrace()
@@ -78,7 +78,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
     public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
             String stepName,
             OrderedMapPosition<String> position,
-            IObjectSupplierBuilder<StepObjectType, IObjectSupplier<StepObjectType>> objectSupplier,
+            ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier,
             Class<ExecutionReturn> returnType) {
 
         log.atTrace()
@@ -147,7 +147,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
             log.atDebug()
                     .log(logLineHeader() + "Creating auto-detected step");
 
-            IObjectSupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
+            ISupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
             IRuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this, runtimeName,
                     stageName, stepName, Void.class, supplierBuilder)
                     .autoDetect(true);

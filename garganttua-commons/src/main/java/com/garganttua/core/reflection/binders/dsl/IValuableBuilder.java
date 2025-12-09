@@ -2,8 +2,8 @@ package com.garganttua.core.reflection.binders.dsl;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for configuring single-value elements (fields).
@@ -85,7 +85,7 @@ public interface IValuableBuilder<Builder, Link, Built> extends IAutomaticLinked
      * @return this builder instance for method chaining
      * @throws DslException if the supplier's type is incompatible with the field type
      */
-    IValuableBuilder<Builder, Link, Built> withValue(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException;
+    IValuableBuilder<Builder, Link, Built> withValue(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException;
 
     /**
      * Configures whether {@code null} values are allowed for the field.

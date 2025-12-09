@@ -8,8 +8,8 @@ import lombok.extern.slf4j.Slf4j;
  * Exception thrown when errors occur during object supply operations.
  *
  * <p>
- * {@code SupplyException} is thrown by {@link IObjectSupplier} and
- * {@link IContextualObjectSupplier} implementations when object creation or
+ * {@code SupplyException} is thrown by {@link ISupplier} and
+ * {@link IContextualSupplier} implementations when object creation or
  * retrieval fails. This includes scenarios such as missing contexts, invalid
  * configuration, instantiation failures, or resource unavailability.
  * </p>
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * IObjectSupplier<Database> supplier = ...;
+ * ISupplier<Database> supplier = ...;
  * try {
  *     Database db = Supplier.contextualSupply(supplier, contexts);
  * } catch (SupplyException e) {
@@ -37,8 +37,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  * @see CoreException
- * @see IObjectSupplier
- * @see IContextualObjectSupplier
+ * @see ISupplier
+ * @see IContextualSupplier
  */
 @Slf4j
 public class SupplyException extends CoreException {

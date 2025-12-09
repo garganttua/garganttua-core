@@ -11,12 +11,12 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.ConstructorBinder;
 import com.garganttua.core.reflection.binders.ContextualConstructorBinder;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.NullableContextualObjectSupplier;
-import com.garganttua.core.supply.NullableObjectSupplier;
-import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.NullableContextualSupplier;
+import com.garganttua.core.supply.NullableSupplier;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,7 +26,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         implements IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>> {
 
     private final Class<Constructed> objectClass;
-    private final List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> parameters;
+    private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> parameters;
     private final List<Boolean> parameterNullableAllowed;
 
     protected AbstractConstructorBinderBuilder(Link Link, Class<Constructed> objectClass) {
@@ -49,7 +49,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(int i, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
+    public Builder withParam(int i, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
         ensureCapacity(i);
         this.parameters.set(i, supplier);
         this.parameterNullableAllowed.set(i, false);
@@ -65,7 +65,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(int i, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException {
+    public Builder withParam(int i, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, boolean acceptNullable) throws DslException {
         ensureCapacity(i);
         this.parameters.set(i, supplier);
         this.parameterNullableAllowed.set(i, acceptNullable);
@@ -84,12 +84,12 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
+    public Builder withParam(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
         return withParam(supplier, false);
     }
 
     @Override
-    public Builder withParam(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException {
+    public Builder withParam(ISupplierBuilder<?, ? extends ISupplier<?>> supplier, boolean acceptNullable) throws DslException {
         int idx = parameters.size();
         return withParam(idx, supplier, acceptNullable);
     }
@@ -100,7 +100,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
+    public Builder withParam(String paramName, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
@@ -110,7 +110,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     @Override
-    public Builder withParam(String paramName, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean acceptNullable)
+    public Builder withParam(String paramName, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, boolean acceptNullable)
             throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }
@@ -137,9 +137,9 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
             }
         }
 
-        List<IObjectSupplier<?>> builtsuppliers = new ArrayList<>();
+        List<ISupplier<?>> builtsuppliers = new ArrayList<>();
         for (int i = 0; i < parameters.size(); i++) {
-            IObjectSupplierBuilder<?, ?> builder = parameters.get(i);
+            ISupplierBuilder<?, ?> builder = parameters.get(i);
             if (builder == null) {
                 log.atWarn().log("[ConstructorBinderBuilder] Parameter {} not configured", i);
                 throw new DslException("Parameter " + i + " not configured");
@@ -166,7 +166,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     protected Class<?>[] getParameterTypes() {
-        return this.parameters.stream().map(IObjectSupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
+        return this.parameters.stream().map(ISupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
     }
 
     protected Constructor<Constructed> findConstructor() {
@@ -229,17 +229,17 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return primitive;
     }
 
-    protected static IObjectSupplier<?> createNullableObjectSupplier(IObjectSupplierBuilder<?,?> builder,
+    protected static ISupplier<?> createNullableObjectSupplier(ISupplierBuilder<?,?> builder,
             boolean allowNullable) throws DslException {
         if (builder.isContextual()) {
-            IContextualObjectSupplier<?, ?> contextualSupplier = (IContextualObjectSupplier<?, ?>) builder
+            IContextualSupplier<?, ?> contextualSupplier = (IContextualSupplier<?, ?>) builder
                     .build();
-            return new NullableContextualObjectSupplier<>(contextualSupplier, allowNullable);
+            return new NullableContextualSupplier<>(contextualSupplier, allowNullable);
         }
-        return new NullableObjectSupplier<>(builder.build(), allowNullable);
+        return new NullableSupplier<>(builder.build(), allowNullable);
     }
 
-    protected static IObjectSupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply) {
-        return new FixedObjectSupplierBuilder<>(objectToSupply);
+    protected static ISupplierBuilder<?, ?> createFixedObjectSupplierBuilder(Object objectToSupply) {
+        return new FixedSupplierBuilder<>(objectToSupply);
     }
 }

@@ -5,18 +5,19 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CustomExtractedCondition<T, R> implements ICondition {
 
-    private IObjectSupplier<T> supplier;
+    private ISupplier<T> supplier;
     private Function<T, R> extractor;
     private Predicate<R> predicate;
 
-    public CustomExtractedCondition(IObjectSupplier<T> supplier,
+    public CustomExtractedCondition(ISupplier<T> supplier,
             Function<T, R> extractor,
             Predicate<R> predicate) {
         log.atTrace().log("Entering CustomExtractedCondition constructor");
@@ -26,8 +27,11 @@ public class CustomExtractedCondition<T, R> implements ICondition {
         log.atTrace().log("Exiting CustomExtractedCondition constructor");
     }
 
+    /*
+        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
+    */
     @Override
-    public boolean evaluate() throws ConditionException {
+    public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for CustomExtractedCondition");
         log.atDebug().log("Evaluating CUSTOM EXTRACTED condition - applying extractor then predicate");
 
@@ -46,7 +50,7 @@ public class CustomExtractedCondition<T, R> implements ICondition {
 
         log.atInfo().log("CUSTOM EXTRACTED condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return result;
+        return new FixedSupplier<Boolean>(result);
     }
 
 }

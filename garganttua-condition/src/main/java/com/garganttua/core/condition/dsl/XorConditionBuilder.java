@@ -31,11 +31,18 @@ public class XorConditionBuilder implements IConditionBuilder {
         log.atTrace().log("Entering build() for XorConditionBuilder");
         log.atDebug().log("Building XOR condition from {} condition builders", conditions.length);
 
-        ICondition condition = new XorCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
+        ICondition condition = null;
+        if (!isContextual())
+            condition = new XorCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
         log.atDebug().log("XOR condition built successfully");
         log.atTrace().log("Exiting build()");
         return condition;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return Arrays.stream(this.conditions).anyMatch(IConditionBuilder::isContextual);
     }
 
 }

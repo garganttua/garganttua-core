@@ -10,19 +10,19 @@
  *
  * <h2>Main Implementation Classes</h2>
  * <ul>
- *   <li>{@code FixedObjectSupplier} - Supplies fixed value</li>
- *   <li>{@code NullObjectSupplier} - Supplies null value</li>
- *   <li>{@code NewObjectSupplier} - Creates new object instances</li>
- *   <li>{@code NullableObjectSupplier} - Supplies value or null</li>
- *   <li>{@code ContextualObjectSupplier} - Supplies value from context</li>
- *   <li>{@code NewContextualObjectSupplier} - Creates objects with context</li>
- *   <li>{@code NullableContextualObjectSupplier} - Context-aware nullable supplier</li>
+ *   <li>{@code FixedSupplier} - Supplies fixed value</li>
+ *   <li>{@code NullSupplier} - Supplies null value</li>
+ *   <li>{@code NewSupplier} - Creates new object instances</li>
+ *   <li>{@code NullableSupplier} - Supplies value or null</li>
+ *   <li>{@code ContextualSupplier} - Supplies value from context</li>
+ *   <li>{@code NewContextualSupplier} - Creates objects with context</li>
+ *   <li>{@code NullableContextualSupplier} - Context-aware nullable supplier</li>
  * </ul>
  *
  * <h2>Usage Example: Fixed Supplier</h2>
  * <pre>{@code
  * // Create fixed value supplier
- * IObjectSupplier<String> supplier = new FixedObjectSupplier<>("default-value");
+ * ISupplier<String> supplier = new FixedSupplier<>("default-value");
  *
  * // Get value
  * String value = supplier.get();  // Always returns "default-value"
@@ -31,7 +31,7 @@
  * <h2>Usage Example: New Object Supplier</h2>
  * <pre>{@code
  * // Create supplier that creates new instances
- * IObjectSupplier<User> userSupplier = new NewObjectSupplier<>(
+ * ISupplier<User> userSupplier = new NewSupplier<>(
  *     User.class,
  *     () -> {
  *         User user = new User();
@@ -48,8 +48,8 @@
  * <h2>Usage Example: Contextual Supplier</h2>
  * <pre>{@code
  * // Create context-aware supplier
- * IObjectSupplier<UserRepository> repoSupplier =
- *     new ContextualObjectSupplier<>(
+ * ISupplier<UserRepository> repoSupplier =
+ *     new ContextualSupplier<>(
  *         context -> context.getBean(UserRepository.class)
  *     );
  *
@@ -60,7 +60,7 @@
  * <h2>Usage Example: Nullable Supplier</h2>
  * <pre>{@code
  * // Create nullable supplier
- * IObjectSupplier<String> supplier = new NullableObjectSupplier<>(
+ * ISupplier<String> supplier = new NullableSupplier<>(
  *     () -> {
  *         String value = fetchFromCache();
  *         return value != null ? value : null;

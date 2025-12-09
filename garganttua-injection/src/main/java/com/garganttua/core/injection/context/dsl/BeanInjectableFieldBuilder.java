@@ -7,8 +7,8 @@ import java.util.Set;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.binders.dsl.AbstractFieldBinderBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,7 +24,7 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
         log.atTrace().log("Entering BeanInjectableFieldBuilder constructor with link: {}, beanSupplierBuilder: {}, fieldType: {}",
                 link, beanSupplierBuilder, fieldType);
         log.atInfo().log("BeanInjectableFieldBuilder initialized for fieldType: {} in beanClass: {}", fieldType,
-                link.getSuppliedType());
+                link.getSuppliedClass());
         log.atTrace().log("Exiting BeanInjectableFieldBuilder constructor");
     }
 
@@ -39,13 +39,13 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
 
     @Override
     public IBeanInjectableFieldBuilder<FieldType, BeanType> valueSupplier(
-            IObjectSupplierBuilder<BeanType, ? extends IObjectSupplier<BeanType>> valueSupplier) {
+            ISupplierBuilder<BeanType, ? extends ISupplier<BeanType>> valueSupplier) {
         log.atTrace().log("Entering valueSupplier() with valueSupplier: {}", valueSupplier);
         this.ownerSupplierBuilder = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
         log.atDebug().log("Set ownerSupplierBuilder for fieldType: {} to supplier of type: {}", this.fieldType,
-                valueSupplier.getSuppliedType());
+                valueSupplier.getSuppliedClass());
         log.atInfo().log("Value supplier set for fieldType: {} in beanClass: {}", this.fieldType,
-                valueSupplier.getSuppliedType());
+                valueSupplier.getSuppliedClass());
         log.atTrace().log("Exiting valueSupplier()");
         return this;
     }
@@ -53,13 +53,13 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection() for fieldType: {} in beanClass: {}", this.fieldType,
-                this.ownerSupplierBuilder.getSuppliedType());
+                this.ownerSupplierBuilder.getSuppliedClass());
 
         log.atDebug().log("Finding field with address: {}", this.address);
         Field field = this.findField();
         if (field == null) {
             String message = "Field with address " + this.address + " not found in class "
-                    + this.ownerSupplierBuilder.getSuppliedType().getSimpleName();
+                    + this.ownerSupplierBuilder.getSuppliedClass().getSimpleName();
             log.atError().log(message);
             throw new DslException(message);
         }

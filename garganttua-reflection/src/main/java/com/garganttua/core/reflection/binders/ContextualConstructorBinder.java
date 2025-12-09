@@ -2,13 +2,15 @@ package com.garganttua.core.reflection.binders;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.constructors.Constructors;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,12 +24,14 @@ public class ContextualConstructorBinder<Constructed>
 
     public ContextualConstructorBinder(Class<Constructed> objectClass,
             Constructor<Constructed> constructor,
-            List<IObjectSupplier<?>> parameterSuppliers) {
+            List<ISupplier<?>> parameterSuppliers) {
         super(parameterSuppliers);
-        log.atTrace().log("Creating ContextualConstructorBinder for class={}, constructor params={}", objectClass.getName(), constructor.getParameterCount());
+        log.atTrace().log("Creating ContextualConstructorBinder for class={}, constructor params={}",
+                objectClass.getName(), constructor.getParameterCount());
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
         this.constructor = Objects.requireNonNull(constructor, "Constructor cannot be null");
-        log.atDebug().log("ContextualConstructorBinder created for class {} with {} parameters", objectClass.getName(), parameterSuppliers.size());
+        log.atDebug().log("ContextualConstructorBinder created for class {} with {} parameters", objectClass.getName(),
+                parameterSuppliers.size());
     }
 
     @Override
@@ -40,7 +44,8 @@ public class ContextualConstructorBinder<Constructed>
         log.atTrace().log("Executing contextual constructor for class {}", objectClass.getName());
         try {
             Object[] args = this.buildArguments(contexts);
-            log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(), args.length);
+            log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(),
+                    args.length);
             Constructed instance = this.constructor.newInstance(args);
             log.atInfo().log("Successfully created instance of class {}", objectClass.getName());
             return Optional.ofNullable(instance);
@@ -58,5 +63,15 @@ public class ContextualConstructorBinder<Constructed>
     @Override
     public Constructor<?> constructor() {
         return this.constructor;
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return this.objectClass;
+    }
+
+    @Override
+    public Optional<Constructed> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
+        return this.execute(ownerContext, otherContexts);
     }
 }

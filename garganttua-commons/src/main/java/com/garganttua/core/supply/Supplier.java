@@ -8,15 +8,15 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * {@code Supplier} offers static utility methods that simplify supplier usage,
  * particularly for contextual suppliers. The primary use case is automatically
- * matching and providing the correct context to {@link IContextualObjectSupplier}
+ * matching and providing the correct context to {@link IContextualSupplier}
  * instances, eliminating the need for manual context type checking and casting.
  * </p>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Define suppliers
- * IObjectSupplier<Database> dbSupplier = ...;  // Contextual supplier needing DiContext
- * IObjectSupplier<Logger> loggerSupplier = ...; // Simple supplier, no context needed
+ * ISupplier<Database> dbSupplier = ...;  // Contextual supplier needing DiContext
+ * ISupplier<Logger> loggerSupplier = ...; // Simple supplier, no context needed
  *
  * // Available contexts
  * DiContext diContext = ...;
@@ -30,15 +30,15 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>Context Matching</h2>
  * <p>
- * For contextual suppliers, the {@link #contextualSupply(IObjectSupplier, Object...)}
+ * For contextual suppliers, the {@link #contextualSupply(ISupplier, Object...)}
  * method automatically searches the provided contexts array for a compatible context
  * type using {@link Class#isAssignableFrom(Class)}. This supports both exact type
  * matches and subtype relationships.
  * </p>
  *
  * @since 2.0.0-ALPHA01
- * @see IObjectSupplier
- * @see IContextualObjectSupplier
+ * @see ISupplier
+ * @see IContextualSupplier
  */
 @Slf4j
 public class Supplier {
@@ -54,10 +54,10 @@ public class Supplier {
      *
      * <p>
      * This method provides a unified interface for working with both contextual and
-     * non-contextual suppliers. For {@link IContextualObjectSupplier} instances, it
+     * non-contextual suppliers. For {@link IContextualSupplier} instances, it
      * automatically searches the provided contexts array for a compatible context type
-     * and delegates to {@link IContextualObjectSupplier#supply(Object, Object...)}.
-     * For standard {@link IObjectSupplier} instances, it simply calls {@link IObjectSupplier#supply()}.
+     * and delegates to {@link IContextualSupplier#supply(Object, Object...)}.
+     * For standard {@link ISupplier} instances, it simply calls {@link ISupplier#supply()}.
      * </p>
      *
      * <p><b>Behavior:</b></p>
@@ -75,7 +75,7 @@ public class Supplier {
      *                        contextual supplier, or an error occurs during supply
      */
     @SuppressWarnings("unchecked")
-    public static <Supplied> Supplied contextualSupply(IObjectSupplier<Supplied> supplier, Object... contexts) throws SupplyException{
+    public static <Supplied> Supplied contextualSupply(ISupplier<Supplied> supplier, Object... contexts) throws SupplyException{
         log.atTrace().log("Entering contextualSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
 
         if (supplier == null) {
@@ -85,12 +85,12 @@ public class Supplier {
 
         Supplied obj = null;
 
-        if (supplier instanceof IContextualObjectSupplier<?, ?> contextualRaw) {
+        if (supplier instanceof IContextualSupplier<?, ?> contextualRaw) {
             log.atDebug().log("Supplier is contextual, searching for matching context");
-            IContextualObjectSupplier<Supplied, Object> contextual = (IContextualObjectSupplier<Supplied, Object>) contextualRaw;
+            IContextualSupplier<Supplied, Object> contextual = (IContextualSupplier<Supplied, Object>) contextualRaw;
 
             Object matchingContext = null;
-            if (contexts != null) {
+            if (contexts != null && !Void.class.isAssignableFrom(contextual.getOwnerContextType())) {
                 for (Object ctx : contexts) {
                     if (ctx != null && contextual.getOwnerContextType().isAssignableFrom(ctx.getClass())) {
                         matchingContext = ctx;
@@ -100,7 +100,7 @@ public class Supplier {
                 }
             }
 
-            if (matchingContext == null) {
+            if (matchingContext == null && !Void.class.isAssignableFrom(contextual.getOwnerContextType())) {
                 log.atError().log("No compatible context found for supplier expecting {}", contextual.getOwnerContextType().getName());
                 throw new SupplyException(
                         "No compatible context found for supplier expecting " + contextual.getOwnerContextType().getName());

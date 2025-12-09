@@ -9,12 +9,15 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.injection.annotations.Prototype;
+import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Resolver(annotations={Prototype.class})
 public class PrototypeElementResolver extends BeanElementResolver implements IElementResolver {
 
     public PrototypeElementResolver(Set<Class<? extends Annotation>> qualifiers) {
@@ -28,7 +31,7 @@ public class PrototypeElementResolver extends BeanElementResolver implements IEl
     public Resolved resolve(Class<?> elementType, AnnotatedElement element) {
         log.atTrace().log("Entering resolve for elementType: {} and element: {}", elementType, element);
 
-        Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> builder = this.resolve(elementType, element,
+        Optional<ISupplierBuilder<?, ISupplier<?>>> builder = this.resolve(elementType, element,
                 BeanStrategy.prototype);
 
         if (builder.isPresent()) {

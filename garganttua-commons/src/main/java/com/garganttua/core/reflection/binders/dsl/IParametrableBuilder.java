@@ -2,8 +2,8 @@ package com.garganttua.core.reflection.binders.dsl;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for configuring parameters of executable elements (methods/constructors).
@@ -59,14 +59,14 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  *   <li><b>By position</b>: {@code withParam(int, Object)} - Specify parameter at exact index</li>
  *   <li><b>By name</b>: {@code withParam(String, Object)} - Specify parameter by name (requires debug symbols)</li>
  *   <li><b>Sequential</b>: {@code withParam(Object)} - Add parameters in order</li>
- *   <li><b>Supplier-based</b>: All methods accept {@link IObjectSupplierBuilder} for dynamic resolution</li>
+ *   <li><b>Supplier-based</b>: All methods accept {@link ISupplierBuilder} for dynamic resolution</li>
  * </ul>
  *
  * @param <Builder> the concrete builder type for method chaining
  * @param <Built> the type of binder being constructed
  * @since 2.0.0-ALPHA01
  * @see IExecutableBinderBuilder
- * @see IObjectSupplierBuilder
+ * @see ISupplierBuilder
  */
 public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<Builder, Built> {
 
@@ -88,7 +88,7 @@ public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<
      * @return this builder instance for method chaining
      * @throws DslException if the index is invalid or the supplier type is incompatible
      */
-    Builder withParam(int i, IObjectSupplierBuilder<?,? extends IObjectSupplier<?>> supplier) throws DslException;
+    Builder withParam(int i, ISupplierBuilder<?,? extends ISupplier<?>> supplier) throws DslException;
 
     /**
      * Specifies a parameter value by name.
@@ -108,7 +108,7 @@ public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<
      * @return this builder instance for method chaining
      * @throws DslException if the parameter name is not found or the supplier type is incompatible
      */
-    Builder withParam(String paramName, IObjectSupplierBuilder<?,? extends IObjectSupplier<?>> supplier) throws DslException;
+    Builder withParam(String paramName, ISupplierBuilder<?,? extends ISupplier<?>> supplier) throws DslException;
 
     /**
      * Specifies the next sequential parameter value.
@@ -126,7 +126,7 @@ public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<
      * @return this builder instance for method chaining
      * @throws DslException if too many parameters are specified or the supplier type is incompatible
      */
-    Builder withParam(IObjectSupplierBuilder<?,? extends IObjectSupplier<?>> supplier) throws DslException;
+    Builder withParam(ISupplierBuilder<?,? extends ISupplier<?>> supplier) throws DslException;
 
     /**
      * Specifies a parameter value at the given position with nullable control.
@@ -149,7 +149,7 @@ public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<
      * @return this builder instance for method chaining
      * @throws DslException if the index is invalid or the supplier type is incompatible
      */
-    Builder withParam(int i, IObjectSupplierBuilder<?,? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException;
+    Builder withParam(int i, ISupplierBuilder<?,? extends ISupplier<?>> supplier, boolean acceptNullable) throws DslException;
 
     /**
      * Specifies a parameter value by name with nullable control.
@@ -172,7 +172,7 @@ public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<
      * @return this builder instance for method chaining
      * @throws DslException if the parameter name is not found or the supplier type is incompatible
      */
-    Builder withParam(String paramName, IObjectSupplierBuilder<?,? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException;
+    Builder withParam(String paramName, ISupplierBuilder<?,? extends ISupplier<?>> supplier, boolean acceptNullable) throws DslException;
 
     /**
      * Specifies the next sequential parameter value with nullable control.
@@ -193,5 +193,5 @@ public interface IParametrableBuilder<Builder, Built> extends IAutomaticBuilder<
      * @return this builder instance for method chaining
      * @throws DslException if too many parameters are specified or the supplier type is incompatible
      */
-    Builder withParam(IObjectSupplierBuilder<?,? extends IObjectSupplier<?>> supplier, boolean acceptNullable) throws DslException;
+    Builder withParam(ISupplierBuilder<?,? extends ISupplier<?>> supplier, boolean acceptNullable) throws DslException;
 }

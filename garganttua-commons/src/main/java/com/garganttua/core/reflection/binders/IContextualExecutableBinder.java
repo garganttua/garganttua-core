@@ -3,6 +3,7 @@ package com.garganttua.core.reflection.binders;
 import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.supply.IContextualSupplier;
 
 /**
  * Context-aware executable binder for methods and constructors that require runtime context.
@@ -63,7 +64,7 @@ import com.garganttua.core.reflection.ReflectionException;
  * @see IContextualConstructorBinder
  */
 public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
-                extends IExecutableBinder<ExecutionReturn> {
+                extends IExecutableBinder<ExecutionReturn>, IContextualSupplier<ExecutionReturn, OwnerContextType> {
 
         /**
          * Returns the required owner context type for this binder.

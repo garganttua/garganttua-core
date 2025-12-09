@@ -31,11 +31,18 @@ public class NorConditionBuilder implements IConditionBuilder {
         log.atTrace().log("Entering build() for NorConditionBuilder");
         log.atDebug().log("Building NOR condition from {} condition builders", conditions.length);
 
-        ICondition condition = new NorCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
+        ICondition condition = null;
+        if (!isContextual())
+            condition = new NorCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
         log.atDebug().log("NOR condition built successfully");
         log.atTrace().log("Exiting build()");
         return condition;
+    }
+
+    @Override
+    public boolean isContextual() {
+        return Arrays.stream(this.conditions).anyMatch(IConditionBuilder::isContextual);
     }
 
 }

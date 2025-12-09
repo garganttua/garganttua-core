@@ -1,6 +1,6 @@
 package com.garganttua.core.runtime.dsl;
 
-import static com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder.*;
+import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.*;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -25,8 +25,8 @@ import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.Runtime;
 import com.garganttua.core.runtime.annotations.Stages;
 import com.garganttua.core.runtime.annotations.Variables;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class RuntimeBuilder<InputType, OutputType>
         private Class<InputType> inputType;
         private Class<OutputType> outputType;
         private Object objectForAutoDetection;
-        private Map<String, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> presetVariables = new HashMap<>();
+        private Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> presetVariables = new HashMap<>();
 
         public RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
                         Class<OutputType> outputType) {
@@ -111,7 +111,7 @@ public class RuntimeBuilder<InputType, OutputType>
                 log.atTrace().log("{} Stages to build: {}", logLineHeader(), stages.keySet());
 
                 Map<String, IRuntimeStage<InputType, OutputType>> builtStages = this.stages.build();
-                Map<String, IObjectSupplier<?>> variables = this.presetVariables.entrySet().stream()
+                Map<String, ISupplier<?>> variables = this.presetVariables.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build()));
 
                 log.atDebug().log("{} Preset variables: {}", logLineHeader(), variables.keySet());
@@ -153,7 +153,7 @@ public class RuntimeBuilder<InputType, OutputType>
                         return;
                 }
 
-                Map<String, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> variables = (Map<String, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>>) ObjectQueryFactory
+                Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> variables = (Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>>) ObjectQueryFactory
                                 .objectQuery(this.objectForAutoDetection).getValue(address);
 
                 variables.entrySet().forEach(e -> this.variable(e.getKey(), e.getValue()));
@@ -196,13 +196,13 @@ public class RuntimeBuilder<InputType, OutputType>
         }
 
         private ParameterizedType getVariablesMapType() {
-                WildcardType wildcardIObjectSupplier = WildcardTypeImpl.extends_(new ParameterizedTypeImpl(
-                                IObjectSupplier.class,
+                WildcardType wildcardISupplier = WildcardTypeImpl.extends_(new ParameterizedTypeImpl(
+                                ISupplier.class,
                                 new Type[] { WildcardTypeImpl.unbounded() }));
 
                 ParameterizedType supplierBuilderType = new ParameterizedTypeImpl(
-                                IObjectSupplierBuilder.class,
-                                new Type[] { WildcardTypeImpl.unbounded(), wildcardIObjectSupplier });
+                                ISupplierBuilder.class,
+                                new Type[] { WildcardTypeImpl.unbounded(), wildcardISupplier });
 
                 return new ParameterizedTypeImpl(
                                 Map.class,
@@ -225,7 +225,7 @@ public class RuntimeBuilder<InputType, OutputType>
 
         @Override
         public IRuntimeBuilder<InputType, OutputType> variable(String name,
-                        IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> value) {
+                        ISupplierBuilder<?, ? extends ISupplier<?>> value) {
                 log.atTrace().log("{} Entering variable registration for [{}]", logLineHeader(), name);
                 this.presetVariables.put(Objects.requireNonNull(name, "Variable name cannot be null"),
                                 Objects.requireNonNull(value, "Value supplier builder cannot be null"));
@@ -253,7 +253,7 @@ public class RuntimeBuilder<InputType, OutputType>
 
         @Override
         public IRuntimeBuilder<InputType, OutputType> mutex(
-                        IObjectSupplierBuilder<? extends IMutex, ? extends IObjectSupplier<? extends IMutex>> mutex) {
+                        ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex) {
                 // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'mutex'");
         }

@@ -1,5 +1,6 @@
 package com.garganttua.core.supply;
 
+import java.lang.reflect.Type;
 import java.util.Optional;
 
 import lombok.AllArgsConstructor;
@@ -7,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
-public class NullObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType>{
+public class NullSupplier<SuppliedType> implements ISupplier<SuppliedType>{
 
     private Class<SuppliedType> suppliedType;
 
@@ -21,7 +22,7 @@ public class NullObjectSupplier<SuppliedType> implements IObjectSupplier<Supplie
     }
 
     @Override
-    public Class<SuppliedType> getSuppliedType() {
+    public Type getSuppliedType() {
         return this.suppliedType;
     }
 

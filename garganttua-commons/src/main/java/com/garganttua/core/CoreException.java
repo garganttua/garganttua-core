@@ -187,6 +187,8 @@ public class CoreException extends RuntimeException {
 
     private static final long serialVersionUID = 7855765591949705798L;
 
+    public static final int EXPRESSION_ERROR = 12;
+
     /**
      * The error code categorizing this exception.
      * <p>

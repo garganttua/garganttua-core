@@ -9,14 +9,16 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Provider;
+import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.injection.context.dsl.IPropertySupplierBuilder;
 import com.garganttua.core.injection.context.properties.Properties;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Resolver(annotations={Property.class})
 public class PropertyElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -63,7 +65,7 @@ public class PropertyElementResolver implements IElementResolver {
         propertySupplierBuilder.key(key);
         log.atInfo().log("Set key '{}' on propertySupplierBuilder", key);
 
-        IObjectSupplierBuilder<?, IObjectSupplier<?>> result = (IObjectSupplierBuilder) propertySupplierBuilder;
+        ISupplierBuilder<?, ISupplier<?>> result = (ISupplierBuilder) propertySupplierBuilder;
         log.atTrace().log("Exiting resolve with Resolved for elementType: {}", elementType.getSimpleName());
 
         return new Resolved(true, elementType, result, IInjectableElementResolver.isNullable(element));

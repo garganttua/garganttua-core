@@ -5,7 +5,7 @@ import java.lang.annotation.Annotation;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.reflection.binders.Dependent;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for constructing bean suppliers with query criteria.
@@ -13,7 +13,7 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * <p>
  * {@code IBeanSupplierBuilder} provides a fluent API for building {@link IBeanSupplier} instances
  * that can dynamically resolve and supply beans based on specified criteria such as name, provider,
- * strategy, and qualifiers. This builder extends {@link IObjectSupplierBuilder} with DI-specific
+ * strategy, and qualifiers. This builder extends {@link ISupplierBuilder} with DI-specific
  * query capabilities and tracks dependencies for circular dependency detection. Bean suppliers
  * enable late binding and dynamic bean resolution.
  * </p>
@@ -45,10 +45,10 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * @param <Bean> the type of bean this supplier provides
  * @since 2.0.0-ALPHA01
  * @see IBeanSupplier
- * @see IObjectSupplierBuilder
+ * @see ISupplierBuilder
  * @see Dependent
  */
-public interface IBeanSupplierBuilder<Bean> extends IObjectSupplierBuilder<Bean, IBeanSupplier<Bean>>, Dependent {
+public interface IBeanSupplierBuilder<Bean> extends ISupplierBuilder<Bean, IBeanSupplier<Bean>>, Dependent {
 
     /**
      * Specifies the bean name to search for.

@@ -1,5 +1,6 @@
 package com.garganttua.core.supply;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -9,26 +10,27 @@ import com.garganttua.core.reflection.binders.IConstructorBinder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class NewObjectSupplier<SuppliedType> implements IObjectSupplier<SuppliedType> {
+public class NewSupplier<SuppliedType> implements ISupplier<SuppliedType> {
 
     private Class<SuppliedType> suppliedType;
     private IConstructorBinder<SuppliedType> constructorBinder;
 
-    public NewObjectSupplier(Class<SuppliedType> suppliedType,
+    public NewSupplier(Class<SuppliedType> suppliedType,
             IConstructorBinder<SuppliedType> constructorBinder) {
-        log.atTrace().log("Entering NewObjectSupplier constructor with suppliedType: {}", suppliedType);
+        log.atTrace().log("Entering NewSupplier constructor with suppliedType: {}", suppliedType);
         this.constructorBinder = constructorBinder;
         this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
-        log.atTrace().log("Exiting NewObjectSupplier constructor");
+        log.atTrace().log("Exiting NewSupplier constructor");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Optional<SuppliedType> supply() throws SupplyException {
         log.atTrace().log("Entering supply method");
         log.atDebug().log("Supplying new object of type {} using constructor binder", this.suppliedType.getSimpleName());
 
         try {
-            Optional<SuppliedType> result = this.constructorBinder.execute();
+            Optional<SuppliedType> result = (Optional<SuppliedType>) this.constructorBinder.execute();
             log.atInfo().log("Supply completed for new object of type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
             log.atTrace().log("Exiting supply method");
             return result;
@@ -40,7 +42,7 @@ public class NewObjectSupplier<SuppliedType> implements IObjectSupplier<Supplied
     }
 
     @Override
-    public Class<SuppliedType> getSuppliedType() {
+    public Type getSuppliedType() {
         return this.suppliedType;
     }
 

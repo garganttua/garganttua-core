@@ -1,6 +1,7 @@
 package com.garganttua.core.injection.context.dsl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -80,7 +81,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     }
 
     @Override
-    public Class<Bean> getSuppliedType() {
+    public Type getSuppliedType() {
         log.atTrace().log("Entering getSuppliedType() method");
         log.atTrace().log("Exiting getSuppliedType() method with type: {}", this.type);
         return type;

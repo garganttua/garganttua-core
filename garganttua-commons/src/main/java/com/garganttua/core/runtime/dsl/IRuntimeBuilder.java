@@ -4,8 +4,8 @@ import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.runtime.IMutex;
 import com.garganttua.core.runtime.IRuntime;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 
 /**
@@ -53,7 +53,7 @@ import com.garganttua.core.utils.OrderedMapPosition;
  */
 public interface IRuntimeBuilder<InputType, OutputType> extends IAutomaticLinkedBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>, IContextBuilderObserver {
 
-    IRuntimeBuilder<InputType, OutputType> mutex(IObjectSupplierBuilder<? extends IMutex, ? extends IObjectSupplier<? extends IMutex>> mutex);
+    IRuntimeBuilder<InputType, OutputType> mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex);
 
     /**
      * Sets an initial variable with a constant value.
@@ -81,9 +81,9 @@ public interface IRuntimeBuilder<InputType, OutputType> extends IAutomaticLinked
      * @param name the variable name
      * @param value the object supplier builder for the variable value
      * @return this builder for method chaining
-     * @see com.garganttua.core.supply.dsl.IObjectSupplierBuilder
+     * @see com.garganttua.core.supply.dsl.ISupplierBuilder
      */
-    IRuntimeBuilder<InputType, OutputType> variable(String name, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> value);
+    IRuntimeBuilder<InputType, OutputType> variable(String name, ISupplierBuilder<?, ? extends ISupplier<?>> value);
 
     /**
      * Creates a new stage at the end of the runtime.

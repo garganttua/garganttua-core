@@ -13,8 +13,8 @@ import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.context.beans.Beans;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +31,7 @@ public class BeanElementResolver {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected Optional<IObjectSupplierBuilder<?, IObjectSupplier<?>>> resolve(Class<?> elementType,
+    protected Optional<ISupplierBuilder<?, ISupplier<?>>> resolve(Class<?> elementType,
             AnnotatedElement parameter,
             BeanStrategy strategy) {
         log.atTrace().log("Entering resolve with elementType: {}, parameter: {}, strategy: {}", elementType, parameter,
@@ -65,7 +65,7 @@ public class BeanElementResolver {
             }
         }
 
-        IObjectSupplierBuilder beanSupplierBuilder = Beans.bean(
+        ISupplierBuilder beanSupplierBuilder = Beans.bean(
                 Optional.ofNullable(provider),
                 new BeanReference<>(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
                         paramQualifiers));

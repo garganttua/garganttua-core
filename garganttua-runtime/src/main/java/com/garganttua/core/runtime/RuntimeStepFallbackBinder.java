@@ -1,5 +1,6 @@
 package com.garganttua.core.runtime;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,6 +10,7 @@ import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -153,5 +155,16 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     private String logLineHeader() {
         return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "][Fallback "
                 + this.delegate.getExecutableReference() + "] ";
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return this.delegate.getSuppliedClass();
+    }
+
+    @Override
+    public Optional<ExecutionReturned> supply(IRuntimeContext<InputType, OutputType> ownerContext,
+            Object... otherContexts) throws SupplyException {
+        return this.execute(ownerContext, otherContexts);
     }
 }

@@ -26,10 +26,10 @@ import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
-import com.garganttua.core.supply.IContextualObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.ContextualObjectSupplierBuilder;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.CopyException;
 
 import lombok.Getter;
@@ -43,7 +43,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Getter
     private final Class<OutputType> outputType;
     private OutputType output;
-    private final Map<String, IObjectSupplier<?>> presetVariables = new HashMap<>();
+    private final Map<String, ISupplier<?>> presetVariables = new HashMap<>();
     private Instant start;
     private Instant stop;
     private long startNano;
@@ -56,7 +56,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     private final Set<RuntimeExceptionRecord> recordedException = new HashSet<>();
 
     public RuntimeContext(IDiContext parent, InputType input, Class<OutputType> outputType,
-            Map<String, IObjectSupplier<?>> presetVariables, UUID uuid) {
+            Map<String, ISupplier<?>> presetVariables, UUID uuid) {
         this.uuid = Objects.requireNonNull(uuid, "Uuid cannot be null");
         log.atTrace().log(
                 "[RuntimeContext.<init>] Entering constructor with parent={}, input={}, outputType={}, presetVariables={}",
@@ -81,59 +81,54 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         return result;
     }
 
-    @Supplier(name="variable", contextual=true, contextType=IRuntimeContext.class, description="Supplies a runtime variable attached to the context by name" )
     @SuppressWarnings("unchecked")
-    public static <VariableType, InputType, OutputType> IObjectSupplierBuilder<VariableType, IContextualObjectSupplier<VariableType, IRuntimeContext<InputType, OutputType>>> variable(
+    public static <VariableType, InputType, OutputType> ISupplierBuilder<VariableType, IContextualSupplier<VariableType, IRuntimeContext<InputType, OutputType>>> variable(
             String variableName, Class<VariableType> variableType) {
         log.atTrace().log("[RuntimeContext.variable] Creating variable supplier for {} of type {}", variableName,
                 variableType);
-        return new ContextualObjectSupplierBuilder<>((context, others) -> {
+        return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getVariable(variableName, variableType);
         }, variableType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
-    @Supplier(name="input", contextual=true, contextType=IRuntimeContext.class, description="Supplies the runtime input attached to the context" )
     @SuppressWarnings("unchecked")
-    public static <InputType, OutputType> IObjectSupplierBuilder<InputType, IContextualObjectSupplier<InputType, IRuntimeContext<InputType, OutputType>>> input(
+    public static <InputType, OutputType> ISupplierBuilder<InputType, IContextualSupplier<InputType, IRuntimeContext<InputType, OutputType>>> input(
             Class<InputType> inputType) {
         log.atTrace().log("[RuntimeContext.input] Creating input supplier for type {}", inputType);
-        return new ContextualObjectSupplierBuilder<>((context, others) -> {
+        return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getInput();
         }, inputType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
-    @Supplier(name="exception", contextual=true, contextType=IRuntimeContext.class, description="Supplies the eventually throwned exception during runtime attached to the context" )
     @SuppressWarnings("unchecked")
-    public static <ExceptionType extends Throwable, InputType, OutputType> IObjectSupplierBuilder<ExceptionType, IContextualObjectSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
+    public static <ExceptionType extends Throwable, InputType, OutputType> ISupplierBuilder<ExceptionType, IContextualSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
             Class<ExceptionType> exceptionType) {
         log.atTrace().log("[RuntimeContext.exception] Creating exception supplier for type {}", exceptionType);
-        return new ContextualObjectSupplierBuilder<>((context, others) -> {
+        return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getException(exceptionType);
         }, exceptionType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
-    @Supplier(name="exception", contextual=true, contextType=IRuntimeContext.class, description="Supplies the returned code of the runtime attached to the context" )
     @SuppressWarnings("unchecked")
-    public static <InputType, OutputType> IObjectSupplierBuilder<Integer, IContextualObjectSupplier<Integer, IRuntimeContext<InputType, OutputType>>> code() {
+    public static <InputType, OutputType> ISupplierBuilder<Integer, IContextualSupplier<Integer, IRuntimeContext<InputType, OutputType>>> code() {
         log.atTrace().log("[RuntimeContext.code] Creating code supplier");
-        return new ContextualObjectSupplierBuilder<>((context, others) -> {
+        return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getCode();
         }, Integer.class, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
-    @Supplier(name="exceptionMessage", contextual=true, contextType=IRuntimeContext.class, description="Supplies the eventually throwned exception message during runtime attached to the context" )
     @SuppressWarnings("unchecked")
-    public static <InputType, OutputType> IObjectSupplierBuilder<String, IContextualObjectSupplier<String, IRuntimeContext<InputType, OutputType>>> exceptionMessage() {
+    public static <InputType, OutputType> ISupplierBuilder<String, IContextualSupplier<String, IRuntimeContext<InputType, OutputType>>> exceptionMessage() {
         log.atTrace().log("[RuntimeContext.exceptionMessage] Creating exceptionMessage supplier");
-        return new ContextualObjectSupplierBuilder<>((context, others) -> {
+        return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getExceptionMessage();
         }, String.class, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
     }
 
     @SuppressWarnings("unchecked")
-    public static <InputType, OutputType> IObjectSupplierBuilder<IRuntimeContext<InputType, OutputType>, IContextualObjectSupplier<IRuntimeContext<InputType, OutputType>, IRuntimeContext<InputType, OutputType>>> context() {
+    public static <InputType, OutputType> ISupplierBuilder<IRuntimeContext<InputType, OutputType>, IContextualSupplier<IRuntimeContext<InputType, OutputType>, IRuntimeContext<InputType, OutputType>>> context() {
         log.atTrace().log("[RuntimeContext.context] Creating context supplier");
-        return new ContextualObjectSupplierBuilder<>((context, others) -> {
+        return new ContextualSupplierBuilder<>((context, others) -> {
             return Optional.of(context);
         }, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class,
                 (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);

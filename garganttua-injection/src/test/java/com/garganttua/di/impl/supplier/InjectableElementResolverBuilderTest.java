@@ -62,7 +62,7 @@ public class InjectableElementResolverBuilderTest {
 
                 assertNotNull(resolved);
                 assertTrue(resolved.resolved());
-                assertEquals(DummyOtherBean.class, resolved.elementSupplier().getSuppliedType());
+                assertEquals(DummyOtherBean.class, resolved.elementSupplier().getSuppliedClass());
                 Optional<DummyOtherBean> bean = (Optional<DummyOtherBean>) resolved.elementSupplier().build().supply();
                 assertNotNull(bean);
                 assertTrue(bean.isPresent());
@@ -82,7 +82,7 @@ public class InjectableElementResolverBuilderTest {
 
                 assertNotNull(resolved);
                 assertTrue(resolved.resolved());
-                assertEquals(AnotherDummyBean.class, resolved.elementSupplier().getSuppliedType());
+                assertEquals(AnotherDummyBean.class, resolved.elementSupplier().getSuppliedClass());
                 Optional<AnotherDummyBean> bean = (Optional<AnotherDummyBean>) resolved.elementSupplier().build().supply();
                 assertNotNull(bean);
                 assertTrue(bean.isPresent());
@@ -102,7 +102,7 @@ public class InjectableElementResolverBuilderTest {
 
                 assertNotNull(resolved);
                 assertTrue(resolved.resolved());
-                assertEquals(String.class, resolved.elementSupplier().getSuppliedType());
+                assertEquals(String.class, resolved.elementSupplier().getSuppliedClass());
                 Optional<String> property = (Optional<String>) resolved.elementSupplier().build().supply();
                 assertNotNull(property);
                 assertTrue(property.isPresent());

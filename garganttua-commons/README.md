@@ -87,11 +87,11 @@ The module implements several design patterns consistently across packages:
 - `LifecycleException` - Exception for lifecycle errors
 
 **supply** - Lazy object supplier framework
-- `IObjectSupplier<T>` - Generic supplier with `supply()` and `getSuppliedType()` methods
-- `IContextualObjectSupplier<T>` - Context-aware supplier variant
+- `ISupplier<T>` - Generic supplier with `supply()` and `getSuppliedType()` methods
+- `IContextualSupplier<T>` - Context-aware supplier variant
 - `Supplier<T>` - Functional interface for object provision
 - `SupplyException` - Exception for supply failures
-- `dsl.ISupplierBuilder` / `dsl.IObjectSupplierBuilder` - Builders for suppliers
+- `dsl.ISupplierBuilder` / `dsl.ISupplierBuilder` - Builders for suppliers
 
 **utils** - Common utility classes
 - `OrderedMap<K,V>` - LinkedHashMap with positional insertion (BEFORE/AFTER specific keys)

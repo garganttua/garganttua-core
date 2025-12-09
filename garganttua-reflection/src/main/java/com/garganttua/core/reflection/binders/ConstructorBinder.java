@@ -2,6 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,7 +10,8 @@ import java.util.Optional;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.constructors.Constructors;
 import com.garganttua.core.reflection.utils.ConstructorAccessManager;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +24,7 @@ public class ConstructorBinder<Constructed>
     private Constructor<Constructed> constructor;
 
     public ConstructorBinder(Class<Constructed> objectClass,
-            Constructor<Constructed> constructor, List<IObjectSupplier<?>> parameterSuppliers) {
+            Constructor<Constructed> constructor, List<ISupplier<?>> parameterSuppliers) {
         super(parameterSuppliers);
         log.atTrace().log("Creating ConstructorBinder for class={}, constructor params={}", objectClass.getName(), constructor.getParameterCount());
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
@@ -59,6 +61,20 @@ public class ConstructorBinder<Constructed>
     @Override
     public Constructor<?> constructor() {
         return this.constructor;
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return this.objectClass;
+    }
+
+    @Override
+    public Optional<Constructed> supply() throws SupplyException {
+        try {
+            return this.execute();
+        } catch (ReflectionException e) {
+            throw new SupplyException(e);
+        }
     }
 
 }

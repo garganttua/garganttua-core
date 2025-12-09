@@ -8,15 +8,15 @@ import java.util.Optional;
  * <p>
  * {@code IContextualObjectSupply} provides a lightweight, functional approach to
  * defining context-dependent object creation logic. It is typically used as a lambda
- * or method reference when building {@link IContextualObjectSupplier} instances through
- * builder APIs. Unlike {@link IContextualObjectSupplier}, this interface focuses solely
+ * or method reference when building {@link IContextualSupplier} instances through
+ * builder APIs. Unlike {@link IContextualSupplier}, this interface focuses solely
  * on the supply logic without metadata like type information.
  * </p>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Using as a lambda in a builder
- * IObjectSupplier<Logger> loggerSupplier = SupplierBuilder
+ * ISupplier<Logger> loggerSupplier = SupplierBuilder
  *     .forType(Logger.class)
  *     .withContext(DiContext.class, (context, others) -> {
  *         String appName = context.getProperty("app.name");
@@ -25,7 +25,7 @@ import java.util.Optional;
  *     .build();
  *
  * // Using as a method reference
- * IObjectSupplier<Database> dbSupplier = SupplierBuilder
+ * ISupplier<Database> dbSupplier = SupplierBuilder
  *     .forType(Database.class)
  *     .withContext(Config.class, this::createDatabase)
  *     .build();
@@ -35,16 +35,16 @@ import java.util.Optional;
  * }
  * }</pre>
  *
- * <h2>Comparison with IContextualObjectSupplier</h2>
+ * <h2>Comparison with IContextualSupplier</h2>
  * <ul>
  *   <li>{@code IContextualObjectSupply}: Pure creation logic (functional interface)</li>
- *   <li>{@link IContextualObjectSupplier}: Full supplier with metadata and lifecycle</li>
+ *   <li>{@link IContextualSupplier}: Full supplier with metadata and lifecycle</li>
  * </ul>
  *
  * @param <Supplied> the type of object this supply logic creates
  * @param <Context> the type of the primary context required for creation
  * @since 2.0.0-ALPHA01
- * @see IContextualObjectSupplier
+ * @see IContextualSupplier
  * @see com.garganttua.core.supply.dsl.ISupplierBuilder#withContext(Class, IContextualObjectSupply)
  */
 @FunctionalInterface

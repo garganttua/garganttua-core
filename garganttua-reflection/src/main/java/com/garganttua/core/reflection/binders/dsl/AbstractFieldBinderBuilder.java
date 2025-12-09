@@ -13,9 +13,9 @@ import com.garganttua.core.reflection.binders.FieldBinder;
 import com.garganttua.core.reflection.binders.IFieldBinder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,9 +28,9 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
     private Class<OwnerType> ownerType;
     protected ObjectAddress address;
     private Class<?> expectedFieldType;
-    protected IObjectSupplierBuilder<?, ?> valueSupplierBuilder;
+    protected ISupplierBuilder<?, ?> valueSupplierBuilder;
     protected Class<FieldType> fieldType;
-    protected IObjectSupplierBuilder<OwnerType, ? extends IObjectSupplier<OwnerType>> ownerSupplierBuilder;
+    protected ISupplierBuilder<OwnerType, ? extends ISupplier<OwnerType>> ownerSupplierBuilder;
     private Boolean allowNull = false;
     private IObjectQuery query;
 
@@ -45,18 +45,18 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
     }
 
     protected AbstractFieldBinderBuilder(Link link,
-            IObjectSupplierBuilder<OwnerType, ? extends IObjectSupplier<OwnerType>> ownerSupplierBuilder,
+            ISupplierBuilder<OwnerType, ? extends ISupplier<OwnerType>> ownerSupplierBuilder,
             Class<FieldType> fieldType) throws DslException {
         super(link);
         this.ownerSupplierBuilder = Objects.requireNonNull(ownerSupplierBuilder,
                 "Owner supplier builder cannot be null");
-        this.ownerType = ownerSupplierBuilder.getSuppliedType();
+        this.ownerType = ownerSupplierBuilder.getSuppliedClass();
         this.fieldType = Objects.requireNonNull(fieldType, "Field Type cannot be null");
         try {
             this.query = ObjectQueryFactory.objectQuery(this.ownerType);
         } catch (ReflectionException e) {
             log.atError().log("[FieldBinderBuilder] Error creating objectQuery for class {}",
-                    this.ownerSupplierBuilder.getSuppliedType(), e);
+                    this.ownerSupplierBuilder.getSuppliedClass(), e);
             throw new DslException(e.getMessage(), e);
         }
     }
@@ -107,7 +107,7 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
         Objects.requireNonNull(this.address, "Address is not set");
         Objects.requireNonNull(this.valueSupplierBuilder, "Value supplier builder is not set");
 
-        IObjectSupplier<FieldType> valueSupplier = (IObjectSupplier<FieldType>) AbstractConstructorBinderBuilder
+        ISupplier<FieldType> valueSupplier = (ISupplier<FieldType>) AbstractConstructorBinderBuilder
                 .createNullableObjectSupplier(this.valueSupplierBuilder, this.allowNull);
 
         if (this.buildContextual())
@@ -120,13 +120,13 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
     @Override
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> withValue(Object value) throws DslException {
         Objects.requireNonNull(value, "Value cannot be null");
-        this.valueSupplierBuilder = FixedObjectSupplierBuilder.of(value);
+        this.valueSupplierBuilder = FixedSupplierBuilder.of(value);
         return this;
     }
 
     @Override
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> withValue(
-            IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
+            ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
         Objects.requireNonNull(supplier, "Supplier cannot be null");
         this.valueSupplierBuilder = supplier;
         return this;

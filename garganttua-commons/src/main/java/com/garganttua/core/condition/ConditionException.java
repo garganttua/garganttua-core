@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * <pre>{@code
  * public class UserConditions {
  *
- *     public static ICondition hasValidEmail(IObjectSupplier<User> userSupplier) {
+ *     public static ICondition hasValidEmail(ISupplier<User> userSupplier) {
  *         return () -> {
  *             User user = userSupplier.get();
  *             if (user == null) {

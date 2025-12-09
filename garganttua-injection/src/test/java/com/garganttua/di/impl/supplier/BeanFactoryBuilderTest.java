@@ -17,7 +17,7 @@ import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.injection.dummies.DummyBeanQualifier;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.SupplyException;
-import com.garganttua.core.supply.dsl.FixedObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 public class BeanFactoryBuilderTest {
 
@@ -30,9 +30,9 @@ public class BeanFactoryBuilderTest {
                 .strategy(BeanStrategy.singleton)
                 .name("aBean")
                 .qualifier(DummyBeanQualifier.class)
-                .field(String.class).field("anotherValue").withValue(FixedObjectSupplierBuilder.of(random)).up()
+                .field(String.class).field("anotherValue").withValue(FixedSupplierBuilder.of(random)).up()
                 .constructor()
-                .withParam(FixedObjectSupplierBuilder.of("constructedWithParameter"))
+                .withParam(FixedSupplierBuilder.of("constructedWithParameter"))
                 .up()
                 .postConstruction().method("markPostConstruct").withReturn(Void.class)
                 .up()

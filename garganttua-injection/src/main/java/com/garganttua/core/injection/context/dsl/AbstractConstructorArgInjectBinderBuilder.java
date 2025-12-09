@@ -11,7 +11,7 @@ import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
-import com.garganttua.core.supply.dsl.NullObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -66,9 +66,9 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
                     },
                     n -> {
                         log.atWarn().log(
-                                "Constructor parameter {} not resolved, using NullObjectSupplierBuilder for type: {}",
+                                "Constructor parameter {} not resolved, using NullSupplierBuilder for type: {}",
                                 counter.get(), r.elementType());
-                        this.withParam(counter.getAndIncrement(), new NullObjectSupplierBuilder<>(r.elementType()), n);
+                        this.withParam(counter.getAndIncrement(), new NullSupplierBuilder<>(r.elementType()), n);
                     });
         });
 

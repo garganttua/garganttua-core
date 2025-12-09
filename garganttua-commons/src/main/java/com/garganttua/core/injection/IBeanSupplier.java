@@ -1,13 +1,13 @@
 package com.garganttua.core.injection;
 
 import com.garganttua.core.reflection.binders.Dependent;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 
 /**
  * Represents a supplier capable of providing bean instances in the dependency injection system.
  *
  * <p>
- * An {@code IBeanSupplier} combines the functionality of {@link IObjectSupplier} for object
+ * An {@code IBeanSupplier} combines the functionality of {@link ISupplier} for object
  * creation with {@link Dependent} to track dependencies. This interface is the base contract
  * for all bean suppliers, including factories and direct suppliers, enabling the DI framework
  * to instantiate and manage bean instances with proper dependency tracking.
@@ -33,10 +33,10 @@ import com.garganttua.core.supply.IObjectSupplier;
  *
  * @param <Bean> the type of bean this supplier provides
  * @since 2.0.0-ALPHA01
- * @see IObjectSupplier
+ * @see ISupplier
  * @see Dependent
  * @see IBeanFactory
  */
-public interface IBeanSupplier<Bean> extends IObjectSupplier<Bean>, Dependent {
+public interface IBeanSupplier<Bean> extends ISupplier<Bean>, Dependent {
 
 }

@@ -19,7 +19,7 @@ import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.utils.CopyException;
 
@@ -47,7 +47,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
-				.filter(factory -> type.isAssignableFrom(factory.getSuppliedType()))
+				.filter(factory -> type.isAssignableFrom(factory.getSuppliedClass()))
 				.findFirst();
 
 		if (factoryOpt.isPresent()) {
@@ -83,7 +83,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		log.atTrace().log("Getting beans implementing interface: {}", interfasse);
 		List<T> result = this.beanFactories.stream()
 				.filter(factory -> ObjectReflectionHelper.isImplementingInterface(interfasse,
-						factory.getSuppliedType()))
+						factory.getSuppliedClass()))
 				.map(factory -> {
 					try {
 						return factory.supply().orElse(null);
@@ -116,7 +116,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		log.atTrace().log("Performing dependency cycle detection");
 		DependencyGraph graph = new DependencyGraph();
 		this.beanFactories.forEach(builder -> builder.getDependencies()
-				.forEach(dep -> graph.addDependency(builder.getSuppliedType(), dep)));
+				.forEach(dep -> graph.addDependency(builder.getSuppliedClass(), dep)));
 		new DependencyCycleDetector().detectCycles(graph);
 		log.atInfo().log("Dependency cycle detection completed");
 	}
@@ -173,7 +173,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 		List<T> result = (List<T>) this.beanFactories.stream()
 				.filter(factory -> factory.matches(query))
-				.map(IObjectSupplier::supply)
+				.map(ISupplier::supply)
 				.map(Optional::get)
 				.toList();
 

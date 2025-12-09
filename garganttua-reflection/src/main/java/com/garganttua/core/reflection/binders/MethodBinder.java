@@ -1,6 +1,7 @@
 package com.garganttua.core.reflection.binders;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +11,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +22,13 @@ public class MethodBinder<Returned>
         implements IMethodBinder<Returned> {
 
     private final Class<Returned> returnedClass;
-    private final IObjectSupplier<?> objectSupplier;
+    private final ISupplier<?> objectSupplier;
     private final ObjectAddress method;
     private final boolean collection;
 
-    public MethodBinder(IObjectSupplier<?> objectSupplier,
+    public MethodBinder(ISupplier<?> objectSupplier,
             ObjectAddress method,
-            List<IObjectSupplier<?>> parameterSuppliers,
+            List<ISupplier<?>> parameterSuppliers,
             Class<Returned> returnedClass,
             boolean collection) {
         super(parameterSuppliers);
@@ -39,9 +40,9 @@ public class MethodBinder<Returned>
         log.atInfo().log("MethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
     }
 
-    public MethodBinder(IObjectSupplier<?> objectSupplier,
+    public MethodBinder(ISupplier<?> objectSupplier,
             ObjectAddress method,
-            List<IObjectSupplier<?>> parameterSuppliers,
+            List<ISupplier<?>> parameterSuppliers,
             Class<Returned> returnedClass) {
         this(objectSupplier, method, parameterSuppliers, returnedClass, false);
     }
@@ -64,14 +65,14 @@ public class MethodBinder<Returned>
         if (collectionTarget && owner instanceof Collection<?> col) {
             log.atDebug().log("Executing method {} on collection with {} elements", method, col.size());
             for (Object element : col) {
-                ObjectQueryFactory.objectQuery(ownerType).invoke(element, method, args);
+                ObjectQueryFactory.objectQuery(owner).invoke(element, method, args);
             }
             log.atInfo().log("Executed method {} on collection successfully", method);
             return Optional.empty();
         }
 
         log.atDebug().log("Invoking method {} on owner of type {}", method, ownerType);
-        Object result = ObjectQueryFactory.objectQuery(ownerType)
+        Object result = ObjectQueryFactory.objectQuery(owner)
                 .invoke(owner, method, args);
 
         if (result != null && !returnedClass.isInstance(result)) {
@@ -92,7 +93,7 @@ public class MethodBinder<Returned>
         try {
             Optional<Returned> result = execute(
                     objectSupplier.supply().get(),
-                    objectSupplier.getSuppliedType(),
+                    objectSupplier.getSuppliedClass(),
                     method,
                     returnedClass,
                     collection,
@@ -108,7 +109,21 @@ public class MethodBinder<Returned>
     @Override
     public String getExecutableReference() {
         log.atTrace().log("Getting executable reference for method {}", method);
-        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedType()).find(this.method).getLast());
+        return Methods.prettyColored((Method) ObjectQueryFactory.objectQuery(this.objectSupplier.getSuppliedClass()).find(this.method).getLast());
+    }
+
+    @Override
+    public Optional<Returned> supply() throws SupplyException {
+        try {
+            return this.execute();
+        } catch (ReflectionException e) {
+            throw new SupplyException(e);
+        }
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return this.objectSupplier.getSuppliedType();
     }
 
 }

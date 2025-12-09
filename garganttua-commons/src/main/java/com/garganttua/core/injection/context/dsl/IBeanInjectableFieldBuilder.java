@@ -4,8 +4,8 @@ import java.lang.reflect.Field;
 
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.dsl.IFieldBinderBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for configuring field injection on beans.
@@ -79,7 +79,7 @@ public interface IBeanInjectableFieldBuilder<FieldType, BeanType> extends IField
      * @param valueSupplier the supplier that provides the field value
      * @return this builder for method chaining
      */
-    public IBeanInjectableFieldBuilder<FieldType, BeanType> valueSupplier(IObjectSupplierBuilder<BeanType, ? extends IObjectSupplier<BeanType>> valueSupplier);
+    public IBeanInjectableFieldBuilder<FieldType, BeanType> valueSupplier(ISupplierBuilder<BeanType, ? extends ISupplier<BeanType>> valueSupplier);
 
     /**
      * Returns the field that will be injected.

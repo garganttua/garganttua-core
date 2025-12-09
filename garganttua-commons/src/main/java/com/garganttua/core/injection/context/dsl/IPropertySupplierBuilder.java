@@ -1,7 +1,7 @@
 package com.garganttua.core.injection.context.dsl;
 
 import com.garganttua.core.injection.IPropertySupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for constructing property suppliers with query criteria.
@@ -9,7 +9,7 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * <p>
  * {@code IPropertySupplierBuilder} provides a fluent API for building {@link IPropertySupplier}
  * instances that can dynamically resolve and supply property values from property providers
- * based on specified key and provider criteria. This builder extends {@link IObjectSupplierBuilder}
+ * based on specified key and provider criteria. This builder extends {@link ISupplierBuilder}
  * with property-specific query capabilities, enabling late binding and dynamic property resolution.
  * </p>
  *
@@ -45,10 +45,10 @@ import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
  * @param <Property> the type of property value this supplier provides
  * @since 2.0.0-ALPHA01
  * @see IPropertySupplier
- * @see IObjectSupplierBuilder
+ * @see ISupplierBuilder
  * @see com.garganttua.core.injection.IPropertyProvider
  */
-public interface IPropertySupplierBuilder<Property> extends IObjectSupplierBuilder<Property, IPropertySupplier<Property>>  {
+public interface IPropertySupplierBuilder<Property> extends ISupplierBuilder<Property, IPropertySupplier<Property>>  {
 
     /**
      * Specifies the property key to search for.
