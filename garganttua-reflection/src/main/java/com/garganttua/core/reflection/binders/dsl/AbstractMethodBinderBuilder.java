@@ -55,6 +55,10 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         }
     }
 
+    protected void nullableParameter(int i, boolean acceptNullable){
+        this.parameterNullableAllowed.set(i, acceptNullable);
+    }
+
     private boolean buildContextual() {
         if (this.supplier.isContextual())
             return true;

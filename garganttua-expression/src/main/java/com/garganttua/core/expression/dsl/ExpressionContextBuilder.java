@@ -6,13 +6,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.expression.IExpressionContext;
 import com.garganttua.core.expression.annotations.ExpressionLeaf;
 import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.context.ExpressionContext;
+import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.expression.context.IExpressionNodeFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,6 +48,8 @@ public class ExpressionContextBuilder
 
     private Set<String> packages = new HashSet<>();
 
+    private Set<ExpressionNodeMethodBinderBuilder<?>> nodes = new HashSet<>();
+
     protected ExpressionContextBuilder() {
         super();
         log.atTrace().log("Entering ExpressionBuilder constructor");
@@ -66,7 +72,9 @@ public class ExpressionContextBuilder
                 methodOwner, supplied);
         Objects.requireNonNull(methodOwner, "Method owner cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        return new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied);
+        ExpressionNodeMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied);
+        this.nodes.add(expressionNodeMethodBinderBuilder);
+        return expressionNodeMethodBinderBuilder;
     }
 
     @Override
@@ -75,7 +83,9 @@ public class ExpressionContextBuilder
                 methodOwner, supplied);
         Objects.requireNonNull(methodOwner, "Method owner cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        return new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied, true);
+        ExpressionNodeMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied, true);
+        this.nodes.add(expressionNodeMethodBinderBuilder);
+        return expressionNodeMethodBinderBuilder;
     }
 
 
@@ -103,8 +113,8 @@ public class ExpressionContextBuilder
 
     @Override
     protected IExpressionContext doBuild() throws DslException {
-        
-        return null;
+        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream().map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
+        return new ExpressionContext(builtNodes);
     }
 
     @Override

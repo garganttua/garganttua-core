@@ -2,6 +2,7 @@ package com.garganttua.core.expression;
 
 import java.util.Optional;
 
+import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 

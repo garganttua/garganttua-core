@@ -9,6 +9,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.expression.context.ExpressionContext;
+import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
@@ -107,7 +109,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node3);
                 assertDoesNotThrow(exp::evaluate);
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualRecursiveSupply(exp.evaluate(), new ExpressionContext()));
+                                Supplier.contextualRecursiveSupply(exp.evaluate(), new ExpressionContext(null)));
 
         }
 
@@ -162,7 +164,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node3);
 
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext()));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null)));
         }
 
         @Test
@@ -212,7 +214,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node3);
 
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext()));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null)));
         }
 
         @Test
@@ -266,7 +268,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node2);
 
                 assertEquals("Hello from node 1 node 2",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(), " node 2"));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null), " node 2"));
         }
 
         @Test
@@ -321,7 +323,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node2);
 
                 SupplyException exception = assertThrows(SupplyException.class,
-                                () -> Supplier.contextualRecursiveSupply(exp, new ExpressionContext(),
+                                () -> Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null),
                                                 new StringConcatenator()));
 
                 assertEquals("Error on parameter 0", exception.getMessage());
@@ -378,7 +380,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node2);
 
                 assertEquals("Hello from node 1 node 2",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(), new StringConcatenator()));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null), new StringConcatenator()));
         }
 
 }

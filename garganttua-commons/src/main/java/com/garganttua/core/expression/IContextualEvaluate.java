@@ -1,5 +1,6 @@
 package com.garganttua.core.expression;
 
+import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 

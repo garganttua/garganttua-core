@@ -2,7 +2,7 @@ package com.garganttua.core.expression.dsl;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
-import com.garganttua.core.expression.IExpressionContext;
+import com.garganttua.core.expression.context.IExpressionContext;
 
 public interface IExpressionContextBuilder extends IAutomaticBuilder<IExpressionContextBuilder, IExpressionContext>, IPackageableBuilder<IExpressionContextBuilder, IExpressionContext> {
 
