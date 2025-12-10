@@ -28,7 +28,7 @@ public class TwoStepsRuntimeTest {
 
     @BeforeAll
     static void setup() {
-        ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
     }
 
     private IDiContextBuilder contextBuilder() {

@@ -10,7 +10,6 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
@@ -43,13 +42,14 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class ExpressionMethodBinderBuilder<S>
+public class ExpressionNodeMethodBinderBuilder<S>
         extends
         AbstractMethodBinderBuilder<IExpressionNode<S, ISupplier<S>>, IExpressionMethodBinderBuilder<S>, IExpressionContextBuilder, IExpressionNodeFactory<S, ISupplier<S>>>
         implements IExpressionMethodBinderBuilder<S> {
 
     private Class<?> methodOwner;
     private Class<S> supplied;
+    private Boolean leaf = false;
 
     /**
      * Creates a new ExpressionMethodBinderBuilder.
@@ -58,12 +58,19 @@ public class ExpressionMethodBinderBuilder<S>
      * @param methodOwner the class that owns the method
      * @param supplied    the type supplied by the method
      */
-    public ExpressionMethodBinderBuilder(IExpressionContextBuilder parent,
+    public ExpressionNodeMethodBinderBuilder(IExpressionContextBuilder parent,
             Class<?> methodOwner,
             Class<S> supplied) throws DslException {
+        this(parent, methodOwner, supplied, false);
+    }
+
+    public ExpressionNodeMethodBinderBuilder(IExpressionContextBuilder parent,
+            Class<?> methodOwner,
+            Class<S> supplied, Boolean leaf) throws DslException {
         super(parent, new NullSupplierBuilder<>(methodOwner));
-        log.atTrace().log("Entering ExpressionMethodBinderBuilder constructor with methodOwner={}, supplied={}",
-                methodOwner, supplied);
+        log.atTrace().log("Entering ExpressionMethodBinderBuilder constructor with methodOwner={}, supplied={}, leaf={}",
+        methodOwner, supplied, leaf);
+        this.leaf = Objects.requireNonNull(leaf, "Leaf boolean cannot be null");
         this.methodOwner = Objects.requireNonNull(methodOwner, "Method owner cannot be null");
         this.supplied = Objects.requireNonNull(supplied, "Supplied type cannot be null");
         log.atTrace().log("Exiting ExpressionMethodBinderBuilder constructor");

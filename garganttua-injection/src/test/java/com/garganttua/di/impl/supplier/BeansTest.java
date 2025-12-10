@@ -27,7 +27,7 @@ public class BeansTest {
 
     @BeforeEach
     void setUp() throws DiException, DslException {
-        ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
         DiContext.context = null;
         builder = DiContext.builder().withPackage("com.garganttua");
     }

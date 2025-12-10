@@ -1,12 +1,18 @@
 package com.garganttua.core.expression.dsl;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionContext;
+import com.garganttua.core.expression.annotations.ExpressionLeaf;
+import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,12 +28,10 @@ import lombok.extern.slf4j.Slf4j;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * IExpressionContext context = ExpressionBuilder
- *     .create()
- *     .withExpression(Calculator.class, Integer.class)
+ *     .builder()
+ *     .withExpressionNode(Calculator.class, Integer.class)
  *         .method("add")
- *         .withParam(5)
- *         .withParam(3)
- *         .end()
+ *         .up()
  *     .build();
  * }</pre>
  *
@@ -38,7 +42,7 @@ public class ExpressionContextBuilder
         extends AbstractAutomaticBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
 
-    private List<String> packages = new ArrayList<>();
+    private Set<String> packages = new HashSet<>();
 
     protected ExpressionContextBuilder() {
         super();
@@ -51,19 +55,29 @@ public class ExpressionContextBuilder
      *
      * @return a new ExpressionBuilder instance
      */
-    public static ExpressionContextBuilder create() {
+    public static ExpressionContextBuilder builder() {
         log.atTrace().log("Creating new ExpressionBuilder");
         return new ExpressionContextBuilder();
     }
 
     @Override
-    public <T> IExpressionMethodBinderBuilder<T> withExpression(Class<?> methodOwner, Class<T> supplied) {
+    public <T> IExpressionMethodBinderBuilder<T> withExpressionNode(Class<?> methodOwner, Class<T> supplied) {
         log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwner={}, supplied={}",
                 methodOwner, supplied);
         Objects.requireNonNull(methodOwner, "Method owner cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        return new ExpressionMethodBinderBuilder<>(this, methodOwner, supplied);
+        return new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied);
     }
+
+    @Override
+    public <T> IExpressionMethodBinderBuilder<T> withExpressionLeaf(Class<?> methodOwner, Class<T> supplied) {
+        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwner={}, supplied={}",
+                methodOwner, supplied);
+        Objects.requireNonNull(methodOwner, "Method owner cannot be null");
+        Objects.requireNonNull(supplied, "Supplied type cannot be null");
+        return new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied, true);
+    }
+
 
     @Override
     public IExpressionContextBuilder withPackage(String packageName) {
@@ -89,11 +103,19 @@ public class ExpressionContextBuilder
 
     @Override
     protected IExpressionContext doBuild() throws DslException {
-        throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
+        
+        return null;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
+        List<Method> nodes = new ArrayList<>();
+        List<Method> leafs = new ArrayList<>();
+        this.packages.stream().forEach(p -> {
+            nodes.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, ExpressionNode.class));
+            leafs.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, ExpressionLeaf.class));
+        });
+        nodes.stream().forEach(m -> this.withExpressionNode(m.getDeclaringClass(), m.getReturnType()).method(m).autoDetect(true));
+        leafs.stream().forEach(m -> this.withExpressionLeaf(m.getDeclaringClass(), m.getReturnType()).method(m).autoDetect(true));
     }
 }

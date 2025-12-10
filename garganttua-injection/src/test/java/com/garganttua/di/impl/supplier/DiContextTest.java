@@ -25,7 +25,7 @@ public class DiContextTest {
 
     @BeforeEach
     void setUp() throws DslException, LifecycleException {
-        ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
         DiContext.builder().withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", propertyValue)

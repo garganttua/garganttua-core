@@ -20,7 +20,7 @@ public class DiContextBuilderTest {
 
     @BeforeEach
     void setUp() throws DiException, DslException {
-        ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
     }
 
     @Test

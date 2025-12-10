@@ -1,6 +1,7 @@
 package com.garganttua.core.reflection;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -79,5 +80,7 @@ public interface IAnnotationScanner {
 	 * @return a list of classes annotated with the specified annotation (never {@code null}, may be empty)
 	 */
 	List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation);
+
+	List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation);
 
 }

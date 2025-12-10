@@ -9,12 +9,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.core.expression.ContextualExpressionNode;
-import com.garganttua.core.expression.Expression;
-import com.garganttua.core.expression.ExpressionContext;
-import com.garganttua.core.expression.ExpressionNode;
-import com.garganttua.core.expression.IExpressionContext;
-import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
@@ -36,10 +30,15 @@ public class NodeTest {
         @Test
         public void testSimpleConcatenationExpression() throws Exception {
 
+                ExpressionLeaf<String> leaf = new ExpressionLeaf<>("", params -> {
+                        return new FixedSupplier<String>((String)params[0]);
+                }, String.class, "Hello world from");
+
                 ExpressionNode<String> node1 = new ExpressionNode<String>("", params -> {
-                        ISupplier<String> supplier = new FixedSupplier<String>("Hello world from node 1");
-                        return supplier;
-                }, String.class);
+                        ISupplier<String> supplier = (ISupplier<String>) params[0];
+                        String t = supplier.supply().get() + " node 1";
+                        return new FixedSupplier<String>(t);
+                }, List.of(leaf),String.class);
 
                 ExpressionNode<String> node2 = new ExpressionNode<String>("", params -> {
                         ISupplier<String> supplier = (ISupplier<String>) params[0];
@@ -64,8 +63,6 @@ public class NodeTest {
 
         @Test
         public void testContextualEvaluationWithinNonContextualExpressionNode() throws Exception {
-
-                final ExpressionContext context = new ExpressionContext();
 
                 ExpressionNode<String> node1 = new ExpressionNode<String>("", params -> {
 

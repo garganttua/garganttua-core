@@ -66,7 +66,7 @@ public class PerformancesTest {
 
         @BeforeAll
         public static void setup() {
-                ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+                ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
         }
 
         @Test

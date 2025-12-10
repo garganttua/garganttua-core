@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.expression.ExpressionException;
-import com.garganttua.core.expression.IEvaluate;
-import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
 
@@ -16,19 +13,19 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     private List<IExpressionNode<?, ? extends ISupplier<?>>> childs = new LinkedList<>();
 
-    private IEvaluate<R> evaluate;
+    private IEvaluateNode<R> evaluate;
 
     private Class<R> returnedType;
 
     private String name;
 
-    public ExpressionNode(String name, IEvaluate<R> evaluate, Class<R> returnedType) {
+    public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType) {
         this.returnedType = returnedType;
         this.childs = List.of();
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
-    public ExpressionNode(String name, IEvaluate<R> evaluate,
+    public ExpressionNode(String name, IEvaluateNode<R> evaluate,
             List<IExpressionNode<?, ? extends ISupplier<?>>> childs, Class<R> returnedType) {
         this.childs = Objects.requireNonNull(childs, "Childs list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");

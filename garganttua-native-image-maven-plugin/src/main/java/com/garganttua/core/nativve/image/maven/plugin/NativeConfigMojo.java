@@ -56,7 +56,7 @@ public class NativeConfigMojo extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException {
-		ObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+		ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
 		getLog().info("Generating Native-image configuration in directory: " + this.buildOutputDirectory);
 		/*
 		 * getLog().info("Looking for Native-image files into " + artifacts.size() +

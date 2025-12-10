@@ -30,19 +30,42 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ObjectReflectionHelper {
 
-	public static IAnnotationScanner annotationScanner;
+	private static volatile IAnnotationScanner annotationScanner;
+	private static final Object SCANNER_LOCK = new Object();
 
-	private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<>();
+	private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER;
 	static {
-		PRIMITIVE_TO_WRAPPER.put(boolean.class, Boolean.class);
-		PRIMITIVE_TO_WRAPPER.put(byte.class, Byte.class);
-		PRIMITIVE_TO_WRAPPER.put(char.class, Character.class);
-		PRIMITIVE_TO_WRAPPER.put(short.class, Short.class);
-		PRIMITIVE_TO_WRAPPER.put(int.class, Integer.class);
-		PRIMITIVE_TO_WRAPPER.put(long.class, Long.class);
-		PRIMITIVE_TO_WRAPPER.put(float.class, Float.class);
-		PRIMITIVE_TO_WRAPPER.put(double.class, Double.class);
-		PRIMITIVE_TO_WRAPPER.put(void.class, Void.class);
+		Map<Class<?>, Class<?>> primitiveMap = new HashMap<>();
+		primitiveMap.put(boolean.class, Boolean.class);
+		primitiveMap.put(byte.class, Byte.class);
+		primitiveMap.put(char.class, Character.class);
+		primitiveMap.put(short.class, Short.class);
+		primitiveMap.put(int.class, Integer.class);
+		primitiveMap.put(long.class, Long.class);
+		primitiveMap.put(float.class, Float.class);
+		primitiveMap.put(double.class, Double.class);
+		primitiveMap.put(void.class, Void.class);
+		PRIMITIVE_TO_WRAPPER = Map.copyOf(primitiveMap);
+	}
+
+	/**
+	 * Sets the annotation scanner in a thread-safe manner.
+	 *
+	 * @param scanner the annotation scanner to set
+	 */
+	public static void setAnnotationScanner(IAnnotationScanner scanner) {
+		synchronized (SCANNER_LOCK) {
+			annotationScanner = scanner;
+		}
+	}
+
+	/**
+	 * Gets the annotation scanner in a thread-safe manner.
+	 *
+	 * @return the current annotation scanner
+	 */
+	public static IAnnotationScanner getAnnotationScanner() {
+		return annotationScanner;
 	}
 
 	public static Constructor<?> getConstructorWithNoParams(Class<?> classs) {
@@ -324,9 +347,28 @@ public class ObjectReflectionHelper {
 	}
 
 	public static List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation) {
-		return ObjectReflectionHelper.annotationScanner.getClassesWithAnnotation(package_, annotation);
+		IAnnotationScanner scanner = getAnnotationScanner();
+		if (scanner == null) {
+			throw new IllegalStateException("Annotation scanner not initialized. Call setAnnotationScanner() first.");
+		}
+		return scanner.getClassesWithAnnotation(package_, annotation);
 	}
 
+	public static List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation) {
+		IAnnotationScanner scanner = getAnnotationScanner();
+		if (scanner == null) {
+			throw new IllegalStateException("Annotation scanner not initialized. Call setAnnotationScanner() first.");
+		}
+		return scanner.getMethodsWithAnnotation(package_, annotation);
+	}
+
+	/**
+	 * 
+	 * @param entityClass the class to inspect
+	 * @param methodAnnotation
+	 * @return
+	 * @throws ReflectionException
+	 */
 	public static String getMethodAddressAnnotatedWith(Class<?> entityClass,
 			Class<? extends Annotation> methodAnnotation) throws ReflectionException {
 
@@ -338,6 +380,12 @@ public class ObjectReflectionHelper {
 		return null;
 	}
 
+	/**
+	 * 
+	 * @param entityClass the class to inspect
+	 * @param methodAnnotation
+	 * @return
+	 */
 	public static Method getMethodAnnotatedWith(Class<?> entityClass, Class<? extends Annotation> methodAnnotation) {
 		Method method = null;
 		for (Method m : entityClass.getDeclaredMethods()) {

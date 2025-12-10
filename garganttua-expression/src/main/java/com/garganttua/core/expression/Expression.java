@@ -3,30 +3,25 @@ package com.garganttua.core.expression;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-import com.garganttua.core.expression.ExpressionException;
-import com.garganttua.core.expression.IContextualExpressionNode;
-import com.garganttua.core.expression.IExpression;
-import com.garganttua.core.expression.IExpressionContext;
-import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.supply.ISupplier;
 
 public class Expression<R> implements IExpression<R, ISupplier<R>> {
 
-    private IExpressionNode<R, ? extends ISupplier<R>> leaf;
+    private IExpressionNode<R, ? extends ISupplier<R>> root;
 
-    public Expression(IExpressionNode<R, ? extends ISupplier<R>> leaf) {
-        this.leaf = Objects.requireNonNull(leaf, "Leaf expression cannot be null");
+    public Expression(IExpressionNode<R, ? extends ISupplier<R>> root) {
+        this.root = Objects.requireNonNull(root, "Root expression cannot be null");
     }
 
     @Override
     public Type getSuppliedType() {
-        return this.leaf.getSuppliedType();
+        return this.root.getSuppliedType();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ISupplier<R> evaluate() throws ExpressionException {
-        ISupplier<?> evaluation = Expression.evaluateNode(leaf);
+        ISupplier<?> evaluation = Expression.evaluateNode(root);
         return (ISupplier<R>) evaluation;
     }
 

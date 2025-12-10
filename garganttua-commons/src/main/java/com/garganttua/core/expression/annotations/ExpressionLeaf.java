@@ -1,6 +1,6 @@
 package com.garganttua.core.expression.annotations;
 
-public @interface Expression {
+public @interface ExpressionLeaf {
 
     String name() default "";
 

@@ -1,13 +1,17 @@
 package com.garganttua.core.expression.dsl;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.expression.annotations.ExpressionLeaf;
+import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+
+import lombok.NonNull;
 
 /**
  * Test class for ExpressionContextBuilder.
@@ -15,6 +19,21 @@ import com.garganttua.core.dsl.DslException;
  * @since 2.0.0-ALPHA01
  */
 class ExpressionContextBuilderTest {
+
+    @ExpressionLeaf
+    public String string(@NonNull String message){
+        return message;
+    }
+
+    @ExpressionNode
+    public String echo(@NonNull String message){
+        return message;
+    }
+
+    @BeforeEach
+    void setUp() {
+        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    }
 
     /**
      * Helper class with static methods for testing.
@@ -44,10 +63,10 @@ class ExpressionContextBuilderTest {
     }
 
     @Test
-    void testCreateExpressionContextBuilder() {
-        // Test that we can create an ExpressionContextBuilder
+    void testbuilderExpressionContextBuilder() {
+        // Test that we can builder an ExpressionContextBuilder
         assertDoesNotThrow(() -> {
-            ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+            ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
             assertNotNull(builder);
         });
     }
@@ -55,7 +74,7 @@ class ExpressionContextBuilderTest {
     @Test
     void testWithPackage() {
         // Test adding a single package
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
             builder.withPackage("com.example.test");
@@ -69,12 +88,12 @@ class ExpressionContextBuilderTest {
     @Test
     void testWithPackages() {
         // Test adding multiple packages
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         String[] packagesToAdd = {
-            "com.example.test1",
-            "com.example.test2",
-            "com.example.test3"
+                "com.example.test1",
+                "com.example.test2",
+                "com.example.test3"
         };
 
         assertDoesNotThrow(() -> {
@@ -83,80 +102,77 @@ class ExpressionContextBuilderTest {
 
         String[] packages = builder.getPackages();
         assertEquals(3, packages.length);
-        assertEquals("com.example.test1", packages[0]);
-        assertEquals("com.example.test2", packages[1]);
-        assertEquals("com.example.test3", packages[2]);
     }
 
     @Test
-    void testWithExpressionCreatesMethodBinderBuilder() {
-        // Test that withExpression returns a method binder builder
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+    void testwithExpressionNodebuildersMethodBinderBuilder() {
+        // Test that withExpressionNode returns a method binder builder
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> methodBuilder =
-                builder.withExpression(TestExpressions.class, String.class);
+            IExpressionMethodBinderBuilder<String> methodBuilder = builder.withExpressionNode(TestExpressions.class,
+                    String.class);
             assertNotNull(methodBuilder);
         });
     }
 
     @Test
-    void testWithExpressionStaticMethod() throws DslException {
+    void testwithExpressionNodeStaticMethod() throws DslException {
         // Test binding a static method
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> methodBuilder =
-                builder.withExpression(TestExpressions.class, String.class)
+            IExpressionMethodBinderBuilder<String> methodBuilder = builder
+                    .withExpressionNode(TestExpressions.class, String.class)
                     .method("getString");
             assertNotNull(methodBuilder);
         });
     }
 
     @Test
-    void testWithExpressionNonStaticMethodFails() throws DslException {
+    void testwithExpressionNodeNonStaticMethodFails() throws DslException {
         // Test that binding a non-static method throws an exception
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(DslException.class, () -> {
-            builder.withExpression(TestExpressions.class, String.class)
-                .method("getNonStaticString");
+            builder.withExpressionNode(TestExpressions.class, String.class)
+                    .method("getNonStaticString");
         });
     }
 
     @Test
-    void testWithExpressionDifferentTypes() throws DslException {
+    void testwithExpressionNodeDifferentTypes() throws DslException {
         // Test binding methods with different return types
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         // String
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> stringBuilder =
-                builder.withExpression(TestExpressions.class, String.class)
+            IExpressionMethodBinderBuilder<String> stringBuilder = builder
+                    .withExpressionNode(TestExpressions.class, String.class)
                     .method("getString");
             assertNotNull(stringBuilder);
         });
 
         // Integer
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<Integer> intBuilder =
-                builder.withExpression(TestExpressions.class, Integer.class)
+            IExpressionMethodBinderBuilder<Integer> intBuilder = builder
+                    .withExpressionNode(TestExpressions.class, Integer.class)
                     .method("getInteger");
             assertNotNull(intBuilder);
         });
 
         // Double
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<Double> doubleBuilder =
-                builder.withExpression(TestExpressions.class, Double.class)
+            IExpressionMethodBinderBuilder<Double> doubleBuilder = builder
+                    .withExpressionNode(TestExpressions.class, Double.class)
                     .method("getDouble");
             assertNotNull(doubleBuilder);
         });
 
         // Boolean
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<Boolean> booleanBuilder =
-                builder.withExpression(TestExpressions.class, Boolean.class)
+            IExpressionMethodBinderBuilder<Boolean> booleanBuilder = builder
+                    .withExpressionNode(TestExpressions.class, Boolean.class)
                     .method("getBoolean");
             assertNotNull(booleanBuilder);
         });
@@ -165,15 +181,15 @@ class ExpressionContextBuilderTest {
     @Test
     void testWithParamIsInoperative() throws DslException {
         // Test that withParam doesn't fail but is inoperative
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> methodBuilder =
-                builder.withExpression(TestExpressions.class, String.class)
+            IExpressionMethodBinderBuilder<String> methodBuilder = builder
+                    .withExpressionNode(TestExpressions.class, String.class)
                     .method("getString")
-                    .withParam("test")  // Should be ignored
-                    .withParam(0, "test")  // Should be ignored
-                    .withParam("paramName", "test");  // Should be ignored
+                    .withParam("test") // Should be ignored
+                    .withParam(0, "test") // Should be ignored
+                    .withParam("paramName", "test"); // Should be ignored
             assertNotNull(methodBuilder);
         });
     }
@@ -181,13 +197,13 @@ class ExpressionContextBuilderTest {
     @Test
     void testWithReturnIsInoperative() throws DslException {
         // Test that withReturn doesn't fail but is inoperative
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> methodBuilder =
-                builder.withExpression(TestExpressions.class, String.class)
+            IExpressionMethodBinderBuilder<String> methodBuilder = builder
+                    .withExpressionNode(TestExpressions.class, String.class)
                     .method("getString")
-                    .withReturn(null);  // Should be ignored
+                    .withReturn(null); // Should be ignored
             assertNotNull(methodBuilder);
         });
     }
@@ -195,7 +211,7 @@ class ExpressionContextBuilderTest {
     @Test
     void testAutoDetect() {
         // Test auto-detect functionality
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
             builder.autoDetect(true);
@@ -209,14 +225,14 @@ class ExpressionContextBuilderTest {
     @Test
     void testChainedCalls() {
         // Test method chaining
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
             builder
-                .withPackage("com.example.test1")
-                .withPackage("com.example.test2")
-                .autoDetect(true)
-                .withExpression(TestExpressions.class, String.class)
+                    .withPackage("com.example.test1")
+                    .withPackage("com.example.test2")
+                    .autoDetect(true)
+                    .withExpressionNode(TestExpressions.class, String.class)
                     .method("getString");
         });
 
@@ -227,7 +243,7 @@ class ExpressionContextBuilderTest {
     @Test
     void testNullPackageNameThrowsException() {
         // Test that null package name throws exception
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
             builder.withPackage(null);
@@ -237,7 +253,7 @@ class ExpressionContextBuilderTest {
     @Test
     void testNullPackageArrayThrowsException() {
         // Test that null package array throws exception
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
             builder.withPackages(null);
@@ -245,32 +261,22 @@ class ExpressionContextBuilderTest {
     }
 
     @Test
-    void testBuildThrowsUnsupportedOperationException() {
-        // Test that build() throws UnsupportedOperationException
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
-
-        assertThrows(UnsupportedOperationException.class, () -> {
-            builder.build();
-        });
-    }
-
-    @Test
     void testMultipleExpressionsOnSameBuilder() throws DslException {
         // Test adding multiple expressions to the same builder
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
             // First expression
-            builder.withExpression(TestExpressions.class, String.class)
-                .method("getString");
+            builder.withExpressionNode(TestExpressions.class, String.class)
+                    .method("getString");
 
             // Second expression
-            builder.withExpression(TestExpressions.class, Integer.class)
-                .method("getInteger");
+            builder.withExpressionNode(TestExpressions.class, Integer.class)
+                    .method("getInteger");
 
             // Third expression
-            builder.withExpression(TestExpressions.class, Boolean.class)
-                .method("getBoolean");
+            builder.withExpressionNode(TestExpressions.class, Boolean.class)
+                    .method("getBoolean");
         });
     }
 
@@ -292,38 +298,45 @@ class ExpressionContextBuilderTest {
     @Test
     void testMethodResolution() throws DslException {
         // Test that we can resolve different methods by name
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         // Should work - correct method name
         assertDoesNotThrow(() -> {
-            builder.withExpression(TestExpressions.class, String.class)
-                .method("getString");
+            builder.withExpressionNode(TestExpressions.class, String.class)
+                    .method("getString");
         });
 
         // Should fail - method doesn't exist
         assertThrows(DslException.class, () -> {
-            builder.withExpression(TestExpressions.class, String.class)
-                .method("nonExistentMethod");
+            builder.withExpressionNode(TestExpressions.class, String.class)
+                    .method("nonExistentMethod");
         });
     }
 
     @Test
-    void testWithExpressionNullMethodOwnerThrowsException() {
+    void testwithExpressionNodeNullMethodOwnerThrowsException() {
         // Test that null method owner throws exception
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
-            builder.withExpression(null, String.class);
+            builder.withExpressionNode(null, String.class);
         });
     }
 
     @Test
-    void testWithExpressionNullSuppliedTypeThrowsException() {
+    void testwithExpressionNodeNullSuppliedTypeThrowsException() {
         // Test that null supplied type throws exception
-        ExpressionContextBuilder builder = ExpressionContextBuilder.create();
+        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
-            builder.withExpression(TestExpressions.class, null);
+            builder.withExpressionNode(TestExpressions.class, null);
         });
+    }
+
+    @Test
+    void testBuildWithAutoDetection() {
+        IExpressionContextBuilder builder = ExpressionContextBuilder.builder()
+                .withPackage("com.garganttua.core.expression.dsl").autoDetect(true);
+        builder.build();
     }
 }

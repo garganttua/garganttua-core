@@ -34,7 +34,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
         return result;
     }
 
-
+    @Override
     public List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation) {
         log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", package_, annotation);
 
