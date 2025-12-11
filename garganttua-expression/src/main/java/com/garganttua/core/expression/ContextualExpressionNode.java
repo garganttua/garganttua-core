@@ -29,8 +29,8 @@ public class ContextualExpressionNode<R>
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
-    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate,
-            List<IExpressionNode<?, ? extends ISupplier<?>>> childs, Class<R> returnedType) {
+    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, Class<R> returnedType,
+            List<IExpressionNode<?, ? extends ISupplier<?>>> childs) {
         this.childs = Objects.requireNonNull(childs, "Childs list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
         this.returnedType = returnedType;

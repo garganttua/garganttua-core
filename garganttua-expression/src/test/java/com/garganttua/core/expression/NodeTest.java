@@ -145,7 +145,7 @@ public class NodeTest {
                                                         String.class);
 
                                         return mb;
-                                }, List.of(node1), String.class);
+                                }, String.class, List.of(node1));
 
                 IExpressionNode<String, ? extends ISupplier<String>> node3 = new ContextualExpressionNode<String>("",
                                 (c,
@@ -160,7 +160,7 @@ public class NodeTest {
                                                         String.class);
 
                                         return mb;
-                                }, List.of(node2), String.class);
+                                }, String.class, List.of(node2));
 
                 Expression<String> exp = new Expression<>(node3);
 
@@ -210,7 +210,7 @@ public class NodeTest {
                                                         String.class);
 
                                         return mb;
-                                }, List.of(node2), String.class);
+                                }, String.class, List.of(node2));
 
                 Expression<String> exp = new Expression<>(node3);
 

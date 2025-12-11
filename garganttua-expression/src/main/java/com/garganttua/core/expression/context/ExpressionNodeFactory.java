@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.expression.ContextualExpressionNode;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionLeaf;
 import com.garganttua.core.expression.ExpressionNode;
@@ -16,6 +17,7 @@ import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
+import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.NullSupplier;
 import com.garganttua.core.supply.NullableSupplier;
@@ -83,14 +85,23 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>> extends
         IExpressionNode<R, S> expressionNode = null;
         if (context.matches(this.parameterTypes)) {
             if (!this.leaf) {
-                context.buildContextual();
-                expressionNode = (IExpressionNode<R, S>) new ExpressionNode<R>(
-                        getExecutableReference(),
-                        params -> {
-                            return this.bindNode(params);
-                        },
-                        (Class<R>) this.method.getReturnType(),
-                        context.nodeChilds());
+                if (context.buildContextual()) {
+                    expressionNode = (IExpressionNode<R, S>) new ExpressionNode<R>(
+                            getExecutableReference(),
+                            params -> {
+                                return this.bindNode(params);
+                            },
+                            (Class<R>) this.method.getReturnType(),
+                            context.nodeChilds());
+                } else {
+                    expressionNode = (IExpressionNode<R, S>) new ContextualExpressionNode<R>(
+                            getExecutableReference(),
+                            (c, params) -> {
+                                return this.bindContextualNode(params);
+                            },
+                            (Class<R>) this.method.getReturnType(),
+                            context.nodeChilds());
+                }
             } else {
                 expressionNode = (IExpressionNode<R, S>) new ExpressionLeaf<R>(
                         getExecutableReference(),
@@ -105,19 +116,34 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>> extends
     }
 
     @SuppressWarnings("unchecked")
+    private IContextualSupplier<R, IExpressionContext> bindContextualNode(ISupplier<?>[] parameters) {
+        List<ISupplier<?>> nullableEncapsulated = this.encapsulateParameters(parameters);
+        return new ContextualMethodBinder<>(
+                new NullSupplier<>(this.method.getDeclaringClass()),
+                new ObjectAddress(this.method.getName()),
+                nullableEncapsulated,
+                (Class<R>) this.method.getReturnType());
+
+    }
+
+    @SuppressWarnings("unchecked")
     private ISupplier<R> bindNode(ISupplier<?>[] parameters) throws DslException {
-
-        List<ISupplier<?>> nullableEncapsulated = new ArrayList<>();
-
-        for(int i = 0; i < parameters.length; i++){
-            nullableEncapsulated.add(new NullableSupplier<>(parameters[i], this.nullableParameters.get(i)));
-        }
+        List<ISupplier<?>> nullableEncapsulated = this.encapsulateParameters(parameters);
 
         return new MethodBinder<R>(
                 new NullSupplier<>(this.method.getDeclaringClass()),
                 new ObjectAddress(this.method.getName()),
                 nullableEncapsulated,
                 (Class<R>) this.method.getReturnType());
+    }
+
+    private List<ISupplier<?>> encapsulateParameters(ISupplier<?>[] parameters) {
+        List<ISupplier<?>> nullableEncapsulated = new ArrayList<>();
+
+        for (int i = 0; i < parameters.length; i++) {
+            nullableEncapsulated.add(new NullableSupplier<>(parameters[i], this.nullableParameters.get(i)));
+        }
+        return nullableEncapsulated;
     }
 
     @SuppressWarnings("unchecked")
