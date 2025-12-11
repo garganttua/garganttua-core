@@ -2,6 +2,7 @@ package com.garganttua.core.expression;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.Set;
 
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
@@ -29,7 +30,7 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
 
     public static ISupplier<?> evaluateNode(IExpressionNode<?, ?> node) {
         if (node instanceof IContextualExpressionNode cNode) {
-            return cNode.evaluate(new ExpressionContext(null));
+            return cNode.evaluate(new ExpressionContext(Set.of()));
         }
         return (ISupplier<?>) node.evaluate();
     }
@@ -37,7 +38,7 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
     public static ISupplier<?> evaluateNode(IExpressionNode<?, ?> node, IExpressionContext context) {
         if (node instanceof IContextualExpressionNode cNode) {
             if( context == null )
-                context = new ExpressionContext(null);
+                context = new ExpressionContext(Set.of());
             return cNode.evaluate(context);
         }
         return (ISupplier<?>) node.evaluate();

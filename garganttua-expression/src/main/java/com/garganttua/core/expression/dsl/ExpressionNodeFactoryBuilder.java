@@ -4,10 +4,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Objects;
 
-import org.slf4j.Logger;
-
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
@@ -46,12 +45,13 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class ExpressionNodeMethodBinderBuilder<S>
+public class ExpressionNodeFactoryBuilder<S>
         extends
         AbstractMethodBinderBuilder<IExpressionNode<S, ISupplier<S>>, IExpressionMethodBinderBuilder<S>, IExpressionContextBuilder, IExpressionNodeFactory<S, ISupplier<S>>>
         implements IExpressionMethodBinderBuilder<S> {
 
     private Class<?> methodOwner;
+    @SuppressWarnings("unused")
     private Class<S> supplied;
     private Boolean leaf = false;
 
@@ -60,15 +60,15 @@ public class ExpressionNodeMethodBinderBuilder<S>
      *
      * @param parent      the parent expression context builder
      * @param methodOwner the class that owns the method
-     * @param supplied    the type supplied by the method
+     * @param supplied    the type supplied by the method (unused, kept for API compatibility)
      */
-    public ExpressionNodeMethodBinderBuilder(IExpressionContextBuilder parent,
+    public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             Class<?> methodOwner,
             Class<S> supplied) throws DslException {
         this(parent, methodOwner, supplied, false);
     }
 
-    public ExpressionNodeMethodBinderBuilder(IExpressionContextBuilder parent,
+    public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             Class<?> methodOwner,
             Class<S> supplied, Boolean leaf) throws DslException {
         super(parent, new NullSupplierBuilder<>(methodOwner));
@@ -152,9 +152,19 @@ public class ExpressionNodeMethodBinderBuilder<S>
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected IExpressionNodeFactory<S, ISupplier<S>> doBuild() throws DslException {
-        throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
+        Method method = this.findMethod();
+        ObjectAddress methodAddress = new ObjectAddress(method.getName());
+        return new ExpressionNodeFactory<S, ISupplier<S>>(
+            this.methodOwner,
+            (Class<ISupplier<S>>) (Class<?>) ISupplier.class,
+            method,
+            methodAddress,
+            this.nullableParameters(),
+            leaf
+        );
     }
 
     @Override

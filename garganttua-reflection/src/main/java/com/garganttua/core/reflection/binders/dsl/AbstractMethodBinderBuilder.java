@@ -55,6 +55,10 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         }
     }
 
+    protected List<Boolean> nullableParameters(){
+        return this.parameterNullableAllowed;
+    }
+
     protected void nullableParameter(int i, boolean acceptNullable){
         this.parameterNullableAllowed.set(i, acceptNullable);
     }

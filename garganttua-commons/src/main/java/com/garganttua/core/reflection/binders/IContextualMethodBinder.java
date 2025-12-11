@@ -1,6 +1,9 @@
 package com.garganttua.core.reflection.binders;
 
+import java.util.Optional;
+
 import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.SupplyException;
 
 /**
  * Context-aware method binder for reflective method invocation with runtime context resolution.
@@ -63,6 +66,9 @@ import com.garganttua.core.supply.IContextualSupplier;
  * @see IContextualExecutableBinder
  */
 public interface IContextualMethodBinder<ExecutionReturned, OwnerContextType> extends IMethodBinder<ExecutionReturned>, IContextualExecutableBinder<ExecutionReturned, OwnerContextType> {
-
+@Override
+    default Optional<ExecutionReturned> supply() throws SupplyException {
+        return this.execute();
+    }
 
 }

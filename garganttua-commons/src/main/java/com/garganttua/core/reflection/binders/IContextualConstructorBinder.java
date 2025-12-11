@@ -1,5 +1,9 @@
 package com.garganttua.core.reflection.binders;
 
+import java.util.Optional;
+
+import com.garganttua.core.supply.SupplyException;
+
 /**
  * Context-aware constructor binder for object instantiation with runtime dependency resolution.
  *
@@ -88,6 +92,11 @@ public interface IContextualConstructorBinder<Constructed> extends IConstructorB
     @Override
     default Class<Void> getOwnerContextType(){
         return Void.class;
+    }
+
+    @Override
+    default Optional<Constructed> supply() throws SupplyException {
+        return this.execute();
     }
 
 }

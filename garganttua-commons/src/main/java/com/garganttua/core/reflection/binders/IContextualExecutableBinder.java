@@ -148,4 +148,9 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
                 return execute(null);
         }
 
+        @Override
+        default Optional<ExecutionReturn> supply() throws SupplyException {
+                return this.execute();
+        }
+
 }

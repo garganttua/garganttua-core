@@ -48,7 +48,7 @@ public class ExpressionContextBuilder
 
     private Set<String> packages = new HashSet<>();
 
-    private Set<ExpressionNodeMethodBinderBuilder<?>> nodes = new HashSet<>();
+    private Set<ExpressionNodeFactoryBuilder<?>> nodes = new HashSet<>();
 
     protected ExpressionContextBuilder() {
         super();
@@ -72,7 +72,7 @@ public class ExpressionContextBuilder
                 methodOwner, supplied);
         Objects.requireNonNull(methodOwner, "Method owner cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        ExpressionNodeMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied);
+        ExpressionNodeFactoryBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this, methodOwner, supplied);
         this.nodes.add(expressionNodeMethodBinderBuilder);
         return expressionNodeMethodBinderBuilder;
     }
@@ -83,7 +83,7 @@ public class ExpressionContextBuilder
                 methodOwner, supplied);
         Objects.requireNonNull(methodOwner, "Method owner cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        ExpressionNodeMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeMethodBinderBuilder<>(this, methodOwner, supplied, true);
+        ExpressionNodeFactoryBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this, methodOwner, supplied, true);
         this.nodes.add(expressionNodeMethodBinderBuilder);
         return expressionNodeMethodBinderBuilder;
     }

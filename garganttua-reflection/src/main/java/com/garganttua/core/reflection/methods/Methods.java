@@ -39,4 +39,19 @@ public class Methods {
                                 + ")";
         }
 
+        public static String pretty(Method method) {
+                log.atTrace().log("Creating pretty representation for method: {}", method);
+
+                String pretty = method.getDeclaringClass().getSimpleName()
+                                + "."
+                                + method.getName()
+                                + "("
+                                + Arrays.stream(method.getParameterTypes())
+                                                .map(Class::getSimpleName)
+                                                .collect(Collectors.joining(", "))
+                                + ")";
+
+                return pretty;
+        }
+
 }

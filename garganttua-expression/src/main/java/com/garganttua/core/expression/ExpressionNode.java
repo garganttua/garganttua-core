@@ -25,8 +25,8 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
-    public ExpressionNode(String name, IEvaluateNode<R> evaluate,
-            List<IExpressionNode<?, ? extends ISupplier<?>>> childs, Class<R> returnedType) {
+    public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType,
+            List<IExpressionNode<?, ? extends ISupplier<?>>> childs) {
         this.childs = Objects.requireNonNull(childs, "Childs list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
         this.returnedType = returnedType;

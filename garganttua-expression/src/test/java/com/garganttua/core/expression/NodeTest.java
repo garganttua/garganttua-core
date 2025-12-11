@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,19 +41,19 @@ public class NodeTest {
                         ISupplier<String> supplier = (ISupplier<String>) params[0];
                         String t = supplier.supply().get() + " node 1";
                         return new FixedSupplier<String>(t);
-                }, List.of(leaf),String.class);
+                },String.class, List.of(leaf));
 
                 ExpressionNode<String> node2 = new ExpressionNode<String>("", params -> {
                         ISupplier<String> supplier = (ISupplier<String>) params[0];
                         String t = supplier.supply().get() + " node 2";
                         return new FixedSupplier<String>(t);
-                }, List.of(node1), String.class);
+                }, String.class, List.of(node1));
 
                 ExpressionNode<String> node3 = new ExpressionNode<String>("", params -> {
                         ISupplier<String> supplier = (ISupplier<String>) params[0];
                         String t = supplier.supply().get() + " node 3";
                         return new FixedSupplier<String>(t);
-                }, List.of(node2), String.class);
+                }, String.class, List.of(node2));
 
                 assertEquals("Hello world from node 1 node 2 node 3", node3.evaluate().supply().get());
                 assertEquals("Hello world from node 1 node 2 node 3", node3.supply().get().supply().get());
@@ -91,7 +92,7 @@ public class NodeTest {
                                         String.class);
 
                         return mb;
-                }, List.of(node1), String.class);
+                }, String.class, List.of(node1));
 
                 ExpressionNode<String> node3 = new ExpressionNode<String>("", params -> {
                         ContextualMethodBinder<String, ExpressionContext> mb = new ContextualMethodBinder<>(
@@ -104,12 +105,12 @@ public class NodeTest {
                                         String.class);
 
                         return mb;
-                }, List.of(node2), String.class);
+                }, String.class, List.of(node2));
 
                 Expression<String> exp = new Expression<>(node3);
                 assertDoesNotThrow(exp::evaluate);
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualRecursiveSupply(exp.evaluate(), new ExpressionContext(null)));
+                                Supplier.contextualRecursiveSupply(exp.evaluate(), new ExpressionContext(Set.of())));
 
         }
 
@@ -164,7 +165,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node3);
 
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null)));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(Set.of())));
         }
 
         @Test
@@ -195,7 +196,7 @@ public class NodeTest {
                                         String.class);
 
                         return mb;
-                }, List.of(node1), String.class);
+                }, String.class, List.of(node1));
 
                 IExpressionNode<String, ? extends ISupplier<String>> node3 = new ContextualExpressionNode<>("",
                                 (c, params) -> {
@@ -214,7 +215,7 @@ public class NodeTest {
                 Expression<String> exp = new Expression<>(node3);
 
                 assertEquals("Hello from node 1 node 2 node 3",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null)));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(Set.of())));
         }
 
         @Test
@@ -263,12 +264,12 @@ public class NodeTest {
                                         String.class);
 
                         return mb;
-                }, List.of(node1), String.class);
+                }, String.class, List.of(node1));
 
                 Expression<String> exp = new Expression<>(node2);
 
                 assertEquals("Hello from node 1 node 2",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null), " node 2"));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(Set.of()), " node 2"));
         }
 
         @Test
@@ -318,12 +319,12 @@ public class NodeTest {
                                         String.class);
 
                         return mb;
-                }, List.of(node1), String.class);
+                }, String.class, List.of(node1));
 
                 Expression<String> exp = new Expression<>(node2);
 
                 SupplyException exception = assertThrows(SupplyException.class,
-                                () -> Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null),
+                                () -> Supplier.contextualRecursiveSupply(exp, new ExpressionContext(Set.of()),
                                                 new StringConcatenator()));
 
                 assertEquals("Error on parameter 0", exception.getMessage());
@@ -375,12 +376,12 @@ public class NodeTest {
                                         String.class);
 
                         return mb;
-                }, List.of(node1), String.class);
+                }, String.class, List.of(node1));
 
                 Expression<String> exp = new Expression<>(node2);
 
                 assertEquals("Hello from node 1 node 2",
-                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(null), new StringConcatenator()));
+                                Supplier.contextualRecursiveSupply(exp, new ExpressionContext(Set.of()), new StringConcatenator()));
         }
 
 }

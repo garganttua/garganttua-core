@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 /**
  * Base interface for binders that execute methods or constructors via reflection.
@@ -92,6 +93,6 @@ public interface IExecutableBinder<ExecutionReturn> extends Dependent, ISupplier
      *                            invocation target exceptions, instantiation errors,
      *                            or parameter mismatch
      */
-    Optional<? extends ExecutionReturn> execute() throws ReflectionException;
+    Optional<ExecutionReturn> execute() throws ReflectionException;
 
 }
