@@ -6,6 +6,8 @@ import com.garganttua.core.supply.ISupplier;
 
 public interface IExpressionNodeFactory<R, S extends ISupplier<R>> extends IContextualMethodBinder<IExpressionNode<R, S>, IExpressionNodeContext> {
 
-    String getKey();
+    String key();
+
+    String description();
 
 }

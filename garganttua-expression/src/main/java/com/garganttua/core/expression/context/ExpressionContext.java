@@ -14,7 +14,7 @@ public class ExpressionContext implements IExpressionContext {
 
     public ExpressionContext(Set<IExpressionNodeFactory<?,? extends ISupplier<?>>> nodeFactories) {
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");
-        this.nodeFactories = nodeFactories.stream().collect(Collectors.toMap(IExpressionNodeFactory::getKey, ef -> ef));
+        this.nodeFactories = nodeFactories.stream().collect(Collectors.toMap(IExpressionNodeFactory::key, ef -> ef));
     }
 
     @Override

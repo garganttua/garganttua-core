@@ -33,7 +33,9 @@ public class ExpressionNodeFactoryTest {
                 TestService.class.getMethod("string", String.class),
                 new ObjectAddress("string"),
                 List.of(false),
-                true);
+                true,
+                Optional.of("string"),
+                Optional.of("String converter"));
 
         ExpressionNodeFactory<String, ISupplier<String>> nodefactory = new ExpressionNodeFactory<String, ISupplier<String>>(
                 TestService.class,
@@ -41,7 +43,9 @@ public class ExpressionNodeFactoryTest {
                 TestService.class.getMethod("greet", String.class),
                 new ObjectAddress("greet"),
                 List.of(false),
-                false);
+                false,
+                Optional.of("greet"),
+                Optional.of("Greeting function"));
 
 
 

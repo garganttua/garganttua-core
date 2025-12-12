@@ -3,6 +3,7 @@ package com.garganttua.core.expression.dsl;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
@@ -54,6 +55,8 @@ public class ExpressionNodeFactoryBuilder<S>
     @SuppressWarnings("unused")
     private Class<S> supplied;
     private Boolean leaf = false;
+    private String name;
+    private String description;
 
     /**
      * Creates a new ExpressionMethodBinderBuilder.
@@ -163,7 +166,9 @@ public class ExpressionNodeFactoryBuilder<S>
             method,
             methodAddress,
             this.nullableParameters(),
-            leaf
+            leaf,
+            Optional.ofNullable(this.name),
+            Optional.ofNullable(this.description)
         );
     }
 
@@ -263,6 +268,18 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     public IExpressionMethodBinderBuilder<S> withReturn(Class<IExpressionNode<S, ISupplier<S>>> returnedType) throws DslException {
         log.atWarn().log("withReturn is not supported for ExpressionMethodBinderBuilder");
+        return this;
+    }
+
+    @Override
+    public IExpressionMethodBinderBuilder<S> withName(String name) {
+        this.name = Objects.requireNonNull(name, "Name cannot be null");
+        return this;
+    }
+
+    @Override
+    public IExpressionMethodBinderBuilder<S> withDescription(String description) {
+        this.description = Objects.requireNonNull(description, "Description cannot be null");
         return this;
     }
 }

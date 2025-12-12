@@ -9,7 +9,8 @@ public interface IExpressionMethodBinderBuilder<S> extends IMethodBinderBuilder<
 
     IExpressionMethodBinderBuilder<S> withNullableParam(int i);
 
+    IExpressionMethodBinderBuilder<S> withName(String name);
 
+    IExpressionMethodBinderBuilder<S> withDescription(String description);
 
-    
 }
