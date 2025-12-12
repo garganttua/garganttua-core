@@ -49,4 +49,9 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
         return this.evaluate.evaluate(childsSignals.toArray(new ISupplier<?>[0]));
     }
+
+    @Override
+    public Class<R> getFinalSuppliedClass() {
+        return this.returnedType;
+    }
 }

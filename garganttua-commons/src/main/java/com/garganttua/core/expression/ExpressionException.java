@@ -12,4 +12,8 @@ public class ExpressionException extends CoreException {
         super(CoreException.EXPRESSION_ERROR, string);
     }
 
+    public ExpressionException(Throwable e) {
+        super(CoreException.EXPRESSION_ERROR, e.getMessage(), e);
+    }
+
 }

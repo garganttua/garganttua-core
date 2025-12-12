@@ -36,4 +36,9 @@ public class ExpressionLeaf<R> implements IExpressionNode<R, ISupplier<R>>{
         return this.evaluate.evaluate(this.parameters);
     }
 
+    @Override
+    public Class<R> getFinalSuppliedClass() {
+        return this.returnedType;
+    }
+
 }

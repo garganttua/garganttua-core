@@ -57,4 +57,9 @@ public class ContextualExpressionNode<R>
         return this.evaluate.evaluate(ownerContext, childsSignals.toArray(new ISupplier<?>[0]));
     }
 
+    @Override
+    public Class<R> getFinalSuppliedClass() {
+        return this.returnedType;
+    }
+
 }

@@ -14,4 +14,6 @@ public interface IExpressionNode<R, S extends ISupplier<R>> extends ISupplier<S>
         return Optional.of(this.evaluate());
     }
 
+    Class<R> getFinalSuppliedClass();
+
 }
