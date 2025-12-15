@@ -37,6 +37,7 @@ The Supply framework enables you to define **declarative object suppliers** that
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-dsl`
 
 <!-- AUTO-GENERATED-END -->
 

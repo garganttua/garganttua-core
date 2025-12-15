@@ -40,7 +40,8 @@ The Runtime framework enables you to define **multi-stage execution pipelines** 
  - `com.garganttua.core:garganttua-injection`
  - `com.garganttua.core:garganttua-execution`
  - `com.garganttua.core:garganttua-condition`
- - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-reflections:provided`
+ - `com.garganttua.core:garganttua-native:provided`
  - `ch.qos.logback:logback-classic:test`
  - `com.github.f4b6a3:uuid-creator:5.0.0`
  - `org.jfree:jfreechart:1.5.4:test`

@@ -20,6 +20,26 @@ The `garganttua-expression` module provides a powerful, extensible expression la
 ## Installation
 
 <!-- AUTO-GENERATED-START -->
+### Installation with Maven
+```xml
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-expression</artifactId>
+    <version>2.0.0-ALPHA01</version>
+</dependency>
+```
+
+### Actual version
+2.0.0-ALPHA01
+
+### Dependencies
+ - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-dsl`
+ - `com.garganttua.core:garganttua-supply`
+ - `com.garganttua.core:garganttua-reflection`
+ - `com.garganttua.core:garganttua-reflections:test`
+ - `org.antlr:antlr4-runtime:4.13.0`
+
 <!-- AUTO-GENERATED-END -->
 
 ## Core Concepts

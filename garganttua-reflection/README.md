@@ -24,7 +24,7 @@ Traditional Java reflection is verbose, error-prone, and difficult to work with 
 ```xml
 <dependency>
     <groupId>com.garganttua.core</groupId>
-    <artifactId>garganttua-runtime</artifactId>
+    <artifactId>garganttua-reflection</artifactId>
     <version>2.0.0-ALPHA01</version>
 </dependency>
 ```
@@ -34,14 +34,10 @@ Traditional Java reflection is verbose, error-prone, and difficult to work with 
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
- - `com.garganttua.core:garganttua-injection`
- - `com.garganttua.core:garganttua-execution`
- - `com.garganttua.core:garganttua-condition`
+ - `com.garganttua.core:garganttua-dsl`
+ - `com.garganttua.core:garganttua-supply`
  - `com.garganttua.core:garganttua-reflections:test`
- - `ch.qos.logback:logback-classic:test`
- - `com.github.f4b6a3:uuid-creator:5.0.0`
- - `org.jfree:jfreechart:1.5.4:test`
- - `com.github.librepdf:openpdf:1.3.40:test`
+ - `org.javatuples:javatuples`
 
 <!-- AUTO-GENERATED-END -->
 

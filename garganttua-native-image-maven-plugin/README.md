@@ -39,7 +39,13 @@ When building native images with GraalVM, all reflection and resource metadata m
  - `org.apache.maven.plugin-tools:maven-plugin-annotations:provided`
  - `org.apache.maven:maven-plugin-api:provided`
  - `org.apache.maven:maven-core`
+ - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-dsl`
  - `com.garganttua.core:garganttua-native`
+ - `com.garganttua.core:garganttua-reflection`
+ - `com.garganttua.core:garganttua-reflections`
+ - `org.slf4j:slf4j-api:compile`
+ - `org.slf4j:slf4j-simple:compile`
 
 <!-- AUTO-GENERATED-END -->
 
