@@ -107,6 +107,8 @@ These modules implement the primary framework capabilities:
 
 - **[garganttua-condition](./garganttua-condition/README.md)** - Expressive DSL for building and evaluating runtime conditions with full boolean algebra support (AND, OR, XOR, NAND, NOR), custom predicates, and property extraction.
 
+- **[garganttua-expression](./garganttua-expression/README.md)** - 
+
 ### Utility Modules
 
 Specialized modules for specific technical needs:
@@ -286,7 +288,7 @@ The module dependency structure follows these principles:
 
 1. **Foundation Layer** - commons, dsl, supply, lifecycle
 2. **Infrastructure Layer** - reflection, condition, execution
-3. **Framework Layer** - injection, runtime, mapper
+3. **Framework Layer** - injection, runtime, mapper, expression
 4. **Integration Layer** - bindings (reflections, spring)
 5. **Build Layer** - native, native-image-maven-plugin
 
