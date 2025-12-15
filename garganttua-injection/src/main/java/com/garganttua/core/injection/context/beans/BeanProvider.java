@@ -13,6 +13,7 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.dsl.BeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.validation.DependencyCycleDetector;
@@ -34,14 +35,32 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	private List<IBeanFactory<?>> beanFactories;
 	private final Object copyMutex = new Object();
 	private boolean mutable = true;
+	private IInjectableElementResolver resolver = null;
 
 	public BeanProvider(List<IBeanFactory<?>> beanFactories) {
-		this(beanFactories, false);
+		this(beanFactories, Optional.empty(), false);
 	}
 
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, boolean mutable) {
+		this(beanFactories, Optional.empty(), mutable);
+	}
+
+	public BeanProvider(List<IBeanFactory<?>> beanFactories, IInjectableElementResolver resolver){
+		this(beanFactories, resolver, false);
+	}
+
+	public BeanProvider(List<IBeanFactory<?>> beanFactories, Optional<IInjectableElementResolver> resolver){
+		this(beanFactories, resolver.orElse(null), false);
+	}
+
+	public BeanProvider(List<IBeanFactory<?>> beanFactories, Optional<IInjectableElementResolver> resolver, boolean mutable) {
+		this(beanFactories, resolver.orElse(null), mutable);
+	}
+
+	public BeanProvider(List<IBeanFactory<?>> beanFactories, IInjectableElementResolver resolver, boolean mutable) {
 		log.atTrace().log("Entering BeanProvider constructor with beanFactories: {}", beanFactories);
 		this.mutable = mutable;
+		this.resolver = resolver;
 		this.beanFactories = Collections
 				.synchronizedList(Objects.requireNonNull(beanFactories, "Bean factories cannot be null"));
 		log.atDebug().log("BeanProvider initialized with {} bean factories", beanFactories.size());
@@ -254,7 +273,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 			throw new DiException("Only prototype strategy is supported for manual bean addition, without object");
 		}
 
-		IBeanFactoryBuilder<?> factory = new BeanFactoryBuilder<>(reference.type())
+		IBeanFactoryBuilder<?> factory = new BeanFactoryBuilder<>(reference.type(), Optional.ofNullable(this.resolver))
 				.qualifiers(reference.qualifiers())
 				.autoDetect(autoDetect);
 		reference.strategy().ifPresent(factory::strategy);
