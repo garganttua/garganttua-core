@@ -1,7 +1,7 @@
 
 -1/ renommer ISupplier et toute l'API ObjectSupplier en Supplier tout court
-0/ Créer les ContextualSupplier
-1/ implement auto detection for @Resolvers
+0/ Créer les ContextualSupplier correspondant aux Suppliers déjà implémentés et dont il n'existe pas encore d'équivalent en contextual
+1/ ✅ DONE - implement auto detection for @Resolvers for DiContextBuilder (see DiContextBuilder.autoDetectResolvers())
 2/ implement auto detection for @ChildContext => register a new child context factory
 3/ Maybe remove the function context(IDiContextBuilder context) in IRuntimesBuilder => this method is used to register the runtime resolvers and child context factory. If the todos 1/ an 2/ are done, then this method is obsoleth an can be deleted in favor of auto-detection
 4/ Create a @ScanPackage() auto detected by builders that implements IPackageableBuilder in order to auto-detect packages to scan for reflection
