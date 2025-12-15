@@ -55,6 +55,9 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  */
 public interface IBeanFactoryBuilder<Bean> extends IAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>, ISupplierBuilder<Bean, IBeanFactory<Bean>>, Dependent {
 
+
+    IBeanFactoryBuilder<Bean> bean(Bean bean) throws DslException;
+    
     /**
      * Specifies the bean strategy (scope) for this factory.
      *

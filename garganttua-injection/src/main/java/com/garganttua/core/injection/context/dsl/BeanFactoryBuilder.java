@@ -34,9 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
 
-    private Bean bean;
+    private Bean bean = null;
     private Class<Bean> beanClass;
-    private BeanStrategy strategy;
+    private BeanStrategy strategy = BeanStrategy.singleton;
     private String name;
     private IBeanConstructorBinderBuilder<Bean> constructorBinderBuilder;
     private Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders = new HashSet<>();
@@ -85,7 +85,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
                 this.postConstructMethodBinderBuilders,
                 new HashSet<>(this.injectableFields));
         log.atInfo().log("Building BeanFactory for beanClass: {} with definition: {}", this.beanClass, definition);
-        BeanFactory<Bean> factory = new BeanFactory<>(definition);
+        BeanFactory<Bean> factory = new BeanFactory<>(definition, Optional.ofNullable(this.bean));
         log.atTrace().log("Exiting doBuild");
         return factory;
     }
@@ -289,6 +289,15 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     @Override
     public boolean isContextual() {
         return false;
+    }
+
+    @Override
+    public IBeanFactoryBuilder<Bean> bean(Bean bean) throws DslException {
+        if( this.strategy != BeanStrategy.singleton ){
+            throw new DslException("Only singleton strategy supports direct bean assignment");
+        }
+        this.bean = Objects.requireNonNull(bean, "Bean instance cannot be null");
+        return this;
     }
 
 }

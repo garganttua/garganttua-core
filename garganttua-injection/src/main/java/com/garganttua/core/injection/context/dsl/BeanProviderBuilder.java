@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -67,7 +68,7 @@ public class BeanProviderBuilder
 		try {
 			provider = new BeanProvider(this.beanFactoryBuilders.values().stream()
 					.map(IBeanFactoryBuilder::build)
-					.collect(Collectors.toList()));
+					.collect(Collectors.toList()), Optional.ofNullable(this.resolver), true);
 			log.atInfo().log("IBeanProvider successfully built with {} beans", provider.size());
 		} catch (Exception e) {
 			log.atError().log("Failed to build IBeanProvider. Error: {}", e.getMessage(), e);

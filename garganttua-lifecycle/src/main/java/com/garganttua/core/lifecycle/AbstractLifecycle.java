@@ -15,11 +15,8 @@ public abstract class AbstractLifecycle implements ILifecycle {
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
 
     protected abstract ILifecycle doInit() throws LifecycleException;
-
     protected abstract ILifecycle doStart() throws LifecycleException;
-
     protected abstract ILifecycle doFlush() throws LifecycleException;
-
     protected abstract ILifecycle doStop() throws LifecycleException;
 
     protected final Object lifecycleMutex = new Object();
