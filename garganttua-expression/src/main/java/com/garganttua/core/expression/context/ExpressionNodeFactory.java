@@ -189,8 +189,9 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         }
 
         key.append(")");
-        System.out.println(key);
-        return key.toString();
+        String keyString = key.toString();
+        log.atDebug().log("Generated factory key: {}", keyString);
+        return keyString;
     }
 
     /**

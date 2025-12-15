@@ -16,6 +16,7 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Type converter functions for expression language.
@@ -49,6 +50,7 @@ import jakarta.annotation.Nullable;
  *
  * @since 2.0.0-ALPHA01
  */
+@Slf4j
 public class StandardExpressionLeafs {
 
     // ========== Primitive Type Converters ==========
@@ -74,9 +76,13 @@ public class StandardExpressionLeafs {
      */
     @ExpressionLeaf(name = "int", description = "Parses a string to an Integer")
     public static Integer Integer(@Nullable String value) {
+        log.atTrace().log("Converting '{}' to Integer", value);
         try {
-            return java.lang.Integer.parseInt(value);
+            Integer result = java.lang.Integer.parseInt(value);
+            log.atDebug().log("Converted '{}' to Integer: {}", value, result);
+            return result;
         } catch (NumberFormatException e) {
+            log.atError().log("Failed to convert '{}' to Integer", value, e);
             throw new ExpressionException("Cannot convert '" + value + "' to Integer: " + e.getMessage());
         }
     }
@@ -199,36 +205,50 @@ public class StandardExpressionLeafs {
      */
     @ExpressionLeaf(name = "class", description = "Loads a class by fully qualified name or primitive type")
     public static Class<?> Class(@Nullable String className) {
+        log.atTrace().log("Loading class: {}", className);
         if (className == null) {
+            log.atError().log("Class name is null");
             throw new ExpressionException("Class name cannot be null");
         }
 
         // Handle primitive types
         switch (className) {
             case "boolean":
+                log.atDebug().log("Returning primitive type: boolean.class");
                 return boolean.class;
             case "byte":
+                log.atDebug().log("Returning primitive type: byte.class");
                 return byte.class;
             case "short":
+                log.atDebug().log("Returning primitive type: short.class");
                 return short.class;
             case "int":
+                log.atDebug().log("Returning primitive type: int.class");
                 return int.class;
             case "long":
+                log.atDebug().log("Returning primitive type: long.class");
                 return long.class;
             case "float":
+                log.atDebug().log("Returning primitive type: float.class");
                 return float.class;
             case "double":
+                log.atDebug().log("Returning primitive type: double.class");
                 return double.class;
             case "char":
+                log.atDebug().log("Returning primitive type: char.class");
                 return char.class;
             case "void":
+                log.atDebug().log("Returning primitive type: void.class");
                 return void.class;
         }
 
         // Handle regular classes
         try {
-            return java.lang.Class.forName(className);
+            Class<?> clazz = java.lang.Class.forName(className);
+            log.atDebug().log("Loaded class: {}", className);
+            return clazz;
         } catch (ClassNotFoundException e) {
+            log.atError().log("Failed to load class: {}", className, e);
             throw new ExpressionException("Cannot load class '" + className + "': " + e.getMessage());
         }
     }

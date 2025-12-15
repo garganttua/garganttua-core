@@ -27,12 +27,16 @@ public class ExpressionContext implements IExpressionContext {
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
 
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
+        log.atTrace().log("Entering ExpressionContext constructor");
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");
         this.nodeFactories = nodeFactories.stream().collect(Collectors.toMap(IExpressionNodeFactory::key, ef -> ef));
+        log.atInfo().log("ExpressionContext initialized with {} node factories", nodeFactories.size());
+        log.atTrace().log("Exiting ExpressionContext constructor");
     }
 
     @Override
     public IExpression<?, ? extends ISupplier<?>> expression(String expressionString) {
+        log.atTrace().log("Entering expression(expressionString={})", expressionString);
         log.atDebug().log("Parsing expression: {}", expressionString);
 
         Objects.requireNonNull(expressionString, "Expression string cannot be null");
@@ -42,19 +46,23 @@ public class ExpressionContext implements IExpressionContext {
             ExpressionLexer lexer = new ExpressionLexer(CharStreams.fromString(expressionString));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             ExpressionParser parser = new ExpressionParser(tokens);
+            log.atDebug().log("ANTLR4 lexer and parser created");
 
             // Parse the expression starting from root rule
             ExpressionParser.RootContext rootContext = parser.root();
+            log.atDebug().log("Expression parsed by ANTLR4");
 
             // Visit and build the expression tree
             ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories);
             IExpressionNode<?, ? extends ISupplier<?>> rootNode = visitor.visit(rootContext);
 
             if (rootNode == null) {
+                log.atError().log("Failed to parse expression: {}", expressionString);
                 throw new ExpressionException("Failed to parse expression: " + expressionString);
             }
 
-            log.atDebug().log("Expression parsed successfully");
+            log.atInfo().log("Expression parsed successfully: {}", expressionString);
+            log.atTrace().log("Exiting expression");
             return new Expression<>(rootNode);
 
         } catch (Exception e) {
@@ -78,34 +86,45 @@ public class ExpressionContext implements IExpressionContext {
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitRoot(ExpressionParser.RootContext ctx) {
+            log.atTrace().log("Visiting root node");
             return visit(ctx.expression());
         }
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitExpression(ExpressionParser.ExpressionContext ctx) {
+            log.atTrace().log("Visiting expression node");
             if (ctx.functionCall() != null) {
+                log.atDebug().log("Expression is a function call");
                 return visit(ctx.functionCall());
             } else if (ctx.literal() != null) {
+                log.atDebug().log("Expression is a literal");
                 return visit(ctx.literal());
             } else if (ctx.type() != null) {
+                log.atDebug().log("Expression is a type");
                 return visit(ctx.type());
             } else if (ctx.IDENTIFIER() != null) {
                 // Handle standalone identifier as a string literal
+                log.atDebug().log("Expression is an identifier: {}", ctx.IDENTIFIER().getText());
                 return createLeafNode("string", ctx.IDENTIFIER().getText());
             }
+            log.atError().log("Unknown expression type in context: {}", ctx.getText());
             throw new ExpressionException("Unknown expression type");
         }
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitFunctionCall(ExpressionParser.FunctionCallContext ctx) {
             String functionName = ctx.IDENTIFIER().getText();
+            log.atTrace().log("Visiting function call: {}", functionName);
             List<IExpressionNode<?, ? extends ISupplier<?>>> arguments = new ArrayList<>();
 
             if (ctx.arguments() != null) {
+                log.atDebug().log("Processing {} arguments for function {}", ctx.arguments().expression().size(), functionName);
                 for (ExpressionParser.ExpressionContext argCtx : ctx.arguments().expression()) {
                     IExpressionNode<?, ? extends ISupplier<?>> argNode = visit(argCtx);
                     arguments.add(argNode);
                 }
+            } else {
+                log.atDebug().log("No arguments for function {}", functionName);
             }
 
             // Build function key with parameter types
@@ -114,9 +133,11 @@ public class ExpressionContext implements IExpressionContext {
             IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
             if (factory == null) {
+                log.atError().log("Unknown function: {}", functionKey);
                 throw new ExpressionException("Unknown function: " + functionKey);
             }
 
+            log.atDebug().log("Creating node for function: {}", functionKey);
             // Create expression node context with child nodes
             ExpressionNodeContext context = new ExpressionNodeContext(arguments);
             Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
@@ -266,8 +287,9 @@ public class ExpressionContext implements IExpressionContext {
                 keyBuilder.append(paramTypes[i].getSimpleName());
             }
             keyBuilder.append(")");
-            System.out.println("=> " + keyBuilder);
-            return keyBuilder.toString();
+            String key = keyBuilder.toString();
+            log.atDebug().log("Built leaf key: {}", key);
+            return key;
         }
 
         /**
@@ -285,8 +307,9 @@ public class ExpressionContext implements IExpressionContext {
             }
 
             keyBuilder.append(")");
-            System.out.println("=> " + keyBuilder);
-            return keyBuilder.toString();
+            String key = keyBuilder.toString();
+            log.atDebug().log("Built node key: {}", key);
+            return key;
         }
     }
 }

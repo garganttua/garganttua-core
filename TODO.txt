@@ -1,5 +1,3 @@
-
--1/ renommer ISupplier et toute l'API ObjectSupplier en Supplier tout court
 0/ Créer les ContextualSupplier
 1/ implement auto detection for @Resolvers
 2/ implement auto detection for @ChildContext => register a new child context factory
@@ -7,3 +5,4 @@
 4/ Create a @ScanPackage() auto detected by builders that implements IPackageableBuilder in order to auto-detect packages to scan for reflection
 5/ Implements Locks and mutex for runtime
 6/ Implements distributed locks and mutex system over redis in a binding module
+7/ Add built-in conditions as expression nodes
