@@ -70,7 +70,7 @@ public class BeanFactoryTest {
 
         @Test
         void testDenpendencies() {
-                assertEquals(1, singletonWithConstructorWithParamFactory.getDependencies().size());
+                assertEquals(1, singletonWithConstructorWithParamFactory.dependencies().size());
         }
 
         @Test

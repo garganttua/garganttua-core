@@ -49,13 +49,13 @@ public class DummyBeanProvider implements IBeanProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<T> getBean(Class<T> type) {
+    public <T> Optional<T> get(Class<T> type) {
         return (Optional<T>) Optional.of(new DummyBean());
     }
 
     @Override
-    public <T> Optional<T> getBean(String name, Class<T> type) {
-        throw new UnsupportedOperationException("Unimplemented method 'getBean'");
+    public <T> Optional<T> get(String name, Class<T> type) {
+        throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
 
     @Override
@@ -64,8 +64,8 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
-        throw new UnsupportedOperationException("Unimplemented method 'getBeansImplementingInterface'");
+    public <T> List<T> get(Class<T> interfasse, boolean includePrototypes) {
+        throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
 
     @Override
@@ -84,13 +84,49 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public <T> Optional<T> queryBean(BeanReference<T> query) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBean'");
+    public <T> Optional<T> query(BeanReference<T> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'query'");
     }
 
     @Override
-    public <T> List<T> queryBeans(BeanReference<T> query) throws DiException {
-        throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    public <T> List<T> queries(BeanReference<T> query) throws DiException {
+        throw new UnsupportedOperationException("Unimplemented method 'queries'");
+    }
+
+    @Override
+    public <T> void add(BeanReference<T> query, T bean) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'add'");
+    }
+
+    @Override
+    public <T> void add(BeanReference<T> reference, T bean, boolean autoDetect) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'add'");
+    }
+
+    @Override
+    public <T> void add(BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'add'");
+    }
+
+    @Override
+    public <T> void add(BeanReference<T> reference, Optional<T> bean) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'add'");
+    }
+
+    @Override
+    public <T> void add(BeanReference<T> reference) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'add'");
+    }
+
+    @Override
+    public <T> void add(BeanReference<T> reference, boolean autoDetect) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
 

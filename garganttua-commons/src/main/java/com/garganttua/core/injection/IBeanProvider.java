@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.core.lifecycle.ILifecycle;
-import com.garganttua.core.nativve.INativeConfiguration;
 import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.utils.Copyable;
 
@@ -66,7 +65,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @return an {@link Optional} containing the bean if found, or empty if not found
      * @throws DiException if an error occurs during bean retrieval or instantiation
      */
-    <T> Optional<T> getBean(Class<T> type) throws DiException;
+    <T> Optional<T> get(Class<T> type) throws DiException;
 
     /**
      * Retrieves a bean instance by its name and type.
@@ -82,7 +81,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @return an {@link Optional} containing the bean if found, or empty if not found
      * @throws DiException if an error occurs during bean retrieval or instantiation
      */
-    <T> Optional<T> getBean(String name, Class<T> type) throws DiException;
+    <T> Optional<T> get(String name, Class<T> type) throws DiException;
 
     /**
      * Retrieves all beans that implement or extend the specified interface or class.
@@ -97,7 +96,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @param includePrototypes whether to include prototype-scoped beans in the results
      * @return a list of all matching bean instances (never {@code null}, may be empty)
      */
-    <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes);
+    <T> List<T> get(Class<T> interfasse, boolean includePrototypes);
 
     /**
      * Checks if this provider is mutable.
@@ -126,7 +125,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @throws DiException if an error occurs during bean query or instantiation
      * @see BeanReference
      */
-    <T> Optional<T> queryBean(BeanReference<T> query) throws DiException;
+    <T> Optional<T> query(BeanReference<T> query) throws DiException;
 
     /**
      * Queries for all beans matching the provided reference.
@@ -142,7 +141,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @throws DiException if an error occurs during bean query or instantiation
      * @see BeanReference
      */
-    <T> List<T> queryBeans(BeanReference<T> query) throws DiException;
+    <T> List<T> queries(BeanReference<T> reference) throws DiException;
 
     /**
      * Returns the total number of bean definitions managed by this provider.
@@ -150,5 +149,17 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @return the count of bean definitions
      */
     int size();
+
+    <T> void add(BeanReference<T> reference, T bean, boolean autoDetect) throws DiException;
+
+    <T> void add(BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException;
+
+    <T> void add(BeanReference<T> reference, T bean) throws DiException;
+
+    <T> void add(BeanReference<T> reference, Optional<T> bean) throws DiException;
+
+    <T> void add(BeanReference<T> reference) throws DiException;
+
+    <T> void add(BeanReference<T> reference, boolean autoDetect) throws DiException;
 
 }

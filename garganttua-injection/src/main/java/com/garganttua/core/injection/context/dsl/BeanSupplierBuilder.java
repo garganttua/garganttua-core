@@ -147,7 +147,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Entering getDependencies() method");
         log.atTrace().log("Exiting getDependencies() method with empty set");
         return Set.of();

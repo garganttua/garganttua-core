@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
 
+    private Bean bean;
     private Class<Bean> beanClass;
     private BeanStrategy strategy;
     private String name;
@@ -275,12 +276,12 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Calculating dependencies for beanClass: {}", this.beanClass);
         Set<Class<?>> dependencies = new HashSet<>();
-        this.injectableFields.forEach(f -> dependencies.addAll(f.getDependencies()));
-        Optional.ofNullable(this.constructorBinderBuilder).ifPresent(c -> dependencies.addAll(c.getDependencies()));
-        this.postConstructMethodBinderBuilders.forEach(m -> dependencies.addAll(m.getDependencies()));
+        this.injectableFields.forEach(f -> dependencies.addAll(f.dependencies()));
+        Optional.ofNullable(this.constructorBinderBuilder).ifPresent(c -> dependencies.addAll(c.dependencies()));
+        this.postConstructMethodBinderBuilders.forEach(m -> dependencies.addAll(m.dependencies()));
         log.atInfo().log("Dependencies for beanClass {}: {}", this.beanClass, dependencies);
         return dependencies;
     }
@@ -289,4 +290,5 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     public boolean isContextual() {
         return false;
     }
+
 }

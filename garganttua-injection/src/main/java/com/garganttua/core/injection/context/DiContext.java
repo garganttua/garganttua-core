@@ -331,7 +331,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             log.atError().log("Invalid bean provider: {}", provider);
             throw new DiException("Invalid bean provider " + provider);
         }
-        Optional<Bean> result = beanProvider.queryBean(query);
+        Optional<Bean> result = beanProvider.query(query);
         log.atDebug().log("Bean obtained from provider {}: {}", provider, result);
         return result;
     }
@@ -342,7 +342,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(query, "Bean query cannot be null");
         for (IBeanProvider provider : this.beanProviders.values()) {
-            Optional<Bean> bean = provider.queryBean(query);
+            Optional<Bean> bean = provider.query(query);
             if (bean.isPresent()) {
                 log.atDebug().log("Bean found in provider {}: {}", provider, bean);
                 return bean;
@@ -372,7 +372,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         Objects.requireNonNull(query, "Bean query cannot be null");
         List<Bean> beans = new ArrayList<>();
         for (IBeanProvider provider : this.beanProviders.values()) {
-            List<Bean> providerBeans = provider.queryBeans(query);
+            List<Bean> providerBeans = provider.queries(query);
             beans.addAll(providerBeans);
             log.atDebug().log("Found {} beans in provider {}", providerBeans.size(), provider);
         }
@@ -389,7 +389,7 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             log.atError().log("Invalid bean provider: {}", provider);
             throw new DiException("Invalid bean provider " + provider);
         }
-        List<Bean> result = beanProvider.queryBeans(query);
+        List<Bean> result = beanProvider.queries(query);
         log.atDebug().log("Beans obtained from provider {}: {} items", provider, result.size());
         return result;
     }
@@ -504,5 +504,42 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
                 return this.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
             .map(IBeanProvider::nativeConfiguration)
             .orElse(Collections.emptySet());
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, T bean, boolean autoDetect)
+            throws DiException {
+        IBeanProvider beanProvider = this.beanProviders.get(provider);
+        if (beanProvider == null) {
+            log.atError().log("Invalid bean provider: {}", provider);
+            throw new DiException("Invalid bean provider " + provider);
+        }
+        beanProvider.add(reference, bean, autoDetect);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean, boolean autoDetect)
+            throws DiException {
+        this.addBean(provider, reference, bean.orElseGet(null), autoDetect);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, T bean) throws DiException {
+        this.addBean(provider, reference, bean, false);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean) throws DiException {
+        this.addBean(provider, reference, bean.orElseGet(null), false);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference) throws DiException {
+        this.addBean(provider, reference, Optional.empty(), false);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
+        this.addBean(provider, reference, Optional.empty(), autoDetect);
     }
 }

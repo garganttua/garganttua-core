@@ -63,5 +63,5 @@ public interface Dependent {
      *
      * @return an immutable set of dependency types (never {@code null}, may be empty)
      */
-    Set<Class<?>> getDependencies();
+    Set<Class<?>> dependencies();
 }

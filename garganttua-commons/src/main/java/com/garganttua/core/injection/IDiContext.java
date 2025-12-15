@@ -10,16 +10,21 @@ import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.utils.Copyable;
 
 /**
- * Central interface for the dependency injection context managing beans, properties, and child contexts.
+ * Central interface for the dependency injection context managing beans,
+ * properties, and child contexts.
  *
  * <p>
- * {@code IDiContext} serves as the main entry point for dependency injection operations. It manages
- * multiple bean providers and property providers, enables bean and property queries, and supports
- * hierarchical context creation through child contexts. The context also integrates with the
+ * {@code IDiContext} serves as the main entry point for dependency injection
+ * operations. It manages
+ * multiple bean providers and property providers, enables bean and property
+ * queries, and supports
+ * hierarchical context creation through child contexts. The context also
+ * integrates with the
  * element resolution system for automatic dependency injection.
  * </p>
  *
  * <h2>Usage Example</h2>
+ * 
  * <pre>{@code
  * // Query beans from the context
  * IDiContext context = ...;
@@ -41,8 +46,10 @@ import com.garganttua.core.utils.Copyable;
  *
  * <h2>Thread Safety</h2>
  * <p>
- * Thread safety depends on the context implementation and whether it is mutable.
- * Typically, immutable contexts are thread-safe while mutable contexts require synchronization.
+ * Thread safety depends on the context implementation and whether it is
+ * mutable.
+ * Typically, immutable contexts are thread-safe while mutable contexts require
+ * synchronization.
  * </p>
  *
  * @since 2.0.0-ALPHA01
@@ -51,7 +58,8 @@ import com.garganttua.core.utils.Copyable;
  * @see IInjectableElementResolver
  * @see ILifecycle
  */
-public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copyable<IDiContext>, INativeReflectionConfiguration {
+public interface IDiContext
+                extends ILifecycle, IInjectableElementResolver, Copyable<IDiContext>, INativeReflectionConfiguration {
 
         // --- Bean Scopes ---
 
@@ -67,16 +75,17 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
          * Retrieves a specific bean provider by name.
          *
          * @param name the name of the provider
-         * @return an {@link Optional} containing the provider if found, or empty otherwise
+         * @return an {@link Optional} containing the provider if found, or empty
+         *         otherwise
          */
         Optional<IBeanProvider> getBeanProvider(String name);
 
         /**
          * Queries for a single bean matching the query from a specific provider.
          *
-         * @param <Bean> the bean type
+         * @param <Bean>   the bean type
          * @param provider the provider name (empty to search all providers)
-         * @param query the bean reference to match
+         * @param query    the bean reference to match
          * @return an {@link Optional} containing the bean if found, or empty otherwise
          * @throws DiException if an error occurs during query or bean instantiation
          */
@@ -86,7 +95,7 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
          * Queries for a single bean matching the query from all providers.
          *
          * @param <Bean> the bean type
-         * @param query the bean reference to match
+         * @param query  the bean reference to match
          * @return an {@link Optional} containing the bean if found, or empty otherwise
          * @throws DiException if an error occurs during query or bean instantiation
          */
@@ -95,9 +104,9 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
         /**
          * Queries for a single bean matching the query from a named provider.
          *
-         * @param <Bean> the bean type
+         * @param <Bean>   the bean type
          * @param provider the provider name
-         * @param query the bean reference to match
+         * @param query    the bean reference to match
          * @return an {@link Optional} containing the bean if found, or empty otherwise
          * @throws DiException if an error occurs during query or bean instantiation
          */
@@ -106,9 +115,9 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
         /**
          * Queries for all beans matching the query from a specific provider.
          *
-         * @param <Bean> the bean type
+         * @param <Bean>   the bean type
          * @param provider the provider name (empty to search all providers)
-         * @param query the bean reference to match
+         * @param query    the bean reference to match
          * @return a list of all matching beans (never {@code null}, may be empty)
          * @throws DiException if an error occurs during query or bean instantiation
          */
@@ -118,7 +127,7 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
          * Queries for all beans matching the query from all providers.
          *
          * @param <Bean> the bean type
-         * @param query the bean reference to match
+         * @param query  the bean reference to match
          * @return a list of all matching beans (never {@code null}, may be empty)
          * @throws DiException if an error occurs during query or bean instantiation
          */
@@ -127,13 +136,25 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
         /**
          * Queries for all beans matching the query from a named provider.
          *
-         * @param <Bean> the bean type
+         * @param <Bean>   the bean type
          * @param provider the provider name
-         * @param query the bean reference to match
+         * @param query    the bean reference to match
          * @return a list of all matching beans (never {@code null}, may be empty)
          * @throws DiException if an error occurs during query or bean instantiation
          */
         <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException;
+
+        <T> void addBean(String provider, BeanReference<T> reference, T bean, boolean autoDetect) throws DiException;
+
+        <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException;
+
+        <T> void addBean(String provider, BeanReference<T> reference, T bean) throws DiException;
+
+        <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean) throws DiException;
+
+        <T> void addBean(String provider, BeanReference<T> reference) throws DiException;
+
+        <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException;
 
         // --- Property Scopes ---
 
@@ -149,42 +170,49 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
          * Retrieves a specific property provider by name.
          *
          * @param name the name of the provider
-         * @return an {@link Optional} containing the provider if found, or empty otherwise
+         * @return an {@link Optional} containing the provider if found, or empty
+         *         otherwise
          */
         Optional<IPropertyProvider> getPropertyProvider(String name);
 
         /**
          * Retrieves a property value from a specific provider.
          *
-         * @param <T> the property type
+         * @param <T>      the property type
          * @param provider the provider name (empty to search all providers)
-         * @param key the property key
-         * @param type the expected property type
-         * @return an {@link Optional} containing the property value if found, or empty otherwise
-         * @throws DiException if an error occurs during property retrieval or type conversion
+         * @param key      the property key
+         * @param type     the expected property type
+         * @return an {@link Optional} containing the property value if found, or empty
+         *         otherwise
+         * @throws DiException if an error occurs during property retrieval or type
+         *                     conversion
          */
         <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException;
 
         /**
          * Retrieves a property value from all providers.
          *
-         * @param <T> the property type
-         * @param key the property key
+         * @param <T>  the property type
+         * @param key  the property key
          * @param type the expected property type
-         * @return an {@link Optional} containing the property value if found, or empty otherwise
-         * @throws DiException if an error occurs during property retrieval or type conversion
+         * @return an {@link Optional} containing the property value if found, or empty
+         *         otherwise
+         * @throws DiException if an error occurs during property retrieval or type
+         *                     conversion
          */
         <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
 
         /**
          * Retrieves a property value from a named provider.
          *
-         * @param <T> the property type
+         * @param <T>          the property type
          * @param providerName the provider name
-         * @param key the property key
-         * @param type the expected property type
-         * @return an {@link Optional} containing the property value if found, or empty otherwise
-         * @throws DiException if an error occurs during property retrieval or type conversion
+         * @param key          the property key
+         * @param type         the expected property type
+         * @return an {@link Optional} containing the property value if found, or empty
+         *         otherwise
+         * @throws DiException if an error occurs during property retrieval or type
+         *                     conversion
          */
         <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException;
 
@@ -192,8 +220,8 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
          * Sets a property value in the specified provider.
          *
          * @param provider the provider name
-         * @param key the property key
-         * @param value the property value
+         * @param key      the property key
+         * @param value    the property value
          * @throws DiException if the provider is immutable or an error occurs
          */
         void setProperty(String provider, String key, Object value) throws DiException;
@@ -204,14 +232,16 @@ public interface IDiContext extends ILifecycle, IInjectableElementResolver, Copy
          * Creates a new child context with the specified type and arguments.
          *
          * <p>
-         * The child context is created by cloning this context and then using a registered
-         * factory to instantiate the child. The child context inherits beans and properties
+         * The child context is created by cloning this context and then using a
+         * registered
+         * factory to instantiate the child. The child context inherits beans and
+         * properties
          * from the parent but can have its own modifications.
          * </p>
          *
          * @param <ChildContext> the child context type
-         * @param contextClass the class of the child context to create
-         * @param args additional arguments for child context initialization
+         * @param contextClass   the class of the child context to create
+         * @param args           additional arguments for child context initialization
          * @return the created child context
          * @throws DiException if no factory is registered or child creation fails
          */

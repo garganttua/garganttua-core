@@ -33,7 +33,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Set<Class<?>> getDependencies() {
+        public Set<Class<?>> dependencies() {
             throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 
@@ -74,7 +74,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Set<Class<?>> getDependencies() {
+        public Set<Class<?>> dependencies() {
             throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 

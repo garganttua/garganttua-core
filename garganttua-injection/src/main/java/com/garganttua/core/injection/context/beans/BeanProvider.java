@@ -9,9 +9,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.context.dsl.BeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.validation.DependencyCycleDetector;
 import com.garganttua.core.injection.context.validation.DependencyGraph;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
@@ -29,11 +32,16 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	private List<IBeanFactory<?>> beanFactories;
-
 	private final Object copyMutex = new Object();
+	private boolean mutable = true;
 
 	public BeanProvider(List<IBeanFactory<?>> beanFactories) {
+		this(beanFactories, false);
+	}
+
+	public BeanProvider(List<IBeanFactory<?>> beanFactories, boolean mutable) {
 		log.atTrace().log("Entering BeanProvider constructor with beanFactories: {}", beanFactories);
+		this.mutable = mutable;
 		this.beanFactories = Collections
 				.synchronizedList(Objects.requireNonNull(beanFactories, "Bean factories cannot be null"));
 		log.atDebug().log("BeanProvider initialized with {} bean factories", beanFactories.size());
@@ -42,7 +50,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Optional<T> getBean(Class<T> type) throws DiException {
+	public <T> Optional<T> get(Class<T> type) throws DiException {
 		log.atTrace().log("Entering getBean with type: {}", type);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
@@ -66,7 +74,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	public <T> Optional<T> getBean(String name, Class<T> type) throws DiException {
+	public <T> Optional<T> get(String name, Class<T> type) throws DiException {
 		log.atTrace().log("getBean by name '{}' and type {} is not implemented", name, type);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
@@ -75,11 +83,11 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public boolean isMutable() {
 		log.atTrace().log("Checking if BeanProvider is mutable: returning false");
-		return false;
+		return this.mutable;
 	}
 
 	@Override
-	public <T> List<T> getBeansImplementingInterface(Class<T> interfasse, boolean includePrototypes) {
+	public <T> List<T> get(Class<T> interfasse, boolean includePrototypes) {
 		log.atTrace().log("Getting beans implementing interface: {}", interfasse);
 		List<T> result = this.beanFactories.stream()
 				.filter(factory -> ObjectReflectionHelper.isImplementingInterface(interfasse,
@@ -115,7 +123,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	private void doDependencyCycleDetection() throws DiException {
 		log.atTrace().log("Performing dependency cycle detection");
 		DependencyGraph graph = new DependencyGraph();
-		this.beanFactories.forEach(builder -> builder.getDependencies()
+		this.beanFactories.forEach(builder -> builder.dependencies()
 				.forEach(dep -> graph.addDependency(builder.getSuppliedClass(), dep)));
 		new DependencyCycleDetector().detectCycles(graph);
 		log.atInfo().log("Dependency cycle detection completed");
@@ -142,7 +150,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Optional<T> queryBean(BeanReference<T> query) throws DiException {
+	public <T> Optional<T> query(BeanReference<T> query) throws DiException {
 		log.atTrace().log("Querying single bean with query: {}", query);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
@@ -167,7 +175,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> List<T> queryBeans(BeanReference<T> query) throws DiException {
+	public <T> List<T> queries(BeanReference<T> query) throws DiException {
 		log.atTrace().log("Querying multiple beans with query: {}", query);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
@@ -201,8 +209,56 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
 		log.atTrace().log("Building native configuration from {} bean factories", this.beanFactories.size());
-		Set<IReflectionConfigurationEntryBuilder> result = this.beanFactories.stream().map(f -> f.nativeEntry()).collect(Collectors.toSet());
+		Set<IReflectionConfigurationEntryBuilder> result = this.beanFactories.stream().map(f -> f.nativeEntry())
+				.collect(Collectors.toSet());
 		log.atDebug().log("Native configuration built with {} entries", result.size());
 		return result;
+	}
+
+	@Override
+	public <T> void add(BeanReference<T> reference, T bean) throws DiException {
+		this.add(reference, bean, false);
+	}
+
+	@Override
+	public <T> void add(BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException {
+		this.add(reference, bean.orElseGet(null), autoDetect);
+	}
+
+	@Override
+	public <T> void add(BeanReference<T> reference, Optional<T> bean) throws DiException {
+		this.add(reference, bean.orElseGet(null), false);
+	}
+
+	@Override
+	public <T> void add(BeanReference<T> reference) throws DiException {
+		this.add(reference, Optional.empty(), false);
+	}
+
+	@Override
+	public <T> void add(BeanReference<T> reference, boolean autoDetect) throws DiException {
+		this.add(reference, Optional.empty(), autoDetect);
+	}
+
+	@Override
+	public <T> void add(BeanReference<T> reference, T bean, boolean autoDetect) throws DiException {
+		if (!isMutable()) {
+			throw new DiException("BeanProvider is not mutable");
+		}
+		Objects.requireNonNull(reference, "Bean reference cannot be null");
+		if (bean != null && reference.strategy().isPresent() && reference.strategy().get() != BeanStrategy.singleton) {
+			throw new DiException("Only singleton strategy is supported for manual bean addition, with bean object");
+		}
+		if (bean == null && ((reference.strategy().isPresent() && reference.strategy().get() != BeanStrategy.prototype)
+				|| !reference.strategy().isPresent())) {
+			throw new DiException("Only prototype strategy is supported for manual bean addition, without object");
+		}
+
+		IBeanFactoryBuilder<?> factory = new BeanFactoryBuilder<>(reference.type())
+				.qualifiers(reference.qualifiers())
+				.autoDetect(autoDetect);
+		reference.strategy().ifPresent(factory::strategy);
+		reference.name().ifPresent(factory::name);
+		this.beanFactories.add(factory.build());
 	}
 }

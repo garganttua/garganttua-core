@@ -107,16 +107,16 @@ public record BeanDefinition<Bean>(BeanReference<Bean> reference,
      *
      * @return a set of all dependency classes (never {@code null})
      */
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         Set<Class<?>> dependencies = new HashSet<>();
         this.injectableFields.stream().forEach(f -> {
-            dependencies.addAll(f.getDependencies());
+            dependencies.addAll(f.dependencies());
         });
         this.constructorBinder.ifPresent(c -> {
-            dependencies.addAll(c.getDependencies());
+            dependencies.addAll(c.dependencies());
         });
         this.postConstructMethodBinderBuilders.stream().forEach(m -> {
-            dependencies.addAll(m.getDependencies());
+            dependencies.addAll(m.dependencies());
         });
         return dependencies;
     }

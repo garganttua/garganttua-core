@@ -368,6 +368,7 @@ graph TD
 - **JUnit 5** - Modern testing framework with parameterized tests and extensions
 - **Maven** - Build automation and dependency management
 - **GraalVM** - Native image compilation for optimal startup and memory footprint
+- **ANTLR4** - Parser generator for grammar definition and automatic lexer and parser generation for building language processors.
 
 ## 📖 Use Cases
 

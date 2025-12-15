@@ -60,8 +60,8 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
-        return this.delegate.getDependencies();
+    public Set<Class<?>> dependencies() {
+        return this.delegate.dependencies();
     }
 
     @Override

@@ -44,7 +44,7 @@ public abstract class ExecutableBinder<ReturnedType> implements IExecutableBinde
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Getting dependencies from parameter suppliers");
         Set<Class<?>> dependencies = new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedClass())
                 .collect(Collectors.toSet()));

@@ -48,7 +48,7 @@ public class BeanConstructorBinderBuilder<Bean> extends
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Entering getDependencies for beanType: {}", this.beanType.getSimpleName());
         Set<Class<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));
         log.atInfo().log("Dependencies for beanType {}: {}", this.beanType.getSimpleName(), dependencies);

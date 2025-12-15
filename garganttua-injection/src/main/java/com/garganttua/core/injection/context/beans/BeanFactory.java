@@ -28,10 +28,29 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private volatile Bean bean;
 	private BeanDefinition<Bean> definition;
 	private final Object beanMutex = new Object();
+	private boolean singletonBeanInitialized = false;
 
 	public BeanFactory(BeanDefinition<Bean> definition) {
+		this(definition, Optional.empty());
+	}
+
+	public BeanFactory(BeanDefinition<Bean> definition, Optional<Bean> bean) {
+		this(definition, bean.orElse(null));
+	}
+
+	public BeanFactory(BeanDefinition<Bean> definition, Bean bean) {
 		log.atTrace().log("Entering BeanFactory constructor with definition: {}", definition);
 		this.definition = Objects.requireNonNull(definition, "Bean definition cannot be null");
+		this.bean = bean;
+		if (bean != null) {
+			// If bean is provided, force singleton strategy
+			log.atInfo().log("BeanFactory initialized with predefined bean, forcing singleton strategy");
+			this.definition = new BeanDefinition<>(
+					new BeanReference<>(definition.reference().type(), Optional.of(BeanStrategy.singleton),
+							definition.reference().name(), definition.reference().qualifiers()),
+					definition.constructorBinder(), definition.postConstructMethodBinderBuilders(),
+					definition.injectableFields());
+		}
 		log.atInfo().log("BeanFactory initialized for definition: {}", definition);
 		log.atTrace().log("Exiting BeanFactory constructor");
 	}
@@ -59,8 +78,6 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private Bean getBean() throws DiException {
 		log.atTrace().log("Creating new bean instance for definition: {}", definition);
 		Bean bean = createBeanInstance();
-		doInjection(bean);
-		invokePostConstructMethods(bean);
 		log.atInfo().log("Bean instance created: {}", bean);
 		return bean;
 	}
@@ -78,18 +95,19 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 			if (this.definition.constructorBinder().isPresent()) {
 				Optional<Bean> constructed = executeConstructorBinder();
 				return constructed.orElseThrow(() -> new DiException(
-						"Constructor binder returned empty for bean of type " + this.definition.reference().effectiveName()));
+						"Constructor binder returned empty for bean of type "
+								+ this.definition.reference().effectiveName()));
 			} else {
 				return ObjectReflectionHelper.instanciateNewObject(this.definition.reference().type());
 			}
 		} catch (Exception e) {
 			log.atError().log("Failed to instantiate bean of type {}: {}", this.definition.reference().effectiveName(),
 					e.getMessage());
-			throw new DiException("Failed to instantiate bean of type " + this.definition.reference().effectiveName(), e);
+			throw new DiException("Failed to instantiate bean of type " + this.definition.reference().effectiveName(),
+					e);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private Optional<Bean> executeConstructorBinder() throws DiException {
 		log.atTrace().log("Executing constructor binder for definition: {}", definition);
 		try {
@@ -119,7 +137,9 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				log.atError().log("Post construct method binder failed for bean {}: {}",
 						this.definition.reference().effectiveName(), e.getMessage());
 				throw new DiException(
-						"Post construct method binder failed for bean of type " + this.definition.reference().effectiveName(), e);
+						"Post construct method binder failed for bean of type "
+								+ this.definition.reference().effectiveName(),
+						e);
 			}
 		}
 	}
@@ -132,31 +152,45 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		try {
 			if (strat.isPresent()) {
 				if (strat.get() == BeanStrategy.prototype) {
-					log.atDebug().log("Using prototype strategy for bean");
-					bean = getBean();
+					bean = createAndInitializePrototype();
 				} else {
-					synchronized (this.beanMutex) {
-						if (this.bean == null) {
-							log.atDebug().log("Singleton bean not initialized, creating bean");
-							this.bean = getBean();
-						}
-					}
-					bean = this.bean;
+					bean = createAnInitializeSingleton(bean);
 				}
 			} else {
-				synchronized (this.beanMutex) {
-					if (this.bean == null) {
-						log.atDebug().log("No strategy defined, creating singleton bean");
-						this.bean = getBean();
-					}
-				}
-				bean = this.bean;
+				bean = createAnInitializeSingleton(bean);
 			}
 			log.atInfo().log("Bean supplied: {}", bean);
 			return Optional.ofNullable(bean);
 		} catch (DiException e) {
 			log.atError().log("Failed to supply bean for definition {}: {}", definition, e.getMessage());
 			throw new SupplyException(e);
+		}
+	}
+
+	private Bean createAndInitializePrototype() {
+		Bean bean;
+		synchronized (this.beanMutex) {
+			log.atDebug().log("Using prototype strategy for bean");
+			bean = getBean();
+			this.doInjection(bean);
+			this.invokePostConstructMethods(bean);
+		}
+		return bean;
+	}
+
+	private Bean createAnInitializeSingleton(Bean bean) {
+		synchronized (this.beanMutex) {
+			if (this.bean == null) {
+				log.atDebug().log("Creating singleton bean");
+				this.bean = getBean();
+			}
+			if (!this.singletonBeanInitialized) {
+				this.doInjection(this.bean);
+				this.invokePostConstructMethods(this.bean);
+				this.singletonBeanInitialized = true;
+				log.atDebug().log("Singleton bean initialized flag set to true");
+			}
+			return this.bean;
 		}
 	}
 
@@ -175,15 +209,15 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	@Override
-	public BeanDefinition<Bean> getDefinition() {
+	public BeanDefinition<Bean> definition() {
 		log.atTrace().log("Returning bean definition: {}", definition);
 		return this.definition;
 	}
 
 	@Override
-	public Set<Class<?>> getDependencies() {
+	public Set<Class<?>> dependencies() {
 		log.atTrace().log("Returning dependencies for definition: {}", definition);
-		return this.definition.getDependencies();
+		return this.definition.dependencies();
 	}
 
 	@Override
@@ -191,25 +225,28 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		log.atTrace().log("Building native configuration entry for definition: {}", definition);
 		ReflectConfigEntryBuilder eb = new ReflectConfigEntryBuilder(definition.reference().type());
 
-		//Constructor
+		// Constructor
 		definition.constructorBinder().ifPresentOrElse(c -> {
 			log.atDebug().log("Adding constructor binder to native entry for type: {}", definition.reference().type());
 			eb.constructor(c.constructor());
 		}, () -> {
 			try {
-				log.atDebug().log("Adding default constructor to native entry for type: {}", definition.reference().type());
+				log.atDebug().log("Adding default constructor to native entry for type: {}",
+						definition.reference().type());
 				eb.constructor(definition.reference().type().getDeclaredConstructor());
 			} catch (NoSuchMethodException | SecurityException e) {
-				log.atWarn().log("Error adding default constructor for type {}: {}", definition.reference().type(), e.getMessage());
+				log.atWarn().log("Error adding default constructor for type {}: {}", definition.reference().type(),
+						e.getMessage());
 			}
 		});
 
-		//Fields
+		// Fields
 		log.atDebug().log("Adding {} injectable fields to native entry", definition.injectableFields().size());
 		definition.injectableFields().forEach(f -> eb.field(f.field()));
 
-		//Methods
-		log.atDebug().log("Adding {} post construct methods to native entry", definition.postConstructMethodBinderBuilders().size());
+		// Methods
+		log.atDebug().log("Adding {} post construct methods to native entry",
+				definition.postConstructMethodBinderBuilders().size());
 		definition.postConstructMethodBinderBuilders().forEach(m -> eb.method(m.method()));
 
 		log.atInfo().log("Native configuration entry built for type: {}", definition.reference().type());

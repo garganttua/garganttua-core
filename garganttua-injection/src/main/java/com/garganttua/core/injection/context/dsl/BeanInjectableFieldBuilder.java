@@ -29,7 +29,7 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Entering getDependencies() for injectable field of type: {}", this.fieldType);
         Set<Class<?>> dependencies = Set.of(this.fieldType);
         log.atDebug().log("Dependencies for injectable field: {}", dependencies);

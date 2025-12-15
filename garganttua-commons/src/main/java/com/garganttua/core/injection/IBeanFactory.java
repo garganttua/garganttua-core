@@ -3,6 +3,7 @@ package com.garganttua.core.injection;
 import java.util.Set;
 
 import com.garganttua.core.nativve.INativeElement;
+import com.garganttua.core.reflection.binders.Dependent;
 
 /**
  * Represents a factory responsible for creating and managing bean instances in the dependency injection system.
@@ -70,19 +71,6 @@ public interface IBeanFactory<Bean> extends IBeanSupplier<Bean>, INativeElement 
      *
      * @return the bean definition for this factory
      */
-    BeanDefinition<Bean> getDefinition();
-
-    /**
-     * Returns the set of dependency types required to instantiate the bean.
-     *
-     * <p>
-     * This method analyzes the bean's constructor parameters, injectable fields, and
-     * post-construct method parameters to determine all required dependencies. This
-     * information is used for dependency resolution order and circular dependency detection.
-     * </p>
-     *
-     * @return a set of classes representing the bean's dependencies
-     */
-    Set<Class<?>> getDependencies();
+    BeanDefinition<Bean> definition();
 
 }

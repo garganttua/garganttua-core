@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.reflection.binders.Dependent;
@@ -52,7 +53,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  * @see ISupplierBuilder
  * @see Dependent
  */
-public interface IBeanFactoryBuilder<Bean> extends ISupplierBuilder<Bean, IBeanFactory<Bean>>, Dependent {
+public interface IBeanFactoryBuilder<Bean> extends IAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>, ISupplierBuilder<Bean, IBeanFactory<Bean>>, Dependent {
 
     /**
      * Specifies the bean strategy (scope) for this factory.

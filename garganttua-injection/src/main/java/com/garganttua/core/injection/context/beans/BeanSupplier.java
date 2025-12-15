@@ -63,7 +63,7 @@ public class BeanSupplier<Bean> implements IBeanSupplier<Bean> {
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Returning empty dependencies set for query: {}", query);
         return Set.of();
     }

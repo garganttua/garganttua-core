@@ -431,4 +431,36 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
         return this.delegateContext.nativeConfiguration();
     }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, T bean, boolean autoDetect)
+            throws DiException {
+        this.delegateContext.addBean(provider, reference, bean, autoDetect);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean, boolean autoDetect)
+            throws DiException {
+        this.delegateContext.addBean(provider, reference, bean, autoDetect);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, T bean) throws DiException {
+        this.delegateContext.addBean(provider, reference, bean);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean) throws DiException {
+        this.delegateContext.addBean(provider, reference, bean);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference) throws DiException {
+        this.delegateContext.addBean(provider, reference);
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
+        this.delegateContext.addBean(provider, reference, autoDetect);
+    }
 }

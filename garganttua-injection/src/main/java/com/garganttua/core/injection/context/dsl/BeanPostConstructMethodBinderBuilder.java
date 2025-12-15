@@ -66,7 +66,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         log.atTrace().log("Entering getDependencies()");
         log.atDebug().log("Getting parameter types for post-construct method");
         Set<Class<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));

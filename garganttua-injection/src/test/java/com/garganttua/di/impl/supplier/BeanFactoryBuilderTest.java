@@ -47,7 +47,7 @@ public class BeanFactoryBuilderTest {
         assertTrue(bean.get().isPostConstructCalled());
         assertEquals(random, bean.get().getAnotherValue());
 
-        assertEquals(1, beanSupplier.getDependencies().size());
+        assertEquals(1, beanSupplier.dependencies().size());
     }
 
 }

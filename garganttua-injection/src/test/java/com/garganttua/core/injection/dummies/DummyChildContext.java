@@ -3,12 +3,10 @@ package com.garganttua.core.injection.dummies;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
@@ -18,7 +16,6 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.utils.CopyException;
 
@@ -158,6 +155,44 @@ public class DummyChildContext implements IDiContext{
     @Override
     public <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'queryBeans'");
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, T bean, boolean autoDetect)
+            throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addBean'");
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean, boolean autoDetect)
+            throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addBean'");
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, T bean) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addBean'");
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addBean'");
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addBean'");
+    }
+
+    @Override
+    public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
 
