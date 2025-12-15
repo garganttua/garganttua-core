@@ -1,4 +1,4 @@
-# Garganttua Expression Module
+# Garganttua Expression
 
 Advanced expression language for dynamic object creation and type-safe evaluation in Java applications.
 
@@ -19,15 +19,8 @@ The `garganttua-expression` module provides a powerful, extensible expression la
 
 ## Installation
 
-Add the dependency to your `pom.xml`:
-
-```xml
-<dependency>
-    <groupId>com.garganttua.core</groupId>
-    <artifactId>garganttua-expression</artifactId>
-    <version>2.0.0-ALPHA01</version>
-</dependency>
-```
+<!-- AUTO-GENERATED-START -->
+<!-- AUTO-GENERATED-END -->
 
 ## Core Concepts
 

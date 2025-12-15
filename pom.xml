@@ -34,6 +34,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>21</java.version>
+
+    <!-- Dependency Versions -->
     <lombok.version>1.18.36</lombok.version>
     <slf4j.version>2.0.17</slf4j.version>
     <slf4j.simple.version>2.0.17</slf4j.simple.version>
@@ -43,6 +45,14 @@
     <javax.inject.version>1</javax.inject.version>
     <jackson.databind.version>2.15.2</jackson.databind.version>
     <spring.framework.version>6.2.1</spring.framework.version>
+    <jakarta.annotations.api.version>2.1.1</jakarta.annotations.api.version>
+    <logback.classic.version>1.5.16</logback.classic.version>
+    <uuid.creator.version>5.0.0</uuid.creator.version>
+    <jfreechart.version>1.5.4</jfreechart.version>
+    <openpdf.version>1.3.40</openpdf.version>
+    <antlr4.version>4.13.0</antlr4.version>
+
+    <!-- Maven Plugin Versions -->
     <maven.core.version>3.8.6</maven.core.version>
     <maven.exec.plugin.version>3.1.0</maven.exec.plugin.version>
     <maven.plugin.api.version>3.0</maven.plugin.api.version>
@@ -51,11 +61,13 @@
     <maven.plugin.plugin.version>3.10.2</maven.plugin.plugin.version>
     <maven.plugin.annotations.version>3.5</maven.plugin.annotations.version>
     <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+    <maven.shade.plugin.version>3.5.0</maven.shade.plugin.version>
+    <build.helper.maven.plugin.version>3.4.0</build.helper.maven.plugin.version>
+    <jacoco.maven.plugin.version>0.8.11</jacoco.maven.plugin.version>
+
+    <!-- Compiler Configuration -->
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
-    <jakarta.annotations.api.version>2.1.1</jakarta.annotations.api.version>
-    <logback.classic.version>1.5.16</logback.classic.version>
-    <jacoco.maven.plugin.version>0.8.11</jacoco.maven.plugin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
