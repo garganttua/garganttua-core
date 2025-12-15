@@ -267,8 +267,6 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection()");
-
-        // Auto-detect @Qualifier annotations
         this.packages.stream()
                 .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, Qualifier.class)
                         .stream()
@@ -276,117 +274,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
                 .map(clazz -> (Class<? extends Annotation>) clazz)
                 .forEach(this.qualifiers::add);
         log.atInfo().log("Auto-detected qualifiers: {}", this.qualifiers);
-
-        // Auto-detect @Resolver classes
-        this.autoDetectResolvers();
-
         log.atTrace().log("Exiting doAutoDetection");
-    }
-
-    /**
-     * Auto-detects and registers resolver classes annotated with @Resolver.
-     * This method scans all configured packages for classes with the @Resolver annotation,
-     * instantiates them, and registers them for the annotations they handle.
-     *
-     * @throws DslException if a resolver cannot be instantiated or registered
-     */
-    private void autoDetectResolvers() throws DslException {
-        log.atTrace().log("Entering autoDetectResolvers()");
-
-        this.packages.stream()
-                .flatMap(package_ -> ObjectReflectionHelper
-                        .getClassesWithAnnotation(package_, com.garganttua.core.injection.annotations.Resolver.class)
-                        .stream())
-                .forEach(resolverClass -> {
-                    try {
-                        log.atDebug().log("Found resolver class: {}", resolverClass.getName());
-
-                        // Get the @Resolver annotation
-                        com.garganttua.core.injection.annotations.Resolver resolverAnnotation =
-                                resolverClass.getAnnotation(com.garganttua.core.injection.annotations.Resolver.class);
-
-                        if (resolverAnnotation == null) {
-                            log.atWarn().log("Resolver class {} has no @Resolver annotation", resolverClass.getName());
-                            return;
-                        }
-
-                        // Get the annotations this resolver handles
-                        Class<? extends Annotation>[] handledAnnotations = resolverAnnotation.annotations();
-
-                        if (handledAnnotations == null || handledAnnotations.length == 0) {
-                            log.atWarn().log("Resolver class {} handles no annotations", resolverClass.getName());
-                            return;
-                        }
-
-                        // Instantiate the resolver
-                        IElementResolver resolverInstance = instantiateResolver(resolverClass);
-
-                        // Register the resolver for each annotation it handles
-                        for (Class<? extends Annotation> annotation : handledAnnotations) {
-                            this.resolvers.withResolver(annotation, resolverInstance);
-                            log.atInfo().log("Auto-registered resolver {} for annotation {}",
-                                    resolverClass.getSimpleName(), annotation.getSimpleName());
-                        }
-
-                    } catch (Exception e) {
-                        log.atError().log("Failed to auto-detect resolver: {}", resolverClass.getName(), e);
-                        throw new RuntimeException("Failed to auto-detect resolver: " + resolverClass.getName(), e);
-                    }
-                });
-
-        log.atTrace().log("Exiting autoDetectResolvers");
-    }
-
-    /**
-     * Instantiates a resolver class using reflection.
-     * Tries multiple constructor strategies:
-     * 1. No-arg constructor
-     * 2. Constructor with Set<Class<? extends Annotation>> parameter (for qualifiers)
-     * 3. Constructor with IBeanProvider parameter
-     *
-     * @param resolverClass the resolver class to instantiate
-     * @return an instance of the resolver
-     * @throws DslException if the resolver cannot be instantiated
-     */
-    @SuppressWarnings("unchecked")
-    private IElementResolver instantiateResolver(Class<?> resolverClass) throws DslException {
-        log.atTrace().log("Entering instantiateResolver for class: {}", resolverClass.getName());
-
-        try {
-            // Strategy 1: Try no-arg constructor
-            try {
-                IElementResolver instance = (IElementResolver) resolverClass.getDeclaredConstructor().newInstance();
-                log.atDebug().log("Instantiated resolver {} using no-arg constructor",
-                        resolverClass.getSimpleName());
-                return instance;
-            } catch (NoSuchMethodException e) {
-                log.atDebug().log("No no-arg constructor found for {}", resolverClass.getSimpleName());
-            }
-
-            // Strategy 2: Try constructor with Set<Class<? extends Annotation>> (qualifiers)
-            try {
-                IElementResolver instance = (IElementResolver) resolverClass
-                        .getDeclaredConstructor(Set.class)
-                        .newInstance(this.qualifiers);
-                log.atDebug().log("Instantiated resolver {} using constructor with qualifiers",
-                        resolverClass.getSimpleName());
-                return instance;
-            } catch (NoSuchMethodException e) {
-                log.atDebug().log("No Set constructor found for {}", resolverClass.getSimpleName());
-            }
-
-            // If we get here, no suitable constructor was found
-            throw new DslException("No suitable constructor found for resolver class: " + resolverClass.getName() +
-                    ". Expected either no-arg constructor or constructor with Set<Class<? extends Annotation>> parameter.");
-
-        } catch (DslException e) {
-            throw e;
-        } catch (Exception e) {
-            log.atError().log("Failed to instantiate resolver: {}", resolverClass.getName(), e);
-            throw new DslException("Failed to instantiate resolver: " + resolverClass.getName(), e);
-        } finally {
-            log.atTrace().log("Exiting instantiateResolver");
-        }
     }
 
     @Override
