@@ -189,6 +189,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         }
 
         key.append(")");
+        System.out.println(key);
         return key.toString();
     }
 

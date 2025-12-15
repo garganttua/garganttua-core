@@ -31,7 +31,6 @@ public class ExpressionContextTest {
     public void setUp() throws Exception {
         // Create factories for StandardExpressionLeafs methods as expression leaves
 
-        // Factory for string(String) - expression leaf that converts string to String supplier
         ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<>(
                 StandardExpressionLeafs.class,
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
@@ -42,7 +41,6 @@ public class ExpressionContextTest {
                 Optional.of("string"),
                 Optional.of("Converts a value to a String supplier"));
 
-        // Factory for int(String) - expression leaf that converts string to Integer supplier
         ExpressionNodeFactory<Integer, ISupplier<Integer>> intFactory = new ExpressionNodeFactory<>(
                 StandardExpressionLeafs.class,
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
@@ -53,7 +51,16 @@ public class ExpressionContextTest {
                 Optional.of("int"),
                 Optional.of("Parses a string to an Integer supplier"));
 
-        // Factory for add(ISupplier<Integer>, ISupplier<Integer>) - expression node that adds two integers
+        ExpressionNodeFactory<Boolean, ISupplier<Boolean>> booleanFactory = new ExpressionNodeFactory<>(
+                StandardExpressionLeafs.class,
+                (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class,
+                StandardExpressionLeafs.class.getMethod("Boolean", String.class),
+                new ObjectAddress("Boolean"),
+                List.of(false),
+                true, // This is a leaf node
+                Optional.of("boolean"),
+                Optional.of("Parses a string to a Boolean supplier"));
+
         ExpressionNodeFactory<Integer, ISupplier<Integer>> addFactory = new ExpressionNodeFactory<>(
                 TestFunctions.class,
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
@@ -64,11 +71,23 @@ public class ExpressionContextTest {
                 Optional.of("add"),
                 Optional.of("Adds two integer suppliers"));
 
+        ExpressionNodeFactory<Integer, ISupplier<Integer>> classFactory = new ExpressionNodeFactory<>(
+                StandardExpressionLeafs.class,
+                (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
+                StandardExpressionLeafs.class.getMethod("Class", String.class),
+                new ObjectAddress("Class"),
+                List.of(false),
+                true, // This is a leaf node
+                Optional.of("class"),
+                Optional.of("Parses a string to a Class supplier"));
+
         // Create expression context with leaf and node factories
         Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> factories = Set.of(
                 stringFactory,
                 intFactory,
-                addFactory
+                booleanFactory,
+                addFactory,
+                classFactory
         );
 
         expressionContext = new ExpressionContext(factories);
@@ -112,6 +131,26 @@ public class ExpressionContextTest {
 
         assertTrue(value.isPresent(), "Value should be present");
         assertEquals(42, value.get(), "Value should be 42");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSimpleBooleanExpression() throws Exception {
+        // Parse a simple integer literal expression
+        IExpression<?, ? extends ISupplier<?>> expression = expressionContext.expression("true");
+
+        assertNotNull(expression, "Expression should not be null");
+
+        // Evaluate the expression
+        ISupplier<?> result = expression.evaluate();
+
+        assertNotNull(result, "Result should not be null");
+
+        // Get the actual value
+        Optional<Boolean> value = (Optional<Boolean>) result.supply();
+
+        assertTrue(value.isPresent(), "Value should be present");
+        assertTrue(value.get(), "Value should be true");
     }
 
     @SuppressWarnings("unchecked")
@@ -160,5 +199,47 @@ public class ExpressionContextTest {
         ExpressionException exception = assertThrows(ExpressionException.class, () -> expressionContext.expression("add(8,add(toto, 30))"));
 
         assertEquals("Unknown function: add(String,Integer)", exception.getMessage());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPrimitiveTypeExpression() throws Exception {
+
+        // Test primitive type int
+        IExpression<?, ? extends ISupplier<?>> intTypeExpr = expressionContext.expression("int");
+        ISupplier<?> intTypeResult = intTypeExpr.evaluate();
+        Optional<Class<?>> intTypeValue = (Optional<Class<?>>) intTypeResult.supply();
+
+        assertTrue(intTypeValue.isPresent(), "int type should be present");
+        assertEquals(int.class, intTypeValue.get(), "Should return int.class");
+
+        // Test primitive type boolean
+        IExpression<?, ? extends ISupplier<?>> boolTypeExpr = expressionContext.expression("boolean");
+        ISupplier<?> boolTypeResult = boolTypeExpr.evaluate();
+        Optional<Class<?>> boolTypeValue = (Optional<Class<?>>) boolTypeResult.supply();
+
+        assertTrue(boolTypeValue.isPresent(), "boolean type should be present");
+        assertEquals(boolean.class, boolTypeValue.get(), "Should return boolean.class");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testClassTypeExpression() throws Exception {
+
+        // Test fully qualified class name
+        IExpression<?, ? extends ISupplier<?>> stringTypeExpr = expressionContext.expression("java.lang.String");
+        ISupplier<?> stringTypeResult = stringTypeExpr.evaluate();
+        Optional<Class<?>> stringTypeValue = (Optional<Class<?>>) stringTypeResult.supply();
+
+        assertTrue(stringTypeValue.isPresent(), "String type should be present");
+        assertEquals(String.class, stringTypeValue.get(), "Should return String.class");
+
+        // Test Class<?> expression
+        IExpression<?, ? extends ISupplier<?>> classOfExpr = expressionContext.expression("Class<?>");
+        ISupplier<?> classOfResult = classOfExpr.evaluate();
+        Optional<Class<?>> classOfValue = (Optional<Class<?>>) classOfResult.supply();
+
+        assertTrue(classOfValue.isPresent(), "Class<?> type should be present");
+        assertEquals(Class.class, classOfValue.get(), "Should return Class.class");
     }
 }

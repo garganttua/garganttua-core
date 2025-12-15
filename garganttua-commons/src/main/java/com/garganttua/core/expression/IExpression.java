@@ -1,16 +1,15 @@
 package com.garganttua.core.expression;
 
-import java.util.Optional;
-
+import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public interface IExpression<R, S extends ISupplier<R>> extends ISupplier<S> {
+public interface IExpression<R, S extends ISupplier<R>> extends ISupplierBuilder<R, S> {
 
     S evaluate() throws ExpressionException;
 
     @Override
-    default Optional<S> supply() throws ExpressionException {
-        return Optional.of(this.evaluate());
+    default S build() throws DslException {
+        return this.evaluate();
     }
-
 }

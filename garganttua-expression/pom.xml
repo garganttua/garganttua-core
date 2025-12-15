@@ -56,7 +56,7 @@
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/resources/antlr4</sourceDirectory>
                             <outputDirectory>
-                                ${project.build.directory}/generated-sources/antlr4/com/garganttua/core/query/antlr4</outputDirectory>
+                                ${project.build.directory}/generated-sources/antlr4/com/garganttua/core/expression/antlr4</outputDirectory>
                             <visitor>true</visitor>
                             <listener>true</listener>
                         </configuration>

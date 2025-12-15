@@ -15,8 +15,8 @@ import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.IExpressionNode;
-import com.garganttua.core.query.antlr4.QueryLexer;
-import com.garganttua.core.query.antlr4.QueryParser;
+import com.garganttua.core.expression.antlr4.ExpressionLexer;
+import com.garganttua.core.expression.antlr4.ExpressionParser;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExpressionContext implements IExpressionContext {
 
-    private Map<String, IExpressionNodeFactory<?,? extends ISupplier<?>>> nodeFactories;
+    private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
 
-    public ExpressionContext(Set<IExpressionNodeFactory<?,? extends ISupplier<?>>> nodeFactories) {
+    public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");
         this.nodeFactories = nodeFactories.stream().collect(Collectors.toMap(IExpressionNodeFactory::key, ef -> ef));
     }
@@ -39,16 +39,16 @@ public class ExpressionContext implements IExpressionContext {
 
         try {
             // Create ANTLR4 lexer and parser
-            QueryLexer lexer = new QueryLexer(CharStreams.fromString(expressionString));
+            ExpressionLexer lexer = new ExpressionLexer(CharStreams.fromString(expressionString));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            QueryParser parser = new QueryParser(tokens);
+            ExpressionParser parser = new ExpressionParser(tokens);
 
-            // Parse the expression
-            QueryParser.QueryContext queryContext = parser.query();
+            // Parse the expression starting from root rule
+            ExpressionParser.RootContext rootContext = parser.root();
 
             // Visit and build the expression tree
             ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories);
-            IExpressionNode<?, ? extends ISupplier<?>> rootNode = visitor.visit(queryContext);
+            IExpressionNode<?, ? extends ISupplier<?>> rootNode = visitor.visit(rootContext);
 
             if (rootNode == null) {
                 throw new ExpressionException("Failed to parse expression: " + expressionString);
@@ -65,23 +65,24 @@ public class ExpressionContext implements IExpressionContext {
     }
 
     /**
-     * ANTLR4 Visitor for building expression trees from parsed query.
+     * ANTLR4 Visitor for building expression trees from parsed Expression.
      */
-    private static class ExpressionVisitor extends com.garganttua.core.query.antlr4.QueryBaseVisitor<IExpressionNode<?, ? extends ISupplier<?>>> {
+    private static class ExpressionVisitor
+            extends com.garganttua.core.expression.antlr4.ExpressionBaseVisitor<IExpressionNode<?, ? extends ISupplier<?>>> {
 
-        private final Map<String, IExpressionNodeFactory<?,? extends ISupplier<?>>> nodeFactories;
+        private final Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
 
-        public ExpressionVisitor(Map<String, IExpressionNodeFactory<?,? extends ISupplier<?>>> nodeFactories) {
+        public ExpressionVisitor(Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
             this.nodeFactories = nodeFactories;
         }
 
         @Override
-        public IExpressionNode<?, ? extends ISupplier<?>> visitQuery(QueryParser.QueryContext ctx) {
+        public IExpressionNode<?, ? extends ISupplier<?>> visitRoot(ExpressionParser.RootContext ctx) {
             return visit(ctx.expression());
         }
 
         @Override
-        public IExpressionNode<?, ? extends ISupplier<?>> visitExpression(QueryParser.ExpressionContext ctx) {
+        public IExpressionNode<?, ? extends ISupplier<?>> visitExpression(ExpressionParser.ExpressionContext ctx) {
             if (ctx.functionCall() != null) {
                 return visit(ctx.functionCall());
             } else if (ctx.literal() != null) {
@@ -96,21 +97,21 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         @Override
-        public IExpressionNode<?, ? extends ISupplier<?>> visitFunctionCall(QueryParser.FunctionCallContext ctx) {
+        public IExpressionNode<?, ? extends ISupplier<?>> visitFunctionCall(ExpressionParser.FunctionCallContext ctx) {
             String functionName = ctx.IDENTIFIER().getText();
             List<IExpressionNode<?, ? extends ISupplier<?>>> arguments = new ArrayList<>();
 
             if (ctx.arguments() != null) {
-                for (QueryParser.ExpressionContext argCtx : ctx.arguments().expression()) {
+                for (ExpressionParser.ExpressionContext argCtx : ctx.arguments().expression()) {
                     IExpressionNode<?, ? extends ISupplier<?>> argNode = visit(argCtx);
                     arguments.add(argNode);
                 }
             }
 
             // Build function key with parameter types
-            String functionKey = buildFunctionKey(functionName, arguments);
+            String functionKey = buildNodeKey(functionName, arguments);
 
-            IExpressionNodeFactory<?,? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
+            IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
             if (factory == null) {
                 throw new ExpressionException("Unknown function: " + functionKey);
@@ -120,11 +121,12 @@ public class ExpressionContext implements IExpressionContext {
             ExpressionNodeContext context = new ExpressionNodeContext(arguments);
             Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
 
-            return node.orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));
+            return node
+                    .orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));
         }
 
         @Override
-        public IExpressionNode<?, ? extends ISupplier<?>> visitLiteral(QueryParser.LiteralContext ctx) {
+        public IExpressionNode<?, ? extends ISupplier<?>> visitLiteral(ExpressionParser.LiteralContext ctx) {
             if (ctx.STRING() != null) {
                 String value = ctx.STRING().getText();
                 // Remove surrounding quotes
@@ -135,11 +137,11 @@ public class ExpressionContext implements IExpressionContext {
                 // Extract character between single quotes
                 value = value.substring(1, value.length() - 1);
                 return createLeafNode("char", value);
-            } else if (ctx.INT() != null) {
-                String value = ctx.INT().getText();
+            } else if (ctx.INT_LITERAL() != null) {
+                String value = ctx.INT_LITERAL().getText();
                 return createLeafNode("int", value);
-            } else if (ctx.FLOAT() != null) {
-                String value = ctx.FLOAT().getText();
+            } else if (ctx.FLOAT_LIT() != null) {
+                String value = ctx.FLOAT_LIT().getText();
                 return createLeafNode("double", value);
             } else if (ctx.BOOLEAN() != null) {
                 String value = ctx.BOOLEAN().getText();
@@ -155,18 +157,18 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         @Override
-        public IExpressionNode<?, ? extends ISupplier<?>> visitArrayLiteral(QueryParser.ArrayLiteralContext ctx) {
+        public IExpressionNode<?, ? extends ISupplier<?>> visitArrayLiteral(ExpressionParser.ArrayLiteralContext ctx) {
             List<IExpressionNode<?, ? extends ISupplier<?>>> elements = new ArrayList<>();
 
             if (ctx.expression() != null) {
-                for (QueryParser.ExpressionContext exprCtx : ctx.expression()) {
+                for (ExpressionParser.ExpressionContext exprCtx : ctx.expression()) {
                     elements.add(visit(exprCtx));
                 }
             }
 
             // Use the "list" function to create array/list
-            String functionKey = buildFunctionKey("list", elements);
-            IExpressionNodeFactory<?,? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
+            String functionKey = buildNodeKey("list", elements);
+            IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
             if (factory == null) {
                 throw new ExpressionException("Array/List factory not found: " + functionKey);
@@ -179,14 +181,57 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         @Override
-        public IExpressionNode<?, ? extends ISupplier<?>> visitType(QueryParser.TypeContext ctx) {
+        public IExpressionNode<?, ? extends ISupplier<?>> visitType(ExpressionParser.TypeContext ctx) {
             // Handle type expressions like Class<String>, int[], etc.
+
+            // Check if it's a simple type (no array dimensions)
+            if (ctx.arrayDims() == null && ctx.simpleType() != null) {
+                ExpressionParser.SimpleTypeContext simpleType = ctx.simpleType();
+
+                // Handle primitive types
+                if (simpleType.primitiveType() != null) {
+                    String primitiveTypeName = simpleType.primitiveType().getText();
+                    return createLeafNode("class", primitiveTypeName);
+                }
+
+                // Handle Class<Type> or Class<?>
+                if (simpleType.classOfType() != null) {
+                    // For Class<Type> expressions, return Class.class
+                    return createLeafNode("class", "java.lang.Class");
+                }
+
+                // Handle regular class types (e.g., java.lang.String, List<T>)
+                if (simpleType.classType() != null) {
+                    String className = getFullClassName(simpleType.classType());
+                    return createLeafNode("class", className);
+                }
+            }
+
+            // For array types or other complex types, convert to string representation
             String typeString = ctx.getText();
             return createLeafNode("string", typeString);
         }
 
         /**
-         * Creates a leaf node by finding the appropriate factory and supplying parameters.
+         * Extracts the full class name from a classType context.
+         */
+        private String getFullClassName(ExpressionParser.ClassTypeContext ctx) {
+            if (ctx.className() != null) {
+                // Build the full class name from identifiers
+                StringBuilder className = new StringBuilder();
+                for (int i = 0; i < ctx.className().IDENTIFIER().size(); i++) {
+                    if (i > 0)
+                        className.append(".");
+                    className.append(ctx.className().IDENTIFIER(i).getText());
+                }
+                return className.toString();
+            }
+            return ctx.getText();
+        }
+
+        /**
+         * Creates a leaf node by finding the appropriate factory and supplying
+         * parameters.
          */
         private IExpressionNode<?, ? extends ISupplier<?>> createLeafNode(String functionName, Object... params) {
             // Build parameter type list
@@ -195,17 +240,9 @@ public class ExpressionContext implements IExpressionContext {
                 paramTypes[i] = params[i].getClass();
             }
 
-            // Build function key
-            StringBuilder keyBuilder = new StringBuilder(functionName);
-            keyBuilder.append("(");
-            for (int i = 0; i < paramTypes.length; i++) {
-                if (i > 0) keyBuilder.append(",");
-                keyBuilder.append(paramTypes[i].getSimpleName());
-            }
-            keyBuilder.append(")");
-            String functionKey = keyBuilder.toString();
+            String functionKey = buildLeafKey(functionName, paramTypes);
 
-            IExpressionNodeFactory<?,? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
+            IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
             if (factory == null) {
                 throw new ExpressionException("Function not found: " + functionKey);
@@ -219,20 +256,36 @@ public class ExpressionContext implements IExpressionContext {
             return node.orElseThrow(() -> new ExpressionException("Failed to create leaf node for: " + functionKey));
         }
 
+        private String buildLeafKey(String functionName, Class<?>[] paramTypes) {
+            // Build function key
+            StringBuilder keyBuilder = new StringBuilder(functionName);
+            keyBuilder.append("(");
+            for (int i = 0; i < paramTypes.length; i++) {
+                if (i > 0)
+                    keyBuilder.append(",");
+                keyBuilder.append(paramTypes[i].getSimpleName());
+            }
+            keyBuilder.append(")");
+            System.out.println("=> " + keyBuilder);
+            return keyBuilder.toString();
+        }
+
         /**
          * Builds a function key in the format "functionName(Type1,Type2,...)".
          */
-        private String buildFunctionKey(String functionName, List<IExpressionNode<?, ? extends ISupplier<?>>> arguments) {
+        private String buildNodeKey(String functionName, List<IExpressionNode<?, ? extends ISupplier<?>>> arguments) {
             StringBuilder keyBuilder = new StringBuilder(functionName);
             keyBuilder.append("(");
 
             for (int i = 0; i < arguments.size(); i++) {
-                if (i > 0) keyBuilder.append(",");
+                if (i > 0)
+                    keyBuilder.append(",");
                 // Use the supplied class from the node
                 keyBuilder.append(arguments.get(i).getFinalSuppliedClass().getSimpleName());
             }
 
             keyBuilder.append(")");
+            System.out.println("=> " + keyBuilder);
             return keyBuilder.toString();
         }
     }

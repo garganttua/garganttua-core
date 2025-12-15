@@ -43,4 +43,9 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
         }
         return (ISupplier<?>) node.evaluate();
     }
+
+    @Override
+    public boolean isContextual() {
+        return false;
+    }
 }

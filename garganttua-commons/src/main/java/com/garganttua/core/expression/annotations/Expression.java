@@ -7,15 +7,14 @@ import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
 
+/**
+ * for injection 
+ */
 @Native
-@Target({ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExpressionLeaf {
+public @interface Expression {
 
-    String name() default "";
-
-    Class<?> contextType() default Void.class;
-
-    String description() default "";
+    String value();
 
 }

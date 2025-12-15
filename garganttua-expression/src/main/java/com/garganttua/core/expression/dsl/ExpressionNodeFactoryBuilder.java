@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.expression.annotations.ExpressionLeaf;
+import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -56,14 +58,15 @@ public class ExpressionNodeFactoryBuilder<S>
     private Class<S> supplied;
     private Boolean leaf = false;
     private String name;
-    private String description;
+    private String description = "No description";
 
     /**
      * Creates a new ExpressionMethodBinderBuilder.
      *
      * @param parent      the parent expression context builder
      * @param methodOwner the class that owns the method
-     * @param supplied    the type supplied by the method (unused, kept for API compatibility)
+     * @param supplied    the type supplied by the method (unused, kept for API
+     *                    compatibility)
      */
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             Class<?> methodOwner,
@@ -92,6 +95,7 @@ public class ExpressionNodeFactoryBuilder<S>
         if (!Methods.isStatic(method)) {
             throw new DslException("Method " + method.getName() + " must be static for expression binding");
         }
+        this.name = method.getName();
         return super.method(method);
     }
 
@@ -101,6 +105,7 @@ public class ExpressionNodeFactoryBuilder<S>
         if (!Methods.isStatic(this.methodOwner, methodAddress)) {
             throw new DslException("Method at address " + methodAddress + " must be static for expression binding");
         }
+        this.name = methodAddress.getElement(methodAddress.length()-1);
         return super.method(methodAddress);
     }
 
@@ -115,7 +120,7 @@ public class ExpressionNodeFactoryBuilder<S>
         if (!Methods.isStatic(resolvedMethod)) {
             throw new DslException("Method " + methodName + " must be static for expression binding");
         }
-
+        this.name = methodName;
         return result;
     }
 
@@ -126,6 +131,7 @@ public class ExpressionNodeFactoryBuilder<S>
         if (!Methods.isStatic(method)) {
             throw new DslException("Method " + method.getName() + " must be static for expression binding");
         }
+        this.name = method.getName();
         return super.method(method, returnType, parameterTypes);
     }
 
@@ -161,23 +167,43 @@ public class ExpressionNodeFactoryBuilder<S>
         Method method = this.findMethod();
         ObjectAddress methodAddress = new ObjectAddress(method.getName());
         return new ExpressionNodeFactory<S, ISupplier<S>>(
-            this.methodOwner,
-            (Class<ISupplier<S>>) (Class<?>) ISupplier.class,
-            method,
-            methodAddress,
-            this.nullableParameters(),
-            leaf,
-            Optional.ofNullable(this.name),
-            Optional.ofNullable(this.description)
-        );
+                this.methodOwner,
+                (Class<ISupplier<S>>) (Class<?>) ISupplier.class,
+                method,
+                methodAddress,
+                this.nullableParameters(),
+                leaf,
+                Optional.ofNullable(this.name),
+                Optional.ofNullable(this.description));
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
         Method m = this.findMethod();
+        if (this.leaf) {
+            ExpressionLeaf leafInfos = m.getAnnotation(ExpressionLeaf.class);
+            if (leafInfos.name() != null && !leafInfos.name().isBlank()) {
+                this.withName(leafInfos.name());
+            } else {
+                this.name = m.getName();
+            }
+            if (leafInfos.description() != null && !leafInfos.description().isBlank()) {
+                this.withDescription(leafInfos.description());
+            }
+        } else {
+            ExpressionNode nodeInfos = m.getAnnotation(ExpressionNode.class);
+            if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
+                this.withName(nodeInfos.name());
+            } else {
+                this.name = m.getName();
+            }
+            if (nodeInfos.description() != null && !nodeInfos.description().isBlank()) {
+                this.withDescription(nodeInfos.description());
+            }
+        }
         Parameter[] params = m.getParameters();
         for (int i = 0; i < params.length; i++) {
-            if( params[i].isAnnotationPresent(Nullable.class)){
+            if (params[i].isAnnotationPresent(Nullable.class)) {
                 this.withNullableParam(i);
             }
         }
@@ -198,20 +224,24 @@ public class ExpressionNodeFactoryBuilder<S>
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(int i, Object parameter, boolean nullAllowed) throws DslException {
+    public IExpressionMethodBinderBuilder<S> withParam(int i, Object parameter, boolean nullAllowed)
+            throws DslException {
         log.atWarn().log("withParam(int, Object, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(int i, ISupplierBuilder<?, ?> supplierBuilder) throws DslException {
+    public IExpressionMethodBinderBuilder<S> withParam(int i, ISupplierBuilder<?, ?> supplierBuilder)
+            throws DslException {
         log.atWarn().log("withParam(int, ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(int i, ISupplierBuilder<?, ?> supplierBuilder, boolean nullAllowed) throws DslException {
-        log.atWarn().log("withParam(int, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
+    public IExpressionMethodBinderBuilder<S> withParam(int i, ISupplierBuilder<?, ?> supplierBuilder,
+            boolean nullAllowed) throws DslException {
+        log.atWarn()
+                .log("withParam(int, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
@@ -222,20 +252,24 @@ public class ExpressionNodeFactoryBuilder<S>
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(String parameterName, Object parameter, boolean nullAllowed) throws DslException {
+    public IExpressionMethodBinderBuilder<S> withParam(String parameterName, Object parameter, boolean nullAllowed)
+            throws DslException {
         log.atWarn().log("withParam(String, Object, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(String parameterName, ISupplierBuilder<?, ?> supplierBuilder) throws DslException {
+    public IExpressionMethodBinderBuilder<S> withParam(String parameterName, ISupplierBuilder<?, ?> supplierBuilder)
+            throws DslException {
         log.atWarn().log("withParam(String, ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(String parameterName, ISupplierBuilder<?, ?> supplierBuilder, boolean nullAllowed) throws DslException {
-        log.atWarn().log("withParam(String, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
+    public IExpressionMethodBinderBuilder<S> withParam(String parameterName, ISupplierBuilder<?, ?> supplierBuilder,
+            boolean nullAllowed) throws DslException {
+        log.atWarn()
+                .log("withParam(String, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
@@ -258,7 +292,8 @@ public class ExpressionNodeFactoryBuilder<S>
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withParam(ISupplierBuilder<?, ?> supplierBuilder, boolean nullAllowed) throws DslException {
+    public IExpressionMethodBinderBuilder<S> withParam(ISupplierBuilder<?, ?> supplierBuilder, boolean nullAllowed)
+            throws DslException {
         log.atWarn().log("withParam(ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
@@ -266,7 +301,8 @@ public class ExpressionNodeFactoryBuilder<S>
     // ========== Override withReturn to make it inoperative ==========
 
     @Override
-    public IExpressionMethodBinderBuilder<S> withReturn(Class<IExpressionNode<S, ISupplier<S>>> returnedType) throws DslException {
+    public IExpressionMethodBinderBuilder<S> withReturn(Class<IExpressionNode<S, ISupplier<S>>> returnedType)
+            throws DslException {
         log.atWarn().log("withReturn is not supported for ExpressionMethodBinderBuilder");
         return this;
     }

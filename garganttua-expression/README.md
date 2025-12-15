@@ -1,201 +1,418 @@
 # Garganttua Expression
 
-Module de langage de requ�tes (DSL) pour cr�er dynamiquement des `ISupplier` � partir de requ�tes textuelles.
+Advanced expression language for dynamic object supplying in the Garganttua Core framework.
 
-## Vue d'ensemble
+## Overview
 
-Le module `garganttua-query` fournit un langage de requ�tes bas� sur ANTLR4 permettant d'exprimer des appels de fonctions, des valeurs litt�rales, des tableaux typ�s et des objets JSON. Les requ�tes sont analys�es syntaxiquement, converties en AST (Abstract Syntax Tree), puis ex�cut�es pour produire des `ISupplier`.
+The `garganttua-expression` module provides a powerful expression language that allows you to parse, build, and evaluate dynamic expressions at runtime. Built on ANTLR4, it offers a type-safe way to create expression trees that produce suppliers of values, enabling complex runtime evaluation scenarios with strongly-typed results.
+
+## Features
+
+- **Expression Parsing**: Parse string expressions into executable expression trees using ANTLR4
+- **Type-Safe Evaluation**: Strongly typed expression nodes that return `ISupplier<T>` instances
+- **Flexible Node Types**:
+  - **Leaf Nodes**: Terminal nodes that convert raw values into suppliers
+  - **Composite Nodes**: Internal nodes that compose other expression nodes
+- **DSL Builder**: Fluent API for constructing expression contexts programmatically
+- **Annotation Support**: Auto-detection of expression functions via `@ExpressionNode` and `@ExpressionLeaf` annotations
+- **Standard Functions**: Built-in expression functions for common types (String, Integer, Boolean, etc.)
+
+## Maven Dependency
+
+```xml
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-expression</artifactId>
+    <version>2.0.0-ALPHA01</version>
+</dependency>
+```
+
+## Key Concepts
+
+### Expression Nodes
+
+Expression nodes are the building blocks of the expression tree:
+
+- **IExpressionNode**: Base interface for all expression nodes
+- **ExpressionLeaf**: Leaf nodes that convert raw parameter values to suppliers
+- **ExpressionNode**: Composite nodes that evaluate child expression nodes
+
+### Expression Context
+
+The `ExpressionContext` is the runtime environment for parsing and evaluating expressions:
+
+- Maintains a registry of available expression node factories
+- Parses expression strings into expression trees
+- Resolves function names to their corresponding node factories
+
+### Expression Node Factory
+
+Factories create expression nodes based on method bindings:
+
+- **ExpressionNodeFactory**: Wraps a method and creates corresponding expression nodes
+- Distinguishes between leaf factories (for terminal values) and composite factories (for functions)
+- Generates unique keys based on function name and parameter types
+
+---
+
+## Quick Start
+
+### Basic Usage
+
+```java
+import com.garganttua.core.expression.*;
+import com.garganttua.core.expression.context.*;
+import com.garganttua.core.expression.functions.StandardExpressionLeafs;
+import com.garganttua.core.supply.ISupplier;
+
+// Define expression functions
+class MathFunctions {
+    public static Integer add(Integer a, Integer b) {
+        return a + b;
+    }
+}
+
+// Create expression context with factories
+ExpressionNodeFactory<Integer> intFactory = new ExpressionNodeFactory<>(
+    StandardExpressionLeafs.class,
+    ISupplier.class,
+    StandardExpressionLeafs.class.getMethod("Integer", String.class),
+    new ObjectAddress("Integer"),
+    List.of(false),
+    true, // leaf node
+    Optional.of("int"),
+    Optional.of("Parses string to Integer")
+);
+
+ExpressionNodeFactory<Integer> addFactory = new ExpressionNodeFactory<>(
+    MathFunctions.class,
+    ISupplier.class,
+    MathFunctions.class.getMethod("add", Integer.class, Integer.class),
+    new ObjectAddress("add"),
+    List.of(false, false),
+    false, // composite node
+    Optional.of("add"),
+    Optional.of("Adds two integers")
+);
+
+// Build expression context
+IExpressionContext context = new ExpressionContext(Set.of(intFactory, addFactory));
+
+// Parse and evaluate expression
+IExpression<?, ?> expression = context.expression("add(42, 30)");
+ISupplier<?> result = expression.evaluate();
+Optional<Integer> value = (Optional<Integer>) result.supply();
+
+System.out.println(value.get()); // Output: 72
+```
+
+### Using the DSL Builder
+
+```java
+import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
+
+// Build context using fluent API
+IExpressionContext context = ExpressionContextBuilder
+    .builder()
+    .withExpressionLeaf(StandardExpressionLeafs.class, String.class)
+        .method("String")
+        .up()
+    .withExpressionLeaf(StandardExpressionLeafs.class, Integer.class)
+        .method("Integer")
+        .up()
+    .withExpressionNode(MathFunctions.class, Integer.class)
+        .method("add")
+        .up()
+    .build();
+
+// Parse complex nested expressions
+IExpression<?, ?> expr = context.expression("add(8, add(42, 30))");
+ISupplier<?> result = expr.evaluate();
+Optional<Integer> value = (Optional<Integer>) result.supply();
+
+System.out.println(value.get()); // Output: 80
+```
+
+### Using Package Scanning with Annotations
+
+```java
+import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.ExpressionLeaf;
+
+// Define functions with annotations
+class AnnotatedFunctions {
+    @ExpressionLeaf
+    public static String string(String value) {
+        return value;
+    }
+
+    @ExpressionNode
+    public static Integer multiply(Integer a, Integer b) {
+        return a * b;
+    }
+}
+
+// Build context with package scanning
+IExpressionContext context = ExpressionContextBuilder
+    .builder()
+    .withPackage("com.myapp.expressions")
+    .autoDetect(true)
+    .build();
+
+// All annotated methods are automatically registered
+IExpression<?, ?> expr = context.expression("multiply(6, 7)");
+```
+
+---
+
+## Expression Language Syntax
+
+The expression language supports the following constructs defined by the ANTLR4 grammar (`Query.g4`):
+
+### Literals
+
+```java
+// String literals
+expression("\"Hello World\"")
+
+// Integer literals
+expression("42")
+
+// Float literals
+expression("3.14")
+
+// Boolean literals
+expression("true")
+expression("false")
+
+// Null literal
+expression("null")
+```
+
+### Function Calls
+
+```java
+// Simple function call
+expression("add(10, 20)")
+
+// Nested function calls
+expression("add(multiply(2, 3), 4)")
+
+// Multiple parameters
+expression("concat(\"Hello\", \" \", \"World\")")
+```
+
+### Arrays (if list factory is registered)
+
+```java
+expression("[1, 2, 3, 4, 5]")
+expression("[\"a\", \"b\", \"c\"]")
+```
+
+### Identifiers
+
+Standalone identifiers are converted to string literals:
+
+```java
+expression("myVar")  // Treated as string "myVar"
+```
+
+---
+
+## Standard Expression Leafs
+
+The framework provides `StandardExpressionLeafs` with common type conversions:
+
+```java
+// String conversion
+StandardExpressionLeafs.String(String)  // Returns ISupplier<String>
+
+// Integer parsing
+StandardExpressionLeafs.Integer(String) // Returns ISupplier<Integer>
+
+// Boolean parsing
+StandardExpressionLeafs.Boolean(String) // Returns ISupplier<Boolean>
+
+// Double parsing
+StandardExpressionLeafs.Double(String)  // Returns ISupplier<Double>
+
+// Character parsing
+StandardExpressionLeafs.Character(String) // Returns ISupplier<Character>
+```
+
+These leafs are designed to be used as terminal nodes in your expression trees, converting string literals from the parsed expression into typed suppliers.
+
+---
 
 ## Architecture
 
+### Core Components
+
+1. **IExpression**: Represents a parsed expression ready for evaluation
+2. **IExpressionNode**: Node in the expression tree (leaf or composite)
+3. **IExpressionContext**: Context holding available functions and parsing logic
+4. **IExpressionNodeFactory**: Factory for creating expression nodes from method bindings
+5. **ExpressionVisitor**: ANTLR4 visitor that builds expression trees from parsed queries
+
+### Expression Evaluation Flow
+
 ```
-Query String � ANTLR Parser � AST � Conversion � Java Values � ISupplier
+String Expression → ANTLR4 Parser → QueryParser.QueryContext
+                                    ↓
+                            ExpressionVisitor
+                                    ↓
+                          IExpressionNode Tree
+                                    ↓
+                              Expression.evaluate()
+                                    ↓
+                            ISupplier<T> Result
 ```
 
-### Composants principaux
+### Factory Key Generation
 
-- **Query.g4** : Grammaire ANTLR4 d�finissant la syntaxe du langage
-- **Query.java** : Visiteur ANTLR qui convertit l'AST en valeurs Java
-- **QueryMethodBinder** : Ex�cute les m�thodes statiques enregistr�es
-- **QueryBuilder** : API fluide pour construire des requ�tes
+Expression node factories are indexed by keys in the format:
+
+```
+functionName(Type1,Type2,...)
+```
+
+For example:
+- `add(Integer,Integer)` - function taking two integers
+- `int(String)` - leaf function converting string to integer
+- `concat(String,String,String)` - function taking three strings
 
 ---
 
-## Grammaire Query.g4
+## Advanced Features
 
-### 1. Types de donn�es support�s
+### Contextual Expression Nodes
 
-#### 1.1 Litt�raux primitifs
+Create expression nodes that are aware of the evaluation context:
 
-| Type | Syntaxe | Exemples |
-|------|---------|----------|
-| Entier | `INT` | `42`, `-123` |
-| D�cimal | `FLOAT` | `3.14`, `-2.71` |
-| Cha�ne | `STRING` | `"hello"`, `"world"` |
-| Caract�re | `CHAR` | `'a'`, `'z'` |
-| Bool�en | `BOOLEAN` | `true`, `false` |
-| Null | `NULL` | `null` |
+```java
+public class MyContextualNode<R>
+    extends ContextualExpressionNode<R>
+    implements IContextualExpressionNode<R, ISupplier<R>> {
 
-**Exemples :**
-```
-query.query("42")           // � 42L (Long)
-query.query("3.14")         // � 3.14 (Double)
-query.query("\"hello\"")    // � "hello" (String)
-query.query("'c'")          // � "c" (String)
-query.query("true")         // � true (Boolean)
-query.query("null")         // � null
+    @Override
+    public ISupplier<R> evaluate(IExpressionContext context) {
+        // Access context during evaluation
+        // Useful for variable resolution, scoped functions, etc.
+        return () -> Optional.of(result);
+    }
+}
 ```
 
-#### 1.2 Tableaux typ�s
+### Custom Node Factories
 
-Syntaxe : `type[valeur1, valeur2, ...]`
+Create custom node factories for domain-specific functions:
 
-**Types primitifs support�s :**
-- `int[...]` � `int[]`
-- `long[...]` � `long[]`
-- `double[...]` � `double[]`
-- `float[...]` � `float[]`
-- `boolean[...]` � `boolean[]`
-- `char[...]` � `char[]`
-
-**Exemples :**
-```
-query.query("int[1,2,3]")              // � int[] {1, 2, 3}
-query.query("double[3.14,2.71]")       // � double[] {3.14, 2.71}
-query.query("boolean[true,false]")     // � boolean[] {true, false}
-query.query("char['a','b','c']")       // � char[] {'a', 'b', 'c'}
+```java
+ExpressionNodeFactory<MyType> customFactory = new ExpressionNodeFactory<>(
+    MyFunctions.class,
+    ISupplier.class,
+    MyFunctions.class.getMethod("myFunction", String.class, Integer.class),
+    new ObjectAddress("myFunction"),
+    List.of(false, true), // second parameter is nullable
+    false,
+    Optional.of("myFunc"),
+    Optional.of("Custom function description")
+);
 ```
 
-**Tableaux imbriqu�s :**
-```
-query.query("int[int[1,2], int[3,4]]") // � Object[] {int[]{1,2}, int[]{3,4}}
-```
+### Complex Expression Trees
 
-#### 1.3 Tableaux non typ�s
+Build complex nested expressions:
 
-Syntaxe : `[valeur1, valeur2, ...]`
+```java
+// Expression: add(8, add(42, 30))
+// Tree structure:
+//        add
+//       /   \
+//      8    add
+//          /   \
+//         42   30
 
-**Exemples :**
-```
-query.query("[1,2,3]")                 // � Object[] {1L, 2L, 3L}
-query.query("[\"a\",\"b\",3.14]")      // � Object[] {"a", "b", 3.14}
-query.query("[[1,2],[3,4]]")           // � Object[] {Object[]{1L,2L}, Object[]{3L,4L}}
-```
-
-#### 1.4 Objets (JSON-like)
-
-Syntaxe : `{"cl�": valeur, ...}`
-
-**Exemples :**
-```
-query.query("{\"name\":\"Alice\"}")
-// � Map<String, Object> {"name" � "Alice"}
-
-query.query("{\"age\":int[30]}")
-// � Map<String, Object> {"age" � int[]{30}}
-
-query.query("{\"coords\":float[1.0,2.0]}")
-// � Map<String, Object> {"coords" � float[]{1.0, 2.0}}
-
-query.query("{\"nested\":{\"x\":int[1],\"y\":int[2]}}")
-// � Map<String, Object> {"nested" � Map{"x" � int[]{1}, "y" � int[]{2}}}
-```
-
-#### 1.5 Types (Class<?>)
-
-**Types primitifs :**
-```
-query.query("int")       // � int.class
-query.query("double")    // � double.class
-query.query("boolean")   // � boolean.class
-```
-
-**Classes Java :**
-```
-query.query("java.lang.String")         // � String.class
-query.query("java.util.List")           // � List.class
-```
-
-**Types g�n�riques :**
-```
-query.query("Class<String>")            // � Class.class
-query.query("Class<?>")                 // � Class.class
-query.query("java.util.List<String>")   // � Parsing support� (conversion non impl�ment�e)
+IExpression<?, ?> expr = context.expression("add(8, add(42, 30))");
+// Result: 80
 ```
 
 ---
 
-### 2. Appels de fonction
+## Error Handling
 
-Syntaxe : `nomFonction(arg1, arg2, ...)`
+The framework throws `ExpressionException` for:
 
-#### 2.1 Fonctions simples
+- Syntax errors during parsing
+- Unknown function names
+- Type mismatches
+- Evaluation errors
 
-**Exemple :**
 ```java
-// Enregistrer une fonction
-QueryBuilder qb = new QueryBuilder();
-qb.withQuery(MyClass.class, String.class)
-  .method("fixed", ISupplier.class, new Class<?>[] { String.class })
-  .up();
-IQuery query = qb.build();
-
-// Ex�cuter
-query.query("fixed(\"Hello world\")");
-// � Appelle MyClass.fixed("Hello world") � ISupplier<String>
+try {
+    IExpression<?, ?> expr = context.expression("add(\"string\", 42)");
+    expr.evaluate();
+} catch (ExpressionException e) {
+    System.err.println("Expression error: " + e.getMessage());
+    // Example: "Unknown function: add(String,Integer)"
+}
 ```
 
-#### 2.2 Fonctions imbriqu�es
+### Error Messages
 
-Les fonctions peuvent �tre imbriqu�es. Les fonctions internes sont ex�cut�es en premier, et leurs r�sultats (via `.supply()`) sont pass�s aux fonctions parentes.
+- **Parsing errors**: "Error parsing expression '...': ..."
+- **Unknown function**: "Unknown function: functionName(Type1,Type2)"
+- **Function not found**: "Function not found: functionName(Type1,Type2)"
+- **Failed node creation**: "Failed to create node for function: ..."
 
-**Exemple :**
+---
+
+## Testing
+
+The module includes comprehensive tests:
+
+- [ExpressionContextTest.java](src/test/java/com/garganttua/core/expression/context/ExpressionContextTest.java): Tests for parsing and evaluating expressions
+- [ExpressionNodeFactoryTest.java](src/test/java/com/garganttua/core/expression/context/ExpressionNodeFactoryTest.java): Tests for node factory creation and configuration
+- [ExpressionContextBuilderTest.java](src/test/java/com/garganttua/core/expression/dsl/ExpressionContextBuilderTest.java): Tests for DSL builder functionality
+
+### Example Test
+
 ```java
-// Enregistrer les fonctions
-qb.withQuery(MyClass.class, String.class)
-  .method("fixed", ISupplier.class, new Class<?>[] { String.class })
-  .up()
-  .withQuery(TypeConverters.class, String.class)
-  .method("string", ISupplier.class, new Class<?>[] { String.class })
-  .up();
+@Test
+public void testAddExpression() throws Exception {
+    // Parse an expression with a function call: add(42, 30)
+    IExpression<?, ?> expression = expressionContext.expression("add(42, 30)");
 
-// Ex�cuter
-query.query("fixed(string(\"Hello world\"))");
+    assertNotNull(expression, "Expression should not be null");
 
-// Ex�cution :
-// 1. string("Hello world") � ISupplier<String>
-// 2. .supply() � Optional<"Hello world">
-// 3. fixed("Hello world") � ISupplier<String>
+    // Evaluate the expression
+    ISupplier<?> result = expression.evaluate();
+    Optional<Integer> value = (Optional<Integer>) result.supply();
+
+    assertTrue(value.isPresent(), "Value should be present");
+    assertEquals(72, value.get(), "Value should be 72 (42 + 30)");
+}
 ```
 
-#### 2.3 Arguments mixtes
+Run tests:
 
-Les fonctions peuvent recevoir diff�rents types d'arguments :
-
-```java
-query.query("process(int[1,2,3], \"text\", true, 3.14)");
-// Arguments : int[]{1,2,3}, "text", true, 3.14
-
-query.query("compute(Class<String>, int[42])");
-// Arguments : String.class, int[]{42}
-
-query.query("merge({\"a\":1}, {\"b\":2})");
-// Arguments : Map{"a"�1L}, Map{"b"�2L}
+```bash
+mvn test -pl garganttua-expression
 ```
 
 ---
 
-### 3. R�gles de grammaire
+## Grammar
 
-#### 3.1 R�gle principale
+The expression language is defined using ANTLR4 grammar (`Query.g4`):
+
+### Main Rule
 
 ```antlr4
 query : expression EOF ;
 ```
 
-Une requ�te est une expression unique suivie de la fin de fichier.
-
-#### 3.2 Expressions
+### Expressions
 
 ```antlr4
 expression
@@ -206,13 +423,7 @@ expression
     ;
 ```
 
-Une expression peut �tre :
-- Un appel de fonction : `sum(1,2,3)`
-- Un litt�ral : `42`, `"hello"`, `[1,2,3]`
-- Un type : `int`, `Class<String>`
-- Un identifiant : `myVar` (converti en cha�ne)
-
-#### 3.3 Appels de fonction
+### Function Calls
 
 ```antlr4
 functionCall
@@ -224,9 +435,7 @@ arguments
     ;
 ```
 
-Format : `nomFonction(arg1, arg2, ...)`
-
-#### 3.4 Litt�raux
+### Literals
 
 ```antlr4
 literal
@@ -239,21 +448,9 @@ literal
     | arrayLiteral
     | objectLiteral
     ;
-
-arrayLiteral
-    : '[' (expression (',' expression)*)? ']'
-    ;
-
-objectLiteral
-    : '{' (pair (',' pair)*)? '}'
-    ;
-
-pair
-    : STRING ':' (literal | type | objectLiteral)
-    ;
 ```
 
-#### 3.5 Types
+### Types
 
 ```antlr4
 type
@@ -261,245 +458,66 @@ type
     ;
 
 simpleType
-    : primitiveType
-    | classType
-    | classOfType
+    : primitiveType    // boolean, int, double, etc.
+    | classType        // java.lang.String, List<T>
+    | classOfType      // Class<String>, Class<?>
     ;
-
-primitiveType
-    : 'boolean' | 'byte' | 'short' | 'int'
-    | 'long' | 'float' | 'double' | 'char'
-    ;
-
-arrayDims
-    : ('[' (expression (',' expression)*)? ']')+
-    ;
-
-classType
-    : className genericArguments?
-    ;
-
-className
-    : IDENTIFIER ('.' IDENTIFIER)*
-    ;
-
-genericArguments
-    : '<' type (',' type)* '>'
-    ;
-
-classOfType
-    : 'Class' '<' type '>'
-    | 'Class' '<' '?' '>'
-    ;
-```
-
-#### 3.6 Tokens lexicaux
-
-```antlr4
-IDENTIFIER : [a-zA-Z_][a-zA-Z_0-9]* ;
-STRING     : '"' (~["\\] | '\\' .)* '"' ;
-CHAR       : '\'' . '\'' ;
-INT        : '-'? [0-9]+ ;
-FLOAT      : '-'? [0-9]+ '.' [0-9]+ ;
-BOOLEAN    : 'true' | 'false';
-NULL       : 'null';
-WS         : [ \t\r\n]+ -> skip ;
 ```
 
 ---
 
-## Utilisation
+## Integration with Other Modules
 
-### Exemple complet
+`garganttua-expression` integrates with:
 
-```java
-import com.garganttua.core.query.IQuery;
-import com.garganttua.core.query.dsl.QueryBuilder;
-import com.garganttua.core.supply.ISupplier;
-
-public class Example {
-
-    // Fonction � enregistrer (doit �tre statique)
-    public static ISupplier<String> greet(String name) {
-        return new FixedSupplierBuilder<>("Hello, " + name).build();
-    }
-
-    public static ISupplier<Integer> add(int a, int b) {
-        return new FixedSupplierBuilder<>(a + b).build();
-    }
-
-    public static void main(String[] args) {
-        // 1. Construire le QueryBuilder
-        QueryBuilder qb = new QueryBuilder();
-
-        // 2. Enregistrer les fonctions
-        qb.withQuery(Example.class, String.class)
-          .method("greet", ISupplier.class, new Class<?>[] { String.class })
-          .up()
-          .withQuery(Example.class, Integer.class)
-          .method("add", ISupplier.class, new Class<?>[] { int.class, int.class })
-          .up();
-
-        // 3. Construire la Query
-        IQuery query = qb.build();
-
-        // 4. Ex�cuter des requ�tes
-        Optional<ISupplier<?>> result1 = query.query("greet(\"Alice\")");
-        if (result1.isPresent()) {
-            Optional<String> value = (Optional<String>) result1.get().supply();
-            System.out.println(value.get()); // "Hello, Alice"
-        }
-
-        Optional<ISupplier<?>> result2 = query.query("add(10, 32)");
-        if (result2.isPresent()) {
-            Optional<Integer> value = (Optional<Integer>) result2.get().supply();
-            System.out.println(value.get()); // 42
-        }
-    }
-}
-```
-
-### Fonctions de conversion de type
-
-Le module fournit des fonctions de conversion dans `TypeConverters` :
-
-```java
-import com.garganttua.core.query.functions.TypeConverters;
-
-// Fonctions disponibles :
-TypeConverters.string("hello")      // � ISupplier<String>
-TypeConverters.integer(42)          // � ISupplier<Integer>
-TypeConverters.longValue(123L)      // � ISupplier<Long>
-TypeConverters.doubleValue(3.14)    // � ISupplier<Double>
-TypeConverters.floatValue(2.71f)    // � ISupplier<Float>
-TypeConverters.booleanValue(true)   // � ISupplier<Boolean>
-```
-
-**Utilisation dans les requ�tes :**
-
-```java
-qb.withQuery(TypeConverters.class, String.class)
-  .method("string", ISupplier.class, new Class<?>[] { String.class })
-  .up();
-
-query.query("string(\"Hello\")");
-// � ISupplier<String> contenant "Hello"
-```
+- **garganttua-supply**: Uses `ISupplier` for lazy evaluation and optional results
+- **garganttua-reflection**: Uses reflection utilities for method binding and type introspection
+- **garganttua-dsl**: Extends DSL builder patterns for fluent API construction
+- **garganttua-commons**: Uses core interfaces like `IExpressionContext` and `IExpressionNodeFactory`
 
 ---
 
-## Comportement de conversion
+## Best Practices
 
-### Valeurs litt�rales
-
-| Expression | Type Java | Valeur |
-|------------|-----------|--------|
-| `42` | `Long` | `42L` |
-| `3.14` | `Double` | `3.14` |
-| `"hello"` | `String` | `"hello"` |
-| `'c'` | `String` | `"c"` |
-| `true` | `Boolean` | `true` |
-| `null` | - | `null` � `Optional.empty()` |
-
-### Tableaux typ�s
-
-Les tableaux typ�s sont convertis en tableaux primitifs Java :
-
-```java
-int[1,2,3]       � int[] {1, 2, 3}
-double[3.14]     � double[] {3.14}
-boolean[true]    � boolean[] {true}
-```
-
-### Tableaux imbriqu�s
-
-Les tableaux contenant d'autres tableaux sont convertis en `Object[]` :
-
-```java
-int[int[1,2], int[3,4]]  � Object[] {int[]{1,2}, int[]{3,4}}
-```
-
-### Appels de fonction
-
-Les appels de fonction sont ex�cut�s r�cursivement :
-
-1. Les arguments sont d'abord convertis (appels imbriqu�s ex�cut�s)
-2. Pour les fonctions imbriqu�es, `.supply()` est appel� automatiquement
-3. La fonction parente re�oit les valeurs d�j� extraites
-4. Le r�sultat final est un `ISupplier`
-
-**Exemple :**
-```java
-fixed(string("Hello"))
-
-// �tapes :
-// 1. string("Hello") � ISupplier<String>
-// 2. .supply() � Optional.of("Hello")
-// 3. fixed("Hello") � ISupplier<String>
-```
+1. **Register Leaf Nodes First**: Always register type conversion leafs before composite functions to ensure proper type resolution
+2. **Use Type-Safe Factories**: Define factories with proper generic types to maintain compile-time type safety
+3. **Handle Nullability**: Explicitly specify which parameters can be null in the `nullableParameters` list
+4. **Provide Descriptions**: Add meaningful descriptions to factories for better debugging and documentation
+5. **Reuse Contexts**: Create expression contexts once and reuse them for multiple expressions to amortize initialization cost
+6. **Cache Parsed Expressions**: If evaluating the same expression multiple times, parse once and evaluate repeatedly
+7. **Use DSL Builder**: Prefer the DSL builder API over manual factory construction for cleaner, more maintainable code
 
 ---
 
-## Gestion des erreurs
+## Performance Considerations
 
-### Fonctions non enregistr�es
+- **Parsing Overhead**: Expression parsing has overhead; cache parsed `IExpression` instances when possible
+- **Lazy Evaluation**: Expression results are `ISupplier` instances, enabling lazy evaluation strategies
+- **Factory Lookup**: Factory lookup is O(1) using HashMap-based key resolution
+- **Nested Expressions**: Deep nesting creates deep call stacks during evaluation; consider flattening for performance-critical paths
 
-Si une fonction n'est pas enregistr�e, la requ�te retourne `Optional.empty()` :
+---
 
-```java
-query.query("unknownFunction(1,2,3)")  // � Optional.empty()
-```
+## Thread Safety
 
-### Valeurs null
-
-Les valeurs `null` retournent `Optional.empty()` au lieu de cr�er un `FixedSupplier` :
-
-```java
-query.query("null")  // � Optional.empty()
-```
-
-### Erreurs d'ex�cution
-
-Les erreurs lors de l'ex�cution des fonctions sont logg�es et retournent `Optional.empty()` :
-
-```java
-query.query("divide(10, 0)")  // � Optional.empty() + log d'erreur
-```
+- **ExpressionContext**: Thread-safe for reading (parsing expressions)
+- **Expression Evaluation**: Thread-safe if the underlying functions are thread-safe
+- **Node Factories**: Immutable and thread-safe after construction
+- **Expression Trees**: Immutable after parsing; safe for concurrent evaluation
 
 ---
 
 ## Limitations
 
-1. **Mots-cl�s r�serv�s** : `boolean`, `byte`, `short`, `int`, `long`, `float`, `double`, `char`, `true`, `false`, `null`, `Class` ne peuvent pas �tre utilis�s comme noms de fonction ou variables
-
-2. **M�thodes statiques uniquement** : Seules les m�thodes statiques peuvent �tre enregistr�es
-
-3. **Types g�n�riques** : Le parsing des types g�n�riques est support� mais la conversion compl�te n'est pas encore impl�ment�e
-
-4. **Cha�nes de caract�res** : Les �chappements support�s sont `\"` et `\\`
+- **No Operator Overloading**: Use function calls instead of operators (e.g., `add(a, b)` instead of `a + b`)
+- **No Control Flow**: No if/else, loops, or other control flow constructs (expressions are purely functional)
+- **No Variable Assignments**: Expressions are read-only and cannot modify state
+- **Array/Object Literals**: Require appropriate factories to be registered
+- **Reserved Keywords**: Keywords like `boolean`, `int`, `true`, `false`, `null`, `Class` cannot be used as function names
 
 ---
 
-## AST (Abstract Syntax Tree)
-
-Le module utilise les nSuds AST suivants :
-
-| NSud | Description | Exemple |
-|------|-------------|---------|
-| `LiteralNode` | Valeur litt�rale | `42`, `"hello"` |
-| `FunctionNode` | Appel de fonction | `sum(1,2,3)` |
-| `IdentifierNode` | Identifiant | `myVar`, `true` |
-| `ArrayLiteralNode` | Tableau non typ� | `[1,2,3]` |
-| `TypedArrayNode` | Tableau typ� | `int[1,2,3]` |
-| `ObjectLiteralNode` | Objet JSON | `{"key":"value"}` |
-| `PrimitiveTypeNode` | Type primitif | `int`, `double` |
-| `ClassTypeNode` | Type classe | `java.lang.String` |
-| `ArrayTypeNode` | Type tableau | `int[]` |
-| `ClassOfTypeNode` | Type Class | `Class<String>` |
-
----
-
-## D�pendances
+## Dependencies
 
 ```xml
 <dependency>
@@ -507,13 +525,38 @@ Le module utilise les nSuds AST suivants :
     <artifactId>antlr4-runtime</artifactId>
     <version>4.13.0</version>
 </dependency>
+
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-commons</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-supply</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-reflection</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-dsl</artifactId>
+</dependency>
 ```
 
 ---
 
-## Tests
+## License
 
-Voir `QueryBuilderTest.java` pour des exemples d'utilisation :
-- `testSimpleQuery()` : Test d'une requ�te avec fonctions imbriqu�es
-- `testNonStaticQueryShouldThrowException()` : V�rification que seules les m�thodes statiques sont accept�es
-- `dummyTest()` : Tests de parsing de diverses syntaxes
+Part of the Garganttua Core framework. See main project LICENSE file.
+
+---
+
+## Version
+
+Current version: **2.0.0-ALPHA01**
+
+This is an alpha release. APIs may change in future versions.

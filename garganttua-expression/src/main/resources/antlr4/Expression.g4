@@ -1,17 +1,17 @@
-grammar Query;
+grammar Expression;
 
 options {
     language = Java;
 }
 
 @header {
-    package com.garganttua.core.query.antlr4;
+    package com.garganttua.core.expression.antlr4;
 }
 
 // ===============================
 // RÈGLE PRINCIPALE
 // ===============================
-query
+root
     : expression EOF
     ;
 
@@ -21,8 +21,8 @@ query
 expression
     : functionCall
     | literal
-    | type           // Permet int[1,2,3], Class<String>, etc.
-    | IDENTIFIER
+    | IDENTIFIER     // Identifiants simples traités comme strings
+    | type           // Types (int, boolean, java.lang.String, Class<?>, etc.)
     ;
 
 // ===============================
@@ -42,8 +42,8 @@ arguments
 literal
     : STRING
     | CHAR
-    | INT
-    | FLOAT
+    | INT_LITERAL
+    | FLOAT_LIT
     | BOOLEAN
     | NULL
     | arrayLiteral
@@ -76,14 +76,14 @@ simpleType
     ;
 
 primitiveType
-    : 'boolean'
-    | 'byte'
-    | 'short'
-    | 'int'
-    | 'long'
-    | 'float'
-    | 'double'
-    | 'char'
+    : BOOLEAN_TYPE
+    | BYTE_TYPE
+    | SHORT_TYPE
+    | INT_TYPE
+    | LONG_TYPE
+    | FLOAT_TYPE
+    | DOUBLE_TYPE
+    | CHAR_TYPE
     ;
 
 // Dimensions pour les tableaux de type (peut contenir des valeurs)
@@ -105,24 +105,38 @@ genericArguments
     : '<' type (',' type)* '>'
     ;
 
-// Class<> ou Class<?> 
+// Class<> ou Class<?>
 classOfType
-    : 'Class' '<' type '>'
-    | 'Class' '<' '?' '>'
+    : CLASS '<' type '>'
+    | CLASS '<' '?' '>'
     ;
 
 // ===============================
 // TOKENS
 // ===============================
-IDENTIFIER : [a-zA-Z_][a-zA-Z_0-9]* ;
 
-STRING     : '"' (~["\\] | '\\' .)* '"' ;
-CHAR       : '\'' . '\'' ;
+// Type keywords (must come before IDENTIFIER to have priority)
+BOOLEAN_TYPE : 'boolean';
+BYTE_TYPE    : 'byte';
+SHORT_TYPE   : 'short';
+INT_TYPE     : 'int';
+LONG_TYPE    : 'long';
+FLOAT_TYPE   : 'float';
+DOUBLE_TYPE  : 'double';
+CHAR_TYPE    : 'char';
+CLASS        : 'Class';
 
-INT        : '-'? [0-9]+ ;
-FLOAT      : '-'? [0-9]+ '.' [0-9]+ ;
+// Boolean literals (must come before IDENTIFIER)
+BOOLEAN      : 'true' | 'false';
+NULL         : 'null';
 
-BOOLEAN    : 'true' | 'false';
-NULL       : 'null';
+// Literals
+STRING       : '"' (~["\\] | '\\' .)* '"' ;
+CHAR         : '\'' . '\'' ;
+INT_LITERAL  : '-'? [0-9]+ ;
+FLOAT_LIT    : '-'? [0-9]+ '.' [0-9]+ ;
+
+// Identifiers (must come after keywords)
+IDENTIFIER   : [a-zA-Z_][a-zA-Z_0-9]* ;
 
 WS : [ \t\r\n]+ -> skip ;

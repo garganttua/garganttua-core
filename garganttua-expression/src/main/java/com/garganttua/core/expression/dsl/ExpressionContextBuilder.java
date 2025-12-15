@@ -10,14 +10,18 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.annotations.ExpressionLeaf;
 import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
+import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
 
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -127,5 +131,18 @@ public class ExpressionContextBuilder
         });
         nodes.stream().forEach(m -> this.withExpressionNode(m.getDeclaringClass(), m.getReturnType()).method(m).autoDetect(true));
         leafs.stream().forEach(m -> this.withExpressionLeaf(m.getDeclaringClass(), m.getReturnType()).method(m).autoDetect(true));
+    }
+
+    @Override
+    public IExpressionContextBuilder context(IDiContextBuilder context) {
+        Objects.requireNonNull(context, "Injection context builder cannot be null");
+        context.resolvers().withResolver(Expression.class, (t, e) -> {
+            Expression expression = e.getAnnotation(Expression.class);
+            if( expression == null )
+                return Resolved.notResolved(t, e);
+            return new Resolved(true, t, this.built.expression(expression.value()), e.isAnnotationPresent(Nullable.class));
+        });
+        
+        return this;
     }
 }

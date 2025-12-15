@@ -191,13 +191,41 @@ public class StandardExpressionLeafs {
 
     /**
      * Converts a fully qualified class name to an ISupplier&lt;Class&lt;?&gt;&gt;.
+     * Supports primitive type names (int, boolean, etc.) and fully qualified class names.
      *
-     * @param className the fully qualified class name
+     * @param className the fully qualified class name or primitive type name
      * @return an ISupplier that supplies the Class object
      * @throws ExpressionException if class cannot be found
      */
-    @ExpressionLeaf(name = "class", description = "Loads a class by fully qualified name")
+    @ExpressionLeaf(name = "class", description = "Loads a class by fully qualified name or primitive type")
     public static Class<?> Class(@Nullable String className) {
+        if (className == null) {
+            throw new ExpressionException("Class name cannot be null");
+        }
+
+        // Handle primitive types
+        switch (className) {
+            case "boolean":
+                return boolean.class;
+            case "byte":
+                return byte.class;
+            case "short":
+                return short.class;
+            case "int":
+                return int.class;
+            case "long":
+                return long.class;
+            case "float":
+                return float.class;
+            case "double":
+                return double.class;
+            case "char":
+                return char.class;
+            case "void":
+                return void.class;
+        }
+
+        // Handle regular classes
         try {
             return java.lang.Class.forName(className);
         } catch (ClassNotFoundException e) {
