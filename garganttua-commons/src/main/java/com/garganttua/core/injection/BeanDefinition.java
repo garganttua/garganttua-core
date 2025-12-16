@@ -1,6 +1,5 @@
 package com.garganttua.core.injection;
 
-import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -8,7 +7,6 @@ import java.util.Set;
 
 import com.garganttua.core.injection.context.dsl.IBeanInjectableFieldBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
-import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 

@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 import lombok.extern.slf4j.Slf4j;
 
-/*Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
+/** Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
 @Slf4j
 public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<Class<? extends Annotation>> qualifiers) {
@@ -161,6 +161,12 @@ public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strat
         return qualifiers;
     }
 
+    /**
+     * x
+     * @param ref Namming rule : [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...]
+     * @return
+     * @throws DiException
+     */
     @SuppressWarnings("unchecked")
     public static Pair<Optional<String>, BeanReference<?>> parse(String ref) throws DiException {
 

@@ -27,6 +27,7 @@ import jakarta.annotation.Nullable;
 
 @Step
 @Named("output-step")
+@Mutex
 public class DummyRuntimeProcessOutputStep {
 
     @Condition
