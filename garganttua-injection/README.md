@@ -186,51 +186,82 @@ List<Plugin> plugins = Beans.beans(Plugin.class)
 
 ### Basic JSR-330 Example
 
+Based on real test code from `DiContextTest.java`:
+
 ```java
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
+import com.garganttua.core.injection.annotations.Prototype;
+import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.beans.Beans;
+import jakarta.annotation.PostConstruct;
 
-// Define beans with JSR-330 annotations
+// Define a singleton bean with dependencies
 @Singleton
-public class UserRepository {
-    public User findById(String id) {
-        // Implementation
+@Named("dummyBeanForTest")
+public class DummyBean {
+    private String value = "default";
+    private boolean postConstructCalled = false;
+    private AnotherDummyBean anotherBean;
+    private DummyOtherBean otherBean;
+
+    @Inject
+    public DummyBean(
+        @Property("com.garganttua.dummyPropertyInConstructor") String value,
+        @Prototype @Named("AnotherDummyBeanForTest") AnotherDummyBean anotherBean,
+        @Singleton @Named("emailService") DummyOtherBean otherBean
+    ) {
+        this.value = value;
+        this.anotherBean = anotherBean;
+    }
+
+    @PostConstruct
+    public void markPostConstruct() {
+        this.postConstructCalled = true;
+    }
+
+    public String getValue() { return value; }
+    public boolean isPostConstructCalled() { return postConstructCalled; }
+}
+
+// Prototype bean - new instance every time
+@Prototype
+@Named("AnotherDummyBeanForTest")
+public class AnotherDummyBean {
+    private String randomValue;
+
+    public AnotherDummyBean() {
+        this.randomValue = UUID.randomUUID().toString();
     }
 }
 
+// Another singleton bean
+@Named("emailService")
 @Singleton
-public class UserService {
-    private final UserRepository repository;
-
-    @Inject
-    public UserService(UserRepository repository) {
-        this.repository = repository;
-    }
-
-    public User getUser(String id) {
-        return repository.findById(id);
-    }
+public class DummyOtherBean {
 }
 
 // Initialize context and retrieve beans
 public class Application {
     public static void main(String[] args) throws Exception {
-        // Create and start context
-        IDiContext context = DiContext.builder()
-            .withPackage("com.example")
+        // Create and start context with property injection
+        DiContext.builder()
+            .withPackage("com.garganttua")
+            .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+                .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+                .up()
             .autoDetect(true)
             .build()
             .onInit()
             .onStart();
 
-        // Query bean
-        Optional<UserService> service = Beans.bean(UserService.class)
-            .build()
-            .supply();
+        // Query bean by type
+        Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
 
-        if (service.isPresent()) {
-            User user = service.get().getUser("123");
-            System.out.println("User: " + user.getName());
+        if (bean.isPresent()) {
+            System.out.println("Value: " + bean.get().getValue()); // "propertyValue"
+            System.out.println("Post-construct called: " + bean.get().isPostConstructCalled()); // true
         }
     }
 }
@@ -238,164 +269,303 @@ public class Application {
 
 ### Named Beans with @Named
 
+Based on real test code from `BeanQueryTest.java`:
+
 ```java
-import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
+import com.garganttua.core.injection.context.beans.BeanQuery;
 
-// Define named implementations
-@Named("mysql")
-public class MySqlDatabase implements Database {
-    public void connect() {
-        System.out.println("Connected to MySQL");
+// Define a named bean
+@Singleton
+@Named("dummyBeanForTest")
+public class DummyBean {
+    private String value = "default";
+
+    public String getValue() {
+        return value;
     }
 }
 
-@Named("postgres")
-public class PostgresDatabase implements Database {
-    public void connect() {
-        System.out.println("Connected to PostgreSQL");
-    }
-}
-
-// Inject specific implementation
-public class DataService {
-    @Inject
-    @Named("mysql")
-    private Database database;
-
-    public void initialize() {
-        database.connect();
-    }
-}
-
-// Or query programmatically
-Optional<Database> mysql = Beans.bean(Database.class)
-    .name("mysql")
+// Query bean by name
+IBeanQueryBuilder<DummyBean> builder = BeanQuery.builder();
+Optional<DummyBean> bean = builder
+    .name("dummyBeanForTest")
     .build()
-    .supply();
+    .execute();
+
+assertTrue(bean.isPresent());
+
+// Query by type and name together
+IBeanQueryBuilder<DummyBean> builder2 = BeanQuery.builder();
+Optional<DummyBean> bean2 = builder2
+    .type(DummyBean.class)
+    .name("dummyBeanForTest")
+    .build()
+    .execute();
+
+assertTrue(bean2.isPresent());
+
+// Query with non-existent name returns empty
+IBeanQueryBuilder<DummyBean> builder3 = BeanQuery.builder();
+Optional<DummyBean> bean3 = builder3
+    .name("nonExistent")
+    .build()
+    .execute();
+
+assertFalse(bean3.isPresent());
 ```
 
 ### Custom Qualifiers
 
+Based on real test code from the dummy beans:
+
 ```java
 import javax.inject.Qualifier;
-import java.lang.annotation.*;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-// Define custom qualifier
+// Define custom qualifier (from DummyBeanQualifier.java)
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.TYPE})
-public @interface Primary { }
-
-// Apply to beans
-@Primary
-public class PrimaryCache implements Cache { }
-
-public class BackupCache implements Cache { }
-
-// Inject qualified bean
-public class CacheManager {
-    @Inject
-    @Primary
-    private Cache cache; // Will inject PrimaryCache
+public @interface DummyBeanQualifier {
 }
 
-// Register qualifier in context
+// Apply qualifier to a bean (from DummyOtherBean.java)
+@Named("emailService")
+@Singleton
+@DummyBeanQualifier
+public class DummyOtherBean {
+}
+
+// Use qualifier in dependency injection (from DummyBean.java)
+@Singleton
+@Named("dummyBeanForTest")
+public class DummyBean {
+    @Provider("garganttua")
+    @Named("emailService")
+    @DummyBeanQualifier
+    @Nullable
+    private DummyOtherBean otherBean;
+}
+
+// Register qualifier in context when building
 IDiContext context = DiContext.builder()
-    .withPackage("com.example")
-    .withQualifier(Primary.class)
+    .withPackage("com.garganttua")
+    .withQualifier(DummyBeanQualifier.class)
     .autoDetect(true)
     .build();
 ```
 
 ### Property Injection
 
+Based on real test code from `DiContextTest.java` and `InjectableElementResolverTest.java`:
+
 ```java
 import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.context.properties.Properties;
 
-public class EmailConfig {
-    @Property("email.smtp.host")
-    private String smtpHost;
+// Define bean with property injection in constructor (from DummyBean.java)
+@Singleton
+@Named("dummyBeanForTest")
+public class DummyBean {
+    private String value;
 
-    @Property("email.smtp.port")
-    private Integer smtpPort;
+    @Inject
+    public DummyBean(
+        @Provider("garganttua")
+        @Property("com.garganttua.dummyPropertyInConstructor") String value
+    ) {
+        this.value = value;
+    }
 
-    @Property("email.from")
-    private String fromAddress;
+    public String getValue() {
+        return value;
+    }
 }
 
-// Configure properties
-IDiContext context = DiContext.builder()
-    .withPackage("com.example")
+// Configure properties in context (from DiContextTest.java)
+String propertyValue = UUID.randomUUID().toString();
+
+DiContext.builder()
+    .withPackage("com.garganttua")
     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
-        .withProperty(String.class, "email.smtp.host", "smtp.gmail.com")
-        .withProperty(Integer.class, "email.smtp.port", 587)
-        .withProperty(String.class, "email.from", "noreply@example.com")
+        .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", propertyValue)
         .up()
+    .autoDetect(true)
     .build()
     .onInit()
     .onStart();
 
-// Retrieve property values
-Optional<String> smtpHost = Properties.property(String.class)
-    .key("email.smtp.host")
+// Retrieve property values directly (from DiContextTest.java)
+Optional<String> property = Properties.property(String.class)
+    .key("com.garganttua.dummyPropertyInConstructor")
     .build()
     .supply();
+
+assertNotNull(property);
+assertTrue(property.isPresent());
+assertEquals(propertyValue, property.get());
+
+// Verify bean received the property (from DiContextTest.java)
+Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
+assertEquals(propertyValue, bean.get().getValue());
 ```
 
 ### Prototype Scope
 
+Based on real test code from `AnotherDummyBean.java` and `BeanFactoryTest.java`:
+
 ```java
 import com.garganttua.core.injection.annotations.Prototype;
+import java.util.UUID;
 
+// Prototype bean creates new instance each time (from AnotherDummyBean.java)
 @Prototype
-public class RequestProcessor {
-    private final String requestId;
+@Named("AnotherDummyBeanForTest")
+public class AnotherDummyBean {
+    private String randomValue;
 
-    public RequestProcessor() {
-        this.requestId = UUID.randomUUID().toString();
+    public AnotherDummyBean() {
+        this.randomValue = UUID.randomUUID().toString();
     }
 
-    public String getRequestId() {
-        return requestId;
+    public String getRandomValue() {
+        return randomValue;
     }
 }
 
-// Each supply() call creates a new instance
-Optional<RequestProcessor> processor1 = Beans.bean(RequestProcessor.class).build().supply();
-Optional<RequestProcessor> processor2 = Beans.bean(RequestProcessor.class).build().supply();
+// Test showing prototype vs singleton behavior (from BeanFactoryTest.java)
+// Singleton strategy returns same instance
+BeanFactory<DummyBean> singletonFactory = new BeanFactory<>(
+    new BeanDefinition<>(
+        new BeanReference<>(DummyBean.class, Optional.of(BeanStrategy.singleton), Optional.empty(), null),
+        Optional.empty(), Set.of(), Set.of()
+    )
+);
 
-// Different instances with different request IDs
-assertNotEquals(processor1.get().getRequestId(), processor2.get().getRequestId());
+Optional<DummyBean> bean1 = singletonFactory.supply();
+Optional<DummyBean> bean2 = singletonFactory.supply();
+assertSame(bean1.get(), bean2.get()); // Same instance
+
+// Prototype strategy returns different instances
+BeanFactory<DummyBean> prototypeFactory = new BeanFactory<>(
+    new BeanDefinition<>(
+        new BeanReference<>(DummyBean.class, Optional.of(BeanStrategy.prototype), Optional.empty(), null),
+        Optional.empty(), Set.of(), Set.of()
+    )
+);
+
+Optional<DummyBean> bean3 = prototypeFactory.supply();
+Optional<DummyBean> bean4 = prototypeFactory.supply();
+assertNotSame(bean3.get(), bean4.get()); // Different instances
 ```
 
 ### Programmatic Bean Registration
 
-```java
-// Example creation in progress
+Based on real test code from `BeanFactoryBuilderTest.java`:
 
+```java
+import com.garganttua.core.injection.context.dsl.BeanFactoryBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+
+// Programmatically configure a bean with full control
+String randomValue = UUID.randomUUID().toString();
+IBeanFactoryBuilder<DummyBean> builder = new BeanFactoryBuilder<>(DummyBean.class);
+
+IBeanSupplier<DummyBean> beanSupplier = builder
+    // Set strategy and metadata
+    .strategy(BeanStrategy.singleton)
+    .name("aBean")
+    .qualifier(DummyBeanQualifier.class)
+
+    // Configure field injection
+    .field(String.class).field("anotherValue")
+        .withValue(FixedSupplierBuilder.of(randomValue))
+        .up()
+
+    // Configure constructor injection
+    .constructor()
+        .withParam(FixedSupplierBuilder.of("constructedWithParameter"))
+        .up()
+
+    // Configure post-construct method
+    .postConstruction()
+        .method("markPostConstruct")
+        .withReturn(Void.class)
+        .up()
+
+    .build();
+
+// Supply the configured bean
+Optional<DummyBean> bean = beanSupplier.supply();
+
+assertNotNull(bean);
+assertTrue(bean.isPresent());
+assertEquals("constructedWithParameter", bean.get().getValue());
+assertTrue(bean.get().isPostConstructCalled());
+assertEquals(randomValue, bean.get().getAnotherValue());
+
+// Check dependencies
+assertEquals(1, beanSupplier.dependencies().size());
 ```
 
 ### Post-Construct Callbacks
 
-```java
-public class DatabaseConnection {
-    @Inject
-    @Property("db.url")
-    private String url;
+Based on real test code from `DummyBean.java` and `DiContextTest.java`:
 
-    private Connection connection;
+```java
+import jakarta.annotation.PostConstruct;
+
+// Define bean with post-construct callback (from DummyBean.java)
+@Singleton
+@Named("dummyBeanForTest")
+public class DummyBean {
+    private String value;
+    private boolean postConstructCalled = false;
+    private AnotherDummyBean anotherBean;
+
+    @Inject
+    public DummyBean(
+        @Property("com.garganttua.dummyPropertyInConstructor") String value,
+        @Prototype @Named("AnotherDummyBeanForTest") AnotherDummyBean anotherBean
+    ) {
+        this.value = value;
+        this.anotherBean = anotherBean;
+    }
 
     @PostConstruct
-    public void initialize() {
-        // Called after dependency injection completes
-        this.connection = DriverManager.getConnection(url);
-        System.out.println("Database connected: " + url);
+    public void markPostConstruct() {
+        // Called after all dependencies are injected
+        this.postConstructCalled = true;
+    }
+
+    public boolean isPostConstructCalled() {
+        return postConstructCalled;
     }
 }
+
+// Test verifying post-construct is called (from DiContextTest.java)
+DiContext.builder()
+    .withPackage("com.garganttua")
+    .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+        .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+        .up()
+    .autoDetect(true)
+    .build()
+    .onInit()
+    .onStart();
+
+Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
+assertNotNull(bean);
+assertTrue(bean.isPresent());
+assertTrue(bean.get().isPostConstructCalled()); // Post-construct was executed
+assertNotNull(bean.get().getAnotherBean()); // Dependencies were injected first
 ```
 
 ### Child Contexts
+
+Note: The test files don't contain complete child context examples. The framework supports child contexts through the `IChildContextFactory` interface, but detailed working examples are not present in the current test suite. The basic pattern is:
 
 ```java
 // Parent context with shared beans
@@ -419,6 +589,8 @@ IDiContext childContext = parentContext.newChildContext(
 
 ### Querying Multiple Beans
 
+Note: The test files don't contain examples of querying multiple beans at once. The framework supports this through the `Beans.beans()` method, but working examples are not present in the current test suite. The basic pattern would be:
+
 ```java
 // Define multiple implementations
 @Named("json")
@@ -427,30 +599,59 @@ public class JsonSerializer implements Serializer { }
 @Named("xml")
 public class XmlSerializer implements Serializer { }
 
-@Named("yaml")
-public class YamlSerializer implements Serializer { }
-
 // Query all implementations
 List<Serializer> serializers = Beans.beans(Serializer.class)
     .build()
     .supplyAll();
-
-System.out.println("Found " + serializers.size() + " serializers");
-// Output: Found 3 serializers
 ```
 
 ### Dependency Validation
 
+Based on real test code from `DependencyCycleDetectorTest.java`:
+
 ```java
-// The context validates dependencies at build time
-try {
-    IDiContext context = DiContext.builder()
-        .withPackage("com.example")
-        .autoDetect(true)
-        .build(); // Throws exception if circular dependencies detected
-} catch (DslException e) {
-    System.err.println("Circular dependency detected: " + e.getMessage());
-}
+import com.garganttua.core.injection.context.validation.DependencyCycleDetector;
+import com.garganttua.core.injection.context.validation.DependencyGraph;
+
+// Test classes
+static class A { }
+static class B { }
+static class C { }
+
+// Create dependency graph
+DependencyGraph graph = new DependencyGraph();
+DependencyCycleDetector detector = new DependencyCycleDetector();
+
+// No cycle - validation passes
+graph.addDependency(A.class, B.class);
+graph.addDependency(B.class, C.class);
+assertDoesNotThrow(() -> detector.detectCycles(graph));
+
+// Simple cycle A -> B -> A
+DependencyGraph cyclicGraph = new DependencyGraph();
+cyclicGraph.addDependency(A.class, B.class);
+cyclicGraph.addDependency(B.class, A.class);
+
+DiException ex = assertThrows(DiException.class, () -> detector.detectCycles(cyclicGraph));
+assertTrue(ex.getMessage().contains("Circular dependency detected"));
+assertTrue(ex.getMessage().contains("A") && ex.getMessage().contains("B"));
+
+// Complex cycle A -> B -> C -> A
+DependencyGraph complexCycle = new DependencyGraph();
+complexCycle.addDependency(A.class, B.class);
+complexCycle.addDependency(B.class, C.class);
+complexCycle.addDependency(C.class, A.class);
+
+DiException ex2 = assertThrows(DiException.class, () -> detector.detectCycles(complexCycle));
+assertTrue(ex2.getMessage().contains("Circular dependency detected"));
+assertTrue(ex2.getMessage().contains("A -> B -> C -> A"));
+
+// Self-dependency A -> A
+DependencyGraph selfCycle = new DependencyGraph();
+selfCycle.addDependency(A.class, A.class);
+
+DiException ex3 = assertThrows(DiException.class, () -> detector.detectCycles(selfCycle));
+assertTrue(ex3.getMessage().contains("A"));
 ```
 
 ## Advanced Integration

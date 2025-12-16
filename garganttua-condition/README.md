@@ -50,7 +50,7 @@ Key features:
 The core interface that all conditions implement. It defines a single method:
 
 ```java
-boolean evaluate() throws ConditionException
+boolean fullEvaluate() throws ConditionException
 ```
 
 All condition implementations (AND, OR, custom, etc.) conform to this contract, enabling uniform composition.
@@ -62,12 +62,12 @@ Each condition type has a corresponding builder implementing `IConditionBuilder`
 ```java
 IConditionBuilder builder = and(condition1, condition2);
 ICondition condition = builder.build();
-boolean result = condition.evaluate();
+boolean result = condition.fullEvaluate();
 ```
 
 ### Object Suppliers
 
-Conditions operate on values provided by `ISupplier<T>` implementations. Suppliers defer object retrieval until `evaluate()` is called, enabling:
+Conditions operate on values provided by `ISupplier<T>` implementations. Suppliers defer object retrieval until `fullEvaluate()` is called, enabling:
 - **Lazy evaluation** - Values are fetched only when needed
 - **Dynamic values** - Conditions can work with changing data
 - **Integration** - Seamless connection with the supply module
@@ -123,43 +123,53 @@ import static com.garganttua.core.condition.Conditions.*;
 import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.*;
 
 // Simple null check
-boolean isPresent = isNotNull(of("hello")).build().evaluate(); // true
+boolean isPresent = isNotNull(of("hello")).build().fullEvaluate(); // true
 
 // Numeric comparison
-boolean isValid = custom(of(10), v -> v > 5).build().evaluate(); // true
+boolean isValid = custom(of(10), v -> v > 5).build().fullEvaluate(); // true
 
 // Combined logic
 boolean result = and(
     isNotNull(of("data")),
     custom(of(10), v -> v > 5)
-).build().evaluate(); // true
+).build().fullEvaluate(); // true
 ```
 
 ### Null Checks
 
 ```java
 // Check if value is null
-isNull(of(null)).build().evaluate(); // true
-isNull(of("present")).build().evaluate(); // false
+isNull(of("null")).build().fullEvaluate(); // false
+isNull("String").build().fullEvaluate(); // false
+isNull(NullSupplierBuilder.of(String.class)).build().fullEvaluate(); // true
 
 // Check if value is not null
-isNotNull(of("hello")).build().evaluate(); // true
-isNotNull(NullSupplierBuilder.of(String.class)).build().evaluate(); // false
+isNotNull(of("null")).build().fullEvaluate(); // true
+isNotNull("String").build().fullEvaluate(); // true
+isNotNull(NullSupplierBuilder.of(String.class)).build().fullEvaluate(); // false
 ```
 
 ### Equality Checks
 
 ```java
 // Equals - compares two supplied values
-equals(of(10), of(10)).build().evaluate(); // true
-equals(of("abc"), of("ABC")).build().evaluate(); // false
+Conditions.equals(of(10), of(10)).build().fullEvaluate(); // true
+Conditions.equals(of("abc"), of("abc")).build().fullEvaluate(); // true
+Conditions.equals(of("abc"), of("ABC")).build().fullEvaluate(); // false
 
 // NotEquals
-notEquals(of(10), of(20)).build().evaluate(); // true
-notEquals(of("test"), of("test")).build().evaluate(); // false
+notEquals(of(10), of(10)).build().fullEvaluate(); // false
+notEquals(of(10), of(20)).build().fullEvaluate(); // true
+notEquals(of("abc"), of("abc")).build().fullEvaluate(); // false
+notEquals(of("abc"), of("ABC")).build().fullEvaluate(); // true
 
 // Type safety - throws DslException for type mismatch
-equals(of(10), of(10.0)).build().evaluate(); // throws DslException: "Type mismatch Integer VS Double"
+Conditions.equals(of(10), of(10.0)).build().fullEvaluate(); // throws DslException: "Type mismatch Integer VS Double"
+
+// Object equality
+Object o = new Object();
+Conditions.equals(of(o), of(o)).build().fullEvaluate(); // true
+Conditions.equals(of(o), of(new Object())).build().fullEvaluate(); // false
 ```
 
 ### Logical Operators
@@ -170,12 +180,17 @@ equals(of(10), of(10.0)).build().evaluate(); // throws DslException: "Type misma
 and(
     custom(of(10), v -> v > 5),
     custom(of(20), v -> v < 30)
-).build().evaluate(); // true (both conditions are true)
+).build().fullEvaluate(); // true (both conditions are true)
 
 and(
-    custom(of(10), v -> v > 5),
-    custom(of(50), v -> v < 30)
-).build().evaluate(); // false (second condition is false)
+    isNull(NullSupplierBuilder.of(String.class)),
+    isNull(NullSupplierBuilder.of(String.class))
+).build().fullEvaluate(); // true (both are null)
+
+and(
+    isNull(NullSupplierBuilder.of(String.class)),
+    isNull(of("null"))
+).build().fullEvaluate(); // false (second is not null)
 ```
 
 #### OR - At least one condition must be true
@@ -184,12 +199,17 @@ and(
 or(
     custom(of(5), v -> v > 3),
     custom(of(2), v -> v > 10)
-).build().evaluate(); // true (first condition is true)
+).build().fullEvaluate(); // true (first condition is true)
 
 or(
     custom(of(1), v -> v > 3),
     custom(of(2), v -> v > 10)
-).build().evaluate(); // false (both conditions are false)
+).build().fullEvaluate(); // false (both conditions are false)
+
+or(
+    custom(of("test"), String::isEmpty, e -> !e),
+    custom(of(99), v -> v < 100)
+).build().fullEvaluate(); // true (both conditions are true)
 ```
 
 #### XOR - Odd number of conditions must be true
@@ -199,19 +219,38 @@ or(
 xor(
     custom(of(10), v -> v > 5),    // true
     custom(of(50), v -> v < 30)    // false
-).build().evaluate(); // true (one true, one false)
+).build().fullEvaluate(); // true (one true, one false)
 
 xor(
     custom(of(10), v -> v > 5),    // true
     custom(of(20), v -> v < 30)    // true
-).build().evaluate(); // false (both true)
+).build().fullEvaluate(); // false (both true)
+
+xor(
+    custom(of(1), v -> v > 5),     // false
+    custom(of(2), v -> v > 10)     // false
+).build().fullEvaluate(); // false (both false)
 
 // XOR with 3 conditions - odd number must be true
 xor(
     custom(of(10), v -> v > 5),    // true
     custom(of(5), v -> v > 0),     // true
     custom(of(20), v -> v < 30)    // true
-).build().evaluate(); // true (3 is odd)
+).build().fullEvaluate(); // true (3 is odd)
+
+xor(
+    custom(of(10), v -> v > 5),    // true
+    custom(of(5), v -> v < 0),     // false
+    custom(of(20), v -> v < 30)    // true
+).build().fullEvaluate(); // false (2 is even)
+
+// XOR with 4 conditions
+xor(
+    custom(of(10), v -> v > 5),    // true
+    custom(of(20), v -> v < 30),   // true
+    custom(of(0), v -> v < 0),     // false
+    custom(of(1), v -> v > 10)     // false
+).build().fullEvaluate(); // false (2 is even)
 ```
 
 #### NAND - NOT(AND) - At least one condition must be false
@@ -220,12 +259,17 @@ xor(
 nand(
     custom(of(10), v -> v > 5),
     custom(of(20), v -> v < 30)
-).build().evaluate(); // false (both true, so AND is true, NAND is false)
+).build().fullEvaluate(); // false (both true, so AND is true, NAND is false)
 
 nand(
     custom(of(10), v -> v > 5),
     custom(of(50), v -> v < 30)
-).build().evaluate(); // true (one false, so AND is false, NAND is true)
+).build().fullEvaluate(); // true (one false, so AND is false, NAND is true)
+
+nand(
+    custom(of(1), v -> v > 5),
+    custom(of(2), v -> v > 10)
+).build().fullEvaluate(); // true (both false, so AND is false, NAND is true)
 ```
 
 #### NOR - NOT(OR) - All conditions must be false
@@ -234,12 +278,17 @@ nand(
 nor(
     custom(of(1), v -> v > 3),
     custom(of(2), v -> v > 3)
-).build().evaluate(); // true (both false, so OR is false, NOR is true)
+).build().fullEvaluate(); // true (both false, so OR is false, NOR is true)
 
 nor(
     custom(of(5), v -> v > 3),
     custom(of(2), v -> v > 3)
-).build().evaluate(); // false (one true, so OR is true, NOR is false)
+).build().fullEvaluate(); // false (one true, so OR is true, NOR is false)
+
+nor(
+    custom(of(5), v -> v > 3),
+    custom(of(8), v -> v > 3)
+).build().fullEvaluate(); // false (both true, so OR is true, NOR is false)
 ```
 
 ### Custom Conditions
@@ -247,106 +296,49 @@ nor(
 #### Direct Predicate
 
 ```java
-// Simple value test
-custom(of(125), val -> val > 100).build().evaluate(); // true
+// Simple numeric test
+custom(of(125), val -> val > 3).build().fullEvaluate(); // true
+custom(of(10), val -> val < 5).build().fullEvaluate(); // false
 
 // Boolean test
-custom(of(true), val -> val).build().evaluate(); // true
+custom(of(true), val -> val).build().fullEvaluate(); // true
+custom(of(false), val -> val).build().fullEvaluate(); // false
 
-// String test
-custom(of(""), String::isEmpty, empty -> empty).build().evaluate(); // true
+// Zero check
+custom(of(0), val -> val == 0).build().fullEvaluate(); // true
+
+// Double comparison
+custom(of(3.14), val -> val > 3).build().fullEvaluate(); // true
 ```
 
 #### Extracted Predicate
 
 ```java
 // Extract property, then test
-custom(of("hello"), String::length, len -> len > 3).build().evaluate(); // true
+custom(of("hello"), String::length, len -> len > 3).build().fullEvaluate(); // true
 
 // Extract with method reference
-custom(of("abc"), String::isEmpty, empty -> !empty).build().evaluate(); // true
+custom(of("abc"), String::isEmpty, empty -> !empty).build().fullEvaluate(); // true
+custom(of(""), String::isEmpty, empty -> !empty).build().fullEvaluate(); // false
+
+// String length checks
+custom(of("abc123"), String::length, len -> len == 6).build().fullEvaluate(); // true
 
 // Extract computed value
-custom(of("hello"), str -> str.chars().sum(), sum -> sum > 500).build().evaluate(); // true
+custom(of("hello"), str -> str.chars().sum(), sum -> sum > 500).build().fullEvaluate(); // true
 
-// Extract with identity
-custom(of("identity"), Function.identity(), s -> s.startsWith("i")).build().evaluate(); // true
+// Extract with identity function
+custom(of("identity"), Function.identity(), s -> s.startsWith("i")).build().fullEvaluate(); // true
 ```
 
 ### Complex Compositions
 
 ```java
-// Nested logical operators
+// Combining AND with custom conditions
 and(
-    or(
-        custom(of(10), v -> v > 5),
-        custom(of(2), v -> v < 0)
-    ),
-    xor(
-        isNotNull(of("data")),
-        isNull(of(null))
-    )
-).build().evaluate();
-
-// Business rule example: validate order
-and(
-    isNotNull(orderSupplier),
-    custom(orderSupplier, Order::getAmount, amount -> amount > 0),
-    custom(orderSupplier, Order::getStatus, status -> status.equals("PENDING")),
-    or(
-        custom(orderSupplier, Order::isPriority, priority -> priority),
-        custom(orderSupplier, Order::getCustomerTier, tier -> tier.equals("GOLD"))
-    )
-).build().evaluate();
-```
-
-### Real-World Examples
-
-#### User Access Control
-
-```java
-// Check if user has permission to access resource
-boolean hasAccess = and(
-    isNotNull(userSupplier),
-    custom(userSupplier, User::isActive, active -> active),
-    or(
-        custom(userSupplier, User::getRole, role -> role.equals("ADMIN")),
-        and(
-            custom(userSupplier, User::getRole, role -> role.equals("USER")),
-            custom(resourceSupplier, Resource::isPublic, isPublic -> isPublic)
-        )
-    )
-).build().evaluate();
-```
-
-#### Feature Flag System
-
-```java
-// Enable feature based on multiple criteria
-boolean featureEnabled = and(
-    custom(configSupplier, Config::getEnvironment, env -> env.equals("PRODUCTION")),
-    or(
-        custom(userSupplier, User::isBetaTester, isBeta -> isBeta),
-        custom(rolloutSupplier, Rollout::getPercentage, pct -> pct >= 100)
-    ),
-    custom(featureSupplier, Feature::isStable, stable -> stable)
-).build().evaluate();
-```
-
-#### Data Validation
-
-```java
-// Validate product before saving
-boolean isValidProduct = and(
-    isNotNull(productSupplier),
-    custom(productSupplier, Product::getName, name -> name != null && !name.isBlank()),
-    custom(productSupplier, Product::getPrice, price -> price > 0),
-    custom(productSupplier, Product::getStock, stock -> stock >= 0),
-    or(
-        custom(productSupplier, Product::getSku, sku -> sku != null),
-        custom(productSupplier, Product::getBarcode, barcode -> barcode != null)
-    )
-).build().evaluate();
+    custom(of(10), val -> val > 5),
+    custom(of(20), val -> val < 30)
+).build().fullEvaluate(); // true
 ```
 
 ## Tips and best practices
@@ -369,7 +361,7 @@ boolean isValidProduct = and(
 
 5. **Be aware of type mismatches** - `equals()` and `notEquals()` throw `DslException` when comparing different types:
    ```java
-   equals(of(10), of(10.0)).build().evaluate(); // throws DslException
+   equals(of(10), of(10.0)).build().fullEvaluate(); // throws DslException
    ```
 
 6. **Use generics appropriately** - Let type inference work for you, but specify types explicitly when needed for clarity.
@@ -399,7 +391,7 @@ boolean isValidProduct = and(
 9. **Catch appropriate exceptions** - `DslException` for build-time errors, `ConditionException` for evaluation-time errors:
    ```java
    try {
-       boolean result = condition.build().evaluate();
+       boolean result = condition.build().fullEvaluate();
    } catch (DslException e) {
        // Handle configuration error
    } catch (ConditionException e) {
@@ -414,8 +406,8 @@ boolean isValidProduct = and(
 11. **Reuse built conditions** - Build once, evaluate multiple times:
     ```java
     ICondition condition = and(cond1, cond2).build(); // Build once
-    boolean result1 = condition.evaluate(); // Reuse
-    boolean result2 = condition.evaluate(); // Reuse
+    boolean result1 = condition.fullEvaluate(); // Reuse
+    boolean result2 = condition.fullEvaluate(); // Reuse
     ```
 
 12. **Order matters for AND/OR** - Place cheaper or more likely-to-fail conditions first to short-circuit evaluation when possible.

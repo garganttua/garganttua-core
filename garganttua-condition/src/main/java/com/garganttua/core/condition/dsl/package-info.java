@@ -27,61 +27,89 @@
  *   <li>{@code XorConditionBuilder} - Builds XOR conditions</li>
  * </ul>
  *
- * <h2>Usage Example: Simple Condition Builders</h2>
+ * <h2>Usage Example: Equality Checks (from ConditionTest)</h2>
  * <pre>{@code
- * // Build equals condition
- * ICondition ageCheck = new EqualsConditionBuilder()
- *     .extractor(context -> context.get("age"))
- *     .expectedValue(18)
- *     .build();
+ * import static com.garganttua.core.condition.Conditions.*;
+ * import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.*;
  *
- * // Build not null condition
- * ICondition emailCheck = new NotNullConditionBuilder()
- *     .extractor(context -> context.get("email"))
- *     .build();
+ * // Equals condition
+ * Conditions.equals(of(10), of(10)).build().fullEvaluate(); // true
+ * Conditions.equals(of("abc"), of("abc")).build().fullEvaluate(); // true
+ * Conditions.equals(of("abc"), of("ABC")).build().fullEvaluate(); // false
+ *
+ * // Not equals condition
+ * notEquals(of(10), of(20)).build().fullEvaluate(); // true
+ * notEquals(of("abc"), of("ABC")).build().fullEvaluate(); // true
+ *
+ * // Type mismatch detection
+ * Conditions.equals(of(10), of(10.0)).build().fullEvaluate(); // throws DslException
  * }</pre>
  *
- * <h2>Usage Example: Composite Condition Builders</h2>
+ * <h2>Usage Example: AND Operator (from ConditionTest)</h2>
  * <pre>{@code
- * // Build AND condition
- * ICondition userCondition = new AndConditionBuilder()
- *     .add(new EqualsConditionBuilder()
- *         .extractor(ctx -> ctx.get("status"))
- *         .expectedValue("ACTIVE")
- *         .build())
- *     .add(new NotNullConditionBuilder()
- *         .extractor(ctx -> ctx.get("email"))
- *         .build())
- *     .build();
+ * import static com.garganttua.core.condition.Conditions.*;
  *
- * // Build OR condition
- * ICondition roleCondition = new OrConditionBuilder()
- *     .add(new EqualsConditionBuilder()
- *         .extractor(ctx -> ctx.get("role"))
- *         .expectedValue("ADMIN")
- *         .build())
- *     .add(new EqualsConditionBuilder()
- *         .extractor(ctx -> ctx.get("role"))
- *         .expectedValue("MODERATOR")
- *         .build())
- *     .build();
+ * // AND - all conditions must be true
+ * and(
+ *     custom(of(10), v -> v > 5),
+ *     custom(of(20), v -> v < 30)
+ * ).build().fullEvaluate(); // true
+ *
+ * and(
+ *     isNull(NullSupplierBuilder.of(String.class)),
+ *     isNull(NullSupplierBuilder.of(String.class))
+ * ).build().fullEvaluate(); // true
+ *
+ * and(
+ *     isNull(NullSupplierBuilder.of(String.class)),
+ *     isNull(of("null"))
+ * ).build().fullEvaluate(); // false
  * }</pre>
  *
- * <h2>Usage Example: Custom Condition Builders</h2>
+ * <h2>Usage Example: OR Operator (from ConditionTest)</h2>
  * <pre>{@code
- * // Build custom condition
- * ICondition customCheck = new CustomConditionBuilder()
- *     .predicate(context -> {
- *         User user = context.get("user");
- *         return user.getAge() >= 18 && user.hasValidEmail();
- *     })
- *     .build();
+ * // OR - at least one condition must be true
+ * or(
+ *     custom(of(5), v -> v > 3),
+ *     custom(of(2), v -> v > 10)
+ * ).build().fullEvaluate(); // true (first is true)
  *
- * // Build custom extracted condition
- * ICondition extractedCheck = new CustomExtractedConditionBuilder()
- *     .extractor(context -> context.get("user"))
- *     .predicate(user -> user.isActive() && !user.isBlocked())
- *     .build();
+ * or(
+ *     custom(of(1), v -> v > 3),
+ *     custom(of(2), v -> v > 10)
+ * ).build().fullEvaluate(); // false (both are false)
+ * }</pre>
+ *
+ * <h2>Usage Example: XOR Operator (from ConditionTest)</h2>
+ * <pre>{@code
+ * // XOR - odd number of conditions must be true
+ * xor(
+ *     custom(of(10), v -> v > 5),    // true
+ *     custom(of(50), v -> v < 30)    // false
+ * ).build().fullEvaluate(); // true
+ *
+ * xor(
+ *     custom(of(10), v -> v > 5),    // true
+ *     custom(of(20), v -> v < 30)    // true
+ * ).build().fullEvaluate(); // false
+ * }</pre>
+ *
+ * <h2>Usage Example: Custom Conditions (from ConditionTest)</h2>
+ * <pre>{@code
+ * // Direct predicate
+ * custom(of(125), val -> val > 3).build().fullEvaluate(); // true
+ * custom(of(true), val -> val).build().fullEvaluate(); // true
+ *
+ * // Extracted predicate - extract property then test
+ * custom(of("hello"), String::length, len -> len > 3).build().fullEvaluate(); // true
+ * custom(of("abc"), String::isEmpty, empty -> !empty).build().fullEvaluate(); // true
+ * custom(of(""), String::isEmpty, empty -> !empty).build().fullEvaluate(); // false
+ *
+ * // Computed value extraction
+ * custom(of("hello"), str -> str.chars().sum(), sum -> sum > 500).build().fullEvaluate(); // true
+ *
+ * // Identity extraction
+ * custom(of("identity"), Function.identity(), s -> s.startsWith("i")).build().fullEvaluate(); // true
  * }</pre>
  *
  * <h2>Features</h2>

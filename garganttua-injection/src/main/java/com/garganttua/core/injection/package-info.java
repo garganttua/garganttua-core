@@ -38,33 +38,32 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
+ * Based on real test code from DiContextTest.java:
  * <pre>{@code
- * // Create and configure context
- * IDiContext context = new DiContextBuilder()
- *     .withPackage("com.myapp.services")
- *     .withPackage("com.myapp.repositories")
+ * // Create and configure context with properties and auto-detection
+ * DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+ *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+ *         .up()
+ *     .autoDetect(true)
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- *     .beanProvider("database")
- *         .addBean(DataSource.class)
- *         .addBean(TransactionManager.class)
- *         .done()
+ * // Query bean by type
+ * Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
  *
- *     .propertyProvider("config")
- *         .addProperty("db.url", "jdbc:mysql://localhost:3306/mydb")
- *         .addProperty("db.pool.size", "10")
- *         .done()
+ * if (bean.isPresent()) {
+ *     System.out.println("Value: " + bean.get().getValue());
+ *     System.out.println("Post-construct called: " + bean.get().isPostConstructCalled());
+ * }
  *
- *     .build();
- *
- * // Start lifecycle
- * context.onStart();
- *
- * // Retrieve beans
- * UserService userService = context.getBean(UserService.class);
- * DataSource dataSource = context.getBean(DataSource.class);
- *
- * // Shutdown
- * context.onStop();
+ * // Query property
+ * Optional<String> property = Properties.property(String.class)
+ *     .key("com.garganttua.dummyPropertyInConstructor")
+ *     .build()
+ *     .supply();
  * }</pre>
  *
  * <h2>Architecture</h2>

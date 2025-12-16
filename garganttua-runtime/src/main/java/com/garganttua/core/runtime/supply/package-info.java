@@ -18,30 +18,77 @@
  *   <li><b>Value Supplier</b> - Provides fixed values</li>
  * </ul>
  *
- * <h2>Usage Example: Input Supplier</h2>
+ * <h2>Usage Example: Input Parameter</h2>
  * <pre>{@code
- * // Supply input to step method
- * InputSupplier<OrderRequest> inputSupplier =
- *     new InputSupplier<>(runtimeContext);
+ * // Using @Input annotation in step method
+ * @Step
+ * @Named("output-step")
+ * public class DummyRuntimeProcessOutputStep {
  *
- * OrderRequest input = inputSupplier.get();
+ *     @Operation
+ *     String method(@Input String input) {
+ *         // Input is automatically supplied from runtime context
+ *         return input + "-processed";
+ *     }
+ * }
  * }</pre>
  *
- * <h2>Usage Example: Variable Supplier</h2>
+ * <h2>Usage Example: Variable Parameter</h2>
  * <pre>{@code
- * // Supply variable from context
- * VariableSupplier<String> userIdSupplier =
- *     new VariableSupplier<>(runtimeContext, "userId", String.class);
+ * // Using @Variable annotation to access runtime variables
+ * @Step
+ * @Named("step-one")
+ * public class StepOne {
  *
- * String userId = userIdSupplier.get();
+ *     @Operation
+ *     @Variable(name = "step-one-returned")
+ *     String method(
+ *             @Input String input,
+ *             @Variable(name = "step-one-variable") String variable) {
+ *         // Variables are supplied from runtime context
+ *         return input + "-step-one-processed-" + variable;
+ *     }
+ * }
  * }</pre>
  *
- * <h2>Usage Example: Context Supplier</h2>
+ * <h2>Usage Example: Context and Fixed Value Parameters</h2>
  * <pre>{@code
- * // Supply runtime context
- * ContextSupplier contextSupplier = new ContextSupplier(runtimeContext);
+ * // Using multiple parameter types
+ * @Step
+ * @Named("output-step")
+ * public class DummyRuntimeProcessOutputStep {
  *
- * RuntimeContext context = contextSupplier.get();
+ *     @Operation
+ *     String method(
+ *             @Input String input,
+ *             @Fixed(valueString = "fixed-value-in-method") String fixedValue,
+ *             @Variable(name = "variable") String variable,
+ *             @Context IRuntimeContext<String, String> context) {
+ *         // Input, fixed values, variables, and context are all supplied
+ *         return input + "-processed-" + fixedValue + "-" + variable;
+ *     }
+ * }
+ * }</pre>
+ *
+ * <h2>Usage Example: Exception Parameters in Fallback</h2>
+ * <pre>{@code
+ * // Using exception-related suppliers in fallback methods
+ * @Step
+ * @Named("output-step")
+ * public class DummyRuntimeProcessOutputStep {
+ *
+ *     @FallBack
+ *     @OnException(exception = DiException.class)
+ *     String fallbackMethod(
+ *             @Input String input,
+ *             @Exception DiException exception,
+ *             @Code Integer code,
+ *             @ExceptionMessage String exceptionMessage,
+ *             @Context IRuntimeContext<String, String> context) {
+ *         // Exception, code, and message are supplied from runtime context
+ *         return input + "-fallback-" + code + "-" + exceptionMessage;
+ *     }
+ * }
  * }</pre>
  *
  * <h2>Parameter Resolution</h2>

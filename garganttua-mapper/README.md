@@ -49,32 +49,36 @@ The `@FieldMappingRule` annotation defines how a field in the destination object
 
 **Basic Example:**
 ```java
-class Source {
-    public int age;
+class GenericEntity {
+    protected String uuid;
+    protected String id;
 }
 
-class Destination {
-    @FieldMappingRule(sourceFieldAddress = "age")
-    private String age; // Automatic int→String conversion
+class GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "uuid")
+    protected String uuid;
+
+    @FieldMappingRule(sourceFieldAddress = "id")
+    protected String id;
 }
 ```
 
 **With Custom Conversion:**
 ```java
-class UserDto {
-    @FieldMappingRule(
-        sourceFieldAddress = "createdAt",
-        fromSourceMethod = "fromTimestamp",
-        toSourceMethod = "toTimestamp"
-    )
-    private String createdAt;
+class OtherGenericEntity extends GenericEntity {
+    long longField;
+}
 
-    private String fromTimestamp(long timestamp) {
-        return Instant.ofEpochMilli(timestamp).toString();
+class OtherGenericDto extends GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "longField", fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+    String longField;
+
+    private String fromMethod(long longField) {
+        return String.valueOf(longField);
     }
 
-    private long toTimestamp(String iso8601) {
-        return Instant.parse(iso8601).toEpochMilli();
+    private long toMethod(String value) {
+        return Long.valueOf(value);
     }
 }
 ```
@@ -89,23 +93,23 @@ The `@ObjectMappingRule` annotation defines custom conversion methods for an **e
 
 **Example:**
 ```java
-@ObjectMappingRule(fromSourceMethod = "fromEntity", toSourceMethod = "toEntity")
-class ComplexDto {
-    private String computedField;
+class GenericEntityWithObjectMapping extends GenericEntity {
+    long longField;
+}
 
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String name;
+@ObjectMappingRule(fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+class GenericDtoWithObjectMapping extends GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "longField", fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+    String longField;
 
-    private void fromEntity(UserEntity entity) {
-        this.name = entity.getName();
-        this.computedField = entity.getFirstName() + " " + entity.getLastName();
+    private void fromMethod(GenericEntityWithObjectMapping entity) {
+        this.id = entity.getId();
+        this.uuid = entity.getUuid();
+        this.longField = String.valueOf(entity.getLongField());
     }
 
-    private void toEntity(UserEntity entity) {
-        entity.setName(this.name);
-        String[] parts = this.computedField.split(" ");
-        entity.setFirstName(parts[0]);
-        entity.setLastName(parts.length > 1 ? parts[1] : "");
+    private void toMethod(GenericEntityWithObjectMapping entity) {
+        // Reverse mapping logic
     }
 }
 ```
@@ -116,32 +120,36 @@ Each `@FieldMappingRule` uses an `ObjectAddress` to specify which source field m
 
 **Simple Field:**
 ```java
-@FieldMappingRule(sourceFieldAddress = "username")
-private String username;
-```
-
-**Nested Object Navigation:**
-```java
-@FieldMappingRule(sourceFieldAddress = "user.profile.email")
-private String email;
+class Parent {
+    @FieldMappingRule(sourceFieldAddress = "parent")
+    private String parent;
+}
 ```
 
 **Collection Element Mapping:**
 ```java
-@FieldMappingRule(sourceFieldAddress = "users.#item.name")
-private List<String> userNames;
+class Inner {
+    @FieldMappingRule(sourceFieldAddress = "inner")
+    private String inner;
+}
+
+class Destination {
+    private List<Inner> list;
+}
 ```
 
 **Map Value Navigation:**
 ```java
-@FieldMappingRule(sourceFieldAddress = "userMap.#value.email")
-private List<String> emails;
+class Destination {
+    private Map<String, Inner> map1;  // Maps to inner via #value
+}
 ```
 
 **Map Key Access:**
 ```java
-@FieldMappingRule(sourceFieldAddress = "settings.#key")
-private List<String> settingKeys;
+class Destination {
+    private Map<Inner, String> map2;  // Maps to inner via #key
+}
 ```
 
 For complete ObjectAddress syntax documentation, see [ObjectAddress README](../garganttua-commons/ObjectAddress-README.md).
@@ -151,30 +159,30 @@ For complete ObjectAddress syntax documentation, see [ObjectAddress README](../g
 One of Garganttua Mapper's most powerful features is **bi-directional mapping** - the same configuration works in both directions:
 
 ```java
-class Entity {
-    public String name;
-    public int age;
+class GenericEntity {
+    protected String uuid;
+    protected String id;
 }
 
-class Dto {
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String name;
+class GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "uuid")
+    protected String uuid;
 
-    @FieldMappingRule(sourceFieldAddress = "age")
-    private int age;
+    @FieldMappingRule(sourceFieldAddress = "id")
+    protected String id;
 }
 
-Mapper mapper = new Mapper();
+Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
 
 // Forward: Entity → Dto
-Entity entity = new Entity();
-entity.name = "Alice";
-entity.age = 30;
-Dto dto = mapper.map(entity, Dto.class);
+GenericEntity entity = new GenericEntity();
+entity.setUuid("uuid");
+entity.setId("id");
+GenericDto dto = mapper.map(entity, GenericDto.class);
 
 // Reverse: Dto → Entity
-Entity entity2 = mapper.map(dto, Entity.class);
-// entity2.name == "Alice", entity2.age == 30
+GenericEntity entity2 = mapper.map(dto, GenericEntity.class);
+// entity2.getUuid() == "uuid", entity2.getId() == "id"
 ```
 
 ### Mapper Configuration
@@ -195,111 +203,83 @@ Mapper mapper = new Mapper()
 
 ### 1. Basic Field Mapping
 
-Map simple fields between objects with automatic type conversion:
+Map simple fields between objects:
 
 ```java
-class Source {
-    public int value;
-    public String name;
+class GenericEntity {
+    protected String uuid;
+    protected String id;
 }
 
-class Destination {
-    @FieldMappingRule(sourceFieldAddress = "value")
-    private String value; // int → String
+class GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "uuid")
+    protected String uuid;
 
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String name;
+    @FieldMappingRule(sourceFieldAddress = "id")
+    protected String id;
 }
 
-Source source = new Source();
-source.value = 42;
-source.name = "Test";
+GenericEntity entity = new GenericEntity();
+entity.setUuid("uuid");
+entity.setId("id");
 
-Mapper mapper = new Mapper();
-Destination dest = mapper.map(source, Destination.class);
+Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+GenericDto dest = mapper.map(entity, GenericDto.class);
 
-System.out.println(dest.value); // "42"
-System.out.println(dest.name);  // "Test"
+System.out.println(dest.getUuid()); // "uuid"
+System.out.println(dest.getId());   // "id"
 ```
 
-### 2. Nested Object Mapping
+### 2. Inheritance Mapping
 
-Map fields from nested object hierarchies:
+Map fields from parent and child classes:
 
 ```java
-class Address {
-    public String city;
-    public String zipCode;
+class Parent {
+    @FieldMappingRule(sourceFieldAddress = "parent")
+    private String parent;
 }
 
-class User {
-    public String name;
-    public Address address;
+class Destination extends Parent {
+    @FieldMappingRule(sourceFieldAddress = "field")
+    private String field;
 }
 
-class UserDto {
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String name;
-
-    @FieldMappingRule(sourceFieldAddress = "address.city")
-    private String city;
-
-    @FieldMappingRule(sourceFieldAddress = "address.zipCode")
-    private String zipCode;
-}
-
-User user = new User();
-user.name = "Bob";
-user.address = new Address();
-user.address.city = "Paris";
-user.address.zipCode = "75001";
-
-Mapper mapper = new Mapper();
-UserDto dto = mapper.map(user, UserDto.class);
-
-System.out.println(dto.name);    // "Bob"
-System.out.println(dto.city);    // "Paris"
-System.out.println(dto.zipCode); // "75001"
+// The mapper respects inheritance hierarchies and maps both parent and child fields
 ```
 
 ### 3. Collection Mapping
 
-Map lists, sets, and other collections with automatic element transformation:
+Map lists with automatic element transformation:
 
 ```java
-class OrderItem {
-    public String productName;
-    public int quantity;
+class SourceList {
+    public int sourceField;
 }
 
-class Order {
-    public List<OrderItem> items = new ArrayList<>();
+class Source {
+    public List<SourceList> sourceList = new ArrayList<>();
 }
 
-class OrderItemDto {
-    @FieldMappingRule(sourceFieldAddress = "productName")
-    private String productName;
-
-    @FieldMappingRule(sourceFieldAddress = "quantity")
-    private int quantity;
+class DestList {
+    @FieldMappingRule(sourceFieldAddress = "sourceField")
+    public int destField;
 }
 
-class OrderDto {
-    @FieldMappingRule(sourceFieldAddress = "items")
-    private List<OrderItemDto> items = new ArrayList<>();
+class Dest {
+    @FieldMappingRule(sourceFieldAddress = "sourceList")
+    public List<DestList> destList = new ArrayList<>();
 }
 
-Order order = new Order();
-OrderItem item1 = new OrderItem();
-item1.productName = "Widget";
-item1.quantity = 5;
-order.items.add(item1);
+Source source = new Source();
+for(int i = 0; i < 10; i++)
+    source.sourceList.add(new SourceList(i));
 
-Mapper mapper = new Mapper();
-OrderDto dto = mapper.map(order, OrderDto.class);
+Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
+Dest dest = mapper.map(source, Dest.class);
 
-System.out.println(dto.items.get(0).productName); // "Widget"
-System.out.println(dto.items.get(0).quantity);    // 5
+System.out.println(dest.destList.size());           // 10
+System.out.println(dest.destList.get(0).destField); // 0
 ```
 
 ### 4. Map Collection Mapping
@@ -307,23 +287,18 @@ System.out.println(dto.items.get(0).quantity);    // 5
 Handle Map structures with key/value transformations:
 
 ```java
-class UserPreferences {
-    public Map<String, String> settings = new HashMap<>();
+class Inner {
+    @FieldMappingRule(sourceFieldAddress = "inner")
+    private String inner;
 }
 
-class PreferencesDto {
-    @FieldMappingRule(sourceFieldAddress = "settings")
-    private Map<String, String> settings = new HashMap<>();
+class Destination {
+    // Map with Inner as value - maps to inner field via #value
+    private Map<String, Inner> map1;
+
+    // Map with Inner as key - maps to inner field via #key
+    private Map<Inner, String> map2;
 }
-
-UserPreferences prefs = new UserPreferences();
-prefs.settings.put("theme", "dark");
-prefs.settings.put("language", "en");
-
-Mapper mapper = new Mapper();
-PreferencesDto dto = mapper.map(prefs, PreferencesDto.class);
-
-System.out.println(dto.settings.get("theme")); // "dark"
 ```
 
 ### 5. Custom Type Conversion
@@ -331,277 +306,115 @@ System.out.println(dto.settings.get("theme")); // "dark"
 Define custom conversion logic for complex transformations:
 
 ```java
-class Product {
-    public BigDecimal price;
-    public Currency currency;
+class OtherGenericEntity extends GenericEntity {
+    long longField;
 }
 
-class ProductDto {
-    @FieldMappingRule(
-        sourceFieldAddress = "price",
-        fromSourceMethod = "fromPrice",
-        toSourceMethod = "toPrice"
-    )
-    private String formattedPrice;
+class OtherGenericDto extends GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "longField", fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+    String longField;
 
-    private String fromPrice(BigDecimal price) {
-        return NumberFormat.getCurrencyInstance().format(price);
+    private String fromMethod(long longField) {
+        return String.valueOf(longField);
     }
 
-    private BigDecimal toPrice(String formatted) {
-        try {
-            Number number = NumberFormat.getCurrencyInstance().parse(formatted);
-            return BigDecimal.valueOf(number.doubleValue());
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    private long toMethod(String value) {
+        return Long.valueOf(value);
     }
 }
-
-Product product = new Product();
-product.price = new BigDecimal("99.99");
-
-Mapper mapper = new Mapper();
-ProductDto dto = mapper.map(product, ProductDto.class);
-
-System.out.println(dto.formattedPrice); // "$99.99"
 ```
 
-### 6. Inheritance and Polymorphism
+### 6. Validation and Error Handling
 
-Mapper respects class inheritance hierarchies:
-
-```java
-class BaseEntity {
-    public Long id;
-    public LocalDateTime createdAt;
-}
-
-class UserEntity extends BaseEntity {
-    public String username;
-    public String email;
-}
-
-class BaseDto {
-    @FieldMappingRule(sourceFieldAddress = "id")
-    protected Long id;
-
-    @FieldMappingRule(sourceFieldAddress = "createdAt")
-    protected LocalDateTime createdAt;
-}
-
-class UserDto extends BaseDto {
-    @FieldMappingRule(sourceFieldAddress = "username")
-    private String username;
-
-    @FieldMappingRule(sourceFieldAddress = "email")
-    private String email;
-}
-
-UserEntity entity = new UserEntity();
-entity.id = 123L;
-entity.createdAt = LocalDateTime.now();
-entity.username = "john_doe";
-entity.email = "john@example.com";
-
-Mapper mapper = new Mapper();
-UserDto dto = mapper.map(entity, UserDto.class);
-
-// All fields from both base and derived classes are mapped
-System.out.println(dto.id);       // 123
-System.out.println(dto.username); // "john_doe"
-```
-
-### 7. Bi-directional Mapping
-
-Same configuration works in both directions automatically:
+The mapper validates mapping rules to ensure they are correctly configured:
 
 ```java
-class Entity {
-    public String name;
-    public int value;
+// Valid mapping with correct conversion methods
+class Source {
+    private int field;
 }
 
-class Dto {
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String name;
+class CorrectDestination {
+    @FieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from", toSourceMethod = "to")
+    private String field;
 
-    @FieldMappingRule(
-        sourceFieldAddress = "value",
-        fromSourceMethod = "fromValue",
-        toSourceMethod = "toValue"
-    )
-    private String value;
-
-    private String fromValue(int val) {
-        return "Value: " + val;
+    public String from(int field) {
+        return String.valueOf(field);
     }
 
-    private int toValue(String str) {
-        return Integer.parseInt(str.replace("Value: ", ""));
+    public int to(String field) {
+        return Integer.parseInt(field);
     }
 }
 
-Mapper mapper = new Mapper();
-
-// Forward: Entity → Dto
-Entity entity = new Entity();
-entity.name = "Test";
-entity.value = 42;
-Dto dto = mapper.map(entity, Dto.class);
-System.out.println(dto.name);  // "Test"
-System.out.println(dto.value); // "Value: 42"
-
-// Reverse: Dto → Entity
-Entity entity2 = mapper.map(dto, Entity.class);
-System.out.println(entity2.name);  // "Test"
-System.out.println(entity2.value); // 42
+// This will validate successfully
+List<MappingRule> rules = MappingRules.parse(CorrectDestination.class);
+MappingRules.validate(Source.class, rules);
 ```
 
-### 8. Collection Element Flattening
+### 7. Configuration and Error Handling
 
-Extract values from collection elements into a flat structure:
+Configure mapper behavior:
 
 ```java
-class User {
-    public String name;
+// Fail-fast mode - throws exception on errors
+Mapper mapper = new Mapper()
+    .configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
+
+// Lenient mode - continues on errors
+Mapper lenientMapper = new Mapper()
+    .configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+
+// Example: This throws MapperException in fail-fast mode
+GenericEntity entity = new GenericEntity();
+entity.setUuid("uuid");
+entity.setId("id");
+
+try {
+    GenericDto dto = mapper.map(entity, GenericDto.class);
+} catch (MapperException e) {
+    // Handle mapping error
 }
-
-class Team {
-    public List<User> members = new ArrayList<>();
-}
-
-class TeamSummaryDto {
-    @FieldMappingRule(sourceFieldAddress = "members.#item.name")
-    private List<String> memberNames = new ArrayList<>();
-}
-
-Team team = new Team();
-User user1 = new User(); user1.name = "Alice";
-User user2 = new User(); user2.name = "Bob";
-team.members.add(user1);
-team.members.add(user2);
-
-Mapper mapper = new Mapper();
-TeamSummaryDto dto = mapper.map(team, TeamSummaryDto.class);
-
-System.out.println(dto.memberNames); // ["Alice", "Bob"]
 ```
 
-### 9. Complex Object Graph Mapping
-
-Handle complex, deeply nested object structures:
-
-```java
-class Department {
-    public String name;
-    public List<Employee> employees = new ArrayList<>();
-}
-
-class Employee {
-    public String name;
-    public Address address;
-}
-
-class Address {
-    public String city;
-}
-
-class DepartmentReportDto {
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String departmentName;
-
-    @FieldMappingRule(sourceFieldAddress = "employees.#item.name")
-    private List<String> employeeNames;
-
-    @FieldMappingRule(sourceFieldAddress = "employees.#item.address.city")
-    private List<String> employeeCities;
-}
-
-Department dept = new Department();
-dept.name = "Engineering";
-
-Employee emp1 = new Employee();
-emp1.name = "Alice";
-emp1.address = new Address();
-emp1.address.city = "Paris";
-
-Employee emp2 = new Employee();
-emp2.name = "Bob";
-emp2.address = new Address();
-emp2.address.city = "London";
-
-dept.employees.add(emp1);
-dept.employees.add(emp2);
-
-Mapper mapper = new Mapper();
-DepartmentReportDto dto = mapper.map(dept, DepartmentReportDto.class);
-
-System.out.println(dto.departmentName);  // "Engineering"
-System.out.println(dto.employeeNames);   // ["Alice", "Bob"]
-System.out.println(dto.employeeCities);  // ["Paris", "London"]
-```
-
-### 10. Object-Level Custom Mapping
+### 8. Object-Level Custom Mapping
 
 Use `@ObjectMappingRule` when field-level mapping isn't sufficient:
 
 ```java
-class MoneyAmount {
-    public double amount;
-    public String currency;
+class GenericEntityWithObjectMapping extends GenericEntity {
+    long longField;
 }
 
-@ObjectMappingRule(fromSourceMethod = "fromMoney", toSourceMethod = "toMoney")
-class MoneyDto {
-    private String display;
+@ObjectMappingRule(fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+class GenericDtoWithObjectMapping extends GenericDto {
+    @FieldMappingRule(sourceFieldAddress = "longField", fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+    String longField;
 
-    private void fromMoney(MoneyAmount money) {
-        this.display = money.currency + " " + String.format("%.2f", money.amount);
+    private void fromMethod(GenericEntityWithObjectMapping entity) {
+        this.id = entity.getId();
+        this.uuid = entity.getUuid();
+        this.longField = String.valueOf(entity.getLongField());
     }
 
-    private void toMoney(MoneyAmount money) {
-        String[] parts = this.display.split(" ");
-        money.currency = parts[0];
-        money.amount = Double.parseDouble(parts[1]);
+    private void toMethod(GenericEntityWithObjectMapping entity) {
+        // Reverse mapping logic
     }
 }
-
-MoneyAmount money = new MoneyAmount();
-money.amount = 150.75;
-money.currency = "USD";
-
-Mapper mapper = new Mapper();
-MoneyDto dto = mapper.map(money, MoneyDto.class);
-System.out.println(dto.display); // "USD 150.75"
-
-MoneyAmount money2 = mapper.map(dto, MoneyAmount.class);
-System.out.println(money2.amount);   // 150.75
-System.out.println(money2.currency); // "USD"
 ```
 
-### 11. Error Handling Configuration
+### 9. Pre-recording Mapping Configurations
 
-Control how the mapper handles errors:
+For high-performance scenarios, pre-record the configuration:
 
 ```java
-// Fail-fast mode (recommended for development)
-Mapper strictMapper = new Mapper()
-    .configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
+Mapper mapper = new Mapper();
 
-try {
-    BrokenDto dto = strictMapper.map(source, BrokenDto.class);
-} catch (MapperException e) {
-    System.err.println("Mapping failed: " + e.getMessage());
-    // Handle the error appropriately
-}
+// Pre-record the mapping configuration
+mapper.recordMappingConfiguration(GenericEntity.class, GenericDto.class);
 
-// Lenient mode (useful in production with logging)
-Mapper lenientMapper = new Mapper()
-    .configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
-
-PartialDto dto = lenientMapper.map(source, PartialDto.class);
-// Some fields may be null/empty, but mapping continues
+// Subsequent mappings use the cached configuration
+assertEquals(1, mapper.mappingConfigurations.size());
 ```
 
 ## Advanced Patterns
@@ -614,102 +427,22 @@ For high-performance scenarios where the same mapping is executed repeatedly, pr
 Mapper mapper = new Mapper();
 
 // Pre-record the mapping configuration
-MappingConfiguration config = mapper.recordMappingConfiguration(
-    UserEntity.class,
-    UserDto.class
-);
+mapper.recordMappingConfiguration(GenericEntity.class, GenericDto.class);
+
+assertEquals(1, mapper.mappingConfigurations.size());
 
 // Subsequent mappings use the cached configuration
-for (UserEntity entity : entities) {
-    UserDto dto = mapper.map(entity, UserDto.class); // Fast path
-}
-```
+GenericEntity entity = new GenericEntity();
+entity.setUuid("uuid");
+entity.setId("id");
 
-**Performance Impact:**
-- First mapping: ~10-50ms (annotation parsing + reflection)
-- Pre-recorded mappings: ~0.1-1ms (direct field access)
-- Automatic caching after first use
-
-### Singleton Mapper Pattern
-
-Use a single `Mapper` instance throughout your application for maximum performance:
-
-```java
-public class MapperProvider {
-    private static final Mapper INSTANCE = new Mapper()
-        .configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
-
-    public static Mapper get() {
-        return INSTANCE;
-    }
-}
-
-// Usage across your application
-UserDto dto = MapperProvider.get().map(entity, UserDto.class);
+GenericDto dto = mapper.map(entity, GenericDto.class); // Fast path
 ```
 
 **Benefits:**
+- Automatic caching after first use
 - Configuration cache shared across all mappings
 - Reduced memory footprint
-- Thread-safe (Mapper is stateless for mapping operations)
-
-### Aggregating Multiple Sources
-
-Combine data from multiple source objects:
-
-```java
-class User {
-    public String name;
-}
-
-class UserStats {
-    public int loginCount;
-}
-
-@ObjectMappingRule(fromSourceMethod = "aggregate", toSourceMethod = "split")
-class UserProfileDto {
-    @FieldMappingRule(sourceFieldAddress = "name")
-    private String name;
-
-    private int loginCount;
-
-    // Custom aggregation method
-    private void aggregate(User user, UserStats stats) {
-        this.name = user.name;
-        this.loginCount = stats.loginCount;
-    }
-
-    // Not typically used in aggregation scenarios
-    private void split(User user, UserStats stats) {
-        user.name = this.name;
-        stats.loginCount = this.loginCount;
-    }
-}
-```
-
-### Conditional Mapping Logic
-
-Implement conditional transformations using custom conversion methods:
-
-```java
-class ProductDto {
-    @FieldMappingRule(
-        sourceFieldAddress = "price",
-        fromSourceMethod = "formatPrice"
-    )
-    private String displayPrice;
-
-    private String formatPrice(double price) {
-        if (price == 0.0) {
-            return "FREE";
-        } else if (price < 0) {
-            return "INVALID";
-        } else {
-            return String.format("$%.2f", price);
-        }
-    }
-}
-```
 
 ## Thread-Safety
 
@@ -719,20 +452,32 @@ The `Mapper` class is **fully thread-safe** and designed for concurrent use in m
 
 **Thread-Safe Operations:**
 ```java
-// Single shared mapper instance
-Mapper mapper = new Mapper();
+Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+int threadCount = 100;
+ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 
-// Multiple threads can use the same mapper concurrently
-ExecutorService executor = Executors.newFixedThreadPool(10);
+GenericEntity entity = new GenericEntity();
+entity.setUuid("uuid");
+entity.setId("id");
 
-for (int i = 0; i < 100; i++) {
-    final User user = users.get(i);
-    executor.submit(() -> {
-        // Thread-safe mapping - no synchronization needed
-        UserDto dto = mapper.map(user, UserDto.class);
-        // Process dto...
-    });
+List<Future<?>> futures = new ArrayList<>();
+for (int i = 0; i < threadCount; i++) {
+    futures.add(executor.submit(() -> {
+        try {
+            mapper.map(entity, GenericDto.class);
+        } catch (MapperException e) {
+            fail("Mapping failed: " + e.getMessage());
+        }
+    }));
 }
+
+for (Future<?> future : futures) {
+    future.get();
+}
+
+executor.shutdown();
+// Only one configuration was created despite concurrent access
+assertEquals(1, mapper.mappingConfigurations.size());
 ```
 
 ### Lock-Free Configuration Caching
@@ -855,14 +600,21 @@ The mapper includes comprehensive concurrency tests:
 ```java
 @Test
 public void testConcurrentMapping() throws Exception {
-    Mapper mapper = new Mapper();
+    Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
     int threadCount = 100;
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    GenericEntity entity = new GenericEntity();
+    entity.setUuid("uuid");
+    entity.setId("id");
 
     List<Future<?>> futures = new ArrayList<>();
     for (int i = 0; i < threadCount; i++) {
         futures.add(executor.submit(() -> {
-            mapper.map(entity, GenericDto.class);
+            try {
+                mapper.map(entity, GenericDto.class);
+            } catch (MapperException e) {
+                fail("Mapping failed: " + e.getMessage());
+            }
         }));
     }
 
@@ -883,14 +635,21 @@ public void testConcurrentMapping() throws Exception {
 Garganttua Mapper automatically caches mapping configurations after the first use:
 
 ```java
-Mapper mapper = new Mapper();
+Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+
+GenericEntity entity1 = new GenericEntity();
+entity1.setUuid("uuid1");
+entity1.setId("id1");
 
 // First mapping: parses annotations (slower)
-UserDto dto1 = mapper.map(user1, UserDto.class);
+GenericDto dto1 = mapper.map(entity1, GenericDto.class);
+
+GenericEntity entity2 = new GenericEntity();
+entity2.setUuid("uuid2");
+entity2.setId("id2");
 
 // Subsequent mappings: uses cached configuration (faster)
-UserDto dto2 = mapper.map(user2, UserDto.class); // ~10-100x faster
-UserDto dto3 = mapper.map(user3, UserDto.class);
+GenericDto dto2 = mapper.map(entity2, GenericDto.class);
 ```
 
 ### Pre-recording for Critical Paths
@@ -901,20 +660,13 @@ For performance-critical code paths, explicitly pre-record configurations:
 Mapper mapper = new Mapper();
 
 // Pre-record during application startup
-mapper.recordMappingConfiguration(OrderEntity.class, OrderDto.class);
-mapper.recordMappingConfiguration(ProductEntity.class, ProductDto.class);
-mapper.recordMappingConfiguration(UserEntity.class, UserDto.class);
+mapper.recordMappingConfiguration(GenericEntity.class, GenericDto.class);
+
+// Verify configuration was recorded
+assertEquals(1, mapper.mappingConfigurations.size());
 
 // Runtime mappings are now optimized
 ```
-
-### Best Practices for Performance
-
-1. **Reuse Mapper instances** - Don't create new Mapper objects for each mapping
-2. **Pre-record frequently used mappings** - Especially for REST API endpoints
-3. **Use simple field mappings when possible** - Avoid custom conversion methods unless necessary
-4. **Batch related pre-recordings** - During application initialization
-5. **Profile your mappings** - Identify bottlenecks in complex object graphs
 
 ## Error Handling
 
@@ -926,41 +678,68 @@ The mapper throws `MapperException` when mapping rules are invalid or execution 
 - Source field does not exist in the source object
 - Conversion method signature doesn't match field types
 - Conversion method not found or not accessible
-- Type conversion impossible (e.g., "abc" → Integer)
-- Null safety violations
+- Type conversion impossible
 
-**Example:**
+**Example from tests - Field that doesn't exist:**
 ```java
-Mapper mapper = new Mapper()
-    .configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
-
-try {
-    InvalidDto dto = mapper.map(source, InvalidDto.class);
-} catch (MapperException e) {
-    log.error("Mapping configuration error: {}", e.getMessage());
-    // Common causes:
-    // - @FieldMappingRule(sourceFieldAddress = "nonExistentField")
-    // - fromSourceMethod signature mismatch
-    // - Private fields without getters/setters
+class DestinationWithMappingFromFieldThatDoesntExist {
+    @FieldMappingRule(sourceFieldAddress = "notExists")
+    private String field;
 }
+
+List<MappingRule> rules = MappingRules.parse(DestinationWithMappingFromFieldThatDoesntExist.class);
+MapperException exception = assertThrows(MapperException.class,
+    () -> MappingRules.validate(Destination2.class, rules));
+
+// Error message: "Object element notExists not found in class..."
+```
+
+**Example from tests - Incorrect method signature:**
+```java
+class Source {
+    private int field;
+}
+
+class DestinationWithIncorrectFromMethod {
+    @FieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from")
+    private String field;
+
+    public String from(String field) {  // Wrong type - should be int
+        return "";
+    }
+}
+
+MapperException exception = assertThrows(MapperException.class,
+    () -> MappingRules.validate(Source.class, rules));
+
+// Error message: "Invalid method from of class DestinationWithIncorrectFromMethod : parameter must be of type int"
 ```
 
 ### Lenient vs Strict Mode
 
 Choose the appropriate error handling strategy:
 
-**Strict Mode** (recommended for development):
+**Strict Mode** (throws exception on errors):
 ```java
 Mapper mapper = new Mapper()
     .configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
-// Throws exception on first error, fails fast
+
+GenericEntity entity = new GenericEntity();
+entity.setUuid("uuid");
+entity.setId("id");
+
+assertThrows(MapperException.class, () -> {
+    mapper.map(entity, GenericDto.class);
+});
 ```
 
-**Lenient Mode** (useful for production with degraded functionality):
+**Lenient Mode** (continues on errors):
 ```java
 Mapper mapper = new Mapper()
     .configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
-// Logs errors but continues, may produce partial results
+
+GenericDto dto = mapper.map(entity, GenericDto.class);
+// Continues mapping even if some fields fail
 ```
 
 ## Tips and Best Practices

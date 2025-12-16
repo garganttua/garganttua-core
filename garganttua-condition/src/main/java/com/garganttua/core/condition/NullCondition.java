@@ -1,8 +1,8 @@
 package com.garganttua.core.condition;
 
 import java.util.Objects;
-import java.util.Optional;
 
+import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -27,25 +27,19 @@ public class NullCondition implements ICondition {
         log.atTrace().log("Entering evaluate() for NullCondition");
         log.atDebug().log("Evaluating NULL condition - checking if supplier returns null/empty");
 
-        try {
-            Optional<?> supplied = this.supplier.supply();
-            log.atDebug().log("Supplier returned: {}", supplied.isPresent() ? "non-empty value" : "empty/null");
-            if (supplied.isPresent()) {
-                log.atInfo().log("NULL condition evaluation complete: false (value is present)");
-                log.atTrace().log("Exiting evaluate() with result: false");
-                return new FixedSupplier<Boolean>(false);
-            }
+        Boolean result = Null(this.supplier.supply().orElse(null));
 
-        } catch (Exception e) {
-            log.atWarn().log("Exception during supplier evaluation, treating as null: {}", e.getMessage());
-            log.atInfo().log("NULL condition evaluation complete: true (exception occurred)");
-            log.atTrace().log("Exiting evaluate() with result: true");
-            return new FixedSupplier<Boolean>(true);
-        }
+        log.atInfo().log("NULL condition evaluation complete: {}", result);
+        log.atTrace().log("Exiting evaluate() with result: {}", result);
+        return new FixedSupplier<Boolean>(result);
+    }
 
-        log.atInfo().log("NULL condition evaluation complete: true (value is null/empty)");
-        log.atTrace().log("Exiting evaluate() with result: true");
-        return new FixedSupplier<Boolean>(true);
+    @ExpressionNode(name = "null", description = "Checks if an object is not null")
+    public static boolean Null(Object obj) {
+        boolean result = obj == null;
+        log.atDebug().log("NULL condition result: {}", result);
+
+        return result;
     }
 
 }

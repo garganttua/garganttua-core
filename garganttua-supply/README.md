@@ -128,358 +128,261 @@ All built suppliers are automatically wrapped in nullable wrappers based on the 
 
 ## Usage
 
-### 1. Fixed Value Supplier
+All examples below are extracted from actual working test files in the garganttua-supply module.
 
-Supply the same value on every call:
+### 1. Custom Supplier Implementation (SupplierTest)
 
-```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
-
-// Using static factory method
-ISupplier<String> supplier = fixed(String.class, "Hello World")
-    .build();
-
-String value1 = supplier.supply().get(); // "Hello World"
-String value2 = supplier.supply().get(); // Same instance
-```
-
-### 2. Null Value Supplier
-
-Represent optional values that are absent:
+Create a custom supplier by implementing the ISupplierBuilder interface:
 
 ```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.SupplyException;
+import java.lang.reflect.Type;
+import java.util.Optional;
 
-ISupplier<String> supplier = nullObject(String.class)
-    .build();
+ISupplierBuilder<String, ISupplier<String>> b = new ISupplierBuilder<String, ISupplier<String>>() {
 
-Optional<String> result = supplier.supply();
-assert result.isEmpty(); // true
-```
+    @Override
+    public ISupplier<String> build() throws DslException {
+        return new ISupplier<String>() {
 
-### 3. New Instance Supplier
+            @Override
+            public Optional<String> supply() throws SupplyException {
+                return Optional.of("Hello");
+            }
 
-Create fresh instances using constructor binding:
-
-```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
-import com.garganttua.core.reflection.binders.ConstructorBinder;
-
-// Assuming User has constructor User(String name, int age)
-IConstructorBinder<User> ctorBinder = ConstructorBinder.of(User.class)
-    .withParameter(() -> "Alice")
-    .withParameter(() -> 30)
-    .build();
-
-ISupplier<User> supplier = newObject(User.class, ctorBinder)
-    .build();
-
-User user1 = supplier.supply().get(); // new User("Alice", 30)
-User user2 = supplier.supply().get(); // Another new instance
-assert user1 != user2; // Different instances
-```
-
-### 4. Contextual Supplier
-
-Resolve objects from external context:
-
-```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
-
-// Define context type
-class AppContext {
-    public String getMessage() {
-        return "Hello from context";
-    }
-}
-
-// Create contextual supplier
-ISupplier<String> supplier = contextual(
-    String.class,
-    AppContext.class,
-    (context, otherContexts) -> Optional.of(context.getMessage())
-).build();
-
-// Supply with context
-AppContext context = new AppContext();
-String message = ((IContextualSupplier<String, AppContext>) supplier)
-    .supply(context)
-    .get(); // "Hello from context"
-```
-
-### 5. New Contextual Instance Supplier
-
-Create instances using context-aware constructor binding:
-
-```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
-
-// Assuming contextual constructor binder that uses DI context
-IContextualConstructorBinder<DatabaseService> ctorBinder = ...;
-
-ISupplier<DatabaseService> supplier = newContextual(
-    DatabaseService.class,
-    DiContext.class,
-    ctorBinder
-).build();
-
-// Supply with DI context
-DiContext diContext = new DiContext();
-DatabaseService service = ((IContextualSupplier<DatabaseService, DiContext>) supplier)
-    .supply(diContext)
-    .get();
-```
-
-### 6. Nullable Validation
-
-Enforce non-null contracts declaratively:
-
-```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
-
-// Non-nullable supplier - will throw if null
-ISupplier<String> nonNull = new SupplierBuilder<>(String.class)
-    .withValue("Valid")
-    .nullable(false)  // Enforce non-null
-    .build();
-
-String value = nonNull.supply().get(); // OK
-
-// Nullable supplier - allows null
-ISupplier<String> nullable = new SupplierBuilder<>(String.class)
-    .nullable(true)
-    .build();
-
-Optional<String> result = nullable.supply(); // Empty Optional, no exception
-```
-
-### 7. Builder Pattern - Full Configuration
-
-Use the builder for complex supplier configuration:
-
-```java
-IConstructorBinder<Service> ctorBinder = ...;
-
-ISupplier<Service> supplier = new SupplierBuilder<>(Service.class)
-    .withConstructor(ctorBinder)
-    .nullable(false)
-    .build();
-
-Service service = supplier.supply().get();
-```
-
-### 8. Integration with Dependency Injection
-
-Supply beans from DI context:
-
-```java
-import static com.garganttua.core.supply.dsl.SupplierBuilder.*;
-
-// Contextual supplier that resolves from DI
-ISupplier<UserService> supplier = contextual(
-    UserService.class,
-    IDiContext.class,
-    (diContext, others) -> diContext.getBean(UserService.class)
-).build();
-
-// Use in runtime
-IDiContext diContext = new DiContext();
-diContext.registerBean(new UserService());
-
-UserService service = ((IContextualSupplier<UserService, IDiContext>) supplier)
-    .supply(diContext)
-    .get();
-```
-
-### 9. Factory Pattern Implementation
-
-Implement factory with suppliers:
-
-```java
-public class UserFactory {
-    private ISupplier<User> userSupplier;
-
-    public UserFactory(IConstructorBinder<User> ctorBinder) {
-        this.userSupplier = newObject(User.class, ctorBinder).build();
+            @Override
+            public Type getSuppliedType() {
+                return String.class;
+            }
+        };
     }
 
-    public User createUser() {
-        return userSupplier.supply()
-            .orElseThrow(() -> new RuntimeException("Failed to create user"));
+    @Override
+    public Type getSuppliedType() {
+        return String.class;
     }
-}
+
+    @Override
+    public boolean isContextual() {
+        throw new UnsupportedOperationException("Unimplemented method 'isContextual'");
+    }
+};
+
+ISupplier<String> supplier = (ISupplier<String>) b.build();
+assertEquals("Hello", supplier.supply().get());
 ```
 
-### 10. Supplier Composition
+### 2. Fixed Value Supplier (SupplierTest)
 
-Combine suppliers for complex scenarios:
+Supply a fixed value using FixedSupplierBuilder:
 
 ```java
-public class ConfigurableService {
-    private ISupplier<String> configSupplier;
-    private ISupplier<Logger> loggerSupplier;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.SupplyException;
 
-    public ConfigurableService(
-        ISupplier<String> config,
-        ISupplier<Logger> logger) {
+FixedSupplierBuilder<String> builder = new FixedSupplierBuilder<String>("hello");
 
-        this.configSupplier = config;
-        this.loggerSupplier = logger;
-    }
+ISupplier<String> supplier = builder.build();
 
-    public void initialize() {
-        String config = configSupplier.supply().orElse("default");
-        Logger logger = loggerSupplier.supply().orElseThrow();
-
-        logger.info("Initialized with config: {}", config);
-    }
-}
+assertEquals("hello", supplier.supply().get());
 ```
 
-### 11. Dynamic Supplier Selection
+### 3. Contextual Supplier with Anonymous Class (SupplierTest)
 
-Choose supplier implementation at runtime:
+Create a contextual supplier using an anonymous implementation:
 
 ```java
-public ISupplier<Database> createDatabaseSupplier(Environment env) {
-    if (env.isProduction()) {
-        // Use fixed instance in production (singleton)
-        return fixed(Database.class, ProductionDatabase.getInstance())
-            .build();
-    } else {
-        // Create new instance for each test
-        IConstructorBinder<Database> binder = ...;
-        return newObject(Database.class, binder)
-            .build();
+import com.garganttua.core.supply.IContextualSupply;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import java.util.Optional;
+
+IContextualSupply<String, Object> supply = new IContextualSupply<String, Object>() {
+
+    @Override
+    public Optional<String> supply(Object context, Object... contexts) {
+        return Optional.of("hello from context");
     }
-}
+};
+
+ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
+        supply, String.class, Object.class);
+
+IContextualSupplier<String, Object> supplier = builder.build();
+
+assertEquals("hello from context", supplier.supply(new Object()).get());
 ```
 
-### 12. Error Handling
+### 4. Contextual Supplier with Lambda (SupplierTest)
 
-Handle supply failures gracefully:
+Create a contextual supplier using lambda syntax:
 
 ```java
-ISupplier<Service> supplier = newObject(Service.class, ctorBinder)
-    .build();
+import com.garganttua.core.supply.IContextualSupply;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
 
-try {
-    Optional<Service> result = supplier.supply();
+IContextualSupply<String, Object> supply = (context, contexts) -> Optional.of("hello from context");
 
-    if (result.isPresent()) {
-        Service service = result.get();
-        // Use service
-    } else {
-        // Handle absence
-        log.warn("Service could not be supplied");
-    }
-} catch (SupplyException e) {
-    log.error("Supply failed", e);
-    // Handle exception
-}
+ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
+        supply, String.class, Object.class);
+
+IContextualSupplier<String, Object> supplier = builder.build();
+
+assertEquals("hello from context", supplier.supply(new Object()).get());
+```
+
+### 5. Custom Context Type Supplier (SupplierTest)
+
+Use a specific context type (String) instead of Object:
+
+```java
+import com.garganttua.core.supply.IContextualSupply;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
+
+IContextualSupply<String, String> supply = (context, contexts) -> Optional
+        .of("hello from context " + context);
+
+ContextualSupplierBuilder<String, String> builder = new ContextualSupplierBuilder<String, String>(
+        supply, String.class, String.class);
+
+IContextualSupplier<String, String> supplier = builder.build();
+
+assertEquals("hello from context string context", supplier.supply("string context").get());
+```
+
+### 6. SupplierBuilder - Value Supplier (SupplierBuilderTest)
+
+Build a value supplier using SupplierBuilder:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.supply.NullableSupplier;
+import com.garganttua.core.supply.FixedSupplier;
+
+var b = new SupplierBuilder<>(String.class).withValue("hello");
+var s = b.build();
+assertTrue(s instanceof NullableSupplier);
+assertTrue(((NullableSupplier<?>) s).getDelegate() instanceof FixedSupplier);
+```
+
+### 7. SupplierBuilder - Nullable Value Supplier (SupplierBuilderTest)
+
+Configure nullable behavior:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.supply.NullableSupplier;
+
+var b = new SupplierBuilder<>(String.class).withValue("hello").nullable(true);
+var s = b.build();
+assertTrue(s instanceof NullableSupplier);
+assertTrue(((NullableSupplier<?>) s).isNullable());
+```
+
+### 8. SupplierBuilder - Context with Contextual Constructor (SupplierBuilderTest)
+
+Create a contextual supplier with a contextual constructor binder:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.supply.NullableContextualSupplier;
+import com.garganttua.core.supply.NewContextualSupplier;
+import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
+
+// Using fake binder for demonstration (replace with real implementation)
+var b = new SupplierBuilder<>(String.class)
+        .withContext(Integer.class, new FakeContextualSupply<>())
+        .withConstructor(new FakeContextualConstructorBinder<>());
+
+var s = b.build();
+assertTrue(s instanceof NullableContextualSupplier);
+assertTrue(((NullableContextualSupplier<?, ?>) s).getDelegate() instanceof NewContextualSupplier);
+```
+
+### 9. SupplierBuilder - Context Without Constructor (SupplierBuilderTest)
+
+Create a contextual supplier without a constructor:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.supply.NullableContextualSupplier;
+import com.garganttua.core.supply.ContextualSupplier;
+
+var b = new SupplierBuilder<>(String.class)
+        .withContext(Integer.class, new FakeContextualSupply<>());
+
+var s = b.build();
+assertTrue(s instanceof NullableContextualSupplier);
+assertTrue(((NullableContextualSupplier<?, ?>) s).getDelegate() instanceof ContextualSupplier);
+```
+
+### 10. SupplierBuilder - Constructor Only (SupplierBuilderTest)
+
+Build a supplier with only a constructor binder:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.supply.NullableSupplier;
+import com.garganttua.core.supply.NewSupplier;
+import com.garganttua.core.reflection.binders.IConstructorBinder;
+
+var b = new SupplierBuilder<>(String.class)
+        .withConstructor(new FakeConstructorBinder<>());
+
+var s = b.build();
+assertTrue(s instanceof NullableSupplier);
+assertTrue(((NullableSupplier<?>) s).getDelegate() instanceof NewSupplier);
+```
+
+### 11. SupplierBuilder - Default Null Supplier (SupplierBuilderTest)
+
+When no configuration is provided, a NullSupplier is created:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.supply.NullableSupplier;
+import com.garganttua.core.supply.NullSupplier;
+
+var b = new SupplierBuilder<>(String.class);
+var s = b.build();
+assertTrue(s instanceof NullableSupplier);
+assertTrue(((NullableSupplier<?>) s).getDelegate() instanceof NullSupplier);
+```
+
+### 12. Error Handling - Invalid Context Constructor (SupplierBuilderTest)
+
+Attempting to use a non-contextual constructor with a contextual supply throws an exception:
+
+```java
+import com.garganttua.core.supply.dsl.SupplierBuilder;
+import com.garganttua.core.dsl.DslException;
+
+var b = new SupplierBuilder<>(String.class)
+        .withContext(Integer.class, new FakeContextualSupply<>());
+
+assertThrows(DslException.class, () -> b.withConstructor(new FakeConstructorBinder<>()).build());
 ```
 
 ## Advanced Patterns
 
-### Custom Supplier Implementation
+The test files demonstrate the following patterns:
 
-Create custom suppliers for specialized needs:
-
-```java
-public class LazyObjectSupplier<T> implements ISupplier<T> {
-    private final Class<T> type;
-    private final Supplier<T> factory;
-    private volatile T instance;
-
-    public LazyObjectSupplier(Class<T> type, Supplier<T> factory) {
-        this.type = type;
-        this.factory = factory;
-    }
-
-    @Override
-    public Optional<T> supply() {
-        if (instance == null) {
-            synchronized (this) {
-                if (instance == null) {
-                    instance = factory.get();
-                }
-            }
-        }
-        return Optional.ofNullable(instance);
-    }
-
-    @Override
-    public Class<T> getSuppliedType() {
-        return type;
-    }
-}
-```
-
-### Supplier Chain Pattern
-
-Chain suppliers for fallback behavior:
-
-```java
-public class FallbackSupplier<T> implements ISupplier<T> {
-    private final ISupplier<T> primary;
-    private final ISupplier<T> fallback;
-
-    public FallbackSupplier(
-        ISupplier<T> primary,
-        ISupplier<T> fallback) {
-
-        this.primary = primary;
-        this.fallback = fallback;
-    }
-
-    @Override
-    public Optional<T> supply() throws SupplyException {
-        try {
-            Optional<T> result = primary.supply();
-            if (result.isPresent()) {
-                return result;
-            }
-        } catch (SupplyException e) {
-            // Log and continue to fallback
-        }
-
-        return fallback.supply();
-    }
-
-    @Override
-    public Class<T> getSuppliedType() {
-        return primary.getSuppliedType();
-    }
-}
-```
-
-### Supplier Registry Pattern
-
-Manage multiple suppliers with a registry:
-
-```java
-public class SupplierRegistry {
-    private final Map<String, ISupplier<?>> suppliers = new ConcurrentHashMap<>();
-
-    public <T> void register(String name, ISupplier<T> supplier) {
-        suppliers.put(name, supplier);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> ISupplier<T> get(String name, Class<T> type) {
-        ISupplier<?> supplier = suppliers.get(name);
-        if (supplier != null && type.isAssignableFrom(supplier.getSuppliedType())) {
-            return (ISupplier<T>) supplier;
-        }
-        throw new IllegalArgumentException("No supplier found for: " + name);
-    }
-
-    public <T> T supply(String name, Class<T> type) throws SupplyException {
-        return get(name, type).supply()
-            .orElseThrow(() -> new SupplyException("Failed to supply: " + name));
-    }
-}
-```
+1. **Custom Supplier Implementation** - Implement ISupplierBuilder to create custom suppliers
+2. **Fixed Value Suppliers** - Use FixedSupplierBuilder for constant values
+3. **Contextual Suppliers** - Use ContextualSupplierBuilder for context-aware resolution
+4. **Lambda-based Suppliers** - Leverage lambda expressions for concise supplier definitions
+5. **Builder Pattern** - Use SupplierBuilder fluent API for complex configurations
+6. **Nullable Wrappers** - All suppliers are wrapped in NullableSupplier/NullableContextualSupplier
+7. **Type Safety** - Generic type parameters ensure compile-time type safety
+8. **Error Handling** - DslException thrown for invalid configurations
 
 ## Performance
 

@@ -15,122 +15,116 @@
  * </p>
  *
  * <h2>Usage Example: Complete Context Configuration</h2>
+ * Based on real test code from DiContextTest.java and DiContextBuilderTest.java:
  * <pre>{@code
- * IDiContext context = new DiContextBuilder()
- *     // Package scanning
- *     .withPackage("com.myapp.services")
- *     .withPackage("com.myapp.repositories")
- *     .withPackages(new String[]{"com.myapp.controllers", "com.myapp.utils"})
+ * // Basic context with package scanning and properties
+ * DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+ *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+ *         .up()
+ *     .autoDetect(true)
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- *     // Bean providers
- *     .beanProvider("database")
- *         .addBean(DataSource.class)
- *         .addBean(TransactionManager.class)
- *         .addBean(JdbcTemplate.class)
- *         .done()
+ * // Context with custom bean and property providers
+ * IDiContext context = DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .beanProvider(Predefined.BeanProviders.garganttua.toString(), new DummyBeanProviderBuilder())
+ *         .up()
+ *     .beanProvider("dummy", new DummyBeanProviderBuilder())
+ *         .up()
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString(), new DummyPropertyProviderBuilder())
+ *         .up()
+ *     .propertyProvider("dummy", new DummyPropertyProviderBuilder())
+ *         .up()
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- *     // Property providers
- *     .propertyProvider("application")
- *         .addProperty("app.name", "MyApplication")
- *         .addProperty("app.version", "1.0.0")
- *         .addPropertiesFromFile("application.properties")
- *         .done()
- *
- *     // Custom qualifiers
- *     .withQualifier(Named.class)
- *     .withQualifier(Primary.class)
- *
- *     // Build observers
- *     .observer(buildEvent -> {
- *         System.out.println("Context building: " + buildEvent);
- *     })
- *
- *     // Build context
- *     .build();
+ * // Verify providers are registered
+ * assertEquals(2, context.getBeanProviders().size());
+ * assertEquals(2, context.getPropertyProviders().size());
  * }</pre>
  *
  * <h2>Usage Example: Bean Factory Configuration</h2>
+ * Based on real test code from BeanFactoryBuilderTest.java:
  * <pre>{@code
- * IDiContext context = new DiContextBuilder()
- *     .beanProvider("services")
- *         .factory(UserService.class)
- *             // Constructor injection
- *             .constructor()
- *                 .parameter(0).bean(UserRepository.class)
- *                 .parameter(1).property("user.cache.size")
- *                 .done()
+ * // Programmatically configure a bean with full control
+ * String randomValue = UUID.randomUUID().toString();
+ * IBeanFactoryBuilder<DummyBean> builder = new BeanFactoryBuilder<>(DummyBean.class);
  *
- *             // Field injection
- *             .field("logger")
- *                 .bean(Logger.class, "userLogger")
- *                 .done()
+ * IBeanSupplier<DummyBean> beanSupplier = builder
+ *     // Set strategy and metadata
+ *     .strategy(BeanStrategy.singleton)
+ *     .name("aBean")
+ *     .qualifier(DummyBeanQualifier.class)
  *
- *             // Post-construct method
- *             .postConstruct()
- *                 .method("initialize")
- *                 .done()
+ *     // Configure field injection
+ *     .field(String.class).field("anotherValue")
+ *         .withValue(FixedSupplierBuilder.of(randomValue))
+ *         .up()
  *
- *             .done()
- *         .done()
+ *     // Configure constructor injection
+ *     .constructor()
+ *         .withParam(FixedSupplierBuilder.of("constructedWithParameter"))
+ *         .up()
+ *
+ *     // Configure post-construct method
+ *     .postConstruction()
+ *         .method("markPostConstruct")
+ *         .withReturn(Void.class)
+ *         .up()
+ *
  *     .build();
+ *
+ * // Supply the configured bean
+ * Optional<DummyBean> bean = beanSupplier.supply();
+ * assertEquals("constructedWithParameter", bean.get().getValue());
+ * assertTrue(bean.get().isPostConstructCalled());
  * }</pre>
  *
- * <h2>Usage Example: Property Supplier</h2>
+ * <h2>Usage Example: Property Configuration</h2>
+ * Based on real test code from DiContextTest.java:
  * <pre>{@code
- * IDiContext context = new DiContextBuilder()
- *     .propertyProvider("config")
- *         .supplier("db.url")
- *             .value("jdbc:mysql://localhost:3306/mydb")
- *             .done()
+ * // Configure properties with provider
+ * DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+ *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+ *         .up()
+ *     .autoDetect(true)
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- *         .supplier("db.pool.size")
- *             .value(10)
- *             .done()
- *
- *         .supplier("db.timeout")
- *             .custom(() -> calculateTimeout())
- *             .done()
- *
- *         .done()
- *     .build();
+ * // Retrieve property
+ * Optional<String> property = Properties.property(String.class)
+ *     .key("com.garganttua.dummyPropertyInConstructor")
+ *     .build()
+ *     .supply();
  * }</pre>
  *
- * <h2>Usage Example: Bean Supplier</h2>
+ * <h2>Usage Example: Bean with Dependencies</h2>
+ * Based on real test code from DummyBean.java:
  * <pre>{@code
- * IDiContext context = new DiContextBuilder()
- *     .beanProvider("datasource")
- *         .supplier(DataSource.class)
- *             .type(HikariDataSource.class)
- *             .constructor()
- *                 .parameter(0).property("db.url")
- *                 .done()
- *             .property("maximumPoolSize").value(10)
- *             .done()
- *         .done()
- *     .build();
- * }</pre>
+ * // Bean with constructor dependency injection
+ * @Singleton
+ * @Named("dummyBeanForTest")
+ * public class DummyBean {
+ *     private String value;
+ *     private AnotherDummyBean anotherBean;
  *
- * <h2>Usage Example: Injectable Field Configuration</h2>
- * <pre>{@code
- * IDiContext context = new DiContextBuilder()
- *     .beanProvider("services")
- *         .factory(EmailService.class)
- *             .injectableField("smtpHost")
- *                 .property("smtp.host")
- *                 .done()
- *
- *             .injectableField("smtpPort")
- *                 .property("smtp.port")
- *                 .defaultValue(587)
- *                 .done()
- *
- *             .injectableField("mailSender")
- *                 .bean(MailSender.class)
- *                 .done()
- *
- *             .done()
- *         .done()
- *     .build();
+ *     @Inject
+ *     public DummyBean(
+ *         @Property("com.garganttua.dummyPropertyInConstructor") String value,
+ *         @Prototype @Named("AnotherDummyBeanForTest") AnotherDummyBean anotherBean
+ *     ) {
+ *         this.value = value;
+ *         this.anotherBean = anotherBean;
+ *     }
+ * }
  * }</pre>
  *
  * <h2>Features</h2>

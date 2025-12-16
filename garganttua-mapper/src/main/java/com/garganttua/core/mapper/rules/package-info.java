@@ -1,41 +1,53 @@
 /**
- * Mapping rule executors and field transformation strategies.
+ * Mapping rule parsing, validation, and execution.
  *
  * <h2>Overview</h2>
  * <p>
- * This package provides executor implementations for different mapping rule types.
- * Executors handle the actual field-to-field copying, transformation, and type
- * conversion during the mapping process.
+ * This package provides the core functionality for parsing mapping annotations,
+ * validating mapping rules, and executing field transformations during the mapping process.
  * </p>
  *
- * <h2>Executor Classes</h2>
+ * <h2>Key Components</h2>
  * <ul>
- *   <li>{@code SimpleFieldMappingExecutor} - Executes simple field-to-field mapping</li>
- *   <li>{@code SimpleMapableFieldMappingExecutor} - Executes mapping with transformations</li>
- *   <li>{@code MethodMappingExecutor} - Executes mapping via getter/setter methods</li>
- *   <li>{@code SimpleCollectionMappingExecutor} - Executes collection element mapping</li>
- *   <li>{@code MapableCollectionMappingExecutor} - Executes collection mapping with transformations</li>
+ *   <li>{@code MappingRules} - Parses and validates mapping rules from annotations</li>
+ *   <li>{@code MappingRule} - Represents a single field mapping rule with source/destination addresses</li>
  * </ul>
  *
- * <h2>Mapping Strategies</h2>
- * <ul>
- *   <li><b>Direct Mapping</b> - Copy value directly from source to target field</li>
- *   <li><b>Transformed Mapping</b> - Apply transformation function before copying</li>
- *   <li><b>Method Mapping</b> - Use getter/setter methods instead of direct field access</li>
- *   <li><b>Collection Mapping</b> - Map collection elements individually</li>
- *   <li><b>Nested Mapping</b> - Recursively map nested objects</li>
- * </ul>
+ * <h2>Mapping Rule Parsing</h2>
+ * <p>
+ * The MappingRules class parses {@code @FieldMappingRule} and {@code @ObjectMappingRule}
+ * annotations from destination classes to create a list of mapping rules:
+ * </p>
+ * <pre>{@code
+ * class GenericDto {
+ *     @FieldMappingRule(sourceFieldAddress = "uuid")
+ *     protected String uuid;
  *
- * <h2>Execution Process</h2>
- * <ol>
- *   <li>Extract value from source field</li>
- *   <li>Apply transformation if configured</li>
- *   <li>Perform type conversion if needed</li>
- *   <li>Set value to target field</li>
- *   <li>Handle null values according to rules</li>
- * </ol>
+ *     @FieldMappingRule(sourceFieldAddress = "id")
+ *     protected String id;
+ * }
+ *
+ * List<MappingRule> rules = MappingRules.parse(GenericDto.class);
+ * // rules.size() == 2
+ * }</pre>
+ *
+ * <h2>Mapping Rule Validation</h2>
+ * <p>
+ * The validation process ensures that:
+ * </p>
+ * <ul>
+ *   <li>Source fields exist in the source class</li>
+ *   <li>Conversion method signatures match field types</li>
+ *   <li>Required methods are present and accessible</li>
+ * </ul>
+ * <pre>{@code
+ * List<MappingRule> rules = MappingRules.parse(CorrectDestination.class);
+ * MappingRules.validate(Source.class, rules);  // Throws MapperException if invalid
+ * }</pre>
  *
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.mapper
+ * @see com.garganttua.core.mapper.annotations.FieldMappingRule
+ * @see com.garganttua.core.mapper.annotations.ObjectMappingRule
  */
 package com.garganttua.core.mapper.rules;

@@ -24,46 +24,221 @@
  *
  * <h2>Usage Examples</h2>
  *
- * <h3>Fixed Supplier</h3>
+ * <h3>Simple Non-Contextual Supplier</h3>
  * <pre>{@code
- * User user = new User("John");
- * ISupplier<User> supplier = FixedSupplierBuilder
- *     .create(user)
- *     .build();
+ * // Implement ISupplier for simple object provisioning
+ * class SimpleStringSupplier implements ISupplier<String> {
+ *     private final String value;
  *
- * User retrieved = supplier.get(); // Returns the same instance
+ *     public SimpleStringSupplier(String value) {
+ *         this.value = value;
+ *     }
+ *
+ *     @Override
+ *     public Optional<String> supply() throws SupplyException {
+ *         return Optional.ofNullable(value);
+ *     }
+ *
+ *     @Override
+ *     public Type getSuppliedType() {
+ *         return String.class;
+ *     }
+ * }
+ *
+ * // Use with contextualSupply utility
+ * ISupplier<String> supplier = new SimpleStringSupplier("Hello World");
+ * String result = Supplier.contextualSupply(supplier);
+ * // result: "Hello World"
  * }</pre>
  *
- * <h3>Factory Supplier</h3>
+ * <h3>Contextual Supplier with Typed Context</h3>
  * <pre>{@code
- * ISupplier<UUID> uuidSupplier = FactoryObjectSupplierBuilder
- *     .create(UUID::randomUUID, UUID.class)
- *     .build();
+ * // Implement IContextualSupplier for context-aware provisioning
+ * class ContextualStringSupplier implements IContextualSupplier<String, String> {
+ *     private final String prefix;
  *
- * UUID id1 = uuidSupplier.get(); // New UUID
- * UUID id2 = uuidSupplier.get(); // Different UUID
+ *     public ContextualStringSupplier(String prefix) {
+ *         this.prefix = prefix;
+ *     }
+ *
+ *     @Override
+ *     public Optional<String> supply(String context, Object... otherContexts)
+ *             throws SupplyException {
+ *         return Optional.of(prefix + context);
+ *     }
+ *
+ *     @Override
+ *     public Class<String> getOwnerContextType() {
+ *         return String.class;
+ *     }
+ *
+ *     @Override
+ *     public Type getSuppliedType() {
+ *         return String.class;
+ *     }
+ * }
+ *
+ * // Supply with matching context
+ * IContextualSupplier<String, String> supplier = new ContextualStringSupplier("Hello, ");
+ * String result = Supplier.contextualSupply(supplier, "World");
+ * // result: "Hello, World"
  * }</pre>
  *
- * <h3>Contextual Supplier</h3>
+ * <h3>Multiple Context Matching</h3>
  * <pre>{@code
- * IContextualSupplier<User> userSupplier = ContextualSupplierBuilder
- *     .create(ctx -> {
- *         String userId = ctx.getProperty("userId");
- *         return userRepository.findById(userId);
- *     }, User.class)
- *     .build();
+ * // Contextual supplier that requires Integer context
+ * class ContextualIntegerSupplier implements IContextualSupplier<Integer, Integer> {
+ *     private final int multiplier;
  *
- * User user = userSupplier.get(executionContext);
+ *     public ContextualIntegerSupplier(int multiplier) {
+ *         this.multiplier = multiplier;
+ *     }
+ *
+ *     @Override
+ *     public Optional<Integer> supply(Integer context, Object... otherContexts)
+ *             throws SupplyException {
+ *         return Optional.of(context * multiplier);
+ *     }
+ *
+ *     @Override
+ *     public Class<Integer> getOwnerContextType() {
+ *         return Integer.class;
+ *     }
+ *
+ *     @Override
+ *     public Type getSuppliedType() {
+ *         return Integer.class;
+ *     }
+ * }
+ *
+ * // Pass multiple contexts - framework finds the matching Integer context
+ * IContextualSupplier<Integer, Integer> supplier = new ContextualIntegerSupplier(10);
+ * Integer result = Supplier.contextualSupply(supplier, "ignored", 5, "also ignored");
+ * // result: 50 (5 * 10, using the Integer context)
  * }</pre>
  *
- * <h2>Integration with DI</h2>
+ * <h3>Recursive Supply - Nested Suppliers</h3>
  * <pre>{@code
- * // Register supplier as bean provider
- * IDiContext context = new DiContextBuilder()
- *     .addBeanSupplier(User.class, userSupplier)
- *     .build();
+ * // Supplier that returns another supplier
+ * class NestedSupplier implements ISupplier<ISupplier<String>> {
+ *     private final ISupplier<String> innerSupplier;
  *
- * User user = context.getBean(User.class); // Uses supplier
+ *     public NestedSupplier(ISupplier<String> innerSupplier) {
+ *         this.innerSupplier = innerSupplier;
+ *     }
+ *
+ *     @Override
+ *     public Optional<ISupplier<String>> supply() throws SupplyException {
+ *         return Optional.ofNullable(innerSupplier);
+ *     }
+ *
+ *     @Override
+ *     public Type getSuppliedType() {
+ *         return ISupplier.class;
+ *     }
+ * }
+ *
+ * // contextualRecursiveSupply automatically resolves nested suppliers
+ * ISupplier<String> innerSupplier = new SimpleStringSupplier("Nested value");
+ * ISupplier<ISupplier<String>> outerSupplier = new NestedSupplier(innerSupplier);
+ * String result = (String) Supplier.contextualRecursiveSupply(outerSupplier);
+ * // result: "Nested value" (resolved through 2 levels)
+ * }</pre>
+ *
+ * <h3>Deep Nesting Resolution</h3>
+ * <pre>{@code
+ * // Create deeply nested supplier (3 levels)
+ * class DeeplyNestedSupplier implements ISupplier<ISupplier<ISupplier<String>>> {
+ *     private final String finalValue;
+ *
+ *     public DeeplyNestedSupplier(String finalValue) {
+ *         this.finalValue = finalValue;
+ *     }
+ *
+ *     @Override
+ *     public Optional<ISupplier<ISupplier<String>>> supply() throws SupplyException {
+ *         return Optional.of(
+ *             new NestedSupplier(
+ *                 new SimpleStringSupplier(finalValue)
+ *             )
+ *         );
+ *     }
+ *
+ *     @Override
+ *     public Type getSuppliedType() {
+ *         return ISupplier.class;
+ *     }
+ * }
+ *
+ * // Automatically resolves all 3 levels to the final String
+ * ISupplier<ISupplier<ISupplier<String>>> deepSupplier = new DeeplyNestedSupplier("Deep value");
+ * String result = (String) Supplier.contextualRecursiveSupply(deepSupplier);
+ * // result: "Deep value" (resolved through 3 levels)
+ * }</pre>
+ *
+ * <h3>Void Context Supplier</h3>
+ * <pre>{@code
+ * // Contextual supplier that doesn't require specific context
+ * class VoidContextSupplier implements IContextualSupplier<String, Void> {
+ *     @Override
+ *     public Optional<String> supply(Void context, Object... otherContexts)
+ *             throws SupplyException {
+ *         return Optional.of("No context needed");
+ *     }
+ *
+ *     @Override
+ *     public Class<Void> getOwnerContextType() {
+ *         return Void.class;
+ *     }
+ *
+ *     @Override
+ *     public Type getSuppliedType() {
+ *         return String.class;
+ *     }
+ * }
+ *
+ * // Can be called without any context
+ * IContextualSupplier<String, Void> supplier = new VoidContextSupplier();
+ * String result = Supplier.contextualSupply(supplier);
+ * // result: "No context needed"
+ * }</pre>
+ *
+ * <h3>Subtype Context Matching</h3>
+ * <pre>{@code
+ * // Parent context type
+ * class ParentContext {
+ *     String value = "parent";
+ * }
+ *
+ * // Child context type extends parent
+ * class ChildContext extends ParentContext {
+ *     String childValue = "child";
+ * }
+ *
+ * // Supplier accepting parent context
+ * IContextualSupplier<String, ParentContext> supplier =
+ *     new IContextualSupplier<String, ParentContext>() {
+ *         @Override
+ *         public Optional<String> supply(ParentContext context, Object... otherContexts)
+ *                 throws SupplyException {
+ *             return Optional.of("Received: " + context.value);
+ *         }
+ *
+ *         @Override
+ *         public Class<ParentContext> getOwnerContextType() {
+ *             return ParentContext.class;
+ *         }
+ *
+ *         @Override
+ *         public Type getSuppliedType() {
+ *             return String.class;
+ *         }
+ *     };
+ *
+ * // Child context matches parent context type via isAssignableFrom
+ * ChildContext childContext = new ChildContext();
+ * String result = Supplier.contextualSupply(supplier, childContext);
+ * // result: "Received: parent"
  * }</pre>
  *
  * <h2>Benefits</h2>

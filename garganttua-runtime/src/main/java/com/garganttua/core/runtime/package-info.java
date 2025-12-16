@@ -29,65 +29,90 @@
  *   <li>{@code RuntimeStepExecutionTools} - Execution utilities</li>
  * </ul>
  *
- * <h2>Usage Example: Simple Runtime Execution</h2>
+ * <h2>Usage Example: Auto-Detection Runtime with Annotations</h2>
  * <pre>{@code
- * @RuntimeDefinition(input = OrderRequest.class, output = OrderResponse.class)
- * public class OrderProcessingRuntime {
+ * import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.of;
+ *
+ * // Define the runtime with annotations
+ * @RuntimeDefinition(input=String.class, output=String.class)
+ * @Named("runtime-1")
+ * public class OneStepRuntime {
  *
  *     @Stages
- *     @Step(order = 1)
- *     @Operation("validateOrder")
- *     public void validate(@Input OrderRequest request) {
- *         // Validation logic
- *     }
+ *     public Map<String, List<Class<?>>> stages = Map.of(
+ *             "stage-1", List.of(DummyRuntimeProcessOutputStep.class));
  *
- *     @Step(order = 2)
- *     @Operation("processPayment")
- *     public void payment(@Input OrderRequest request, @Output OrderResponse response) {
- *         // Payment processing
- *     }
+ *     @Variables
+ *     public Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> presetVariables =
+ *         Map.of("variable", of("preset-variable"));
  * }
  *
- * // Execute runtime
- * Runtime<OrderRequest, OrderResponse> runtime =
- *     RuntimeFactory.create(OrderProcessingRuntime.class);
+ * // Build with auto-detection
+ * IDiContextBuilder contextBuilder = DiContext.builder()
+ *     .autoDetect(true)
+ *     .withPackage("com.garganttua.core.runtime.annotations")
+ *     .withPackage("com.garganttua.core.runtime");
  *
- * OrderRequest request = new OrderRequest();
- * RuntimeResult<OrderResponse> result = runtime.execute(request);
+ * contextBuilder.build().onInit().onStart();
  *
- * if (result.isSuccess()) {
- *     OrderResponse response = result.getOutput();
- * }
- * }</pre>
+ * IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder()
+ *     .context(contextBuilder)
+ *     .autoDetect(true);
  *
- * <h2>Usage Example: Programmatic Runtime</h2>
- * <pre>{@code
- * // Build runtime programmatically
- * Runtime<DataRequest, DataResponse> runtime =
- *     new RuntimeBuilder<DataRequest, DataResponse>()
- *         .input(DataRequest.class)
- *         .output(DataResponse.class)
- *
- *         .stage("processing")
- *             .step("fetchData")
- *                 .method(dataService, "fetch")
- *                     .parameter(0).input()
- *                     .done()
- *                 .done()
- *
- *             .step("transformData")
- *                 .method(transformer, "transform")
- *                     .parameter(0).variable("rawData")
- *                     .parameter(1).output()
- *                     .done()
- *                 .done()
- *             .done()
- *
- *         .build();
+ * Map<String, IRuntime<?, ?>> runtimes = runtimesBuilder.build();
  *
  * // Execute
- * DataRequest request = new DataRequest();
- * RuntimeResult<DataResponse> result = runtime.execute(request);
+ * IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
+ * IRuntimeResult<String, String> result = runtime.execute("input").orElseThrow();
+ * }</pre>
+ *
+ * <h2>Usage Example: Step with Exception Handling</h2>
+ * <pre>{@code
+ * import static com.garganttua.core.condition.Conditions.custom;
+ * import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.of;
+ *
+ * @Step
+ * @Named("output-step")
+ * public class DummyRuntimeProcessOutputStep {
+ *
+ *     @Condition
+ *     IConditionBuilder condition = custom(of(10), i -> 1 > 0);
+ *
+ *     @Operation(abortOnUncatchedException=true)
+ *     @Output
+ *     @Catch(exception = DiException.class, code = 401)
+ *     @Variable(name = "method-returned")
+ *     @Code(201)
+ *     @Nullable
+ *     String method(
+ *             @Input String input,
+ *             @Fixed(valueString = "fixed-value-in-method") String fixedValue,
+ *             @Variable(name = "variable") String variable,
+ *             @Context IRuntimeContext<String, String> context)
+ *             throws DiException, CustomException {
+ *
+ *         if (variable.equals("di-exception")) {
+ *             throw new DiException(input + "-processed-" + fixedValue + "-" + variable);
+ *         }
+ *
+ *         return input + "-processed-" + fixedValue + "-" + variable;
+ *     }
+ *
+ *     @FallBack
+ *     @Output
+ *     @Nullable
+ *     @OnException(exception = DiException.class)
+ *     @Variable(name = "fallback-returned")
+ *     String fallbackMethod(
+ *             @Input String input,
+ *             @Fixed(valueString = "fixed-value-in-fallback") String fixedValue,
+ *             @Exception DiException exception,
+ *             @Code Integer code,
+ *             @Nullable @ExceptionMessage String exceptionMessage,
+ *             @Context IRuntimeContext<String, String> context) {
+ *         return input + "-fallback-" + fixedValue + "-" + code + "-" + exceptionMessage;
+ *     }
+ * }
  * }</pre>
  *
  * <h2>Runtime Lifecycle</h2>
@@ -101,22 +126,47 @@
  *   <li><b>Completion</b> - Result created with output and status</li>
  * </ol>
  *
- * <h2>Context Management</h2>
+ * <h2>Multi-Step Runtime Example</h2>
  * <pre>{@code
- * // Access context in step method
- * @Step(order = 1)
- * @Operation("processData")
- * public void process(@Context RuntimeContext ctx, @Input DataRequest request) {
- *     // Store variable
- *     ctx.setVariable("userId", request.getUserId());
- *     ctx.setVariable("timestamp", System.currentTimeMillis());
+ * // Runtime definition with two steps
+ * @RuntimeDefinition(input = String.class, output = String.class)
+ * @Named("two-steps-runtime")
+ * public class TwoStepsRuntimeDefinition {
+ *     @Stages
+ *     public Map<String, List<Class<?>>> stages = Map.of(
+ *         "stage-1", List.of(StepOne.class, StepOutput.class));
+ * }
  *
- *     // Retrieve variable
- *     String userId = ctx.getVariable("userId");
+ * // First step stores result in variable
+ * @Step
+ * @Named("step-one")
+ * public class StepOne {
+ *     @Operation(abortOnUncatchedException = false)
+ *     @Catch(exception = DiException.class, code = 401)
+ *     @Variable(name = "step-one-returned")
+ *     @Nullable
+ *     String method(
+ *             @Input String input,
+ *             @Variable(name = "step-one-variable") String variable)
+ *             throws DiException {
+ *         return input + "-step-one-processed-" + variable;
+ *     }
+ * }
  *
- *     // Check variable existence
- *     if (ctx.hasVariable("timestamp")) {
- *         Long timestamp = ctx.getVariable("timestamp");
+ * // Second step uses variable from first step
+ * @Step
+ * @Named("output-step")
+ * public class StepOutput {
+ *     @Output
+ *     @Code(222)
+ *     @Operation(abortOnUncatchedException = true)
+ *     @Catch(exception = DiException.class, code = 444)
+ *     @Nullable
+ *     String method(
+ *             @Variable(name = "step-one-returned") String input,
+ *             @Variable(name = "output-step-variable") String outputStepVariable)
+ *             throws DiException {
+ *         return input + "-output-step-processed-" + outputStepVariable;
  *     }
  * }
  * }</pre>

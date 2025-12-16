@@ -17,75 +17,108 @@
  *
  * <h2>Usage Example: Simple Mapping</h2>
  * <pre>{@code
- * // Define source and target
- * UserDTO source = new UserDTO();
- * source.setFirstName("John");
- * source.setLastName("Doe");
- * source.setEmail("john.doe@example.com");
+ * // Define source entity
+ * GenericEntity entity = new GenericEntity();
+ * entity.setUuid("uuid");
+ * entity.setId("id");
  *
- * User target = new User();
+ * // Perform mapping to DTO
+ * Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+ * GenericDto dto = mapper.map(entity, GenericDto.class);
  *
- * // Perform mapping
- * Mapper mapper = new Mapper();
- * mapper.map(source, target);
- *
- * // Or create new target instance
- * User user = mapper.map(source, User.class);
+ * // dto.getUuid() == "uuid"
+ * // dto.getId() == "id"
  * }</pre>
  *
- * <h2>Usage Example: Mapping Rules</h2>
+ * <h2>Usage Example: Field Mapping Rules</h2>
  * <pre>{@code
- * // Configure mapping rules
- * MappingRules rules = new MappingRules()
- *     .rule(UserDTO.class, User.class)
- *         .field("firstName", "givenName")
- *         .field("lastName", "familyName")
- *         .field("email", "emailAddress")
- *         .done();
+ * // Define DTO with field mapping rules
+ * class GenericDto {
+ *     @FieldMappingRule(sourceFieldAddress = "uuid")
+ *     protected String uuid;
  *
- * // Create mapper with rules
- * Mapper mapper = new Mapper(rules);
- * User user = mapper.map(userDTO, User.class);
+ *     @FieldMappingRule(sourceFieldAddress = "id")
+ *     protected String id;
+ * }
+ *
+ * // Parse mapping rules from annotations
+ * List<MappingRule> rules = MappingRules.parse(GenericDto.class);
+ * // rules.size() == 2
  * }</pre>
  *
  * <h2>Usage Example: Custom Transformations</h2>
  * <pre>{@code
- * // Define transformation
- * MappingRules rules = new MappingRules()
- *     .rule(OrderDTO.class, Order.class)
- *         .field("orderDate", "createdAt")
- *             .transform(date -> Instant.ofEpochMilli(date.getTime()))
- *             .done()
- *         .field("totalAmount", "total")
- *             .transform(amount -> new BigDecimal(amount).setScale(2))
- *             .done()
- *         .done();
+ * // Define DTO with custom conversion methods
+ * class OtherGenericDto extends GenericDto {
+ *     @FieldMappingRule(sourceFieldAddress = "longField", fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+ *     String longField;
  *
- * Mapper mapper = new Mapper(rules);
- * Order order = mapper.map(orderDTO, Order.class);
+ *     private String fromMethod(long longField) {
+ *         return String.valueOf(longField);
+ *     }
+ *
+ *     private long toMethod(String value) {
+ *         return Long.valueOf(value);
+ *     }
+ * }
+ *
+ * // Mapper automatically uses conversion methods
+ * Mapper mapper = new Mapper();
+ * OtherGenericDto dto = mapper.map(entity, OtherGenericDto.class);
  * }</pre>
  *
  * <h2>Usage Example: Collection Mapping</h2>
  * <pre>{@code
- * // Map collections
- * List<UserDTO> userDTOs = Arrays.asList(dto1, dto2, dto3);
+ * // Define collection mapping
+ * class SourceList {
+ *     public int sourceField;
+ * }
  *
- * Mapper mapper = new Mapper();
- * List<User> users = mapper.mapCollection(userDTOs, User.class);
+ * class Source {
+ *     public List<SourceList> sourceList = new ArrayList<>();
+ * }
+ *
+ * class DestList {
+ *     @FieldMappingRule(sourceFieldAddress = "sourceField")
+ *     public int destField;
+ * }
+ *
+ * class Dest {
+ *     @FieldMappingRule(sourceFieldAddress = "sourceList")
+ *     public List<DestList> destList = new ArrayList<>();
+ * }
+ *
+ * // Map collections
+ * Source source = new Source();
+ * for(int i = 0; i < 10; i++)
+ *     source.sourceList.add(new SourceList(i));
+ *
+ * Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
+ * Dest dest = mapper.map(source, Dest.class);
+ * // dest.destList.size() == 10
  * }</pre>
  *
- * <h2>Usage Example: Nested Object Mapping</h2>
+ * <h2>Usage Example: Object-Level Mapping</h2>
  * <pre>{@code
- * // Configure nested mapping
- * MappingRules rules = new MappingRules()
- *     .rule(CustomerDTO.class, Customer.class)
- *         .field("billingAddress", "address")
- *             .nested(AddressDTO.class, Address.class)
- *             .done()
- *         .done();
+ * // Configure object-level mapping with custom methods
+ * @ObjectMappingRule(fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+ * class GenericDtoWithObjectMapping extends GenericDto {
+ *     @FieldMappingRule(sourceFieldAddress = "longField", fromSourceMethod = "fromMethod", toSourceMethod = "toMethod")
+ *     String longField;
  *
- * Mapper mapper = new Mapper(rules);
- * Customer customer = mapper.map(customerDTO, Customer.class);
+ *     private void fromMethod(GenericEntityWithObjectMapping entity) {
+ *         this.id = entity.getId();
+ *         this.uuid = entity.getUuid();
+ *         this.longField = String.valueOf(entity.getLongField());
+ *     }
+ *
+ *     private void toMethod(GenericEntityWithObjectMapping entity) {
+ *         // Reverse mapping logic
+ *     }
+ * }
+ *
+ * Mapper mapper = new Mapper();
+ * GenericDtoWithObjectMapping dto = mapper.map(entity, GenericDtoWithObjectMapping.class);
  * }</pre>
  *
  * <h2>Features</h2>

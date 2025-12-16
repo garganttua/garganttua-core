@@ -1,17 +1,30 @@
 package com.garganttua.core.injection.context.beans;
 
+import java.lang.annotation.Annotation;
 import java.util.Optional;
+import java.util.Set;
 
+import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanQueryBuilder;
 import com.garganttua.core.injection.context.dsl.BeanQueryBuilder;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanSupplierBuilder;
 
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Beans {
+
+    @ExpressionNode(name = "beanReference", description = "Creates a BeanReference with the specified parameters")
+    public static BeanReference<?> beanReference(@Nullable Class<?> type, @Nullable Optional<BeanStrategy> strategy, @Nullable Optional<String> name,
+            Set<Class<? extends Annotation>> qualifiers) {
+        log.atTrace().log("Creating BeanReference with type: {}, strategy: {}, name: {}, qualifiers: {}", type,
+                strategy, name, qualifiers);
+        return new BeanReference<>(type, strategy, name, qualifiers);
+    }
 
     public static <Bean> IBeanSupplierBuilder<Bean> bean(Optional<String> provider, BeanReference<Bean> query) {
         log.atTrace().log("Creating BeanSupplierBuilder with provider: {} and query: {}", provider, query);

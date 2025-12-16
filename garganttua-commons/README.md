@@ -222,40 +222,240 @@ Exception Classes:
 
 ## Usage
 
-### Dependency Injection Example
+### OrderedMap - Positional Map Operations
+
+The `OrderedMap` class provides a LinkedHashMap with the ability to insert elements at specific positions relative to existing keys.
 
 ```java
-// Quick example under construction
+import com.garganttua.core.utils.OrderedMap;
+import com.garganttua.core.runtime.Position;
+
+// Create an ordered map
+OrderedMap<String, String> map = new OrderedMap<>();
+
+// Basic put operations
+map.put("a", "Alpha");
+map.put("c", "Charlie");
+
+// Insert "b" BEFORE "c"
+map.putAt("b", "Bravo", "c", Position.BEFORE);
+// Result order: a, b, c
+
+// Insert "d" AFTER "a"
+map.putAt("d", "Delta", "a", Position.AFTER);
+// Result order: a, d, b, c
+
+// If reference key doesn't exist, element is added at the end
+map.putAt("e", "Echo", "nonexistent", Position.BEFORE);
+// Result order: a, d, b, c, e
+
+// Duplicate keys throw IllegalArgumentException
+// map.put("a", "Another Alpha"); // Throws: "Key already exists: a"
+
+// Convert to standard Map
+Map<String, String> standardMap = map.asMap();
 ```
 
-### Condition Evaluation
+### BeanReference - Bean Lookup DSL
+
+`BeanReference` provides a powerful DSL for parsing and matching beans in the dependency injection system.
 
 ```java
-// Quick example under construction
+import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
+
+// Parse bean reference by fully qualified class name
+var ref1 = BeanReference.parse("java.lang.String");
+// Type: String.class
+
+// With strategy specification
+var ref2 = BeanReference.parse("java.lang.String!singleton");
+// Type: String.class, Strategy: singleton
+
+// With named bean
+var ref3 = BeanReference.parse("java.lang.String#main");
+// Type: String.class, Name: "main"
+
+// With provider prefix
+var ref4 = BeanReference.parse("local::#Mail");
+// Provider: "local", Name: "Mail"
+
+// Full syntax: provider::class!strategy#name@qualifier
+var ref5 = BeanReference.parse("local::java.lang.String!prototype#bean1");
+// Provider: "local", Type: String.class, Strategy: prototype, Name: "bean1"
+
+// With qualifiers (using fully qualified annotation class names)
+var ref6 = BeanReference.parse("java.lang.String@com.example.Q1@com.example.Q2");
+// Type: String.class, Qualifiers: [Q1.class, Q2.class]
+
+// Check if references match
+BeanReference<String> ref7 = new BeanReference<>(
+    String.class,
+    Optional.of(BeanStrategy.singleton),
+    Optional.of("myBean"),
+    Set.of()
+);
+BeanReference<String> ref8 = new BeanReference<>(
+    String.class,
+    Optional.of(BeanStrategy.singleton),
+    Optional.of("myBean"),
+    Set.of()
+);
+assertTrue(ref7.matches(ref8)); // true - same type, strategy, name
 ```
 
-### Executor Chain Pattern
+### BeanDefinition - Bean Metadata
+
+`BeanDefinition` encapsulates complete bean metadata including reference, supplier, binders, and dependencies.
 
 ```java
-// Quick example under construction
+import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
+
+// Create bean reference
+BeanReference<MyBean> ref = new BeanReference<>(
+    MyBean.class,
+    Optional.of(BeanStrategy.singleton),
+    Optional.of("myBean"),
+    Set.of(TestQualifier.class)
+);
+
+// Create bean definition
+BeanDefinition<MyBean> def = new BeanDefinition<>(
+    ref,                    // Bean reference
+    Optional.empty(),       // Optional supplier
+    Set.of(),              // Field binders
+    Set.of()               // Method binders
+);
+
+// Get effective name (uses explicit name or falls back to simple class name)
+String name = def.reference().effectiveName(); // "myBean"
+
+// Bean definitions with same reference are equal
+BeanReference<MyBean> ref2 = new BeanReference<>(
+    MyBean.class,
+    Optional.of(BeanStrategy.singleton),
+    Optional.of("myBean"),
+    Set.of(TestQualifier.class)
+);
+BeanDefinition<MyBean> def2 = new BeanDefinition<>(ref2, Optional.empty(), Set.of(), Set.of());
+assertTrue(def.equals(def2)); // true
 ```
 
-### Object Mapping
+### Supplier Framework - Contextual Object Supply
+
+The Supplier framework provides utilities for supplying objects with optional context awareness and recursive resolution.
 
 ```java
-// Quick example under construction
-```
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.IContextualSupplier;
+import com.garganttua.core.supply.Supplier;
 
-### Runtime Workflow
+// Simple non-contextual supplier
+class SimpleStringSupplier implements ISupplier<String> {
+    private final String value;
 
-```java
-// Quick example under construction
-```
+    public SimpleStringSupplier(String value) {
+        this.value = value;
+    }
 
-### Reflection Utilities
+    @Override
+    public Optional<String> supply() throws SupplyException {
+        return Optional.ofNullable(value);
+    }
 
-```java
-// Quick example under construction
+    @Override
+    public Type getSuppliedType() {
+        return String.class;
+    }
+}
+
+// Use non-contextual supplier
+ISupplier<String> supplier = new SimpleStringSupplier("Hello World");
+String result = Supplier.contextualSupply(supplier);
+// result: "Hello World"
+
+// Contextual supplier that requires specific context type
+class ContextualStringSupplier implements IContextualSupplier<String, String> {
+    private final String prefix;
+
+    public ContextualStringSupplier(String prefix) {
+        this.prefix = prefix;
+    }
+
+    @Override
+    public Optional<String> supply(String context, Object... otherContexts) throws SupplyException {
+        return Optional.of(prefix + context);
+    }
+
+    @Override
+    public Class<String> getOwnerContextType() {
+        return String.class;
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return String.class;
+    }
+}
+
+// Use contextual supplier with matching context
+IContextualSupplier<String, String> contextualSupplier = new ContextualStringSupplier("Hello, ");
+String result2 = Supplier.contextualSupply(contextualSupplier, "World");
+// result2: "Hello, World"
+
+// Contextual supplier with multiple contexts (finds matching one)
+IContextualSupplier<Integer, Integer> intSupplier = new ContextualIntegerSupplier(10);
+Integer result3 = Supplier.contextualSupply(intSupplier, "ignored", 5, "also ignored");
+// result3: 50 (5 * 10)
+
+// Nested suppliers - recursive resolution
+class NestedSupplier implements ISupplier<ISupplier<String>> {
+    private final ISupplier<String> innerSupplier;
+
+    public NestedSupplier(ISupplier<String> innerSupplier) {
+        this.innerSupplier = innerSupplier;
+    }
+
+    @Override
+    public Optional<ISupplier<String>> supply() throws SupplyException {
+        return Optional.ofNullable(innerSupplier);
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return ISupplier.class;
+    }
+}
+
+// Recursive supply resolves nested suppliers automatically
+ISupplier<String> innerSupplier = new SimpleStringSupplier("Nested value");
+ISupplier<ISupplier<String>> outerSupplier = new NestedSupplier(innerSupplier);
+String result4 = (String) Supplier.contextualRecursiveSupply(outerSupplier);
+// result4: "Nested value" (resolved through 2 levels)
+
+// Void context supplier (no context needed)
+class VoidContextSupplier implements IContextualSupplier<String, Void> {
+    @Override
+    public Optional<String> supply(Void context, Object... otherContexts) throws SupplyException {
+        return Optional.of("No context needed");
+    }
+
+    @Override
+    public Class<Void> getOwnerContextType() {
+        return Void.class;
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        return String.class;
+    }
+}
+
+IContextualSupplier<String, Void> voidSupplier = new VoidContextSupplier();
+String result5 = Supplier.contextualSupply(voidSupplier);
+// result5: "No context needed"
 ```
 
 ## Tips and best practices

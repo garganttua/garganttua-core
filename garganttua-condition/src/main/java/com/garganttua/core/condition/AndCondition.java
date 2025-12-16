@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -28,6 +29,15 @@ public class AndCondition implements ICondition {
         log.atTrace().log("Entering evaluate() for AndCondition with {} conditions", conditions.size());
         log.atDebug().log("Evaluating AND condition - all {} conditions must be true", conditions.size());
 
+        Boolean result = and(this.conditions);
+
+        log.atInfo().log("AND condition evaluation complete: {}", result);
+        log.atTrace().log("Exiting evaluate() with result: {}", result);
+        return new FixedSupplier<Boolean>(result);
+    }
+
+    @ExpressionNode(name = "and", description = "Logical AND of multiple conditions")
+    public static Boolean and(Set<ICondition> conditions) {
         List<ISupplier<Boolean>> results = conditions.stream().map(c -> c.evaluate()).toList();
         log.atDebug().log("Individual condition results: {}", results);
 
@@ -35,10 +45,7 @@ public class AndCondition implements ICondition {
         for (ISupplier<Boolean> b : results) {
             result &= b.supply().get();
         }
-
-        log.atInfo().log("AND condition evaluation complete: {}", result);
-        log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return new FixedSupplier<Boolean>(result);
+        return result;
     }
 
 }

@@ -2,7 +2,7 @@ package com.garganttua.core.condition;
 
 import java.util.Objects;
 
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -18,13 +18,6 @@ public class EqualsCondition<T> implements ICondition {
         log.atTrace().log("Entering EqualsCondition constructor");
         this.supplier1 = Objects.requireNonNull(supplier1, "Object supplier 1 cannot be null");
         this.supplier2 = Objects.requireNonNull(supplier2, "Object supplier 2 cannot be null");
-        if (!this.supplier1.getSuppliedClass().equals(this.supplier2.getSuppliedClass())) {
-            log.atError().log("Type mismatch: {} VS {}",
-                this.supplier1.getSuppliedClass().getSimpleName(),
-                this.supplier2.getSuppliedClass().getSimpleName());
-            throw new DslException("Type mismatch " + this.supplier1.getSuppliedClass().getSimpleName() + " VS "
-                    + this.supplier2.getSuppliedClass().getSimpleName());
-        }
         log.atTrace().log("Exiting EqualsCondition constructor");
     }
 
@@ -48,10 +41,28 @@ public class EqualsCondition<T> implements ICondition {
         });
         log.atDebug().log("Supplier 2 provided a non-empty value");
 
-        boolean result = this.supplier1.supply().get().equals(this.supplier2.supply().get());
+        boolean result = equals(this.supplier1.supply().get(),this.supplier2.supply().get());
         log.atInfo().log("EQUALS condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
+    }
+
+    @ExpressionNode(name = "equals", description = "Checks if two objects are equal")
+    public static boolean equals(Object obj1, Object obj2) {
+        log.atTrace().log("Entering static equals() method");
+                if( obj1 == null || obj2 == null ) {
+            return false;
+        }
+        if (!obj1.getClass().equals(obj2.getClass())) {
+            log.atError().log("Type mismatch: {} VS {}",
+                obj1.getClass().getSimpleName(),
+                obj2.getClass().getSimpleName());
+            return false;
+        }
+        boolean result = Objects.equals(obj1, obj2);
+        log.atDebug().log("Equality check result for objects {} and {}: {}", obj1, obj2, result);
+        log.atTrace().log("Exiting static equals() method with result: {}", result);
+        return result;
     }
 
 }

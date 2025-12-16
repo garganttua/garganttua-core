@@ -15,61 +15,86 @@
  * {@link com.garganttua.core.reflection.binders.dsl} (commons package).
  * </p>
  *
- * <h2>Usage Example: Field Binder Builder Implementation</h2>
+ * <h2>Usage Example: Constructor Binder Builder (from ConstructorBinderBuilderTest)</h2>
  * <pre>{@code
- * // Build a field binder with fluent API
- * IFieldBinder binder = new FieldBinderBuilder()
- *     .target(UserService.class)
- *     .field("apiUrl")
- *     .value("https://api.example.com")
- *     .build();
+ * class TargetClass {
+ *     public final String name;
+ *     public final int value;
  *
- * // Apply binding
- * UserService service = new UserService();
- * binder.inject(service);
+ *     public TargetClass(String name, int value) {
+ *         this.name = name;
+ *         this.value = value;
+ *     }
+ *
+ *     public TargetClass(String name) {
+ *         this(name, 0);
+ *     }
+ *
+ *     public TargetClass() {
+ *         this("default", -1);
+ *     }
+ * }
+ *
+ * // Build constructor binder with raw values
+ * ConcreteConstructorBinderBuilder builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+ * builder.withParam("Hello").withParam(123);
+ *
+ * IConstructorBinder<TargetClass> binder = builder.build();
+ * Optional<? extends TargetClass> obj = binder.execute();
+ * TargetClass tc = obj.get();
+ * assertEquals("Hello", tc.name);
+ * assertEquals(123, tc.value);
  * }</pre>
  *
- * <h2>Usage Example: Constructor Binder Builder Implementation</h2>
+ * <h2>Usage Example: Constructor with Suppliers (from ConstructorBinderBuilderTest)</h2>
  * <pre>{@code
- * // Build a constructor binder
- * IConstructorBinder binder = new ConstructorBinderBuilder()
- *     .target(DatabaseService.class)
- *     .parameter(0)
- *         .value("jdbc:mysql://localhost:3306/mydb")
- *         .done()
- *     .parameter(1)
- *         .property("db.username")
- *         .done()
- *     .parameter(2)
- *         .property("db.password")
- *         .done()
- *     .build();
+ * // Build constructor with suppliers for dynamic values
+ * ConcreteConstructorBinderBuilder builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+ * builder.withParam(new FixedSupplierBuilder<>("Dynamic"))
+ *        .withParam(new FixedSupplierBuilder<>(999));
  *
- * // Create instance
- * DatabaseService service = binder.newInstance();
+ * IConstructorBinder<TargetClass> binder = builder.build();
+ * TargetClass tc = binder.execute().get();
+ * assertEquals("Dynamic", tc.name);
+ * assertEquals(999, tc.value);
+ *
+ * // Use default constructor (no parameters)
+ * builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+ * binder = builder.build();
+ * tc = binder.execute().get();
+ * assertEquals("default", tc.name);
+ * assertEquals(-1, tc.value);
  * }</pre>
  *
- * <h2>Usage Example: Method Binder Builder Implementation</h2>
+ * <h2>Usage Example: Method Binder Builder (from MethodBinderTest)</h2>
  * <pre>{@code
- * EmailService emailService = new EmailService();
+ * class MethodObject {
+ *     String echo(String message) {
+ *         return message;
+ *     }
  *
- * // Build a method binder
- * IMethodBinder binder = new MethodBinderBuilder()
- *     .target(emailService)
- *     .method("sendEmail")
- *     .parameter(0)
- *         .value("user@example.com")
- *         .done()
- *     .parameter(1)
- *         .value("Welcome!")
- *         .done()
- *     .parameter(2)
- *         .template("Hello ${user.name}, welcome to our platform!")
- *         .done()
- *     .build();
+ *     static String staticEcho(String message) {
+ *         return message;
+ *     }
+ * }
  *
- * // Invoke method
- * binder.invoke();
+ * // Build and invoke instance method
+ * ConcreteMethodBinderBuilder b = new ConcreteMethodBinderBuilder(
+ *     new Object(),
+ *     FixedSupplierBuilder.of(new MethodObject())
+ * );
+ * b.method("echo").withReturn(String.class).withParam("Hello");
+ * IMethodBinder<String> mb = b.build();
+ * assertEquals("Hello", mb.supply().get());
+ *
+ * // Build and invoke static method
+ * ConcreteMethodBinderBuilder staticBuilder = new ConcreteMethodBinderBuilder(
+ *     new Object(),
+ *     new NullSupplierBuilder<>(MethodObject.class)
+ * );
+ * staticBuilder.method("staticEcho").withReturn(String.class).withParam("Hello");
+ * IMethodBinder<String> staticBinder = staticBuilder.build();
+ * assertEquals("Hello", staticBinder.supply().get());
  * }</pre>
  *
  * <h2>Features</h2>

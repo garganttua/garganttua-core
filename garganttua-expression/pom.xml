@@ -82,6 +82,27 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.garganttua.core</groupId>
+                <artifactId>garganttua-native-image-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>native-config</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <resources>
+                    </resources>
+                    <packages>
+                        <package>com.garganttua.core.expression</package>
+                    </packages>
+                    <reflections>
+                    </reflections>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

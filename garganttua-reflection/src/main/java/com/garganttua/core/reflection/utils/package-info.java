@@ -17,87 +17,76 @@
  *   <li><b>Validation</b> - Validating reflection operations</li>
  * </ul>
  *
- * <h2>Usage Example: Type Conversion</h2>
+ * <h2>Usage Example: ObjectReflectionHelper (from ObjectReflectionHelperTest)</h2>
  * <pre>{@code
- * // Convert string to various types
- * Integer intValue = TypeConverter.convert("42", Integer.class);
- * Boolean boolValue = TypeConverter.convert("true", Boolean.class);
- * LocalDate dateValue = TypeConverter.convert("2025-01-01", LocalDate.class);
+ * class SuperClass {
+ *     Long superField;
+ * }
  *
- * // Convert with default value
- * int timeout = TypeConverter.convert("invalid", int.class, 30);
+ * class Entity extends SuperClass {
+ *     String field;
+ *
+ *     public String aMethod(String test, SuperClass superClass) {
+ *         return null;
+ *     }
+ * }
+ *
+ * // Get field from class
+ * Field fieldField = ObjectReflectionHelper.getField(Entity.class, "field");
+ * assertNotNull(fieldField);
+ *
+ * // Try to get non-existent field
+ * Field testField = ObjectReflectionHelper.getField(Entity.class, "test");
+ * assertNull(testField);
+ *
+ * // Get field from superclass - searches inheritance hierarchy
+ * Field superFieldField = ObjectReflectionHelper.getField(Entity.class, "superField");
+ * assertNotNull(superFieldField);  // Successfully finds field in parent class
+ *
+ * // Get method
+ * Method method = ObjectReflectionHelper.getMethod(Entity.class, "aMethod");
+ * assertNotNull(method);
  * }</pre>
  *
- * <h2>Usage Example: Accessibility Management</h2>
+ * <h2>Usage Example: Field Resolution Across Hierarchies</h2>
  * <pre>{@code
- * Field privateField = User.class.getDeclaredField("password");
+ * // ObjectReflectionHelper can find fields in parent classes
+ * class Parent {
+ *     private Long id;
+ * }
  *
- * // Make field accessible
- * AccessibilityUtils.makeAccessible(privateField);
+ * class Child extends Parent {
+ *     private String name;
+ * }
  *
- * // Set value
- * privateField.set(user, "newPassword");
+ * // Find field in child class
+ * Field nameField = ObjectReflectionHelper.getField(Child.class, "name");
+ * assertNotNull(nameField);
  *
- * // Restore accessibility
- * AccessibilityUtils.restoreAccessibility(privateField);
+ * // Find field in parent class through child
+ * Field idField = ObjectReflectionHelper.getField(Child.class, "id");
+ * assertNotNull(idField);  // Finds field in parent
  * }</pre>
  *
- * <h2>Usage Example: Annotation Processing</h2>
+ * <h2>Usage Example: Method Resolution</h2>
  * <pre>{@code
- * // Get annotation value
- * Property propAnnotation = field.getAnnotation(Property.class);
- * String propertyName = AnnotationUtils.getValue(propAnnotation, "value");
+ * class Service {
+ *     public void process(String data) {
+ *         // implementation
+ *     }
  *
- * // Check annotation presence with inheritance
- * boolean hasInject = AnnotationUtils.hasAnnotation(
- *     field,
- *     Inject.class,
- *     true  // check inherited
- * );
+ *     private void validate(Object obj) {
+ *         // implementation
+ *     }
+ * }
  *
- * // Get all annotations
- * List<Annotation> annotations = AnnotationUtils.getAllAnnotations(field);
- * }</pre>
+ * // Get public method
+ * Method processMethod = ObjectReflectionHelper.getMethod(Service.class, "process");
+ * assertNotNull(processMethod);
  *
- * <h2>Usage Example: Reflection Caching</h2>
- * <pre>{@code
- * // Cache field lookup
- * Field field = ReflectionCache.getField(User.class, "email");
- *
- * // Cache method lookup
- * Method method = ReflectionCache.getMethod(
- *     UserService.class,
- *     "updateUser",
- *     String.class, String.class
- * );
- *
- * // Cache constructor lookup
- * Constructor<User> constructor = ReflectionCache.getConstructor(
- *     User.class,
- *     String.class, int.class
- * );
- *
- * // Clear cache
- * ReflectionCache.clear();
- * }</pre>
- *
- * <h2>Usage Example: Validation</h2>
- * <pre>{@code
- * // Validate field is accessible
- * ReflectionValidator.validateFieldAccess(field, User.class);
- *
- * // Validate method signature
- * ReflectionValidator.validateMethodSignature(
- *     method,
- *     void.class,
- *     String.class, int.class
- * );
- *
- * // Validate constructor parameters
- * ReflectionValidator.validateConstructorParameters(
- *     constructor,
- *     String.class, int.class
- * );
+ * // Get private method
+ * Method validateMethod = ObjectReflectionHelper.getMethod(Service.class, "validate");
+ * assertNotNull(validateMethod);
  * }</pre>
  *
  * <h2>Features</h2>

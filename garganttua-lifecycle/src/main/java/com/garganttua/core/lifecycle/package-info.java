@@ -23,98 +23,96 @@
  *   <li><b>FAILED</b> - Component failed to start or stop</li>
  * </ul>
  *
- * <h2>Usage Example: Custom Lifecycle Component</h2>
+ * <h2>Usage Example: Custom Lifecycle Component (from AbstractLifecycleTest)</h2>
  * <pre>{@code
- * public class DatabaseService extends AbstractLifecycle {
+ * import java.util.concurrent.atomic.AtomicInteger;
  *
- *     private Connection connection;
+ * private static class TestLifecycle extends AbstractLifecycle {
  *
- *     @Override
- *     protected void doStart() {
- *         // Called during start transition
- *         connection = DriverManager.getConnection(dbUrl);
- *         connection.setAutoCommit(false);
- *     }
+ *     AtomicInteger initCount = new AtomicInteger();
+ *     AtomicInteger startCount = new AtomicInteger();
+ *     AtomicInteger flushCount = new AtomicInteger();
+ *     AtomicInteger stopCount = new AtomicInteger();
  *
  *     @Override
- *     protected void doStop() {
- *         // Called during stop transition
- *         if (connection != null) {
- *             connection.close();
- *             connection = null;
- *         }
- *     }
- *
- *     public void executeQuery(String sql) {
- *         ensureStarted();  // Validates lifecycle state
- *         // Execute query
- *     }
- * }
- *
- * // Usage
- * DatabaseService service = new DatabaseService();
- * service.onStart();  // Transitions to STARTED
- * service.executeQuery("SELECT * FROM users");
- * service.onStop();   // Transitions to STOPPED
- * }</pre>
- *
- * <h2>Usage Example: Lifecycle State Checking</h2>
- * <pre>{@code
- * public class CacheService extends AbstractLifecycle {
- *
- *     private Map<String, Object> cache;
- *
- *     @Override
- *     protected void doStart() {
- *         cache = new ConcurrentHashMap<>();
+ *     protected ILifecycle doInit() {
+ *         initCount.incrementAndGet();
+ *         return this;
  *     }
  *
  *     @Override
- *     protected void doStop() {
- *         cache.clear();
- *         cache = null;
+ *     protected ILifecycle doStart() {
+ *         startCount.incrementAndGet();
+ *         return this;
  *     }
  *
- *     public void put(String key, Object value) {
- *         if (!isStarted()) {
- *             throw new IllegalStateException("Service not started");
- *         }
- *         cache.put(key, value);
+ *     @Override
+ *     protected ILifecycle doFlush() {
+ *         flushCount.incrementAndGet();
+ *         return this;
  *     }
  *
- *     public Object get(String key) {
- *         ensureStarted();  // Throws if not started
- *         return cache.get(key);
+ *     @Override
+ *     protected ILifecycle doStop() {
+ *         stopCount.incrementAndGet();
+ *         return this;
  *     }
  * }
  * }</pre>
  *
- * <h2>Usage Example: Error Handling</h2>
+ * <h2>Usage Example: Init and Start (from testInitAndStart)</h2>
  * <pre>{@code
- * public class MessageProcessor extends AbstractLifecycle {
+ * TestLifecycle lifecycle = new TestLifecycle();
+ * lifecycle.onInit().onStart();
  *
- *     @Override
- *     protected void doStart() {
- *         try {
- *             initializeConnections();
- *             startWorkerThreads();
- *         } catch (Exception e) {
- *             // Lifecycle automatically transitions to FAILED
- *             throw new RuntimeException("Failed to start processor", e);
- *         }
- *     }
+ * assertTrue(lifecycle.isInitialized());
+ * assertTrue(lifecycle.isStarted());
+ * assertFalse(lifecycle.isStopped());
  *
- *     @Override
- *     protected void doStop() {
- *         try {
- *             stopWorkerThreads();
- *             closeConnections();
- *         } catch (Exception e) {
- *             // Log error but allow stop to complete
- *             logger.error("Error during stop", e);
- *         }
- *     }
- * }
+ * assertEquals(1, lifecycle.initCount.get());
+ * assertEquals(1, lifecycle.startCount.get());
+ * }</pre>
+ *
+ * <h2>Usage Example: Stop After Start (from testStop)</h2>
+ * <pre>{@code
+ * lifecycle.onInit().onStart().onStop();
+ *
+ * assertTrue(lifecycle.isStopped());
+ * assertFalse(lifecycle.isStarted());
+ * assertEquals(1, lifecycle.stopCount.get());
+ * }</pre>
+ *
+ * <h2>Usage Example: Reload Sequence (from testReload)</h2>
+ * <pre>{@code
+ * lifecycle.onInit().onStart();
+ * lifecycle.onReload();
+ *
+ * assertTrue(lifecycle.isInitialized());
+ * assertTrue(lifecycle.isStarted());
+ * assertTrue(lifecycle.isFlushed());
+ *
+ * // Counters: each phase must be executed
+ * assertTrue(lifecycle.initCount.get() >= 2, "init must be recalled");
+ * assertTrue(lifecycle.startCount.get() >= 2, "start must be recalled");
+ * assertTrue(lifecycle.flushCount.get() >= 1, "flush must be executed");
+ * assertTrue(lifecycle.stopCount.get() >= 1, "stop must be executed");
+ * }</pre>
+ *
+ * <h2>Usage Example: Error Handling (from AbstractLifecycleTest)</h2>
+ * <pre>{@code
+ * // Start without init fails
+ * assertThrows(LifecycleException.class, () -> lifecycle.onStart());
+ *
+ * // Double init fails
+ * lifecycle.onInit();
+ * assertThrows(LifecycleException.class, () -> lifecycle.onInit());
+ *
+ * // Double start fails
+ * lifecycle.onInit().onStart();
+ * assertThrows(LifecycleException.class, () -> lifecycle.onStart());
+ *
+ * // Flush after start fails
+ * assertThrows(LifecycleException.class, () -> lifecycle.onInit().onStart().onFlush());
  * }</pre>
  *
  * <h2>State Transitions</h2>

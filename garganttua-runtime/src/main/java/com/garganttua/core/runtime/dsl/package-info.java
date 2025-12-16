@@ -15,114 +15,93 @@
  * {@link com.garganttua.core.runtime.dsl} (commons package).
  * </p>
  *
- * <h2>Usage Example: Complete Runtime Builder</h2>
+ * <h2>Usage Example: Programmatic Runtime Builder from Tests</h2>
  * <pre>{@code
- * Runtime<OrderRequest, OrderResponse> runtime =
- *     new RuntimeBuilder<OrderRequest, OrderResponse>()
- *         .input(OrderRequest.class)
- *         .output(OrderResponse.class)
+ * import static com.garganttua.core.condition.Conditions.custom;
+ * import static com.garganttua.core.runtime.RuntimeContext.*;
+ * import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.of;
  *
- *         // Define variables
- *         .variable("orderId", String.class)
- *         .variable("timestamp", Long.class)
+ * // Build runtime programmatically
+ * DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
  *
- *         // Validation stage
- *         .stage("validation")
- *             .step("validateRequest")
- *                 .method(validator, "validate")
- *                     .parameter(0).input()
- *                     .done()
- *                 .catchException(ValidationException.class)
- *                     .onException()
- *                         .method(errorHandler, "handleValidation")
- *                             .parameter(0).exception()
- *                             .parameter(1).output()
- *                             .done()
- *                         .done()
- *                     .done()
- *                 .done()
- *             .done()
+ * IRuntimesBuilder builder = RuntimesBuilder.builder()
+ *     .context(contextBuilder)
+ *     .runtime("runtime-1", String.class, String.class)
+ *         .stage("stage-1")
+ *             .step("step-1", of(step), String.class)
+ *                 .method()
+ *                     .condition(custom(of(10), i -> true))
+ *                     .output(true)
+ *                     .variable("method-returned")
+ *                     .method("method")
+ *                     .code(201)
+ *                     .katch(DiException.class).code(401).up()
+ *                     .withParam(input(String.class))
+ *                     .withParam(of("fixed-value-in-method"))
+ *                     .withParam(variable("variable", String.class))
+ *                     .withParam(context()).up()
+ *                 .fallBack()
+ *                     .onException(DiException.class).up()
+ *                     .output(true)
+ *                     .variable("fallback-returned")
+ *                     .method("fallbackMethod")
+ *                     .withParam(input(String.class))
+ *                     .withParam(of("fixed-value-in-method"))
+ *                     .withParam(exception(DiException.class))
+ *                     .withParam(code())
+ *                     .withParam(exceptionMessage())
+ *                     .withParam(context())
+ *                     .up().up().up()
+ *         .variable("variable", of("preset-variable"))
+ *         .up();
  *
- *         // Processing stage
- *         .stage("processing")
- *             .step("extractOrderId")
- *                 .method(extractor, "extract")
- *                     .parameter(0).input()
- *                     .parameter(1).context()
- *                     .done()
- *                 .done()
+ * Map<String, IRuntime<?, ?>> runtimes = builder.build();
+ * IRuntime<String, String> runtime = (IRuntime<String, String>) runtimes.get("runtime-1");
  *
- *             .step("processPayment")
- *                 .method(paymentService, "process")
- *                     .parameter(0).variable("orderId")
- *                     .parameter(1).input()
- *                     .parameter(2).output()
- *                     .done()
- *                 .catchException(PaymentException.class)
- *                     .fallback()
- *                         .method(paymentService, "refund")
- *                             .parameter(0).variable("orderId")
- *                             .done()
- *                         .done()
- *                     .done()
- *                 .done()
- *
- *             .step("fulfillOrder")
- *                 .condition(ctx -> ctx.getOutput().isPaymentSuccessful())
- *                 .method(fulfillmentService, "fulfill")
- *                     .parameter(0).variable("orderId")
- *                     .parameter(1).output()
- *                     .done()
- *                 .done()
- *             .done()
- *
- *         .build();
- *
- * // Execute runtime
- * OrderRequest request = new OrderRequest();
- * RuntimeResult<OrderResponse> result = runtime.execute(request);
+ * // Execute
+ * IRuntimeResult<String, String> result = runtime.execute("input").orElseThrow();
+ * assertEquals("input-processed-fixed-value-in-method-preset-variable", result.output());
+ * assertEquals(201, result.code());
  * }</pre>
  *
- * <h2>Usage Example: Step Method Builder</h2>
+ * <h2>Usage Example: Auto-Detection Builder</h2>
  * <pre>{@code
- * // Build step with method binding
- * RuntimeStepMethodBuilder stepBuilder = new RuntimeStepMethodBuilder()
- *     .target(userService)
- *     .method("updateUser")
- *     .parameter(0)
- *         .input()
- *         .done()
- *     .parameter(1)
- *         .variable("userId")
- *         .done()
- *     .parameter(2)
- *         .output()
- *         .done()
- *     .build();
+ * // Build with auto-detection
+ * IDiContextBuilder contextBuilder = DiContext.builder()
+ *     .autoDetect(true)
+ *     .withPackage("com.garganttua.core.runtime.annotations")
+ *     .withPackage("com.garganttua.core.runtime");
+ *
+ * contextBuilder.build().onInit().onStart();
+ *
+ * IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder()
+ *     .context(contextBuilder)
+ *     .autoDetect(true);
+ *
+ * Map<String, IRuntime<?, ?>> runtimes = runtimesBuilder.build();
+ *
+ * // All annotated runtimes are automatically detected and built
+ * assertTrue(runtimes.containsKey("runtime-1"));
+ * assertTrue(runtimes.containsKey("two-steps-runtime"));
  * }</pre>
  *
- * <h2>Usage Example: Exception Handling Builder</h2>
+ * <h2>Usage Example: Runtime with Variables</h2>
  * <pre>{@code
- * // Build step with exception handling
- * RuntimeStepBuilder stepBuilder = new RuntimeStepBuilder()
- *     .name("processData")
- *     .method(dataService, "process")
- *         .parameter(0).input()
- *         .done()
- *     .catchException(IOException.class)
- *         .onException()
- *             .method(errorHandler, "handleIO")
- *                 .parameter(0).exception()
- *                 .parameter(1).exceptionMessage()
- *                 .done()
- *             .done()
- *         .fallback()
- *             .method(dataService, "processFromCache")
- *                 .parameter(0).input()
- *                 .done()
- *             .done()
- *         .done()
- *     .build();
+ * // Build runtime with preset variables
+ * IRuntime<String, String> runtime = builder
+ *     .runtime("two-steps-runtime", String.class, String.class)
+ *         .variable("step-one-variable", "step-one-variable")
+ *         .variable("output-step-variable", "output-step-variable")
+ *         .up()
+ *     .build()
+ *     .get("two-steps-runtime");
+ *
+ * IRuntimeResult<String, String> result = runtime.execute("test").orElseThrow();
+ *
+ * // Variables are shared between steps
+ * assertEquals(222, result.code());
+ * assertEquals("test-step-one-processed-step-one-variable-output-step-processed-output-step-variable",
+ *     result.output());
  * }</pre>
  *
  * <h2>Features</h2>

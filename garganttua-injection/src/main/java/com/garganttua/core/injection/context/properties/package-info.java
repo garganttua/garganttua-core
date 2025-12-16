@@ -28,75 +28,105 @@
  * </ul>
  *
  * <h2>Usage Example: Property Provider</h2>
+ * Based on real test code from DiContextTest.java and DiContextBuilderTest.java:
  * <pre>{@code
- * // Create property provider
- * PropertyProvider provider = new PropertyProvider("application");
+ * // Configure properties using predefined provider
+ * String propertyValue = UUID.randomUUID().toString();
  *
- * // Add properties
- * provider.addProperty("app.name", "MyApplication");
- * provider.addProperty("app.version", "1.0.0");
- * provider.addProperty("db.url", "jdbc:mysql://localhost:3306/mydb");
+ * DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+ *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", propertyValue)
+ *         .up()
+ *     .autoDetect(true)
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- * // Load from file
- * provider.loadPropertiesFromFile("application.properties");
+ * // Retrieve property
+ * Optional<String> property = Properties.property(String.class)
+ *     .key("com.garganttua.dummyPropertyInConstructor")
+ *     .build()
+ *     .supply();
  *
- * // Get property
- * String appName = provider.getProperty("app.name");
- * String dbUrl = provider.getProperty("db.url", "jdbc:mysql://localhost:3306/default");
+ * assertTrue(property.isPresent());
+ * assertEquals(propertyValue, property.get());
  * }</pre>
  *
- * <h2>Usage Example: Property Supplier</h2>
+ * <h2>Usage Example: Property in Bean Constructor</h2>
+ * Based on real test code from DummyBean.java and InjectableElementResolverTest.java:
  * <pre>{@code
- * // Fixed value supplier
- * PropertySupplier nameSupplier = new PropertySupplier("app.name", "MyApplication");
+ * // Bean with property injection in constructor
+ * @Singleton
+ * @Named("dummyBeanForTest")
+ * public class DummyBean {
+ *     private String value;
  *
- * // Dynamic supplier
- * PropertySupplier timestampSupplier = new PropertySupplier(
- *     "app.timestamp",
- *     () -> String.valueOf(System.currentTimeMillis())
- * );
+ *     @Inject
+ *     public DummyBean(
+ *         @Provider("garganttua")
+ *         @Property("com.garganttua.dummyPropertyInConstructor") String value
+ *     ) {
+ *         this.value = value;
+ *     }
+ * }
  *
- * // Environment variable supplier
- * PropertySupplier pathSupplier = new PropertySupplier(
- *     "app.home",
- *     () -> System.getenv("APP_HOME")
- * );
+ * // Test property resolution
+ * Constructor<DummyBean> ctor = DummyBean.class.getConstructor(String.class, AnotherDummyBean.class, DummyOtherBean.class);
+ * Parameter[] params = ctor.getParameters();
  *
- * // Get values
- * String name = nameSupplier.get();
- * String timestamp = timestampSupplier.get();
+ * PropertyElementResolver propertyConstructor = new PropertyElementResolver();
+ * Resolved resolved = propertyConstructor.resolve(params[0].getType(), params[0]);
+ *
+ * assertTrue(resolved.resolved());
+ * assertEquals(String.class, resolved.elementSupplier().getSuppliedClass());
+ * Optional<String> property = (Optional<String>) resolved.elementSupplier().build().supply();
+ * assertEquals("propertyValue", property.get());
  * }</pre>
  *
- * <h2>Usage Example: Placeholder Resolution</h2>
+ * <h2>Usage Example: Multiple Property Providers</h2>
+ * Based on real test code from DiContextBuilderTest.java:
  * <pre>{@code
- * PropertyProvider provider = new PropertyProvider("config");
- * provider.addProperty("db.host", "localhost");
- * provider.addProperty("db.port", "3306");
- * provider.addProperty("db.name", "mydb");
+ * // Register multiple property providers
+ * IDiContext context = DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString(), new DummyPropertyProviderBuilder())
+ *         .up()
+ *     .propertyProvider("dummy", new DummyPropertyProviderBuilder())
+ *         .up()
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- * // Resolve placeholder
- * String url = provider.resolvePlaceholder(
- *     "jdbc:mysql://${db.host}:${db.port}/${db.name}"
- * );
- * // Result: "jdbc:mysql://localhost:3306/mydb"
+ * // Verify providers are registered
+ * assertEquals(2, context.getPropertyProviders().size());
+ * assertTrue(context.getBeanProvider(Predefined.PropertyProviders.garganttua.toString()).isPresent());
  * }</pre>
  *
- * <h2>Usage Example: Property Hierarchy</h2>
+ * <h2>Usage Example: Property in Bean Lifecycle</h2>
+ * Based on real test code from DiContextTest.java:
  * <pre>{@code
- * // Parent properties
- * PropertyProvider parent = new PropertyProvider("parent");
- * parent.addProperty("app.name", "BaseApp");
- * parent.addProperty("app.timeout", "30");
+ * // Property is injected before post-construct
+ * @Singleton
+ * public class DummyBean {
+ *     private String value;
+ *     private boolean postConstructCalled = false;
  *
- * // Child properties (overrides parent)
- * PropertyProvider child = new PropertyProvider("child", parent);
- * child.addProperty("app.name", "CustomApp");  // Overrides parent
+ *     @Inject
+ *     public DummyBean(@Property("com.garganttua.dummyPropertyInConstructor") String value) {
+ *         this.value = value;
+ *     }
  *
- * // Child gets own value
- * String name = child.getProperty("app.name");  // "CustomApp"
+ *     @PostConstruct
+ *     public void markPostConstruct() {
+ *         this.postConstructCalled = true;
+ *     }
+ * }
  *
- * // Child falls back to parent
- * String timeout = child.getProperty("app.timeout");  // "30"
+ * // Verify property injection and post-construct execution
+ * Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
+ * assertEquals("propertyValue", bean.get().getValue()); // Property injected
+ * assertTrue(bean.get().isPostConstructCalled()); // Post-construct executed
  * }</pre>
  *
  * <h2>Features</h2>

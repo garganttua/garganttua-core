@@ -51,18 +51,36 @@ The `ObjectAddress` class is the foundation of Garganttua Reflection. It represe
 ```
 simple_field             → Access direct field
 parent.child             → Access nested field
-users.#item.name         → Access field in collection elements
-settings.#value.enabled  → Access field in map values
-settings.#key            → Access map keys
+innersInList.i           → Access field in list elements
+innersInMap.#key.i       → Access field in map keys
+innersInMap.#value.i     → Access field in map values
+```
+
+**Example from ObjectAddressTest.java:**
+```java
+// Create address with validation
+ObjectAddress address = new ObjectAddress("field1.field2.field3");
+assertEquals(3, address.length());
+assertEquals("field1", address.getElement(0));
+assertEquals("field2", address.getElement(1));
+assertEquals("field3", address.getElement(2));
+
+// Convert to string
+assertEquals("field1.field2.field3", address.toString());
+
+// Invalid addresses throw IllegalArgumentException
+assertThrows(IllegalArgumentException.class, () -> new ObjectAddress(".field1.field2"));
+assertThrows(IllegalArgumentException.class, () -> new ObjectAddress("field1.field2."));
+assertThrows(IllegalArgumentException.class, () -> new ObjectAddress(""));
 ```
 
 **Features:**
 - Dot-separated path elements
 - Support for nested objects (unlimited depth)
-- Collection iteration with `#item` operator
+- Collection/list iteration support
 - Map navigation with `#key` and `#value` operators
-- Immutable and cloneable
-- Full integration with ObjectQuery
+- Immutable and validates on creation
+- Equals and hashCode implemented
 
 ### ObjectQuery
 
@@ -137,465 +155,558 @@ Internal utilities for managing field, method, and constructor accessibility:
 
 ## Usage
 
-### 1. Simple Field Access
+### 1. Getting Field Values (ObjectFieldGetterTest.java)
 
-Get and set field values in a straightforward object:
+Get field values from objects using ObjectFieldGetter:
 
 ```java
-class User {
-    private String username;
-    private String email;
-    private int age;
+class ObjectTest {
+    private long l;
+    private String s;
+    private float f;
+    private int i;
 }
 
-User user = new User();
+// Create object
+ObjectTest o = new ObjectTest(null, 1, "Depth-1", 1.0f, 1, null, null, null);
 
-// Create query
-ObjectQuery query = ObjectQueryFactory.objectQuery(user);
+// Get simple field value
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
 
-// Set values
-query.setValue("username", "alice");
-query.setValue("email", "alice@example.com");
-query.setValue("age", 30);
+ObjectAddress address = new ObjectAddress("l");
+ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 
-// Get values
-String username = query.getValue("username");  // "alice"
-String email = query.getValue("email");         // "alice@example.com"
-Integer age = query.getValue("age");             // 30
+Object value = getter.getValue(o);
+assertNotNull(value);
+assertEquals(1L, value);  // Returns the long value
 ```
 
-### 2. Nested Object Navigation
+### 2. Nested Object Navigation (ObjectFieldGetterTest.java)
 
 Access deeply nested fields using dot notation:
 
 ```java
-class Address {
-    private String city;
-    private String zipCode;
+class ObjectTest {
+    private ObjectTest inner;
+    private float f;
 }
 
-class Profile {
-    private Address address;
-}
+// Create nested object (depth 2)
+ObjectTest o = createNestedObject(2);  // Creates object with inner object
 
-class User {
-    private Profile profile;
-}
+// Get value from nested field
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "f"));
 
-User user = new User();
-user.profile = new Profile();
-user.profile.address = new Address();
+ObjectAddress address = new ObjectAddress("inner.f");
+ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 
-ObjectQuery query = ObjectQueryFactory.objectQuery(user);
+Object value = getter.getValue(o);
+assertNotNull(value);
+assertEquals(1F, value);  // Returns float from inner object
 
-// Set nested values
-query.setValue("profile.address.city", "Paris");
-query.setValue("profile.address.zipCode", "75001");
+// Deep nesting (6 levels)
+ObjectTest deepObject = createNestedObject(6);
+List<Object> deepFieldInfos = new ArrayList<Object>();
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
 
-// Get nested values
-String city = query.getValue("profile.address.city");        // "Paris"
-String zipCode = query.getValue("profile.address.zipCode");  // "75001"
+ObjectAddress deepAddress = new ObjectAddress("inner.inner.inner.inner.inner.i", false);
+ObjectFieldGetter deepGetter = new ObjectFieldGetter(ObjectTest.class, deepFieldInfos, deepAddress);
+
+Object deepValue = deepGetter.getValue(deepObject);
+assertEquals(1, deepValue);  // Successfully retrieves value from 6 levels deep
 ```
 
-### 3. Collection Element Access
+### 3. List/Collection Access (ObjectFieldGetterTest.java)
 
-Work with collections using the `#item` operator:
+Work with lists and retrieve values from elements:
 
 ```java
-class Order {
-    private List<OrderItem> items = new ArrayList<>();
+class ObjectTest {
+    private List<ObjectTest> innersInList;
+    private int i;
 }
 
-class OrderItem {
-    private String productName;
-    private int quantity;
-}
+// Create object with list
+ObjectTest o = createNestedObject(2);
 
-Order order = new Order();
-OrderItem item1 = new OrderItem();
-item1.productName = "Widget";
-item1.quantity = 5;
-order.items.add(item1);
+// Get field values from list elements
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
 
-ObjectQuery query = ObjectQueryFactory.objectQuery(order);
+ObjectAddress address = new ObjectAddress("inner.f");  // Address for list traversal
+ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 
-// Access collection elements
-List<String> productNames = query.getValue("items.#item.productName");
-// Returns: ["Widget"]
+Object value = getter.getValue(o);
+assertNotNull(value);
+assertTrue(List.class.isAssignableFrom(value.getClass()));
+assertEquals(1, ((List<Object>) value).get(0));  // Returns list of values from elements
 
-List<Integer> quantities = query.getValue("items.#item.quantity");
-// Returns: [5]
+// Nested list access (6 levels deep)
+ObjectTest deepObject = createNestedObject(6);
+List<Object> deepFieldInfos = new ArrayList<Object>();
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+deepFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
+
+ObjectAddress deepAddress = new ObjectAddress("inner.inner.innersInList.inner.inner.i", false);
+ObjectFieldGetter deepGetter = new ObjectFieldGetter(ObjectTest.class, deepFieldInfos, deepAddress);
+
+Object deepValue = deepGetter.getValue(deepObject);
+assertNotNull(deepValue);
+assertEquals(1, ((List<Object>) deepValue).get(0));
 ```
 
-### 4. Map Value Access
+### 4. Map Access with #key and #value (ObjectFieldGetterTest.java)
 
 Navigate map structures with `#key` and `#value` operators:
 
 ```java
-class Configuration {
-    private Map<String, Setting> settings = new HashMap<>();
+class ObjectTest {
+    private Map<ObjectTest, ObjectTest> innersInMap;
+    private int i;
 }
 
-class Setting {
-    private boolean enabled;
-    private String value;
-}
+// Create object with map
+ObjectTest o = createNestedObject(2);
 
-Configuration config = new Configuration();
-Setting setting1 = new Setting();
-setting1.enabled = true;
-setting1.value = "production";
-config.settings.put("environment", setting1);
+// Access field in map keys using #key
+List<Object> keyFieldInfos = new ArrayList<Object>();
+keyFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInMap"));
+keyFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
 
-ObjectQuery query = ObjectQueryFactory.objectQuery(config);
+ObjectAddress keyAddress = new ObjectAddress("innersMap.#key.i");
+ObjectFieldGetter keyGetter = new ObjectFieldGetter(ObjectTest.class, keyFieldInfos, keyAddress);
 
-// Access map values
-List<Boolean> enabledFlags = query.getValue("settings.#value.enabled");
-// Returns: [true]
+Object keyValue = keyGetter.getValue(o);
+assertNotNull(keyValue);
+assertTrue(List.class.isAssignableFrom(keyValue.getClass()));
+assertTrue(((List<Object>) keyValue).contains(1));  // Returns list of values from map keys
 
-List<String> values = query.getValue("settings.#value.value");
-// Returns: ["production"]
+// Access field in map values using #value
+List<Object> valueFieldInfos = new ArrayList<Object>();
+valueFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInMap"));
+valueFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
 
-// Access map keys
-List<String> keys = query.getValue("settings.#key");
-// Returns: ["environment"]
+ObjectAddress valueAddress = new ObjectAddress("innersMap.#value.i");
+ObjectFieldGetter valueGetter = new ObjectFieldGetter(ObjectTest.class, valueFieldInfos, valueAddress);
+
+Object valueValue = valueGetter.getValue(o);
+assertNotNull(valueValue);
+assertTrue(List.class.isAssignableFrom(valueValue.getClass()));
+assertTrue(((List<Object>) valueValue).contains(1));  // Returns list of values from map values
 ```
 
-### 5. Method Invocation
+### 5. Setting Field Values (ObjectFieldSetterTest.java)
 
-Invoke methods on objects using ObjectAddress:
+Set field values in objects using ObjectFieldSetter:
 
 ```java
-class Calculator {
-    public int add(int a, int b) {
-        return a + b;
+class ObjectTest {
+    private long l;
+    private String s;
+    private ObjectTest inner;
+}
+
+// Set simple long value
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+
+ObjectAddress address = new ObjectAddress("l");
+ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
+
+ObjectTest object = (ObjectTest) setter.setValue(1L);
+assertNotNull(object);
+assertEquals(1L, object.getL());
+
+// Set string value
+List<Object> stringFieldInfos = new ArrayList<Object>();
+stringFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "s"));
+
+ObjectAddress stringAddress = new ObjectAddress("s");
+ObjectFieldSetter stringSetter = new ObjectFieldSetter(ObjectTest.class, stringFieldInfos, stringAddress);
+
+ObjectTest stringObject = (ObjectTest) stringSetter.setValue("test");
+assertNotNull(stringObject);
+assertEquals("test", stringObject.getS());
+
+// Set value in nested inner object
+List<Object> innerFieldInfos = new ArrayList<Object>();
+innerFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+innerFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+
+ObjectAddress innerAddress = new ObjectAddress("inner.l");
+ObjectFieldSetter innerSetter = new ObjectFieldSetter(ObjectTest.class, innerFieldInfos, innerAddress);
+
+ObjectTest innerObject = (ObjectTest) innerSetter.setValue(1L);
+assertNotNull(innerObject);
+assertEquals(1L, innerObject.getInner().getL());
+```
+
+### 6. Setting Values in Lists (ObjectFieldSetterTest.java)
+
+Set values in list fields:
+
+```java
+class ObjectTest {
+    private List<ObjectTest> innersInList;
+    private long l;
+}
+
+// Set values in list - creates list elements automatically
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+
+ObjectAddress address = new ObjectAddress("innersInList.l");
+ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
+
+ObjectTest object = (ObjectTest) setter.setValue(List.of(1L, 2L, 3L));
+
+assertNotNull(object);
+assertEquals(3, object.getInnersInList().size());
+assertEquals(1L, object.getInnersInList().get(0).getL());
+assertEquals(2L, object.getInnersInList().get(1).getL());
+assertEquals(3L, object.getInnersInList().get(2).getL());
+
+// Nested lists (depth 2)
+List<Object> nestedFieldInfos = new ArrayList<Object>();
+nestedFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+nestedFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+nestedFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+
+ObjectAddress nestedAddress = new ObjectAddress("innersInList.innersInList.l", false);
+ObjectFieldSetter nestedSetter = new ObjectFieldSetter(ObjectTest.class, nestedFieldInfos, nestedAddress);
+
+ObjectTest nestedObject = (ObjectTest) nestedSetter.setValue(List.of(List.of(1L, 2L, 3L), List.of(1L, 2L, 3L)));
+
+assertNotNull(nestedObject);
+assertEquals(2, nestedObject.getInnersInList().size());
+assertEquals(1L, nestedObject.getInnersInList().get(0).getInnersInList().get(0).getL());
+assertEquals(2L, nestedObject.getInnersInList().get(0).getInnersInList().get(1).getL());
+```
+
+### 7. Setting Values in Arrays and Maps (ObjectFieldSetterTest.java)
+
+Set values in array and map fields:
+
+```java
+class ObjectTest {
+    private ObjectTest[] innersInArray;
+    private Map<ObjectTest, ObjectTest> innersInMap;
+    private List<ObjectTest> innersInList;
+    private long l;
+}
+
+// Set values in array
+List<Object> arrayFieldInfos = new ArrayList<Object>();
+arrayFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInArray"));
+arrayFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+arrayFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+
+ObjectAddress arrayAddress = new ObjectAddress("innersInArray.innersInList.l");
+ObjectFieldSetter arraySetter = new ObjectFieldSetter(ObjectTest.class, arrayFieldInfos, arrayAddress);
+
+ObjectTest arrayObject = (ObjectTest) arraySetter.setValue(List.of(List.of(1L, 2L, 3L), List.of(1L, 2L, 3L)));
+
+assertNotNull(arrayObject);
+assertEquals(2, arrayObject.getInnersInArray().length);
+for(ObjectTest objectTest : arrayObject.getInnersInArray()) {
+    assertEquals(1L, objectTest.getInnersInList().get(0).getL());
+    assertEquals(2L, objectTest.getInnersInList().get(1).getL());
+    assertEquals(3L, objectTest.getInnersInList().get(2).getL());
+}
+
+// Set values in map using #key operator
+List<Object> mapFieldInfos = new ArrayList<Object>();
+mapFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInMap"));
+mapFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+mapFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+
+ObjectAddress mapAddress = new ObjectAddress("innersInMap.#key.innersInList.l");
+ObjectFieldSetter mapSetter = new ObjectFieldSetter(ObjectTest.class, mapFieldInfos, mapAddress);
+
+ObjectTest mapObject = (ObjectTest) mapSetter.setValue(List.of(List.of(1L, 2L, 3L), List.of(1L, 2L, 3L)));
+
+assertNotNull(mapObject);
+assertEquals(2, mapObject.getInnersInMap().size());
+mapObject.getInnersInMap().keySet().forEach(objectTest -> {
+    assertEquals(1L, objectTest.getInnersInList().get(0).getL());
+    assertEquals(2L, objectTest.getInnersInList().get(1).getL());
+    assertEquals(3L, objectTest.getInnersInList().get(2).getL());
+});
+```
+
+### 8. ObjectReflectionHelper Utilities (ObjectReflectionHelperTest.java)
+
+Use helper methods to get fields and methods:
+
+```java
+class SuperClass {
+    Long superField;
+}
+
+class Entity extends SuperClass {
+    String field;
+
+    public String aMethod(String test, SuperClass superClass) {
+        return null;
+    }
+}
+
+// Get field from class
+Field fieldField = ObjectReflectionHelper.getField(Entity.class, "field");
+assertNotNull(fieldField);
+
+// Try to get non-existent field
+Field testField = ObjectReflectionHelper.getField(Entity.class, "test");
+assertNull(testField);
+
+// Get field from superclass
+Field superFieldField = ObjectReflectionHelper.getField(Entity.class, "superField");
+assertNotNull(superFieldField);  // Successfully finds field in parent class
+
+// Get method
+Method method = ObjectReflectionHelper.getMethod(Entity.class, "aMethod");
+assertNotNull(method);
+```
+
+### 9. Constructor Binder with Parameters (ConstructorBinderBuilderTest.java)
+
+Build and invoke constructors with parameters:
+
+```java
+class TargetClass {
+    public final String name;
+    public final int value;
+
+    public TargetClass(String name, int value) {
+        this.name = name;
+        this.value = value;
     }
 
-    public String format(String prefix, int value) {
-        return prefix + ": " + value;
+    public TargetClass(String name) {
+        this(name, 0);
+    }
+
+    public TargetClass() {
+        this("default", -1);
     }
 }
 
-Calculator calc = new Calculator();
-ObjectQuery query = ObjectQueryFactory.objectQuery(calc);
+// Build constructor binder with raw values
+ConcreteConstructorBinderBuilder builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+builder.withParam("Hello").withParam(123);
 
-// Invoke methods
-Integer sum = query.invoke("add", 10, 20);
-// Returns: 30
+IConstructorBinder<TargetClass> binder = builder.build();
+assertNotNull(binder);
 
-String formatted = query.invoke("format", "Result", 42);
-// Returns: "Result: 42"
+Optional<? extends TargetClass> obj = binder.execute();
+assertTrue(obj.isPresent());
+TargetClass tc = obj.get();
+assertEquals("Hello", tc.name);
+assertEquals(123, tc.value);
+
+// Build constructor with suppliers
+builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+builder.withParam(new FixedSupplierBuilder<>("Dynamic"))
+       .withParam(new FixedSupplierBuilder<>(999));
+
+binder = builder.build();
+tc = binder.execute().get();
+assertEquals("Dynamic", tc.name);
+assertEquals(999, tc.value);
+
+// Use default constructor
+builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+binder = builder.build();
+tc = binder.execute().get();
+assertEquals("default", tc.name);
+assertEquals(-1, tc.value);
+
+// Nullable parameters
+builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+builder.withParam(0, new NullSupplierBuilder<String>(String.class), true);
+builder.withParam(1, 77);
+
+binder = builder.build();
+tc = binder.execute().get();
+assertNull(tc.name);
+assertEquals(77, tc.value);
 ```
 
-### 6. Nested Method Invocation
+### 10. Method Binder for Instance and Static Methods (MethodBinderTest.java)
 
-Invoke methods on nested objects:
+Invoke methods using method binders:
 
 ```java
-class User {
-    private Profile profile;
-}
+class MethodObject {
+    String echo(String message) {
+        return message;
+    }
 
-class Profile {
-    private String name;
-
-    public String getDisplayName() {
-        return "User: " + name;
+    static String staticEcho(String message) {
+        return message;
     }
 }
 
-User user = new User();
-user.profile = new Profile();
-user.profile.name = "Alice";
-
-ObjectQuery query = ObjectQueryFactory.objectQuery(user);
-
-// Invoke method on nested object
-String displayName = query.invoke("profile.getDisplayName");
-// Returns: "User: Alice"
-```
-
-### 7. ObjectAddress Creation and Resolution
-
-Work with ObjectAddress objects directly:
-
-```java
-class Department {
-    private List<Employee> employees;
-}
-
-class Employee {
-    private String name;
-    private Address address;
-}
-
-ObjectQuery query = ObjectQueryFactory.objectQuery(Department.class);
-
-// Create ObjectAddress
-ObjectAddress nameAddress = new ObjectAddress("employees.#item.name", true);
-ObjectAddress cityAddress = new ObjectAddress("employees.#item.address.city", true);
-
-// Find field structure
-List<Object> nameStructure = query.find(nameAddress);
-// Returns: [Field(employees), Field(name)]
-
-List<Object> cityStructure = query.find(cityAddress);
-// Returns: [Field(employees), Field(address), Field(city)]
-```
-
-### 8. Field Resolution
-
-Resolve fields across complex hierarchies:
-
-```java
-class BaseEntity {
-    private Long id;
-    private LocalDateTime createdAt;
-}
-
-class User extends BaseEntity {
-    private String username;
-    private String email;
-}
-
-ObjectQuery query = ObjectQueryFactory.objectQuery(User.class);
-
-// Resolve field by name (searches through inheritance hierarchy)
-ObjectAddress idAddress = FieldResolver.fieldByFieldName("id", query, User.class);
-// Successfully finds 'id' in BaseEntity
-
-ObjectAddress usernameAddress = FieldResolver.fieldByFieldName("username", query, User.class);
-// Finds 'username' in User
-
-// Resolve with type validation
-ObjectAddress emailAddress = FieldResolver.fieldByFieldName("email", query, User.class, String.class);
-// Validates that 'email' is of type String
-```
-
-### 9. Field Instantiation
-
-Automatically instantiate field values based on type:
-
-```java
-class Container {
-    private List<String> items;
-    private Map<String, Integer> counts;
-    private int[] numbers;
-}
-
-Container container = new Container();
-
-// Get field
-Field itemsField = Container.class.getDeclaredField("items");
-Field countsField = Container.class.getDeclaredField("counts");
-Field numbersField = Container.class.getDeclaredField("numbers");
-
-// Instantiate based on field type
-Object itemsList = Fields.instanciate(itemsField);
-// Returns: new ArrayList<String>()
-
-Object countsMap = Fields.instanciate(countsField);
-// Returns: new HashMap<String, Integer>()
-
-Object numbersArray = Fields.instanciate(numbersField);
-// Returns: new int[0]
-```
-
-### 10. Generic Type Extraction
-
-Extract generic type information from fields:
-
-```java
-class Repository {
-    private List<User> users;
-    private Map<String, Product> products;
-    private Set<Order> orders;
-}
-
-Field usersField = Repository.class.getDeclaredField("users");
-Field productsField = Repository.class.getDeclaredField("products");
-
-// Extract generic types
-Class<?> userType = Fields.getGenericType(usersField, 0);
-// Returns: User.class
-
-Class<?> keyType = Fields.getGenericType(productsField, 0);
-Class<?> valueType = Fields.getGenericType(productsField, 1);
-// keyType: String.class, valueType: Product.class
-```
-
-### 11. Field Binder Pattern
-
-Reactive field binding with suppliers:
-
-```java
-class Config {
-    private String environment;
-    private int maxConnections;
-}
-
-// Create suppliers
-ISupplier<Config> configSupplier = () -> Optional.of(new Config());
-ISupplier<String> envSupplier = () -> Optional.of("production");
-ISupplier<Integer> maxConnSupplier = () -> Optional.of(100);
-
-// Create binders
-FieldBinder<Config, String> envBinder = new FieldBinder<>(
-    configSupplier,
-    new ObjectAddress("environment", true),
-    envSupplier
+// Invoke instance method
+ConcreteMethodBinderBuilder b = new ConcreteMethodBinderBuilder(
+    new Object(),
+    FixedSupplierBuilder.of(new MethodObject())
 );
+b.method("echo").withReturn(String.class).withParam("Hello");
+IMethodBinder<String> mb = b.build();
 
-FieldBinder<Config, Integer> maxConnBinder = new FieldBinder<>(
-    configSupplier,
-    new ObjectAddress("maxConnections", true),
-    maxConnSupplier
+assertEquals("Hello", mb.supply().get());
+
+// Invoke static method (supplier returns null for static)
+ConcreteMethodBinderBuilder staticBuilder = new ConcreteMethodBinderBuilder(
+    new Object(),
+    new NullSupplierBuilder<>(MethodObject.class)
 );
+staticBuilder.method("staticEcho").withReturn(String.class).withParam("Hello");
+IMethodBinder<String> staticBinder = staticBuilder.build();
 
-// Set values (deferred until execution)
-envBinder.setValue();
-maxConnBinder.setValue();
-
-// Get values
-String env = envBinder.getValue();           // "production"
-Integer maxConn = maxConnBinder.getValue();  // 100
+assertEquals("Hello", staticBinder.supply().get());
 ```
 
-### 12. ObjectAccessor Functional API
+### 11. Null Value Handling (ObjectFieldGetterTest.java)
 
-Use functional approach for reflection operations:
+Handle null values in object graphs:
 
 ```java
-class UserDto {
-    private String username;
-    private String email;
+class ObjectTest {
+    private ObjectTest inner;
+    private int i;
 }
 
-class UserEntity {
-    private String username;
-    private String email;
-}
+// Create object with null inner
+ObjectTest o = new ObjectTest(null, 0, null, 0, 0, null, null, null);
 
-UserEntity entity = new UserEntity();
-entity.username = "alice";
-entity.email = "alice@example.com";
+// Get null value
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 
-// Define functional getters
-ThrowingFunction<Class<?>, UserDto> getDtoClass = (clazz) -> new UserDto();
-ThrowingFunction<UserDto, ObjectAddress> getUsernameAddress =
-    (dto) -> new ObjectAddress("username", true);
+ObjectAddress address = new ObjectAddress("inner");
+ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 
-// Get value using functional API
-String username = ObjectAccessor.getValue(
-    entity,
-    (clazz) -> entity,
-    (obj) -> new ObjectAddress("username", true)
-);
-// Returns: "alice"
+Object value = getter.getValue(o);
+assertNull(value);  // Returns null
 
-// Set value using functional API
-ObjectAccessor.setValue(
-    entity,
-    (clazz) -> entity,
-    (obj) -> new ObjectAddress("email", true),
-    "newemail@example.com"
-);
-// entity.email is now "newemail@example.com"
+// Get value from null inner object
+List<Object> nestedFieldInfos = new ArrayList<Object>();
+nestedFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+nestedFieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
+
+ObjectAddress nestedAddress = new ObjectAddress("inner.i");
+ObjectFieldGetter nestedGetter = new ObjectFieldGetter(ObjectTest.class, nestedFieldInfos, nestedAddress);
+
+Object nestedValue = nestedGetter.getValue(o);
+assertNull(nestedValue);  // Returns null when traversing through null
 ```
 
 ## Advanced Patterns
 
-### Dynamic Field Discovery
+### Complex Nested Structure Access (ObjectFieldGetterTest.java)
 
-Discover available fields at runtime:
+Access values through complex nested structures with lists, arrays, and maps:
 
 ```java
-class DynamicObject {
-    private String field1;
-    private int field2;
-    private List<String> field3;
+class ObjectTest {
+    private ObjectTest inner;
+    private List<ObjectTest> innersInList;
+    private ObjectTest[] innersInArray;
+    private Map<ObjectTest, ObjectTest> innersInMap;
+    private int i;
 }
 
-ObjectQuery query = ObjectQueryFactory.objectQuery(DynamicObject.class);
+// Create deeply nested object (6 levels)
+ObjectTest o = createNestedObject(6);
 
-// Find all fields matching a name
-try {
-    ObjectAddress address = query.address("field1");
-    System.out.println("Found field at: " + address);
-} catch (ReflectionException e) {
-    System.out.println("Field not found");
-}
+// Access through: inner -> innersInList -> innersInArray -> innersInMap (value) -> inner -> i
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInArray"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInMap"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "i"));
+
+ObjectAddress address = new ObjectAddress("inner.innersInList.innersInArray.innersInMap.#value.inner.i", false);
+ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
+
+Object value = getter.getValue(o);
+assertNotNull(value);
+// Returns nested list structure: List<List<List<int>>>
+assertEquals(1, ((List<Object>) ((List<Object>) ((List<Object>) value).get(0)).get(0)).get(0));
 ```
 
-### Field Structure Generation
+### Setting Values in Sets (ObjectFieldSetterTest.java)
 
-Generate nested object structures automatically:
+Set values in Set fields:
 
 ```java
-class Order {
-    private Customer customer;
+class ObjectTest {
+    private Set<ObjectTest> innersInSet;
+    private List<ObjectTest> innersInList;
+    private long l;
 }
 
-class Customer {
-    private Address address;
-}
+// Set values in set with nested list
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInSet"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
 
-class Address {
-    private String city;
-}
+ObjectAddress address = new ObjectAddress("innersInSet.innersInList.l");
+ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
 
-ObjectQuery query = ObjectQueryFactory.objectQuery(Order.class);
+ObjectTest object = (ObjectTest) setter.setValue(List.of(List.of(1L, 2L, 3L), List.of(1L, 2L, 3L)));
 
-// Generate structure for nested field
-Object structure = query.fieldValueStructure("customer.address.city");
-// Returns: fully initialized Customer → Address → city hierarchy
+assertNotNull(object);
+assertEquals(2, object.getInnersInSet().size());
+object.getInnersInSet().forEach(objectTest -> {
+    assertEquals(1L, objectTest.getInnersInList().get(0).getL());
+    assertEquals(2L, objectTest.getInnersInList().get(1).getL());
+    assertEquals(3L, objectTest.getInnersInList().get(2).getL());
+});
 ```
 
-### Blacklist Pattern for Circular References
+### Deep Nesting Support
 
-Prevent infinite recursion with class blacklisting:
-
-```java
-// Add classes to blacklist to prevent traversal
-Fields.BlackList.addClassToBlackList(java.lang.Object.class);
-Fields.BlackList.addClassToBlackList(java.lang.Class.class);
-
-// Check if class is blacklisted
-boolean isBlacklisted = Fields.BlackList.isBlackListed(Object.class);
-// Returns: true
-```
-
-### Type Checking Utilities
-
-Validate field types before operations:
+The library supports unlimited depth nesting. Example from tests shows 6-level deep access:
 
 ```java
-Field field = SomeClass.class.getDeclaredField("someField");
+// Create object nested 6 levels deep
+ObjectTest deepObject = createNestedObject(6);
 
-// Check if field is not primitive
-boolean isComplex = Fields.isNotPrimitive(field.getType());
+// Access: inner.inner.inner.inner.inner.l (5 levels of inner, then field l)
+List<Object> fieldInfos = new ArrayList<Object>();
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
 
-// Check if field is not primitive and not in java.*/javax.* packages
-boolean isCustomType = Fields.isNotPrimitiveOrInternal(field.getType());
+ObjectAddress address = new ObjectAddress("inner.inner.inner.inner.inner.l", false);
+ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
 
-// Check if field is collection/array/map
-boolean isContainer = Fields.isArrayOrMapOrCollectionField(field);
-```
-
-### Logging with Pretty Printing
-
-Use colored console output for debugging:
-
-```java
-Field userField = User.class.getDeclaredField("username");
-Method getUserMethod = User.class.getMethod("getUsername");
-
-// Pretty colored output (ANSI colors)
-String fieldStr = Fields.prettyColored(userField);
-// Output: "User.username : String" (with colors)
-
-String methodStr = Methods.prettyColored(getUserMethod);
-// Output: "User.getUsername()" (with colors)
+ObjectTest object = (ObjectTest) setter.setValue(1L);
+assertNotNull(object);
+assertEquals(1L, object.getInner().getInner().getInner().getInner().getInner().getL());
 ```
 
 ## Performance

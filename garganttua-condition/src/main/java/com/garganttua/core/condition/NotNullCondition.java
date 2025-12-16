@@ -2,6 +2,7 @@ package com.garganttua.core.condition;
 
 import java.util.Objects;
 
+import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -14,7 +15,7 @@ public class NotNullCondition implements ICondition {
 
     public NotNullCondition(ISupplier<?> supplier) {
         log.atTrace().log("Entering NotNullCondition constructor");
-        this.supplier = Objects.requireNonNull(supplier, "Object supplier builder cannot be null");
+        this.supplier = Objects.requireNonNull(supplier, "Object supplier cannot be null");
         log.atTrace().log("Exiting NotNullCondition constructor");
     }
 
@@ -26,13 +27,19 @@ public class NotNullCondition implements ICondition {
         log.atTrace().log("Entering evaluate() for NotNullCondition");
         log.atDebug().log("Evaluating NOT NULL condition - negation of NULL condition");
 
-        boolean nullResult = new NullCondition(supplier).fullEvaluate();
-        log.atDebug().log("NULL condition result: {}", nullResult);
-
-        boolean result = !nullResult;
+        boolean result = notNull(this.supplier.supply().orElse(null));
         log.atInfo().log("NOT NULL condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
+    }
+
+    @ExpressionNode(name = "notNull", description = "Checks if an object is not null")
+    public static boolean notNull(Object obj) {
+        boolean nullResult = obj == null;
+        log.atDebug().log("NULL condition result: {}", nullResult);
+
+        boolean result = !nullResult;
+        return result;
     }
 
 }

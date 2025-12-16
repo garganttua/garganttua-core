@@ -24,72 +24,102 @@
  *   <li>{@link com.garganttua.core.reflection.utils} - Reflection utility classes</li>
  * </ul>
  *
- * <h2>Usage Example: Object Accessor</h2>
+ * <h2>Usage Example: ObjectAddress (from ObjectAddressTest)</h2>
  * <pre>{@code
- * public class User {
- *     private String name;
- *     private int age;
+ * // Create address with validation
+ * ObjectAddress address = new ObjectAddress("field1.field2.field3");
+ * assertEquals(3, address.length());
+ * assertEquals("field1", address.getElement(0));
+ * assertEquals("field2", address.getElement(1));
+ * assertEquals("field3", address.getElement(2));
  *
- *     public void greet(String message) {
- *         System.out.println(message + ", " + name);
+ * // Convert to string
+ * assertEquals("field1.field2.field3", address.toString());
+ *
+ * // Invalid addresses throw IllegalArgumentException
+ * assertThrows(IllegalArgumentException.class, () -> new ObjectAddress(".field1.field2"));
+ * assertThrows(IllegalArgumentException.class, () -> new ObjectAddress("field1.field2."));
+ * }</pre>
+ *
+ * <h2>Usage Example: Field Getting (from ObjectFieldGetterTest)</h2>
+ * <pre>{@code
+ * class ObjectTest {
+ *     private long l;
+ *     private ObjectTest inner;
+ * }
+ *
+ * // Get simple field value
+ * List<Object> fieldInfos = new ArrayList<Object>();
+ * fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+ *
+ * ObjectAddress address = new ObjectAddress("l");
+ * ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
+ *
+ * Object value = getter.getValue(o);
+ * assertEquals(1L, value);
+ *
+ * // Get nested field value
+ * List<Object> nestedInfos = new ArrayList<Object>();
+ * nestedInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
+ * nestedInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+ *
+ * ObjectAddress nestedAddress = new ObjectAddress("inner.l");
+ * ObjectFieldGetter nestedGetter = new ObjectFieldGetter(ObjectTest.class, nestedInfos, nestedAddress);
+ *
+ * Object nestedValue = nestedGetter.getValue(o);
+ * assertEquals(1L, nestedValue);
+ * }</pre>
+ *
+ * <h2>Usage Example: Field Setting (from ObjectFieldSetterTest)</h2>
+ * <pre>{@code
+ * class ObjectTest {
+ *     private String s;
+ *     private List<ObjectTest> innersInList;
+ * }
+ *
+ * // Set simple field
+ * List<Object> fieldInfos = new ArrayList<Object>();
+ * fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "s"));
+ *
+ * ObjectAddress address = new ObjectAddress("s");
+ * ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
+ *
+ * ObjectTest object = (ObjectTest) setter.setValue("test");
+ * assertEquals("test", object.getS());
+ *
+ * // Set values in list - creates list elements automatically
+ * List<Object> listInfos = new ArrayList<Object>();
+ * listInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
+ * listInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "s"));
+ *
+ * ObjectAddress listAddress = new ObjectAddress("innersInList.s");
+ * ObjectFieldSetter listSetter = new ObjectFieldSetter(ObjectTest.class, listInfos, listAddress);
+ *
+ * ObjectTest listObject = (ObjectTest) listSetter.setValue(List.of("a", "b", "c"));
+ * assertEquals(3, listObject.getInnersInList().size());
+ * }</pre>
+ *
+ * <h2>Usage Example: Constructor Binder (from ConstructorBinderBuilderTest)</h2>
+ * <pre>{@code
+ * class TargetClass {
+ *     public final String name;
+ *     public final int value;
+ *
+ *     public TargetClass(String name, int value) {
+ *         this.name = name;
+ *         this.value = value;
  *     }
  * }
  *
- * // Create object accessor
- * User user = new User();
- * ObjectAccessor accessor = new ObjectAccessor(user);
+ * // Build constructor binder with parameters
+ * ConcreteConstructorBinderBuilder builder = new ConcreteConstructorBinderBuilder(TargetClass.class);
+ * builder.withParam("Hello").withParam(123);
  *
- * // Set field values
- * accessor.setField("name", "Alice");
- * accessor.setField("age", 30);
- *
- * // Get field values
- * String name = accessor.getField("name");
- * int age = accessor.getField("age");
- *
- * // Invoke method
- * accessor.invokeMethod("greet", "Hello");
- * }</pre>
- *
- * <h2>Usage Example: Field Access</h2>
- * <pre>{@code
- * // Direct field access
- * FieldAccessor fieldAccessor = new FieldAccessor(User.class, "email");
- * fieldAccessor.set(user, "alice@example.com");
- * String email = fieldAccessor.get(user);
- *
- * // Field query
- * List<Field> annotatedFields = FieldQuery.findFieldsWithAnnotation(
- *     User.class,
- *     Inject.class
- * );
- * }</pre>
- *
- * <h2>Usage Example: Method Invocation</h2>
- * <pre>{@code
- * // Method invoker
- * MethodInvoker invoker = new MethodInvoker(user, "updateProfile");
- * invoker.withParameter(0, "New Name");
- * invoker.withParameter(1, "new.email@example.com");
- * Object result = invoker.invoke();
- *
- * // Method query
- * List<Method> providers = MethodQuery.findMethodsWithAnnotation(
- *     ConfigClass.class,
- *     Provider.class
- * );
- * }</pre>
- *
- * <h2>Usage Example: Constructor Access</h2>
- * <pre>{@code
- * // Constructor invocation
- * ConstructorAccessor<User> constructor =
- *     new ConstructorAccessor<>(User.class);
- *
- * constructor.withParameter(0, "Alice");
- * constructor.withParameter(1, 30);
- *
- * User user = constructor.newInstance();
+ * IConstructorBinder<TargetClass> binder = builder.build();
+ * Optional<? extends TargetClass> obj = binder.execute();
+ * TargetClass tc = obj.get();
+ * assertEquals("Hello", tc.name);
+ * assertEquals(123, tc.value);
  * }</pre>
  *
  * <h2>Features</h2>

@@ -30,70 +30,108 @@
  * </ol>
  *
  * <h2>Usage Example: Bean Factory</h2>
+ * Based on real test code from BeanFactoryTest.java:
  * <pre>{@code
- * // Create bean factory for UserService
- * BeanFactory<UserService> factory = new BeanFactory<>(UserService.class)
- *     .withConstructorInjection(
- *         UserRepository.class,
- *         ConfigurationProperties.class
+ * // Create singleton bean factory
+ * BeanFactory<DummyBean> singletonFactory = new BeanFactory<>(
+ *     new BeanDefinition<>(
+ *         new BeanReference<>(DummyBean.class, Optional.of(BeanStrategy.singleton), Optional.empty(), null),
+ *         Optional.empty(), Set.of(), Set.of()
  *     )
- *     .withFieldInjection("logger", Logger.class)
- *     .withPostConstruct("initialize");
+ * );
  *
- * // Create instance
- * UserService service = factory.create(diContext);
+ * // Singleton returns same instance
+ * Optional<DummyBean> bean1 = singletonFactory.supply();
+ * Optional<DummyBean> bean2 = singletonFactory.supply();
+ * assertSame(bean1.get(), bean2.get());
+ *
+ * // Create prototype bean factory
+ * BeanFactory<DummyBean> prototypeFactory = new BeanFactory<>(
+ *     new BeanDefinition<>(
+ *         new BeanReference<>(DummyBean.class, Optional.of(BeanStrategy.prototype), Optional.empty(), null),
+ *         Optional.empty(), Set.of(), Set.of()
+ *     )
+ * );
+ *
+ * // Prototype returns different instances
+ * Optional<DummyBean> bean3 = prototypeFactory.supply();
+ * Optional<DummyBean> bean4 = prototypeFactory.supply();
+ * assertNotSame(bean3.get(), bean4.get());
  * }</pre>
  *
  * <h2>Usage Example: Bean Provider</h2>
+ * Based on real test code from DiContextBuilderTest.java:
  * <pre>{@code
- * // Create bean provider
- * BeanProvider provider = new BeanProvider("services");
+ * // Create context with multiple bean providers
+ * IDiContext context = DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .beanProvider(Predefined.BeanProviders.garganttua.toString(), new DummyBeanProviderBuilder())
+ *         .up()
+ *     .beanProvider("dummy", new DummyBeanProviderBuilder())
+ *         .up()
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- * // Register factories
- * provider.registerFactory(UserService.class, userServiceFactory);
- * provider.registerFactory(OrderService.class, orderServiceFactory);
- *
- * // Get bean
- * UserService service = provider.getBean(UserService.class, diContext);
- *
- * // Check existence
- * boolean hasBean = provider.hasBean(OrderService.class);
+ * // Verify providers are registered
+ * assertEquals(2, context.getBeanProviders().size());
+ * assertTrue(context.getBeanProvider(Predefined.BeanProviders.garganttua.toString()).isPresent());
  * }</pre>
  *
  * <h2>Usage Example: Bean Supplier</h2>
+ * Based on real test code from BeanFactoryBuilderTest.java:
  * <pre>{@code
- * // Create bean supplier with configuration
- * BeanSupplier<DataSource> supplier = new BeanSupplier<>(
- *     HikariDataSource.class,
- *     diContext
- * )
- *     .configureConstructor(
- *         param -> param.resolveProperty("db.url"),
- *         param -> param.resolveProperty("db.username"),
- *         param -> param.resolveProperty("db.password")
- *     )
- *     .configureProperty("maximumPoolSize", 10)
- *     .configureProperty("connectionTimeout", 30000);
+ * // Programmatically configure a bean supplier
+ * String randomValue = UUID.randomUUID().toString();
+ * IBeanFactoryBuilder<DummyBean> builder = new BeanFactoryBuilder<>(DummyBean.class);
  *
- * // Get configured instance
- * DataSource dataSource = supplier.get();
+ * IBeanSupplier<DummyBean> beanSupplier = builder
+ *     .strategy(BeanStrategy.singleton)
+ *     .name("aBean")
+ *     .qualifier(DummyBeanQualifier.class)
+ *     .field(String.class).field("anotherValue")
+ *         .withValue(FixedSupplierBuilder.of(randomValue))
+ *         .up()
+ *     .constructor()
+ *         .withParam(FixedSupplierBuilder.of("constructedWithParameter"))
+ *         .up()
+ *     .postConstruction()
+ *         .method("markPostConstruct")
+ *         .withReturn(Void.class)
+ *         .up()
+ *     .build();
+ *
+ * Optional<DummyBean> bean = beanSupplier.supply();
+ * assertEquals("constructedWithParameter", bean.get().getValue());
+ * assertTrue(bean.get().isPostConstructCalled());
  * }</pre>
  *
  * <h2>Usage Example: Bean Query</h2>
+ * Based on real test code from BeanQueryTest.java:
  * <pre>{@code
- * BeanQuery query = new BeanQuery(beanProvider);
- *
  * // Query by type
- * UserService service = query.findByType(UserService.class);
+ * IBeanQueryBuilder<DummyBean> builder = BeanQuery.builder();
+ * Optional<DummyBean> bean = builder.type(DummyBean.class).build().execute();
+ * assertTrue(bean.isPresent());
  *
- * // Query by type and qualifier
- * UserService adminService = query.findByTypeAndQualifier(
- *     UserService.class,
- *     "admin"
- * );
+ * // Query by name
+ * IBeanQueryBuilder<DummyBean> builder2 = BeanQuery.builder();
+ * Optional<DummyBean> namedBean = builder2.name("dummyBeanForTest").build().execute();
+ * assertTrue(namedBean.isPresent());
  *
- * // Query all of type
- * List<MessageHandler> handlers = query.findAllByType(MessageHandler.class);
+ * // Query by type and name
+ * IBeanQueryBuilder<DummyBean> builder3 = BeanQuery.builder();
+ * Optional<DummyBean> exactBean = builder3
+ *     .type(DummyBean.class)
+ *     .name("dummyBeanForTest")
+ *     .build()
+ *     .execute();
+ * assertTrue(exactBean.isPresent());
+ *
+ * // Query with non-existent name returns empty
+ * IBeanQueryBuilder<DummyBean> builder4 = BeanQuery.builder();
+ * Optional<DummyBean> notFound = builder4.name("toto").build().execute();
+ * assertFalse(notFound.isPresent());
  * }</pre>
  *
  * <h2>Scope Management</h2>

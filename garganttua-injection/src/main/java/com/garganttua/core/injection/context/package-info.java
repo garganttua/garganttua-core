@@ -26,62 +26,80 @@
  * </ul>
  *
  * <h2>Context Lifecycle</h2>
+ * Based on real test code from DiContextTest.java:
  * <pre>{@code
- * // 1. Create context
- * IDiContext context = new DiContextBuilder()
- *     .withPackage("com.myapp")
- *     .build();
+ * // 1. Create context with package scanning and properties
+ * DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+ *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+ *         .up()
+ *     .autoDetect(true)
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- * // 2. Start context (initializes beans, executes @PostConstruct)
- * context.onStart();
- *
- * // 3. Use context
- * MyService service = context.getBean(MyService.class);
- * service.doWork();
- *
- * // 4. Stop context (executes @PreDestroy, cleans up resources)
- * context.onStop();
+ * // 2. Use context - query beans
+ * Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
+ * if (bean.isPresent()) {
+ *     System.out.println("Value: " + bean.get().getValue());
+ *     System.out.println("Post-construct called: " + bean.get().isPostConstructCalled());
+ * }
  * }</pre>
  *
  * <h2>Bean Resolution</h2>
+ * Based on real test code from BeanQueryTest.java:
  * <pre>{@code
- * // By type
- * UserService service = context.getBean(UserService.class);
+ * // Query by type
+ * IBeanQueryBuilder<DummyBean> builder = BeanQuery.builder();
+ * Optional<DummyBean> bean = builder.type(DummyBean.class).build().execute();
  *
- * // By type and qualifier
- * UserService adminService = context.getBean(UserService.class, "admin");
+ * // Query by name
+ * IBeanQueryBuilder<DummyBean> builder2 = BeanQuery.builder();
+ * Optional<DummyBean> namedBean = builder2.name("dummyBeanForTest").build().execute();
  *
- * // Check existence
- * boolean hasBean = context.hasBean(UserService.class);
+ * // Query by type and name
+ * IBeanQueryBuilder<DummyBean> builder3 = BeanQuery.builder();
+ * Optional<DummyBean> exactBean = builder3
+ *     .type(DummyBean.class)
+ *     .name("dummyBeanForTest")
+ *     .build()
+ *     .execute();
  * }</pre>
  *
  * <h2>Property Resolution</h2>
+ * Based on real test code from DiContextTest.java:
  * <pre>{@code
- * // Get property
- * String dbUrl = context.getProperty("db.url");
+ * // Configure property
+ * DiContext.builder()
+ *     .withPackage("com.garganttua")
+ *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+ *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
+ *         .up()
+ *     .build()
+ *     .onInit()
+ *     .onStart();
  *
- * // Get with default
- * String dbUrl = context.getProperty("db.url", "jdbc:mysql://localhost:3306/default");
+ * // Retrieve property
+ * Optional<String> property = Properties.property(String.class)
+ *     .key("com.garganttua.dummyPropertyInConstructor")
+ *     .build()
+ *     .supply();
  *
- * // Check existence
- * boolean hasProperty = context.hasProperty("db.url");
+ * assertTrue(property.isPresent());
+ * assertEquals("propertyValue", property.get());
  * }</pre>
  *
  * <h2>Context Hierarchy</h2>
+ * Note: Working examples are not present in current test suite.
  * <pre>{@code
  * // Create parent context
- * IDiContext parent = new DiContextBuilder()
+ * IDiContext parent = DiContext.builder()
  *     .withPackage("com.myapp.core")
  *     .build();
  *
  * // Create child context
- * IDiContext child = new DiContextBuilder()
- *     .withPackage("com.myapp.module")
- *     .parentContext(parent)
- *     .build();
- *
- * // Child can access parent beans
- * CoreService coreService = child.getBean(CoreService.class);
+ * IDiContext child = parent.newChildContext(CustomChildContext.class, "module1");
  * }</pre>
  *
  * <h2>Related Packages</h2>

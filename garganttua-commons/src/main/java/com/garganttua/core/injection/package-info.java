@@ -36,29 +36,127 @@
  *   <li>Lifecycle callbacks (post-construct, pre-destroy)</li>
  * </ul>
  *
- * <h2>Usage Example</h2>
+ * <h2>BeanReference - Bean Lookup DSL</h2>
+ * <p>
+ * {@link com.garganttua.core.injection.BeanReference} provides a powerful DSL for parsing
+ * and matching beans in the dependency injection system. The syntax supports provider, type,
+ * strategy, name, and qualifiers.
+ * </p>
+ *
+ * <h3>Basic Parsing</h3>
  * <pre>{@code
- * // Create context
- * IDiContext context = new DiContextBuilder()
- *     .addBean(UserRepository.class)
- *     .addBean(UserService.class)
- *     .addProperty("db.url", "jdbc:mysql://localhost:3306/mydb")
- *     .build();
+ * // Parse by fully qualified class name
+ * var ref1 = BeanReference.parse("java.lang.String");
+ * // Type: String.class
  *
- * // Start lifecycle
- * context.onStart();
+ * // With strategy (singleton or prototype)
+ * var ref2 = BeanReference.parse("java.lang.String!singleton");
+ * // Type: String.class, Strategy: singleton
  *
- * // Retrieve beans
- * UserService service = context.getBean(UserService.class);
+ * // With named bean
+ * var ref3 = BeanReference.parse("java.lang.String#main");
+ * // Type: String.class, Name: "main"
  *
- * // With qualifier
- * UserService adminService = context.getBean(UserService.class, "admin");
+ * // With provider prefix
+ * var ref4 = BeanReference.parse("local::#Mail");
+ * // Provider: "local", Name: "Mail"
+ * }</pre>
  *
- * // Get property
- * String dbUrl = context.getProperty("db.url");
+ * <h3>Advanced Parsing</h3>
+ * <pre>{@code
+ * // Full syntax: provider::class!strategy#name@qualifier
+ * var ref = BeanReference.parse("local::java.lang.String!prototype#bean1");
+ * // Provider: "local"
+ * // Type: String.class
+ * // Strategy: prototype
+ * // Name: "bean1"
  *
- * // Shutdown
- * context.onStop();
+ * // With qualifiers (fully qualified annotation class names)
+ * var ref2 = BeanReference.parse("java.lang.String@com.example.Q1@com.example.Q2");
+ * // Type: String.class
+ * // Qualifiers: [Q1.class, Q2.class]
+ *
+ * // Complete example with all components
+ * var ref3 = BeanReference.parse("remote::com.myapp.Service!singleton#primary@com.myapp.Production");
+ * }</pre>
+ *
+ * <h3>Programmatic Creation and Matching</h3>
+ * <pre>{@code
+ * // Create references programmatically
+ * BeanReference<String> ref1 = new BeanReference<>(
+ *     String.class,
+ *     Optional.of(BeanStrategy.singleton),
+ *     Optional.of("myBean"),
+ *     Set.of()
+ * );
+ *
+ * BeanReference<String> ref2 = new BeanReference<>(
+ *     String.class,
+ *     Optional.of(BeanStrategy.singleton),
+ *     Optional.of("myBean"),
+ *     Set.of()
+ * );
+ *
+ * // Check if references match (compares type, strategy, name, qualifiers)
+ * boolean matches = ref1.matches(ref2); // true
+ *
+ * // Get effective name (explicit name or simple class name)
+ * String name = ref1.effectiveName(); // "myBean"
+ * }</pre>
+ *
+ * <h2>BeanDefinition - Bean Metadata</h2>
+ * <p>
+ * {@link com.garganttua.core.injection.BeanDefinition} encapsulates complete bean metadata
+ * including reference, supplier, field binders, and method binders.
+ * </p>
+ *
+ * <h3>Creating Bean Definitions</h3>
+ * <pre>{@code
+ * // Create bean reference
+ * BeanReference<MyService> ref = new BeanReference<>(
+ *     MyService.class,
+ *     Optional.of(BeanStrategy.singleton),
+ *     Optional.of("primaryService"),
+ *     Set.of(PrimaryQualifier.class)
+ * );
+ *
+ * // Create bean definition with all metadata
+ * BeanDefinition<MyService> def = new BeanDefinition<>(
+ *     ref,                           // Bean reference
+ *     Optional.of(supplier),         // Optional supplier for bean creation
+ *     Set.of(fieldBinder1, fieldBinder2), // Field injection binders
+ *     Set.of(methodBinder1)          // Method injection binders
+ * );
+ *
+ * // Access metadata
+ * String effectiveName = def.reference().effectiveName(); // "primaryService"
+ * Class<MyService> type = def.reference().type();         // MyService.class
+ * BeanStrategy strategy = def.reference().strategy().get(); // singleton
+ * }</pre>
+ *
+ * <h3>Equality and Matching</h3>
+ * <pre>{@code
+ * // Bean definitions are equal if their references match
+ * BeanReference<MyService> ref1 = new BeanReference<>(
+ *     MyService.class,
+ *     Optional.of(BeanStrategy.singleton),
+ *     Optional.of("myBean"),
+ *     Set.of()
+ * );
+ *
+ * BeanReference<MyService> ref2 = new BeanReference<>(
+ *     MyService.class,
+ *     Optional.of(BeanStrategy.singleton),
+ *     Optional.of("myBean"),
+ *     Set.of()
+ * );
+ *
+ * BeanDefinition<MyService> def1 = new BeanDefinition<>(ref1, Optional.empty(), Set.of(), Set.of());
+ * BeanDefinition<MyService> def2 = new BeanDefinition<>(ref2, Optional.empty(), Set.of(), Set.of());
+ *
+ * boolean equal = def1.equals(def2);         // true
+ * boolean hashEqual = def1.hashCode() == def2.hashCode(); // true
+ * boolean matches = def1.reference().matches(def2.reference()); // true
  * }</pre>
  *
  * <h2>Related Packages</h2>

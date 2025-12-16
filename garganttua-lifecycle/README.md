@@ -158,151 +158,119 @@ This allows components to expose lifecycle operations with custom exception type
 
 ## Usage
 
-### Basic Lifecycle Implementation
+All examples below are extracted from the actual working test file [AbstractLifecycleTest.java](src/test/java/com/garganttua/core/lifecycle/AbstractLifecycleTest.java).
+
+### Basic Lifecycle Implementation (from AbstractLifecycleTest)
 
 ```java
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class DatabaseConnection extends AbstractLifecycle {
+private static class TestLifecycle extends AbstractLifecycle {
 
-    private Connection connection;
-    private ConnectionPool pool;
+    AtomicInteger initCount = new AtomicInteger();
+    AtomicInteger startCount = new AtomicInteger();
+    AtomicInteger flushCount = new AtomicInteger();
+    AtomicInteger stopCount = new AtomicInteger();
 
     @Override
-    protected ILifecycle doInit() throws LifecycleException {
-        // Allocate resources
-        this.pool = new ConnectionPool(10);
+    protected ILifecycle doInit() {
+        initCount.incrementAndGet();
         return this;
     }
 
     @Override
-    protected ILifecycle doStart() throws LifecycleException {
-        // Establish connection
-        try {
-            this.connection = pool.acquire();
-            this.connection.open();
-        } catch (SQLException e) {
-            throw new LifecycleException("Failed to start connection", e);
-        }
+    protected ILifecycle doStart() {
+        startCount.incrementAndGet();
         return this;
     }
 
     @Override
-    protected ILifecycle doStop() throws LifecycleException {
-        // Close connection gracefully
-        try {
-            if (connection != null && connection.isOpen()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            throw new LifecycleException("Failed to stop connection", e);
-        }
+    protected ILifecycle doFlush() {
+        flushCount.incrementAndGet();
         return this;
     }
 
     @Override
-    protected ILifecycle doFlush() throws LifecycleException {
-        // Release resources
-        pool.releaseAll();
-        this.connection = null;
+    protected ILifecycle doStop() {
+        stopCount.incrementAndGet();
         return this;
-    }
-
-    // Business methods can verify state
-    public ResultSet executeQuery(String sql) throws LifecycleException {
-        ensureInitializedAndStarted(); // Throws if not ready
-        return connection.executeQuery(sql);
     }
 }
-
-// Usage
-DatabaseConnection db = new DatabaseConnection();
-db.onInit();   // Initialize connection pool
-db.onStart();  // Open connection
-// Use database
-db.onStop();   // Close connection
-db.onFlush();  // Release pool
 ```
 
-### Lifecycle with Background Threads
+### Init and Start (from testInitAndStart)
 
 ```java
-public class EventProcessor extends AbstractLifecycle {
+TestLifecycle lifecycle = new TestLifecycle();
+lifecycle.onInit().onStart();
 
-    private ExecutorService executorService;
-    private BlockingQueue<Event> eventQueue;
-    private volatile boolean processing = false;
+assertTrue(lifecycle.isInitialized());
+assertTrue(lifecycle.isStarted());
+assertFalse(lifecycle.isStopped());
 
-    @Override
-    protected ILifecycle doInit() throws LifecycleException {
-        // Create thread pool and queue
-        this.executorService = Executors.newFixedThreadPool(4);
-        this.eventQueue = new LinkedBlockingQueue<>(1000);
-        return this;
-    }
-
-    @Override
-    protected ILifecycle doStart() throws LifecycleException {
-        // Start background processing
-        this.processing = true;
-
-        // Submit worker tasks
-        for (int i = 0; i < 4; i++) {
-            executorService.submit(this::processEvents);
-        }
-
-        return this;
-    }
-
-    @Override
-    protected ILifecycle doStop() throws LifecycleException {
-        // Signal workers to stop
-        this.processing = false;
-
-        // Shutdown executor with timeout
-        executorService.shutdown();
-        try {
-            if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-
-        return this;
-    }
-
-    @Override
-    protected ILifecycle doFlush() throws LifecycleException {
-        // Clear pending events
-        eventQueue.clear();
-        this.executorService = null;
-        return this;
-    }
-
-    private void processEvents() {
-        while (processing) {
-            try {
-                Event event = eventQueue.poll(1, TimeUnit.SECONDS);
-                if (event != null) {
-                    handleEvent(event);
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
-
-    public void submitEvent(Event event) throws LifecycleException {
-        ensureInitializedAndStarted();
-        eventQueue.offer(event);
-    }
-}
+assertEquals(1, lifecycle.initCount.get());
+assertEquals(1, lifecycle.startCount.get());
 ```
+
+### Stop After Start (from testStop)
+
+```java
+lifecycle.onInit().onStart().onStop();
+
+assertTrue(lifecycle.isStopped());
+assertFalse(lifecycle.isStarted());
+assertEquals(1, lifecycle.stopCount.get());
+```
+
+### Reload Sequence (from testReload)
+
+```java
+lifecycle.onInit().onStart();
+
+lifecycle.onReload();
+
+assertTrue(lifecycle.isInitialized());
+assertTrue(lifecycle.isStarted());
+assertTrue(lifecycle.isFlushed());
+assertTrue(lifecycle.isStopped() == false); // restarted
+
+// Counters: each phase must be executed
+assertTrue(lifecycle.initCount.get() >= 2, "init must be recalled");
+assertTrue(lifecycle.startCount.get() >= 2, "start must be recalled");
+assertTrue(lifecycle.flushCount.get() >= 1, "flush must be executed");
+assertTrue(lifecycle.stopCount.get() >= 1, "stop must be executed");
+```
+
+### Error Handling - Flush After Start Fails (from testFlushAfterStart)
+
+```java
+assertThrows(LifecycleException.class, () -> lifecycle.onInit().onStart().onFlush());
+```
+
+### Error Handling - Start Without Init (from testStartWithoutInit)
+
+```java
+assertThrows(LifecycleException.class, () -> lifecycle.onStart());
+```
+
+### Error Handling - Double Init (from testInitTwiceThrows)
+
+```java
+lifecycle.onInit();
+assertThrows(LifecycleException.class, () -> lifecycle.onInit());
+```
+
+### Error Handling - Double Start (from testStartTwiceThrows)
+
+```java
+lifecycle.onInit().onStart();
+assertThrows(LifecycleException.class, () -> lifecycle.onStart());
+```
+
+## Advanced Usage Patterns
 
 ### Reload Support
 
