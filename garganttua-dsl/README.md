@@ -1,4 +1,4 @@
-# Garganttua DSL
+# 📜 Garganttua DSL
 
 ## Description
 

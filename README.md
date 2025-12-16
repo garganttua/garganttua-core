@@ -2,9 +2,16 @@
 
 **Garganttua Core** is the foundational framework of the Garganttua ecosystem. It provides a comprehensive suite of modular, low-level building blocks designed for building high-performance, enterprise-grade Java applications. With a focus on modularity, type safety, and developer experience, Garganttua Core offers essential capabilities for reflection, dependency injection, workflow orchestration, mapping, encryption, and runtime management.
 
+## ⚠️ Disclaimer
+
+This documentation is partially generated using AI and may not always reflect the exact implementation.
+If you find anything incorrect or unclear in this documentation or its sub-sections, please let me know at jeremy.colombet@garganttua.com.
+
+If you need additional information, code snippets, examples, or further explanations, feel free to reach out.
+
 ## 🎯 Key Features
 
-- **Modular Architecture** - 14 independent modules, each solving a specific technical concern
+- **Modular Architecture** - 15 independent modules, each solving a specific technical concern
 - **Dependency Injection** - Lightweight IoC container with context management and bean lifecycle
 - **Runtime Workflows** - Sophisticated orchestration engine with stages, steps, and exception handling
 - **Advanced Reflection** - Type-safe reflection utilities with annotation scanning and dynamic binding

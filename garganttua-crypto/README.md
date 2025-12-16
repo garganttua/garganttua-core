@@ -1,4 +1,10 @@
-# Garganttua Crypto
+# 🛠️ 🔐 Garganttua Crypto
+
+## ⚠️ DISCLAIMER
+
+This module is not yet finished and is not at a high priority at this time. So it will obviously be fully updated. 
+
+**⚠️Please do not use this module !!!⚠️**
 
 ## Description
 

@@ -1,4 +1,4 @@
-# Garganttua Native
+# ⚡ Garganttua Native
 
 ## Description
 

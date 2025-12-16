@@ -1,4 +1,4 @@
-# Garganttua Native Image Maven Plugin
+# 🏗️ Garganttua Native Image Maven Plugin
 
 ## Description
 
