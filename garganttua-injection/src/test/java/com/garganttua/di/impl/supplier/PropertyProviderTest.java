@@ -209,7 +209,7 @@ public class PropertyProviderTest {
     @Test
     void testFlush() throws LifecycleException, DiException {
         propertyProvider.onInit().onStart();
-        propertyProvider.onFlush();
+        propertyProvider.onStop().onFlush();
 
         Set<String> keys = propertyProvider.keys();
         assertEquals(0, keys.size());

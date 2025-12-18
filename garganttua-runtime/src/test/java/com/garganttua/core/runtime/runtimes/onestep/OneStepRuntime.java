@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.inject.Named;
 
-import com.garganttua.core.runtime.annotations.Mutex;
 import com.garganttua.core.runtime.annotations.RuntimeDefinition;
 import com.garganttua.core.runtime.annotations.Stages;
 import com.garganttua.core.runtime.annotations.Variables;
@@ -16,7 +15,6 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 @RuntimeDefinition(input=String.class, output=String.class)
 @Named("runtime-1")
-@Mutex(name="OneStepRuntime-Mutex", strategy=IMutex.Strategy.awit, timout=5000, timeoutUnit=TimeUnit.SECONDS, fallbackStrategy=IMutex.FallbackStrategy.abort, retries=3)
 public class OneStepRuntime {
 
     @Stages
