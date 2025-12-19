@@ -71,4 +71,35 @@ public interface IExpressionContext {
      */
     IExpression<?, ? extends ISupplier<?>> expression(String expression);
 
+    /**
+     * Returns the manual page documentation for a registered expression node.
+     *
+     * <p>The key should be in the format "functionName(Type1,Type2,...)" as returned
+     * by {@link IExpressionNodeFactory#key()}.</p>
+     *
+     * @param key the unique key identifying the expression node factory
+     * @return the manual page documentation, or null if the key is not found
+     */
+    String man(String key);
+
+    /**
+     * Returns a formatted list of all available expression node factories.
+     *
+     * <p>The list is formatted in man-style with each factory's key and description.</p>
+     *
+     * @return a formatted string containing all available expression factories
+     */
+    String man();
+
+    /**
+     * Returns the manual page documentation for a registered expression node by index.
+     *
+     * <p>The index corresponds to the position in the sorted list of factories,
+     * as shown by {@link #listFactories()}. Index starts at 1.</p>
+     *
+     * @param index the 1-based index of the expression node factory
+     * @return the manual page documentation, or null if the index is out of bounds
+     */
+    String man(int index);
+
 }

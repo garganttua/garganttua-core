@@ -119,6 +119,13 @@ public class ExpressionContextBuilder
         }
         Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream()
                 .map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
+
+
+        
+
+
+
+        
         return new ExpressionContext(builtNodes);
     }
 

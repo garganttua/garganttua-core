@@ -10,4 +10,11 @@ public interface IExpressionNodeFactory<R, S extends ISupplier<R>> extends ICont
 
     String description();
 
+    /**
+     * Returns a manual page (man-style) documentation for this expression node factory.
+     *
+     * @return a formatted string containing comprehensive documentation
+     */
+    String man();
+
 }

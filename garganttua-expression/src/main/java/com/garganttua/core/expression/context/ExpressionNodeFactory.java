@@ -402,4 +402,68 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     public String description() {
         return this.description;
     }
+
+    /**
+     * Generates a manual page (man-style) documentation for this expression node factory.
+     *
+     * <p>The manual includes:</p>
+     * <ul>
+     *   <li>NAME - The function name</li>
+     *   <li>SYNOPSIS - The function signature with parameter types</li>
+     *   <li>DESCRIPTION - A detailed description of what the function does</li>
+     *   <li>PARAMETERS - List of parameter types and nullability</li>
+     *   <li>RETURN VALUE - The return type of the function</li>
+     * </ul>
+     *
+     * @return a formatted manual page string
+     */
+    @Override
+    public String man() {
+        StringBuilder manual = new StringBuilder();
+
+        // NAME section
+        manual.append("NAME\n");
+        manual.append("    ").append(this.name).append(" - ").append("\n\n");
+
+        // SYNOPSIS section
+        manual.append("SYNOPSIS\n");
+        manual.append("    ").append(this.method.getReturnType().getSimpleName()).append(" ");
+        manual.append(this.name).append("(");
+
+        for (int i = 0; i < this.parameterTypes.length; i++) {
+            if (i > 0) {
+                manual.append(", ");
+            }
+            manual.append(this.parameterTypes[i].getSimpleName());
+            manual.append(" arg").append(i);
+        }
+        manual.append(")\n\n");
+
+        // DESCRIPTION section
+        manual.append("DESCRIPTION\n");
+        manual.append("    ").append(this.description).append("\n\n");
+
+        // PARAMETERS section
+        if (this.parameterTypes.length > 0) {
+            manual.append("PARAMETERS\n");
+            for (int i = 0; i < this.parameterTypes.length; i++) {
+                manual.append("    arg").append(i).append(" : ");
+                manual.append(this.parameterTypes[i].getSimpleName());
+
+                if (this.nullableParameters.get(i)) {
+                    manual.append(" (nullable)");
+                } else {
+                    manual.append(" (required)");
+                }
+                manual.append("\n");
+            }
+            manual.append("\n");
+        }
+
+        // RETURN VALUE section
+        manual.append("RETURN VALUE\n");
+        manual.append("    ").append(this.method.getReturnType().getSimpleName()).append("\n");
+
+        return manual.toString();
+    }
 }

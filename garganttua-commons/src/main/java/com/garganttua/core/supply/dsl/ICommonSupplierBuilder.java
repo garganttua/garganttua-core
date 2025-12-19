@@ -1,5 +1,8 @@
 package com.garganttua.core.supply.dsl;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.supply.IContextualSupply;
@@ -70,5 +73,64 @@ public interface ICommonSupplierBuilder<Supplied> extends ISupplierBuilder<Suppl
      *                     constructor binder is invalid or incompatible
      */
     ICommonSupplierBuilder<Supplied> withConstructor(IConstructorBinder<Supplied> constructorBinder) throws DslException;
+
+    /**
+     * Configures the supplier to provide values asynchronously from a CompletableFuture.
+     *
+     * <p>
+     * The built supplier will wait for the future to complete and return its value.
+     * An optional timeout can be specified to limit waiting time.
+     * </p>
+     *
+     * @param future the CompletableFuture to wait on
+     * @return this builder instance for method chaining
+     * @throws DslException if a supply strategy has already been configured
+     */
+    ICommonSupplierBuilder<Supplied> withFuture(CompletableFuture<Supplied> future) throws DslException;
+
+    /**
+     * Configures the supplier to provide values asynchronously from a CompletableFuture with timeout.
+     *
+     * <p>
+     * The built supplier will wait for the future to complete and return its value,
+     * with a timeout limit specified in milliseconds.
+     * </p>
+     *
+     * @param future the CompletableFuture to wait on
+     * @param timeoutMillis the timeout in milliseconds
+     * @return this builder instance for method chaining
+     * @throws DslException if a supply strategy has already been configured
+     */
+    ICommonSupplierBuilder<Supplied> withFuture(CompletableFuture<Supplied> future, Long timeoutMillis) throws DslException;
+
+    /**
+     * Configures the supplier to provide values from a blocking queue.
+     *
+     * <p>
+     * The built supplier will poll or take elements from the queue.
+     * Without a timeout, the supplier will block indefinitely until an element is available.
+     * </p>
+     *
+     * @param queue the BlockingQueue to poll from
+     * @return this builder instance for method chaining
+     * @throws DslException if a supply strategy has already been configured
+     */
+    ICommonSupplierBuilder<Supplied> withBlockingQueue(BlockingQueue<Supplied> queue) throws DslException;
+
+    /**
+     * Configures the supplier to provide values from a blocking queue with timeout.
+     *
+     * <p>
+     * The built supplier will poll elements from the queue with a timeout limit
+     * specified in milliseconds. If no element is available within the timeout,
+     * the supplier returns empty.
+     * </p>
+     *
+     * @param queue the BlockingQueue to poll from
+     * @param timeoutMillis the timeout in milliseconds
+     * @return this builder instance for method chaining
+     * @throws DslException if a supply strategy has already been configured
+     */
+    ICommonSupplierBuilder<Supplied> withBlockingQueue(BlockingQueue<Supplied> queue, Long timeoutMillis) throws DslException;
 
 }

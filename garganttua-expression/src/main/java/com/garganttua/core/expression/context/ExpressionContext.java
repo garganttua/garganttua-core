@@ -72,6 +72,101 @@ public class ExpressionContext implements IExpressionContext {
         }
     }
 
+    @Override
+    public String man(String key) {
+        log.atTrace().log("Entering man(key={})", key);
+        log.atDebug().log("Looking up manual for expression node: {}", key);
+
+        Objects.requireNonNull(key, "Key cannot be null");
+
+        IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = this.nodeFactories.get(key);
+
+        if (factory == null) {
+            log.atWarn().log("No expression node factory found for key: {}", key);
+            return null;
+        }
+
+        String manual = factory.man();
+        log.atDebug().log("Manual retrieved for key: {}", key);
+        log.atTrace().log("Exiting man");
+
+        return manual;
+    }
+
+    @Override
+    public String man() {
+        log.atTrace().log("Entering listFactories()");
+        log.atDebug().log("Generating list of {} expression node factories", this.nodeFactories.size());
+
+        StringBuilder list = new StringBuilder();
+
+        // Header
+        list.append("AVAILABLE EXPRESSION FUNCTIONS\n");
+        list.append("==============================\n\n");
+        list.append("Total functions: ").append(this.nodeFactories.size()).append("\n\n");
+
+        // Sort factories by key for consistent output and track index
+        final int[] index = {1};
+        this.nodeFactories.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    String key = entry.getKey();
+                    IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = entry.getValue();
+
+                    // Format: [index] key - description
+                    String indexStr = String.format("[%d]", index[0]++);
+                    list.append("  ").append(indexStr).append(" ").append(key);
+
+                    // Align descriptions (pad to 45 characters to account for index)
+                    int totalLength = indexStr.length() + 1 + key.length();
+                    int padding = Math.max(1, 45 - totalLength);
+                    list.append(" ".repeat(padding));
+
+                    list.append("- ").append(factory.description()).append("\n");
+                });
+
+        list.append("\n");
+        list.append("Use man(\"key\") or man(index) to get detailed documentation for a specific function.\n");
+
+        log.atDebug().log("Factory list generated");
+        log.atTrace().log("Exiting listFactories");
+
+        return list.toString();
+    }
+
+    @Override
+    public String man(int index) {
+        log.atTrace().log("Entering man(index={})", index);
+        log.atDebug().log("Looking up manual for expression node at index: {}", index);
+
+        if (index < 1) {
+            log.atWarn().log("Invalid index: {}. Index must be >= 1", index);
+            return null;
+        }
+
+        // Get sorted list of factories
+        List<Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>> sortedFactories =
+                this.nodeFactories.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .toList();
+
+        // Check if index is in bounds (1-based index)
+        if (index > sortedFactories.size()) {
+            log.atWarn().log("Index {} out of bounds. Total factories: {}", index, sortedFactories.size());
+            return null;
+        }
+
+        // Get factory at index (convert from 1-based to 0-based)
+        Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry =
+                sortedFactories.get(index - 1);
+
+        String manual = entry.getValue().man();
+        log.atDebug().log("Manual retrieved for index {} (key: {})", index, entry.getKey());
+        log.atTrace().log("Exiting man");
+
+        return manual;
+    }
+
     /**
      * ANTLR4 Visitor for building expression trees from parsed Expression.
      */

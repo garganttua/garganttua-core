@@ -238,4 +238,177 @@ public class ExpressionContextTest {
         assertTrue(classOfValue.isPresent(), "Class<?> type should be present");
         assertEquals(Class.class, classOfValue.get(), "Should return Class.class");
     }
+
+    @Test
+    public void testManualPageRetrieval() {
+        // Test retrieving manual for the "add" function
+        String manual = expressionContext.man("add(Integer,Integer)");
+
+        assertNotNull(manual, "Manual should not be null");
+        assertTrue(manual.contains("NAME"), "Manual should contain NAME section");
+        assertTrue(manual.contains("add"), "Manual should contain function name");
+        assertTrue(manual.contains("Adds two integer suppliers"), "Manual should contain description");
+        assertTrue(manual.contains("SYNOPSIS"), "Manual should contain SYNOPSIS section");
+        assertTrue(manual.contains("PARAMETERS"), "Manual should contain PARAMETERS section");
+        assertTrue(manual.contains("RETURN VALUE"), "Manual should contain RETURN VALUE section");
+        assertTrue(manual.contains("Integer"), "Manual should contain Integer type");
+
+        System.out.println("\n=== Manual for add(Integer,Integer) ===");
+        System.out.println(manual);
+    }
+
+    @Test
+    public void testManualPageRetrievalForString() {
+        // Test retrieving manual for the "string" function
+        String manual = expressionContext.man("string(String)");
+
+        assertNotNull(manual, "Manual should not be null");
+        assertTrue(manual.contains("string"), "Manual should contain function name");
+        assertTrue(manual.contains("Converts a value to a String supplier"), "Manual should contain description");
+
+        System.out.println("\n=== Manual for string(String) ===");
+        System.out.println(manual);
+    }
+
+    @Test
+    public void testManualPageRetrievalForNonExistentKey() {
+        // Test retrieving manual for a non-existent function
+        String manual = expressionContext.man("nonExistent(String)");
+
+        assertNull(manual, "Manual should be null for non-existent key");
+    }
+
+    @Test
+    public void testManualPageRetrievalNullKey() {
+        // Test that null key throws NullPointerException
+        assertThrows(NullPointerException.class, () -> {
+            expressionContext.man(null);
+        }, "Should throw NullPointerException for null key");
+    }
+
+    @Test
+    public void testListFactories() {
+        // Test listing all available factories
+        String factoryList = expressionContext.man();
+
+        assertNotNull(factoryList, "Factory list should not be null");
+        assertTrue(factoryList.contains("AVAILABLE EXPRESSION FUNCTIONS"), "Should contain header");
+        assertTrue(factoryList.contains("Total functions:"), "Should contain total count");
+        assertTrue(factoryList.contains("add(Integer,Integer)"), "Should contain add function");
+        assertTrue(factoryList.contains("string(String)"), "Should contain string function");
+        assertTrue(factoryList.contains("int(String)"), "Should contain int function");
+        assertTrue(factoryList.contains("boolean(String)"), "Should contain boolean function");
+        assertTrue(factoryList.contains("class(String)"), "Should contain class function");
+        assertTrue(factoryList.contains("Adds two integer suppliers"), "Should contain add description");
+        assertTrue(factoryList.contains("Converts a value to a String supplier"), "Should contain string description");
+        assertTrue(factoryList.contains("Use man(\"key\")"), "Should contain usage hint");
+
+        // Verify index format is present
+        assertTrue(factoryList.contains("[1]"), "Should contain index [1]");
+        assertTrue(factoryList.contains("[2]"), "Should contain index [2]");
+        assertTrue(factoryList.contains("[3]"), "Should contain index [3]");
+
+        System.out.println("\n=== List of Available Expression Factories ===");
+        System.out.println(factoryList);
+    }
+
+    @Test
+    public void testListFactoriesIsSorted() {
+        // Test that the factory list is sorted alphabetically by key
+        String factoryList = expressionContext.man();
+
+        // Extract all function keys from the output
+        String[] lines = factoryList.split("\n");
+        String previousKey = "";
+        int expectedIndex = 1;
+
+        for (String line : lines) {
+            // Skip header and footer lines
+            if (line.trim().startsWith("AVAILABLE") || line.trim().startsWith("====") ||
+                line.trim().startsWith("Total") || line.trim().startsWith("Use") || line.trim().isEmpty()) {
+                continue;
+            }
+
+            // Verify index is sequential
+            assertTrue(line.contains("[" + expectedIndex + "]"),
+                    "Line should contain index [" + expectedIndex + "]: " + line);
+            expectedIndex++;
+
+            // Extract key (remove index prefix and everything after '-')
+            String withoutIndex = line.trim().replaceFirst("\\[\\d+\\]\\s*", "");
+            String currentKey = withoutIndex.split("-")[0].trim();
+
+            // Verify alphabetical order
+            assertTrue(currentKey.compareTo(previousKey) >= 0,
+                    "Keys should be sorted alphabetically: " + previousKey + " should come before " + currentKey);
+
+            previousKey = currentKey;
+        }
+    }
+
+    @Test
+    public void testManualPageRetrievalByIndex() {
+        // Test retrieving manual by index
+        // Index 1 should be "add(Integer,Integer)" since it's first alphabetically
+        String manual = expressionContext.man(1);
+
+        assertNotNull(manual, "Manual should not be null for valid index");
+        assertTrue(manual.contains("NAME"), "Manual should contain NAME section");
+        assertTrue(manual.contains("add"), "Manual should contain function name");
+        assertTrue(manual.contains("SYNOPSIS"), "Manual should contain SYNOPSIS section");
+
+        System.out.println("\n=== Manual for index 1 ===");
+        System.out.println(manual);
+    }
+
+    @Test
+    public void testManualPageRetrievalByIndexOutOfBounds() {
+        // Test with index too high
+        String manual = expressionContext.man(999);
+        assertNull(manual, "Manual should be null for index out of bounds");
+
+        // Test with index 0
+        String manualZero = expressionContext.man(0);
+        assertNull(manualZero, "Manual should be null for index 0");
+
+        // Test with negative index
+        String manualNegative = expressionContext.man(-1);
+        assertNull(manualNegative, "Manual should be null for negative index");
+    }
+
+    @Test
+    public void testManualPageRetrievalByIndexMatchesKey() {
+        // Get the factory list to see which key is at index 1
+        String factoryList = expressionContext.man();
+
+        // Get manual by index 1
+        String manualByIndex = expressionContext.man(1);
+
+        // The first entry alphabetically should be "add(Integer,Integer)"
+        String manualByKey = expressionContext.man("add(Integer,Integer)");
+
+        // They should be the same
+        assertEquals(manualByKey, manualByIndex,
+                "Manual retrieved by index should match manual retrieved by key");
+    }
+
+    @Test
+    public void testAllIndicesAccessible() {
+        // Test that all indices from 1 to total count are accessible
+        String factoryList = expressionContext.man();
+
+        // Parse the total count
+        int totalFunctions = 5; // We know there are 5 factories in the test setup
+
+        // Try to get manual for each index
+        for (int i = 1; i <= totalFunctions; i++) {
+            String manual = expressionContext.man(i);
+            assertNotNull(manual, "Manual should not be null for index " + i);
+            assertTrue(manual.contains("NAME"), "Manual for index " + i + " should contain NAME section");
+        }
+
+        // Index beyond total should return null
+        String beyondTotal = expressionContext.man(totalFunctions + 1);
+        assertNull(beyondTotal, "Manual should be null for index beyond total");
+    }
 }

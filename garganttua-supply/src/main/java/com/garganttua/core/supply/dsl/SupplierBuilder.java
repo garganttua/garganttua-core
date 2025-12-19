@@ -2,6 +2,8 @@ package com.garganttua.core.supply.dsl;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
@@ -16,6 +18,8 @@ import com.garganttua.core.supply.NewSupplier;
 import com.garganttua.core.supply.NullSupplier;
 import com.garganttua.core.supply.NullableContextualSupplier;
 import com.garganttua.core.supply.NullableSupplier;
+import com.garganttua.core.supply.FutureSupplier;
+import com.garganttua.core.supply.BlockingSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +33,9 @@ public class SupplierBuilder<Supplied>
     private IConstructorBinder<Supplied> constructorBinder;
     private boolean nullable = false;
     private Class<Supplied> suppliedType;
+    private CompletableFuture<Supplied> future;
+    private BlockingQueue<Supplied> blockingQueue;
+    private Long timeoutMillis;
 
     public SupplierBuilder(Class<Supplied> suppliedType) {
         log.atTrace().log("Entering SupplierBuilder constructor with suppliedType={}", suppliedType);
@@ -52,6 +59,22 @@ public class SupplierBuilder<Supplied>
     public ISupplier<Supplied> build() throws DslException {
         log.atTrace().log("Entering build for suppliedType={}", this.suppliedType);
         ISupplier<Supplied> supplier;
+
+        if (this.future != null) {
+            log.atDebug().log("Building FutureSupplier with timeout={}", this.timeoutMillis);
+            supplier = new FutureSupplier<>(this.future, this.suppliedType, this.timeoutMillis);
+            log.atInfo().log("Built FutureSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
+            log.atTrace().log("Exiting build");
+            return wrapNullable(supplier, this.nullable);
+        }
+
+        if (this.blockingQueue != null) {
+            log.atDebug().log("Building BlockingSupplier with timeout={}", this.timeoutMillis);
+            supplier = new BlockingSupplier<>(this.blockingQueue, this.suppliedType, this.timeoutMillis);
+            log.atInfo().log("Built BlockingSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
+            log.atTrace().log("Exiting build");
+            return wrapNullable(supplier, this.nullable);
+        }
 
         if (this.value != null) {
             log.atDebug().log("Building FixedSupplier with value of type {}", this.value.getClass().getName());
@@ -181,6 +204,46 @@ public class SupplierBuilder<Supplied>
         builder.contextType = contextType;
         builder.constructorBinder = binder;
         return builder;
+    }
+
+    @Override
+    public ICommonSupplierBuilder<Supplied> withFuture(CompletableFuture<Supplied> future) throws DslException {
+        log.atTrace().log("Entering withFuture with future");
+        this.future = Objects.requireNonNull(future, "Future cannot be null");
+        log.atDebug().log("Future configured for type {}", this.suppliedType);
+        log.atTrace().log("Exiting withFuture");
+        return this;
+    }
+
+    @Override
+    public ICommonSupplierBuilder<Supplied> withFuture(CompletableFuture<Supplied> future, Long timeoutMillis)
+            throws DslException {
+        log.atTrace().log("Entering withFuture with future and timeout={}", timeoutMillis);
+        this.future = Objects.requireNonNull(future, "Future cannot be null");
+        this.timeoutMillis = timeoutMillis;
+        log.atDebug().log("Future configured for type {} with timeout={}", this.suppliedType, timeoutMillis);
+        log.atTrace().log("Exiting withFuture");
+        return this;
+    }
+
+    @Override
+    public ICommonSupplierBuilder<Supplied> withBlockingQueue(BlockingQueue<Supplied> queue) throws DslException {
+        log.atTrace().log("Entering withBlockingQueue with queue");
+        this.blockingQueue = Objects.requireNonNull(queue, "BlockingQueue cannot be null");
+        log.atDebug().log("BlockingQueue configured for type {}", this.suppliedType);
+        log.atTrace().log("Exiting withBlockingQueue");
+        return this;
+    }
+
+    @Override
+    public ICommonSupplierBuilder<Supplied> withBlockingQueue(BlockingQueue<Supplied> queue, Long timeoutMillis)
+            throws DslException {
+        log.atTrace().log("Entering withBlockingQueue with queue and timeout={}", timeoutMillis);
+        this.blockingQueue = Objects.requireNonNull(queue, "BlockingQueue cannot be null");
+        this.timeoutMillis = timeoutMillis;
+        log.atDebug().log("BlockingQueue configured for type {} with timeout={}", this.suppliedType, timeoutMillis);
+        log.atTrace().log("Exiting withBlockingQueue");
+        return this;
     }
 
 }
