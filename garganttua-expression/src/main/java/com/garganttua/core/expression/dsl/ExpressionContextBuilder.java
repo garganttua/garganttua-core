@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
@@ -20,6 +21,7 @@ import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import jakarta.annotation.Nullable;
@@ -120,13 +122,19 @@ public class ExpressionContextBuilder
         Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream()
                 .map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
 
+        CompletableFuture<ExpressionContext> futur = new CompletableFuture<>();
+        try {
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man")).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("expressionManualByIndex", int.class)).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("expressionManualByKey", String.class)).withDescription("the description");
+        } catch (DslException | NoSuchMethodException | SecurityException e) {
+            throw new DslException("Failed to register built-in expression nodes", e);
+        }
 
+        ExpressionContext context = new ExpressionContext(builtNodes);
+        futur.complete(context);
         
-
-
-
-        
-        return new ExpressionContext(builtNodes);
+        return context;
     }
 
     @Override

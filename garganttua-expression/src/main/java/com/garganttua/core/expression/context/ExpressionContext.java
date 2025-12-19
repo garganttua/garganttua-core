@@ -19,9 +19,11 @@ import com.garganttua.core.expression.antlr4.ExpressionLexer;
 import com.garganttua.core.expression.antlr4.ExpressionParser;
 import com.garganttua.core.supply.ISupplier;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@NoArgsConstructor
 public class ExpressionContext implements IExpressionContext {
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
@@ -73,7 +75,7 @@ public class ExpressionContext implements IExpressionContext {
     }
 
     @Override
-    public String man(String key) {
+    public String expressionManualByKey(String key) {
         log.atTrace().log("Entering man(key={})", key);
         log.atDebug().log("Looking up manual for expression node: {}", key);
 
@@ -135,7 +137,7 @@ public class ExpressionContext implements IExpressionContext {
     }
 
     @Override
-    public String man(int index) {
+    public String expressionManualByIndex(int index) {
         log.atTrace().log("Entering man(index={})", index);
         log.atDebug().log("Looking up manual for expression node at index: {}", index);
 

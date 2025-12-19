@@ -242,7 +242,7 @@ public class ExpressionContextTest {
     @Test
     public void testManualPageRetrieval() {
         // Test retrieving manual for the "add" function
-        String manual = expressionContext.man("add(Integer,Integer)");
+        String manual = expressionContext.expressionManualByKey("add(Integer,Integer)");
 
         assertNotNull(manual, "Manual should not be null");
         assertTrue(manual.contains("NAME"), "Manual should contain NAME section");
@@ -260,7 +260,7 @@ public class ExpressionContextTest {
     @Test
     public void testManualPageRetrievalForString() {
         // Test retrieving manual for the "string" function
-        String manual = expressionContext.man("string(String)");
+        String manual = expressionContext.expressionManualByKey("string(String)");
 
         assertNotNull(manual, "Manual should not be null");
         assertTrue(manual.contains("string"), "Manual should contain function name");
@@ -273,7 +273,7 @@ public class ExpressionContextTest {
     @Test
     public void testManualPageRetrievalForNonExistentKey() {
         // Test retrieving manual for a non-existent function
-        String manual = expressionContext.man("nonExistent(String)");
+        String manual = expressionContext.expressionManualByKey("nonExistent(String)");
 
         assertNull(manual, "Manual should be null for non-existent key");
     }
@@ -282,7 +282,7 @@ public class ExpressionContextTest {
     public void testManualPageRetrievalNullKey() {
         // Test that null key throws NullPointerException
         assertThrows(NullPointerException.class, () -> {
-            expressionContext.man(null);
+            expressionContext.expressionManualByKey(null);
         }, "Should throw NullPointerException for null key");
     }
 
@@ -350,7 +350,7 @@ public class ExpressionContextTest {
     public void testManualPageRetrievalByIndex() {
         // Test retrieving manual by index
         // Index 1 should be "add(Integer,Integer)" since it's first alphabetically
-        String manual = expressionContext.man(1);
+        String manual = expressionContext.expressionManualByIndex(1);
 
         assertNotNull(manual, "Manual should not be null for valid index");
         assertTrue(manual.contains("NAME"), "Manual should contain NAME section");
@@ -364,15 +364,15 @@ public class ExpressionContextTest {
     @Test
     public void testManualPageRetrievalByIndexOutOfBounds() {
         // Test with index too high
-        String manual = expressionContext.man(999);
+        String manual = expressionContext.expressionManualByIndex(999);
         assertNull(manual, "Manual should be null for index out of bounds");
 
         // Test with index 0
-        String manualZero = expressionContext.man(0);
+        String manualZero = expressionContext.expressionManualByIndex(0);
         assertNull(manualZero, "Manual should be null for index 0");
 
         // Test with negative index
-        String manualNegative = expressionContext.man(-1);
+        String manualNegative = expressionContext.expressionManualByIndex(-1);
         assertNull(manualNegative, "Manual should be null for negative index");
     }
 
@@ -382,10 +382,10 @@ public class ExpressionContextTest {
         String factoryList = expressionContext.man();
 
         // Get manual by index 1
-        String manualByIndex = expressionContext.man(1);
+        String manualByIndex = expressionContext.expressionManualByIndex(1);
 
         // The first entry alphabetically should be "add(Integer,Integer)"
-        String manualByKey = expressionContext.man("add(Integer,Integer)");
+        String manualByKey = expressionContext.expressionManualByKey("add(Integer,Integer)");
 
         // They should be the same
         assertEquals(manualByKey, manualByIndex,
@@ -402,13 +402,13 @@ public class ExpressionContextTest {
 
         // Try to get manual for each index
         for (int i = 1; i <= totalFunctions; i++) {
-            String manual = expressionContext.man(i);
+            String manual = expressionContext.expressionManualByIndex(i);
             assertNotNull(manual, "Manual should not be null for index " + i);
             assertTrue(manual.contains("NAME"), "Manual for index " + i + " should contain NAME section");
         }
 
         // Index beyond total should return null
-        String beyondTotal = expressionContext.man(totalFunctions + 1);
+        String beyondTotal = expressionContext.expressionManualByIndex(totalFunctions + 1);
         assertNull(beyondTotal, "Manual should be null for index beyond total");
     }
 }

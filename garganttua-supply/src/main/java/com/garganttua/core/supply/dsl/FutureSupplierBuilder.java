@@ -36,7 +36,7 @@ public class FutureSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
 
     private final CompletableFuture<Supplied> future;
-    private final Type suppliedType;
+    private final Class<Supplied> suppliedType;
     private Long timeoutMillis;
 
     /**
@@ -45,7 +45,7 @@ public class FutureSupplierBuilder<Supplied>
      * @param future the CompletableFuture to wrap
      * @param suppliedType the type of the supplied object
      */
-    public FutureSupplierBuilder(CompletableFuture<Supplied> future, Type suppliedType) {
+    public FutureSupplierBuilder(CompletableFuture<Supplied> future, Class<Supplied> suppliedType) {
         log.atTrace().log("Entering FutureSupplierBuilder constructor");
         this.future = Objects.requireNonNull(future, "Future cannot be null");
         this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
@@ -93,7 +93,7 @@ public class FutureSupplierBuilder<Supplied>
      * @param suppliedType the type of the supplied object
      * @return a new FutureSupplierBuilder instance
      */
-    public static <Supplied> FutureSupplierBuilder<Supplied> of(CompletableFuture<Supplied> future, Type suppliedType) {
+    public static <Supplied> FutureSupplierBuilder<Supplied> of(CompletableFuture<Supplied> future, Class<Supplied> suppliedType) {
         log.atTrace().log("Entering static of method");
         log.atDebug().log("Creating FutureSupplierBuilder");
         FutureSupplierBuilder<Supplied> result = new FutureSupplierBuilder<>(future, suppliedType);

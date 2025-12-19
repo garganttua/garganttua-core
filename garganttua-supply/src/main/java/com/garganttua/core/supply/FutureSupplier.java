@@ -40,7 +40,7 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
 
     private final CompletableFuture<Supplied> future;
     private final Long timeoutMillis;
-    private final Type suppliedType;
+    private final Class<Supplied> suppliedType;
 
     /**
      * Creates a FutureSupplier with no timeout.
@@ -48,7 +48,7 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
      * @param future the CompletableFuture to wrap
      * @param suppliedType the type of the supplied object
      */
-    public FutureSupplier(CompletableFuture<Supplied> future, Type suppliedType) {
+    public FutureSupplier(CompletableFuture<Supplied> future, Class<Supplied> suppliedType) {
         this(future, suppliedType, null);
     }
 
@@ -59,7 +59,7 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
      * @param suppliedType the type of the supplied object
      * @param timeoutMillis the timeout in milliseconds, or null for no timeout
      */
-    public FutureSupplier(CompletableFuture<Supplied> future, Type suppliedType, Long timeoutMillis) {
+    public FutureSupplier(CompletableFuture<Supplied> future, Class<Supplied> suppliedType, Long timeoutMillis) {
         log.atTrace().log("Entering FutureSupplier constructor with timeout: {}", timeoutMillis);
         this.future = Objects.requireNonNull(future, "Future cannot be null");
         this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
@@ -99,7 +99,7 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
     }
 
     @Override
-    public Type getSuppliedType() {
+    public Class<Supplied> getSuppliedType() {
         return suppliedType;
     }
 }

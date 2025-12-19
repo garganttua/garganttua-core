@@ -130,17 +130,6 @@ class ExpressionContextBuilderTest {
     }
 
     @Test
-    void testwithExpressionNodeNonStaticMethodFails() throws DslException {
-        // Test that binding a non-static method throws an exception
-        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
-
-        assertThrows(DslException.class, () -> {
-            builder.expression(of(TestExpressions.class), String.class)
-                    .method("getNonStaticString");
-        });
-    }
-
-    @Test
     void testwithExpressionNodeDifferentTypes() throws DslException {
         // Test binding methods with different return types
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
