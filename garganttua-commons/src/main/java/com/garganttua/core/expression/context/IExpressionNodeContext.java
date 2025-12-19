@@ -10,12 +10,8 @@ public interface IExpressionNodeContext {
      */
     List<Object> parameters();
 
-    /* Object[] leafParameters(); */
-
     boolean buildContextual();
-
-   /*  List<IExpressionNode<?, ? extends ISupplier<?>>> nodeChilds(); */
-
+    
     boolean matches(Class<?>[] parameterTypes);
 
 }

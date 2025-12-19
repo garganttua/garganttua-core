@@ -3,7 +3,7 @@ package com.garganttua.core.condition;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -37,7 +37,7 @@ public class XorCondition implements ICondition {
         return new FixedSupplier<Boolean>(result);
     }
 
-    @ExpressionNode(name = "xor", description = "Logical XOR of multiple conditions")
+    @Expression(name = "xor", description = "Logical XOR of multiple conditions")
     public static Boolean or(Set<ICondition> conditions) {
         boolean result = false;
         int conditionIndex = 0;

@@ -4,7 +4,9 @@ import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import javax.annotation.Nullable;
+
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanQueryBuilder;
@@ -12,20 +14,20 @@ import com.garganttua.core.injection.context.dsl.BeanQueryBuilder;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanSupplierBuilder;
 
-import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Beans {
 
-    @ExpressionNode(name = "beanReference", description = "Creates a BeanReference with the specified parameters")
-    public static BeanReference<?> beanReference(@Nullable Class<?> type, @Nullable Optional<BeanStrategy> strategy, @Nullable Optional<String> name,
-            Set<Class<? extends Annotation>> qualifiers) {
+    @Expression(name = "beanReference", description = "Creates a BeanReference with the specified parameters")
+    public static BeanReference<?> beanReference(@Nullable Class<?> type, Optional<BeanStrategy> strategy, Optional<String> name,
+            @Nullable Set<Class<? extends Annotation>> qualifiers) {
         log.atTrace().log("Creating BeanReference with type: {}, strategy: {}, name: {}, qualifiers: {}", type,
                 strategy, name, qualifiers);
         return new BeanReference<>(type, strategy, name, qualifiers);
     }
 
+    @Expression(name = "bean", description = "Creates a BeanSupplierBuilder with the specified parameters")
     public static <Bean> IBeanSupplierBuilder<Bean> bean(Optional<String> provider, BeanReference<Bean> query) {
         log.atTrace().log("Creating BeanSupplierBuilder with provider: {} and query: {}", provider, query);
         IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(provider, query);
@@ -33,6 +35,7 @@ public class Beans {
         return builder;
     }
 
+    @Expression(name = "bean", description = "Creates a BeanSupplierBuilder with the specified parameters")
     public static <Bean> IBeanSupplierBuilder<Bean> bean(BeanReference<Bean> query) {
         log.atTrace().log("Creating BeanSupplierBuilder with query: {}", query);
         IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(query);
@@ -40,6 +43,7 @@ public class Beans {
         return builder;
     }
 
+    @Expression(name = "bean", description = "Creates a BeanSupplierBuilder with the specified parameters")
     public static <Bean> IBeanSupplierBuilder<Bean> bean(Class<Bean> type) {
         log.atTrace().log("Creating BeanSupplierBuilder with type: {}", type);
         IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(type);
@@ -47,6 +51,7 @@ public class Beans {
         return builder;
     }
 
+    @Expression(name = "bean", description = "Creates a BeanSupplierBuilder with the specified parameters")
     public static <Bean> IBeanSupplierBuilder<Bean> bean(String provider, Class<Bean> type, String name) {
         log.atTrace().log("Creating BeanSupplierBuilder with provider: {}, type: {}, name: {}", provider, type, name);
         IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(type).name(name).provider(provider);
@@ -54,6 +59,7 @@ public class Beans {
         return builder;
     }
 
+    @Expression(name = "bean", description = "Creates a BeanSupplierBuilder with the specified parameters")
     public static <Bean> IBeanSupplierBuilder<Bean> bean(Class<Bean> type, String name) {
         log.atTrace().log("Creating BeanSupplierBuilder with type: {} and name: {}", type, name);
         IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(type).name(name);
@@ -61,6 +67,7 @@ public class Beans {
         return builder;
     }
 
+    @Expression(name = "bean", description = "Creates a BeanSupplierBuilder with the specified parameters")
     public static <Bean> IBeanSupplierBuilder<Bean> bean(String provider, Class<Bean> type) {
         log.atTrace().log("Creating BeanSupplierBuilder with provider: {} and type: {}", provider, type);
         IBeanSupplierBuilder<Bean> builder = new BeanSupplierBuilder<>(type).provider(provider);
@@ -68,6 +75,7 @@ public class Beans {
         return builder;
     }
 
+    @Expression(name = "query", description = "Creates a BeanQueryBuilder with the specified parameters")
     public static <Bean> IBeanQueryBuilder<Bean> query() {
         log.atTrace().log("Creating BeanQueryBuilder");
         IBeanQueryBuilder<Bean> queryBuilder = new BeanQueryBuilder<>();

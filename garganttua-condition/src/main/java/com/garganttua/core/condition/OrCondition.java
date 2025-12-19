@@ -3,7 +3,7 @@ package com.garganttua.core.condition;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -37,7 +37,7 @@ public class OrCondition implements ICondition {
         return new FixedSupplier<Boolean>(result);
     }
 
-    @ExpressionNode(name = "or", description = "Logical OR of multiple conditions")
+    @Expression(name = "or", description = "Logical OR of multiple conditions")
     public static boolean or(Set<ICondition> conditions) {
         int conditionIndex = 0;
         for (ICondition c : conditions) {

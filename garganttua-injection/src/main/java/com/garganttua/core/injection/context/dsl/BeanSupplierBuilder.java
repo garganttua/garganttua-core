@@ -166,8 +166,8 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     @Override
     public boolean isContextual() {
         log.atTrace().log("Entering isContextual() method");
-        log.atTrace().log("Exiting isContextual() method with result: false");
-        return false;
+        log.atTrace().log("Exiting isContextual() method with result: {}", !this.useStaticContext);
+        return !this.useStaticContext;
     }
 
     @Override

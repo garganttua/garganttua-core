@@ -1,16 +1,15 @@
 package com.garganttua.core.expression.dsl;
 
+import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.expression.annotations.ExpressionLeaf;
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 
 import lombok.NonNull;
 
@@ -21,12 +20,12 @@ import lombok.NonNull;
  */
 class ExpressionContextBuilderTest {
 
-    @ExpressionLeaf
+    @Expression
     public String string(@NonNull String message){
         return message;
     }
 
-    @ExpressionNode
+    @Expression
     public String echo(@NonNull String message){
         return message;
     }

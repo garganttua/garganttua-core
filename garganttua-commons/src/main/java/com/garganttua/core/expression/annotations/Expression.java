@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import com.garganttua.core.nativve.annotations.Native;
 
 /**
- * for injection resolver
+ * for injection resolver and Expression context auto dectection
  */
 @Native
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
@@ -16,5 +16,9 @@ import com.garganttua.core.nativve.annotations.Native;
 public @interface Expression {
 
     String value() default "";
+
+    String name() default "";
+
+    String description() default "";
 
 }

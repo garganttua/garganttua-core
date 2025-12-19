@@ -1,10 +1,9 @@
 package com.garganttua.core.condition;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -37,7 +36,7 @@ public class NandCondition implements ICondition {
         return new FixedSupplier<Boolean>(result);
     }
 
-    @ExpressionNode(name = "nand", description = "Logical AND of multiple conditions")
+    @Expression(name = "nand", description = "Logical AND of multiple conditions")
     public static Boolean nand(Set<ICondition> conditions) {
         boolean andResult = new AndCondition(conditions).fullEvaluate();
         log.atDebug().log("AND condition result: {}", andResult);

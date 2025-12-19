@@ -2,7 +2,7 @@ package com.garganttua.core.condition;
 
 import java.util.Objects;
 
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -47,7 +47,7 @@ public class EqualsCondition<T> implements ICondition {
         return new FixedSupplier<Boolean>(result);
     }
 
-    @ExpressionNode(name = "equals", description = "Checks if two objects are equal")
+    @Expression(name = "equals", description = "Checks if two objects are equal")
     public static boolean equals(Object obj1, Object obj2) {
         log.atTrace().log("Entering static equals() method");
                 if( obj1 == null || obj2 == null ) {

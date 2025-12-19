@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
-import com.garganttua.core.expression.annotations.ExpressionNode;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -161,7 +161,7 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     protected void doAutoDetection() throws DslException {
         Method m = this.findMethod();
-        ExpressionNode nodeInfos = m.getAnnotation(ExpressionNode.class);
+        Expression nodeInfos = m.getAnnotation(Expression.class);
         if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
             this.withName(nodeInfos.name());
         } else {

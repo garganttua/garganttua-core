@@ -1,19 +1,8 @@
 package com.garganttua.core.expression.functions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.garganttua.core.expression.ExpressionException;
-import com.garganttua.core.expression.annotations.ExpressionLeaf;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
-import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +51,7 @@ public class Expressions {
      * @return an ISupplier that supplies the string value
      * @throws ExpressionException if value cannot be converted
      */
-    @ExpressionLeaf(name = "string", description = "Converts a value to a String")
+    @Expression(name = "string", description = "Converts a value to a String")
     public static String String(@Nullable String value) {
         return value;
     }
@@ -74,7 +63,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed integer value
      * @throws ExpressionException if value cannot be parsed as integer
      */
-    @ExpressionLeaf(name = "int", description = "Parses a string to an Integer")
+    @Expression(name = "int", description = "Parses a string to an Integer")
     public static Integer Integer(@Nullable String value) {
         log.atTrace().log("Converting '{}' to Integer", value);
         try {
@@ -94,7 +83,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed long value
      * @throws ExpressionException if value cannot be parsed as long
      */
-    @ExpressionLeaf(name = "long", description = "Parses a string to a Long")
+    @Expression(name = "long", description = "Parses a string to a Long")
     public static Long Long(@Nullable String value) {
         try {
             return java.lang.Long.parseLong(value);
@@ -110,7 +99,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed double value
      * @throws ExpressionException if value cannot be parsed as double
      */
-    @ExpressionLeaf(name = "double", description = "Parses a string to a Double")
+    @Expression(name = "double", description = "Parses a string to a Double")
     public static Double Double(@Nullable String value) {
         try {
             return java.lang.Double.parseDouble(value);
@@ -126,7 +115,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed float value
      * @throws ExpressionException if value cannot be parsed as float
      */
-    @ExpressionLeaf(name = "float", description = "Parses a string to a Float")
+    @Expression(name = "float", description = "Parses a string to a Float")
     public static Float Float(@Nullable String value) {
         try {
             return java.lang.Float.parseFloat(value);
@@ -141,7 +130,7 @@ public class Expressions {
      * @param value the string representation of a boolean ("true" or "false")
      * @return an ISupplier that supplies the parsed boolean value
      */
-    @ExpressionLeaf(name = "boolean", description = "Parses a string to a Boolean (true/false)")
+    @Expression(name = "boolean", description = "Parses a string to a Boolean (true/false)")
     public static Boolean Boolean(@Nullable String value) {
         return java.lang.Boolean.parseBoolean(value);
     }
@@ -153,7 +142,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed byte value
      * @throws ExpressionException if value cannot be parsed as byte
      */
-    @ExpressionLeaf(name = "byte", description = "Parses a string to a Byte (-128 to 127)")
+    @Expression(name = "byte", description = "Parses a string to a Byte (-128 to 127)")
     public static Byte Byte(@Nullable String value) {
         try {
             return java.lang.Byte.parseByte(value);
@@ -169,7 +158,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed short value
      * @throws ExpressionException if value cannot be parsed as short
      */
-    @ExpressionLeaf(name = "short", description = "Parses a string to a Short")
+    @Expression(name = "short", description = "Parses a string to a Short")
     public static Short Short(@Nullable String value) {
         try {
             return java.lang.Short.parseShort(value);
@@ -185,7 +174,7 @@ public class Expressions {
      * @return an ISupplier that supplies the character value
      * @throws ExpressionException if value is empty
      */
-    @ExpressionLeaf(name = "char", description = "Extracts first character from string as Character")
+    @Expression(name = "char", description = "Extracts first character from string as Character")
     public static Character Character(@Nullable String value) {
         if (value == null || value.isEmpty()) {
             throw new ExpressionException("Cannot convert empty string to Character");
@@ -203,7 +192,7 @@ public class Expressions {
      * @return an ISupplier that supplies the Class object
      * @throws ExpressionException if class cannot be found
      */
-    @ExpressionLeaf(name = "class", description = "Loads a class by fully qualified name or primitive type")
+    @Expression(name = "class", description = "Loads a class by fully qualified name or primitive type")
     public static Class<?> Class(@Nullable String className) {
         log.atTrace().log("Loading class: {}", className);
         if (className == null) {

@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
