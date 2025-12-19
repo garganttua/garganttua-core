@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class StandardExpressionLeafs {
+public class Expressions {
 
     // ========== Primitive Type Converters ==========
 
@@ -258,6 +258,6 @@ public class StandardExpressionLeafs {
     /**
      * Private constructor to prevent instantiation.
      */
-    private StandardExpressionLeafs() {
+    private Expressions() {
     }
 }

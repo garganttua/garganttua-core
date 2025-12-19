@@ -52,4 +52,22 @@ public class ExpressionNodeFactoryTest {
 
         assertEquals("Hello, greet", expression.get().evaluate().supply().get());
     }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testExpressionNodeCanHandleEitherOtherExpressionNodeAndObject() throws Exception {
+
+        ExpressionNodeFactory<String, ISupplier<String>> nodefactory = new ExpressionNodeFactory<String, ISupplier<String>>(
+                of(TestService.class).build(),
+                (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
+                TestService.class.getMethod("greet", String.class),
+                new ObjectAddress("greet"),
+                List.of(false),
+                Optional.of("greet"),
+                Optional.of("Greeting function"));
+
+        Optional<IExpressionNode<String,ISupplier<String>>> expression = nodefactory.supply(new ExpressionNodeContext(List.of("greet")));
+
+        assertEquals("Hello, greet", expression.get().evaluate().supply().get());
+    }
 }

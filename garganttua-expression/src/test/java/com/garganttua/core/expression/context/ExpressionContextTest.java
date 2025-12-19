@@ -1,5 +1,6 @@
 package com.garganttua.core.expression.context;
 
+import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
@@ -11,10 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
-import com.garganttua.core.expression.functions.StandardExpressionLeafs;
+import com.garganttua.core.expression.functions.Expressions;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
-import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 
 public class ExpressionContextTest {
 
@@ -33,27 +33,27 @@ public class ExpressionContextTest {
         // Create factories for StandardExpressionLeafs methods as expression leaves
 
         ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<>(
-                of(StandardExpressionLeafs.class).build(),
+                of(Expressions.class).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                StandardExpressionLeafs.class.getMethod("String", String.class),
+                Expressions.class.getMethod("String", String.class),
                 new ObjectAddress("String"),
                 List.of(false),
                 Optional.of("string"),
                 Optional.of("Converts a value to a String supplier"));
 
         ExpressionNodeFactory<Integer, ISupplier<Integer>> intFactory = new ExpressionNodeFactory<>(
-                of(StandardExpressionLeafs.class).build(),
+                of(Expressions.class).build(),
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
-                StandardExpressionLeafs.class.getMethod("Integer", String.class),
+                Expressions.class.getMethod("Integer", String.class),
                 new ObjectAddress("Integer"),
                 List.of(false),
                 Optional.of("int"),
                 Optional.of("Parses a string to an Integer supplier"));
 
         ExpressionNodeFactory<Boolean, ISupplier<Boolean>> booleanFactory = new ExpressionNodeFactory<>(
-                of(StandardExpressionLeafs.class).build(),
+                of(Expressions.class).build(),
                 (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class,
-                StandardExpressionLeafs.class.getMethod("Boolean", String.class),
+                Expressions.class.getMethod("Boolean", String.class),
                 new ObjectAddress("Boolean"),
                 List.of(false),
                 Optional.of("boolean"),
@@ -69,9 +69,9 @@ public class ExpressionContextTest {
                 Optional.of("Adds two integer suppliers"));
 
         ExpressionNodeFactory<Integer, ISupplier<Integer>> classFactory = new ExpressionNodeFactory<>(
-                of(StandardExpressionLeafs.class).build(),
+                of(Expressions.class).build(),
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
-                StandardExpressionLeafs.class.getMethod("Class", String.class),
+                Expressions.class.getMethod("Class", String.class),
                 new ObjectAddress("Class"),
                 List.of(false),
                 Optional.of("class"),
