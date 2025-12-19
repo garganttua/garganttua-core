@@ -3,27 +3,34 @@ package com.garganttua.core.supply;
 import java.util.Optional;
 
 /**
- * Contextual supplier interface for providing object instances based on runtime context.
+ * Contextual supplier interface for providing object instances based on runtime
+ * context.
  *
  * <p>
- * {@code IContextualSupplier} extends {@link ISupplier} to support context-aware
- * object creation. This is essential for dependency injection scenarios where the created
- * object depends on runtime information such as the owning container, request scope, or
- * parent objects. The supplier requires a primary context (owner) and optionally accepts
+ * {@code IContextualSupplier} extends {@link ISupplier} to support
+ * context-aware
+ * object creation. This is essential for dependency injection scenarios where
+ * the created
+ * object depends on runtime information such as the owning container, request
+ * scope, or
+ * parent objects. The supplier requires a primary context (owner) and
+ * optionally accepts
  * additional contexts for complex resolution scenarios.
  * </p>
  *
  * <h2>Usage Example</h2>
- * <pre>{@code
+ * 
+ * <pre>
+ * {@code
  * // Supplier that requires a DiContext to resolve dependencies
  * IContextualSupplier<UserService, DiContext> supplier =
  *     new IContextualSupplier<>() {
- *         @Override
+ *         &#64;Override
  *         public Class<DiContext> getOwnerContextType() {
  *             return DiContext.class;
  *         }
  *
- *         @Override
+ *         &#64;Override
  *         public Optional<UserService> supply(DiContext context, Object... otherContexts)
  *                 throws SupplyException {
  *             // Resolve dependencies from context
@@ -41,12 +48,14 @@ import java.util.Optional;
  * // Usage with context
  * DiContext context = ...;
  * Optional<UserService> service = supplier.supply(context);
- * }</pre>
+ * }
+ * </pre>
  *
  * <h2>Context Resolution</h2>
  * <p>
  * The {@link Supplier#contextualSupply(ISupplier, Object...)} utility method
- * automatically matches the required context type from the provided contexts array,
+ * automatically matches the required context type from the provided contexts
+ * array,
  * simplifying context-aware instantiation.
  * </p>
  *
@@ -57,7 +66,7 @@ import java.util.Optional;
  * </p>
  *
  * @param <Supplied> the type of object this supplier provides
- * @param <Context> the type of the required owner context
+ * @param <Context>  the type of the required owner context
  * @since 2.0.0-ALPHA01
  * @see ISupplier
  * @see Supplier#contextualSupply(ISupplier, Object...)
@@ -78,8 +87,9 @@ public interface IContextualSupplier<Supplied, Context> extends ISupplier<Suppli
      */
     @Override
     default Optional<Supplied> supply() throws SupplyException {
-        if( getOwnerContextType() != Void.class)
-            throw new SupplyException("Owner context of type "+getOwnerContextType().getSimpleName()+" required for this supplier");
+        if (getOwnerContextType() != Void.class)
+            throw new SupplyException(
+                    "Owner context of type " + getOwnerContextType().getSimpleName() + " required for this supplier");
 
         return supply(null);
     }
@@ -98,20 +108,30 @@ public interface IContextualSupplier<Supplied, Context> extends ISupplier<Suppli
     Class<Context> getOwnerContextType();
 
     /**
-     * Supplies an instance using the provided owner context and optional additional contexts.
+     * Supplies an instance using the provided owner context and optional additional
+     * contexts.
      *
      * <p>
      * This method creates or retrieves an instance using the primary owner context
-     * and any additional contexts that may be needed for complex resolution scenarios.
+     * and any additional contexts that may be needed for complex resolution
+     * scenarios.
      * The implementation can use the contexts to resolve dependencies, access
      * configuration, or determine creation strategies.
      * </p>
      *
-     * @param ownerContext the primary context required for object creation (never {@code null})
-     * @param otherContexts additional optional contexts that may assist in object creation
-     * @return an {@link Optional} containing the supplied instance, or empty if unavailable
-     * @throws SupplyException if an error occurs during instance creation or context resolution
+     * @param ownerContext  the primary context required for object creation (never
+     *                      {@code null})
+     * @param otherContexts additional optional contexts that may assist in object
+     *                      creation
+     * @return an {@link Optional} containing the supplied instance, or empty if
+     *         unavailable
+     * @throws SupplyException if an error occurs during instance creation or
+     *                         context resolution
      */
     Optional<Supplied> supply(Context ownerContext, Object... otherContexts) throws SupplyException;
+
+    default boolean isContextual() {
+        return true;
+    }
 
 }

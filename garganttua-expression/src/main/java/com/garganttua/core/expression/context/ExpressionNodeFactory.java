@@ -9,7 +9,6 @@ import java.util.Optional;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.ContextualExpressionNode;
 import com.garganttua.core.expression.ExpressionException;
-import com.garganttua.core.expression.ExpressionLeaf;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -24,7 +23,6 @@ import com.garganttua.core.supply.NullableSupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
-import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -83,7 +81,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
     // ========== Fields ==========
 
-    private final boolean leaf;
     private final Method method;
     private final Class<?>[] parameterTypes;
     private final List<Boolean> nullableParameters;
@@ -121,14 +118,14 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             Method method,
             ObjectAddress methodAddress,
             List<Boolean> nullableParameters,
-            Boolean leaf, Optional<String> name, Optional<String> description) throws ExpressionException {
+            Optional<String> name, Optional<String> description) throws ExpressionException {
 
         super(methodOwnerSupplier,
                 methodAddress,
                 List.of(),
                 (Class<IExpressionNode<R, S>>) (Class<?>) IExpressionNode.class);
 
-        log.atTrace().log("Creating ExpressionNodeFactory: method={}, leaf={}", method.getName(), leaf);
+        log.atTrace().log("Creating ExpressionNodeFactory: method={}", method.getName());
 
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         this.name = name.orElse(this.method.getName());
@@ -140,10 +137,8 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         validateParameterConfiguration();
 
-        this.leaf = Objects.requireNonNull(leaf, "Leaf flag cannot be null");
-
-        log.atDebug().log("ExpressionNodeFactory created: method={}, parameterCount={}, leaf={}",
-                method.getName(), parameterTypes.length, leaf);
+        log.atDebug().log("ExpressionNodeFactory created: method={}, parameterCount={}",
+                method.getName(), parameterTypes.length);
     }
 
     /**
@@ -166,7 +161,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         this.methodAddress = method;
         this.parameterTypes = new Class<?>[0];
         this.nullableParameters = List.of();
-        this.leaf = false;
     }
 
     // ========== Public Methods ==========
@@ -219,16 +213,16 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             IExpressionNodeContext context,
             Object... otherContexts) throws SupplyException {
 
-        log.atTrace().log("Supplying expression node for context");
+        log.atTrace().log("Supplying expression node for contexts {} {}", context, otherContexts);
 
         if (!context.matches(this.parameterTypes)) {
             log.atDebug().log("Context does not match parameter types, returning empty");
             return Optional.empty();
         }
 
-        IExpressionNode<R, S> expressionNode = this.leaf
-                ? createLeafNode(context)
-                : createCompositeNode(context);
+        IExpressionNode<R, S> expressionNode = context.buildContextual()
+                ? createContextualNode(context)
+                : createNonContextualNode(context);
 
         log.atDebug().log("Expression node created: type={}",
                 expressionNode != null ? expressionNode.getClass().getSimpleName() : "null");
@@ -237,37 +231,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     }
 
     // ========== Private Node Creation Methods ==========
-
-    /**
-     * Creates a leaf expression node.
-     *
-     * @param context the expression context
-     * @return the created leaf node
-     */
-    @SuppressWarnings("unchecked")
-    private IExpressionNode<R, S> createLeafNode(IExpressionNodeContext context) {
-        log.atTrace().log("Creating leaf expression node");
-
-        return (IExpressionNode<R, S>) new ExpressionLeaf<R>(
-                getExecutableReference(),
-                this::bindLeaf,
-                getReturnType(),
-                context.leafParameters());
-    }
-
-    /**
-     * Creates a composite expression node (either contextual or non-contextual).
-     *
-     * @param context the expression context
-     * @return the created composite node
-     */
-    private IExpressionNode<R, S> createCompositeNode(IExpressionNodeContext context) {
-        log.atTrace().log("Creating composite expression node: contextual={}", context.buildContextual());
-
-        return context.buildContextual()
-                ? createNonContextualNode(context)
-                : createContextualNode(context);
-    }
 
     /**
      * Creates a non-contextual expression node.
@@ -281,7 +244,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 getExecutableReference(),
                 this::bindNode,
                 getReturnType(),
-                context.nodeChilds());
+                context.parameters());
     }
 
     /**
@@ -296,7 +259,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 getExecutableReference(),
                 (c, params) -> this.bindContextualNode(params),
                 getReturnType(),
-                context.nodeChilds());
+                context.parameters());
     }
 
     // ========== Private Binding Methods ==========
@@ -307,7 +270,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      * @param parameters the supplier parameters to bind
      * @return a contextual supplier that invokes the bound method
      */
-    private IContextualSupplier<R, IExpressionContext> bindContextualNode(ISupplier<?>[] parameters) {
+    private IContextualSupplier<R, IExpressionContext> bindContextualNode(Object... parameters) {
         log.atTrace().log("Binding contextual node with {} parameters", parameters.length);
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
@@ -326,7 +289,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      * @return a supplier that invokes the bound method
      * @throws DslException if binding fails
      */
-    private ISupplier<R> bindNode(ISupplier<?>[] parameters) throws DslException {
+    private ISupplier<R> bindNode(Object... parameters) throws DslException {
         log.atTrace().log("Binding non-contextual node with {} parameters", parameters.length);
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
@@ -338,39 +301,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 getReturnType());
     }
 
-    /**
-     * Binds a leaf node method for direct evaluation.
-     *
-     * @param parameters the concrete parameter values
-     * @return a method binder that can execute the bound method
-     * @throws ExpressionException if binding fails
-     */
-    private IMethodBinder<R> bindLeaf(Object[] parameters) {
-        log.atTrace().log("Binding leaf with {} parameters", parameters.length);
-
-        try {
-            ExpressionMethodBinderBuilder builder = new ExpressionMethodBinderBuilder(
-                    new Object(),
-                    new NullSupplierBuilder<>(this.method.getDeclaringClass()));
-
-            builder.method(this.method)
-                    .withReturn(getReturnType());
-
-            for (int i = 0; i < parameters.length; i++) {
-                builder.withParam(i,
-                        new FixedSupplierBuilder<>(parameters[i]),
-                        this.nullableParameters.get(i));
-            }
-
-            return builder.build();
-
-        } catch (DslException e) {
-            String errorMsg = "Failed to bind leaf method: " + method.getName() + " - " + e.getMessage();
-            log.atError().log(errorMsg, e);
-            throw new ExpressionException(errorMsg);
-        }
-    }
-
     // ========== Private Utility Methods ==========
 
     /**
@@ -379,12 +309,19 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      * @param parameters the parameters to encapsulate
      * @return a list of encapsulated suppliers
      */
-    private List<ISupplier<?>> encapsulateParameters(ISupplier<?>[] parameters) {
+    private List<ISupplier<?>> encapsulateParameters(Object[] parameters) {
         List<ISupplier<?>> encapsulated = new ArrayList<>(parameters.length);
 
         for (int i = 0; i < parameters.length; i++) {
+            ISupplier<?> supplier = null;
+            if( !(parameters[i] instanceof ISupplier<?>) ) {
+                supplier = new FixedSupplierBuilder<>(parameters[i]).build();
+            } else {
+                supplier = (ISupplier<?>) parameters[i];
+            }
+
             boolean nullable = this.nullableParameters.get(i);
-            encapsulated.add(new NullableSupplier<>(parameters[i], nullable));
+            encapsulated.add(new NullableSupplier<>(supplier, nullable));
         }
 
         return encapsulated;

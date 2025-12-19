@@ -10,25 +10,13 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public interface IExpressionContextBuilder extends IAutomaticBuilder<IExpressionContextBuilder, IExpressionContext>, IPackageableBuilder<IExpressionContextBuilder, IExpressionContext>, IContextBuilderObserver {
 
-    //Methods for non static expressions
-
     /**
-     * Supply a null value for static method
      * @param <T>
      * @param methodOwnerSupplier
      * @param supplied
      * @return
      */
-    <T> IExpressionMethodBinderBuilder<T> withExpressionNode(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied);
-
-    /**
-     * Supply a null value for static method
-     * @param <T>
-     * @param methodOwnerSupplier
-     * @param supplied
-     * @return
-     */
-    <T> IExpressionMethodBinderBuilder<T> withExpressionLeaf(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied);
+    <T> IExpressionMethodBinderBuilder<T> expression(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied);
 
     IExpressionContextBuilder context(IDiContextBuilder context);
 

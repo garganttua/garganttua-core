@@ -66,6 +66,6 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
 
     @Override
     public boolean isContextual() {
-        return false;
+        return root.isContextual();
     }
 }

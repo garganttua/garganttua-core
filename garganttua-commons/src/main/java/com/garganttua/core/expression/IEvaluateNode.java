@@ -40,6 +40,6 @@ public interface IEvaluateNode<R> {
     * @return a supplier that provides the evaluation result
     * @throws ExpressionException if evaluation fails
     */
-   ISupplier<R> evaluate(ISupplier<?> ...parameters) throws ExpressionException;
+   ISupplier<R> evaluate(Object ...parameters) throws ExpressionException;
 
 }

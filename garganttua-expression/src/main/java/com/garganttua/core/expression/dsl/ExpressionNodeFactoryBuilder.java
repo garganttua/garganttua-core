@@ -7,18 +7,14 @@ import java.util.Optional;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
-import com.garganttua.core.expression.annotations.ExpressionLeaf;
 import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
-import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
-import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -58,32 +54,16 @@ public class ExpressionNodeFactoryBuilder<S>
     private ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier;
     @SuppressWarnings("unused")
     private Class<S> supplied;
-    private Boolean leaf = false;
     private String name;
     private String description = "No description";
 
-    /**
-     * Creates a new ExpressionMethodBinderBuilder.
-     *
-     * @param parent      the parent expression context builder
-     * @param methodOwner the class that owns the method
-     * @param supplied    the type supplied by the method (unused, kept for API
-     *                    compatibility)
-     */
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
             Class<S> supplied) throws DslException {
-        this(parent, methodOwnerSupplier, supplied, false);
-    }
-
-    public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
-            ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
-            Class<S> supplied, Boolean leaf) throws DslException {
         super(parent, methodOwnerSupplier);
         log.atTrace().log(
-                "Entering ExpressionMethodBinderBuilder constructor with methodOwnerSupplier={}, supplied={}, leaf={}",
-                methodOwnerSupplier, supplied, leaf);
-        this.leaf = Objects.requireNonNull(leaf, "Leaf boolean cannot be null");
+                "Entering ExpressionMethodBinderBuilder constructor with methodOwnerSupplier={}, supplied={}",
+                methodOwnerSupplier, supplied);
         this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         this.supplied = Objects.requireNonNull(supplied, "Supplied type cannot be null");
         log.atTrace().log("Exiting ExpressionMethodBinderBuilder constructor");
@@ -174,7 +154,6 @@ public class ExpressionNodeFactoryBuilder<S>
                 method,
                 methodAddress,
                 this.nullableParameters(),
-                leaf,
                 Optional.ofNullable(this.name),
                 Optional.ofNullable(this.description));
     }
@@ -182,26 +161,14 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     protected void doAutoDetection() throws DslException {
         Method m = this.findMethod();
-        if (this.leaf) {
-            ExpressionLeaf leafInfos = m.getAnnotation(ExpressionLeaf.class);
-            if (leafInfos.name() != null && !leafInfos.name().isBlank()) {
-                this.withName(leafInfos.name());
-            } else {
-                this.name = m.getName();
-            }
-            if (leafInfos.description() != null && !leafInfos.description().isBlank()) {
-                this.withDescription(leafInfos.description());
-            }
+        ExpressionNode nodeInfos = m.getAnnotation(ExpressionNode.class);
+        if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
+            this.withName(nodeInfos.name());
         } else {
-            ExpressionNode nodeInfos = m.getAnnotation(ExpressionNode.class);
-            if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
-                this.withName(nodeInfos.name());
-            } else {
-                this.name = m.getName();
-            }
-            if (nodeInfos.description() != null && !nodeInfos.description().isBlank()) {
-                this.withDescription(nodeInfos.description());
-            }
+            this.name = m.getName();
+        }
+        if (nodeInfos.description() != null && !nodeInfos.description().isBlank()) {
+            this.withDescription(nodeInfos.description());
         }
         Parameter[] params = m.getParameters();
         for (int i = 0; i < params.length; i++) {

@@ -101,4 +101,7 @@ public interface ISupplier<Supplied> {
         return (Class<Supplied>) ISupplierBuilder.extractClass(type);
     }
 
+    default boolean isContextual(){
+        return false;
+    }
 }

@@ -38,7 +38,6 @@ public class ExpressionContextTest {
                 StandardExpressionLeafs.class.getMethod("String", String.class),
                 new ObjectAddress("String"),
                 List.of(false),
-                true, // This is a leaf node
                 Optional.of("string"),
                 Optional.of("Converts a value to a String supplier"));
 
@@ -48,7 +47,6 @@ public class ExpressionContextTest {
                 StandardExpressionLeafs.class.getMethod("Integer", String.class),
                 new ObjectAddress("Integer"),
                 List.of(false),
-                true, // This is a leaf node
                 Optional.of("int"),
                 Optional.of("Parses a string to an Integer supplier"));
 
@@ -58,7 +56,6 @@ public class ExpressionContextTest {
                 StandardExpressionLeafs.class.getMethod("Boolean", String.class),
                 new ObjectAddress("Boolean"),
                 List.of(false),
-                true, // This is a leaf node
                 Optional.of("boolean"),
                 Optional.of("Parses a string to a Boolean supplier"));
 
@@ -68,7 +65,6 @@ public class ExpressionContextTest {
                 TestFunctions.class.getMethod("add", Integer.class, Integer.class),
                 new ObjectAddress("add"),
                 List.of(false, false),
-                false, // This is NOT a leaf node - it takes other expression nodes as parameters
                 Optional.of("add"),
                 Optional.of("Adds two integer suppliers"));
 
@@ -78,7 +74,6 @@ public class ExpressionContextTest {
                 StandardExpressionLeafs.class.getMethod("Class", String.class),
                 new ObjectAddress("Class"),
                 List.of(false),
-                true, // This is a leaf node
                 Optional.of("class"),
                 Optional.of("Parses a string to a Class supplier"));
 

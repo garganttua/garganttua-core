@@ -51,6 +51,6 @@ public interface IContextualEvaluate<R> {
      * @return a contextual supplier that requires the expression context for evaluation
      * @throws ExpressionException if evaluation fails
      */
-    IContextualSupplier<R, IExpressionContext> evaluate(IExpressionContext context, ISupplier<?> ...parameters) throws ExpressionException;
+    IContextualSupplier<R, IExpressionContext> evaluate(IExpressionContext context, Object ...parameters) throws ExpressionException;
 
 }

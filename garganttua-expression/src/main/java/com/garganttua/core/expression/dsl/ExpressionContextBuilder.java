@@ -80,25 +80,13 @@ public class ExpressionContextBuilder
 
 
     @Override
-    public <T> IExpressionMethodBinderBuilder<T> withExpressionNode(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
+    public <T> IExpressionMethodBinderBuilder<T> expression(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
         log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
                 methodOwnerSupplier, supplied);
         Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
         IExpressionMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this,
                 methodOwnerSupplier, supplied);
-        this.nodes.add(expressionNodeMethodBinderBuilder);
-        return expressionNodeMethodBinderBuilder;
-    }
-
-    @Override
-    public <T> IExpressionMethodBinderBuilder<T> withExpressionLeaf(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
-        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
-                methodOwnerSupplier, supplied);
-        Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
-        Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        IExpressionMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this,
-                methodOwnerSupplier, supplied, true);
         this.nodes.add(expressionNodeMethodBinderBuilder);
         return expressionNodeMethodBinderBuilder;
     }
@@ -142,16 +130,12 @@ public class ExpressionContextBuilder
             log.atError().log("Attempt to build before authorization");
             throw new DslException("Build is not yet authorized");
         }
-        List<Method> nodes = new ArrayList<>();
-        List<Method> leafs = new ArrayList<>();
+        List<Method> expressions = new ArrayList<>();
         this.packages.stream().forEach(p -> {
-            nodes.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, ExpressionNode.class));
-            leafs.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, ExpressionLeaf.class));
+            expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class));
         });
-        nodes.stream().forEach(
-                m -> this.withExpressionNode(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true));
-        leafs.stream().forEach(
-                m -> this.withExpressionLeaf(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true));
+        expressions.stream().forEach(
+                m -> this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true));
     }
 
     private boolean canBuild() {

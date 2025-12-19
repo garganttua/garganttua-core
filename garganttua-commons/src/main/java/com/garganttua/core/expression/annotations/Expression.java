@@ -8,13 +8,13 @@ import java.lang.annotation.Target;
 import com.garganttua.core.nativve.annotations.Native;
 
 /**
- * for injection 
+ * for injection resolver
  */
 @Native
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Expression {
 
-    String value();
+    String value() default "";
 
 }

@@ -76,7 +76,8 @@ public class ExpressionContext implements IExpressionContext {
      * ANTLR4 Visitor for building expression trees from parsed Expression.
      */
     private static class ExpressionVisitor
-            extends com.garganttua.core.expression.antlr4.ExpressionBaseVisitor<IExpressionNode<?, ? extends ISupplier<?>>> {
+            extends
+            com.garganttua.core.expression.antlr4.ExpressionBaseVisitor<IExpressionNode<?, ? extends ISupplier<?>>> {
 
         private final Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
 
@@ -105,7 +106,7 @@ public class ExpressionContext implements IExpressionContext {
             } else if (ctx.IDENTIFIER() != null) {
                 // Handle standalone identifier as a string literal
                 log.atDebug().log("Expression is an identifier: {}", ctx.IDENTIFIER().getText());
-                return createLeafNode("string", ctx.IDENTIFIER().getText());
+                return createNode("string", ctx.IDENTIFIER().getText());
             }
             log.atError().log("Unknown expression type in context: {}", ctx.getText());
             throw new ExpressionException("Unknown expression type");
@@ -115,10 +116,11 @@ public class ExpressionContext implements IExpressionContext {
         public IExpressionNode<?, ? extends ISupplier<?>> visitFunctionCall(ExpressionParser.FunctionCallContext ctx) {
             String functionName = ctx.IDENTIFIER().getText();
             log.atTrace().log("Visiting function call: {}", functionName);
-            List<IExpressionNode<?, ? extends ISupplier<?>>> arguments = new ArrayList<>();
+            List<Object> arguments = new ArrayList<>();
 
             if (ctx.arguments() != null) {
-                log.atDebug().log("Processing {} arguments for function {}", ctx.arguments().expression().size(), functionName);
+                log.atDebug().log("Processing {} arguments for function {}", ctx.arguments().expression().size(),
+                        functionName);
                 for (ExpressionParser.ExpressionContext argCtx : ctx.arguments().expression()) {
                     IExpressionNode<?, ? extends ISupplier<?>> argNode = visit(argCtx);
                     arguments.add(argNode);
@@ -127,7 +129,7 @@ public class ExpressionContext implements IExpressionContext {
                 log.atDebug().log("No arguments for function {}", functionName);
             }
 
-            // Build function key with parameter types
+            // Build function key with parameter types (IExpressionNode instances)
             String functionKey = buildNodeKey(functionName, arguments);
 
             IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
@@ -138,7 +140,7 @@ public class ExpressionContext implements IExpressionContext {
             }
 
             log.atDebug().log("Creating node for function: {}", functionKey);
-            // Create expression node context with child nodes
+            // Create expression node context with IExpressionNode instances
             ExpressionNodeContext context = new ExpressionNodeContext(arguments);
             Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
 
@@ -152,23 +154,23 @@ public class ExpressionContext implements IExpressionContext {
                 String value = ctx.STRING().getText();
                 // Remove surrounding quotes
                 value = value.substring(1, value.length() - 1);
-                return createLeafNode("string", value);
+                return createNode("string", value);
             } else if (ctx.CHAR() != null) {
                 String value = ctx.CHAR().getText();
                 // Extract character between single quotes
                 value = value.substring(1, value.length() - 1);
-                return createLeafNode("char", value);
+                return createNode("char", value);
             } else if (ctx.INT_LITERAL() != null) {
                 String value = ctx.INT_LITERAL().getText();
-                return createLeafNode("int", value);
+                return createNode("int", value);
             } else if (ctx.FLOAT_LIT() != null) {
                 String value = ctx.FLOAT_LIT().getText();
-                return createLeafNode("double", value);
+                return createNode("double", value);
             } else if (ctx.BOOLEAN() != null) {
                 String value = ctx.BOOLEAN().getText();
-                return createLeafNode("boolean", value);
+                return createNode("boolean", value);
             } else if (ctx.NULL() != null) {
-                return createLeafNode("null");
+                return createNode("null");
             } else if (ctx.arrayLiteral() != null) {
                 return visit(ctx.arrayLiteral());
             } else if (ctx.objectLiteral() != null) {
@@ -179,7 +181,7 @@ public class ExpressionContext implements IExpressionContext {
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitArrayLiteral(ExpressionParser.ArrayLiteralContext ctx) {
-            List<IExpressionNode<?, ? extends ISupplier<?>>> elements = new ArrayList<>();
+            List<Object> elements = new ArrayList<>();
 
             if (ctx.expression() != null) {
                 for (ExpressionParser.ExpressionContext exprCtx : ctx.expression()) {
@@ -212,25 +214,25 @@ public class ExpressionContext implements IExpressionContext {
                 // Handle primitive types
                 if (simpleType.primitiveType() != null) {
                     String primitiveTypeName = simpleType.primitiveType().getText();
-                    return createLeafNode("class", primitiveTypeName);
+                    return createNode("class", primitiveTypeName);
                 }
 
                 // Handle Class<Type> or Class<?>
                 if (simpleType.classOfType() != null) {
                     // For Class<Type> expressions, return Class.class
-                    return createLeafNode("class", "java.lang.Class");
+                    return createNode("class", "java.lang.Class");
                 }
 
                 // Handle regular class types (e.g., java.lang.String, List<T>)
                 if (simpleType.classType() != null) {
                     String className = getFullClassName(simpleType.classType());
-                    return createLeafNode("class", className);
+                    return createNode("class", className);
                 }
             }
 
             // For array types or other complex types, convert to string representation
             String typeString = ctx.getText();
-            return createLeafNode("string", typeString);
+            return createNode("string", typeString);
         }
 
         /**
@@ -251,17 +253,17 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         /**
-         * Creates a leaf node by finding the appropriate factory and supplying
-         * parameters.
+         * Creates a node by finding the appropriate factory and supplying parameters.
+         * Parameters can be direct values (String, Integer, etc.) used by the node.
          */
-        private IExpressionNode<?, ? extends ISupplier<?>> createLeafNode(String functionName, Object... params) {
+        private IExpressionNode<?, ? extends ISupplier<?>> createNode(String functionName, Object... params) {
             // Build parameter type list
             Class<?>[] paramTypes = new Class<?>[params.length];
             for (int i = 0; i < params.length; i++) {
                 paramTypes[i] = params[i].getClass();
             }
 
-            String functionKey = buildLeafKey(functionName, paramTypes);
+            String functionKey = buildKey(functionName, paramTypes);
 
             IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
@@ -269,16 +271,18 @@ public class ExpressionContext implements IExpressionContext {
                 throw new ExpressionException("Function not found: " + functionKey);
             }
 
-            // Create leaf context with actual parameter values
+            // Create context with actual parameter values
             List<Object> paramList = List.of(params);
-            ExpressionNodeContext context = new ExpressionNodeContext(paramList, true);
+            ExpressionNodeContext context = new ExpressionNodeContext(paramList);
             Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
 
-            return node.orElseThrow(() -> new ExpressionException("Failed to create leaf node for: " + functionKey));
+            return node.orElseThrow(() -> new ExpressionException("Failed to create node for: " + functionKey));
         }
 
-        private String buildLeafKey(String functionName, Class<?>[] paramTypes) {
-            // Build function key
+        /**
+         * Builds a function key for direct parameters in the format "functionName(Type1,Type2,...)".
+         */
+        private String buildKey(String functionName, Class<?>[] paramTypes) {
             StringBuilder keyBuilder = new StringBuilder(functionName);
             keyBuilder.append("(");
             for (int i = 0; i < paramTypes.length; i++) {
@@ -288,22 +292,27 @@ public class ExpressionContext implements IExpressionContext {
             }
             keyBuilder.append(")");
             String key = keyBuilder.toString();
-            log.atDebug().log("Built leaf key: {}", key);
+            log.atDebug().log("Built key: {}", key);
             return key;
         }
 
         /**
          * Builds a function key in the format "functionName(Type1,Type2,...)".
          */
-        private String buildNodeKey(String functionName, List<IExpressionNode<?, ? extends ISupplier<?>>> arguments) {
+        private String buildNodeKey(String functionName, List<Object> arguments) {
             StringBuilder keyBuilder = new StringBuilder(functionName);
             keyBuilder.append("(");
 
             for (int i = 0; i < arguments.size(); i++) {
                 if (i > 0)
                     keyBuilder.append(",");
-                // Use the supplied class from the node
-                keyBuilder.append(arguments.get(i).getFinalSuppliedClass().getSimpleName());
+
+                if (arguments.get(i) instanceof IExpressionNode<?, ?> node) {
+                    keyBuilder.append(node.getFinalSuppliedClass().getSimpleName());
+                } else {
+                    keyBuilder.append(arguments.get(i).getClass().getSimpleName());
+                }
+
             }
 
             keyBuilder.append(")");

@@ -15,7 +15,7 @@ import com.garganttua.core.supply.ISupplier;
 public class ContextualExpressionNode<R>
         implements IContextualExpressionNode<R, IContextualSupplier<R, IExpressionContext>> {
 
-    private List<IExpressionNode<?, ? extends ISupplier<?>>> childs = new LinkedList<>();
+    private List<Object> params = new LinkedList<>();
 
     private IContextualEvaluate<R> evaluate;
 
@@ -25,13 +25,13 @@ public class ContextualExpressionNode<R>
 
     public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, Class<R> returnedType) {
         this.returnedType = returnedType;
-        this.childs = List.of();
+        this.params = List.of();
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
     public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, Class<R> returnedType,
-            List<IExpressionNode<?, ? extends ISupplier<?>>> childs) {
-        this.childs = Objects.requireNonNull(childs, "Childs list cannot be null");
+            List<Object> params) {
+        this.params = Objects.requireNonNull(params, "Childs list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
         this.returnedType = returnedType;
     }
@@ -50,11 +50,18 @@ public class ContextualExpressionNode<R>
     public IContextualSupplier<R, IExpressionContext> evaluate(IExpressionContext ownerContext,
             Object... otherContexts) throws ExpressionException {
 
-        List<ISupplier<?>> childsSignals = this.childs.stream()
-                .map(node -> Expression.evaluateNode(node, ownerContext))
+        List<Object> childs = this.params.stream()
+                .map(p -> {
+                    if (p instanceof IExpressionNode<?, ? extends ISupplier<?>> node)
+                        return (Object) Expression.evaluateNode(node, ownerContext);
+                    else 
+                        return p;
+                })
                 .collect(Collectors.toList());
 
-        return this.evaluate.evaluate(ownerContext, childsSignals.toArray(new ISupplier<?>[0]));
+        Object[] params = childs.toArray(new Object[0]);
+        return this.evaluate.evaluate(ownerContext, params);
+
     }
 
     @Override

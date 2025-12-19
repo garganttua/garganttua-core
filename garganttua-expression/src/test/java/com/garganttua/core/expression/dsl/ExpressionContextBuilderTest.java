@@ -111,7 +111,7 @@ class ExpressionContextBuilderTest {
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> methodBuilder = builder.withExpressionNode(of(TestExpressions.class),
+            IExpressionMethodBinderBuilder<String> methodBuilder = builder.expression(of(TestExpressions.class),
                     String.class);
             assertNotNull(methodBuilder);
         });
@@ -124,7 +124,7 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), String.class)
+                    .expression(of(TestExpressions.class), String.class)
                     .method("getString");
             assertNotNull(methodBuilder);
         });
@@ -136,7 +136,7 @@ class ExpressionContextBuilderTest {
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(DslException.class, () -> {
-            builder.withExpressionNode(of(TestExpressions.class), String.class)
+            builder.expression(of(TestExpressions.class), String.class)
                     .method("getNonStaticString");
         });
     }
@@ -149,7 +149,7 @@ class ExpressionContextBuilderTest {
         // String
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> stringBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), String.class)
+                    .expression(of(TestExpressions.class), String.class)
                     .method("getString");
             assertNotNull(stringBuilder);
         });
@@ -157,7 +157,7 @@ class ExpressionContextBuilderTest {
         // Integer
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Integer> intBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), Integer.class)
+                    .expression(of(TestExpressions.class), Integer.class)
                     .method("getInteger");
             assertNotNull(intBuilder);
         });
@@ -165,7 +165,7 @@ class ExpressionContextBuilderTest {
         // Double
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Double> doubleBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), Double.class)
+                    .expression(of(TestExpressions.class), Double.class)
                     .method("getDouble");
             assertNotNull(doubleBuilder);
         });
@@ -173,7 +173,7 @@ class ExpressionContextBuilderTest {
         // Boolean
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Boolean> booleanBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), Boolean.class)
+                    .expression(of(TestExpressions.class), Boolean.class)
                     .method("getBoolean");
             assertNotNull(booleanBuilder);
         });
@@ -186,7 +186,7 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), String.class)
+                    .expression(of(TestExpressions.class), String.class)
                     .method("getString")
                     .withParam("test") // Should be ignored
                     .withParam(0, "test") // Should be ignored
@@ -202,7 +202,7 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
-                    .withExpressionNode(of(TestExpressions.class), String.class)
+                    .expression(of(TestExpressions.class), String.class)
                     .method("getString")
                     .withReturn(null); // Should be ignored
             assertNotNull(methodBuilder);
@@ -233,7 +233,7 @@ class ExpressionContextBuilderTest {
                     .withPackage("com.example.test1")
                     .withPackage("com.example.test2")
                     .autoDetect(true)
-                    .withExpressionNode(of(TestExpressions.class), String.class)
+                    .expression(of(TestExpressions.class), String.class)
                     .method("getString");
         });
 
@@ -268,15 +268,15 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             // First expression
-            builder.withExpressionNode(of(TestExpressions.class), String.class)
+            builder.expression(of(TestExpressions.class), String.class)
                     .method("getString");
 
             // Second expression
-            builder.withExpressionNode(of(TestExpressions.class), Integer.class)
+            builder.expression(of(TestExpressions.class), Integer.class)
                     .method("getInteger");
 
             // Third expression
-            builder.withExpressionNode(of(TestExpressions.class), Boolean.class)
+            builder.expression(of(TestExpressions.class), Boolean.class)
                     .method("getBoolean");
         });
     }
@@ -303,13 +303,13 @@ class ExpressionContextBuilderTest {
 
         // Should work - correct method name
         assertDoesNotThrow(() -> {
-            builder.withExpressionNode(of(TestExpressions.class), String.class)
+            builder.expression(of(TestExpressions.class), String.class)
                     .method("getString");
         });
 
         // Should fail - method doesn't exist
         assertThrows(DslException.class, () -> {
-            builder.withExpressionNode(of(TestExpressions.class), String.class)
+            builder.expression(of(TestExpressions.class), String.class)
                     .method("nonExistentMethod");
         });
     }
@@ -321,7 +321,7 @@ class ExpressionContextBuilderTest {
 
         assertThrows(NullPointerException.class, () -> {
             Class<?> type = null;
-            builder.withExpressionNode(of(type), String.class);
+            builder.expression(of(type), String.class);
         });
     }
 
@@ -331,7 +331,7 @@ class ExpressionContextBuilderTest {
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
-            builder.withExpressionNode(of(TestExpressions.class), null);
+            builder.expression(of(TestExpressions.class), null);
         });
     }
 

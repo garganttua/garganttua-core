@@ -11,7 +11,7 @@ import com.garganttua.core.supply.ISupplier;
 
 public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
-    private List<IExpressionNode<?, ? extends ISupplier<?>>> childs = new LinkedList<>();
+    private List<Object> params = new LinkedList<>();
 
     private IEvaluateNode<R> evaluate;
 
@@ -21,13 +21,13 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType) {
         this.returnedType = returnedType;
-        this.childs = List.of();
+        this.params = List.of();
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
     public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType,
-            List<IExpressionNode<?, ? extends ISupplier<?>>> childs) {
-        this.childs = Objects.requireNonNull(childs, "Childs list cannot be null");
+            List<Object> params) {
+        this.params = Objects.requireNonNull(params, "Params list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
         this.returnedType = returnedType;
     }
@@ -43,15 +43,22 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     @Override
     public ISupplier<R> evaluate() throws ExpressionException {
-        List<ISupplier<?>> childsSignals = this.childs.stream()
-                .map(node -> Expression.evaluateNode(node))
+        List<Object> childs = this.params.stream()
+                .map(p -> {
+                    if (p instanceof IExpressionNode<?, ? extends ISupplier<?>> node)
+                        return (Object) Expression.evaluateNode(node);
+                    else 
+                        return p;
+                })
                 .collect(Collectors.toList());
 
-        return this.evaluate.evaluate(childsSignals.toArray(new ISupplier<?>[0]));
+        Object[] params = childs.toArray(new Object[0]);
+        return this.evaluate.evaluate(params);
     }
 
     @Override
     public Class<R> getFinalSuppliedClass() {
         return this.returnedType;
     }
+
 }

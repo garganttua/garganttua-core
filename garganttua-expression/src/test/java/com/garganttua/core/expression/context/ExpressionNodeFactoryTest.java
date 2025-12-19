@@ -34,7 +34,6 @@ public class ExpressionNodeFactoryTest {
                 TestService.class.getMethod("string", String.class),
                 new ObjectAddress("string"),
                 List.of(false),
-                true,
                 Optional.of("string"),
                 Optional.of("String converter"));
 
@@ -44,13 +43,10 @@ public class ExpressionNodeFactoryTest {
                 TestService.class.getMethod("greet", String.class),
                 new ObjectAddress("greet"),
                 List.of(false),
-                false,
                 Optional.of("greet"),
                 Optional.of("Greeting function"));
 
-
-
-        Optional<IExpressionNode<String,ISupplier<String>>> leaf = leafFactory.supply(new ExpressionNodeContext(List.of("greet"), true));
+        Optional<IExpressionNode<String,ISupplier<String>>> leaf = leafFactory.supply(new ExpressionNodeContext(List.of("greet")));
 
         Optional<IExpressionNode<String,ISupplier<String>>> expression = nodefactory.supply(new ExpressionNodeContext(List.of(leaf.get())));
 
