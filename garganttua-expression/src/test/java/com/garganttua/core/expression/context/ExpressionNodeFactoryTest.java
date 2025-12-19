@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
+import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 
 public class ExpressionNodeFactoryTest {
 
@@ -28,7 +29,7 @@ public class ExpressionNodeFactoryTest {
     public void testExpressionNodeFactoryCreation() throws Exception {
 
         ExpressionNodeFactory<String, ISupplier<String>> leafFactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                TestService.class,
+                of(TestService.class).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
                 TestService.class.getMethod("string", String.class),
                 new ObjectAddress("string"),
@@ -38,7 +39,7 @@ public class ExpressionNodeFactoryTest {
                 Optional.of("String converter"));
 
         ExpressionNodeFactory<String, ISupplier<String>> nodefactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                TestService.class,
+                of(TestService.class).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
                 TestService.class.getMethod("greet", String.class),
                 new ObjectAddress("greet"),

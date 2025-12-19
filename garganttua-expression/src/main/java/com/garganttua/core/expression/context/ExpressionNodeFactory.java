@@ -116,14 +116,14 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      */
     @SuppressWarnings("unchecked")
     public ExpressionNodeFactory(
-            Class<?> methodOwner,
+            ISupplier<?> methodOwnerSupplier,
             Class<S> supplied,
             Method method,
             ObjectAddress methodAddress,
             List<Boolean> nullableParameters,
             Boolean leaf, Optional<String> name, Optional<String> description) throws ExpressionException {
 
-        super(new NullSupplier<>(methodOwner),
+        super(methodOwnerSupplier,
                 methodAddress,
                 List.of(),
                 (Class<IExpressionNode<R, S>>) (Class<?>) IExpressionNode.class);

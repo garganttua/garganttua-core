@@ -21,16 +21,16 @@
         </dependency>
         <dependency>
             <groupId>com.garganttua.core</groupId>
-            <artifactId>garganttua-dsl</artifactId>
+            <artifactId>garganttua-injection</artifactId>
         </dependency>
-        <dependency>
+       <!--  <dependency>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-supply</artifactId>
         </dependency>
         <dependency>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-reflection</artifactId>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-reflections</artifactId>

@@ -11,6 +11,8 @@ import com.garganttua.core.expression.annotations.ExpressionLeaf;
 import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
+import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.reflection.methods.Methods;
@@ -53,7 +55,7 @@ public class ExpressionNodeFactoryBuilder<S>
         AbstractMethodBinderBuilder<IExpressionNode<S, ISupplier<S>>, IExpressionMethodBinderBuilder<S>, IExpressionContextBuilder, IExpressionNodeFactory<S, ISupplier<S>>>
         implements IExpressionMethodBinderBuilder<S> {
 
-    private Class<?> methodOwner;
+    private ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier;
     @SuppressWarnings("unused")
     private Class<S> supplied;
     private Boolean leaf = false;
@@ -69,20 +71,20 @@ public class ExpressionNodeFactoryBuilder<S>
      *                    compatibility)
      */
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
-            Class<?> methodOwner,
+            ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
             Class<S> supplied) throws DslException {
-        this(parent, methodOwner, supplied, false);
+        this(parent, methodOwnerSupplier, supplied, false);
     }
 
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
-            Class<?> methodOwner,
+            ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
             Class<S> supplied, Boolean leaf) throws DslException {
-        super(parent, new NullSupplierBuilder<>(methodOwner));
+        super(parent, methodOwnerSupplier);
         log.atTrace().log(
-                "Entering ExpressionMethodBinderBuilder constructor with methodOwner={}, supplied={}, leaf={}",
-                methodOwner, supplied, leaf);
+                "Entering ExpressionMethodBinderBuilder constructor with methodOwnerSupplier={}, supplied={}, leaf={}",
+                methodOwnerSupplier, supplied, leaf);
         this.leaf = Objects.requireNonNull(leaf, "Leaf boolean cannot be null");
-        this.methodOwner = Objects.requireNonNull(methodOwner, "Method owner cannot be null");
+        this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         this.supplied = Objects.requireNonNull(supplied, "Supplied type cannot be null");
         log.atTrace().log("Exiting ExpressionMethodBinderBuilder constructor");
     }
@@ -102,7 +104,7 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     public IExpressionMethodBinderBuilder<S> method(ObjectAddress methodAddress) throws DslException {
         log.atDebug().log("Checking if method at address {} is static", methodAddress);
-        if (!Methods.isStatic(this.methodOwner, methodAddress)) {
+        if (!Methods.isStatic(this.methodOwnerSupplier.getSuppliedClass(), methodAddress)) {
             throw new DslException("Method at address " + methodAddress + " must be static for expression binding");
         }
         this.name = methodAddress.getElement(methodAddress.length()-1);
@@ -139,7 +141,7 @@ public class ExpressionNodeFactoryBuilder<S>
     public IExpressionMethodBinderBuilder<S> method(ObjectAddress methodAddress,
             Class<IExpressionNode<S, ISupplier<S>>> returnType, Class<?>... parameterTypes) throws DslException {
         log.atDebug().log("Checking if method at address {} is static", methodAddress);
-        if (!Methods.isStatic(this.methodOwner, methodAddress)) {
+        if (!Methods.isStatic(this.methodOwnerSupplier.getSuppliedClass(), methodAddress)) {
             throw new DslException("Method at address " + methodAddress + " must be static for expression binding");
         }
         return super.method(methodAddress, returnType, parameterTypes);
@@ -167,7 +169,7 @@ public class ExpressionNodeFactoryBuilder<S>
         Method method = this.findMethod();
         ObjectAddress methodAddress = new ObjectAddress(method.getName());
         return new ExpressionNodeFactory<S, ISupplier<S>>(
-                this.methodOwner,
+                this.methodOwnerSupplier.build(),
                 (Class<ISupplier<S>>) (Class<?>) ISupplier.class,
                 method,
                 methodAddress,

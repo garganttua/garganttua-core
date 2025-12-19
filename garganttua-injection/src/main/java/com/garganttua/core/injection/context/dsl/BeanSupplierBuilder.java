@@ -12,6 +12,7 @@ import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.context.beans.BeanSupplier;
+import com.garganttua.core.injection.context.beans.ContextualBeanSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,6 +24,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     private Class<Bean> type;
     private BeanStrategy strategy;
     private Class<? extends Annotation> qualifier;
+    private boolean useStaticContext = true;
 
     public BeanSupplierBuilder(Class<Bean> type) {
         log.atTrace().log("Entering BeanSupplierBuilder constructor with type: {}", type);
@@ -101,9 +103,17 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
             log.atDebug().log("Added qualifier to build: {}", this.qualifier.getSimpleName());
         }
 
-        IBeanSupplier<Bean> supplier = new BeanSupplier<>(Optional.ofNullable(this.provider),
+        IBeanSupplier<Bean> supplier = null;
+        
+        if( this.useStaticContext )
+            supplier = new BeanSupplier<>(Optional.ofNullable(this.provider),
                 new BeanReference<>(this.type, Optional.ofNullable(this.strategy),
                         Optional.ofNullable(this.name), qualifiers));
+        else
+            supplier = new ContextualBeanSupplier<>(Optional.ofNullable(this.provider),
+                new BeanReference<>(this.type, Optional.ofNullable(this.strategy),
+                        Optional.ofNullable(this.name), qualifiers));
+
         log.atInfo().log("BeanSupplier built successfully for type: {}, provider: {}, name: {}",
                 this.type.getSimpleName(), this.provider, this.name);
         log.atTrace().log("Exiting build() method");
@@ -158,5 +168,11 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         log.atTrace().log("Entering isContextual() method");
         log.atTrace().log("Exiting isContextual() method with result: false");
         return false;
+    }
+
+    @Override
+    public IBeanSupplierBuilder<Bean> useStaticContext(boolean useStaticContext) {
+        this.useStaticContext = useStaticContext;
+        return this;
     }
 }

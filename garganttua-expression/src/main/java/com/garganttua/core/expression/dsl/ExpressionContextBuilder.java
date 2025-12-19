@@ -16,10 +16,13 @@ import com.garganttua.core.expression.annotations.ExpressionNode;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
+import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -29,18 +32,20 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>
  * {@code ExpressionBuilder} implements the DSL builder pattern for creating
- * {@link IExpressionContext} objects. It extends {@link AbstractAutomaticBuilder} to
+ * {@link IExpressionContext} objects. It extends
+ * {@link AbstractAutomaticBuilder} to
  * provide automatic configuration detection and package scanning capabilities.
  * </p>
  *
  * <h2>Usage Example</h2>
+ * 
  * <pre>{@code
  * IExpressionContext context = ExpressionBuilder
- *     .builder()
- *     .withExpressionNode(Calculator.class, Integer.class)
+ *         .builder()
+ *         .withExpressionNode(Calculator.class, Integer.class)
  *         .method("add")
  *         .up()
- *     .build();
+ *         .build();
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
@@ -52,7 +57,10 @@ public class ExpressionContextBuilder
 
     private Set<String> packages = new HashSet<>();
 
-    private Set<ExpressionNodeFactoryBuilder<?>> nodes = new HashSet<>();
+    private Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
+
+    private IDiContextBuilder injectionContextBuilder;
+    private IDiContext injectionContext;
 
     protected ExpressionContextBuilder() {
         super();
@@ -70,28 +78,30 @@ public class ExpressionContextBuilder
         return new ExpressionContextBuilder();
     }
 
+
     @Override
-    public <T> IExpressionMethodBinderBuilder<T> withExpressionNode(Class<?> methodOwner, Class<T> supplied) {
-        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwner={}, supplied={}",
-                methodOwner, supplied);
-        Objects.requireNonNull(methodOwner, "Method owner cannot be null");
+    public <T> IExpressionMethodBinderBuilder<T> withExpressionNode(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
+        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
+                methodOwnerSupplier, supplied);
+        Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        ExpressionNodeFactoryBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this, methodOwner, supplied);
+        IExpressionMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this,
+                methodOwnerSupplier, supplied);
         this.nodes.add(expressionNodeMethodBinderBuilder);
         return expressionNodeMethodBinderBuilder;
     }
 
     @Override
-    public <T> IExpressionMethodBinderBuilder<T> withExpressionLeaf(Class<?> methodOwner, Class<T> supplied) {
-        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwner={}, supplied={}",
-                methodOwner, supplied);
-        Objects.requireNonNull(methodOwner, "Method owner cannot be null");
+    public <T> IExpressionMethodBinderBuilder<T> withExpressionLeaf(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
+        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
+                methodOwnerSupplier, supplied);
+        Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
-        ExpressionNodeFactoryBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this, methodOwner, supplied, true);
+        IExpressionMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this,
+                methodOwnerSupplier, supplied, true);
         this.nodes.add(expressionNodeMethodBinderBuilder);
         return expressionNodeMethodBinderBuilder;
     }
-
 
     @Override
     public IExpressionContextBuilder withPackage(String packageName) {
@@ -117,32 +127,67 @@ public class ExpressionContextBuilder
 
     @Override
     protected IExpressionContext doBuild() throws DslException {
-        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream().map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
+        if (!this.canBuild()) {
+            log.atError().log("Attempt to build before authorization, injection context is missing");
+            throw new DslException("Build is not yet authorized, injection context is missing");
+        }
+        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream()
+                .map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
         return new ExpressionContext(builtNodes);
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
+        if (!this.canBuild()) {
+            log.atError().log("Attempt to build before authorization");
+            throw new DslException("Build is not yet authorized");
+        }
         List<Method> nodes = new ArrayList<>();
         List<Method> leafs = new ArrayList<>();
         this.packages.stream().forEach(p -> {
             nodes.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, ExpressionNode.class));
             leafs.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, ExpressionLeaf.class));
         });
-        nodes.stream().forEach(m -> this.withExpressionNode(m.getDeclaringClass(), m.getReturnType()).method(m).autoDetect(true));
-        leafs.stream().forEach(m -> this.withExpressionLeaf(m.getDeclaringClass(), m.getReturnType()).method(m).autoDetect(true));
+        nodes.stream().forEach(
+                m -> this.withExpressionNode(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true));
+        leafs.stream().forEach(
+                m -> this.withExpressionLeaf(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true));
+    }
+
+    private boolean canBuild() {
+        if (this.injectionContextBuilder == null) {
+            log.atWarn().log("Injection context builder is not set, can build");
+            return true;
+        }
+        if (this.injectionContext == null) {
+            log.atWarn().log("Injection context is not set, cannot build");
+            return false;
+        }
+        log.atWarn().log("Injection context is set, can build");
+        return true;
     }
 
     @Override
     public IExpressionContextBuilder context(IDiContextBuilder context) {
-        Objects.requireNonNull(context, "Injection context builder cannot be null");
+        this.injectionContextBuilder = Objects.requireNonNull(context, "Injection context builder cannot be null");
+
+        context.observer(this);
         context.resolvers().withResolver(Expression.class, (t, e) -> {
             Expression expression = e.getAnnotation(Expression.class);
-            if( expression == null )
+            if (expression == null)
                 return Resolved.notResolved(t, e);
-            return new Resolved(true, t, this.built.expression(expression.value()), e.isAnnotationPresent(Nullable.class));
+            return new Resolved(true, t, this.built.expression(expression.value()),
+                    e.isAnnotationPresent(Nullable.class));
         });
-        
+
         return this;
     }
+
+    @Override
+    public void handle(IDiContext context) {
+        log.atTrace().log("Entering handle() method");
+        this.injectionContext = Objects.requireNonNull(context, "Context cannot be null");
+        log.atTrace().log("Exiting handle() method");
+    }
+
 }

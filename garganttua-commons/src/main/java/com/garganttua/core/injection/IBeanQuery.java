@@ -3,7 +3,7 @@ package com.garganttua.core.injection;
 import java.util.Optional;
 
 /**
- * Represents a query operation for retrieving a bean from the dependency injection context.
+ * Represents a query operation for retrieving a bean from the static dependency injection context.
  *
  * <p>
  * An {@code IBeanQuery} encapsulates the criteria and execution logic for locating
