@@ -39,7 +39,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
         log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", package_, annotation);
 
         log.atDebug().log("Initializing Reflections scanner for package '{}'", package_);
-        Reflections reflections = new Reflections(package_, Scanners.TypesAnnotated);
+        Reflections reflections = new Reflections(package_, Scanners.MethodsAnnotated);
 
         log.atDebug().log("Fetching annotated methods for annotation '{}' in package {}", annotation.getName(), package_);
         Set<Method> annotatedMethods = reflections.getMethodsAnnotatedWith(annotation);
@@ -47,8 +47,6 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
         log.atInfo().log("Found {} methods annotated with '{}' in package {}", annotatedMethods.size(), annotation.getName(), package_);
 
         List<Method> result = annotatedMethods.stream().collect(Collectors.toList());
-
-        
 
         log.atTrace().log("Exiting getClassesWithAnnotation(package={}, annotation={})", package_, annotation);
         return result;

@@ -3,17 +3,25 @@ package com.garganttua.core.expression.context;
 import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
+import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.functions.Expressions;
+import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.ISupplier;
 
 public class ExpressionContextTest {
@@ -25,12 +33,13 @@ public class ExpressionContextTest {
         }
     }
 
-    private ExpressionContext expressionContext;
+    private IExpressionContext expressionContext;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
     public void setUp() throws Exception {
         // Create factories for StandardExpressionLeafs methods as expression leaves
+        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
 
         ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<>(
                 of(Expressions.class).build(),
@@ -83,10 +92,23 @@ public class ExpressionContextTest {
                 intFactory,
                 booleanFactory,
                 addFactory,
-                classFactory
-        );
+                classFactory);
 
         expressionContext = new ExpressionContext(factories);
+    }
+
+    @Test
+    public void test() {
+
+        IDiContextBuilder injectionContextBuilder = DiContext.builder();
+        ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
+        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).context(injectionContextBuilder);
+
+        injectionContextBuilder.build();
+        IExpressionContext expressionContext = expressionContextBuilder.build();
+
+        System.out.println(expressionContext.man());
+
     }
 
     @SuppressWarnings("unchecked")
@@ -192,7 +214,8 @@ public class ExpressionContextTest {
     @Test
     public void testddExpression_wrongParamType() throws Exception {
         // Parse an expression with a function call: add(42, 30)
-        ExpressionException exception = assertThrows(ExpressionException.class, () -> expressionContext.expression("add(8,add(toto, 30))"));
+        ExpressionException exception = assertThrows(ExpressionException.class,
+                () -> expressionContext.expression("add(8,add(toto, 30))"));
 
         assertEquals("Unknown function: add(String,Integer)", exception.getMessage());
     }
@@ -325,7 +348,7 @@ public class ExpressionContextTest {
         for (String line : lines) {
             // Skip header and footer lines
             if (line.trim().startsWith("AVAILABLE") || line.trim().startsWith("====") ||
-                line.trim().startsWith("Total") || line.trim().startsWith("Use") || line.trim().isEmpty()) {
+                    line.trim().startsWith("Total") || line.trim().startsWith("Use") || line.trim().isEmpty()) {
                 continue;
             }
 
