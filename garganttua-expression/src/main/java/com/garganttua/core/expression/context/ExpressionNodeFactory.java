@@ -168,6 +168,10 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     /**
      * Returns the key identifier for this factory.
      *
+     * <p>Note: Multiple factories can have the same key if different classes have methods
+     * with the same name and parameters. The ExpressionContext handles duplicates by
+     * keeping the first factory registered.</p>
+     *
      * @return a string in the format "name(Type1,Type2,...)"
      */
     @Override

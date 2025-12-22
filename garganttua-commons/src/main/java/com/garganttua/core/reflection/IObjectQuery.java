@@ -88,11 +88,33 @@ public interface IObjectQuery {
 	/**
 	 * Constructs an ObjectAddress from an element name.
 	 *
+	 * <p>
+	 * This method returns the first matching element (field or method). For overloaded
+	 * methods, use {@link #addresses(String)} to get all variants.
+	 * </p>
+	 *
 	 * @param elementName the name of the element to create an address for
 	 * @return an {@link ObjectAddress} representing the element
 	 * @throws ReflectionException if the address cannot be constructed
 	 */
 	ObjectAddress address(String elementName) throws ReflectionException;
+
+	/**
+	 * Constructs ObjectAddress instances for all elements matching the given name.
+	 *
+	 * <p>
+	 * Unlike {@link #address(String)} which returns only the first match, this method
+	 * returns ALL matching elements. This is particularly useful for methods, where
+	 * multiple overloads may share the same name. For fields, this typically returns
+	 * a single-element list.
+	 * </p>
+	 *
+	 * @param elementName the name of the element(s) to create addresses for
+	 * @return a list of {@link ObjectAddress} instances representing all matching elements
+	 *         (may be empty, never {@code null})
+	 * @throws ReflectionException if the addresses cannot be constructed
+	 */
+	List<ObjectAddress> addresses(String elementName) throws ReflectionException;
 
 	/**
 	 * Builds a structured representation of field values at the specified address.
@@ -269,5 +291,34 @@ public interface IObjectQuery {
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
 	Object invoke(Object object, ObjectAddress methodAddress, Object ...args) throws ReflectionException;
+
+	/**
+	 * Finds all objects (fields or methods) matching the specified address, including all overloaded methods.
+	 *
+	 * <p>
+	 * Unlike {@link #find(ObjectAddress)}, this method returns ALL matching elements,
+	 * particularly useful for finding all overloaded variants of a method.
+	 * For fields, the behavior is identical to {@link #find(ObjectAddress)}.
+	 * </p>
+	 *
+	 * @param address the object address to search
+	 * @return a list of all objects found at the address (may be empty, never {@code null})
+	 * @throws ReflectionException if the address is invalid or search fails
+	 */
+	List<Object> findAll(ObjectAddress address) throws ReflectionException;
+
+	/**
+	 * Finds all objects matching the specified address string, including all overloaded methods.
+	 *
+	 * <p>
+	 * Convenience method that constructs an {@link ObjectAddress} from the string
+	 * and delegates to {@link #findAll(ObjectAddress)}.
+	 * </p>
+	 *
+	 * @param address the dot-separated address string
+	 * @return a list of all objects found at the address (may be empty, never {@code null})
+	 * @throws ReflectionException if the address is invalid or search fails
+	 */
+	List<Object> findAll(String address) throws ReflectionException;
 
 }

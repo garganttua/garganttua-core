@@ -72,15 +72,30 @@ public class ObjectQuery implements IObjectQuery {
     public List<Object> find(ObjectAddress fieldAddress) throws ReflectionException {
         log.atDebug().log("find(ObjectAddress) called with fieldAddress={} in class={}", fieldAddress, objectClass);
         List<Object> list = new ArrayList<>();
-        List<Object> result = findRecursively(this.objectClass, fieldAddress, 0, list);
+        List<Object> result = findRecursively(this.objectClass, fieldAddress, 0, list, false);
         log.atTrace().log("find result for {} : {}", fieldAddress, result);
         return result;
     }
 
-    private List<Object> findRecursively(Class<?> clazz, ObjectAddress address, int index, List<Object> list)
+    @Override
+    public List<Object> findAll(String fieldAddress) throws ReflectionException {
+        log.atTrace().log("findAll(String) called with fieldAddress='{}'", fieldAddress);
+        return this.findAll(new ObjectAddress(fieldAddress, true));
+    }
+
+    @Override
+    public List<Object> findAll(ObjectAddress fieldAddress) throws ReflectionException {
+        log.atDebug().log("findAll(ObjectAddress) called with fieldAddress={} in class={}", fieldAddress, objectClass);
+        List<Object> list = new ArrayList<>();
+        List<Object> result = findRecursively(this.objectClass, fieldAddress, 0, list, true);
+        log.atTrace().log("findAll result for {} : {} element(s)", fieldAddress, result.size());
+        return result;
+    }
+
+    private List<Object> findRecursively(Class<?> clazz, ObjectAddress address, int index, List<Object> list, boolean findAll)
             throws ReflectionException {
         String element = address.getElement(index);
-        log.atTrace().log("findRecursively: element='{}', index={}, class={}", element, index, clazz);
+        log.atTrace().log("findRecursively: element='{}', index={}, class={}, findAll={}", element, index, clazz, findAll);
 
         if (clazz == null || index >= address.length()) {
             log.atError().log("Element '{}' not found in class {}", element, clazz);
@@ -88,18 +103,28 @@ public class ObjectQuery implements IObjectQuery {
         }
 
         Field field = ObjectReflectionHelper.getField(clazz, element);
-        Method method = (index == address.length() - 1 && field == null)
-                ? ObjectReflectionHelper.getMethod(clazz, element)
-                : null;
 
-        if (field == null && method == null) {
+        // For methods: use getMethods if findAll is true, otherwise getMethod
+        List<Method> methods = null;
+        Method method = null;
+        if (index == address.length() - 1 && field == null) {
+            if (findAll) {
+                methods = ObjectReflectionHelper.getMethods(clazz, element);
+            } else {
+                method = ObjectReflectionHelper.getMethod(clazz, element);
+            }
+        }
+
+        boolean hasMethod = (method != null) || (methods != null && !methods.isEmpty());
+
+        if (field == null && !hasMethod) {
             if (clazz.getSuperclass() != null && !Object.class.equals(clazz.getSuperclass())
                     && !Fields.BlackList.isBlackListed(clazz.getSuperclass())) {
                 log.atTrace().log("Element '{}' not found in {}, checking superclass {}", element, clazz,
                         clazz.getSuperclass());
-                return findRecursively(clazz.getSuperclass(), address, index, list);
+                return findRecursively(clazz.getSuperclass(), address, index, list, findAll);
             }
-        } else if (field != null && method == null) {
+        } else if (field != null && !hasMethod) {
             log.atDebug().log("Field '{}' found in {}", field.getName(), clazz.getName());
             list.add(field);
             if (index == address.length() - 1) {
@@ -110,16 +135,16 @@ public class ObjectQuery implements IObjectQuery {
             if (Collection.class.isAssignableFrom(fieldType)) {
                 Class<?> genericType = Fields.getGenericType(field, 0);
                 log.atTrace().log("Field '{}' is Collection, recursing into type={}", field.getName(), genericType);
-                return findRecursively(genericType, address, index + 1, list);
+                return findRecursively(genericType, address, index + 1, list, findAll);
             } else if (Map.class.isAssignableFrom(fieldType)) {
                 String nextElement = address.getElement(index + 1);
                 log.atTrace().log("Field '{}' is Map, next address element='{}'", field.getName(), nextElement);
                 if (ObjectAddress.MAP_VALUE_INDICATOR.equals(nextElement)) {
                     Class<?> valueType = Fields.getGenericType(field, 1);
-                    return findRecursively(valueType, address, index + 2, list);
+                    return findRecursively(valueType, address, index + 2, list, findAll);
                 } else if (ObjectAddress.MAP_KEY_INDICATOR.equals(nextElement)) {
                     Class<?> keyType = Fields.getGenericType(field, 0);
-                    return findRecursively(keyType, address, index + 2, list);
+                    return findRecursively(keyType, address, index + 2, list, findAll);
                 } else {
                     log.atError().log("Map field '{}' address element must indicate key or value, got '{}'",
                             field.getName(), nextElement);
@@ -127,11 +152,16 @@ public class ObjectQuery implements IObjectQuery {
                             "Field " + element + " is a map, so address must indicate key or value");
                 }
             } else {
-                return findRecursively(fieldType, address, index + 1, list);
+                return findRecursively(fieldType, address, index + 1, list, findAll);
             }
-        } else if (field == null && method != null) {
-            log.atDebug().log("Method '{}' found in {}", method.getName(), clazz.getName());
-            list.add(method);
+        } else if (field == null && hasMethod) {
+            if (findAll && methods != null) {
+                log.atDebug().log("Found {} method(s) named '{}' in {}", methods.size(), element, clazz.getName());
+                list.addAll(methods);
+            } else if (method != null) {
+                log.atDebug().log("Method '{}' found in {}", method.getName(), clazz.getName());
+                list.add(method);
+            }
             return list;
         } else {
             log.atError().log("Element '{}' is both a field and method in {}", element, clazz);
@@ -146,6 +176,73 @@ public class ObjectQuery implements IObjectQuery {
     public ObjectAddress address(String elementName) throws ReflectionException {
         log.atDebug().log("address(String) called for element='{}' in class={}", elementName, objectClass);
         return address(this.objectClass, elementName, null);
+    }
+
+    @Override
+    public List<ObjectAddress> addresses(String elementName) throws ReflectionException {
+        log.atDebug().log("addresses(String) called for element='{}' in class={}", elementName, objectClass);
+        return addresses(this.objectClass, elementName, null);
+    }
+
+    private List<ObjectAddress> addresses(Class<?> objectClass, String elementName, ObjectAddress baseAddress)
+            throws ReflectionException {
+        log.atTrace().log("Resolving all addresses for element='{}', class={}, baseAddress={}", elementName, objectClass,
+                baseAddress);
+        List<ObjectAddress> result = new ArrayList<>();
+
+        Field field = null;
+        try {
+            field = objectClass.getDeclaredField(elementName);
+        } catch (NoSuchFieldException | SecurityException ignored) {
+        }
+
+        // Get all methods with this name (including overloads)
+        List<Method> methods = ObjectReflectionHelper.getMethods(objectClass, elementName);
+
+        if (!methods.isEmpty()) {
+            log.atDebug().log("Found {} method(s) named '{}' in {}", methods.size(), elementName, objectClass.getName());
+            for (Method method : methods) {
+                result.add(new ObjectAddress(baseAddress == null ? elementName : baseAddress + "." + elementName, true));
+            }
+        }
+
+        if (field != null) {
+            log.atDebug().log("Found field '{}' in {}", elementName, objectClass.getName());
+            result.add(new ObjectAddress(baseAddress == null ? elementName : baseAddress + "." + elementName, true));
+        }
+
+        // If we found something in this class, return it
+        if (!result.isEmpty()) {
+            log.atInfo().log("Resolved {} address(es) for element '{}' in {}", result.size(), elementName, objectClass);
+            return result;
+        }
+
+        // Search in superclass if nothing found
+        if (objectClass.getSuperclass() != null && !Object.class.equals(objectClass.getSuperclass())
+                && !Fields.BlackList.isBlackListed(objectClass.getSuperclass())) {
+            List<ObjectAddress> superResult = addresses(objectClass.getSuperclass(), elementName, baseAddress);
+            if (!superResult.isEmpty()) {
+                return superResult;
+            }
+        }
+
+        // Search in nested fields (same logic as address method)
+        for (Field f : objectClass.getDeclaredFields()) {
+            if (Fields.isNotPrimitive(f.getType())) {
+                List<ObjectAddress> a;
+                if ((a = doIfIsCollectionForAddresses(f, elementName, baseAddress)) != null && !a.isEmpty())
+                    return a;
+                if ((a = doIfIsMapForAddresses(f, elementName, baseAddress)) != null && !a.isEmpty())
+                    return a;
+                if ((a = doIfIsArrayForAddresses(f, elementName, baseAddress)) != null && !a.isEmpty())
+                    return a;
+                if ((a = doIfNotEnumForAddresses(f, elementName, baseAddress)) != null && !a.isEmpty())
+                    return a;
+            }
+        }
+
+        log.atWarn().log("No addresses found for element '{}' in {}", elementName, objectClass.getName());
+        return result; // Return empty list if nothing found
     }
 
     private ObjectAddress address(Class<?> objectClass, String elementName, ObjectAddress address)
@@ -358,6 +455,66 @@ public class ObjectQuery implements IObjectQuery {
             ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
                     : address.clone().addElement(f.getName());
             return address(f.getType(), elementName, newAddress);
+        }
+        return null;
+    }
+
+    // Helper methods for addresses() that return Lists instead of single ObjectAddress
+
+    private List<ObjectAddress> doIfIsMapForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
+        if (Map.class.isAssignableFrom(f.getType())) {
+            log.atTrace().log("doIfIsMapForAddresses checking field '{}' for element '{}'", f.getName(), elementName);
+            Class<?> keyClass = Fields.getGenericType(f, 0);
+            Class<?> valueClass = Fields.getGenericType(f, 1);
+            if (Fields.isNotPrimitive(keyClass) && !Fields.BlackList.isBlackListed(keyClass)) {
+                ObjectAddress keyAddress = address == null ? new ObjectAddress(f.getName(), true)
+                        : address.clone().addElement(f.getName());
+                keyAddress.addElement(ObjectAddress.MAP_KEY_INDICATOR);
+                List<ObjectAddress> a = addresses(keyClass, elementName, keyAddress);
+                if (!a.isEmpty())
+                    return a;
+            }
+            if (Fields.isNotPrimitive(valueClass) && !Fields.BlackList.isBlackListed(valueClass)) {
+                ObjectAddress valueAddress = address == null ? new ObjectAddress(f.getName(), true)
+                        : address.clone().addElement(f.getName());
+                valueAddress.addElement(ObjectAddress.MAP_VALUE_INDICATOR);
+                List<ObjectAddress> a = addresses(valueClass, elementName, valueAddress);
+                if (!a.isEmpty())
+                    return a;
+            }
+        }
+        return null;
+    }
+
+    private List<ObjectAddress> doIfIsArrayForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
+        if (f.getType().isArray()) {
+            log.atTrace().log("doIfIsArrayForAddresses checking array field '{}' for element '{}'", f.getName(), elementName);
+            Class<?> componentType = f.getType().getComponentType();
+            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
+                    : address.clone().addElement(f.getName());
+            return addresses(componentType, elementName, newAddress);
+        }
+        return null;
+    }
+
+    private List<ObjectAddress> doIfIsCollectionForAddresses(Field f, String elementName, ObjectAddress address)
+            throws ReflectionException {
+        if (Collection.class.isAssignableFrom(f.getType())) {
+            log.atTrace().log("doIfIsCollectionForAddresses checking field '{}' for element '{}'", f.getName(), elementName);
+            Class<?> t = Fields.getGenericType(f, 0);
+            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
+                    : address.clone().addElement(f.getName());
+            return addresses(t, elementName, newAddress);
+        }
+        return null;
+    }
+
+    private List<ObjectAddress> doIfNotEnumForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
+        if (!f.getType().isEnum()) {
+            log.atTrace().log("doIfNotEnumForAddresses checking field '{}' for element '{}'", f.getName(), elementName);
+            ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
+                    : address.clone().addElement(f.getName());
+            return addresses(f.getType(), elementName, newAddress);
         }
         return null;
     }

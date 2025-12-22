@@ -159,6 +159,72 @@ public class ObjectReflectionHelper {
 		return null;
 	}
 
+	/**
+	 * Gets all methods with the specified name from the given class, including overloaded variants.
+	 * This method searches the class hierarchy recursively.
+	 *
+	 * <p>Duplicate methods (same signature) inherited from superclasses are automatically filtered out
+	 * to avoid duplicates when a method is not overridden.</p>
+	 *
+	 * @param objectClass the class to search
+	 * @param methodName the name of the methods to find
+	 * @return a list of all methods with the given name (may be empty, never null)
+	 */
+	public static List<Method> getMethods(Class<?> objectClass, String methodName) {
+		log.atTrace().log("Getting all methods named {} from class: {}", methodName, objectClass.getName());
+		List<Method> methods = new ArrayList<>();
+		// Use a set to track signatures and avoid duplicates
+		HashSet<String> seenSignatures = new HashSet<>();
+
+		// Get all methods with this name from current class
+		for (Method m : objectClass.getDeclaredMethods()) {
+			if (m.getName().equals(methodName)) {
+				String signature = buildMethodSignature(m);
+				if (!seenSignatures.contains(signature)) {
+					log.atDebug().log("Found method {} in class: {}", methodName, objectClass.getName());
+					methods.add(m);
+					seenSignatures.add(signature);
+				}
+			}
+		}
+
+		// Recursively search superclass
+		if (objectClass.getSuperclass() != null) {
+			for (Method m : getMethods(objectClass.getSuperclass(), methodName)) {
+				String signature = buildMethodSignature(m);
+				// Only add if not already seen (avoid inherited duplicates)
+				if (!seenSignatures.contains(signature)) {
+					methods.add(m);
+					seenSignatures.add(signature);
+				}
+			}
+		}
+
+		log.atDebug().log("Found {} method(s) named {} in class hierarchy of {}", methods.size(), methodName, objectClass.getName());
+		return methods;
+	}
+
+	/**
+	 * Builds a unique signature for a method based on its name and parameter types.
+	 * Used for deduplication of inherited methods.
+	 *
+	 * @param method the method to build signature for
+	 * @return a string signature in the format "methodName(Type1,Type2,...)"
+	 */
+	private static String buildMethodSignature(Method method) {
+		StringBuilder signature = new StringBuilder(method.getName());
+		signature.append("(");
+		Class<?>[] paramTypes = method.getParameterTypes();
+		for (int i = 0; i < paramTypes.length; i++) {
+			if (i > 0) {
+				signature.append(",");
+			}
+			signature.append(paramTypes[i].getName());
+		}
+		signature.append(")");
+		return signature.toString();
+	}
+
 	public static <destination> destination instanciateNewObject(Class<destination> clazz, Object... params)
 			throws ReflectionException {
 		log.atTrace().log("Instantiating new object of class: {} with {} params", clazz.getName(),

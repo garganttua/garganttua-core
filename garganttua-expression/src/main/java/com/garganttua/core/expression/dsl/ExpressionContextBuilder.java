@@ -3,7 +3,9 @@ package com.garganttua.core.expression.dsl;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -119,17 +121,17 @@ public class ExpressionContextBuilder
             log.atError().log("Attempt to build before authorization, injection context is missing");
             throw new DslException("Build is not yet authorized, injection context is missing");
         }
-        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream()
-                .map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
-
+        
         CompletableFuture<ExpressionContext> futur = new CompletableFuture<>();
         try {
             this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man")).withDescription("the description");
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("expressionManualByIndex", int.class)).withDescription("the description");
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("expressionManualByKey", String.class)).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man", int.class)).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man", String.class)).withDescription("the description");
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
+        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream()
+                .map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
 
         ExpressionContext context = new ExpressionContext(builtNodes);
         futur.complete(context);
@@ -147,8 +149,51 @@ public class ExpressionContextBuilder
         this.packages.stream().forEach(p -> {
             expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class));
         });
-        expressions.stream().forEach(
-                m -> this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true));
+
+
+        // Deduplicate methods by signature (declaring class + method name + parameter types)
+        // because distinct() only works with object identity, not method equivalence
+        Map<String, Method> uniqueMethods = new LinkedHashMap<>();
+        int duplicateCount = 0;
+        for (Method m : expressions) {
+            String signature = buildMethodSignature(m);
+            if (uniqueMethods.putIfAbsent(signature, m) != null) {
+                duplicateCount++;
+            }
+        }
+
+        log.atDebug().log("Found {} total methods with @Expression, {} unique after deduplication ({} duplicates removed)",
+                expressions.size(), uniqueMethods.size(), duplicateCount);
+
+        // Create factories for unique methods only
+        uniqueMethods.values().forEach(m -> {
+            this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true);
+        });
+    }
+
+    /**
+     * Builds a unique signature for a method based on its declaring class, name, and parameter types.
+     *
+     * @param method the method to build a signature for
+     * @return a unique string signature like "com.example.Beans.bean(java.lang.Class,java.lang.String)"
+     */
+    private String buildMethodSignature(Method method) {
+        StringBuilder signature = new StringBuilder();
+        signature.append(method.getDeclaringClass().getName());
+        signature.append(".");
+        signature.append(method.getName());
+        signature.append("(");
+
+        Class<?>[] paramTypes = method.getParameterTypes();
+        for (int i = 0; i < paramTypes.length; i++) {
+            if (i > 0) {
+                signature.append(",");
+            }
+            signature.append(paramTypes[i].getName());
+        }
+
+        signature.append(")");
+        return signature.toString();
     }
 
     private boolean canBuild() {

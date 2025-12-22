@@ -28,6 +28,12 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     private ISupplierBuilder<?, ?> supplier;
     private ObjectAddress method = null;
+    /**
+     * Stores the actual Method object when set via {@link #method(Method)}.
+     * This prevents re-lookup issues with overloaded methods where
+     * {@code objectQuery.find(address).getLast()} might return the wrong overload.
+     */
+    private Method methodObject = null;
     private List<ISupplierBuilder<?, ?>> parameters;
     private List<Boolean> parameterNullableAllowed;
     private Class<?>[] parameterTypes;
@@ -84,12 +90,32 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return this.findMethod();
     }
 
+    /**
+     * Binds a specific Method object to this builder.
+     *
+     * <p>
+     * This method is particularly important for handling overloaded methods correctly.
+     * By passing the actual Method object, the builder stores it directly and avoids
+     * re-lookup issues that could return the wrong overload variant.
+     * </p>
+     *
+     * <p>
+     * The method also resolves an ObjectAddress for the method and initializes parameter metadata.
+     * </p>
+     *
+     * @param method the Method object to bind
+     * @return this builder instance for method chaining
+     * @throws DslException if method resolution or parameter initialization fails
+     */
     @Override
     public Builder method(Method method) throws DslException {
         log.atDebug().log("[MethodBinderBuilder] Resolving method {} in class {}", method.getName(),
                 this.supplier.getSuppliedClass());
 
         try {
+            // Store the actual Method object to avoid re-lookup issues with overloaded methods
+            this.methodObject = method;
+
             if (this.returnedType != null)
                 this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass(), this.returnedType);
             else
@@ -188,12 +214,36 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         }
     }
 
+    /**
+     * Initializes the parameter metadata for the bound method.
+     *
+     * <p>
+     * This method extracts parameter types, return type, and nullability settings from the Method object.
+     * It uses the stored Method object (if available from {@link #method(Method)}) or performs a lookup
+     * via ObjectAddress. The stored Method approach ensures correct parameter extraction for overloaded methods.
+     * </p>
+     *
+     * <p>
+     * By default, all parameters are marked as non-nullable unless explicitly specified otherwise.
+     * </p>
+     *
+     * @throws DslException if method or object query is not set, or if parameter extraction fails
+     */
     private void initParameters() throws DslException {
         Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before initializing parameters");
         Objects.requireNonNull(this.objectQuery, "[MethodBinderBuilder] Object query cannot be null");
 
         try {
-            Method m = (Method) this.objectQuery.find(this.method).getLast();
+            Method m;
+            // Use stored Method object if available to avoid wrong overload selection
+            if (this.methodObject != null) {
+                m = this.methodObject;
+                log.atDebug().log("[MethodBinderBuilder] Using stored Method object for parameter initialization");
+            } else {
+                m = (Method) this.objectQuery.find(this.method).getLast();
+                log.atDebug().log("[MethodBinderBuilder] Using ObjectAddress lookup for parameter initialization");
+            }
+
             this.parameterTypes = m.getParameterTypes();
             this.parameters = new ArrayList<>(Collections.nCopies(this.parameterTypes.length, null));
             this.returnedType = (Class<ExecutionReturn>) m.getReturnType();
@@ -439,12 +489,38 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return builtParameterSuppliers;
     }
 
+    /**
+     * Retrieves the Method object associated with this binder.
+     *
+     * <p>
+     * This method returns the Method object in one of two ways:
+     * </p>
+     * <ol>
+     *   <li>If the method was set via {@link #method(Method)}, returns the stored Method object directly.
+     *       This ensures correct handling of overloaded methods by avoiding re-lookup.</li>
+     *   <li>If the method was set via {@link #method(String, Class[])}, performs a lookup using the
+     *       ObjectAddress and returns the found Method.</li>
+     * </ol>
+     *
+     * @return the Method object associated with this binder
+     * @throws DslException if no method is set or if lookup fails
+     */
     public Method findMethod() throws DslException {
+        // If we have the actual Method object stored (from method(Method) call), use it directly
+        // This avoids issues with overloaded methods where find() might return the wrong overload
+        if (this.methodObject != null) {
+            log.atDebug().log("[MethodBinderBuilder] Returning stored Method object: {}", this.methodObject);
+            return this.methodObject;
+        }
+
+        // Fallback to old behavior for methods set via ObjectAddress
         if (this.method == null) {
             throw new DslException("Method is not set");
         }
         try {
-            return (Method) this.objectQuery.find(this.method).getLast();
+            Method found = (Method) this.objectQuery.find(this.method).getLast();
+            log.atDebug().log("[MethodBinderBuilder] Found method via ObjectAddress lookup: {}", found);
+            return found;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }

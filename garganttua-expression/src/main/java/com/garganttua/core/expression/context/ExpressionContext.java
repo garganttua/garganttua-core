@@ -31,8 +31,23 @@ public class ExpressionContext implements IExpressionContext {
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         log.atTrace().log("Entering ExpressionContext constructor");
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");
-        this.nodeFactories = nodeFactories.stream().collect(Collectors.toMap(IExpressionNodeFactory::key, ef -> ef));
-        log.atInfo().log("ExpressionContext initialized with {} node factories", nodeFactories.size());
+
+        // Convert to map with merge function to handle duplicates
+        // Duplicates can occur when the same method is registered multiple times
+        // (e.g., through auto-detection and manual registration)
+        this.nodeFactories = nodeFactories.stream()
+                .collect(Collectors.toMap(
+                        IExpressionNodeFactory::key,
+                        ef -> ef ,
+                        (existing, duplicate) -> {
+                            log.atWarn().log("Duplicate factory key detected: {}. Keeping first factory, ignoring duplicate.",
+                                    existing.key());
+                            return existing;  // Keep the first factory, ignore duplicates
+                        }
+                ));
+
+        log.atInfo().log("ExpressionContext initialized with {} unique node factories (from {} total provided)",
+                this.nodeFactories.size(), nodeFactories.size());
         log.atTrace().log("Exiting ExpressionContext constructor");
     }
 
@@ -75,7 +90,7 @@ public class ExpressionContext implements IExpressionContext {
     }
 
     @Override
-    public String expressionManualByKey(String key) {
+    public String man(String key) {
         log.atTrace().log("Entering man(key={})", key);
         log.atDebug().log("Looking up manual for expression node: {}", key);
 
@@ -137,7 +152,7 @@ public class ExpressionContext implements IExpressionContext {
     }
 
     @Override
-    public String expressionManualByIndex(int index) {
+    public String man(int index) {
         log.atTrace().log("Entering man(index={})", index);
         log.atDebug().log("Looking up manual for expression node at index: {}", index);
 

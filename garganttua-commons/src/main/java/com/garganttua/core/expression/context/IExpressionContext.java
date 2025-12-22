@@ -80,7 +80,7 @@ public interface IExpressionContext {
      * @param key the unique key identifying the expression node factory
      * @return the manual page documentation, or null if the key is not found
      */
-    String expressionManualByKey(String key);
+    String man(String key);
 
     /**
      * Returns a formatted list of all available expression node factories.
@@ -100,6 +100,6 @@ public interface IExpressionContext {
      * @param index the 1-based index of the expression node factory
      * @return the manual page documentation, or null if the index is out of bounds
      */
-    String expressionManualByIndex(int index);
+    String man(int index);
 
 }
