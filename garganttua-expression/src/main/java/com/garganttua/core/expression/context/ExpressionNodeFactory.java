@@ -439,7 +439,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 manual.append(", ");
             }
             manual.append(this.parameterTypes[i].getSimpleName());
-            manual.append(" arg").append(i);
+            manual.append(" ").append(this.method.getParameters()[i].getName());
         }
         manual.append(")\n\n");
 
@@ -451,7 +451,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         if (this.parameterTypes.length > 0) {
             manual.append("PARAMETERS\n");
             for (int i = 0; i < this.parameterTypes.length; i++) {
-                manual.append("    arg").append(i).append(" : ");
+                manual.append("    ").append(this.method.getParameters()[i].getName()).append(" : ");
                 manual.append(this.parameterTypes[i].getSimpleName());
 
                 if (this.nullableParameters.get(i)) {

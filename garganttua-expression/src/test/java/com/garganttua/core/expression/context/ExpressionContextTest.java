@@ -105,6 +105,7 @@ public class ExpressionContextTest {
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
         System.out.println(expressionContext.man());
+        System.out.println(expressionContext.man(7));
 
     }
 
