@@ -101,6 +101,18 @@ public interface ISupplier<Supplied> {
         return (Class<Supplied>) ISupplierBuilder.extractClass(type);
     }
 
+    /**
+     * Indicates whether this supplier is contextual.
+     *
+     * <p>
+     * Contextual suppliers require additional execution context to supply instances,
+     * typically implementing {@link IContextualSupplier}. Non-contextual suppliers
+     * can provide instances without external context.
+     * </p>
+     *
+     * @return {@code true} if this supplier requires execution context, {@code false} otherwise
+     * @see IContextualSupplier
+     */
     default boolean isContextual(){
         return false;
     }

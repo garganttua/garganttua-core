@@ -81,6 +81,35 @@ public interface IAnnotationScanner {
 	 */
 	List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation);
 
+	/**
+	 * Finds all methods annotated with the specified annotation in the given package.
+	 *
+	 * <p>
+	 * This method scans the specified package and all its sub-packages, identifying
+	 * methods that are annotated with the given annotation type. Unlike class scanning,
+	 * this searches within classes to find annotated methods.
+	 * </p>
+	 *
+	 * <p><b>Scanning Behavior:</b></p>
+	 * <ul>
+	 *   <li>Scans all classes recursively through sub-packages</li>
+	 *   <li>Examines both public and non-public methods</li>
+	 *   <li>Includes static and instance methods</li>
+	 *   <li>May detect overloaded methods separately if each is annotated</li>
+	 * </ul>
+	 *
+	 * <p><b>Common Use Cases:</b></p>
+	 * <ul>
+	 *   <li>Expression function discovery (e.g., @Expression)</li>
+	 *   <li>Request handler discovery (e.g., @GetMapping, @PostMapping)</li>
+	 *   <li>Event handler discovery (e.g., @EventListener)</li>
+	 *   <li>Scheduled task discovery (e.g., @Scheduled)</li>
+	 * </ul>
+	 *
+	 * @param package_ the base package to scan (e.g., "com.example.services")
+	 * @param annotation the annotation type to search for
+	 * @return a list of methods annotated with the specified annotation (never {@code null}, may be empty)
+	 */
 	List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation);
 
 }
