@@ -184,6 +184,30 @@ public class ObjectQuery implements IObjectQuery {
         return addresses(this.objectClass, elementName, null);
     }
 
+    /**
+     * Recursively resolves all ObjectAddress instances for elements matching the given name.
+     *
+     * <p>
+     * This is the core implementation for {@link #addresses(String)}. It searches for:
+     * </p>
+     * <ul>
+     *   <li>All methods with the given name (including overloaded variants)</li>
+     *   <li>Fields with the given name</li>
+     *   <li>Nested elements in superclasses</li>
+     *   <li>Nested elements in complex field types (collections, maps, arrays, objects)</li>
+     * </ul>
+     *
+     * <p>
+     * Unlike {@link #address(Class, String, ObjectAddress)} which returns only the first match,
+     * this method returns ALL matches, making it essential for handling overloaded methods.
+     * </p>
+     *
+     * @param objectClass the class to search in
+     * @param elementName the name of the element(s) to find
+     * @param baseAddress the base address to prepend to found addresses (may be null for top-level search)
+     * @return list of all matching ObjectAddress instances (may be empty, never null)
+     * @throws ReflectionException if address resolution fails
+     */
     private List<ObjectAddress> addresses(Class<?> objectClass, String elementName, ObjectAddress baseAddress)
             throws ReflectionException {
         log.atTrace().log("Resolving all addresses for element='{}', class={}, baseAddress={}", elementName, objectClass,
@@ -459,8 +483,22 @@ public class ObjectQuery implements IObjectQuery {
         return null;
     }
 
-    // Helper methods for addresses() that return Lists instead of single ObjectAddress
+    /**
+     * Helper methods for {@link #addresses(Class, String, ObjectAddress)} that return Lists
+     * instead of single ObjectAddress instances. These methods handle nested object traversal
+     * for collections, maps, arrays, and complex objects when searching for all matching elements.
+     */
 
+    /**
+     * Searches for addresses in Map field keys and values.
+     * Returns all ObjectAddress instances found in either map keys or values.
+     *
+     * @param f the Map field to search
+     * @param elementName the element name to find
+     * @param address the base address (may be null)
+     * @return list of ObjectAddress instances found, or null if field is not a Map
+     * @throws ReflectionException if address resolution fails
+     */
     private List<ObjectAddress> doIfIsMapForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
         if (Map.class.isAssignableFrom(f.getType())) {
             log.atTrace().log("doIfIsMapForAddresses checking field '{}' for element '{}'", f.getName(), elementName);
@@ -486,6 +524,15 @@ public class ObjectQuery implements IObjectQuery {
         return null;
     }
 
+    /**
+     * Searches for addresses in array component types.
+     *
+     * @param f the array field to search
+     * @param elementName the element name to find
+     * @param address the base address (may be null)
+     * @return list of ObjectAddress instances found in array component type, or null if field is not an array
+     * @throws ReflectionException if address resolution fails
+     */
     private List<ObjectAddress> doIfIsArrayForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
         if (f.getType().isArray()) {
             log.atTrace().log("doIfIsArrayForAddresses checking array field '{}' for element '{}'", f.getName(), elementName);
@@ -497,6 +544,15 @@ public class ObjectQuery implements IObjectQuery {
         return null;
     }
 
+    /**
+     * Searches for addresses in Collection generic type.
+     *
+     * @param f the Collection field to search
+     * @param elementName the element name to find
+     * @param address the base address (may be null)
+     * @return list of ObjectAddress instances found in collection element type, or null if field is not a Collection
+     * @throws ReflectionException if address resolution fails
+     */
     private List<ObjectAddress> doIfIsCollectionForAddresses(Field f, String elementName, ObjectAddress address)
             throws ReflectionException {
         if (Collection.class.isAssignableFrom(f.getType())) {
@@ -509,6 +565,15 @@ public class ObjectQuery implements IObjectQuery {
         return null;
     }
 
+    /**
+     * Searches for addresses in non-enum complex field types.
+     *
+     * @param f the field to search
+     * @param elementName the element name to find
+     * @param address the base address (may be null)
+     * @return list of ObjectAddress instances found in the field's type, or null if field is an enum
+     * @throws ReflectionException if address resolution fails
+     */
     private List<ObjectAddress> doIfNotEnumForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
         if (!f.getType().isEnum()) {
             log.atTrace().log("doIfNotEnumForAddresses checking field '{}' for element '{}'", f.getName(), elementName);

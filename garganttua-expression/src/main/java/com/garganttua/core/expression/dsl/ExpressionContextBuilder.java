@@ -139,6 +139,27 @@ public class ExpressionContextBuilder
         return context;
     }
 
+    /**
+     * Automatically detects and registers methods annotated with @Expression.
+     *
+     * <p>
+     * This method scans the configured packages for methods with the {@code @Expression} annotation
+     * and automatically creates expression node factories for them. It includes signature-based
+     * deduplication to handle cases where the scanner might return multiple Method instances for
+     * the same underlying method.
+     * </p>
+     *
+     * <p>
+     * The deduplication process ensures that:
+     * </p>
+     * <ul>
+     *   <li>Each unique method signature (class + method name + parameter types) is registered only once</li>
+     *   <li>Overloaded methods with different signatures are all registered correctly</li>
+     *   <li>Duplicate Method objects pointing to the same method are filtered out</li>
+     * </ul>
+     *
+     * @throws DslException if the builder is not authorized to build (missing injection context)
+     */
     @Override
     protected void doAutoDetection() throws DslException {
         if (!this.canBuild()) {
