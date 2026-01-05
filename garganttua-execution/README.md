@@ -62,84 +62,117 @@ When an executor fails:
 
 ### Basic Chain Execution
 
+From `TestExecutorChain.testSimpleAdder()`:
+
 ```java
 // Create an executor chain for Integer processing
-ExecutorChain<Integer> chain = new ExecutorChain<>();
+int integer = 0;
+ExecutorChain<Integer> executorChain = new ExecutorChain<>();
 
-// Add executors using lambda expressions
-chain.addExecutor((value, nextChain) -> {
-    value = value + 10;
-    System.out.println("Step 1: " + value);
-    nextChain.execute(value);
+// Add executors that increment the value
+executorChain.addExecutor((i, chain) -> {
+    i = i + 1;
+    System.out.println(i);  // Output: 1
+    chain.execute(i);
 });
 
-chain.addExecutor((value, nextChain) -> {
-    value = value * 2;
-    System.out.println("Step 2: " + value);
-    nextChain.execute(value);
+executorChain.addExecutor((i, chain) -> {
+    i++;
+    System.out.println(i);  // Output: 2
+    chain.execute(i);
+});
+
+executorChain.addExecutor((i, chain) -> {
+    i++;
+    System.out.println(i);  // Output: 3
+    chain.execute(i);
+});
+
+executorChain.addExecutor((i, chain) -> {
+    i++;
+    System.out.println(i);  // Output: 4
+    chain.execute(i);
+});
+
+// Execute the chain starting with 0
+executorChain.execute(integer);  // Final value: 4
+```
+
+### String Builder Chain
+
+From `TestExecutorChain.testStringConcatenation()`:
+
+```java
+// Create a StringBuilder and chain for string processing
+StringBuilder stringBuilder = new StringBuilder();
+ExecutorChain<StringBuilder> executorChain = new ExecutorChain<>();
+
+// Add executors that append text
+executorChain.addExecutor((st, chain) -> {
+    st.append("This ");
+    chain.execute(st);
+});
+
+executorChain.addExecutor((st, chain) -> {
+    st.append("is ");
+    chain.execute(st);
+});
+
+executorChain.addExecutor((st, chain) -> {
+    st.append("test");
+    chain.execute(st);
 });
 
 // Execute the chain
-chain.execute(5);  // Output: Step 1: 15, Step 2: 30
+executorChain.execute(stringBuilder);
+
+// Result: "This is test"
+assertEquals("This is test", stringBuilder.toString());
 ```
 
-### Chain with Fallback Handlers
+### Mathematical Operations Chain
+
+From `TestExecutorChain.testFifo()`:
 
 ```java
-ExecutorChain<String> chain = new ExecutorChain<>();
+// Create a chain with mathematical operations
+Integer integer = 0;
+ExecutorChain<Integer> executorChain = new ExecutorChain<>();
 
-// Add executor with fallback
-chain.addExecutor(
-    // Main executor
-    (request, nextChain) -> {
-        if (request.isEmpty()) {
-            throw new ExecutorException("Empty request");
-        }
-        System.out.println("Processing: " + request);
-        nextChain.execute(request);
-    },
-    // Fallback executor
-    (request, nextChain) -> {
-        System.out.println("Fallback: Using default value");
-        nextChain.execute("default");
-    }
-);
-
-chain.execute("");  // Triggers fallback
-```
-
-### Custom Request Types
-
-```java
-public class OrderRequest {
-    private String orderId;
-    private double amount;
-    // getters, setters...
-}
-
-ExecutorChain<OrderRequest> orderChain = new ExecutorChain<>();
-
-orderChain.addExecutor((order, chain) -> {
-    // Validate order
-    if (order.getAmount() <= 0) {
-        throw new ExecutorException("Invalid amount");
-    }
-    chain.execute(order);
+// Multiply by 2, then increment, repeatedly
+executorChain.addExecutor((i, chain) -> {
+    i *= 2;  // 0 * 2 = 0
+    System.out.println(i);
+    chain.execute(i);
 });
 
-orderChain.addExecutor((order, chain) -> {
-    // Process payment
-    processPayment(order);
-    chain.execute(order);
+executorChain.addExecutor((i, chain) -> {
+    i++;     // 0 + 1 = 1
+    System.out.println(i);
+    chain.execute(i);
 });
 
-orderChain.addExecutor((order, chain) -> {
-    // Send confirmation
-    sendConfirmation(order);
-    chain.execute(order);
+executorChain.addExecutor((i, chain) -> {
+    i *= 2;  // 1 * 2 = 2
+    System.out.println(i);
+    chain.execute(i);
 });
 
-orderChain.execute(new OrderRequest("ORD-123", 99.99));
+executorChain.addExecutor((i, chain) -> {
+    i++;     // 2 + 1 = 3
+    System.out.println(i);
+    chain.execute(i);
+});
+
+executorChain.addExecutor((i, chain) -> {
+    i *= 2;  // 3 * 2 = 6
+    System.out.println(i);
+    assertEquals(6, i);
+    chain.execute(i);
+});
+
+// Execute the chain
+executorChain.execute(integer);  // Final value: 6
 ```
 
 ### Configuring Exception Handling
