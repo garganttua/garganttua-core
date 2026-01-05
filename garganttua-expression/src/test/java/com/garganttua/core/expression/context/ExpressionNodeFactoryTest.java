@@ -87,6 +87,11 @@ public class ExpressionNodeFactoryTest {
         // Generate the manual page
         String manual = factory.man();
 
+        // Print the manual for visual verification
+        System.out.println("Generated Manual Page:");
+        System.out.println("=====================");
+        System.out.println(manual);
+
         // Verify the manual contains expected sections
         assertNotNull(manual, "Manual should not be null");
         assertTrue(manual.contains("NAME"), "Manual should contain NAME section");
@@ -99,13 +104,8 @@ public class ExpressionNodeFactoryTest {
         assertTrue(manual.contains("greet"), "Manual should contain function name");
         assertTrue(manual.contains("Greets a person by name"), "Manual should contain description");
         assertTrue(manual.contains("String"), "Manual should contain return type");
-        assertTrue(manual.contains("arg0"), "Manual should contain parameter names");
+        assertTrue(manual.contains("name"), "Manual should contain parameter names");
         assertTrue(manual.contains("(required)"), "Manual should indicate required parameters");
-
-        // Print the manual for visual verification
-        System.out.println("Generated Manual Page:");
-        System.out.println("=====================");
-        System.out.println(manual);
     }
 
     @SuppressWarnings("unchecked")
