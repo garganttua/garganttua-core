@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.garganttua</groupId>
+        <artifactId>garganttua-core</artifactId>
+        <version>2.0.0-ALPHA01</version>
+    </parent>
+
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-mutex</artifactId>
+    <description>Thread-safe mutex synchronization with configurable acquisition strategies.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-supply</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

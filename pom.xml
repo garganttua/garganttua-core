@@ -149,6 +149,11 @@
         <artifactId>garganttua-expression</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-mutex</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- External Dependencies -->
 
@@ -332,5 +337,6 @@
     <module>garganttua-supply</module>
     <module>garganttua-condition</module>
     <module>garganttua-expression</module>
+    <module>garganttua-mutex</module>
   </modules>
 </project>
