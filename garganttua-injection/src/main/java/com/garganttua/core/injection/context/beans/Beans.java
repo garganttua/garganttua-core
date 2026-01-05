@@ -4,7 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanReference;
@@ -21,7 +21,7 @@ public class Beans {
 
     @Expression(name = "beanReference", description = "Creates a BeanReference with the specified parameters")
     public static BeanReference<?> beanReference(@Nullable Class<?> type, Optional<BeanStrategy> strategy, Optional<String> name,
-            @Nullable Set<Class<? extends Annotation>> qualifiers) {
+            Set<Class<? extends Annotation>> qualifiers) {
         log.atTrace().log("Creating BeanReference with type: {}, strategy: {}, name: {}, qualifiers: {}", type,
                 strategy, name, qualifiers);
         return new BeanReference<>(type, strategy, name, qualifiers);
