@@ -1,8 +1,6 @@
 package com.garganttua.core.mutex;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,21 +10,21 @@ import org.junit.jupiter.api.Test;
 
 class LeaseTimeTest {
 
-    private SynchronizedMutexManager manager;
+    private IMutexManager manager;
 
     @BeforeEach
     void setUp() {
-        manager = new SynchronizedMutexManager();
+        manager = new MutexManager();
     }
 
     @Test
     void testLeaseTimeEnforcement() throws Exception {
-        IMutex mutex = manager.mutex("lease-test");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::lease-test"));
 
         MutexStrategy strategy = new MutexStrategy(
-            -1, TimeUnit.SECONDS,
-            0, 0, TimeUnit.MILLISECONDS,
-            500, TimeUnit.MILLISECONDS  // 500ms lease time
+                -1, TimeUnit.SECONDS,
+                0, 0, TimeUnit.MILLISECONDS,
+                500, TimeUnit.MILLISECONDS // 500ms lease time
         );
 
         // This should fail because execution takes longer than lease time
@@ -43,17 +41,17 @@ class LeaseTimeTest {
         });
 
         assertTrue(exception.getMessage().contains("lease time exceeded"),
-                  "Exception should mention lease time exceeded");
+                "Exception should mention lease time exceeded");
     }
 
     @Test
     void testLeaseTimeSuccess() throws Exception {
-        IMutex mutex = manager.mutex("lease-success");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::lease-success"));
 
         MutexStrategy strategy = new MutexStrategy(
-            -1, TimeUnit.SECONDS,
-            0, 0, TimeUnit.MILLISECONDS,
-            1000, TimeUnit.MILLISECONDS  // 1 second lease time
+                -1, TimeUnit.SECONDS,
+                0, 0, TimeUnit.MILLISECONDS,
+                1000, TimeUnit.MILLISECONDS // 1 second lease time
         );
 
         // This should succeed because execution completes within lease time
@@ -72,12 +70,12 @@ class LeaseTimeTest {
 
     @Test
     void testNoLeaseTimeEnforcement() throws Exception {
-        IMutex mutex = manager.mutex("no-lease");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::no-lease"));
 
         MutexStrategy strategy = new MutexStrategy(
-            -1, TimeUnit.SECONDS,
-            0, 0, TimeUnit.MILLISECONDS,
-            0, TimeUnit.MILLISECONDS  // No lease time (0 or negative)
+                -1, TimeUnit.SECONDS,
+                0, 0, TimeUnit.MILLISECONDS,
+                0, TimeUnit.MILLISECONDS // No lease time (0 or negative)
         );
 
         // This should succeed even though it takes longer
@@ -96,14 +94,14 @@ class LeaseTimeTest {
 
     @Test
     void testLeaseTimeForcesLockRelease() throws Exception {
-        IMutex mutex = manager.mutex("force-release");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::force-release"));
         AtomicBoolean lockAcquiredAfter = new AtomicBoolean(false);
         AtomicBoolean firstThreadStarted = new AtomicBoolean(false);
 
         MutexStrategy leaseStrategy = new MutexStrategy(
-            -1, TimeUnit.SECONDS,
-            0, 0, TimeUnit.MILLISECONDS,
-            300, TimeUnit.MILLISECONDS  // 300ms lease time
+                -1, TimeUnit.SECONDS,
+                0, 0, TimeUnit.MILLISECONDS,
+                300, TimeUnit.MILLISECONDS // 300ms lease time
         );
 
         // First acquisition will exceed lease time
@@ -133,10 +131,9 @@ class LeaseTimeTest {
 
         // Second acquisition should succeed because lock was forcefully released
         MutexStrategy normalStrategy = new MutexStrategy(
-            100, TimeUnit.MILLISECONDS,
-            3, 50, TimeUnit.MILLISECONDS,
-            1000, TimeUnit.MILLISECONDS
-        );
+                100, TimeUnit.MILLISECONDS,
+                3, 50, TimeUnit.MILLISECONDS,
+                1000, TimeUnit.MILLISECONDS);
 
         String result = mutex.acquire(() -> {
             lockAcquiredAfter.set(true);
@@ -150,13 +147,12 @@ class LeaseTimeTest {
 
     @Test
     void testExceptionPropagationWithLease() throws Exception {
-        IMutex mutex = manager.mutex("exception-with-lease");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::exception-with-lease"));
 
         MutexStrategy strategy = new MutexStrategy(
-            -1, TimeUnit.SECONDS,
-            0, 0, TimeUnit.MILLISECONDS,
-            1000, TimeUnit.MILLISECONDS
-        );
+                -1, TimeUnit.SECONDS,
+                0, 0, TimeUnit.MILLISECONDS,
+                1000, TimeUnit.MILLISECONDS);
 
         MutexException exception = assertThrows(MutexException.class, () -> {
             mutex.acquire(() -> {

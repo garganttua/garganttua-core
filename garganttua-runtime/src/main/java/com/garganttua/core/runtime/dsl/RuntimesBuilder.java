@@ -1,7 +1,5 @@
 package com.garganttua.core.runtime.dsl;
 
-import static com.garganttua.core.injection.BeanDefinition.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +13,7 @@ import javax.inject.Named;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.RuntimeContextFactory;
@@ -40,16 +38,17 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         implements IRuntimesBuilder {
 
     private Map<String, IRuntimeBuilder<?, ?>> runtimeBuilders = new HashMap<>();
-    private IDiContextBuilder contextBuilder;
-    private boolean canBuild = false;
-    private IDiContext context = null;
+    private ContextReadinessBuilder<IRuntimesBuilder> readinessBuilder;
 
     private RuntimesBuilder(Optional<IDiContextBuilder> contextBuilder) {
-        Objects.requireNonNull(contextBuilder, "Optional context builder cannot be null");
-        this.contextBuilder = contextBuilder.orElse(null);
-        contextBuilder.ifPresent(c -> c.observer(this));
-        contextBuilder.ifPresent(c -> c.withPackage("com.garganttua.core.runtime.annotations"));
-        contextBuilder.ifPresent(c -> c.childContextFactory(new RuntimeContextFactory()));
+        this.readinessBuilder = new ContextReadinessBuilder<>(contextBuilder, this);
+
+        if (this.readinessBuilder.hasContextBuilder()) {
+            IDiContextBuilder builder = this.readinessBuilder.getContextBuilder();
+            builder.observer(this.readinessBuilder);
+            builder.withPackage("com.garganttua.core.runtime.annotations");
+            builder.childContextFactory(new RuntimeContextFactory());
+        }
 
         log.atInfo()
                 .log("RuntimesBuilder initialized");
@@ -65,7 +64,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
                 .log("Entering runtime({}, {}, {}) method", name, inputType.getSimpleName(),
                         outputType.getSimpleName());
 
-        Objects.requireNonNull(this.contextBuilder, "Context builder cannot be null");
+        this.readinessBuilder.requireContextBuilder();
         Objects.requireNonNull(name, "Name cannot be null");
 
         log.atTrace()
@@ -81,8 +80,8 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
             log.atDebug().log("Reusing existing runtime builder {}", name);
         }
 
-        if (this.context != null) {
-            runtimeBuilder.handle(context);
+        if (this.readinessBuilder.hasContext()) {
+            runtimeBuilder.handle(this.readinessBuilder.getContext());
             log.atDebug().log("Runtime builder {} handled with context", name);
         }
 
@@ -96,10 +95,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     protected Map<String, IRuntime<?, ?>> doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
 
-        if (!this.canBuild) {
-            log.atError().log("Attempt to build before authorization");
-            throw new DslException("Build is not yet authorized");
-        }
+        this.readinessBuilder.requireBuildAuthorization();
 
         log.atInfo().log("Building all runtimes");
 
@@ -118,12 +114,9 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     protected void doAutoDetection() {
         log.atTrace().log("Entering doAutoDetection() method");
 
-        if (!this.canBuild) {
-            log.atError().log("Attempt to auto-detect runtimes before build authorization");
-            throw new DslException("Build is not yet authorized");
-        }
+        this.readinessBuilder.requireBuildAuthorization();
 
-        List<?> definitions = this.context
+        List<?> definitions = this.readinessBuilder.getContext()
                 .queryBeans(new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
 
         log.atInfo().log("Auto-detecting runtimes");
@@ -156,7 +149,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
             ((RuntimeBuilder<?, ?>) runtimeBuilder).setObjectForAutoDetection(runtimeDefinitionObject).autoDetect(true);
         }
 
-        runtimeBuilder.handle(this.context);
+        runtimeBuilder.handle(this.readinessBuilder.getContext());
 
         log.atInfo().log("Auto-detected runtime {} registered", runtimeName);
     }
@@ -186,39 +179,21 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     public IRuntimesBuilder context(IDiContextBuilder context) {
         log.atTrace().log("Entering context() method");
 
-        this.contextBuilder = Objects.requireNonNull(context, "Context builder cannot be null");
-        this.contextBuilder.observer(this);
-        this.contextBuilder.withPackage("com.garganttua.core.runtime.annotations");
-        this.contextBuilder.childContextFactory(new RuntimeContextFactory());
-        this.contextBuilder.resolvers().withResolver(Input.class, new InputElementResolver());
-        this.contextBuilder.resolvers().withResolver(Variable.class, new VariableElementResolver());
-        this.contextBuilder.resolvers().withResolver(Context.class, new ContextElementResolver());
-        this.contextBuilder.resolvers().withResolver(Exception.class, new ExceptionElementResolver());
-        this.contextBuilder.resolvers().withResolver(Code.class, new CodeElementResolver());
-        this.contextBuilder.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
+        this.readinessBuilder.setContextBuilder(Objects.requireNonNull(context, "Context builder cannot be null"));
+
+        context.withPackage("com.garganttua.core.runtime.annotations");
+        context.childContextFactory(new RuntimeContextFactory());
+        context.resolvers().withResolver(Input.class, new InputElementResolver());
+        context.resolvers().withResolver(Variable.class, new VariableElementResolver());
+        context.resolvers().withResolver(Context.class, new ContextElementResolver());
+        context.resolvers().withResolver(Exception.class, new ExceptionElementResolver());
+        context.resolvers().withResolver(Code.class, new CodeElementResolver());
+        context.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
 
         log.atInfo().log("Context builder configured with resolvers");
 
         log.atTrace().log("Exiting context() method");
         return this;
-    }
-
-    @Override
-    public void handle(IDiContext context) {
-        log.atTrace().log("Entering handle() method");
-
-        this.context = Objects.requireNonNull(context, "Context cannot be null");
-        this.canBuild = true;
-
-        log.atInfo()
-                .log("Handling all runtime builders with context");
-
-        this.runtimeBuilders.values().forEach(b -> {
-            log.atDebug().log("Handling individual runtime builder");
-            b.handle(context);
-        });
-
-        log.atTrace().log("Exiting handle() method");
     }
 
 }

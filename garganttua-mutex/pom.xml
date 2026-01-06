@@ -18,6 +18,14 @@
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-commons</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-dsl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-injection</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

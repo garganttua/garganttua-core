@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import com.garganttua.core.expression.context.IExpressionNodeFactory;
 import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
+import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
@@ -61,11 +63,11 @@ public class ExpressionContextBuilder
 
     private Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
 
-    private IDiContextBuilder injectionContextBuilder;
-    private IDiContext injectionContext;
+    private ContextReadinessBuilder<ExpressionContextBuilder> readinessBuilder;
 
     protected ExpressionContextBuilder() {
         super();
+        this.readinessBuilder = new ContextReadinessBuilder<>(Optional.empty(), this);
         log.atTrace().log("Entering ExpressionBuilder constructor");
         log.atTrace().log("Exiting ExpressionBuilder constructor");
     }
@@ -117,7 +119,7 @@ public class ExpressionContextBuilder
 
     @Override
     protected IExpressionContext doBuild() throws DslException {
-        if (!this.canBuild()) {
+        if (!this.readinessBuilder.canBuild()) {
             log.atError().log("Attempt to build before authorization, injection context is missing");
             throw new DslException("Build is not yet authorized, injection context is missing");
         }
@@ -162,7 +164,7 @@ public class ExpressionContextBuilder
      */
     @Override
     protected void doAutoDetection() throws DslException {
-        if (!this.canBuild()) {
+        if (!this.readinessBuilder.canBuild()) {
             log.atError().log("Attempt to build before authorization");
             throw new DslException("Build is not yet authorized");
         }
@@ -217,24 +219,9 @@ public class ExpressionContextBuilder
         return signature.toString();
     }
 
-    private boolean canBuild() {
-        if (this.injectionContextBuilder == null) {
-            log.atWarn().log("Injection context builder is not set, can build");
-            return true;
-        }
-        if (this.injectionContext == null) {
-            log.atWarn().log("Injection context is not set, cannot build");
-            return false;
-        }
-        log.atWarn().log("Injection context is set, can build");
-        return true;
-    }
-
     @Override
     public IExpressionContextBuilder context(IDiContextBuilder context) {
-        this.injectionContextBuilder = Objects.requireNonNull(context, "Injection context builder cannot be null");
-
-        context.observer(this);
+        this.readinessBuilder.context(context);
         context.resolvers().withResolver(Expression.class, (t, e) -> {
             Expression expression = e.getAnnotation(Expression.class);
             if (expression == null)
@@ -244,13 +231,6 @@ public class ExpressionContextBuilder
         });
 
         return this;
-    }
-
-    @Override
-    public void handle(IDiContext context) {
-        log.atTrace().log("Entering handle() method");
-        this.injectionContext = Objects.requireNonNull(context, "Context cannot be null");
-        log.atTrace().log("Exiting handle() method");
     }
 
 }

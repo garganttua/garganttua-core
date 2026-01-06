@@ -31,14 +31,34 @@ import lombok.extern.slf4j.Slf4j;
  * even if an exception is thrown.
  * </p>
  *
- * <h2>Lease Time Management</h2>
+ * <h2>Lease Time Management and Thread Interruption</h2>
  * <p>
  * When using strategy-based acquisition with a lease time, the execution is
- * wrapped in a
- * {@link Future} with a timeout. If the critical section execution exceeds the
- * lease time,
- * a {@link MutexException} is thrown and the lock is forcefully released to
- * prevent deadlocks.
+ * strictly time-bounded. If the critical section execution exceeds the
+ * lease time:
+ * </p>
+ * <ul>
+ *   <li>The executing thread is <b>immediately interrupted</b> via {@link Thread#interrupt()}</li>
+ *   <li>A {@link MutexException} is thrown to the calling thread indicating lease expiration</li>
+ *   <li>The lock is forcefully released to prevent deadlocks</li>
+ *   <li>Execution cannot continue past the lease expiration</li>
+ * </ul>
+ *
+ * <h2>Requirements for User Code</h2>
+ * <p>
+ * <b>IMPORTANT:</b> Code executed within {@link #acquire(ThrowingFunction, MutexStrategy)}
+ * with a lease time MUST be interruption-aware:
+ * </p>
+ * <ul>
+ *   <li>Check {@link Thread#interrupted()} or {@link Thread#isInterrupted()} regularly</li>
+ *   <li>Respond promptly to {@link InterruptedException} from blocking operations</li>
+ *   <li>Do NOT swallow or ignore interruption without proper cleanup</li>
+ *   <li>Avoid long-running uninterruptible operations (tight loops, heavy computation)</li>
+ * </ul>
+ * <p>
+ * Failure to handle interruption correctly may cause the thread to continue executing
+ * beyond the lease time until completion, though the lock will still be released and
+ * a {@link MutexException} will still be thrown to the caller.
  * </p>
  *
  * <h2>Acquisition Strategies</h2>
@@ -46,7 +66,7 @@ import lombok.extern.slf4j.Slf4j;
  * <li><b>Simple acquisition</b>: Blocks indefinitely until lock is
  * available</li>
  * <li><b>Strategy-based</b>: Configurable timeout, retries, and automatic lease
- * expiration</li>
+ * expiration with thread interruption</li>
  * </ul>
  *
  * @since 2.0.0-ALPHA01
@@ -54,7 +74,7 @@ import lombok.extern.slf4j.Slf4j;
  * @see MutexStrategy
  */
 @Slf4j
-public class SynchronizedMutex implements IMutex {
+public class InterruptibleLeaseMutex implements IMutex {
 
     private static final String MUTEX_RELEASED_MSG = "Mutex released: {}";
 
@@ -63,11 +83,11 @@ public class SynchronizedMutex implements IMutex {
     private final ExecutorService executorService;
 
     /**
-     * Constructs a new SynchronizedMutex with the specified name.
+     * Constructs a new InterruptibleLeaseMutex with the specified name.
      *
      * @param name the unique name identifying this mutex
      */
-    public SynchronizedMutex(String name) {
+    public InterruptibleLeaseMutex(String name) {
         this.name = name;
         this.lock = new ReentrantLock(true); // Fair lock to prevent starvation
         this.executorService = Executors.newCachedThreadPool(r -> {
@@ -76,7 +96,7 @@ public class SynchronizedMutex implements IMutex {
             thread.setName("mutex-lease-enforcer-" + name);
             return thread;
         });
-        log.atTrace().log("SynchronizedMutex created: {}", name);
+        log.atTrace().log("InterruptibleLeaseMutex created: {}", name);
     }
 
     @Override
@@ -154,8 +174,13 @@ public class SynchronizedMutex implements IMutex {
             }
         }
 
-        // Execute with lease time enforcement
+        // Execute with lease time enforcement using dedicated thread
+        // We need to track the execution thread to interrupt it on lease expiration
+        final Thread[] executionThread = new Thread[1];
+        final boolean[] leaseExpired = new boolean[1];
+
         Callable<R> task = () -> {
+            executionThread[0] = Thread.currentThread();
             try {
                 return function.execute();
             } catch (MutexException e) {
@@ -172,11 +197,22 @@ public class SynchronizedMutex implements IMutex {
             log.atTrace().log("Mutex execution completed within lease time: {}", name);
             return result;
         } catch (TimeoutException e) {
+            leaseExpired[0] = true;
+
+            // Interrupt the executing thread immediately
+            Thread execThread = executionThread[0];
+            if (execThread != null) {
+                log.atWarn().log("Interrupting execution thread for mutex {} due to lease expiration", name);
+                execThread.interrupt();
+            }
+
+            // Cancel the future with interrupt flag
             future.cancel(true);
-            log.atError().log("Mutex lease time exceeded for {}: {}{}. Forcing lock release.",
+
+            log.atError().log("Mutex lease time exceeded for {}: {}{}. Thread interrupted and lock released.",
                     name, strategy.leaseTime(), strategy.leaseTimeUnit());
             throw new MutexException("Mutex lease time exceeded: " + strategy.leaseTime() +
-                    " " + strategy.leaseTimeUnit());
+                    " " + strategy.leaseTimeUnit() + ". Execution thread was interrupted.");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof MutexException mutexEx) {
@@ -187,8 +223,9 @@ public class SynchronizedMutex implements IMutex {
         } catch (InterruptedException e) {
             future.cancel(true);
             Thread.currentThread().interrupt();
-            throw new MutexException("Mutex execution interrupted", e);
+            throw new MutexException("Mutex acquisition interrupted", e);
         } finally {
+            // Ensure lock is always released exactly once
             lock.unlock();
             log.atTrace().log(MUTEX_RELEASED_MSG, name);
         }

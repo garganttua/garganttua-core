@@ -5,11 +5,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.nativve.annotations.Native;
 
 @Native
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface MutexManager {
+public @interface MutexFactory {
 
+    Class<? extends IMutex> type();
 }

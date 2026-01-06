@@ -25,7 +25,7 @@ import com.garganttua.core.supply.SupplyException;
  * @see IMutex
  * @see IContextualSupplier
  */
-public interface IMutexManager extends IContextualSupplier<IMutex, String> {
+public interface IMutexManager extends IContextualSupplier<IMutex, MutexName> {
 
     /**
      * Retrieves or creates a mutex with the specified name.
@@ -40,7 +40,7 @@ public interface IMutexManager extends IContextualSupplier<IMutex, String> {
      * @return the mutex associated with the given name
      * @throws MutexException if mutex creation or retrieval fails
      */
-    IMutex mutex(String name) throws MutexException;
+    IMutex mutex(MutexName name) throws MutexException;
 
     /**
      * Supplies a mutex identified by name within the supply framework context.
@@ -57,7 +57,7 @@ public interface IMutexManager extends IContextualSupplier<IMutex, String> {
      * @throws SupplyException if mutex retrieval fails
      */
     @Override
-    default Optional<IMutex> supply(String mutexName, Object... otherContexts) throws SupplyException {
+    default Optional<IMutex> supply(MutexName mutexName, Object... otherContexts) throws SupplyException {
         return Optional.ofNullable(this.mutex(mutexName));
     }
 

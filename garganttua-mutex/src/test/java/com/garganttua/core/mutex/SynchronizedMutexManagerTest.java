@@ -14,39 +14,35 @@ import org.junit.jupiter.api.Test;
 
 class SynchronizedMutexManagerTest {
 
-    private SynchronizedMutexManager manager;
+    private IMutexManager manager;
 
     @BeforeEach
     void setUp() {
-        manager = new SynchronizedMutexManager();
+        manager = new MutexManager();
     }
 
     @Test
     void testMutexCreation() throws MutexException {
-        IMutex mutex = manager.mutex("test");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::test"));
         assertNotNull(mutex);
     }
 
     @Test
     void testSameMutexReturnedForSameName() throws MutexException {
-        IMutex mutex1 = manager.mutex("test");
-        IMutex mutex2 = manager.mutex("test");
+        MutexName name = MutexName.fromString("InterruptibleLeaseMutex::test");
+        IMutex mutex1 = manager.mutex(name);
+        IMutex mutex2 = manager.mutex(name);
         assertSame(mutex1, mutex2);
     }
 
     @Test
     void testNullNameThrowsException() {
-        assertThrows(MutexException.class, () -> manager.mutex(null));
-    }
-
-    @Test
-    void testEmptyNameThrowsException() {
-        assertThrows(MutexException.class, () -> manager.mutex(""));
+        assertThrows(NullPointerException.class, () -> manager.mutex(null));
     }
 
     @Test
     void testSimpleAcquisition() throws MutexException {
-        IMutex mutex = manager.mutex("counter");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::counter"));
         AtomicInteger counter = new AtomicInteger(0);
 
         Integer result = mutex.acquire(() -> {
@@ -60,7 +56,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testMutualExclusion() throws Exception {
-        IMutex mutex = manager.mutex("shared-resource");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::shared-resource"));
         int threadCount = 10;
         int incrementsPerThread = 100;
         AtomicInteger counter = new AtomicInteger(0);
@@ -92,7 +88,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testStrategyWithTimeout() throws MutexException {
-        IMutex mutex = manager.mutex("timeout-test");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::timeout-test"));
         MutexStrategy strategy = new MutexStrategy(
             100, TimeUnit.MILLISECONDS,
             0, 0, TimeUnit.MILLISECONDS,
@@ -108,7 +104,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testStrategyWithRetry() throws Exception {
-        IMutex mutex = manager.mutex("retry-test");
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::retry-test"));
         MutexStrategy strategy = new MutexStrategy(
             0, TimeUnit.MILLISECONDS,
             3, 50, TimeUnit.MILLISECONDS,
@@ -150,8 +146,8 @@ class SynchronizedMutexManagerTest {
     }
 
     @Test
-    void testExceptionPropagation() {
-        IMutex mutex = manager.mutex("exception-test");
+    void testExceptionPropagation() throws MutexException {
+        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::exception-test"));
 
         assertThrows(MutexException.class, () -> {
             mutex.acquire(() -> {
@@ -162,13 +158,13 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testSupplyMethod() throws Exception {
-        IMutex result = manager.supply("test-mutex").orElseThrow();
+        IMutex result = manager.supply(MutexName.fromString("InterruptibleLeaseMutex::test-mutex")).orElseThrow();
         assertNotNull(result);
     }
 
     @Test
     void testGetOwnerContextType() {
-        assertEquals(String.class, manager.getOwnerContextType());
+        assertEquals(MutexName.class, manager.getOwnerContextType());
     }
 
     @Test
@@ -186,7 +182,7 @@ class SynchronizedMutexManagerTest {
             final int threadId = i;
             Thread thread = new Thread(() -> {
                 try {
-                    IMutex mutex = manager.mutex("mutex-" + (threadId % 5));
+                    IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::mutex-" + (threadId % 5)));
                     Integer result = mutex.acquire(() -> {
                         try {
                             Thread.sleep(10);
