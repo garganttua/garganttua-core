@@ -3,10 +3,7 @@ package com.garganttua.core.runtime.dsl;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
-import com.garganttua.core.runtime.IMutex;
 import com.garganttua.core.runtime.IRuntimeStep;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder for configuring a runtime step.
@@ -64,8 +61,6 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
                 IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>,
                 IContextBuilderObserver {
-
-        IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex);
 
         /**
          * Begins configuration of the main method for this step.

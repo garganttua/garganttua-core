@@ -1,11 +1,13 @@
 package com.garganttua.core.reflection.binders.dsl;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for constructing method binders with various resolution
@@ -194,4 +196,9 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          */
         Builder method(String methodName,
                         Class<ExecutionReturn> returnType, Class<?>... parameterTypes) throws DslException;
+        
+        
+        Builder mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex)
+                        throws DslException;
+
 }

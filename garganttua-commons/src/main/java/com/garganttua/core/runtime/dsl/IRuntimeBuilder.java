@@ -2,7 +2,6 @@ package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
-import com.garganttua.core.runtime.IMutex;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -52,8 +51,6 @@ import com.garganttua.core.utils.OrderedMapPosition;
  * @see IRuntime
  */
 public interface IRuntimeBuilder<InputType, OutputType> extends IAutomaticLinkedBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>, IContextBuilderObserver {
-
-    IRuntimeBuilder<InputType, OutputType> mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex);
 
     /**
      * Sets an initial variable with a constant value.

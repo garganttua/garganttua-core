@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
@@ -41,6 +42,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     private IObjectQuery objectQuery;
     private boolean collection = false;
     private Class<ExecutionReturn> returnedType;
+    private ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex;
 
     protected AbstractMethodBinderBuilder(Link up, ISupplierBuilder<?, ?> supplier) throws DslException {
         this(up, supplier, false);
@@ -61,11 +63,11 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         }
     }
 
-    protected List<Boolean> nullableParameters(){
+    protected List<Boolean> nullableParameters() {
         return this.parameterNullableAllowed;
     }
 
-    protected void nullableParameter(int i, boolean acceptNullable){
+    protected void nullableParameter(int i, boolean acceptNullable) {
         this.parameterNullableAllowed.set(i, acceptNullable);
     }
 
@@ -94,13 +96,16 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
      * Binds a specific Method object to this builder.
      *
      * <p>
-     * This method is particularly important for handling overloaded methods correctly.
-     * By passing the actual Method object, the builder stores it directly and avoids
+     * This method is particularly important for handling overloaded methods
+     * correctly.
+     * By passing the actual Method object, the builder stores it directly and
+     * avoids
      * re-lookup issues that could return the wrong overload variant.
      * </p>
      *
      * <p>
-     * The method also resolves an ObjectAddress for the method and initializes parameter metadata.
+     * The method also resolves an ObjectAddress for the method and initializes
+     * parameter metadata.
      * </p>
      *
      * @param method the Method object to bind
@@ -113,11 +118,13 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                 this.supplier.getSuppliedClass());
 
         try {
-            // Store the actual Method object to avoid re-lookup issues with overloaded methods
+            // Store the actual Method object to avoid re-lookup issues with overloaded
+            // methods
             this.methodObject = method;
 
             if (this.returnedType != null)
-                this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass(), this.returnedType);
+                this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass(),
+                        this.returnedType);
             else
                 this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass());
             this.initParameters();
@@ -218,16 +225,21 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
      * Initializes the parameter metadata for the bound method.
      *
      * <p>
-     * This method extracts parameter types, return type, and nullability settings from the Method object.
-     * It uses the stored Method object (if available from {@link #method(Method)}) or performs a lookup
-     * via ObjectAddress. The stored Method approach ensures correct parameter extraction for overloaded methods.
+     * This method extracts parameter types, return type, and nullability settings
+     * from the Method object.
+     * It uses the stored Method object (if available from {@link #method(Method)})
+     * or performs a lookup
+     * via ObjectAddress. The stored Method approach ensures correct parameter
+     * extraction for overloaded methods.
      * </p>
      *
      * <p>
-     * By default, all parameters are marked as non-nullable unless explicitly specified otherwise.
+     * By default, all parameters are marked as non-nullable unless explicitly
+     * specified otherwise.
      * </p>
      *
-     * @throws DslException if method or object query is not set, or if parameter extraction fails
+     * @throws DslException if method or object query is not set, or if parameter
+     *                      extraction fails
      */
     private void initParameters() throws DslException {
         Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before initializing parameters");
@@ -496,18 +508,23 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
      * This method returns the Method object in one of two ways:
      * </p>
      * <ol>
-     *   <li>If the method was set via {@link #method(Method)}, returns the stored Method object directly.
-     *       This ensures correct handling of overloaded methods by avoiding re-lookup.</li>
-     *   <li>If the method was set via {@link #method(String, Class[])}, performs a lookup using the
-     *       ObjectAddress and returns the found Method.</li>
+     * <li>If the method was set via {@link #method(Method)}, returns the stored
+     * Method object directly.
+     * This ensures correct handling of overloaded methods by avoiding
+     * re-lookup.</li>
+     * <li>If the method was set via {@link #method(String, Class[])}, performs a
+     * lookup using the
+     * ObjectAddress and returns the found Method.</li>
      * </ol>
      *
      * @return the Method object associated with this binder
      * @throws DslException if no method is set or if lookup fails
      */
     public Method findMethod() throws DslException {
-        // If we have the actual Method object stored (from method(Method) call), use it directly
-        // This avoids issues with overloaded methods where find() might return the wrong overload
+        // If we have the actual Method object stored (from method(Method) call), use it
+        // directly
+        // This avoids issues with overloaded methods where find() might return the
+        // wrong overload
         if (this.methodObject != null) {
             log.atDebug().log("[MethodBinderBuilder] Returning stored Method object: {}", this.methodObject);
             return this.methodObject;
@@ -560,5 +577,12 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     protected Class<?>[] getParameterTypes() {
         return this.parameters.stream().map(ISupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
+    }
+
+    @Override
+    public Builder mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex)
+            throws DslException {
+        this.mutex = Objects.requireNonNull(mutex, "Mutex cannot be null");
+        return (Builder) this;
     }
 }
