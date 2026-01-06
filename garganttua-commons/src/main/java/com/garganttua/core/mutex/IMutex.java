@@ -1,5 +1,9 @@
 package com.garganttua.core.mutex;
 
+import com.garganttua.core.mutex.IMutexManager;
+import com.garganttua.core.mutex.MutexException;
+import com.garganttua.core.mutex.MutexStrategy;
+
 /**
  * Mutex interface for thread-safe critical section execution.
  *
