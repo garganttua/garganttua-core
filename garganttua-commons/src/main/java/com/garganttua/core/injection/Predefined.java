@@ -1,4 +1,4 @@
-package com.garganttua.core.injection.context;
+package com.garganttua.core.injection;
 
 public class Predefined {
 

@@ -25,6 +25,7 @@ import com.garganttua.core.injection.IDiContext;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.DiContextBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;

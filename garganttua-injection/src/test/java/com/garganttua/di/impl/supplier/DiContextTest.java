@@ -9,8 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.injection.context.beans.Beans;
 import com.garganttua.core.injection.context.properties.Properties;
 import com.garganttua.core.injection.dummies.DummyBean;

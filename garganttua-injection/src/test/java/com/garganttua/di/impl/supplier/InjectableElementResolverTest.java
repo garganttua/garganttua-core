@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.injection.context.Predefined;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;

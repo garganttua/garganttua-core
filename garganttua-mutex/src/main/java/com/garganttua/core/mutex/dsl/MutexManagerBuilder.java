@@ -1,19 +1,26 @@
 package com.garganttua.core.mutex.dsl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.IMutexFactory;
 import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.MutexManager;
-import com.garganttua.core.mutex.dsl.IMutexManagerBuilder;
+import com.garganttua.core.mutex.annotations.Mutex;
+import com.garganttua.core.mutex.annotations.MutexFactory;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,12 +61,35 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
 
     private Map<Class<? extends IMutex>, IMutexFactory> factories = new HashMap<>();
     private ContextReadinessBuilder<IMutexManagerBuilder> readinessBuilder;
+    private Set<String> packages = new HashSet<>();
 
     private MutexManagerBuilder(Optional<IDiContextBuilder> contextBuilder) {
         super();
         this.readinessBuilder = new ContextReadinessBuilder<>(contextBuilder, this);
 
         log.atInfo().log("MutexManagerBuilder initialized");
+    }
+
+    @Override
+    public MutexManagerBuilder withPackage(String packageName) {
+        log.atDebug().log("Adding package: {}", packageName);
+        this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
+        return this;
+    }
+
+    @Override
+    public MutexManagerBuilder withPackages(String[] packageNames) {
+        log.atDebug().log("Adding {} packages", packageNames.length);
+        Objects.requireNonNull(packageNames, "Package names cannot be null");
+        for (String pkg : packageNames) {
+            this.withPackage(pkg);
+        }
+        return this;
+    }
+
+    @Override
+    public String[] getPackages() {
+        return this.packages.toArray(new String[0]);
     }
 
     @Override
@@ -82,9 +112,7 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
     protected IMutexManager doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
 
-        if (this.readinessBuilder != null) {
-            this.readinessBuilder.requireBuildAuthorization();
-        }
+        this.readinessBuilder.requireBuildAuthorization();
 
         log.atInfo().log("Building MutexManager with {} registered factories", factories.size());
 
@@ -98,17 +126,18 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection() method");
 
-        if (this.readinessBuilder == null || !this.readinessBuilder.hasContext()) {
-            log.atWarn().log("Auto-detection requested but no DI context available");
+        if (this.readinessBuilder.canBuild() && this.readinessBuilder.hasContext()) {
+            log.atWarn().log("Auto-detection requested but no DI context available, skipping auto-detection");
             return;
         }
 
-        log.atInfo().log("Auto-detecting mutex factories from DI context");
+        log.atInfo().log("Auto-detecting mutex factories");
 
-        // TODO: Implement auto-detection logic to scan for @MutexFactory beans
-        // This will query the DI context for beans with @MutexFactory annotation
-        // and register them automatically
-
+        this.packages.forEach(p -> {
+            ObjectReflectionHelper.getClassesWithAnnotation(p, MutexFactory.class).stream().forEach(f -> {
+                this.readinessBuilder.getContext().addBean(Predefined.BeanProviders.garganttua.toString(), new BeanReference<>(f, Optional.of(BeanStrategy.singleton), Optional.empty(), Set.of(MutexFactory.class)));
+            });
+        });
         log.atTrace().log("Exiting doAutoDetection() method");
     }
 
@@ -119,6 +148,7 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
         Objects.requireNonNull(context, "Context builder cannot be null");
 
         this.readinessBuilder.setContextBuilder(context);
+        context.resolvers().withResolver(Mutex.class, new MutexResolver());
 
         log.atInfo().log("Context builder configured");
 
