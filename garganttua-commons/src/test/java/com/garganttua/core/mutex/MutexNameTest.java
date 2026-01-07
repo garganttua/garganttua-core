@@ -8,17 +8,17 @@ class MutexNameTest {
 
     @Test
     void testConstructorWithValidArguments() {
-        MutexName mutexName = new MutexName("database", "user-table");
+        MutexName mutexName = new MutexName(TestMutexA.class, "user-table");
 
-        assertEquals("database", mutexName.type());
+        assertEquals(TestMutexA.class, mutexName.type());
         assertEquals("user-table", mutexName.name());
     }
 
     @Test
     void testConstructorTrimsWhitespace() {
-        MutexName mutexName = new MutexName("  database  ", "  user-table  ");
+        MutexName mutexName = new MutexName(TestMutexA.class, "  user-table  ");
 
-        assertEquals("database", mutexName.type());
+        assertEquals(TestMutexA.class, mutexName.type());
         assertEquals("user-table", mutexName.name());
     }
 
@@ -32,60 +32,54 @@ class MutexNameTest {
     @Test
     void testConstructorRejectsNullName() {
         assertThrows(NullPointerException.class, () -> {
-            new MutexName("type", null);
-        });
-    }
-
-    @Test
-    void testConstructorRejectsEmptyType() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new MutexName("", "name");
+            new MutexName(TestMutexA.class, null);
         });
     }
 
     @Test
     void testConstructorRejectsEmptyName() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new MutexName("type", "");
-        });
-    }
-
-    @Test
-    void testConstructorRejectsWhitespaceOnlyType() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new MutexName("   ", "name");
+            new MutexName(TestMutexA.class, "");
         });
     }
 
     @Test
     void testConstructorRejectsWhitespaceOnlyName() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new MutexName("type", "   ");
+            new MutexName(TestMutexA.class, "   ");
         });
     }
 
     @Test
     void testFromStringWithValidFormat() {
-        MutexName mutexName = MutexName.fromString("database::user-table");
+        MutexName mutexName = MutexName.fromString("TestMutexA::user-table");
 
-        assertEquals("database", mutexName.type());
+        assertEquals(TestMutexA.class, mutexName.type());
         assertEquals("user-table", mutexName.name());
     }
 
     @Test
     void testFromStringTrimsWhitespace() {
-        MutexName mutexName = MutexName.fromString("  database  ::  user-table  ");
+        MutexName mutexName = MutexName.fromString("  TestMutexA  ::  user-table  ");
 
-        assertEquals("database", mutexName.type());
+        assertEquals(TestMutexA.class, mutexName.type());
         assertEquals("user-table", mutexName.name());
     }
 
     @Test
     void testFromStringWithComplexNames() {
-        MutexName mutexName = MutexName.fromString("cache::session_store-v2");
+        MutexName mutexName = MutexName.fromString("TestMutexB::session_store-v2");
 
-        assertEquals("cache", mutexName.type());
+        assertEquals(TestMutexB.class, mutexName.type());
         assertEquals("session_store-v2", mutexName.name());
+    }
+
+    @Test
+    void testFromStringWithFullyQualifiedClassName() {
+        MutexName mutexName = MutexName.fromString("com.garganttua.core.mutex.TestMutexA::user-table");
+
+        assertEquals(TestMutexA.class, mutexName.type());
+        assertEquals("user-table", mutexName.name());
     }
 
     @Test
@@ -112,7 +106,7 @@ class MutexNameTest {
     @Test
     void testFromStringRejectsMissingSeparator() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            MutexName.fromString("database-user-table");
+            MutexName.fromString("TestMutexA-user-table");
         });
 
         assertTrue(exception.getMessage().contains("missing"));
@@ -122,7 +116,7 @@ class MutexNameTest {
     @Test
     void testFromStringRejectsSingleColon() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            MutexName.fromString("database:user-table");
+            MutexName.fromString("TestMutexA:user-table");
         });
 
         assertTrue(exception.getMessage().contains("missing"));
@@ -141,7 +135,7 @@ class MutexNameTest {
     @Test
     void testFromStringRejectsEmptyName() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            MutexName.fromString("database::");
+            MutexName.fromString("TestMutexA::");
         });
 
         assertTrue(exception.getMessage().contains("name") ||
@@ -151,22 +145,51 @@ class MutexNameTest {
     @Test
     void testFromStringRejectsMultipleSeparators() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            MutexName.fromString("database::cache::user-table");
+            MutexName.fromString("TestMutexA::TestMutexB::user-table");
         });
 
         assertTrue(exception.getMessage().contains("exactly one"));
     }
 
     @Test
-    void testToStringFormat() {
-        MutexName mutexName = new MutexName("database", "user-table");
+    void testFromStringRejectsUnknownClass() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            MutexName.fromString("UnknownMutexClass::user-table");
+        });
 
-        assertEquals("database::user-table", mutexName.toString());
+        assertTrue(exception.getMessage().contains("not found") ||
+                exception.getMessage().contains("class"));
     }
 
     @Test
-    void testRoundTripConversion() {
-        String original = "cache::session-store";
+    void testFromStringRejectsNonIMutexClass() {
+        // String class doesn't implement IMutex
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            MutexName.fromString("java.lang.String::user-table");
+        });
+
+        assertTrue(exception.getMessage().contains("IMutex") ||
+                exception.getMessage().contains("implement"));
+    }
+
+    @Test
+    void testToStringFormat() {
+        MutexName mutexName = new MutexName(TestMutexA.class, "user-table");
+
+        assertEquals("TestMutexA::user-table", mutexName.toString());
+    }
+
+    @Test
+    void testToStringUsesSimpleClassName() {
+        // Even when created with fully qualified name, toString should use simple name
+        MutexName mutexName = MutexName.fromString("com.garganttua.core.mutex.TestMutexA::user-table");
+
+        assertEquals("TestMutexA::user-table", mutexName.toString());
+    }
+
+    @Test
+    void testRoundTripConversionWithSimpleName() {
+        String original = "TestMutexB::session-store";
         MutexName mutexName = MutexName.fromString(original);
         String result = mutexName.toString();
 
@@ -175,18 +198,26 @@ class MutexNameTest {
 
     @Test
     void testEquality() {
-        MutexName name1 = new MutexName("database", "user-table");
-        MutexName name2 = new MutexName("database", "user-table");
-        MutexName name3 = new MutexName("cache", "user-table");
+        MutexName name1 = new MutexName(TestMutexA.class, "user-table");
+        MutexName name2 = new MutexName(TestMutexA.class, "user-table");
+        MutexName name3 = new MutexName(TestMutexB.class, "user-table");
 
         assertEquals(name1, name2);
         assertNotEquals(name1, name3);
     }
 
     @Test
+    void testEqualityWithDifferentNames() {
+        MutexName name1 = new MutexName(TestMutexA.class, "user-table");
+        MutexName name2 = new MutexName(TestMutexA.class, "session-store");
+
+        assertNotEquals(name1, name2);
+    }
+
+    @Test
     void testHashCode() {
-        MutexName name1 = new MutexName("database", "user-table");
-        MutexName name2 = new MutexName("database", "user-table");
+        MutexName name1 = new MutexName(TestMutexA.class, "user-table");
+        MutexName name2 = new MutexName(TestMutexA.class, "user-table");
 
         assertEquals(name1.hashCode(), name2.hashCode());
     }
