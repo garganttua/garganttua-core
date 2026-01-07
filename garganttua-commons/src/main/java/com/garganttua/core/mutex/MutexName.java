@@ -123,7 +123,7 @@ public record MutexName(Class<? extends IMutex> type, String name) {
         if (!trimmedInput.contains(SEPARATOR)) {
             throw new IllegalArgumentException(
                 "Invalid mutex name format: missing '" + SEPARATOR + "' separator. " +
-                "Expected format: 'TypeClassName::name', got: '" + qualifiedName + "'"
+                "Expected format: 'fully.qualified.name.TypeClassName::name', got: '" + qualifiedName + "'"
             );
         }
 
@@ -134,7 +134,7 @@ public record MutexName(Class<? extends IMutex> type, String name) {
         if (parts.length != 2) {
             throw new IllegalArgumentException(
                 "Invalid mutex name format: expected exactly one '" + SEPARATOR + "' separator. " +
-                "Expected format: 'TypeClassName::name', got: '" + qualifiedName + "'"
+                "Expected format: 'fully.qualified.name.TypeClassName::name', got: '" + qualifiedName + "'"
             );
         }
 
@@ -159,17 +159,10 @@ public record MutexName(Class<? extends IMutex> type, String name) {
      */
     @SuppressWarnings("unchecked")
     private static Class<? extends IMutex> loadMutexClass(String className) {
-        // List of common packages to try
-        String[] packagePrefixes = {
-            "",  // Try as-is first (might be fully qualified)
-            "com.garganttua.core.mutex.",  // Common mutex package
-            "com.garganttua.core.mutex.dsl.fixtures."  // Test fixtures package
-        };
 
         ClassNotFoundException lastException = null;
 
-        for (String prefix : packagePrefixes) {
-            String fullClassName = prefix + className;
+            String fullClassName = className;
             try {
                 Class<?> clazz = Class.forName(fullClassName);
                 if (!IMutex.class.isAssignableFrom(clazz)) {
@@ -182,12 +175,10 @@ public record MutexName(Class<? extends IMutex> type, String name) {
                 lastException = e;
                 // Continue trying other prefixes
             }
-        }
 
         // If we get here, none of the attempts worked
         throw new IllegalArgumentException(
-            "Mutex type class not found: '" + className + "'. " +
-            "Tried packages: com.garganttua.core.mutex, com.garganttua.core.mutex.dsl.fixtures",
+            "Mutex type class not found: " + className,
             lastException
         );
     }
@@ -199,7 +190,7 @@ public record MutexName(Class<? extends IMutex> type, String name) {
      */
     @Override
     public String toString() {
-        return type.getSimpleName() + SEPARATOR + name;
+        return type.getCanonicalName() + SEPARATOR + name;
     }
 
 }

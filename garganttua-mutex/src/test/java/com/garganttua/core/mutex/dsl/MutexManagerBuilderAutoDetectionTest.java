@@ -8,11 +8,13 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.DiContextBuilder;
 import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.InterruptibleLeaseMutex;
 import com.garganttua.core.mutex.InterruptibleLeaseMutexFactory;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexName;
+import com.garganttua.core.mutex.dsl.fixtures.TestMutex;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
@@ -60,7 +62,11 @@ class MutexManagerBuilderAutoDetectionTest {
 
         assertNotNull(manager, "Manager should be built successfully");
 
-        manager.mutex(new MutexName(TestMutex.class, "TestMutexFactory"));
+        IMutex mutex = manager.mutex(new MutexName(TestMutex.class, "TestMutexFactory"));
+
+        assertNotNull(mutex);
+
+        mutex.acquire(() -> {System.out.println("Hello World");return 2;});
     }
 
     @Test
@@ -161,7 +167,7 @@ class MutexManagerBuilderAutoDetectionTest {
         assertNotNull(manager, "Manager should be built");
 
         // Verify we can create a mutex using the manually registered factory
-        MutexName name = MutexName.fromString("InterruptibleLeaseMutex::test");
+        MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test");
         assertDoesNotThrow(() -> {
             manager.mutex(name);
         }, "Should be able to create mutex with registered factory");

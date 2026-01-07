@@ -23,13 +23,13 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testMutexCreation() throws MutexException {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test"));
         assertNotNull(mutex);
     }
 
     @Test
     void testSameMutexReturnedForSameName() throws MutexException {
-        MutexName name = MutexName.fromString("InterruptibleLeaseMutex::test");
+        MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test");
         IMutex mutex1 = manager.mutex(name);
         IMutex mutex2 = manager.mutex(name);
         assertSame(mutex1, mutex2);
@@ -42,7 +42,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testSimpleAcquisition() throws MutexException {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::counter"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::counter"));
         AtomicInteger counter = new AtomicInteger(0);
 
         Integer result = mutex.acquire(() -> {
@@ -56,7 +56,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testMutualExclusion() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::shared-resource"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::shared-resource"));
         int threadCount = 10;
         int incrementsPerThread = 100;
         AtomicInteger counter = new AtomicInteger(0);
@@ -88,7 +88,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testStrategyWithTimeout() throws MutexException {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::timeout-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::timeout-test"));
         MutexStrategy strategy = new MutexStrategy(
             100, TimeUnit.MILLISECONDS,
             0, 0, TimeUnit.MILLISECONDS,
@@ -104,7 +104,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testStrategyWithRetry() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::retry-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::retry-test"));
         MutexStrategy strategy = new MutexStrategy(
             0, TimeUnit.MILLISECONDS,
             3, 50, TimeUnit.MILLISECONDS,
@@ -147,7 +147,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testExceptionPropagation() throws MutexException {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::exception-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::exception-test"));
 
         assertThrows(MutexException.class, () -> {
             mutex.acquire(() -> {
@@ -158,7 +158,7 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testSupplyMethod() throws Exception {
-        IMutex result = manager.supply(MutexName.fromString("InterruptibleLeaseMutex::test-mutex")).orElseThrow();
+        IMutex result = manager.supply(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test-mutex")).orElseThrow();
         assertNotNull(result);
     }
 
@@ -182,7 +182,7 @@ class SynchronizedMutexManagerTest {
             final int threadId = i;
             Thread thread = new Thread(() -> {
                 try {
-                    IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::mutex-" + (threadId % 5)));
+                    IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::mutex-" + (threadId % 5)));
                     Integer result = mutex.acquire(() -> {
                         try {
                             Thread.sleep(10);

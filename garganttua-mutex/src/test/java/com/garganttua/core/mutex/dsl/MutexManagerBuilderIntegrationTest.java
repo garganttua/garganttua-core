@@ -66,7 +66,7 @@ class MutexManagerBuilderIntegrationTest {
                                 .build();
 
                 // Try to create a mutex using the auto-detected TestMutexFactory
-                MutexName name = MutexName.fromString("TestMutex::integration-test");
+                MutexName name = MutexName.fromString("com.garganttua.core.mutex.dsl.fixtures.TestMutex::integration-test");
                 IMutex mutex = manager.mutex(name);
 
                 assertNotNull(mutex, "Mutex should be created");
@@ -94,12 +94,12 @@ class MutexManagerBuilderIntegrationTest {
                 assertNotNull(manager, "Manager should be created with mixed factories");
 
                 // Test creating mutex with InterruptibleLeaseMutex type
-                MutexName interruptibleName = MutexName.fromString("InterruptibleLeaseMutex::test1");
+                MutexName interruptibleName = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test1");
                 IMutex interruptibleMutex = manager.mutex(interruptibleName);
                 assertNotNull(interruptibleMutex, "Should create InterruptibleLeaseMutex");
 
                 // Test creating mutex with TestMutex type
-                MutexName testName = MutexName.fromString("TestMutex::test2");
+                MutexName testName = MutexName.fromString("com.garganttua.core.mutex.dsl.fixtures.TestMutex::test2");
                 IMutex testMutex = manager.mutex(testName);
                 assertNotNull(testMutex, "Should create TestMutex or fallback");
         }
@@ -141,7 +141,7 @@ class MutexManagerBuilderIntegrationTest {
                                 .autoDetect(true)
                                 .build();
 
-                MutexName name = MutexName.fromString("InterruptibleLeaseMutex::functional-test");
+                MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::functional-test");
                 IMutex mutex = manager.mutex(name);
 
                 // Actually use the mutex to execute code
@@ -164,7 +164,7 @@ class MutexManagerBuilderIntegrationTest {
                                 .autoDetect(true)
                                 .build();
 
-                MutexName name = MutexName.fromString("InterruptibleLeaseMutex::singleton-test");
+                MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::singleton-test");
                 IMutex mutex1 = manager.mutex(name);
                 IMutex mutex2 = manager.mutex(name);
 

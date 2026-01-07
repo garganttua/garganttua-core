@@ -51,7 +51,7 @@ class ExceptionChainingTest {
 
     @Test
     void testExceptionPreservationInSimpleAcquire() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::exception-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::exception-test"));
         IOException originalException = new IOException("Disk full");
 
         MutexException exception = assertThrows(MutexException.class, () -> {
@@ -73,7 +73,7 @@ class ExceptionChainingTest {
 
     @Test
     void testExceptionPreservationWithStrategy() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::strategy-exception-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::strategy-exception-test"));
         MutexStrategy strategy = new MutexStrategy(
             -1, TimeUnit.SECONDS,
             0, 0, TimeUnit.MILLISECONDS,
@@ -94,7 +94,7 @@ class ExceptionChainingTest {
 
     @Test
     void testExceptionPreservationWithLeaseTime() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::lease-exception-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::lease-exception-test"));
         MutexStrategy strategy = new MutexStrategy(
             -1, TimeUnit.SECONDS,
             0, 0, TimeUnit.MILLISECONDS,
@@ -120,7 +120,7 @@ class ExceptionChainingTest {
 
     @Test
     void testMutexExceptionPassthrough() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::passthrough-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::passthrough-test"));
         MutexException originalException = new MutexException("Original mutex error");
 
         MutexException exception = assertThrows(MutexException.class, () -> {
@@ -134,7 +134,7 @@ class ExceptionChainingTest {
 
     @Test
     void testNestedExceptionChain() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::nested-exception-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::nested-exception-test"));
 
         IOException rootCause = new IOException("Root cause");
         IllegalStateException middleCause = new IllegalStateException("Middle", rootCause);
@@ -152,7 +152,7 @@ class ExceptionChainingTest {
 
     @Test
     void testInterruptedExceptionChaining() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::interrupted-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::interrupted-test"));
 
         // Strategy with 2 second wait time
         MutexStrategy strategy = new MutexStrategy(

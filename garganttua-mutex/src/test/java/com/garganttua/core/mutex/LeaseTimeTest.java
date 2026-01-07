@@ -19,7 +19,7 @@ class LeaseTimeTest {
 
     @Test
     void testLeaseTimeEnforcement() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::lease-test"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::lease-test"));
 
         MutexStrategy strategy = new MutexStrategy(
                 -1, TimeUnit.SECONDS,
@@ -46,7 +46,7 @@ class LeaseTimeTest {
 
     @Test
     void testLeaseTimeSuccess() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::lease-success"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::lease-success"));
 
         MutexStrategy strategy = new MutexStrategy(
                 -1, TimeUnit.SECONDS,
@@ -70,7 +70,7 @@ class LeaseTimeTest {
 
     @Test
     void testNoLeaseTimeEnforcement() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::no-lease"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::no-lease"));
 
         MutexStrategy strategy = new MutexStrategy(
                 -1, TimeUnit.SECONDS,
@@ -94,7 +94,7 @@ class LeaseTimeTest {
 
     @Test
     void testLeaseTimeForcesLockRelease() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::force-release"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::force-release"));
         AtomicBoolean lockAcquiredAfter = new AtomicBoolean(false);
         AtomicBoolean firstThreadStarted = new AtomicBoolean(false);
 
@@ -147,7 +147,7 @@ class LeaseTimeTest {
 
     @Test
     void testExceptionPropagationWithLease() throws Exception {
-        IMutex mutex = manager.mutex(MutexName.fromString("InterruptibleLeaseMutex::exception-with-lease"));
+        IMutex mutex = manager.mutex(MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::exception-with-lease"));
 
         MutexStrategy strategy = new MutexStrategy(
                 -1, TimeUnit.SECONDS,

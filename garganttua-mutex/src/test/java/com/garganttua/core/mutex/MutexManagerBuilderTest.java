@@ -76,7 +76,7 @@ class MutexManagerBuilderTest {
                 .withFactory(InterruptibleLeaseMutex.class, factory)
                 .build();
 
-        MutexName name = MutexName.fromString("InterruptibleLeaseMutex::test");
+        MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test");
         IMutex mutex = manager.mutex(name);
 
         assertNotNull(mutex, "Mutex should be created");
@@ -88,7 +88,7 @@ class MutexManagerBuilderTest {
         IMutexManager manager = MutexManagerBuilder.builder()
                 .build();
 
-        MutexName name = MutexName.fromString("SomeUnknownType::test");
+        MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test");
         IMutex mutex = manager.mutex(name);
 
         assertNotNull(mutex, "Mutex should be created with default factory");

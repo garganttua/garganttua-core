@@ -52,7 +52,7 @@ class MutexNameTest {
 
     @Test
     void testFromStringWithValidFormat() {
-        MutexName mutexName = MutexName.fromString("TestMutexA::user-table");
+        MutexName mutexName = MutexName.fromString("com.garganttua.core.mutex.TestMutexA::user-table");
 
         assertEquals(TestMutexA.class, mutexName.type());
         assertEquals("user-table", mutexName.name());
@@ -60,7 +60,7 @@ class MutexNameTest {
 
     @Test
     void testFromStringTrimsWhitespace() {
-        MutexName mutexName = MutexName.fromString("  TestMutexA  ::  user-table  ");
+        MutexName mutexName = MutexName.fromString("  com.garganttua.core.mutex.TestMutexA  ::  user-table  ");
 
         assertEquals(TestMutexA.class, mutexName.type());
         assertEquals("user-table", mutexName.name());
@@ -68,7 +68,7 @@ class MutexNameTest {
 
     @Test
     void testFromStringWithComplexNames() {
-        MutexName mutexName = MutexName.fromString("TestMutexB::session_store-v2");
+        MutexName mutexName = MutexName.fromString("com.garganttua.core.mutex.TestMutexB::session_store-v2");
 
         assertEquals(TestMutexB.class, mutexName.type());
         assertEquals("session_store-v2", mutexName.name());
@@ -135,7 +135,7 @@ class MutexNameTest {
     @Test
     void testFromStringRejectsEmptyName() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            MutexName.fromString("TestMutexA::");
+            MutexName.fromString("com.garganttua.core.mutex.TestMutexA::");
         });
 
         assertTrue(exception.getMessage().contains("name") ||
@@ -176,7 +176,7 @@ class MutexNameTest {
     void testToStringFormat() {
         MutexName mutexName = new MutexName(TestMutexA.class, "user-table");
 
-        assertEquals("TestMutexA::user-table", mutexName.toString());
+        assertEquals("com.garganttua.core.mutex.TestMutexA::user-table", mutexName.toString());
     }
 
     @Test
@@ -184,12 +184,12 @@ class MutexNameTest {
         // Even when created with fully qualified name, toString should use simple name
         MutexName mutexName = MutexName.fromString("com.garganttua.core.mutex.TestMutexA::user-table");
 
-        assertEquals("TestMutexA::user-table", mutexName.toString());
+        assertEquals("com.garganttua.core.mutex.TestMutexA::user-table", mutexName.toString());
     }
 
     @Test
     void testRoundTripConversionWithSimpleName() {
-        String original = "TestMutexB::session-store";
+        String original = "com.garganttua.core.mutex.TestMutexB::session-store";
         MutexName mutexName = MutexName.fromString(original);
         String result = mutexName.toString();
 
