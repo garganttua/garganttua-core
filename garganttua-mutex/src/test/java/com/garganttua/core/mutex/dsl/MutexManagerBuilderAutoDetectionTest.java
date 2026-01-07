@@ -59,6 +59,8 @@ class MutexManagerBuilderAutoDetectionTest {
                 .build();
 
         assertNotNull(manager, "Manager should be built successfully");
+
+        manager.mutex(new MutexName(TestMutex.class, "TestMutexFactory"));
     }
 
     @Test
@@ -172,7 +174,7 @@ class MutexManagerBuilderAutoDetectionTest {
         IDiContextBuilder contextBuilder = DiContextBuilder.builder()
                 .withPackage("com.garganttua.core.mutex");
         contextBuilder.build();
-        
+
         IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(false)
