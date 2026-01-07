@@ -90,6 +90,9 @@ public class ContextReadinessBuilder<Builder> implements IContextReadinessBuilde
             this.context = null;
             this.builder = Objects.requireNonNull(builder, "Builder cannot be null");
 
+            if( this.contextBuilder != null ) {
+                this.contextBuilder.observer(this);
+            }
             boolean canBuildResult = canBuild();
             log.atDebug().log("ContextReadinessBuilder initialized with contextBuilder: {}, canBuild: {}",
                     this.contextBuilder != null ? "present" : "absent",
@@ -127,7 +130,7 @@ public class ContextReadinessBuilder<Builder> implements IContextReadinessBuilde
         Objects.requireNonNull(contextBuilder, "Context builder cannot be null");
         synchronized (lock) {
             this.contextBuilder = contextBuilder;
-            contextBuilder.observer(this);
+            this.contextBuilder.observer(this);
             log.atDebug().log("Context builder updated");
         }
     }

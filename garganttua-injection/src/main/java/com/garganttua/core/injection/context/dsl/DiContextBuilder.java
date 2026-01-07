@@ -93,20 +93,15 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> {
-                            try {
-                                IBeanProviderBuilder provider = entry.getValue();
-                                if (provider instanceof BeanProviderBuilder bpb) {
-                                    bpb.setQualifierAnnotations(this.qualifiers);
-                                    bpb.setResolver(resolvers);
-                                    log.atDebug().log("Configured BeanProviderBuilder for scope: {}", entry.getKey());
-                                }
-                                return provider.build();
-                            } catch (DslException e) {
-                                log.atError().log("Error building BeanProvider for scope: {}",
-                                        entry.getKey());
-                                throw new RuntimeException("Error building BeanProvider for scope: " + entry.getKey(),
-                                        e);
+
+                            IBeanProviderBuilder provider = entry.getValue();
+                            if (provider instanceof BeanProviderBuilder bpb) {
+                                bpb.setQualifierAnnotations(this.qualifiers);
+                                bpb.setResolver(resolvers);
+                                log.atDebug().log("Configured BeanProviderBuilder for scope: {}", entry.getKey());
                             }
+                            return provider.build();
+
                         }));
         log.atTrace().log("Exiting buildBeanProviders with result size: {}", result.size());
         return result;
@@ -117,16 +112,8 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         Map<String, IPropertyProvider> result = this.propertyProviders.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> {
-                            try {
-                                return entry.getValue().build();
-                            } catch (DslException e) {
-                                log.atError().log("Error building PropertyProvider for scope: {}",
-                                        entry.getKey());
-                                throw new RuntimeException("Error building BeanProvider for scope: " + entry.getKey(),
-                                        e);
-                            }
-                        }));
+                        entry -> entry.getValue().build()
+                ));
         log.atTrace().log("Exiting buildPropertyProviders with result size: {}", result.size());
         return result;
     }

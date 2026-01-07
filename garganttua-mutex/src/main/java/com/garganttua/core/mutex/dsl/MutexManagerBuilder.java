@@ -25,29 +25,35 @@ import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Builder for constructing {@link IMutexManager} instances with configurable mutex factories.
+ * Builder for constructing {@link IMutexManager} instances with configurable
+ * mutex factories.
  *
  * <p>
- * This builder allows configuring different mutex factories for different mutex types,
+ * This builder allows configuring different mutex factories for different mutex
+ * types,
  * enabling flexible mutex management strategies within an application.
  * </p>
  *
  * <h2>Usage Example</h2>
+ * 
  * <pre>{@code
  * IMutexManager manager = MutexManagerBuilder.builder()
- *     .withFactory(InterruptibleLeaseMutex.class, new InterruptibleLeaseMutexFactory())
- *     .build();
+ *         .withFactory(InterruptibleLeaseMutex.class, new InterruptibleLeaseMutexFactory())
+ *         .build();
  * }</pre>
  *
  * <h2>Auto-detection</h2>
  * <p>
- * When auto-detection is enabled, the builder will scan the dependency injection context
- * for beans annotated with {@code @MutexFactory} and automatically register them.
+ * When auto-detection is enabled, the builder will scan the dependency
+ * injection context
+ * for beans annotated with {@code @MutexFactory} and automatically register
+ * them.
  * </p>
  *
  * <h2>Thread Safety</h2>
  * <p>
- * This builder is not thread-safe. Each instance should be used by a single thread
+ * This builder is not thread-safe. Each instance should be used by a single
+ * thread
  * during construction.
  * </p>
  *
@@ -66,7 +72,6 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
     private MutexManagerBuilder(Optional<IDiContextBuilder> contextBuilder) {
         super();
         this.readinessBuilder = new ContextReadinessBuilder<>(contextBuilder, this);
-
         log.atInfo().log("MutexManagerBuilder initialized");
     }
 
@@ -126,19 +131,120 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection() method");
 
-        if (this.readinessBuilder.canBuild() && this.readinessBuilder.hasContext()) {
+        if (shouldSkipAutoDetection()) {
             log.atWarn().log("Auto-detection requested but no DI context available, skipping auto-detection");
             return;
         }
 
-        log.atInfo().log("Auto-detecting mutex factories");
+        log.atInfo().log("Auto-detecting mutex factories in {} packages", packages.size());
 
-        this.packages.forEach(p -> {
-            ObjectReflectionHelper.getClassesWithAnnotation(p, MutexFactory.class).stream().forEach(f -> {
-                this.readinessBuilder.getContext().addBean(Predefined.BeanProviders.garganttua.toString(), new BeanReference<>(f, Optional.of(BeanStrategy.singleton), Optional.empty(), Set.of(MutexFactory.class)));
-            });
-        });
+        for (String packageName : packages) {
+            scanPackageForFactories(packageName);
+        }
+
         log.atTrace().log("Exiting doAutoDetection() method");
+    }
+
+    /**
+     * Determines if auto-detection should be skipped.
+     *
+     * @return true if auto-detection should be skipped, false otherwise
+     */
+    private boolean shouldSkipAutoDetection() {
+        return this.readinessBuilder.canBuild();
+    }
+
+    /**
+     * Scans a package for classes annotated with @MutexFactory and registers them.
+     *
+     * @param packageName the package to scan
+     * @throws DslException if factory registration fails
+     */
+    private void scanPackageForFactories(String packageName) throws DslException {
+        log.atDebug().log("Scanning package: {}", packageName);
+
+        for (Class<?> factoryClass : ObjectReflectionHelper.getClassesWithAnnotation(packageName, MutexFactory.class)) {
+            registerDiscoveredFactory(factoryClass);
+        }
+    }
+
+    /**
+     * Registers a discovered factory class.
+     *
+     * @param factoryClass the factory class to register
+     * @throws DslException if registration fails
+     */
+    private void registerDiscoveredFactory(Class<?> factoryClass) throws DslException {
+        MutexFactory annotation = factoryClass.getAnnotation(MutexFactory.class);
+        if (annotation == null) {
+            log.atWarn().log("Class {} found but missing @MutexFactory annotation", factoryClass.getSimpleName());
+            return;
+        }
+
+        log.atDebug().log("Registering factory: {} for mutex type: {}",
+                factoryClass.getSimpleName(), annotation.type().getSimpleName());
+
+        if (this.readinessBuilder.hasContext()) {
+            registerFactoryInDiContext(factoryClass, annotation);
+        } else {
+            registerFactoryDirectly(factoryClass, annotation);
+        }
+    }
+
+    /**
+     * Registers a factory in the DI context.
+     *
+     * @param factoryClass the factory class
+     * @param annotation the @MutexFactory annotation
+     * @throws DslException if registration fails
+     */
+    @SuppressWarnings("unchecked")
+    private void registerFactoryInDiContext(Class<?> factoryClass, MutexFactory annotation) throws DslException {
+        Class<IMutexFactory> mutexFactoryClass = (Class<IMutexFactory>) (Class<?>) factoryClass;
+
+        BeanReference<IMutexFactory> beanRef = new BeanReference<>(
+                mutexFactoryClass,
+                Optional.of(BeanStrategy.singleton),
+                Optional.empty(),
+                Set.of(MutexFactory.class)
+        );
+
+        this.readinessBuilder.getContext().addBean(Predefined.BeanProviders.garganttua.toString(), beanRef);
+
+        IMutexFactory factory = retrieveFactoryFromContext(beanRef, factoryClass);
+        withFactory(annotation.type(), factory);
+    }
+
+    /**
+     * Retrieves a factory instance from the DI context.
+     *
+     * @param beanRef the bean reference
+     * @param factoryClass the factory class
+     * @return the factory instance
+     * @throws DslException if factory cannot be retrieved
+     */
+    private IMutexFactory retrieveFactoryFromContext(BeanReference<IMutexFactory> beanRef, Class<?> factoryClass)
+            throws DslException {
+        return this.readinessBuilder.getContext()
+                .getBeanProvider(Predefined.BeanProviders.garganttua.toString())
+                .flatMap(provider -> provider.query(beanRef))
+                .orElseThrow(() -> new DslException(
+                        "Mutex Factory bean of type " + factoryClass.getSimpleName() +
+                        " should have been created in DI Context but was not found"
+                ));
+    }
+
+    /**
+     * Registers a factory directly by instantiating it.
+     *
+     * @param factoryClass the factory class
+     * @param annotation the @MutexFactory annotation
+     */
+    private void registerFactoryDirectly(Class<?> factoryClass, MutexFactory annotation) {
+        log.atDebug().log("Creating factory instance directly: {}", factoryClass.getSimpleName());
+
+        IMutexFactory factory = (IMutexFactory) ObjectReflectionHelper.instanciateNewObject(factoryClass);
+        withFactory(annotation.type(), factory);
     }
 
     @Override
