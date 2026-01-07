@@ -15,14 +15,15 @@ import lombok.extern.slf4j.Slf4j;
  * This implementation stores mutexes in a {@link ConcurrentHashMap}, where each
  * mutex is identified by a unique {@link MutexName}. The manager uses registered
  * {@link IMutexFactory} instances to create mutexes of specific types based on
- * the mutex type specified in the name.
+ * the mutex type class specified in the name.
  * </p>
  *
  * <h2>Factory Selection</h2>
  * <p>
- * When creating a mutex, the manager looks up the factory registered for the
- * mutex type. If no factory is found for the specific type, it defaults to
- * creating an {@link InterruptibleLeaseMutex}.
+ * When creating a mutex, the manager performs a direct lookup in the factories
+ * map using the mutex type class ({@code name.type()}). If no factory is registered
+ * for the specific type class, it defaults to creating an {@link InterruptibleLeaseMutex}.
+ * This provides type-safe factory selection and better performance than string matching.
  * </p>
  *
  * <h2>Thread Safety</h2>
@@ -34,12 +35,21 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
+ * // Create manager with registered factories
  * Map<Class<? extends IMutex>, IMutexFactory> factories = new HashMap<>();
  * factories.put(InterruptibleLeaseMutex.class, new InterruptibleLeaseMutexFactory());
  *
  * IMutexManager manager = new MutexManager(factories);
+ *
+ * // Create mutex using simple class name (resolved by MutexName.fromString)
  * MutexName name = MutexName.fromString("InterruptibleLeaseMutex::user:123");
  * IMutex userMutex = manager.mutex(name);
+ *
+ * // Or create directly with class reference
+ * MutexName name2 = new MutexName(InterruptibleLeaseMutex.class, "user:456");
+ * IMutex userMutex2 = manager.mutex(name2);
+ *
+ * // Execute critical section
  * String result = userMutex.acquire(() -> {
  *     // Thread-safe critical section
  *     return updateUser("123");
@@ -92,35 +102,26 @@ public class MutexManager implements IMutexManager {
     /**
      * Creates a new mutex using the appropriate factory based on the mutex type.
      *
-     * @param name the mutex name containing type and identifier
+     * @param name the mutex name containing type class and identifier
      * @return a new mutex instance
      * @throws MutexException if mutex creation fails
      */
     private IMutex createMutex(MutexName name) throws MutexException {
-        String type = name.type();
+        Class<? extends IMutex> type = name.type();
         String mutexName = name.name();
 
-        // Try to find a factory by matching the type string with registered factory class names
-        IMutexFactory factory = factories.values().stream()
-                .filter(f -> {
-                    Class<?>[] interfaces = f.getClass().getInterfaces();
-                    for (Class<?> iface : interfaces) {
-                        if (iface.getSimpleName().contains(type)) {
-                            return true;
-                        }
-                    }
-                    return f.getClass().getSimpleName().contains(type);
-                })
-                .findFirst()
-                .orElse(null);
+        // Try to find a factory registered for this exact mutex type
+        IMutexFactory factory = factories.get(type);
 
         if (factory != null) {
-            log.atDebug().log("Using factory {} for mutex type {}", factory.getClass().getSimpleName(), type);
+            log.atDebug().log("Using factory {} for mutex type {}",
+                    factory.getClass().getSimpleName(), type.getSimpleName());
             return factory.createMutex(mutexName);
         }
 
         // Default fallback to InterruptibleLeaseMutex
-        log.atWarn().log("No factory found for mutex type {}, using default InterruptibleLeaseMutex", type);
+        log.atWarn().log("No factory found for mutex type {}, using default InterruptibleLeaseMutex",
+                type.getSimpleName());
         return new InterruptibleLeaseMutex(mutexName);
     }
 
