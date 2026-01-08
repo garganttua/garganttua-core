@@ -131,6 +131,21 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
         log.atInfo().log("Building MutexManager with {} registered factories", factories.size());
         IMutexManager manager = new MutexManager(factories);
 
+        // Register the built MutexManager in the InjectionContext if available and ready
+        this.readinessBuilder.ifReady(context -> {
+            log.atDebug().log("Registering IMutexManager as bean in InjectionContext");
+            context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
+                    .ifPresent(provider -> {
+                        BeanReference<IMutexManager> beanRef = new BeanReference<>(
+                                IMutexManager.class,
+                                Optional.of(BeanStrategy.singleton),
+                                Optional.empty(),
+                                Set.of());
+                        provider.add(beanRef, manager);
+                        log.atInfo().log("IMutexManager successfully registered as bean");
+                    });
+        });
+
         log.atTrace().log("Exiting doBuild() method");
         return manager;
     }
@@ -174,7 +189,6 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
         }
 
         // Phase 3: Instancier et enregistrer les factories découvertes
-
         final Map<Class<? extends IMutex>, IMutexFactory> factoriesToBeAddedToContext = this
                 .computeFactoriesToBeAddedToContext();
         this.readinessBuilder.ifReady(c -> {

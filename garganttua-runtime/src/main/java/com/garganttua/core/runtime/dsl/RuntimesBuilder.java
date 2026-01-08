@@ -14,6 +14,8 @@ import javax.inject.Named;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
@@ -107,6 +109,22 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
                     log.atDebug().log("Building individual runtime");
                     return e.getValue().build();
                 }));
+
+        // Register the built runtimes map as bean in the InjectionContext if available and ready
+        this.readinessBuilder.ifReady(context -> {
+            log.atDebug().log("Registering Map<String, IRuntime<?, ?>> as bean in InjectionContext");
+            context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
+                    .ifPresent(provider -> {
+                        @SuppressWarnings("unchecked")
+                        BeanReference<Map<String, IRuntime<?, ?>>> beanRef = new BeanReference<>(
+                                (Class<Map<String, IRuntime<?, ?>>>) (Class<?>) Map.class,
+                                Optional.of(BeanStrategy.singleton),
+                                Optional.empty(),
+                                Set.of());
+                        provider.add(beanRef, result);
+                        log.atInfo().log("Map<String, IRuntime<?, ?>> successfully registered as bean with {} runtimes", result.size());
+                    });
+        });
 
         log.atTrace().log("Exiting doBuild() method");
         return result;
