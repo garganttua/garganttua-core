@@ -1,5 +1,6 @@
 package com.garganttua.core.mutex.dsl;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,6 +10,9 @@ import java.util.Set;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.MultiSourceCollector;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.Predefined;
@@ -65,10 +69,14 @@ import lombok.extern.slf4j.Slf4j;
 public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerBuilder, IMutexManager>
         implements IMutexManagerBuilder {
 
+    private static final String SOURCE_CONTEXT = "context";
+    private static final String SOURCE_MANUAL = "manual";
+    private static final String SOURCE_REFLECTION = "reflection";
+
     private ContextReadinessBuilder<IMutexManagerBuilder> readinessBuilder;
     private Set<String> packages = new HashSet<>();
 
-    private Map<Class<? extends IMutex>, IMutexFactory> factories = new HashMap<>();
+    private Map<Class<? extends IMutex>, IMutexFactory> manualFactories = new HashMap<>();
     private Map<Class<? extends IMutex>, IMutexFactory> contextFactories = new HashMap<>();
     private Map<Class<? extends IMutex>, IMutexFactory> reflexionFactories = new HashMap<>();
 
@@ -107,7 +115,7 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
         Objects.requireNonNull(type, "Mutex type cannot be null");
         Objects.requireNonNull(factory, "Mutex factory cannot be null");
 
-        this.factories.put(type, factory);
+        this.manualFactories.put(type, factory);
 
         log.atInfo().log("Registered factory {} for mutex type {}",
                 factory.getClass().getSimpleName(), type.getSimpleName());
@@ -215,25 +223,39 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
         });
     }
 
+    private ISupplier<Map<Class<? extends IMutex>, IMutexFactory>> factorySupplier(
+            Map<Class<? extends IMutex>, IMutexFactory> factories) {
+        return new ISupplier<Map<Class<? extends IMutex>, IMutexFactory>>() {
+            @Override
+            public Optional<Map<Class<? extends IMutex>, IMutexFactory>> supply() throws SupplyException {
+                return Optional.of(factories);
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
+            }
+        };
+    }
+
     private Map<Class<? extends IMutex>, IMutexFactory> computeFactoriesToBeAddedToContext() {
-        Map<Class<? extends IMutex>, IMutexFactory> result = new HashMap<>();
+        MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector = new MultiSourceCollector<>();
 
-        factories.entrySet().stream()
-                .filter(e -> !contextFactories.containsKey(e.getKey()))
-                .forEach(e -> result.put(e.getKey(), e.getValue()));
+        collector.source(factorySupplier(contextFactories), 0, SOURCE_CONTEXT);
+        collector.source(factorySupplier(manualFactories), 1, SOURCE_MANUAL);
+        collector.source(factorySupplier(reflexionFactories), 2, SOURCE_REFLECTION);
 
-        reflexionFactories.entrySet().stream()
-                .filter(e -> !contextFactories.containsKey(e.getKey()))
-                .filter(e -> !result.containsKey(e.getKey()))
-                .forEach(e -> result.put(e.getKey(), e.getValue()));
-
-        return result;
+        return collector.buildExcludingSourceItems(Set.of(SOURCE_CONTEXT));
     }
 
     private Map<Class<? extends IMutex>, IMutexFactory> computeFactoriesForBuild() {
-        Map<Class<? extends IMutex>,IMutexFactory> factoriesForBuild = computeFactoriesToBeAddedToContext();
-        factoriesForBuild.putAll(this.contextFactories);
-        return factoriesForBuild;
+        MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector = new MultiSourceCollector<>();
+
+        collector.source(factorySupplier(contextFactories), 0, SOURCE_CONTEXT);
+        collector.source(factorySupplier(manualFactories), 1, SOURCE_MANUAL);
+        collector.source(factorySupplier(reflexionFactories), 2, SOURCE_REFLECTION);
+
+        return collector.build();
     }
 
     @Override
