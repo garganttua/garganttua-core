@@ -20,7 +20,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Multiple bean providers configured
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .beanProvider("application")
  *         .withBean(DatabaseConnection.class)
  *             .strategy(BeanStrategy.singleton)

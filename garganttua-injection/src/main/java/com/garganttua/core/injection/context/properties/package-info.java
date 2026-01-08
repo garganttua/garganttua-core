@@ -28,12 +28,12 @@
  * </ul>
  *
  * <h2>Usage Example: Property Provider</h2>
- * Based on real test code from DiContextTest.java and DiContextBuilderTest.java:
+ * Based on real test code from InjectionContextTest.java and InjectionContextBuilderTest.java:
  * <pre>{@code
  * // Configure properties using predefined provider
  * String propertyValue = UUID.randomUUID().toString();
  *
- * DiContext.builder()
+ * InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
  *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", propertyValue)
@@ -85,10 +85,10 @@
  * }</pre>
  *
  * <h2>Usage Example: Multiple Property Providers</h2>
- * Based on real test code from DiContextBuilderTest.java:
+ * Based on real test code from InjectionContextBuilderTest.java:
  * <pre>{@code
  * // Register multiple property providers
- * IDiContext context = DiContext.builder()
+ * IInjectionContext context = InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString(), new DummyPropertyProviderBuilder())
  *         .up()
@@ -104,7 +104,7 @@
  * }</pre>
  *
  * <h2>Usage Example: Property in Bean Lifecycle</h2>
- * Based on real test code from DiContextTest.java:
+ * Based on real test code from InjectionContextTest.java:
  * <pre>{@code
  * // Property is injected before post-construct
  * @Singleton

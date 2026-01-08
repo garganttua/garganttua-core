@@ -15,7 +15,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;
@@ -32,7 +32,7 @@ public class InjectableElementResolverTest {
     @BeforeEach
     void setUp() throws DiException, DslException, LifecycleException {
         ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-        DiContext.builder().withPackage("com.garganttua")
+        InjectionContext.builder().withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
                 .up()

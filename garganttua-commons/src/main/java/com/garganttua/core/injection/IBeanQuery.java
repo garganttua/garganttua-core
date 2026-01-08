@@ -36,7 +36,7 @@ import java.util.Optional;
  * @param <Bean> the type of bean this query retrieves
  * @since 2.0.0-ALPHA01
  * @see IBeanQueryBuilder
- * @see IDiContext
+ * @see IInjectionContext
  * @see BeanDefinition
  */
 public interface IBeanQuery<Bean> {

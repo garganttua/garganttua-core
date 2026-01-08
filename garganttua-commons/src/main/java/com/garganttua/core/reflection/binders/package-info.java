@@ -89,13 +89,13 @@
  * <h2>Usage Example: Contextual Binding</h2>
  * <pre>{@code
  * // Contextual field binder with dependency injection context
- * IContextualFieldBinder<IDiContext> binder =
+ * IContextualFieldBinder<IInjectionContext> binder =
  *     new ContextualFieldBinder<>(UserService.class, "repository")
  *         .bindFromContext(ctx -> ctx.getBean(UserRepository.class));
  *
  * // Apply with context
  * UserService service = new UserService();
- * binder.inject(service, diContext);
+ * binder.inject(service, injectionContext);
  * }</pre>
  *
  * <h2>Features</h2>

@@ -29,7 +29,7 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.injection.IDiContext
- * @see com.garganttua.core.injection.context.dsl.IDiContextBuilder
+ * @see com.garganttua.core.injection.IInjectionContext
+ * @see com.garganttua.core.injection.context.dsl.IInjectionContextBuilder
  */
 package com.garganttua.core.injection.context;

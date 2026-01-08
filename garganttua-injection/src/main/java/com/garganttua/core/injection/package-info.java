@@ -38,10 +38,10 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * Based on real test code from DiContextTest.java:
+ * Based on real test code from InjectionContextTest.java:
  * <pre>{@code
  * // Create and configure context with properties and auto-detection
- * DiContext.builder()
+ * InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
  *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
@@ -80,8 +80,8 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.injection.context.DiContext
+ * @see com.garganttua.core.injection.context.InjectionContext
  * @see com.garganttua.core.injection.context.dsl
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  */
 package com.garganttua.core.injection;

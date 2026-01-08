@@ -10,7 +10,7 @@
  *
  * <h2>Core Builder Interfaces</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.injection.context.dsl.IDiContextBuilder} - Main context builder</li>
+ *   <li>{@link com.garganttua.core.injection.context.dsl.IInjectionContextBuilder} - Main context builder</li>
  *   <li>{@link com.garganttua.core.injection.context.dsl.IBeanProviderBuilder} - Bean source configuration</li>
  *   <li>{@link com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder} - Bean factory configuration</li>
  *   <li>{@link com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder} - Property source configuration</li>
@@ -21,7 +21,7 @@
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Build a complete DI context
- * IDiContext context = new DiContextBuilder()
+ * IInjectionContext context = new InjectionContextBuilder()
  *     .withPackage("com.myapp.services")
  *     .withPackage("com.myapp.repositories")
  *
@@ -113,8 +113,8 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.injection.context.dsl.IDiContextBuilder
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.context.dsl.IInjectionContextBuilder
+ * @see com.garganttua.core.injection.IInjectionContext
  * @see com.garganttua.core.dsl.IAutomaticBuilder
  */
 package com.garganttua.core.injection.context.dsl;

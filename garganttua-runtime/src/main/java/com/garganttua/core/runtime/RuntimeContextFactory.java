@@ -4,18 +4,18 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class RuntimeContextFactory implements IDiChildContextFactory<IRuntimeContext<?, ?>> {
+public class RuntimeContextFactory implements IInjectionChildContextFactory<IRuntimeContext<?, ?>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public IRuntimeContext<?, ?> createChildContext(IDiContext parent, Object... args) throws DiException {
+    public IRuntimeContext<?, ?> createChildContext(IInjectionContext parent, Object... args) throws DiException {
         log.atTrace().log("[RuntimeContextFactory.createChildContext] Entering createChildContext with parent={} and args={}", parent, args);
 
         Object input = args[0];

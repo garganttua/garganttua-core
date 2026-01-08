@@ -67,7 +67,7 @@
  * <h2>Usage Example: Auto-Detection Builder</h2>
  * <pre>{@code
  * // Build with auto-detection
- * IDiContextBuilder contextBuilder = DiContext.builder()
+ * IInjectionContextBuilder contextBuilder = InjectionContext.builder()
  *     .autoDetect(true)
  *     .withPackage("com.garganttua.core.runtime.annotations")
  *     .withPackage("com.garganttua.core.runtime");

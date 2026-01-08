@@ -10,7 +10,7 @@ import org.slf4j.MDC;
 
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.supply.ISupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Runtime<InputType, OutputType> implements IRuntime<InputType, OutputType> {
 
         private final String name;
-        private final IDiContext diContext;
+        private final IInjectionContext injectionContext;
         private final Class<InputType> inputType;
         private final Class<OutputType> outputType;
         private final Map<String, IRuntimeStage<InputType, OutputType>> stages;
@@ -29,7 +29,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
         public Runtime(
                         String name,
                         Map<String, IRuntimeStage<InputType, OutputType>> stages,
-                        IDiContext diContext,
+                        IInjectionContext injectionContext,
                         Class<InputType> inputType,
                         Class<OutputType> outputType,
                         Map<String, ISupplier<?>> variables) {
@@ -44,7 +44,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
                 this.name = Objects.requireNonNull(name, "Name cannot be null");
-                this.diContext = Objects.requireNonNull(diContext, "Context cannot be null");
+                this.injectionContext = Objects.requireNonNull(injectionContext, "Context cannot be null");
                 this.presetVariables = Collections.synchronizedMap(
                                 Map.copyOf(Objects.requireNonNull(variables, "Preset variables map cannot be null")));
 
@@ -74,7 +74,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
                         // CREATE CONTEXT
                         log.atDebug().log("Creating runtime context");
 
-                        runtimeContext = this.diContext
+                        runtimeContext = this.injectionContext
                                         .newChildContext(IRuntimeContext.class, input, this.outputType,
                                                         this.presetVariables, uuid);
 

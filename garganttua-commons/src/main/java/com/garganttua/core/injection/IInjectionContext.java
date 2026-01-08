@@ -14,7 +14,7 @@ import com.garganttua.core.utils.Copyable;
  * properties, and child contexts.
  *
  * <p>
- * {@code IDiContext} serves as the main entry point for dependency injection
+ * {@code IInjectionContext} serves as the main entry point for dependency injection
  * operations. It manages
  * multiple bean providers and property providers, enables bean and property
  * queries, and supports
@@ -27,7 +27,7 @@ import com.garganttua.core.utils.Copyable;
  * 
  * <pre>{@code
  * // Query beans from the context
- * IDiContext context = ...;
+ * IInjectionContext context = ...;
  *
  * // Query a bean by definition
  * BeanDefinition<MyService> definition = BeanDefinition.example(
@@ -41,7 +41,7 @@ import com.garganttua.core.utils.Copyable;
  * Optional<String> dbUrl = context.getProperty("db.url", String.class);
  *
  * // Create a child context
- * IDiContext childContext = context.newChildContext(IDiContext.class);
+ * IInjectionContext childContext = context.newChildContext(IInjectionContext.class);
  * }</pre>
  *
  * <h2>Thread Safety</h2>
@@ -58,8 +58,8 @@ import com.garganttua.core.utils.Copyable;
  * @see IInjectableElementResolver
  * @see ILifecycle
  */
-public interface IDiContext
-                extends ILifecycle, IInjectableElementResolver, Copyable<IDiContext>, INativeReflectionConfiguration {
+public interface IInjectionContext
+                extends ILifecycle, IInjectableElementResolver, Copyable<IInjectionContext>, INativeReflectionConfiguration {
 
         // --- Bean Scopes ---
 
@@ -245,7 +245,7 @@ public interface IDiContext
          * @return the created child context
          * @throws DiException if no factory is registered or child creation fails
          */
-        <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass, Object... args)
+        <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass, Object... args)
                         throws DiException;
 
         /**
@@ -253,7 +253,7 @@ public interface IDiContext
          *
          * @param factory the child context factory to register
          */
-        void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory);
+        void registerChildContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory);
 
         /**
          * Returns all registered child context factories.
@@ -262,7 +262,7 @@ public interface IDiContext
          * @return a set of all child context factories (never {@code null})
          * @throws DiException if an error occurs while retrieving factories
          */
-        <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories()
+        <ChildContext extends IInjectionContext> Set<IInjectionChildContextFactory<ChildContext>> getChildContextFactories()
                         throws DiException;
 
 }

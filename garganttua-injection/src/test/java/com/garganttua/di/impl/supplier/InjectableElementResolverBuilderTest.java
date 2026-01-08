@@ -16,8 +16,8 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
-import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.injection.context.dsl.DiContextBuilder;
+import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.InjectableElementResolverBuilder;
 import com.garganttua.core.injection.dummies.AnotherDummyBean;
 import com.garganttua.core.injection.dummies.DummyBean;
@@ -34,7 +34,7 @@ public class InjectableElementResolverBuilderTest {
         @BeforeEach
         void setUp() throws DiException, DslException, LifecycleException {
                 ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-                DiContext.builder().withPackage("com.garganttua")
+                InjectionContext.builder().withPackage("com.garganttua")
                                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor",
                                                 "propertyValue")
@@ -42,8 +42,8 @@ public class InjectableElementResolverBuilderTest {
                                 .autoDetect(true)
                                 .build().onInit().onStart();
 
-                IInjectableElementResolverBuilder builder = new InjectableElementResolverBuilder(DiContext.builder());
-                DiContextBuilder.setBuiltInResolvers(builder, Set.of());
+                IInjectableElementResolverBuilder builder = new InjectableElementResolverBuilder(InjectionContext.builder());
+                InjectionContextBuilder.setBuiltInResolvers(builder, Set.of());
                 this.resolvers = builder.build();
 
         }

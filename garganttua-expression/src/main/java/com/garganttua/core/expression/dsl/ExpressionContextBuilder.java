@@ -18,11 +18,11 @@ import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
@@ -119,7 +119,7 @@ public class ExpressionContextBuilder
 
     @Override
     protected IExpressionContext doBuild() throws DslException {
-        if (!this.readinessBuilder.canBuild()) {
+        if (!(this.readinessBuilder.isReady() || this.readinessBuilder.isEmpty()) ) {
             log.atError().log("Attempt to build before authorization, injection context is missing");
             throw new DslException("Build is not yet authorized, injection context is missing");
         }
@@ -164,10 +164,14 @@ public class ExpressionContextBuilder
      */
     @Override
     protected void doAutoDetection() throws DslException {
-        if (!this.readinessBuilder.canBuild()) {
+        if ( !(this.readinessBuilder.isReady() || this.readinessBuilder.isEmpty()) ) {
             log.atError().log("Attempt to build before authorization");
             throw new DslException("Build is not yet authorized");
         }
+
+        // Synchronize packages from InjectionContextBuilder before scanning
+        synchronizePackagesFromContext();
+
         List<Method> expressions = new ArrayList<>();
         this.packages.stream().forEach(p -> {
             expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class));
@@ -191,6 +195,21 @@ public class ExpressionContextBuilder
         // Create factories for unique methods only
         uniqueMethods.values().forEach(m -> {
             this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true);
+        });
+    }
+
+    /**
+     * Synchronizes packages from the InjectionContextBuilder to this builder's packages.
+     * This ensures that packages declared in the DI context are also scanned for expression methods.
+     */
+    private void synchronizePackagesFromContext() {
+        this.readinessBuilder.synchronizePackagesFromContext(contextPackages -> {
+            int beforeSize = this.packages.size();
+            this.packages.addAll(contextPackages);
+            int addedCount = this.packages.size() - beforeSize;
+            if (addedCount > 0) {
+                log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
+            }
         });
     }
 
@@ -220,7 +239,7 @@ public class ExpressionContextBuilder
     }
 
     @Override
-    public IExpressionContextBuilder context(IDiContextBuilder context) {
+    public IExpressionContextBuilder context(IInjectionContextBuilder context) {
         this.readinessBuilder.context(context);
         context.resolvers().withResolver(Expression.class, (t, e) -> {
             Expression expression = e.getAnnotation(Expression.class);

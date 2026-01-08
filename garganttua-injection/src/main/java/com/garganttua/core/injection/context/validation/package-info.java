@@ -51,6 +51,6 @@
  *
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.injection.context
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  */
 package com.garganttua.core.injection.context.validation;

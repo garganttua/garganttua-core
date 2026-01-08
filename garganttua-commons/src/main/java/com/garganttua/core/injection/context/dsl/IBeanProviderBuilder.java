@@ -11,14 +11,14 @@ import com.garganttua.core.injection.IBeanProvider;
  * {@code IBeanProviderBuilder} provides a fluent API for building {@link IBeanProvider} instances
  * with beans registered either explicitly through {@link #withBean(Class)} or discovered automatically
  * through package scanning with {@link #withPackage(String)}. This builder is linked to
- * {@link IDiContextBuilder}, allowing seamless integration into the context building chain.
+ * {@link IInjectionContextBuilder}, allowing seamless integration into the context building chain.
  * Bean providers act as scopes or namespaces for organizing beans within the DI context.
  * </p>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Build a bean provider with explicit beans
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .beanProvider("application")
  *         .withBean(DatabaseConnection.class)
  *             .strategy(BeanStrategy.singleton)
@@ -31,7 +31,7 @@ import com.garganttua.core.injection.IBeanProvider;
  *     .build();
  *
  * // Build with package scanning
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .beanProvider("services")
  *         .withPackage("com.myapp.services")
  *         .withPackages(new String[]{"com.myapp.controllers", "com.myapp.repositories"})
@@ -39,7 +39,7 @@ import com.garganttua.core.injection.IBeanProvider;
  *     .build();
  *
  * // Mixed approach
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .beanProvider("default")
  *         .withPackage("com.myapp")
  *         .withBean(CustomConfig.class)
@@ -52,10 +52,10 @@ import com.garganttua.core.injection.IBeanProvider;
  * @since 2.0.0-ALPHA01
  * @see IBeanProvider
  * @see IBeanFactoryBuilder
- * @see IDiContextBuilder
+ * @see IInjectionContextBuilder
  * @see IAutomaticLinkedBuilder
  */
-public interface IBeanProviderBuilder extends IAutomaticLinkedBuilder<IBeanProviderBuilder, IDiContextBuilder, IBeanProvider> {
+public interface IBeanProviderBuilder extends IAutomaticLinkedBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider> {
 
     /**
      * Registers a bean explicitly in this provider.

@@ -20,15 +20,15 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
-import com.garganttua.core.injection.context.dsl.DiContextBuilder;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -38,13 +38,13 @@ import com.garganttua.core.utils.CopyException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DiContext extends AbstractLifecycle implements IDiContext {
+public class InjectionContext extends AbstractLifecycle implements IInjectionContext {
 
-    public volatile static IDiContext context = null;
+    public volatile static IInjectionContext context = null;
 
     private final Map<String, IBeanProvider> beanProviders;
     private final Map<String, IPropertyProvider> propertyProviders;
-    private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories;
+    private final List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories;
 
     private IInjectableElementResolver resolverDelegate;
 
@@ -52,39 +52,39 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     private final Object copyMutex = new Object();
     private final Object singletonMutex = new Object();
 
-    public static IDiContextBuilder builder() throws DslException {
-        log.atTrace().log("Entering DiContext.builder()");
-        IDiContextBuilder builder = new DiContextBuilder();
-        log.atTrace().log("Exiting DiContext.builder()");
+    public static IInjectionContextBuilder builder() throws DslException {
+        log.atTrace().log("Entering InjectionContext.builder()");
+        IInjectionContextBuilder builder = new InjectionContextBuilder();
+        log.atTrace().log("Exiting InjectionContext.builder()");
         return builder;
     }
 
-    public static IDiContext master(IInjectableElementResolver resolver,
+    public static IInjectionContext master(IInjectableElementResolver resolver,
             Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
-            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
-        log.atTrace().log("Creating master DiContext");
-        IDiContext ctx = new DiContext(true, resolver, beanProviders, propertyProviders, childContextFactories);
-        log.atInfo().log("Master DiContext created");
+            List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories) {
+        log.atTrace().log("Creating master InjectionContext");
+        IInjectionContext ctx = new InjectionContext(true, resolver, beanProviders, propertyProviders, childContextFactories);
+        log.atInfo().log("Master InjectionContext created");
         return ctx;
     }
 
-    public static IDiContext child(IInjectableElementResolver resolver,
+    public static IInjectionContext child(IInjectableElementResolver resolver,
             Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
-            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
-        log.atTrace().log("Creating child DiContext");
-        IDiContext ctx = new DiContext(false, resolver, beanProviders, propertyProviders, childContextFactories);
-        log.atInfo().log("Child DiContext created");
+            List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories) {
+        log.atTrace().log("Creating child InjectionContext");
+        IInjectionContext ctx = new InjectionContext(false, resolver, beanProviders, propertyProviders, childContextFactories);
+        log.atInfo().log("Child InjectionContext created");
         return ctx;
     }
 
-    protected DiContext(Boolean masterContext, IInjectableElementResolver resolver,
+    protected InjectionContext(Boolean masterContext, IInjectableElementResolver resolver,
             Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
-            List<IDiChildContextFactory<? extends IDiContext>> childContextFactories) {
+            List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories) {
 
-        log.atTrace().log("Initializing DiContext");
+        log.atTrace().log("Initializing InjectionContext");
         this.beanProviders = Collections
                 .synchronizedMap(new HashMap<>(Objects.requireNonNull(beanProviders, "beanProviders cannot be null")));
         this.propertyProviders = Collections.synchronizedMap(
@@ -100,12 +100,12 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
             log.atDebug().log("Setting up master context singleton");
             setupMasterContextSingleton();
         }
-        log.atTrace().log("DiContext initialized");
+        log.atTrace().log("InjectionContext initialized");
     }
 
     private void setupMasterContextSingleton() {
         synchronized (this.singletonMutex) {
-            DiContext.context = this;
+            InjectionContext.context = this;
             log.atInfo().log("Master context singleton assigned");
         }
     }
@@ -130,10 +130,10 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public Set<IDiChildContextFactory<? extends IDiContext>> getChildContextFactories() throws DiException {
+    public Set<IInjectionChildContextFactory<? extends IInjectionContext>> getChildContextFactories() throws DiException {
         log.atTrace().log("Getting child context factories");
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
-        Set<IDiChildContextFactory<? extends IDiContext>> result = Collections.unmodifiableSet(
+        Set<IInjectionChildContextFactory<? extends IInjectionContext>> result = Collections.unmodifiableSet(
                 new HashSet<>(childContextFactories));
         log.atDebug().log("Returning {} child context factories", result.size());
         return result;
@@ -201,18 +201,18 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass,
+    public <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass,
             Object... args) throws DiException {
         log.atTrace().log("Creating new child context of type: {}", contextClass.getName());
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         synchronized (this.mutex) {
             ChildContext ctx = childContextFactories.stream()
                     .filter(factory -> {
-                        Class<? extends IDiContext> childType = getChildContextType(factory);
+                        Class<? extends IInjectionContext> childType = getChildContextType(factory);
                         return childType != null && contextClass.isAssignableFrom(childType);
                     })
                     .findFirst()
-                    .map(factory -> contextClass.cast(factory.createChildContext((IDiContext) this.copy(), args)))
+                    .map(factory -> contextClass.cast(factory.createChildContext((IInjectionContext) this.copy(), args)))
                     .orElseThrow(() -> {
                         log.atError().log("No child context factory registered for class {}", contextClass.getName());
                         return new DiException(
@@ -224,15 +224,15 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @SuppressWarnings("unchecked")
-    private static Class<? extends IDiContext> getChildContextType(
-            IDiChildContextFactory<? extends IDiContext> factory) {
+    private static Class<? extends IInjectionContext> getChildContextType(
+            IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Getting child context type for factory {}", factory);
         Type[] genericInterfaces = factory.getClass().getGenericInterfaces();
         for (Type type : genericInterfaces) {
-            if (isParameterizedOf(type, IDiChildContextFactory.class)) {
+            if (isParameterizedOf(type, IInjectionChildContextFactory.class)) {
                 Type actual = ((ParameterizedType) type).getActualTypeArguments()[0];
-                if (isParameterizedOf(actual, IDiContext.class)) {
-                    Class<? extends IDiContext> clazz = (Class<? extends IDiContext>) ((ParameterizedType) actual).getRawType();
+                if (isParameterizedOf(actual, IInjectionContext.class)) {
+                    Class<? extends IInjectionContext> clazz = (Class<? extends IInjectionContext>) ((ParameterizedType) actual).getRawType();
                     log.atDebug().log("Child context type determined: {}", clazz);
                     return clazz;
                 }
@@ -425,14 +425,14 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
         return this.propertyProviders;
     }
 
-    public List<IDiChildContextFactory<? extends IDiContext>> childContextFactories() {
+    public List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories() {
         log.atTrace().log("Accessing childContextFactories list");
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         return this.childContextFactories;
     }
 
     @Override
-    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+    public void registerChildContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Registering child context factory: {}", factory);
         wrapLifecycle(this::ensureInitialized, DiException.class);
         synchronized (this.mutex) {
@@ -475,8 +475,8 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
     }
 
     @Override
-    public IDiContext copy() throws CopyException {
-        log.atTrace().log("Copying DiContext");
+    public IInjectionContext copy() throws CopyException {
+        log.atTrace().log("Copying InjectionContext");
         wrapLifecycle(this::ensureInitializedAndStarted, CopyException.class);
         synchronized (this.copyMutex) {
             Map<String, IBeanProvider> beanProvidersCopy = this.beanProviders.entrySet().stream()
@@ -487,15 +487,15 @@ public class DiContext extends AbstractLifecycle implements IDiContext {
                     .filter(e -> e.getValue() != null)
                     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().copy()));
 
-            List<IDiChildContextFactory<? extends IDiContext>> childFactoriesCopy = new ArrayList<>(this.childContextFactories);
+            List<IInjectionChildContextFactory<? extends IInjectionContext>> childFactoriesCopy = new ArrayList<>(this.childContextFactories);
 
-            IDiContext copy = DiContext.child(
+            IInjectionContext copy = InjectionContext.child(
                     this.resolverDelegate,
                     new HashMap<>(beanProvidersCopy),
                     new HashMap<>(propertyProvidersCopy),
                     new ArrayList<>(childFactoriesCopy));
 
-            log.atInfo().log("DiContext copied successfully");
+            log.atInfo().log("InjectionContext copied successfully");
             return copy;
         }
     }

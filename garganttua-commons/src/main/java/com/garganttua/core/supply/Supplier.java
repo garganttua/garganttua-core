@@ -15,13 +15,13 @@ import lombok.extern.slf4j.Slf4j;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Define suppliers
- * ISupplier<Database> dbSupplier = ...;  // Contextual supplier needing DiContext
+ * ISupplier<Database> dbSupplier = ...;  // Contextual supplier needing InjectionContext
  * ISupplier<Logger> loggerSupplier = ...; // Simple supplier, no context needed
  *
  * // Available contexts
- * DiContext diContext = ...;
+ * InjectionContext injectionContext = ...;
  * HttpRequest request = ...;
- * Object[] contexts = { diContext, request };
+ * Object[] contexts = { injectionContext, request };
  *
  * // Automatic context matching and supply
  * Database db = Supplier.contextualSupply(dbSupplier, contexts);

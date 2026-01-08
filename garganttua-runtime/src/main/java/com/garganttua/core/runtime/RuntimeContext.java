@@ -16,8 +16,8 @@ import java.util.UUID;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
@@ -50,12 +50,12 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     private long stopNano;
     private final UUID uuid;
     private Integer code = IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
-    private final IDiContext delegateContext;
+    private final IInjectionContext delegateContext;
 
     private final Object lifecycleMutex = new Object();
     private final Set<RuntimeExceptionRecord> recordedException = new HashSet<>();
 
-    public RuntimeContext(IDiContext parent, InputType input, Class<OutputType> outputType,
+    public RuntimeContext(IInjectionContext parent, InputType input, Class<OutputType> outputType,
             Map<String, ISupplier<?>> presetVariables, UUID uuid) {
         this.uuid = Objects.requireNonNull(uuid, "Uuid cannot be null");
         log.atTrace().log(
@@ -357,7 +357,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     @Override
     @Deprecated
-    public <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass,
+    public <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass,
             Object... args) throws DiException {
         log.atTrace().log("[RuntimeContext.newChildContext] Creating new child context of class={} with args={}",
                 contextClass, args);
@@ -366,13 +366,13 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     @Override
     @Deprecated
-    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+    public void registerChildContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("[RuntimeContext.registerChildContextFactory] Registering child context factory {}", factory);
         this.delegateContext.registerChildContextFactory(factory);
     }
 
     @Override
-    public <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories()
+    public <ChildContext extends IInjectionContext> Set<IInjectionChildContextFactory<ChildContext>> getChildContextFactories()
             throws DiException {
         log.atTrace().log("[RuntimeContext.getChildContextFactories] Fetching child context factories");
         return this.delegateContext.getChildContextFactories();
@@ -398,7 +398,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     @Override
     @Deprecated
-    public IDiContext copy() throws CopyException {
+    public IInjectionContext copy() throws CopyException {
         log.atTrace().log("[RuntimeContext.copy] Copying context");
         wrapLifecycle(this::ensureInitializedAndStarted, CopyException.class);
         return this;

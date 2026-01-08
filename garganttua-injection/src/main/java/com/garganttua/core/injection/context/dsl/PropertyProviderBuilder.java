@@ -14,12 +14,12 @@ import com.garganttua.core.injection.context.properties.PropertyProvider;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IDiContextBuilder, IPropertyProvider>
+public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
 
     private List<IPropertyBuilder<?>> propertyBuilders = new ArrayList<>();
 
-    public PropertyProviderBuilder(IDiContextBuilder link) {
+    public PropertyProviderBuilder(IInjectionContextBuilder link) {
         super(link);
         log.atTrace().log("Entering PropertyProviderBuilder constructor with link={}", link);
         log.atTrace().log("Exiting PropertyProviderBuilder constructor");

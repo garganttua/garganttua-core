@@ -14,8 +14,7 @@ import java.util.stream.Collectors;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.OrderedMapBuilder;
-import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.mutex.IMutex;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
@@ -39,7 +38,7 @@ public class RuntimeBuilder<InputType, OutputType>
 
         private String name;
         private final OrderedMapBuilder<String, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>> stages = new OrderedMapBuilder<>();
-        private IDiContext context;
+        private IInjectionContext context;
         private Class<InputType> inputType;
         private Class<OutputType> outputType;
         private Object objectForAutoDetection;
@@ -215,7 +214,7 @@ public class RuntimeBuilder<InputType, OutputType>
         }
 
         @Override
-        public void handle(IDiContext context) {
+        public void handle(IInjectionContext context) {
                 log.atTrace().log("{} Entering handle method", logLineHeader());
                 this.context = Objects.requireNonNull(context, "Context cannot be null");
                 this.stages.values().forEach(s -> s.handle(context));

@@ -17,7 +17,7 @@ import com.garganttua.core.dsl.IBuilder;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Build a query for a specific bean
- * IDiContext context = ...;
+ * IInjectionContext context = ...;
  * IBeanQuery<DataSource> query = context.queryBean()
  *     .type(DataSource.class)
  *     .name("primaryDataSource")

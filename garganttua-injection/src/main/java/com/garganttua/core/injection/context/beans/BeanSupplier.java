@@ -3,7 +3,7 @@ package com.garganttua.core.injection.context.beans;
 import java.util.Optional;
 
 import com.garganttua.core.injection.BeanReference;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.supply.SupplyException;
 
 public class BeanSupplier<Bean> extends ContextualBeanSupplier<Bean> {
@@ -14,7 +14,7 @@ public class BeanSupplier<Bean> extends ContextualBeanSupplier<Bean> {
 
     @Override
     public Optional<Bean> supply() throws SupplyException {
-        return supply(DiContext.context);
+        return supply(InjectionContext.context);
     }
 
 

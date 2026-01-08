@@ -11,14 +11,14 @@ import com.garganttua.core.injection.IPropertyProvider;
  * {@code IPropertyProviderBuilder} provides a fluent API for building {@link IPropertyProvider}
  * instances with typed configuration properties. Properties registered through this builder
  * become available for injection into beans using the {@code @Property} annotation. This builder
- * is linked to {@link IDiContextBuilder}, enabling seamless integration into the context building
+ * is linked to {@link IInjectionContextBuilder}, enabling seamless integration into the context building
  * chain. Property providers act as configuration sources for the DI system.
  * </p>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Build a property provider with various typed properties
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .propertyProvider("config")
  *         .withProperty(String.class, "database.url", "jdbc:mysql://localhost/mydb")
  *         .withProperty(Integer.class, "database.pool.size", 10)
@@ -29,7 +29,7 @@ import com.garganttua.core.injection.IPropertyProvider;
  *     .build();
  *
  * // Multiple property providers for different concerns
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .propertyProvider("database")
  *         .withProperty(String.class, "url", "jdbc:mysql://localhost/mydb")
  *         .withProperty(Integer.class, "pool.size", 10)
@@ -52,11 +52,11 @@ import com.garganttua.core.injection.IPropertyProvider;
  *
  * @since 2.0.0-ALPHA01
  * @see IPropertyProvider
- * @see IDiContextBuilder
+ * @see IInjectionContextBuilder
  * @see com.garganttua.core.injection.annotations.Property
  * @see IAutomaticLinkedBuilder
  */
-public interface IPropertyProviderBuilder extends IAutomaticLinkedBuilder<IPropertyProviderBuilder, IDiContextBuilder, IPropertyProvider>{
+public interface IPropertyProviderBuilder extends IAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>{
 
     /**
      * Registers a typed property in this provider.

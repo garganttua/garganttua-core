@@ -1,6 +1,6 @@
 package com.garganttua.core.injection.context.dsl;
 
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 
 /**
  * Functional interface for observing and reacting to DI context building events.
@@ -9,7 +9,7 @@ import com.garganttua.core.injection.IDiContext;
  * {@code IContextBuilderObserver} defines a callback that is invoked during the DI context
  * build process, allowing custom logic to be executed when the context is constructed. This
  * enables integration hooks, validation, logging, or post-configuration steps during context
- * initialization. Observers are registered with {@link IDiContextBuilder#observer(IContextBuilderObserver)}.
+ * initialization. Observers are registered with {@link IInjectionContextBuilder#observer(IContextBuilderObserver)}.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -21,7 +21,7 @@ import com.garganttua.core.injection.IDiContext;
  * };
  *
  * // Register observer during context building
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .withPackage("com.myapp")
  *     .observer(loggingObserver)
  *     .observer((ctx) -> {
@@ -49,8 +49,8 @@ import com.garganttua.core.injection.IDiContext;
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see IDiContextBuilder#observer(IContextBuilderObserver)
- * @see IDiContext
+ * @see IInjectionContextBuilder#observer(IContextBuilderObserver)
+ * @see IInjectionContext
  */
 @FunctionalInterface
 public interface IContextBuilderObserver {
@@ -66,5 +66,5 @@ public interface IContextBuilderObserver {
      *
      * @param context the newly built DI context
      */
-    void handle(IDiContext context);
+    void handle(IInjectionContext context);
 }

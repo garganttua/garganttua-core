@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BeanProviderBuilder
-		extends AbstractAutomaticLinkedBuilder<IBeanProviderBuilder, IDiContextBuilder, IBeanProvider>
+		extends AbstractAutomaticLinkedBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
 		implements IBeanProviderBuilder {
 
 	private Map<Class<?>, IBeanFactoryBuilder<?>> beanFactoryBuilders = new HashMap<>();
@@ -38,7 +38,7 @@ public class BeanProviderBuilder
 	@Setter
 	private Set<Class<? extends Annotation>> qualifierAnnotations;
 
-	public BeanProviderBuilder(IDiContextBuilder link) {
+	public BeanProviderBuilder(IInjectionContextBuilder link) {
 		super(link);
 		log.atTrace().log("Entering BeanProviderBuilder constructor with link: {}", link);
 		log.atTrace().log("BeanProviderBuilder initialized with link: {}", link);

@@ -16,8 +16,8 @@ import com.garganttua.core.supply.IContextualSupplier;
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * // Field injection requiring DiContext for value resolution
- * IContextualFieldBinder<UserController, Logger, DiContext, DiContext> loggerField =
+ * // Field injection requiring InjectionContext for value resolution
+ * IContextualFieldBinder<UserController, Logger, InjectionContext, InjectionContext> loggerField =
  *     ContextualFieldBinder
  *         .forClass(UserController.class)
  *         .field("logger")
@@ -25,7 +25,7 @@ import com.garganttua.core.supply.IContextualSupplier;
  *         .build();
  *
  * // Set field value from context
- * DiContext context = ...;
+ * InjectionContext context = ...;
  * UserController controller = context.getBean(UserController.class);
  * loggerField.setValue(context, context);
  * // Resolves logger from context and injects into controller.logger

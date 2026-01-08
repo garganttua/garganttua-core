@@ -3,13 +3,13 @@ package com.garganttua.core.runtime;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 
 /**
  * Runtime execution context that maintains state and provides access to shared resources during workflow execution.
  *
  * <p>
- * IRuntimeContext extends {@link IDiContext} to provide dependency injection capabilities while adding
+ * IRuntimeContext extends {@link IInjectionContext} to provide dependency injection capabilities while adding
  * runtime-specific features such as variable storage, exception tracking, input/output management,
  * and result code handling. The context is accessible to all stages and steps during runtime execution.
  * </p>
@@ -21,7 +21,7 @@ import com.garganttua.core.injection.IDiContext;
  *   <li><b>Output Management</b> - Set the final output to be returned in the runtime result</li>
  *   <li><b>Exception Tracking</b> - Record and query exceptions that occurred during execution</li>
  *   <li><b>Result Codes</b> - Set custom result codes to indicate success/failure states</li>
- *   <li><b>Dependency Injection</b> - Access injected beans through the inherited IDiContext methods</li>
+ *   <li><b>Dependency Injection</b> - Access injected beans through the inherited IInjectionContext methods</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -59,10 +59,10 @@ import com.garganttua.core.injection.IDiContext;
  * @since 2.0.0-ALPHA01
  * @see IRuntime
  * @see IRuntimeResult
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  * @see com.garganttua.core.runtime.annotations.Context
  */
-public interface IRuntimeContext<InputType, OutputType> extends IDiContext {
+public interface IRuntimeContext<InputType, OutputType> extends IInjectionContext {
 
     /**
      * Returns the current runtime result being constructed during execution.

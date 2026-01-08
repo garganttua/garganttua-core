@@ -3,8 +3,8 @@ package com.garganttua.core.injection.context.dsl;
 import java.lang.annotation.Annotation;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.nativve.INativeBuilder;
 
@@ -12,7 +12,7 @@ import com.garganttua.core.nativve.INativeBuilder;
  * Builder interface for constructing dependency injection contexts using a fluent DSL.
  *
  * <p>
- * {@code IDiContextBuilder} provides a comprehensive fluent API for building {@link IDiContext}
+ * {@code IInjectionContextBuilder} provides a comprehensive fluent API for building {@link IInjectionContext}
  * instances with bean providers, property providers, package scanning, element resolvers, and
  * child context factories. This builder is the main entry point for programmatically configuring
  * the dependency injection container.
@@ -21,7 +21,7 @@ import com.garganttua.core.nativve.INativeBuilder;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Build a complete DI context
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .withPackage("com.myapp.services")
  *     .beanProvider("default")
  *         .withBean(MyService.class)
@@ -39,12 +39,12 @@ import com.garganttua.core.nativve.INativeBuilder;
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
- * @see IDiContext
+ * @see IInjectionContext
  * @see IBeanProviderBuilder
  * @see IPropertyProviderBuilder
  * @see IAutomaticBuilder
  */
-public interface IDiContextBuilder extends INativeBuilder<IDiContextBuilder, IDiContext> {
+public interface IInjectionContextBuilder extends INativeBuilder<IInjectionContextBuilder, IInjectionContext> {
 
     /**
      * Registers a bean provider with an existing builder.
@@ -86,7 +86,7 @@ public interface IDiContextBuilder extends INativeBuilder<IDiContextBuilder, IDi
      * @param factory the child context factory to register
      * @return this builder for method chaining
      */
-    IDiContextBuilder childContextFactory(IDiChildContextFactory<? extends IDiContext> factory);
+    IInjectionContextBuilder childContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory);
 
     /**
      * Accesses the injectable element resolver builder for registering custom resolvers.
@@ -101,7 +101,7 @@ public interface IDiContextBuilder extends INativeBuilder<IDiContextBuilder, IDi
      * @param qualifier the qualifier annotation class
      * @return this builder for method chaining
      */
-    IDiContextBuilder withQualifier(Class<? extends Annotation> qualifier);
+    IInjectionContextBuilder withQualifier(Class<? extends Annotation> qualifier);
 
     /**
      * Registers an observer to monitor context building events.
@@ -109,6 +109,6 @@ public interface IDiContextBuilder extends INativeBuilder<IDiContextBuilder, IDi
      * @param observer the context builder observer
      * @return this builder for method chaining
      */
-    IDiContextBuilder observer(IContextBuilderObserver observer);
+    IInjectionContextBuilder observer(IContextBuilderObserver observer);
 
 }

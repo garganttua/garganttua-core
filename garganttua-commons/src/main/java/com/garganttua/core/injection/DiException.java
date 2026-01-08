@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * try {
- *     IDiContext context = DiContextBuilder.create()
+ *     IInjectionContext context = InjectionContextBuilder.create()
  *         .withPackage("com.myapp")
  *         .build();
  *     context.initialize();
@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  * @see CoreException
- * @see IDiContext
+ * @see IInjectionContext
  * @see IBeanFactory
  */
 @Slf4j

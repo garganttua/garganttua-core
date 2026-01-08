@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.Predefined;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.Beans;
 import com.garganttua.core.injection.context.properties.Properties;
 import com.garganttua.core.injection.dummies.DummyBean;
@@ -19,14 +19,14 @@ import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.SupplyException;
 
-public class DiContextTest {
+public class InjectionContextTest {
 
     String propertyValue = UUID.randomUUID().toString();
 
     @BeforeEach
     void setUp() throws DslException, LifecycleException {
         ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-        DiContext.builder().withPackage("com.garganttua")
+        InjectionContext.builder().withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", propertyValue)
                 .up()

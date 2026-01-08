@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
@@ -34,7 +34,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     private IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> methodBuilder;
     private Class<ExecutionReturn> executionReturn;
     private IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallbackBuilder;
-    private IDiContext context;
+    private IInjectionContext context;
 
     public RuntimeStepBuilder(RuntimeStageBuilder<InputType, OutputType> runtimeStageBuilder, String runtimeName,
             String stageName, String stepName,
@@ -159,7 +159,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     }
 
     @Override
-    public void handle(IDiContext context) {
+    public void handle(IInjectionContext context) {
         log.atTrace().log("{} Entering handle() method", logLineHeader());
 
         this.context = Objects.requireNonNull(context, "Context cannot be null");

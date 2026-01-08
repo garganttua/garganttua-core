@@ -18,7 +18,7 @@ import java.util.Optional;
  * // Using as a lambda in a builder
  * ISupplier<Logger> loggerSupplier = SupplierBuilder
  *     .forType(Logger.class)
- *     .withContext(DiContext.class, (context, others) -> {
+ *     .withContext(InjectionContext.class, (context, others) -> {
  *         String appName = context.getProperty("app.name");
  *         return Optional.of(LoggerFactory.getLogger(appName));
  *     })

@@ -22,16 +22,16 @@ import java.util.Optional;
  * 
  * <pre>
  * {@code
- * // Supplier that requires a DiContext to resolve dependencies
- * IContextualSupplier<UserService, DiContext> supplier =
+ * // Supplier that requires a InjectionContext to resolve dependencies
+ * IContextualSupplier<UserService, InjectionContext> supplier =
  *     new IContextualSupplier<>() {
  *         &#64;Override
- *         public Class<DiContext> getOwnerContextType() {
- *             return DiContext.class;
+ *         public Class<InjectionContext> getOwnerContextType() {
+ *             return InjectionContext.class;
  *         }
  *
  *         &#64;Override
- *         public Optional<UserService> supply(DiContext context, Object... otherContexts)
+ *         public Optional<UserService> supply(InjectionContext context, Object... otherContexts)
  *                 throws SupplyException {
  *             // Resolve dependencies from context
  *             UserRepository repo = context.getBean(UserRepository.class);
@@ -46,7 +46,7 @@ import java.util.Optional;
  *     };
  *
  * // Usage with context
- * DiContext context = ...;
+ * InjectionContext context = ...;
  * Optional<UserService> service = supplier.supply(context);
  * }
  * </pre>

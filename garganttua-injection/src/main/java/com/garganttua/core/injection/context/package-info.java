@@ -3,14 +3,14 @@
  *
  * <h2>Overview</h2>
  * <p>
- * This package contains the core implementation of the DI context ({@code DiContext}),
+ * This package contains the core implementation of the DI context ({@code InjectionContext}),
  * which orchestrates bean lifecycle, property resolution, dependency injection, and
  * context hierarchy management. It serves as the central coordinator for all DI operations.
  * </p>
  *
  * <h2>Main Classes</h2>
  * <ul>
- *   <li>{@code DiContext} - Main DI context implementation managing beans and properties</li>
+ *   <li>{@code InjectionContext} - Main DI context implementation managing beans and properties</li>
  *   <li>{@code Predefined} - Predefined bean and property constants</li>
  * </ul>
  *
@@ -26,10 +26,10 @@
  * </ul>
  *
  * <h2>Context Lifecycle</h2>
- * Based on real test code from DiContextTest.java:
+ * Based on real test code from InjectionContextTest.java:
  * <pre>{@code
  * // 1. Create context with package scanning and properties
- * DiContext.builder()
+ * InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
  *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
@@ -68,10 +68,10 @@
  * }</pre>
  *
  * <h2>Property Resolution</h2>
- * Based on real test code from DiContextTest.java:
+ * Based on real test code from InjectionContextTest.java:
  * <pre>{@code
  * // Configure property
- * DiContext.builder()
+ * InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
  *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
@@ -94,12 +94,12 @@
  * Note: Working examples are not present in current test suite.
  * <pre>{@code
  * // Create parent context
- * IDiContext parent = DiContext.builder()
+ * IInjectionContext parent = InjectionContext.builder()
  *     .withPackage("com.myapp.core")
  *     .build();
  *
  * // Create child context
- * IDiContext child = parent.newChildContext(CustomChildContext.class, "module1");
+ * IInjectionContext child = parent.newChildContext(CustomChildContext.class, "module1");
  * }</pre>
  *
  * <h2>Related Packages</h2>
@@ -112,7 +112,7 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  * @see com.garganttua.core.injection.context.beans
  * @see com.garganttua.core.injection.context.dsl
  */

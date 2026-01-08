@@ -9,7 +9,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanQueryBuilder;
 import com.garganttua.core.injection.Predefined;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.BeanQuery;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -21,7 +21,7 @@ public class BeanQueryTest {
     @BeforeEach
     void setUp() throws DiException, DslException, LifecycleException {
         ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-        DiContext.builder().withPackage("com.garganttua").autoDetect(true)
+        InjectionContext.builder().withPackage("com.garganttua").autoDetect(true)
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
                 .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
                 .up()
