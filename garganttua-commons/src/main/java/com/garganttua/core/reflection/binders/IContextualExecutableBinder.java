@@ -26,8 +26,8 @@ import com.garganttua.core.supply.SupplyException;
  * <h2>Usage Example</h2>
  * 
  * <pre>{@code
- * // Constructor binder requiring DiContext for parameter resolution
- * IContextualExecutableBinder<UserService, DiContext> constructor =
+ * // Constructor binder requiring InjectionContext for parameter resolution
+ * IContextualExecutableBinder<UserService, InjectionContext> constructor =
  *     ContextualConstructorBinder
  *         .forClass(UserService.class)
  *         .withParameter(UserRepository.class)  // Resolved from context
@@ -35,7 +35,7 @@ import com.garganttua.core.supply.SupplyException;
  *         .build();
  *
  * // Execute with context
- * DiContext context = ...;
+ * InjectionContext context = ...;
  * Optional<UserService> service = constructor.execute(context);
  *
  * // Method binder with context

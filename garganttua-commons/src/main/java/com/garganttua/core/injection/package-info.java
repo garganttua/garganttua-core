@@ -10,7 +10,7 @@
  *
  * <h2>Core Interfaces</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.injection.IDiContext} - Central DI container managing beans and properties</li>
+ *   <li>{@link com.garganttua.core.injection.IInjectionContext} - Central DI container managing beans and properties</li>
  *   <li>{@link com.garganttua.core.injection.IBeanProvider} - Bean source abstraction for different strategies</li>
  *   <li>{@link com.garganttua.core.injection.IBeanFactory} - Factory for creating bean instances</li>
  *   <li>{@link com.garganttua.core.injection.IBeanQuery} - Query interface for bean lookup</li>
@@ -167,7 +167,7 @@
  * </ul>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  * @see com.garganttua.core.injection.IBeanProvider
  * @see com.garganttua.core.injection.context.dsl
  */

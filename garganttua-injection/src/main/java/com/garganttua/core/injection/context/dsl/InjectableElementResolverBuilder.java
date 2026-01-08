@@ -16,13 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class InjectableElementResolverBuilder
-        extends AbstractLinkedBuilder<IDiContextBuilder, IInjectableElementResolver>
+        extends AbstractLinkedBuilder<IInjectionContextBuilder, IInjectableElementResolver>
         implements IInjectableElementResolverBuilder {
 
     private final Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
     private InjectableElementResolver built;
 
-    public InjectableElementResolverBuilder(IDiContextBuilder link) {
+    public InjectableElementResolverBuilder(IInjectionContextBuilder link) {
         super(link);
         log.atTrace().log("Entering InjectableElementResolverBuilder constructor with link={}", link);
         log.atTrace().log("Exiting InjectableElementResolverBuilder constructor");

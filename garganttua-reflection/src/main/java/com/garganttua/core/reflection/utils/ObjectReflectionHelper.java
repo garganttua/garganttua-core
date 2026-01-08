@@ -232,8 +232,8 @@ public class ObjectReflectionHelper {
 		if (params == null || params.length == 0)
 			instanciateNewObject(clazz);
 
-		Class<Object>[] paramTypes = (Class<Object>[]) Arrays.stream(params).map(p -> p.getClass())
-				.collect(Collectors.toList()).toArray(new Class<?>[1]);
+		Class<Object>[] paramTypes = (Class<Object>[]) Arrays.stream(params).map(Object::getClass)
+				.toList().toArray(new Class<?>[1]);
 		Constructor<?> ctor = ObjectReflectionHelper.getConstructor(clazz, paramTypes);
 		if (ctor != null) {
 			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {

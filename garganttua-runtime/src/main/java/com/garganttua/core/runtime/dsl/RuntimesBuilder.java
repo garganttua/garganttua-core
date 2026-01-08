@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime.dsl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +15,7 @@ import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.RuntimeContextFactory;
 import com.garganttua.core.runtime.annotations.Code;
@@ -39,12 +40,13 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
 
     private Map<String, IRuntimeBuilder<?, ?>> runtimeBuilders = new HashMap<>();
     private ContextReadinessBuilder<IRuntimesBuilder> readinessBuilder;
+    private Set<String> packages = new HashSet<>();
 
-    private RuntimesBuilder(Optional<IDiContextBuilder> contextBuilder) {
+    private RuntimesBuilder(Optional<IInjectionContextBuilder> contextBuilder) {
         this.readinessBuilder = new ContextReadinessBuilder<>(contextBuilder, this);
 
         if (this.readinessBuilder.hasContextBuilder()) {
-            IDiContextBuilder builder = this.readinessBuilder.getContextBuilder();
+            IInjectionContextBuilder builder = this.readinessBuilder.getContextBuilder();
             builder.observer(this.readinessBuilder);
             builder.withPackage("com.garganttua.core.runtime.annotations");
             builder.childContextFactory(new RuntimeContextFactory());
@@ -116,6 +118,9 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
 
         this.readinessBuilder.requireBuildAuthorization();
 
+        // Synchronize packages from InjectionContextBuilder before scanning
+        synchronizePackagesFromContext();
+
         List<?> definitions = this.readinessBuilder.getContext()
                 .queryBeans(new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
 
@@ -124,6 +129,21 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         definitions.forEach(this::createAutoDetectedRuntime);
 
         log.atTrace().log("Exiting doAutoDetection() method");
+    }
+
+    /**
+     * Synchronizes packages from the InjectionContextBuilder to this builder's packages.
+     * This ensures that packages declared in the DI context are also used for runtime scanning.
+     */
+    private void synchronizePackagesFromContext() {
+        this.readinessBuilder.synchronizePackagesFromContext(contextPackages -> {
+            int beforeSize = this.packages.size();
+            this.packages.addAll(contextPackages);
+            int addedCount = this.packages.size() - beforeSize;
+            if (addedCount > 0) {
+                log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
+            }
+        });
     }
 
     private void createAutoDetectedRuntime(Object runtimeDefinitionObject) {
@@ -161,22 +181,22 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         return result;
     }
 
-    public static IRuntimesBuilder builder(IDiContextBuilder contextBuilder) {
-        log.atTrace().log("Entering builder() with IDiContextBuilder parameter");
+    public static IRuntimesBuilder builder(IInjectionContextBuilder contextBuilder) {
+        log.atTrace().log("Entering builder() with IInjectionContextBuilder parameter");
         IRuntimesBuilder result = new RuntimesBuilder(Optional.ofNullable(contextBuilder));
-        log.atTrace().log("Exiting builder() with IDiContextBuilder parameter");
+        log.atTrace().log("Exiting builder() with IInjectionContextBuilder parameter");
         return result;
     }
 
-    public static IRuntimesBuilder builder(Optional<IDiContextBuilder> contextBuilder) {
-        log.atTrace().log("Entering builder() with Optional<IDiContextBuilder> parameter");
+    public static IRuntimesBuilder builder(Optional<IInjectionContextBuilder> contextBuilder) {
+        log.atTrace().log("Entering builder() with Optional<IInjectionContextBuilder> parameter");
         IRuntimesBuilder result = new RuntimesBuilder(contextBuilder);
-        log.atTrace().log("Exiting builder() with Optional<IDiContextBuilder> parameter");
+        log.atTrace().log("Exiting builder() with Optional<IInjectionContextBuilder> parameter");
         return result;
     }
 
     @Override
-    public IRuntimesBuilder context(IDiContextBuilder context) {
+    public IRuntimesBuilder context(IInjectionContextBuilder context) {
         log.atTrace().log("Entering context() method");
 
         this.readinessBuilder.setContextBuilder(Objects.requireNonNull(context, "Context builder cannot be null"));

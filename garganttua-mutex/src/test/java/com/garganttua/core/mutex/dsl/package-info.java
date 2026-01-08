@@ -18,7 +18,7 @@
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Create DI context with package scanning
- * IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+ * IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
  *     .withPackage("com.example.mutex");
  *
  * // Build context

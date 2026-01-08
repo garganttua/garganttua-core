@@ -10,39 +10,40 @@ import java.util.Set;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.utils.CopyException;
 
-public class DummyDiContext implements IDiContext {
+public class DummyInjectionContext implements IInjectionContext {
 
     @Override
-    public IDiContext onStart() throws LifecycleException {
+    public IInjectionContext onStart() throws LifecycleException {
         throw new UnsupportedOperationException("Unimplemented method 'onStart'");
     }
 
     @Override
-    public IDiContext onStop() throws LifecycleException {
+    public IInjectionContext onStop() throws LifecycleException {
         throw new UnsupportedOperationException("Unimplemented method 'onStop'");
     }
 
     @Override
-    public IDiContext onFlush() throws LifecycleException {
+    public IInjectionContext onFlush() throws LifecycleException {
         throw new UnsupportedOperationException("Unimplemented method 'onFlush'");
     }
 
     @Override
-    public IDiContext onInit() throws LifecycleException {
+    public IInjectionContext onInit() throws LifecycleException {
         throw new UnsupportedOperationException("Unimplemented method 'onInit'");
     }
 
     @Override
-    public IDiContext onReload() throws LifecycleException {
+    public IInjectionContext onReload() throws LifecycleException {
         throw new UnsupportedOperationException("Unimplemented method 'onReload'");
     }
 
@@ -72,13 +73,13 @@ public class DummyDiContext implements IDiContext {
     }
 
     @Override
-    public <ChildContext extends IDiContext> ChildContext newChildContext(Class<ChildContext> contextClass,
+    public <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass,
             Object... args) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'newChildContext'");
     }
 
     @Override
-    public <ChildContext extends IDiContext> Set<IDiChildContextFactory<ChildContext>> getChildContextFactories() {
+    public <ChildContext extends IInjectionContext> Set<IInjectionChildContextFactory<ChildContext>> getChildContextFactories() {
         throw new UnsupportedOperationException("Unimplemented method 'getChildContextFactories'");
     }
 
@@ -98,7 +99,7 @@ public class DummyDiContext implements IDiContext {
     }
 
     @Override
-    public void registerChildContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+    public void registerChildContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         throw new UnsupportedOperationException("Unimplemented method 'registerChildContextFactory'");
     }
 
@@ -118,7 +119,7 @@ public class DummyDiContext implements IDiContext {
     }
 
     @Override
-    public IDiContext copy() throws CopyException {
+    public IInjectionContext copy() throws CopyException {
         throw new UnsupportedOperationException("Unimplemented method 'copy'");
     }
 
@@ -193,6 +194,12 @@ public class DummyDiContext implements IDiContext {
     public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
+    }
+
+    @Override
+    public LifecycleStatus status() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'status'");
     }
 
 

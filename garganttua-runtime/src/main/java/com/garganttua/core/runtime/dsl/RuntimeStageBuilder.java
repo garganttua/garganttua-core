@@ -12,7 +12,7 @@ import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IBeanSupplier;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStage;
@@ -31,7 +31,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
 
     private final String stageName;
     private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> steps = new OrderedMapBuilder<>();
-    private IDiContext context;
+    private IInjectionContext context;
     private List<Class<Object>> stepsForAutoDetection;
     private String runtimeName;
 
@@ -101,7 +101,7 @@ public class RuntimeStageBuilder<InputType, OutputType>
     }
 
     @Override
-    public void handle(IDiContext context) {
+    public void handle(IInjectionContext context) {
         log.atTrace().log(logLineHeader() + "Entering handle() method");
 
         this.context = Objects.requireNonNull(context, "Context cannot be null");

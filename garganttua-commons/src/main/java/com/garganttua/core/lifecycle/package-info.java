@@ -110,7 +110,7 @@
  *
  * <h2>Integration with DI</h2>
  * <pre>{@code
- * IDiContext context = new DiContextBuilder()
+ * IInjectionContext context = new InjectionContextBuilder()
  *     .addBean(DatabaseService.class)
  *     .addBean(UserService.class)
  *     .build();

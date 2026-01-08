@@ -1,13 +1,13 @@
 package com.garganttua.core.injection.dummies;
 
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 
-public class DummyChildContextFactory implements IDiChildContextFactory<DummyChildContext> {
+public class DummyChildContextFactory implements IInjectionChildContextFactory<DummyChildContext> {
 
     @Override
-    public DummyChildContext createChildContext(IDiContext parent, Object... args) throws DiException {
+    public DummyChildContext createChildContext(IInjectionContext parent, Object... args) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'createChildContext'");
     }
 

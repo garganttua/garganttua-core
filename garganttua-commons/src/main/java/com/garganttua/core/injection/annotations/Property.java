@@ -46,7 +46,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * }
  *
  * // Configure properties in the DI context
- * IDiContext context = DiContextBuilder.create()
+ * IInjectionContext context = InjectionContextBuilder.create()
  *     .propertyProvider("config")
  *         .withProperty(String.class, "database.url", "jdbc:mysql://localhost/mydb")
  *         .withProperty(Integer.class, "database.pool.size", 10)

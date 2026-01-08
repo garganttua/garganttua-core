@@ -6,16 +6,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
 
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
-    private IDiContextBuilder parentBuilder;
+    private IInjectionContextBuilder parentBuilder;
 
     public DummyPropertyProviderBuilder() {
     }
@@ -27,12 +28,12 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
     }
 
     @Override
-    public IDiContextBuilder up() {
+    public IInjectionContextBuilder up() {
         return this.parentBuilder;
     }
 
     @Override
-    public IPropertyProviderBuilder setUp(IDiContextBuilder link) {
+    public IPropertyProviderBuilder setUp(IInjectionContextBuilder link) {
         this.parentBuilder = link;
         return this;
     }
@@ -93,6 +94,12 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
             @Override
             public IPropertyProvider copy() throws CopyException {
                 throw new UnsupportedOperationException("Unimplemented method 'copy'");
+            }
+
+            @Override
+            public LifecycleStatus status() {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException("Unimplemented method 'status'");
             }
         };
     }

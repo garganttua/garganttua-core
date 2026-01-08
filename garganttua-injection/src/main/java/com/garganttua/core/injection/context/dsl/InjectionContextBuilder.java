@@ -18,8 +18,8 @@ import javax.inject.Singleton;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanProvider;
-import com.garganttua.core.injection.IDiChildContextFactory;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -28,7 +28,7 @@ import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.injection.annotations.Null;
 import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Prototype;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;
@@ -41,26 +41,26 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @NativeConfigurationBuilder
-public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder, IDiContext>
-        implements IDiContextBuilder {
+public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjectionContextBuilder, IInjectionContext>
+        implements IInjectionContextBuilder {
 
     private final Set<String> packages = new HashSet<>();
     private final Map<String, IBeanProviderBuilder> beanProviders = new HashMap<>();
     private final Map<String, IPropertyProviderBuilder> propertyProviders = new HashMap<>();
-    private final List<IDiChildContextFactory<? extends IDiContext>> childContextFactories = new ArrayList<>();
+    private final List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories = new ArrayList<>();
     private IInjectableElementResolverBuilder resolvers;
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
     private Set<IContextBuilderObserver> observers = new HashSet<>();
 
-    public static IDiContextBuilder builder() throws DslException {
-        log.atTrace().log("Entering DiContextBuilder.builder()");
-        IDiContextBuilder builder = new DiContextBuilder();
-        log.atTrace().log("Exiting DiContextBuilder.builder()");
+    public static IInjectionContextBuilder builder() throws DslException {
+        log.atTrace().log("Entering InjectionContextBuilder.builder()");
+        IInjectionContextBuilder builder = new InjectionContextBuilder();
+        log.atTrace().log("Exiting InjectionContextBuilder.builder()");
         return builder;
     }
 
-    public DiContextBuilder() throws DslException {
-        log.atTrace().log("Entering DiContextBuilder constructor");
+    public InjectionContextBuilder() throws DslException {
+        log.atTrace().log("Entering InjectionContextBuilder constructor");
         this.beanProviders.put(Predefined.BeanProviders.garganttua.toString(),
                 new BeanProviderBuilder(this).autoDetect(true));
         this.propertyProviders.put(Predefined.PropertyProviders.garganttua.toString(),
@@ -68,11 +68,11 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
 
         this.resolvers = new InjectableElementResolverBuilder(this);
         log.atDebug().log("Initialized default bean and property providers and resolver");
-        log.atTrace().log("Exiting DiContextBuilder constructor");
+        log.atTrace().log("Exiting InjectionContextBuilder constructor");
     }
 
     @Override
-    public IDiContextBuilder childContextFactory(IDiChildContextFactory<? extends IDiContext> factory) {
+    public IInjectionContextBuilder childContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Entering childContextFactory(factory={})", factory);
         Objects.requireNonNull(factory, "ChildContextFactory cannot be null");
         if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
@@ -162,7 +162,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     }
 
     @Override
-    public IDiContextBuilder withPackages(String[] packageNames) {
+    public IInjectionContextBuilder withPackages(String[] packageNames) {
         log.atTrace().log("Entering withPackages(packageNames={})", (Object) packageNames);
         this.packages.addAll(Set.of(packageNames));
         this.beanProviders.values().stream().forEach(p -> p.withPackages(packageNames));
@@ -172,7 +172,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     }
 
     @Override
-    public IDiContextBuilder withPackage(String packageName) {
+    public IInjectionContextBuilder withPackage(String packageName) {
         log.atTrace().log("Entering withPackage(packageName={})", packageName);
         this.packages.add(packageName);
         this.beanProviders.values().stream().forEach(p -> p.withPackage(packageName));
@@ -189,7 +189,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     }
 
     @Override
-    public IDiContextBuilder withQualifier(Class<? extends Annotation> qualifier) {
+    public IInjectionContextBuilder withQualifier(Class<? extends Annotation> qualifier) {
         log.atTrace().log("Entering withQualifier(qualifier={})", qualifier);
         this.qualifiers.add(Objects.requireNonNull(qualifier, "Qualifier cannot be null"));
         log.atInfo().log("Added qualifier: {}", qualifier);
@@ -198,14 +198,14 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     }
 
     @Override
-    protected IDiContext doBuild() throws DslException {
+    protected IInjectionContext doBuild() throws DslException {
         log.atTrace().log("Entering doBuild()");
         if (beanProviders.isEmpty() && propertyProviders.isEmpty()) {
             log.atError().log("No BeanProvider or PropertyProvider defined. Throwing DslException.");
             throw new DslException("At least one BeanProvider and PropertyProvider must be provided");
         }
 
-        DiContextBuilder.setBuiltInResolvers(this.resolvers, this.qualifiers);
+        InjectionContextBuilder.setBuiltInResolvers(this.resolvers, this.qualifiers);
         log.atDebug().log("Set built-in resolvers");
 
         this.qualifiers.forEach(qualifier -> {
@@ -216,19 +216,19 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
         IInjectableElementResolver builtResolvers = this.resolvers.build();
         log.atDebug().log("Built IInjectableElementResolver");
 
-        IDiContext built = DiContext.master(
+        IInjectionContext built = InjectionContext.master(
                 builtResolvers,
                 this.buildBeanProviders(builtResolvers),
                 this.buildPropertyProviders(),
                 new ArrayList<>(childContextFactories));
 
-        log.atInfo().log("Constructed IDiContext master instance");
+        log.atInfo().log("Constructed IInjectionContext master instance");
         this.notifyObserver(built);
         log.atTrace().log("Exiting doBuild()");
         return built;
     }
 
-    private void notifyObserver(IDiContext built) {
+    private void notifyObserver(IInjectionContext built) {
         log.atTrace().log("Entering notifyObserver(built={})", built);
         this.observers.parallelStream().forEach(observer -> {
             observer.handle(built);
@@ -265,7 +265,7 @@ public class DiContextBuilder extends AbstractAutomaticBuilder<IDiContextBuilder
     }
 
     @Override
-    public IDiContextBuilder observer(IContextBuilderObserver observer) {
+    public IInjectionContextBuilder observer(IContextBuilderObserver observer) {
         log.atTrace().log("Entering observer(observer={})", observer);
         this.observers.add(Objects.requireNonNull(observer, "Observer cannot be null"));
         if (this.built != null) {

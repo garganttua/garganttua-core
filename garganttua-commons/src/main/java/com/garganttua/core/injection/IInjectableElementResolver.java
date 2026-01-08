@@ -43,7 +43,7 @@ import lombok.NonNull;
  * @since 2.0.0-ALPHA01
  * @see IElementResolver
  * @see Resolved
- * @see IDiContext
+ * @see IInjectionContext
  */
 public interface IInjectableElementResolver {
 

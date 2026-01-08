@@ -48,7 +48,7 @@
  * }
  *
  * // Build with auto-detection
- * IDiContextBuilder contextBuilder = DiContext.builder()
+ * IInjectionContextBuilder contextBuilder = InjectionContext.builder()
  *     .autoDetect(true)
  *     .withPackage("com.garganttua.core.runtime.annotations")
  *     .withPackage("com.garganttua.core.runtime");

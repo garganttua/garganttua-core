@@ -38,7 +38,7 @@
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Create a dependency injection context
- * IDiContext context = new DiContextBuilder()
+ * IInjectionContext context = new InjectionContextBuilder()
  *     .addBean(UserService.class)
  *     .addProperty("app.name", "MyApp")
  *     .build();
@@ -51,6 +51,6 @@
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  */
 package com.garganttua.core;

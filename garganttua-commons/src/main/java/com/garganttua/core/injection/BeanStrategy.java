@@ -13,7 +13,7 @@ package com.garganttua.core.injection;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Define a singleton bean
- * IDiContextBuilder contextBuilder = ...;
+ * IInjectionContextBuilder contextBuilder = ...;
  * contextBuilder.beanProvider("default")
  *     .withBean(DatabaseConnection.class)
  *         .strategy(BeanStrategy.singleton)

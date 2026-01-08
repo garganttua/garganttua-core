@@ -4,7 +4,7 @@ package com.garganttua.core.injection;
  * Factory interface for creating child dependency injection contexts.
  *
  * <p>
- * An {@code IDiChildContextFactory} is responsible for instantiating child contexts
+ * An {@code IInjectionChildContextFactory} is responsible for instantiating child contexts
  * based on a cloned parent context. This enables hierarchical context structures where
  * child contexts inherit beans and properties from their parent while maintaining
  * their own isolated state. This pattern is useful for request scopes, isolated
@@ -15,10 +15,10 @@ package com.garganttua.core.injection;
  * <pre>{@code
  * // Implement a factory for a custom child context
  * public class RequestScopeContextFactory
- *     implements IDiChildContextFactory<RequestScopeContext> {
+ *     implements IInjectionChildContextFactory<RequestScopeContext> {
  *
  *     public RequestScopeContext createChildContext(
- *             IDiContext clonedParent,
+ *             IInjectionContext clonedParent,
  *             Object... args) throws DiException {
  *         HttpServletRequest request = (HttpServletRequest) args[0];
  *         return new RequestScopeContext(clonedParent, request);
@@ -41,10 +41,10 @@ package com.garganttua.core.injection;
  *
  * @param <ChildContext> the type of child context this factory creates
  * @since 2.0.0-ALPHA01
- * @see IDiContext#newChildContext(Class, Object...)
- * @see IDiContext#registerChildContextFactory(IDiChildContextFactory)
+ * @see IInjectionContext#newChildContext(Class, Object...)
+ * @see IInjectionContext#registerChildContextFactory(IInjectionChildContextFactory)
  */
-public interface IDiChildContextFactory<ChildContext extends IDiContext> {
+public interface IInjectionChildContextFactory<ChildContext extends IInjectionContext> {
 
     /**
      * Creates a new child context based on a cloned parent context.
@@ -60,5 +60,5 @@ public interface IDiChildContextFactory<ChildContext extends IDiContext> {
      * @return the newly created child context
      * @throws DiException if child context creation fails
      */
-    ChildContext createChildContext(IDiContext clonedParent, Object ...args) throws DiException;
+    ChildContext createChildContext(IInjectionContext clonedParent, Object ...args) throws DiException;
 }

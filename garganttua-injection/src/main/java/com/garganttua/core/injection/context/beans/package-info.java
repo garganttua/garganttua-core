@@ -60,10 +60,10 @@
  * }</pre>
  *
  * <h2>Usage Example: Bean Provider</h2>
- * Based on real test code from DiContextBuilderTest.java:
+ * Based on real test code from InjectionContextBuilderTest.java:
  * <pre>{@code
  * // Create context with multiple bean providers
- * IDiContext context = DiContext.builder()
+ * IInjectionContext context = InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .beanProvider(Predefined.BeanProviders.garganttua.toString(), new DummyBeanProviderBuilder())
  *         .up()

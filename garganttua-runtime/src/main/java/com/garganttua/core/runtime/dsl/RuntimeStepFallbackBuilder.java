@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IDiContext;
+import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
@@ -66,7 +66,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     }
 
     @Override
-    public void handle(IDiContext context) {
+    public void handle(IInjectionContext context) {
         Objects.requireNonNull(context, "Context cannot be null");
         this.setResolver(context);
         log.atTrace().log("{} Context handled for fallback builder", logLineHeader());

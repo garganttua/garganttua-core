@@ -9,8 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
@@ -31,15 +31,15 @@ public class TwoStepsRuntimeTest {
         ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
     }
 
-    private IDiContextBuilder contextBuilder() {
-        return DiContext.builder()
+    private IInjectionContextBuilder contextBuilder() {
+        return InjectionContext.builder()
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime.annotations")
                 .withPackage("com.garganttua.core.runtime.runtimes.twosteps");
     }
 
     private IRuntimesBuilder builder() {
-        IDiContextBuilder ctx = contextBuilder();
+        IInjectionContextBuilder ctx = contextBuilder();
         ctx.build().onInit().onStart();
         return RuntimesBuilder.builder().context(ctx).autoDetect(true);
     }

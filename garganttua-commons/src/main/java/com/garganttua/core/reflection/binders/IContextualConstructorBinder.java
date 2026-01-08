@@ -17,7 +17,7 @@ import com.garganttua.core.supply.SupplyException;
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * // Constructor requiring dependencies from DiContext
+ * // Constructor requiring dependencies from InjectionContext
  * IContextualConstructorBinder<UserService> constructor =
  *     ContextualConstructorBinder
  *         .forClass(UserService.class)
@@ -26,8 +26,8 @@ import com.garganttua.core.supply.SupplyException;
  *         .withParameter(Logger.class)          // Resolved from context
  *         .build();
  *
- * // Execute with DiContext
- * DiContext context = ...;
+ * // Execute with InjectionContext
+ * InjectionContext context = ...;
  * Optional<UserService> service = constructor.execute(context);
  *
  * // Check dependencies before instantiation

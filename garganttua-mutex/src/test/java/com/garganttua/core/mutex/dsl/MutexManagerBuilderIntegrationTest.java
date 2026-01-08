@@ -6,8 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.context.dsl.DiContextBuilder;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.InterruptibleLeaseMutex;
@@ -36,11 +36,11 @@ class MutexManagerBuilderIntegrationTest {
         @Test
         void testFullWorkflowWithAutoDetection() throws DslException, MutexException {
                 // Create and build DI context
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures");
 
                 // Build the context to make it available
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 // Create mutex manager with auto-detection
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
@@ -54,10 +54,10 @@ class MutexManagerBuilderIntegrationTest {
         @Test
         void testAutoDetectedFactoryCanCreateMutex() throws DslException, MutexException {
                 // Setup context with the test fixtures package
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures");
 
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 // Build manager with auto-detection
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
@@ -78,11 +78,11 @@ class MutexManagerBuilderIntegrationTest {
         @Test
         void testMixedManualAndAutoDetectedFactories() throws DslException, MutexException {
                 // Setup context
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex")
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures");
 
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 // Build manager with both manual and auto-detected factories
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
@@ -107,10 +107,10 @@ class MutexManagerBuilderIntegrationTest {
         @Test
         void testAutoDetectionScansCorrectPackage() throws DslException {
                 // Verify that specifying a package actually limits the scan
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures");
 
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 // Only scan the fixtures package
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
@@ -131,10 +131,10 @@ class MutexManagerBuilderIntegrationTest {
         @Test
         void testCreatedMutexIsUsable() throws DslException, MutexException {
                 // Create a complete working example
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex");
 
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
                                 .withPackage("com.garganttua.core.mutex")
@@ -154,10 +154,10 @@ class MutexManagerBuilderIntegrationTest {
 
         @Test
         void testSameMutexReturnedOnSubsequentCalls() throws DslException, MutexException {
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex");
 
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
                                 .withPackage("com.garganttua.core.mutex")
@@ -178,10 +178,10 @@ class MutexManagerBuilderIntegrationTest {
                                 "com.garganttua.core.mutex.dsl.fixtures"
                 };
 
-                IDiContextBuilder contextBuilder = DiContextBuilder.builder()
+                IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
                                 .withPackages(packages);
 
-                contextBuilder.build();
+                contextBuilder.build().onInit().onStart();
 
                 IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
                                 .withPackages(packages)

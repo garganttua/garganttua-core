@@ -17,7 +17,7 @@ import com.garganttua.core.supply.ISupplier;
  * <pre>{@code
  * // A bean supplier provides instances through the supply method
  * IBeanSupplier<MyService> supplier = ...;
- * IDiContext context = ...;
+ * IInjectionContext context = ...;
  *
  * // Supply a bean instance
  * MyService instance = supplier.supply(context);

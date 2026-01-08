@@ -149,4 +149,6 @@ public interface ILifecycle {
      */
     ILifecycle onReload() throws LifecycleException;
 
+    LifecycleStatus status();
+
 }

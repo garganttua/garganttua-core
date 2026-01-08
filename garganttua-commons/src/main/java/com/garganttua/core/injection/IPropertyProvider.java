@@ -43,7 +43,7 @@ import com.garganttua.core.utils.Copyable;
  * </p>
  *
  * @since 2.0.0-ALPHA01
- * @see IDiContext
+ * @see IInjectionContext
  * @see ILifecycle
  * @see Copyable
  */

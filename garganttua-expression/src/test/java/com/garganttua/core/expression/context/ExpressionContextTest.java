@@ -14,8 +14,8 @@ import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.functions.Expressions;
-import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
@@ -97,11 +97,11 @@ public class ExpressionContextTest {
     @Test
     public void test() {
 
-        IDiContextBuilder injectionContextBuilder = DiContext.builder();
+        IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).context(injectionContextBuilder);
 
-        injectionContextBuilder.build();
+        injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
         System.out.println(expressionContext.man());

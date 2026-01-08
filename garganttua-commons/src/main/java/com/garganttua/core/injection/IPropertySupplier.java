@@ -16,7 +16,7 @@ import com.garganttua.core.supply.ISupplier;
  * <pre>{@code
  * // A property supplier provides values through the supply method
  * IPropertySupplier<String> supplier = ...;
- * IDiContext context = ...;
+ * IInjectionContext context = ...;
  *
  * // Supply a property value
  * String value = supplier.supply(context);

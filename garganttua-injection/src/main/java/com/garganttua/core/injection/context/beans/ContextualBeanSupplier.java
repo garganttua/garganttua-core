@@ -8,8 +8,8 @@ import java.util.Set;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IContextualBeanSupplier;
-import com.garganttua.core.injection.IDiContext;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -41,16 +41,16 @@ public class ContextualBeanSupplier<Bean> implements IContextualBeanSupplier<Bea
     }
 
     @Override
-    public Class<IDiContext> getOwnerContextType() {
-        return IDiContext.class;
+    public Class<IInjectionContext> getOwnerContextType() {
+        return IInjectionContext.class;
     }
 
     @Override
-    public Optional<Bean> supply(IDiContext context, Object... otherContexts) throws SupplyException {
+    public Optional<Bean> supply(IInjectionContext context, Object... otherContexts) throws SupplyException {
         log.atTrace().log("Entering supply for BeanSupplier with query: {} and provider: {}", query, provider);
 
-        if (DiContext.context == null) {
-            log.atError().log("DiContext.context is null, cannot supply bean");
+        if (InjectionContext.context == null) {
+            log.atError().log("InjectionContext.context is null, cannot supply bean");
             throw new SupplyException("Context not built");
         }
 

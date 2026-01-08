@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
-import com.garganttua.core.injection.context.DiContext;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.IRuntime;
@@ -234,7 +234,7 @@ public class PerformancesTest {
         private Map<String, IRuntime<?, ?>> getRuntimes() {
                 IRuntimesBuilder t = RuntimesBuilder.builder();
 
-                IDiContextBuilder contextBuilder = DiContext.builder().autoDetect(true)
+                IInjectionContextBuilder contextBuilder = InjectionContext.builder().autoDetect(true)
                                 .withPackage("com.garganttua.core.runtime.annotations")
                                 .withPackage("com.garganttua.core.runtime");
                 contextBuilder.build().onInit().onStart();

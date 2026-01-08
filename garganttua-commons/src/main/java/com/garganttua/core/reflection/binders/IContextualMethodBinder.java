@@ -22,17 +22,17 @@ import com.garganttua.core.supply.SupplyException;
  * <h2>Usage Example</h2>
  * 
  * <pre>{@code
- * // Lifecycle method requiring dependencies from DiContext
- * IContextualMethodBinder<Void, DiContext> initMethod =
+ * // Lifecycle method requiring dependencies from InjectionContext
+ * IContextualMethodBinder<Void, InjectionContext> initMethod =
  *     ContextualMethodBinder
  *         .forClass(UserService.class)
  *         .method("initialize")
- *         .withParameter(Logger.class)      // Resolved from DiContext
- *         .withParameter(Config.class)      // Resolved from DiContext
+ *         .withParameter(Logger.class)      // Resolved from InjectionContext
+ *         .withParameter(Config.class)      // Resolved from InjectionContext
  *         .build();
  *
  * // Execute with context
- * DiContext context = ...;
+ * InjectionContext context = ...;
  * initMethod.execute(context);
  *
  * // Request handler method with multiple contexts

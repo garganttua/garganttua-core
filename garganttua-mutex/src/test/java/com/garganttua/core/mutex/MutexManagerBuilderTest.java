@@ -117,8 +117,8 @@ class MutexManagerBuilderTest {
     @Test
     void testStaticBuilderMethods() {
         assertNotNull(MutexManagerBuilder.builder(), "builder() should create instance");
-        assertNotNull(MutexManagerBuilder.builder((com.garganttua.core.injection.context.dsl.IDiContextBuilder) null),
-                "builder(IDiContextBuilder) should handle null");
+        assertNotNull(MutexManagerBuilder.builder((com.garganttua.core.injection.context.dsl.IInjectionContextBuilder) null),
+                "builder(IInjectionContextBuilder) should handle null");
     }
 
 }

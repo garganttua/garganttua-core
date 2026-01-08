@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.injection.context.dsl.IContextReadinessBuilder;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 
 /**
@@ -17,7 +17,7 @@ import com.garganttua.core.runtime.IRuntime;
  * </p>
  *
  * <p>
- * The builder supports dependency injection integration through {@link IDiContextBuilder}, allowing
+ * The builder supports dependency injection integration through {@link IInjectionContextBuilder}, allowing
  * runtimes to access beans, properties, and other DI-managed resources.
  * </p>
  *
@@ -45,7 +45,7 @@ import com.garganttua.core.runtime.IRuntime;
  *
  * <h2>Usage Example - Multiple Runtimes with DI Context</h2>
  * <pre>{@code
- * IDiContextBuilder contextBuilder = new DiContextBuilder();
+ * IInjectionContextBuilder contextBuilder = new InjectionContextBuilder();
  *
  * IRuntimesBuilder builder = new RuntimesBuilder()
  *     .context(contextBuilder)
@@ -98,8 +98,8 @@ public interface IRuntimesBuilder
          *
          * @param context the DI context builder to use
          * @return this builder for method chaining
-         * @see com.garganttua.core.injection.context.dsl.IDiContextBuilder
+         * @see com.garganttua.core.injection.context.dsl.IInjectionContextBuilder
          */
-        IRuntimesBuilder context(IDiContextBuilder context);
+        IRuntimesBuilder context(IInjectionContextBuilder context);
 
 }

@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertySupplier;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +35,10 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
             Optional<Property> result;
             if (this.provider.isPresent()) {
                 log.atDebug().log("Fetching property using provider: {}", provider.get());
-                result = DiContext.context.getProperty(this.provider.get(), this.key, this.type);
+                result = InjectionContext.context.getProperty(this.provider.get(), this.key, this.type);
             } else {
                 log.atDebug().log("Fetching property without provider");
-                result = DiContext.context.getProperty(this.key, this.type);
+                result = InjectionContext.context.getProperty(this.key, this.type);
             }
 
             log.atInfo().log("Property supplied for key '{}': {}", key, result.orElse(null));

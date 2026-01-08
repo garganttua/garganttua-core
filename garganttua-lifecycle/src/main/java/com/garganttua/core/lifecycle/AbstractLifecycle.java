@@ -15,13 +15,17 @@ public abstract class AbstractLifecycle implements ILifecycle {
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
 
     protected abstract ILifecycle doInit() throws LifecycleException;
+
     protected abstract ILifecycle doStart() throws LifecycleException;
+
     protected abstract ILifecycle doFlush() throws LifecycleException;
+
     protected abstract ILifecycle doStop() throws LifecycleException;
 
     protected final Object lifecycleMutex = new Object();
 
-    protected <T extends Exception> void wrapLifecycle(RunnableWithException runnable, Class<T> exceptionType) throws T {
+    protected <T extends Exception> void wrapLifecycle(RunnableWithException runnable, Class<T> exceptionType)
+            throws T {
         log.atTrace().log("Entering wrapLifecycle with exceptionType={}", exceptionType.getSimpleName());
         try {
             runnable.run();
@@ -36,6 +40,29 @@ public abstract class AbstractLifecycle implements ILifecycle {
     @FunctionalInterface
     public interface RunnableWithException {
         void run() throws LifecycleException;
+    }
+
+    @Override
+    public LifecycleStatus status() {
+        synchronized (this.lifecycleMutex) {
+
+            if (!initialized.get()) {
+                return LifecycleStatus.NEW;
+            }
+
+            if (started.get()) {
+                return LifecycleStatus.STARTED;
+            }
+
+            if (stopped.get()) {
+                if (flushed.get()) {
+                    return LifecycleStatus.FLUSHED;
+                }
+                return LifecycleStatus.STOPPED;
+            }
+
+            return LifecycleStatus.INITIALIZED;
+        }
     }
 
     @Override

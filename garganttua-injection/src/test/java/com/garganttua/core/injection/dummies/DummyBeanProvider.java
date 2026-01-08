@@ -8,6 +8,7 @@ import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.utils.CopyException;
 
@@ -124,6 +125,12 @@ public class DummyBeanProvider implements IBeanProvider {
     public <T> void add(BeanReference<T> reference, boolean autoDetect) throws DiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
+    }
+
+    @Override
+    public LifecycleStatus status() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'status'");
     }
 
 

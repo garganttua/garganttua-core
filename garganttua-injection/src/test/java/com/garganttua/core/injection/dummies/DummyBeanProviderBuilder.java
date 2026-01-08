@@ -4,11 +4,11 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 
 public class DummyBeanProviderBuilder implements IBeanProviderBuilder {
 
-    private IDiContextBuilder parentContext;
+    private IInjectionContextBuilder parentContext;
 
     @Override
     public IBeanProviderBuilder autoDetect(boolean b) {
@@ -17,7 +17,7 @@ public class DummyBeanProviderBuilder implements IBeanProviderBuilder {
     }
 
     @Override
-    public IDiContextBuilder up() {
+    public IInjectionContextBuilder up() {
         if (this.parentContext == null) {
             throw new IllegalStateException("No parent context set for DummyBeanProviderBuilder");
         }
@@ -25,7 +25,7 @@ public class DummyBeanProviderBuilder implements IBeanProviderBuilder {
     }
 
     @Override
-    public IBeanProviderBuilder setUp(IDiContextBuilder link) {
+    public IBeanProviderBuilder setUp(IInjectionContextBuilder link) {
         this.parentContext = link;
         return this;
     }

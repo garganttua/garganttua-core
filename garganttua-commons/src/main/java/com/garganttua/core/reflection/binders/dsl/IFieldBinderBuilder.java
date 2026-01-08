@@ -40,7 +40,7 @@ import com.garganttua.core.reflection.binders.IFieldBinder;
  *     .field("config")
  *     .withValue(SupplierBuilder
  *         .forType(Config.class)
- *         .withContext(DiContext.class, ctx -> ctx.getBean(Config.class)))
+ *         .withContext(InjectionContext.class, ctx -> ctx.getBean(Config.class)))
  *     .build();
  *
  * // Nullable field

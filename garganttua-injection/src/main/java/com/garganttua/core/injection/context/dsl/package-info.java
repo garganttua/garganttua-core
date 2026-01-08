@@ -15,10 +15,10 @@
  * </p>
  *
  * <h2>Usage Example: Complete Context Configuration</h2>
- * Based on real test code from DiContextTest.java and DiContextBuilderTest.java:
+ * Based on real test code from InjectionContextTest.java and InjectionContextBuilderTest.java:
  * <pre>{@code
  * // Basic context with package scanning and properties
- * DiContext.builder()
+ * InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
  *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
@@ -29,7 +29,7 @@
  *     .onStart();
  *
  * // Context with custom bean and property providers
- * IDiContext context = DiContext.builder()
+ * IInjectionContext context = InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .beanProvider(Predefined.BeanProviders.garganttua.toString(), new DummyBeanProviderBuilder())
  *         .up()
@@ -86,10 +86,10 @@
  * }</pre>
  *
  * <h2>Usage Example: Property Configuration</h2>
- * Based on real test code from DiContextTest.java:
+ * Based on real test code from InjectionContextTest.java:
  * <pre>{@code
  * // Configure properties with provider
- * DiContext.builder()
+ * InjectionContext.builder()
  *     .withPackage("com.garganttua")
  *     .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
  *         .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", "propertyValue")
@@ -146,7 +146,7 @@
  * Builders follow a clear hierarchy:
  * </p>
  * <ul>
- *   <li><b>DiContextBuilder</b> - Root builder
+ *   <li><b>InjectionContextBuilder</b> - Root builder
  *     <ul>
  *       <li><b>BeanProviderBuilder</b> - Bean source configuration
  *         <ul>
@@ -166,6 +166,6 @@
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.injection.context.dsl
  * @see com.garganttua.core.injection.context
- * @see com.garganttua.core.injection.IDiContext
+ * @see com.garganttua.core.injection.IInjectionContext
  */
 package com.garganttua.core.injection.context.dsl;

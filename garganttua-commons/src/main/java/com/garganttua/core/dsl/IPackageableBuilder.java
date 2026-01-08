@@ -25,12 +25,12 @@ package com.garganttua.core.dsl;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * // Single package configuration
- * DiContext context = DiContextBuilder.create()
+ * InjectionContext context = InjectionContextBuilder.create()
  *     .withPackage("com.example.services")
  *     .build();
  *
  * // Multiple packages configuration
- * DiContext context = DiContextBuilder.create()
+ * InjectionContext context = InjectionContextBuilder.create()
  *     .withPackage("com.example.services")
  *     .withPackage("com.example.repositories")
  *     .withPackage("com.example.controllers")
@@ -42,7 +42,7 @@ package com.garganttua.core.dsl;
  *     "com.example.repositories",
  *     "com.example.controllers"
  * };
- * DiContext context = DiContextBuilder.create()
+ * InjectionContext context = InjectionContextBuilder.create()
  *     .withPackages(packages)
  *     .build();
  *
