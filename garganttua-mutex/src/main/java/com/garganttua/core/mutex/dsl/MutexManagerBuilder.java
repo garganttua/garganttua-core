@@ -127,9 +127,9 @@ public class MutexManagerBuilder extends AbstractAutomaticBuilder<IMutexManagerB
     @Override
     protected IMutexManager doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
+        Map<Class<? extends IMutex>, IMutexFactory> factories = this.computeFactoriesForBuild();
         log.atInfo().log("Building MutexManager with {} registered factories", factories.size());
-
-        IMutexManager manager = new MutexManager(this.computeFactoriesForBuild());
+        IMutexManager manager = new MutexManager(factories);
 
         log.atTrace().log("Exiting doBuild() method");
         return manager;
