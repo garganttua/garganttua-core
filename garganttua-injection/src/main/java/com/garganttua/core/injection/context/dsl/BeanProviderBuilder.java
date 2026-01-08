@@ -1,6 +1,7 @@
 package com.garganttua.core.injection.context.dsl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,9 @@ import javax.inject.Singleton;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.MultiSourceCollector;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectableElementResolver;
@@ -29,7 +33,11 @@ public class BeanProviderBuilder
 		extends AbstractAutomaticLinkedBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
 		implements IBeanProviderBuilder {
 
-	private Map<Class<?>, IBeanFactoryBuilder<?>> beanFactoryBuilders = new HashMap<>();
+	private static final String SOURCE_MANUAL = "manual";
+	private static final String SOURCE_AUTO_DETECTED = "auto-detected";
+
+	private Map<Class<?>, IBeanFactoryBuilder<?>> manualBeanFactoryBuilders = new HashMap<>();
+	private Map<Class<?>, IBeanFactoryBuilder<?>> autoDetectedBeanFactoryBuilders = new HashMap<>();
 	private Set<String> packages = new HashSet<>();
 
 	@Setter
@@ -49,7 +57,7 @@ public class BeanProviderBuilder
 	public <BeanType> IBeanFactoryBuilder<BeanType> withBean(Class<BeanType> beanType) throws DslException {
 		log.atTrace().log("Entering withBean() method with beanType: {}", beanType.getSimpleName());
 		log.atDebug().log("Registering bean type: {}", beanType.getSimpleName());
-		IBeanFactoryBuilder<BeanType> builder = (IBeanFactoryBuilder<BeanType>) this.beanFactoryBuilders
+		IBeanFactoryBuilder<BeanType> builder = (IBeanFactoryBuilder<BeanType>) this.manualBeanFactoryBuilders
 				.computeIfAbsent(beanType,
 						key -> {
 							log.atTrace().log("Creating new BeanFactoryBuilder for type: {}", key.getSimpleName());
@@ -62,11 +70,13 @@ public class BeanProviderBuilder
 	@Override
 	protected IBeanProvider doBuild() throws DslException {
 		log.atTrace().log("Entering doBuild() method");
-		log.atInfo().log("Building IBeanProvider with {} factories", beanFactoryBuilders.size());
+
+		Map<Class<?>, IBeanFactoryBuilder<?>> allBuilders = this.computeBeanFactoryBuilders();
+		log.atInfo().log("Building IBeanProvider with {} factories", allBuilders.size());
 
 		IBeanProvider provider;
 		try {
-			provider = new BeanProvider(this.beanFactoryBuilders.values().stream()
+			provider = new BeanProvider(allBuilders.values().stream()
 					.map(IBeanFactoryBuilder::build)
 					.collect(Collectors.toList()), Optional.ofNullable(this.resolver), true);
 			log.atInfo().log("IBeanProvider successfully built with {} beans", provider.size());
@@ -90,7 +100,7 @@ public class BeanProviderBuilder
 					.forEach(singletonClass -> {
 						try {
 							log.atTrace().log("Detected @Singleton class: {}", singletonClass.getSimpleName());
-							this.beanFactoryBuilders.put(singletonClass,
+							this.autoDetectedBeanFactoryBuilders.put(singletonClass,
 									this.createBeanFactory(qualifierAnnotations, singletonClass, resolver)
 											.strategy(BeanStrategy.singleton));
 						} catch (DslException e) {
@@ -104,7 +114,7 @@ public class BeanProviderBuilder
 					.forEach(prototypeClass -> {
 						try {
 							log.atTrace().log("Detected @Prototype class: {}", prototypeClass.getSimpleName());
-							this.beanFactoryBuilders.put(prototypeClass,
+							this.autoDetectedBeanFactoryBuilders.put(prototypeClass,
 									this.createBeanFactory(qualifierAnnotations, prototypeClass, resolver)
 											.strategy(BeanStrategy.prototype));
 						} catch (DslException e) {
@@ -120,7 +130,7 @@ public class BeanProviderBuilder
 							try {
 								log.atTrace().log("Detected @Qualifier class: {} with qualifier {}",
 										qualifiedClass.getSimpleName(), qualifierAnnotation.getSimpleName());
-								this.beanFactoryBuilders.put(qualifiedClass,
+								this.autoDetectedBeanFactoryBuilders.put(qualifiedClass,
 										this.createBeanFactory(qualifierAnnotations, qualifiedClass, resolver)
 												.strategy(BeanStrategy.singleton));
 							} catch (DslException e) {
@@ -175,5 +185,29 @@ public class BeanProviderBuilder
 		this.packages.addAll(Arrays.asList(packageNames));
 		log.atTrace().log("Exiting withPackages() method with packages: {}", Arrays.toString(packageNames));
 		return this;
+	}
+
+	private ISupplier<Map<Class<?>, IBeanFactoryBuilder<?>>> beanFactorySupplier(
+			Map<Class<?>, IBeanFactoryBuilder<?>> builders) {
+		return new ISupplier<Map<Class<?>, IBeanFactoryBuilder<?>>>() {
+			@Override
+			public Optional<Map<Class<?>, IBeanFactoryBuilder<?>>> supply() throws SupplyException {
+				return Optional.of(builders);
+			}
+
+			@Override
+			public Type getSuppliedType() {
+				throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
+			}
+		};
+	}
+
+	private Map<Class<?>, IBeanFactoryBuilder<?>> computeBeanFactoryBuilders() {
+		MultiSourceCollector<Class<?>, IBeanFactoryBuilder<?>> collector = new MultiSourceCollector<>();
+
+		collector.source(beanFactorySupplier(manualBeanFactoryBuilders), 0, SOURCE_MANUAL);
+		collector.source(beanFactorySupplier(autoDetectedBeanFactoryBuilders), 1, SOURCE_AUTO_DETECTED);
+
+		return collector.build();
 	}
 }
