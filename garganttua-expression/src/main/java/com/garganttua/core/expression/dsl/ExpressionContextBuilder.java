@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.Predefined;
+import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
@@ -123,7 +126,7 @@ public class ExpressionContextBuilder
             log.atError().log("Attempt to build before authorization, injection context is missing");
             throw new DslException("Build is not yet authorized, injection context is missing");
         }
-        
+
         CompletableFuture<ExpressionContext> futur = new CompletableFuture<>();
         try {
             this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man")).withDescription("the description");
@@ -137,7 +140,22 @@ public class ExpressionContextBuilder
 
         ExpressionContext context = new ExpressionContext(builtNodes);
         futur.complete(context);
-        
+
+        // Register the built ExpressionContext as bean in the InjectionContext if available and ready
+        this.readinessBuilder.ifReady(injectionContext -> {
+            log.atDebug().log("Registering IExpressionContext as bean in InjectionContext");
+            injectionContext.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
+                    .ifPresent(provider -> {
+                        BeanReference<IExpressionContext> beanRef = new BeanReference<>(
+                                IExpressionContext.class,
+                                Optional.of(BeanStrategy.singleton),
+                                Optional.empty(),
+                                Set.of());
+                        provider.add(beanRef, context);
+                        log.atInfo().log("IExpressionContext successfully registered as bean with {} nodes", builtNodes.size());
+                    });
+        });
+
         return context;
     }
 

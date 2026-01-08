@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -14,6 +15,9 @@ import javax.inject.Named;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
@@ -94,6 +98,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     }
 
     @Override
+    @SuppressWarnings({ "unchecked"})
     protected Map<String, IRuntime<?, ?>> doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
 
@@ -102,11 +107,42 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         log.atInfo().log("Building all runtimes");
 
         Map<String, IRuntime<?, ?>> result = this.runtimeBuilders.entrySet().stream().collect(Collectors.toMap(
-                e -> e.getKey(),
+                Entry::getKey,
                 e -> {
                     log.atDebug().log("Building individual runtime");
                     return e.getValue().build();
                 }));
+
+        this.readinessBuilder.ifReady(context -> {
+            log.atDebug().log("Registering Map<String, IRuntime<?, ?>> as bean in InjectionContext");
+            Optional<IBeanProvider> beanProvider = context
+                    .getBeanProvider(Predefined.BeanProviders.garganttua.toString());
+            beanProvider.ifPresent(provider -> {
+                BeanReference<Map<String, IRuntime<?, ?>>> beanRef = new BeanReference<>(
+                        (Class<Map<String, IRuntime<?, ?>>>) (Class<?>) Map.class,
+                        Optional.of(BeanStrategy.singleton),
+                        Optional.of("Runtimes"),
+                        Set.of());
+                provider.add(beanRef, result);
+                log.atInfo().log(
+                        "Map<String, IRuntime<?, ?>> successfully registered as bean with {} runtimes with 'runtimes' name",
+                        result.size());
+            });
+
+            result.entrySet().forEach(e -> {
+                beanProvider.ifPresent(provider -> {
+                    BeanReference<IRuntime<?,?>> beanRef = new BeanReference<>(
+                            (Class<IRuntime<?, ?>>) (Class<?>) IRuntime.class,
+                            Optional.of(BeanStrategy.singleton),
+                            Optional.of(e.getKey()),
+                            Set.of(RuntimeDefinition.class));
+                    provider.add(beanRef, e.getValue());
+                    log.atInfo().log(
+                            "IRuntime<?, ?> successfully registered as bean with '"+e.getKey()+"' name");
+                });
+            });
+
+        });
 
         log.atTrace().log("Exiting doBuild() method");
         return result;
@@ -122,7 +158,8 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
         synchronizePackagesFromContext();
 
         List<?> definitions = this.readinessBuilder.getContext()
-                .queryBeans(new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
+                .queryBeans(
+                        new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
 
         log.atInfo().log("Auto-detecting runtimes");
 
@@ -132,8 +169,10 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
     }
 
     /**
-     * Synchronizes packages from the InjectionContextBuilder to this builder's packages.
-     * This ensures that packages declared in the DI context are also used for runtime scanning.
+     * Synchronizes packages from the InjectionContextBuilder to this builder's
+     * packages.
+     * This ensures that packages declared in the DI context are also used for
+     * runtime scanning.
      */
     private void synchronizePackagesFromContext() {
         this.readinessBuilder.synchronizePackagesFromContext(contextPackages -> {
@@ -161,7 +200,7 @@ public class RuntimesBuilder extends AbstractAutomaticBuilder<IRuntimesBuilder, 
                         input.getSimpleName(), output.getSimpleName());
 
         IRuntimeBuilder<?, ?> runtimeBuilder = this.runtimeBuilders.get(runtimeName);
-        if ( runtimeBuilder == null) {
+        if (runtimeBuilder == null) {
             runtimeBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
                     runtimeDefinitionObject).autoDetect(true);
             this.runtimeBuilders.put(runtimeName, runtimeBuilder);
