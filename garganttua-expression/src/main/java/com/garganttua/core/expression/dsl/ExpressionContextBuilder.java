@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.dsl.AbstractAutomaticBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.Predefined;
@@ -24,7 +24,6 @@ import com.garganttua.core.expression.context.IExpressionNodeFactory;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
-import com.garganttua.core.injection.context.dsl.ContextReadinessBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
@@ -40,12 +39,12 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * {@code ExpressionBuilder} implements the DSL builder pattern for creating
  * {@link IExpressionContext} objects. It extends
- * {@link AbstractAutomaticBuilder} to
+ * {@link AbstractAutomaticDependentBuilder} to
  * provide automatic configuration detection and package scanning capabilities.
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * IExpressionContext context = ExpressionBuilder
  *         .builder()
@@ -59,18 +58,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ExpressionContextBuilder
-        extends AbstractAutomaticBuilder<IExpressionContextBuilder, IExpressionContext>
+        extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
 
-    private Set<String> packages = new HashSet<>();
-
-    private Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
-
-    private ContextReadinessBuilder<ExpressionContextBuilder> readinessBuilder;
+    private final Set<String> packages = new HashSet<>();
+    private final Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
 
     protected ExpressionContextBuilder() {
-        super();
-        this.readinessBuilder = new ContextReadinessBuilder<>(Optional.empty(), this);
+        super(Set.of(), Set.of());
         log.atTrace().log("Entering ExpressionBuilder constructor");
         log.atTrace().log("Exiting ExpressionBuilder constructor");
     }
@@ -122,11 +117,6 @@ public class ExpressionContextBuilder
 
     @Override
     protected IExpressionContext doBuild() throws DslException {
-        if (!(this.readinessBuilder.isReady() || this.readinessBuilder.isEmpty()) ) {
-            log.atError().log("Attempt to build before authorization, injection context is missing");
-            throw new DslException("Build is not yet authorized, injection context is missing");
-        }
-
         CompletableFuture<ExpressionContext> futur = new CompletableFuture<>();
         try {
             this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man")).withDescription("the description");
@@ -140,21 +130,6 @@ public class ExpressionContextBuilder
 
         ExpressionContext context = new ExpressionContext(builtNodes);
         futur.complete(context);
-
-        // Register the built ExpressionContext as bean in the InjectionContext if available and ready
-        this.readinessBuilder.ifReady(injectionContext -> {
-            log.atDebug().log("Registering IExpressionContext as bean in InjectionContext");
-            injectionContext.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
-                    .ifPresent(provider -> {
-                        BeanReference<IExpressionContext> beanRef = new BeanReference<>(
-                                IExpressionContext.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.empty(),
-                                Set.of());
-                        provider.add(beanRef, context);
-                        log.atInfo().log("IExpressionContext successfully registered as bean with {} nodes", builtNodes.size());
-                    });
-        });
 
         return context;
     }
@@ -182,19 +157,13 @@ public class ExpressionContextBuilder
      */
     @Override
     protected void doAutoDetection() throws DslException {
-        if ( !(this.readinessBuilder.isReady() || this.readinessBuilder.isEmpty()) ) {
-            log.atError().log("Attempt to build before authorization");
-            throw new DslException("Build is not yet authorized");
-        }
-
         // Synchronize packages from InjectionContextBuilder before scanning
         synchronizePackagesFromContext();
 
         List<Method> expressions = new ArrayList<>();
-        this.packages.stream().forEach(p -> {
-            expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class));
-        });
-
+        this.packages.forEach(p ->
+            expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class))
+        );
 
         // Deduplicate methods by signature (declaring class + method name + parameter types)
         // because distinct() only works with object identity, not method equivalence
@@ -211,9 +180,44 @@ public class ExpressionContextBuilder
                 expressions.size(), uniqueMethods.size(), duplicateCount);
 
         // Create factories for unique methods only
-        uniqueMethods.values().forEach(m -> {
-            this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true);
-        });
+        uniqueMethods.values().forEach(m ->
+            this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true)
+        );
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+        log.atTrace().log("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
+        // No dependency-based auto-detection needed
+        log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+        log.atTrace().log("Entering doPreBuildWithDependency() with dependency: {}", dependency);
+        // Nothing to do in pre-build phase
+        log.atTrace().log("Exiting doPreBuildWithDependency() method");
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+        log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
+
+        if (dependency instanceof IInjectionContext context) {
+            log.atDebug().log("Registering IExpressionContext as bean in InjectionContext");
+            context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
+                    .ifPresent(provider -> {
+                        BeanReference<IExpressionContext> beanRef = new BeanReference<>(
+                                IExpressionContext.class,
+                                Optional.of(BeanStrategy.singleton),
+                                Optional.empty(),
+                                Set.of());
+                        provider.add(beanRef, this.built);
+                        log.atInfo().log("IExpressionContext successfully registered as bean");
+                    });
+        }
+
+        log.atTrace().log("Exiting doPostBuildWithDependency() method");
     }
 
     /**
@@ -221,14 +225,21 @@ public class ExpressionContextBuilder
      * This ensures that packages declared in the DI context are also scanned for expression methods.
      */
     private void synchronizePackagesFromContext() {
-        this.readinessBuilder.synchronizePackagesFromContext(contextPackages -> {
-            int beforeSize = this.packages.size();
-            this.packages.addAll(contextPackages);
-            int addedCount = this.packages.size() - beforeSize;
-            if (addedCount > 0) {
-                log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
-            }
-        });
+        log.atTrace().log("Entering synchronizePackagesFromContext()");
+
+        useDependencies.stream()
+            .filter(dep -> dep.getDependency().equals(IInjectionContextBuilder.class))
+            .findFirst()
+            .ifPresent(dep -> dep.synchronizePackagesFromContext(contextPackages -> {
+                int beforeSize = this.packages.size();
+                this.packages.addAll(contextPackages);
+                int addedCount = this.packages.size() - beforeSize;
+                if (addedCount > 0) {
+                    log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
+                }
+            }));
+
+        log.atTrace().log("Exiting synchronizePackagesFromContext()");
     }
 
     /**
@@ -258,7 +269,7 @@ public class ExpressionContextBuilder
 
     @Override
     public IExpressionContextBuilder context(IInjectionContextBuilder context) {
-        this.readinessBuilder.context(context);
+        this.provide(context);
         context.resolvers().withResolver(Expression.class, (t, e) -> {
             Expression expression = e.getAnnotation(Expression.class);
             if (expression == null)

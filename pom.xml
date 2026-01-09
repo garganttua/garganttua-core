@@ -338,5 +338,6 @@
     <module>garganttua-condition</module>
     <module>garganttua-expression</module>
     <module>garganttua-mutex</module>
+    <module>garganttua-bootstrap</module>
   </modules>
 </project>

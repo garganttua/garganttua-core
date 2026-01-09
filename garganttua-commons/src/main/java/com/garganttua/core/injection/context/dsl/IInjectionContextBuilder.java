@@ -3,6 +3,7 @@ package com.garganttua.core.injection.context.dsl;
 import java.lang.annotation.Annotation;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.IInjectionChildContextFactory;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -44,7 +45,8 @@ import com.garganttua.core.nativve.INativeBuilder;
  * @see IPropertyProviderBuilder
  * @see IAutomaticBuilder
  */
-public interface IInjectionContextBuilder extends INativeBuilder<IInjectionContextBuilder, IInjectionContext> {
+public interface IInjectionContextBuilder extends INativeBuilder<IInjectionContextBuilder, IInjectionContext>,
+        IObservableBuilder<IInjectionContextBuilder, IInjectionContext> {
 
     /**
      * Registers a bean provider with an existing builder.
