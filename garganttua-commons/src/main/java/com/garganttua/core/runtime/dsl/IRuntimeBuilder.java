@@ -1,7 +1,6 @@
 package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
-import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;

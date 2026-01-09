@@ -105,12 +105,4 @@ public interface IInjectionContextBuilder extends INativeBuilder<IInjectionConte
      */
     IInjectionContextBuilder withQualifier(Class<? extends Annotation> qualifier);
 
-    /**
-     * Registers an observer to monitor context building events.
-     *
-     * @param observer the context builder observer
-     * @return this builder for method chaining
-     */
-    IInjectionContextBuilder observer(IContextBuilderObserver observer);
-
 }

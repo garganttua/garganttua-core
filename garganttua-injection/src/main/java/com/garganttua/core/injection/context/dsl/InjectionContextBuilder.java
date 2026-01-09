@@ -50,7 +50,6 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     private final List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories = new ArrayList<>();
     private IInjectableElementResolverBuilder resolvers;
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
-    private Set<IContextBuilderObserver> observers = new HashSet<>();
 
     public static IInjectionContextBuilder builder() throws DslException {
         log.atTrace().log("Entering InjectionContextBuilder.builder()");
@@ -223,18 +222,8 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                 new ArrayList<>(childContextFactories));
 
         log.atInfo().log("Constructed IInjectionContext master instance");
-        this.notifyObserver(built);
         log.atTrace().log("Exiting doBuild()");
         return built;
-    }
-
-    private void notifyObserver(IInjectionContext built) {
-        log.atTrace().log("Entering notifyObserver(built={})", built);
-        this.observers.parallelStream().forEach(observer -> {
-            observer.handle(built);
-            log.atDebug().log("Notified observer: {}", observer);
-        });
-        log.atTrace().log("Exiting notifyObserver");
     }
 
     public static void setBuiltInResolvers(IInjectableElementResolverBuilder resolvers,
@@ -262,18 +251,6 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                 .forEach(this.qualifiers::add);
         log.atInfo().log("Auto-detected qualifiers: {}", this.qualifiers);
         log.atTrace().log("Exiting doAutoDetection");
-    }
-
-    @Override
-    public IInjectionContextBuilder observer(IContextBuilderObserver observer) {
-        log.atTrace().log("Entering observer(observer={})", observer);
-        this.observers.add(Objects.requireNonNull(observer, "Observer cannot be null"));
-        if (this.built != null) {
-            observer.handle(this.built);
-            log.atDebug().log("Notified observer of already built context");
-        }
-        log.atTrace().log("Exiting observer");
-        return this;
     }
 
     @Override

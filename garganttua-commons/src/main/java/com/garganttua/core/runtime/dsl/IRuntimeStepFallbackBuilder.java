@@ -1,7 +1,6 @@
 package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.context.dsl.IContextBuilderObserver;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
