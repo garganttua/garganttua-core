@@ -565,6 +565,72 @@ builder.section("app")
 Config config = builder.build();
 ```
 
+## Dependency Management and Validation
+
+### Phase-Aware Dependencies
+
+Builders can declare dependencies on other builders using `DependencySpec`. Dependencies can be required or optional, and can be associated with specific lifecycle phases:
+
+- **AUTO_DETECT** - Dependency used during the auto-detection phase
+- **BUILD** - Dependency used during the build phase
+- **BOTH** - Dependency used in both phases
+
+Dependencies are declared using:
+- `DependencySpec.require(builderClass, phase)` - Mandatory dependency
+- `DependencySpec.use(builderClass, phase)` - Optional dependency
+
+### Dependency Validation Rules
+
+The framework enforces strict validation rules for dependencies to ensure correctness:
+
+| Dependency Type | `provide()` called? | Builder built? | Result | Validation Phase |
+|-----------------|---------------------|----------------|--------|------------------|
+| **USE** (optional) | ❌ No | N/A | ✅ OK - Optional dependency not provided | N/A |
+| **USE** (optional) | ✅ Yes | ✅ Yes | ✅ OK - Optional dependency ready | Both phases |
+| **USE** (optional) | ✅ Yes | ❌ No | ❌ `DslException` - Provided dependency must be built | Both phases |
+| **REQUIRE** (required) | ❌ No | N/A | ❌ `DslException` - Required dependency missing | Both phases |
+| **REQUIRE** (required) | ✅ Yes | ✅ Yes | ✅ OK - Required dependency ready | Both phases |
+| **REQUIRE** (required) | ✅ Yes | ❌ No | ❌ `DslException` - Required dependency not built | Both phases |
+
+**Important**: For the AUTO_DETECT phase, these validation rules only apply when the builder has `autoDetect(true)` enabled. Builders that don't use auto-detection skip AUTO_DETECT phase validation.
+
+### Validation Behavior
+
+**For "USE" (optional) dependencies:**
+- If you don't call `provide()` → OK, dependency is simply not used
+- If you call `provide()` but the builder isn't built → `DslException` thrown
+- This prevents accessing uninitialized dependencies
+
+**For "REQUIRE" (required) dependencies:**
+- If you don't call `provide()` → `DslException` thrown
+- If you call `provide()` but the builder isn't built → `DslException` thrown
+- This ensures all required dependencies are fully initialized
+
+### Example
+
+```java
+// Declare dependencies
+DependentBuilderSupport support = new DependentBuilderSupport(
+    Set.of(
+        DependencySpec.require(InjectionContextBuilder.class, DependencyPhase.BUILD),
+        DependencySpec.use(LoggerBuilder.class, DependencyPhase.AUTO_DETECT)
+    )
+);
+
+// Provide dependencies
+InjectionContextBuilder injectionCtx = new InjectionContextBuilder()
+    .bean(MyService.class)
+    .build(); // Must be built before use
+
+support.provide(injectionCtx); // OK - builder was built
+
+// Process dependencies in BUILD phase
+support.processPreBuildDependencies(ctx -> {
+    // Use the built injection context
+    configureWith(ctx);
+});
+```
+
 ## Tips and best practices
 
 ### General Principles

@@ -1,8 +1,11 @@
-package com.garganttua.core.dsl;
+package com.garganttua.core.dsl.dependency;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IBuilder;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.binders.Dependent;
 
 /**
@@ -48,18 +51,19 @@ public interface IDependentBuilder<Builder extends IBuilder<Built>, Built>
         extends IBuilder<Built>, Dependent {
 
     /**
-     * Declares an optional dependency on another builder.
+     * Provides a dependency to this builder.
      *
      * <p>
-     * The {@code use()} method indicates that this builder may utilize the
-     * specified dependency if it's available, but can function without it.
-     * This is useful for optional features or enhancements.
+     * The {@code provide()} method supplies a concrete instance of a declared
+     * dependency to this builder. The dependency must have been declared via
+     * the builder's dependency specifications.
      * </p>
      *
-     * @param dependency the optional builder dependency
+     * @param dependency the builder dependency to provide
      * @return this builder instance for method chaining
+     * @throws DslException if the dependency is not in the expected dependencies list
      */
-    Builder provide(IObservableBuilder<?, ?> dependency);
+    Builder provide(IObservableBuilder<?, ?> dependency) throws DslException;
 
     Set<Class<? extends IObservableBuilder<?, ?>>> use();
 
@@ -70,6 +74,6 @@ public interface IDependentBuilder<Builder extends IBuilder<Built>, Built>
         deps.addAll(this.use());
         deps.addAll(this.require());
         return deps;
-    };
+    }
 
 }

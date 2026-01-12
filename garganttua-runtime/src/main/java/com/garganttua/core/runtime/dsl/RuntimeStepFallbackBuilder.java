@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IInjectionContext;
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.runtime.IRuntimeContext;
@@ -40,10 +38,9 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     protected RuntimeStepFallbackBuilder(String runtimeName,
             String stageName, String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
-            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier,
-            IInjectableElementResolver resolver)
+            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier)
             throws DslException {
-        super(Optional.ofNullable(resolver), up, supplier);
+        super(up, supplier);
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
@@ -63,13 +60,6 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         this.output = Objects.requireNonNull(output, "Output cannot be null");
         log.atInfo().log("{} Output flag set for fallback", logLineHeader());
         return this;
-    }
-
-    @Override
-    public void handle(IInjectionContext context) {
-        Objects.requireNonNull(context, "Context cannot be null");
-        this.setResolver(context);
-        log.atTrace().log("{} Context handled for fallback builder", logLineHeader());
     }
 
     @Override

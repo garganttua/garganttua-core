@@ -17,6 +17,7 @@ import javax.inject.Singleton;
 
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectionChildContextFactory;
 import com.garganttua.core.injection.IInjectionContext;
@@ -50,6 +51,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     private final List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories = new ArrayList<>();
     private IInjectableElementResolverBuilder resolvers;
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
+    private Set<IBuilderObserver<IInjectionContextBuilder, IInjectionContext>> observers = new HashSet<>();
 
     public static IInjectionContextBuilder builder() throws DslException {
         log.atTrace().log("Entering InjectionContextBuilder.builder()");
@@ -71,7 +73,8 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     }
 
     @Override
-    public IInjectionContextBuilder childContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
+    public IInjectionContextBuilder childContextFactory(
+            IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Entering childContextFactory(factory={})", factory);
         Objects.requireNonNull(factory, "ChildContextFactory cannot be null");
         if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
@@ -96,7 +99,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                             IBeanProviderBuilder provider = entry.getValue();
                             if (provider instanceof BeanProviderBuilder bpb) {
                                 bpb.setQualifierAnnotations(this.qualifiers);
-                                bpb.setResolver(resolvers);
+                                bpb.provide(this.resolvers);
                                 log.atDebug().log("Configured BeanProviderBuilder for scope: {}", entry.getKey());
                             }
                             return provider.build();
@@ -111,8 +114,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         Map<String, IPropertyProvider> result = this.propertyProviders.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue().build()
-                ));
+                        entry -> entry.getValue().build()));
         log.atTrace().log("Exiting buildPropertyProviders with result size: {}", result.size());
         return result;
     }
@@ -222,8 +224,18 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                 new ArrayList<>(childContextFactories));
 
         log.atInfo().log("Constructed IInjectionContext master instance");
+        this.notifyObserver(built);
         log.atTrace().log("Exiting doBuild()");
         return built;
+    }
+
+    private void notifyObserver(IInjectionContext built) {
+        log.atTrace().log("Entering notifyObserver(built={})", built);
+        this.observers.parallelStream().forEach(observer -> {
+            observer.handle(built);
+            log.atDebug().log("Notified observer: {}", observer);
+        });
+        log.atTrace().log("Exiting notifyObserver");
     }
 
     public static void setBuiltInResolvers(IInjectableElementResolverBuilder resolvers,
@@ -259,5 +271,23 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         String[] pkgs = this.packages.toArray(new String[0]);
         log.atTrace().log("Exiting getPackages() with packages={}", Arrays.toString(pkgs));
         return pkgs;
+    }
+
+    @Override
+    public IInjectionContextBuilder observer(IBuilderObserver<IInjectionContextBuilder, IInjectionContext> observer) {
+        log.atTrace().log("Entering observer(observer={})", observer);
+        Objects.requireNonNull(observer, "Observer cannot be null");
+
+        this.observers.add(observer);
+        log.atDebug().log("Added observer: {}", observer);
+
+        // If context is already built, notify the observer immediately
+        if (this.built != null) {
+            observer.handle(this.built);
+            log.atInfo().log("Context already built, immediately notified observer: {}", observer);
+        }
+
+        log.atTrace().log("Exiting observer");
+        return this;
     }
 }

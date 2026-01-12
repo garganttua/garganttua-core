@@ -4,15 +4,20 @@ import static com.garganttua.core.injection.context.beans.Beans.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.inject.Named;
 
-import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeStage;
@@ -26,21 +31,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RuntimeStageBuilder<InputType, OutputType>
         extends
-        AbstractAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>>
+        AbstractAutomaticLinkedDependentBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>>
         implements IRuntimeStageBuilder<InputType, OutputType> {
 
     private final String stageName;
     private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> steps = new OrderedMapBuilder<>();
     private IInjectionContext context;
+    private IInjectionContextBuilder injectionContextBuilder;
     private List<Class<Object>> stepsForAutoDetection;
     private String runtimeName;
 
     protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String runtimeName, String stageName) {
-        super(Objects.requireNonNull(up, "Parent RuntimeBuilder cannot be null"));
+        super(Objects.requireNonNull(up, "Parent RuntimeBuilder cannot be null"),
+                Set.of(
+                        // InjectionContext needed for BUILD phase (used in doAutoDetection)
+                        DependencySpec.use(IInjectionContextBuilder.class, DependencyPhase.BUILD)
+                ));
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
 
-        log.atInfo().log(logLineHeader() + "RuntimeStageBuilder initialized");
+        log.atInfo().log(logLineHeader() + "RuntimeStageBuilder initialized with phase-aware dependencies");
     }
 
     protected RuntimeStageBuilder(IRuntimeBuilder<InputType, OutputType> up, String runtimeName, String stageName,
@@ -101,20 +111,6 @@ public class RuntimeStageBuilder<InputType, OutputType>
     }
 
     @Override
-    public void handle(IInjectionContext context) {
-        log.atTrace().log(logLineHeader() + "Entering handle() method");
-
-        this.context = Objects.requireNonNull(context, "Context cannot be null");
-        this.steps.values().forEach(s -> {
-            log.atDebug().log(logLineHeader() + "Handling individual step");
-            s.handle(context);
-        });
-        log.atInfo().log(logLineHeader() + "Context handled for stage");
-
-        log.atTrace().log(logLineHeader() + "Exiting handle() method");
-    }
-
-    @Override
     protected IRuntimeStage<InputType, OutputType> doBuild() throws DslException {
         log.atTrace().log(logLineHeader() + "Entering doBuild() method");
         log.atInfo().log(logLineHeader() + "Building stage");
@@ -131,7 +127,6 @@ public class RuntimeStageBuilder<InputType, OutputType>
     protected void doAutoDetection() throws DslException {
         log.atTrace().log(logLineHeader() + "Entering doAutoDetection() method");
 
-        Objects.requireNonNull(this.context, "Context cannot be null");
         Objects.requireNonNull(this.stepsForAutoDetection, "stepsForAutoDetection cannot be null");
 
         log.atInfo()
@@ -152,7 +147,10 @@ public class RuntimeStageBuilder<InputType, OutputType>
                     stageName, stepName, Void.class, supplierBuilder)
                     .autoDetect(true);
 
-            stepBuilder.handle(context);
+            // Provide dependency to sub-builders created during auto-detection
+            if (this.injectionContextBuilder != null) {
+                stepBuilder.provide(this.injectionContextBuilder);
+            }
             this.steps.put(stepName, stepBuilder);
 
             log.atInfo().log(logLineHeader() + "Auto-detected step registered");
@@ -161,7 +159,27 @@ public class RuntimeStageBuilder<InputType, OutputType>
         log.atTrace().log(logLineHeader() + "Exiting doAutoDetection() method");
     }
 
+    @Override
+    public IRuntimeStageBuilder<InputType, OutputType> provide(IObservableBuilder<?, ?> dependency) throws DslException {
+        if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
+            this.injectionContextBuilder = injCtxBuilder;
+        }
+        return super.provide(dependency);
+    }
+
     private String logLineHeader() {
         return "[Runtime " + runtimeName + "][Stage " + stageName + "] ";
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
     }
 }

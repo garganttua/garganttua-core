@@ -67,19 +67,8 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  */
 public interface IBeanInjectableFieldBuilder<FieldType, BeanType> extends IFieldBinderBuilder<FieldType, BeanType, IBeanInjectableFieldBuilder<FieldType, BeanType>, IBeanFactoryBuilder<BeanType>>, Dependent {
 
-    /**
-     * Specifies a custom value supplier for this field.
-     *
-     * <p>
-     * This method allows providing a custom supplier that will be used to obtain
-     * the value to inject into the field. This enables advanced scenarios where
-     * the value needs to be computed or transformed before injection.
-     * </p>
-     *
-     * @param valueSupplier the supplier that provides the field value
-     * @return this builder for method chaining
-     */
-    public IBeanInjectableFieldBuilder<FieldType, BeanType> valueSupplier(ISupplierBuilder<BeanType, ? extends ISupplier<BeanType>> valueSupplier);
+
+    public IBeanInjectableFieldBuilder<FieldType, BeanType> ownerSupplierBuilder(ISupplierBuilder<BeanType, ? extends ISupplier<BeanType>> ownerSupplierBuilder);
 
     /**
      * Returns the field that will be injected.

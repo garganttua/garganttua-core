@@ -41,14 +41,10 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutom
             return this.built;
         }
 
-        if (this.autoDetect) {
+        if (this.autoDetect.booleanValue()) {
             log.atInfo().log("Auto-detection is enabled, performing auto-detection");
-            //try {
-                this.doAutoDetection();
-                log.atDebug().log("Auto-detection completed successfully");
-            /* } catch (DslException e) {
-                log.atWarn().log("Non-blocking issue during auto-detection", e);
-            } */
+            this.doAutoDetection();
+            log.atDebug().log("Auto-detection completed successfully");
         } else {
             log.atDebug().log("Auto-detection is disabled, skipping auto-detection");
         }

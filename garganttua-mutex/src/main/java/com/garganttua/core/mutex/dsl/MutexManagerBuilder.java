@@ -1,6 +1,5 @@
 package com.garganttua.core.mutex.dsl;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,11 +7,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.dsl.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.MultiSourceCollector;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IInjectionContext;
@@ -25,6 +23,7 @@ import com.garganttua.core.mutex.MutexManager;
 import com.garganttua.core.mutex.annotations.Mutex;
 import com.garganttua.core.mutex.annotations.MutexFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.supply.FixedSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,26 +77,30 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     private final Map<Class<? extends IMutex>, IMutexFactory> contextFactories = new HashMap<>();
     private final Map<Class<? extends IMutex>, IMutexFactory> reflexionFactories = new HashMap<>();
 
-    private MutexManagerBuilder(Optional<IInjectionContextBuilder> contextBuilder) {
+    private final MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector;
+
+    private MutexManagerBuilder() {
         super(
-            contextBuilder.isPresent() ? Set.of(IInjectionContextBuilder.class) : Set.of(),
-            Set.of()
-        );
-
-        contextBuilder.ifPresent(this::provide);
-
+                Set.of(IInjectionContextBuilder.class),
+                Set.of());
+                
+        this.collector = new MultiSourceCollector<>();
+        collector.source(new FixedSupplier<>(manualFactories), 0, SOURCE_MANUAL);
+        collector.source(new FixedSupplier<>(contextFactories), 1, SOURCE_CONTEXT);
+        collector.source(new FixedSupplier<>(reflexionFactories), 2, SOURCE_REFLECTION);
+        
         log.atInfo().log("MutexManagerBuilder initialized");
     }
 
     @Override
-    public MutexManagerBuilder withPackage(String packageName) {
+    public IMutexManagerBuilder withPackage(String packageName) {
         log.atDebug().log("Adding package: {}", packageName);
         this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
         return this;
     }
 
     @Override
-    public MutexManagerBuilder withPackages(String[] packageNames) {
+    public IMutexManagerBuilder withPackages(String[] packageNames) {
         log.atDebug().log("Adding {} packages", packageNames.length);
         Objects.requireNonNull(packageNames, "Package names cannot be null");
         for (String pkg : packageNames) {
@@ -130,7 +133,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     @Override
     protected IMutexManager doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
-        Map<Class<? extends IMutex>, IMutexFactory> factories = this.computeFactoriesForBuild();
+        Map<Class<? extends IMutex>, IMutexFactory> factories = this.collector.build();
         log.atInfo().log("Building MutexManager with {} registered factories", factories.size());
         IMutexManager manager = new MutexManager(factories);
 
@@ -141,11 +144,16 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection() method");
-
-        // Synchronize packages from InjectionContextBuilder before scanning
-        synchronizePackagesFromContext();
-
         log.atInfo().log("Auto-detecting mutex factories in {} packages", packages.size());
+
+        for (String packageName : packages) {
+            try {
+                collectFactoriesFromReflexion(packageName);
+            } catch (DslException e) {
+                log.atError().log("Failed to scan package: {}", packageName, e);
+                throw new IllegalStateException("Failed to scan package: " + packageName, e);
+            }
+        }
 
         log.atTrace().log("Exiting doAutoDetection() method");
     }
@@ -164,21 +172,8 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
                     Set.of(MutexFactory.class));
 
             context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
-                    .ifPresent(provider ->
-                        provider.queries(beanRef).forEach(f ->
-                            this.contextFactories.put(f.getClass().getAnnotation(MutexFactory.class).type(), f)
-                        )
-                    );
-        }
-
-        // Phase 2: Scanner les packages par réflexion et découvrir les classes de factories
-        for (String packageName : packages) {
-            try {
-                collectFactoriesFromReflexion(packageName);
-            } catch (DslException e) {
-                log.atError().log("Failed to scan package: {}", packageName, e);
-                throw new IllegalStateException("Failed to scan package: " + packageName, e);
-            }
+                    .ifPresent(provider -> provider.queries(beanRef).forEach(
+                            f -> this.contextFactories.put(f.getClass().getAnnotation(MutexFactory.class).type(), f)));
         }
 
         log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
@@ -187,11 +182,17 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
         log.atTrace().log("Entering doPreBuildWithDependency() with dependency: {}", dependency);
+        log.atTrace().log("Exiting doPreBuildWithDependency() method");
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+        log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
         if (dependency instanceof IInjectionContext context) {
-            // Phase 3: Instancier et enregistrer les factories découvertes
-            final Map<Class<? extends IMutex>, IMutexFactory> factoriesToBeAddedToContext =
-                    this.computeFactoriesToBeAddedToContext();
+
+            final Map<Class<? extends IMutex>, IMutexFactory> factoriesToBeAddedToContext = this
+                    .collector.buildExcludingSourceItems(Set.of(SOURCE_CONTEXT));
 
             factoriesToBeAddedToContext.forEach((type, factory) -> {
                 BeanReference<IMutexFactory> beanRef = new BeanReference<>(
@@ -204,13 +205,6 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
                         .ifPresent(provider -> provider.add(beanRef, factory));
             });
         }
-
-        log.atTrace().log("Exiting doPreBuildWithDependency() method");
-    }
-
-    @Override
-    protected void doPostBuildWithDependency(Object dependency) {
-        log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
         if (dependency instanceof IInjectionContext context) {
             log.atDebug().log("Registering IMutexManager as bean in InjectionContext");
@@ -238,77 +232,20 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         }
     }
 
-    /**
-     * Synchronizes packages from the InjectionContextBuilder to this builder's packages.
-     * This ensures that packages declared in the DI context are also scanned for
-     * mutex factories.
-     */
-    private void synchronizePackagesFromContext() {
-        log.atTrace().log("Entering synchronizePackagesFromContext()");
-
-        useDependencies.stream()
-            .filter(dep -> dep.getDependency().equals(IInjectionContextBuilder.class))
-            .findFirst()
-            .ifPresent(dep -> dep.synchronizePackagesFromContext(contextPackages -> {
-                int beforeSize = this.packages.size();
-                this.packages.addAll(contextPackages);
-                int addedCount = this.packages.size() - beforeSize;
-                if (addedCount > 0) {
-                    log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
-                }
-            }));
-
-        log.atTrace().log("Exiting synchronizePackagesFromContext()");
-    }
-
-    private ISupplier<Map<Class<? extends IMutex>, IMutexFactory>> factorySupplier(
-            Map<Class<? extends IMutex>, IMutexFactory> factories) {
-        return new ISupplier<Map<Class<? extends IMutex>, IMutexFactory>>() {
-            @Override
-            public Optional<Map<Class<? extends IMutex>, IMutexFactory>> supply() throws SupplyException {
-                return Optional.of(factories);
-            }
-
-            @Override
-            public Type getSuppliedType() {
-                throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
-            }
-        };
-    }
-
-    private Map<Class<? extends IMutex>, IMutexFactory> computeFactoriesToBeAddedToContext() {
-        MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector = new MultiSourceCollector<>();
-
-        collector.source(factorySupplier(contextFactories), 0, SOURCE_CONTEXT);
-        collector.source(factorySupplier(manualFactories), 1, SOURCE_MANUAL);
-        collector.source(factorySupplier(reflexionFactories), 2, SOURCE_REFLECTION);
-
-        return collector.buildExcludingSourceItems(Set.of(SOURCE_CONTEXT));
-    }
-
-    private Map<Class<? extends IMutex>, IMutexFactory> computeFactoriesForBuild() {
-        MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector = new MultiSourceCollector<>();
-
-        collector.source(factorySupplier(contextFactories), 0, SOURCE_CONTEXT);
-        collector.source(factorySupplier(manualFactories), 1, SOURCE_MANUAL);
-        collector.source(factorySupplier(reflexionFactories), 2, SOURCE_REFLECTION);
-
-        return collector.build();
-    }
-
     @Override
-    public IMutexManagerBuilder context(IInjectionContextBuilder context) {
-        log.atTrace().log("Entering context() method");
+    public IMutexManagerBuilder provide(IObservableBuilder<?, ?> dependency) {
+        if (dependency instanceof IInjectionContextBuilder injectionContext) {
+            this.addResolverToInjectionContext(injectionContext);
+        }
+        return super.provide(dependency);
+    }
 
+    private void addResolverToInjectionContext(IInjectionContextBuilder context) {
+        log.atTrace().log("Entering addResolverToInjectionContext() method");
         Objects.requireNonNull(context, "Context builder cannot be null");
-
-        this.provide(context);
         context.resolvers().withResolver(Mutex.class, new MutexResolver());
-
         log.atInfo().log("Context builder configured");
-
-        log.atTrace().log("Exiting context() method");
-        return this;
+        log.atTrace().log("Exiting addResolverToInjectionContext() method");
     }
 
     /**
@@ -318,34 +255,8 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
      */
     public static IMutexManagerBuilder builder() {
         log.atTrace().log("Entering builder() with no parameters");
-        IMutexManagerBuilder result = new MutexManagerBuilder(Optional.empty());
+        IMutexManagerBuilder result = new MutexManagerBuilder();
         log.atTrace().log("Exiting builder() with no parameters");
-        return result;
-    }
-
-    /**
-     * Creates a new builder instance with a dependency injection context.
-     *
-     * @param contextBuilder the context builder to use
-     * @return a new MutexManagerBuilder instance
-     */
-    public static IMutexManagerBuilder builder(IInjectionContextBuilder contextBuilder) {
-        log.atTrace().log("Entering builder() with IInjectionContextBuilder parameter");
-        IMutexManagerBuilder result = new MutexManagerBuilder(Optional.ofNullable(contextBuilder));
-        log.atTrace().log("Exiting builder() with IInjectionContextBuilder parameter");
-        return result;
-    }
-
-    /**
-     * Creates a new builder instance with an optional dependency injection context.
-     *
-     * @param contextBuilder the optional context builder to use
-     * @return a new MutexManagerBuilder instance
-     */
-    public static IMutexManagerBuilder builder(Optional<IInjectionContextBuilder> contextBuilder) {
-        log.atTrace().log("Entering builder() with Optional<IInjectionContextBuilder> parameter");
-        IMutexManagerBuilder result = new MutexManagerBuilder(contextBuilder);
-        log.atTrace().log("Exiting builder() with Optional<IInjectionContextBuilder> parameter");
         return result;
     }
 

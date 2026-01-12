@@ -41,7 +41,7 @@ public class TwoStepsRuntimeTest {
     private IRuntimesBuilder builder() {
         IInjectionContextBuilder ctx = contextBuilder();
         ctx.build().onInit().onStart();
-        return RuntimesBuilder.builder().context(ctx).autoDetect(true);
+        return RuntimesBuilder.builder().provide(ctx).autoDetect(true);
     }
 
     private IRuntime<String, String> get(IRuntimesBuilder b) {

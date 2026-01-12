@@ -12,16 +12,17 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.dsl.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.BeanStrategy;
-import com.garganttua.core.injection.Predefined;
-import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
+import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
@@ -65,7 +66,7 @@ public class ExpressionContextBuilder
     private final Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
 
     protected ExpressionContextBuilder() {
-        super(Set.of(), Set.of());
+        super(Set.of(IInjectionContextBuilder.class), Set.of());
         log.atTrace().log("Entering ExpressionBuilder constructor");
         log.atTrace().log("Exiting ExpressionBuilder constructor");
     }
@@ -80,9 +81,9 @@ public class ExpressionContextBuilder
         return new ExpressionContextBuilder();
     }
 
-
     @Override
-    public <T> IExpressionMethodBinderBuilder<T> expression(ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
+    public <T> IExpressionMethodBinderBuilder<T> expression(
+            ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
         log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
                 methodOwnerSupplier, supplied);
         Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
@@ -119,9 +120,12 @@ public class ExpressionContextBuilder
     protected IExpressionContext doBuild() throws DslException {
         CompletableFuture<ExpressionContext> futur = new CompletableFuture<>();
         try {
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man")).withDescription("the description");
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man", int.class)).withDescription("the description");
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class).method(ExpressionContext.class.getMethod("man", String.class)).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class)
+                    .method(ExpressionContext.class.getMethod("man")).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class)
+                    .method(ExpressionContext.class.getMethod("man", int.class)).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class)
+                    .method(ExpressionContext.class.getMethod("man", String.class)).withDescription("the description");
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
@@ -138,9 +142,12 @@ public class ExpressionContextBuilder
      * Automatically detects and registers methods annotated with @Expression.
      *
      * <p>
-     * This method scans the configured packages for methods with the {@code @Expression} annotation
-     * and automatically creates expression node factories for them. It includes signature-based
-     * deduplication to handle cases where the scanner might return multiple Method instances for
+     * This method scans the configured packages for methods with the
+     * {@code @Expression} annotation
+     * and automatically creates expression node factories for them. It includes
+     * signature-based
+     * deduplication to handle cases where the scanner might return multiple Method
+     * instances for
      * the same underlying method.
      * </p>
      *
@@ -148,12 +155,16 @@ public class ExpressionContextBuilder
      * The deduplication process ensures that:
      * </p>
      * <ul>
-     *   <li>Each unique method signature (class + method name + parameter types) is registered only once</li>
-     *   <li>Overloaded methods with different signatures are all registered correctly</li>
-     *   <li>Duplicate Method objects pointing to the same method are filtered out</li>
+     * <li>Each unique method signature (class + method name + parameter types) is
+     * registered only once</li>
+     * <li>Overloaded methods with different signatures are all registered
+     * correctly</li>
+     * <li>Duplicate Method objects pointing to the same method are filtered
+     * out</li>
      * </ul>
      *
-     * @throws DslException if the builder is not authorized to build (missing injection context)
+     * @throws DslException if the builder is not authorized to build (missing
+     *                      injection context)
      */
     @Override
     protected void doAutoDetection() throws DslException {
@@ -161,11 +172,11 @@ public class ExpressionContextBuilder
         synchronizePackagesFromContext();
 
         List<Method> expressions = new ArrayList<>();
-        this.packages.forEach(p ->
-            expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class))
-        );
+        this.packages
+                .forEach(p -> expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class)));
 
-        // Deduplicate methods by signature (declaring class + method name + parameter types)
+        // Deduplicate methods by signature (declaring class + method name + parameter
+        // types)
         // because distinct() only works with object identity, not method equivalence
         Map<String, Method> uniqueMethods = new LinkedHashMap<>();
         int duplicateCount = 0;
@@ -176,13 +187,14 @@ public class ExpressionContextBuilder
             }
         }
 
-        log.atDebug().log("Found {} total methods with @Expression, {} unique after deduplication ({} duplicates removed)",
+        log.atDebug().log(
+                "Found {} total methods with @Expression, {} unique after deduplication ({} duplicates removed)",
                 expressions.size(), uniqueMethods.size(), duplicateCount);
 
         // Create factories for unique methods only
-        uniqueMethods.values().forEach(m ->
-            this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType()).method(m).autoDetect(true)
-        );
+        uniqueMethods.values()
+                .forEach(m -> this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType())
+                        .method(m).autoDetect(true));
     }
 
     @Override
@@ -221,32 +233,36 @@ public class ExpressionContextBuilder
     }
 
     /**
-     * Synchronizes packages from the InjectionContextBuilder to this builder's packages.
-     * This ensures that packages declared in the DI context are also scanned for expression methods.
+     * Synchronizes packages from the InjectionContextBuilder to this builder's
+     * packages.
+     * This ensures that packages declared in the DI context are also scanned for
+     * expression methods.
      */
     private void synchronizePackagesFromContext() {
         log.atTrace().log("Entering synchronizePackagesFromContext()");
 
-        useDependencies.stream()
-            .filter(dep -> dep.getDependency().equals(IInjectionContextBuilder.class))
-            .findFirst()
-            .ifPresent(dep -> dep.synchronizePackagesFromContext(contextPackages -> {
-                int beforeSize = this.packages.size();
-                this.packages.addAll(contextPackages);
-                int addedCount = this.packages.size() - beforeSize;
-                if (addedCount > 0) {
-                    log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
-                }
-            }));
+        support.getUseDependencies().stream()
+                .filter(dep -> dep.getDependency().equals(IInjectionContextBuilder.class))
+                .findFirst()
+                .ifPresent(dep -> dep.synchronizePackagesFromContext(contextPackages -> {
+                    int beforeSize = this.packages.size();
+                    this.packages.addAll(contextPackages);
+                    int addedCount = this.packages.size() - beforeSize;
+                    if (addedCount > 0) {
+                        log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
+                    }
+                }));
 
         log.atTrace().log("Exiting synchronizePackagesFromContext()");
     }
 
     /**
-     * Builds a unique signature for a method based on its declaring class, name, and parameter types.
+     * Builds a unique signature for a method based on its declaring class, name,
+     * and parameter types.
      *
      * @param method the method to build a signature for
-     * @return a unique string signature like "com.example.Beans.bean(java.lang.Class,java.lang.String)"
+     * @return a unique string signature like
+     *         "com.example.Beans.bean(java.lang.Class,java.lang.String)"
      */
     private String buildMethodSignature(Method method) {
         StringBuilder signature = new StringBuilder();
@@ -268,8 +284,14 @@ public class ExpressionContextBuilder
     }
 
     @Override
-    public IExpressionContextBuilder context(IInjectionContextBuilder context) {
-        this.provide(context);
+    public IExpressionContextBuilder provide(IObservableBuilder<?, ?> dependency) {
+        if(dependency instanceof IInjectionContextBuilder injectionContext ){
+            this.addResolverToInjectionContext(injectionContext);
+        }
+        return super.provide(dependency);
+    }
+
+    private void addResolverToInjectionContext(IInjectionContextBuilder context) {
         context.resolvers().withResolver(Expression.class, (t, e) -> {
             Expression expression = e.getAnnotation(Expression.class);
             if (expression == null)
@@ -277,8 +299,5 @@ public class ExpressionContextBuilder
             return new Resolved(true, t, this.built.expression(expression.value()),
                     e.isAnnotationPresent(Nullable.class));
         });
-
-        return this;
     }
-
 }

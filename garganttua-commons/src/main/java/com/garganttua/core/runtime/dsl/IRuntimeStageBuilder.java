@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.runtime.IRuntimeStage;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -46,7 +47,9 @@ import com.garganttua.core.utils.OrderedMapPosition;
  * @see IRuntimeStepBuilder
  * @see IRuntimeStage
  */
-public interface IRuntimeStageBuilder<InputType, OutputType> extends IAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType> >, IContextBuilderObserver {
+public interface IRuntimeStageBuilder<InputType, OutputType> extends
+        IAutomaticLinkedBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>>,
+        IDependentBuilder<IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>> {
 
     /**
      * Creates a new step at the end of this stage.

@@ -9,12 +9,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
@@ -33,25 +37,34 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RuntimeBuilder<InputType, OutputType>
                 extends
-                AbstractAutomaticLinkedBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>
+                AbstractAutomaticLinkedDependentBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>
                 implements IRuntimeBuilder<InputType, OutputType> {
 
         private String name;
         private final OrderedMapBuilder<String, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStage<InputType, OutputType>> stages = new OrderedMapBuilder<>();
-        private IInjectionContext context;
+        private IInjectionContextBuilder injectionContextBuilder;
         private Class<InputType> inputType;
         private Class<OutputType> outputType;
         private Object objectForAutoDetection;
         private Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> presetVariables = new HashMap<>();
 
+        /*
+         * This object is set only during prebuild
+         */
+        private IInjectionContext injectionContext;
+
         public RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
                         Class<OutputType> outputType) {
-                super(Objects.requireNonNull(runtimesBuilder, "RuntimesBuilder cannot be null"));
+                super(Objects.requireNonNull(runtimesBuilder, "RuntimesBuilder cannot be null"),
+                                Set.of(
+                                                new DependencySpecBuilder(IInjectionContextBuilder.class)
+                                                                .requireForBuild().build()));
                 this.name = Objects.requireNonNull(name, "Name cannot be null");
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
 
-                log.atTrace().log("{} Initialized RuntimeBuilder constructor", logLineHeader());
+                log.atTrace().log("{} Initialized RuntimeBuilder constructor with phase-aware dependencies",
+                                logLineHeader());
                 log.atDebug().log("{} Input type: {}, Output type: {}", logLineHeader(), inputType, outputType);
                 log.atInfo().log("{} RuntimeBuilder initialized", logLineHeader());
         }
@@ -103,7 +116,6 @@ public class RuntimeBuilder<InputType, OutputType>
 
         @Override
         protected IRuntime<InputType, OutputType> doBuild() throws DslException {
-                Objects.requireNonNull(this.context, "Context cannot be null");
 
                 log.atTrace().log("{} Entering doBuild method", logLineHeader());
                 log.atInfo().log("{} Building Runtime with {} stage(s)", logLineHeader(), stages.size());
@@ -116,13 +128,12 @@ public class RuntimeBuilder<InputType, OutputType>
                 log.atDebug().log("{} Preset variables: {}", logLineHeader(), variables.keySet());
                 log.atTrace().log("{} Exiting doBuild method", logLineHeader());
 
-                return new Runtime<>(name, builtStages, this.context, this.inputType, this.outputType, variables);
+                return new Runtime<>(name, builtStages, this.injectionContext, this.inputType, this.outputType, variables);
         }
 
         @Override
         protected void doAutoDetection() {
                 Objects.requireNonNull(this.objectForAutoDetection, "objectForAutoDetection cannot be null");
-                Objects.requireNonNull(this.context, "Context cannot be null");
 
                 log.atTrace().log("{} Entering doAutoDetection method", logLineHeader());
                 log.atInfo().log("{} Performing auto-detection of stages and variables", logLineHeader());
@@ -175,15 +186,18 @@ public class RuntimeBuilder<InputType, OutputType>
                         throw new DslException(logLineHeader() + "No field annotated with @Stages found");
                 }
 
-                Map<String, List<Class<Object>>> stages = (Map<String, List<Class<Object>>>) ObjectQueryFactory
+                Map<String, List<Class<Object>>> stagesMap = (Map<String, List<Class<Object>>>) ObjectQueryFactory
                                 .objectQuery(this.objectForAutoDetection).getValue(address);
 
-                stages.entrySet().forEach(e -> {
+                stagesMap.entrySet().forEach(e -> {
                         String stageName = e.getKey();
                         List<Class<Object>> steps = e.getValue();
                         IRuntimeStageBuilder<InputType, OutputType> stageBuilder = new RuntimeStageBuilder<>(this, name,
                                         stageName, steps).autoDetect(true);
-                        stageBuilder.handle(this.context);
+                        // Provide dependency to sub-builders created during auto-detection
+                        if (this.injectionContextBuilder != null) {
+                                stageBuilder.provide(this.injectionContextBuilder);
+                        }
                         this.stages.put(stageName, stageBuilder);
 
                         log.atDebug().log("{} Auto-detected stage [{}] with steps: {}", logLineHeader(), stageName,
@@ -214,12 +228,11 @@ public class RuntimeBuilder<InputType, OutputType>
         }
 
         @Override
-        public void handle(IInjectionContext context) {
-                log.atTrace().log("{} Entering handle method", logLineHeader());
-                this.context = Objects.requireNonNull(context, "Context cannot be null");
-                this.stages.values().forEach(s -> s.handle(context));
-                log.atTrace().log("{} Context handled for all stages", logLineHeader());
-                log.atTrace().log("{} Exiting handle method", logLineHeader());
+        public IRuntimeBuilder<InputType, OutputType> provide(IObservableBuilder<?, ?> dependency) throws DslException {
+                if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
+                        this.injectionContextBuilder = injCtxBuilder;
+                }
+                return super.provide(dependency);
         }
 
         @Override
@@ -248,5 +261,30 @@ public class RuntimeBuilder<InputType, OutputType>
                 this.objectForAutoDetection = Objects.requireNonNull(runtimeDefinitionObject,
                                 "runtimeDefinitionObject cannot be null");
                 return this;
+        }
+
+        @Override
+        protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+                log.atTrace().log("{} Entering doAutoDetectionWithDependency() with dependency: {}", logLineHeader(),
+                                dependency);
+                log.atTrace().log("{} Exiting doAutoDetectionWithDependency() method", logLineHeader());
+        }
+
+        @Override
+        protected void doPreBuildWithDependency(Object dependency) {
+                log.atTrace().log("{} Entering doPreBuildWithDependency() with dependency: {}", logLineHeader(),
+                                dependency);
+                if (dependency instanceof IInjectionContext ic)
+                        this.injectionContext = ic;
+
+                log.atTrace().log("{} Exiting doPreBuildWithDependency() method", logLineHeader());
+        }
+
+        @Override
+        protected void doPostBuildWithDependency(Object dependency) {
+                log.atTrace().log("{} Entering doPostBuildWithDependency() with dependency: {}", logLineHeader(),
+                                dependency);
+                // No post-build operations needed with dependencies for RuntimeBuilder
+                log.atTrace().log("{} Exiting doPostBuildWithDependency() method", logLineHeader());
         }
 }

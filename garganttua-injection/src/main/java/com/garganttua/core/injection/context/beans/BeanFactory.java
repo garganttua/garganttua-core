@@ -85,7 +85,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private void doInjection(Bean onBean) {
 		log.atTrace().log("Performing field injection for bean: {}", onBean);
 		this.definition.injectableFields()
-				.forEach(builder -> builder.valueSupplier(new FixedSupplierBuilder<>(onBean)).build().setValue());
+				.forEach(builder -> builder.ownerSupplierBuilder(new FixedSupplierBuilder<>(onBean)).build().setValue());
 		log.atDebug().log("Field injection completed for bean: {}", onBean);
 	}
 
@@ -111,7 +111,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private Optional<Bean> executeConstructorBinder() throws DiException {
 		log.atTrace().log("Executing constructor binder for definition: {}", definition);
 		try {
-			Optional<Bean> result = (Optional<Bean>) this.definition.constructorBinder().get().execute();
+			Optional<Bean> result = this.definition.constructorBinder().get().execute();
 			log.atDebug().log("Constructor binder result: {}", result.orElse(null));
 			return result;
 		} catch (ReflectionException e) {

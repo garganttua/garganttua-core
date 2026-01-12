@@ -1,10 +1,13 @@
-package com.garganttua.core.dsl;
+package com.garganttua.core.dsl.dependency;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IObservableBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +30,75 @@ import lombok.extern.slf4j.Slf4j;
  *   <li><b>isReady()</b>: Returns true when builder is not null AND builtObject is not null (dependency fully resolved)</li>
  * </ul>
  *
+ * <h2>Dependency Validation Rules</h2>
+ * <p>
+ * The framework enforces strict validation rules to ensure dependencies are properly initialized:
+ * </p>
+ * <table border="1">
+ *   <caption>Dependency Validation Behavior</caption>
+ *   <tr>
+ *     <th>Dependency Type</th>
+ *     <th>provide() called?</th>
+ *     <th>Builder built?</th>
+ *     <th>Result</th>
+ *     <th>Validation Phase</th>
+ *   </tr>
+ *   <tr>
+ *     <td><b>USE</b> (optional)</td>
+ *     <td>No</td>
+ *     <td>N/A</td>
+ *     <td>OK - Optional dependency not provided</td>
+ *     <td>N/A</td>
+ *   </tr>
+ *   <tr>
+ *     <td><b>USE</b> (optional)</td>
+ *     <td>Yes</td>
+ *     <td>Yes</td>
+ *     <td>OK - Optional dependency ready</td>
+ *     <td>Both phases</td>
+ *   </tr>
+ *   <tr>
+ *     <td><b>USE</b> (optional)</td>
+ *     <td>Yes</td>
+ *     <td>No</td>
+ *     <td>DslException - Provided dependency must be built</td>
+ *     <td>Both phases</td>
+ *   </tr>
+ *   <tr>
+ *     <td><b>REQUIRE</b> (required)</td>
+ *     <td>No</td>
+ *     <td>N/A</td>
+ *     <td>DslException - Required dependency missing</td>
+ *     <td>Both phases</td>
+ *   </tr>
+ *   <tr>
+ *     <td><b>REQUIRE</b> (required)</td>
+ *     <td>Yes</td>
+ *     <td>Yes</td>
+ *     <td>OK - Required dependency ready</td>
+ *     <td>Both phases</td>
+ *   </tr>
+ *   <tr>
+ *     <td><b>REQUIRE</b> (required)</td>
+ *     <td>Yes</td>
+ *     <td>No</td>
+ *     <td>DslException - Required dependency not built</td>
+ *     <td>Both phases</td>
+ *   </tr>
+ * </table>
+ *
+ * <p>
+ * <b>Important:</b> For the AUTO_DETECT phase, these validation rules only apply when the builder
+ * has {@code autoDetect(true)} enabled. Builders that don't use auto-detection skip AUTO_DETECT
+ * phase validation.
+ * </p>
+ *
+ * <h3>Validation Methods</h3>
+ * <ul>
+ *   <li>{@link #validateUseDependency()} - Validates optional (USE) dependencies</li>
+ *   <li>{@link #validateRequiredDependency(String)} - Validates required (REQUIRE) dependencies</li>
+ * </ul>
+ *
  * @param <Builder> the type of the observable builder being depended upon
  * @param <Built> the type of object built by the dependency
  * @since 2.0.0-ALPHA01
@@ -39,6 +111,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     private static final String LOG_ABSENT = "absent";
 
     private final Class<Builder> dependencyClass;
+    private final DependencySpec spec;
     private Builder builder;
     private Built builtObject;
     private final Set<String> packages = new HashSet<>();
@@ -47,14 +120,35 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      * Creates a new builder dependency for the specified class.
      *
      * @param dependencyClass the class of the builder being depended upon
+     * @deprecated Use {@link #BuilderDependency(Class, DependencySpec)} instead
      */
+    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
     @SuppressWarnings("unchecked")
     public BuilderDependency(Class<? extends IObservableBuilder<?, ?>> dependencyClass) {
-        log.atTrace().log("Creating BuilderDependency for class: {}", dependencyClass);
+        log.atTrace().log("Creating BuilderDependency for class: {} (deprecated)", dependencyClass);
         this.dependencyClass = (Class<Builder>) Objects.requireNonNull(dependencyClass,
             "Dependency class cannot be null");
+        // Default to BOTH phases when using deprecated constructor
+        this.spec = new DependencySpec(dependencyClass, DependencyPhase.BOTH, false);
         log.atDebug().log("BuilderDependency created for: {}, isReady: {}, isEmpty: {}",
             this.dependencyClass.getName(), isReady(), isEmpty());
+    }
+
+    /**
+     * Creates a new phase-aware builder dependency.
+     *
+     * @param dependencyClass the class of the builder being depended upon
+     * @param spec the dependency specification including phase information
+     */
+    @SuppressWarnings("unchecked")
+    public BuilderDependency(Class<? extends IObservableBuilder<?, ?>> dependencyClass, DependencySpec spec) {
+        log.atTrace().log("Creating phase-aware BuilderDependency for class: {} with phase: {}",
+            dependencyClass, spec.phase());
+        this.dependencyClass = (Class<Builder>) Objects.requireNonNull(dependencyClass,
+            "Dependency class cannot be null");
+        this.spec = Objects.requireNonNull(spec, "Dependency spec cannot be null");
+        log.atDebug().log("BuilderDependency created for: {}, phase: {}, isReady: {}, isEmpty: {}",
+            this.dependencyClass.getName(), spec.phase(), isReady(), isEmpty());
     }
 
     /**
@@ -64,15 +158,15 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      * @param dependency the observable builder providing the dependency
      */
     @SuppressWarnings("unchecked")
-    void handle(IObservableBuilder<?, ?> dependency) {
-        log.atTrace().log("Handling dependency provision: {}", dependency);
-        if (!dependencyClass.isAssignableFrom(dependency.getClass())) {
+    void handle(IObservableBuilder<?, ?> observableBuilder) {
+        log.atTrace().log("Handling observableBuilder provision: {}", observableBuilder);
+        if (!dependencyClass.isAssignableFrom(observableBuilder.getClass())) {
             log.atWarn().log("Dependency type mismatch: expected {}, got {}",
-                dependencyClass.getName(), dependency.getClass().getName());
+                dependencyClass.getName(), observableBuilder.getClass().getName());
             return;
         }
 
-        this.builder = (Builder) dependency;
+        this.builder = (Builder) observableBuilder;
         try {
             this.builtObject = this.builder.build();
             log.atInfo().log("Dependency ready: {} -> {}, isReady: {}", 
@@ -218,5 +312,121 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         log.atTrace().log("Synchronizing packages from context");
         packageConsumer.accept(packages);
         log.atDebug().log("Packages synchronized: {}", packages.size());
+    }
+
+    /**
+     * Gets the dependency specification containing phase information.
+     *
+     * @return the dependency specification
+     */
+    public DependencySpec getSpec() {
+        return spec;
+    }
+
+    /**
+     * Checks if this dependency is needed during auto-detection phase.
+     *
+     * @return true if needed during auto-detection
+     */
+    public boolean isNeededForAutoDetect() {
+        return spec.isNeededForAutoDetect();
+    }
+
+    /**
+     * Checks if this dependency is needed during build phase.
+     *
+     * @return true if needed during build
+     */
+    public boolean isNeededForBuild() {
+        return spec.isNeededForBuild();
+    }
+
+    /**
+     * Checks if this dependency is required during auto-detection phase.
+     *
+     * @return true if required during auto-detection
+     */
+    public boolean isRequiredForAutoDetect() {
+        return spec.isRequiredForAutoDetect();
+    }
+
+    /**
+     * Checks if this dependency is required during build phase.
+     *
+     * @return true if required during build
+     */
+    public boolean isRequiredForBuild() {
+        return spec.isRequiredForBuild();
+    }
+
+    /**
+     * Checks if this dependency is optional during auto-detection phase.
+     *
+     * @return true if optional during auto-detection
+     */
+    public boolean isOptionalForAutoDetect() {
+        return spec.isOptionalForAutoDetect();
+    }
+
+    /**
+     * Checks if this dependency is optional during build phase.
+     *
+     * @return true if optional during build
+     */
+    public boolean isOptionalForBuild() {
+        return spec.isOptionalForBuild();
+    }
+
+    @Override
+    public void requireNotEmpty() {
+        if(this.isEmpty())
+            throw new IllegalStateException("Dependency is empty");
+    }
+
+    /**
+     * Validates that if a dependency was provided via provide(), it must be built.
+     * This applies to "use" (optional) dependencies.
+     *
+     * @throws DslException if provide() was called but the builder is not built
+     */
+    public void validateUseDependency() throws DslException {
+        // If builder was provided but not built, throw exception
+        if (builder != null && builtObject == null) {
+            String errorMsg = String.format(
+                "Dependency %s was provided via provide() but has not been built. " +
+                "Optional dependencies (use) must be built before they can be used.",
+                dependencyClass.getName());
+            log.atError().log(errorMsg);
+            throw new DslException(errorMsg);
+        }
+    }
+
+    /**
+     * Validates that a required dependency has been provided and built.
+     * This applies to "require" (required) dependencies.
+     *
+     * @param phase the phase being validated (for error messaging)
+     * @throws DslException if the required dependency is not provided or not built
+     */
+    public void validateRequiredDependency(String phase) throws DslException {
+        // If neither builder nor built object provided, throw exception
+        if (isEmpty()) {
+            String errorMsg = String.format(
+                "Required dependency %s for phase %s was not provided. " +
+                "Required dependencies must be provided via provide() and built.",
+                dependencyClass.getName(), phase);
+            log.atError().log(errorMsg);
+            throw new DslException(errorMsg);
+        }
+
+        // If builder provided but not built, throw exception
+        if (builder != null && builtObject == null) {
+            String errorMsg = String.format(
+                "Required dependency %s for phase %s was provided but not built. " +
+                "The dependency builder must be built before use.",
+                dependencyClass.getName(), phase);
+            log.atError().log(errorMsg);
+            throw new DslException(errorMsg);
+        }
     }
 }

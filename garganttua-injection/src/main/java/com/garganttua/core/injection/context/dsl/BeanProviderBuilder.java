@@ -13,24 +13,26 @@ import java.util.stream.Collectors;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.MultiSourceCollector;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanProvider;
-import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.beans.BeanProvider;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BeanProviderBuilder
-		extends AbstractAutomaticLinkedBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
+		extends AbstractAutomaticLinkedDependentBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
 		implements IBeanProviderBuilder {
 
 	private static final String SOURCE_MANUAL = "manual";
@@ -41,13 +43,11 @@ public class BeanProviderBuilder
 	private Set<String> packages = new HashSet<>();
 
 	@Setter
-	private IInjectableElementResolver resolver;
-
-	@Setter
 	private Set<Class<? extends Annotation>> qualifierAnnotations;
+	private IInjectableElementResolverBuilder resolverBuilder;
 
 	public BeanProviderBuilder(IInjectionContextBuilder link) {
-		super(link);
+		super(link, Set.of(new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build()));
 		log.atTrace().log("Entering BeanProviderBuilder constructor with link: {}", link);
 		log.atTrace().log("BeanProviderBuilder initialized with link: {}", link);
 	}
@@ -78,7 +78,7 @@ public class BeanProviderBuilder
 		try {
 			provider = new BeanProvider(allBuilders.values().stream()
 					.map(IBeanFactoryBuilder::build)
-					.collect(Collectors.toList()), Optional.ofNullable(this.resolver), true);
+					.collect(Collectors.toList()), Optional.ofNullable(this.resolverBuilder), true);
 			log.atInfo().log("IBeanProvider successfully built with {} beans", provider.size());
 		} catch (Exception e) {
 			log.atError().log("Failed to build IBeanProvider. Error: {}", e.getMessage(), e);
@@ -101,7 +101,7 @@ public class BeanProviderBuilder
 						try {
 							log.atTrace().log("Detected @Singleton class: {}", singletonClass.getSimpleName());
 							this.autoDetectedBeanFactoryBuilders.put(singletonClass,
-									this.createBeanFactory(qualifierAnnotations, singletonClass, resolver)
+									this.createBeanFactory(qualifierAnnotations, singletonClass)
 											.strategy(BeanStrategy.singleton));
 						} catch (DslException e) {
 							log.atError().log("Failed to create singleton bean factory for {}",
@@ -115,7 +115,7 @@ public class BeanProviderBuilder
 						try {
 							log.atTrace().log("Detected @Prototype class: {}", prototypeClass.getSimpleName());
 							this.autoDetectedBeanFactoryBuilders.put(prototypeClass,
-									this.createBeanFactory(qualifierAnnotations, prototypeClass, resolver)
+									this.createBeanFactory(qualifierAnnotations, prototypeClass)
 											.strategy(BeanStrategy.prototype));
 						} catch (DslException e) {
 							log.atError().log("Failed to create prototype bean factory for {}",
@@ -131,7 +131,7 @@ public class BeanProviderBuilder
 								log.atTrace().log("Detected @Qualifier class: {} with qualifier {}",
 										qualifiedClass.getSimpleName(), qualifierAnnotation.getSimpleName());
 								this.autoDetectedBeanFactoryBuilders.put(qualifiedClass,
-										this.createBeanFactory(qualifierAnnotations, qualifiedClass, resolver)
+										this.createBeanFactory(qualifierAnnotations, qualifiedClass)
 												.strategy(BeanStrategy.singleton));
 							} catch (DslException e) {
 								log.atError().log("Failed to create bean factory for qualifier class {}",
@@ -144,15 +144,15 @@ public class BeanProviderBuilder
 	}
 
 	private IBeanFactoryBuilder<?> createBeanFactory(Set<Class<? extends Annotation>> qualifierAnnotations,
-			Class<?> beanClass,
-			IInjectableElementResolver resolver) throws DslException {
+			Class<?> beanClass) throws DslException {
 		log.atTrace().log("Entering createBeanFactory() for class: {}", beanClass.getSimpleName());
 
 		Set<Class<? extends Annotation>> classQualifiers = qualifierAnnotations.stream()
 				.filter(qualifier -> beanClass.isAnnotationPresent(qualifier))
 				.collect(Collectors.toSet());
 
-		IBeanFactoryBuilder<?> builder = new BeanFactoryBuilder<>(beanClass, resolver)
+		IBeanFactoryBuilder<?> builder = new BeanFactoryBuilder<>(beanClass)
+				.provide(this.resolverBuilder)
 				.autoDetect(true)
 				.qualifiers(classQualifiers);
 
@@ -210,4 +210,24 @@ public class BeanProviderBuilder
 
 		return collector.build();
 	}
+
+	@Override
+	protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+	}
+
+	@Override
+	protected void doPreBuildWithDependency(Object dependency) {
+	}
+
+	@Override
+	protected void doPostBuildWithDependency(Object dependency) {
+	}
+
+	@Override
+    public IBeanProviderBuilder provide(IObservableBuilder<?, ?> dependency) {
+        if (dependency instanceof IInjectableElementResolverBuilder rb) {
+            this.resolverBuilder = rb;
+        }
+        return super.provide(dependency);
+    }
 }

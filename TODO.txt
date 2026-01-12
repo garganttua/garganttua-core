@@ -2,8 +2,7 @@
 1/ implement auto detection for @Resolvers
 2/ implement auto detection for @ChildContext => register a new child context factory
 3/ Maybe remove the function context(IDiContextBuilder context) in IRuntimesBuilder => this method is used to register the runtime resolvers and child context factory. If the todos 1/ an 2/ are done, then this method is obsoleth an can be deleted in favor of auto-detection
-4/ Create a @ScanPackage() auto detected by builders that implements IPackageableBuilder in order to auto-detect packages to scan for reflection
-5/ Implements Locks and mutex for runtime
+4/ Create a @ScanPackage() auto detected by builders that implements IPackageableBuilder in order to auto-detect packages to scan for reflection, faire une classe PackageAutoDetect dans DSL
 6/ Implements distributed locks and mutex system over redis in a binding module
 7/ Add built-in conditions as expression nodes
 8/ Implémenter un nativeConfigurationbuilder pour garganttua-expression

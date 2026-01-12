@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
-import com.garganttua.core.nativve.INativeConfiguration;
 import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.utils.Copyable;
 

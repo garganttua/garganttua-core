@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IInjectionContext;
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
@@ -54,10 +52,9 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     protected RuntimeStepMethodBuilder(String runtimeName,
             String stageName, String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
-            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier,
-            IInjectableElementResolver resolver)
+            ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier)
             throws DslException {
-        super(Optional.ofNullable(resolver), up, supplier);
+        super(up, supplier);
         log.atTrace().log(
                 "Entering RuntimeStepMethodBuilder constructor with runtimeName={}, stageName={}, stepName={}",
                 runtimeName, stageName, stepName);
@@ -118,7 +115,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     }
 
     @Override
-    public RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
+    public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         log.atTrace().log("Entering output method with value={}", output);
         this.output = Objects.requireNonNull(output, "Output cannot be null");
         log.atInfo().log("Output set to {}", output);
@@ -133,14 +130,6 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
                 .anyMatch(e -> e.isAssignableFrom(exception));
         log.atDebug().log("isThrown result for {}: {}", exception.getSimpleName(), thrown);
         return thrown;
-    }
-
-    @Override
-    public void handle(IInjectionContext context) {
-        log.atTrace().log("Entering handle method");
-        Objects.requireNonNull(context, "Context cannot be null");
-        this.setResolver(context);
-        log.atInfo().log("Context handled and resolver set");
     }
 
     @Override

@@ -16,14 +16,16 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 
-import com.garganttua.core.dsl.AbstractAutomaticBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
-import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.beans.BeanFactory;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
@@ -31,7 +33,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
+public class BeanFactoryBuilder<Bean>
+        extends AbstractAutomaticDependentBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
 
     private Bean bean = null;
@@ -43,31 +46,11 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     private List<IBeanInjectableFieldBuilder<?, Bean>> injectableFields = new ArrayList<>();
 
     private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
-    private IInjectableElementResolver resolver;
+    private IInjectableElementResolverBuilder resolverBuilder;
 
     public BeanFactoryBuilder(Class<Bean> beanClass) {
-        this(beanClass, Optional.empty());
-        log.atTrace().log("Entered BeanFactoryBuilder constructor with beanClass: {}", beanClass);
-        log.atTrace().log("Exiting BeanFactoryBuilder constructor");
-    }
-
-    public BeanFactoryBuilder(Class<Bean> beanClass, Optional<IInjectableElementResolver> resolver) {
-        super();
-        log.atTrace().log("Entered BeanFactoryBuilder constructor with optional resolver: {}", resolver);
+        super(Set.of(new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build()));
         this.beanClass = Objects.requireNonNull(beanClass, "Bean class cannot be null");
-        Objects.requireNonNull(resolver, "Registry cannot be null");
-        this.resolver = resolver.orElse(null);
-        log.atInfo().log("BeanFactoryBuilder initialized for beanClass: {} with resolver: {}", beanClass,
-                this.resolver);
-        log.atTrace().log("Exiting BeanFactoryBuilder constructor");
-    }
-
-    public BeanFactoryBuilder(Class<Bean> beanClass, IInjectableElementResolver resolver) {
-        super();
-        log.atTrace().log("Entered BeanFactoryBuilder constructor with resolver: {}", resolver);
-        this.beanClass = Objects.requireNonNull(beanClass, "Bean class cannot be null");
-        this.resolver = Objects.requireNonNull(resolver, "Registry cannot be null");
-        log.atInfo().log("BeanFactoryBuilder initialized for beanClass: {} with resolver: {}", beanClass, resolver);
         log.atTrace().log("Exiting BeanFactoryBuilder constructor");
     }
 
@@ -93,37 +76,27 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection for beanClass: {}", this.beanClass);
-        if (this.resolver == null) {
-            log.atError().log("Cannot do auto detection without registry");
-            throw new DslException("Cannot do auto detection without registry");
-        }
         if (this.constructorBinderBuilder == null) {
             this.lookForConstructor();
         }
         this.lookForPostConstructMethods();
-        this.lookForInjectableFields();
         log.atTrace().log("Exiting doAutoDetection");
     }
 
-    private void lookForInjectableFields() {
+    private void lookForInjectableFields(IInjectableElementResolver resolver) {
         log.atTrace().log("Looking for injectable fields in beanClass: {}", this.beanClass);
-        Arrays.stream(this.beanClass.getDeclaredFields()).forEach(this::registerInjectableField);
+        Arrays.stream(this.beanClass.getDeclaredFields()).forEach(f -> this.registerInjectableField(f, resolver));
         log.atTrace().log("Completed looking for injectable fields");
     }
 
-    private void registerInjectableField(Field field) {
-        try {
-            log.atTrace().log("Registering injectable field: {}", field.getName());
-            this.resolver.resolve(field.getType(), field).ifResolved((b, n) -> {
-                IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
-                        field.getType()).field(field).withValue(b).allowNull(n).autoDetect(true);
-                this.injectableFields.add(injectable);
-                log.atInfo().log("Registered injectable field: {} with builder: {}", field.getName(), b);
-            });
-        } catch (DiException e) {
-            log.atWarn().log("Failed to register injectable field: {} due to {}", field.getName(), e.getMessage());
-            throw new RuntimeException(e);
-        }
+    private void registerInjectableField(Field field, IInjectableElementResolver resolver) {
+        log.atTrace().log("Registering injectable field: {}", field.getName());
+        resolver.resolve(field.getType(), field).ifResolved((b, n) -> {
+            IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
+                    field.getType()).field(field).withValue(b).allowNull(n).autoDetect(true);
+            this.injectableFields.add(injectable);
+            log.atInfo().log("Registered injectable field: {} with builder: {}", field.getName(), b);
+        });
     }
 
     private void lookForPostConstructMethods() {
@@ -150,7 +123,8 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
         try {
             log.atTrace().log("Registering post construct method: {}", method.getName());
             IBeanPostConstructMethodBinderBuilder<Bean> methodBinderBuilder = new BeanPostConstructMethodBinderBuilder<>(
-                    this, this, Optional.ofNullable(this.resolver))
+                    this, this)
+                    .provide(this.resolverBuilder)
                     .autoDetect(true)
                     .method(method)
                     .withReturn(Void.class);
@@ -180,8 +154,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
                 .findFirst()
                 .ifPresent(constructor -> {
                     log.atInfo().log("Found @Inject constructor: {}", constructor);
-                    this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass,
-                            Optional.ofNullable(this.resolver))
+                    this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass).provide(this.resolverBuilder)
                             .autoDetect(true);
 
                     Arrays.stream(constructor.getParameters())
@@ -210,8 +183,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     @Override
     public IBeanConstructorBinderBuilder<Bean> constructor() {
         if (this.constructorBinderBuilder == null) {
-            this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass,
-                    Optional.ofNullable(this.resolver));
+            this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass);
             log.atInfo().log("Initialized constructorBinderBuilder for beanClass: {}", this.beanClass);
         }
         return this.constructorBinderBuilder;
@@ -238,7 +210,7 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
     @Override
     public IBeanPostConstructMethodBinderBuilder<Bean> postConstruction() throws DslException {
         IBeanPostConstructMethodBinderBuilder<Bean> builder = new BeanPostConstructMethodBinderBuilder<>(this,
-                this, Optional.ofNullable(this.resolver));
+                this);
         this.postConstructMethodBinderBuilders.add(builder);
         log.atInfo().log("Added post construct method builder: {}", builder);
         return builder;
@@ -293,11 +265,36 @@ public class BeanFactoryBuilder<Bean> extends AbstractAutomaticBuilder<IBeanFact
 
     @Override
     public IBeanFactoryBuilder<Bean> bean(Bean bean) throws DslException {
-        if( this.strategy != BeanStrategy.singleton ){
+        if (this.strategy != BeanStrategy.singleton) {
             throw new DslException("Only singleton strategy supports direct bean assignment");
         }
         this.bean = Objects.requireNonNull(bean, "Bean instance cannot be null");
         return this;
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+        if (dependency instanceof IInjectableElementResolver resolver) {
+            this.lookForInjectableFields(resolver);
+        }
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+
+    }
+
+    @Override
+    public IBeanFactoryBuilder<Bean> provide(IObservableBuilder<?, ?> dependency) {
+        if (dependency instanceof IInjectableElementResolverBuilder rb) {
+            this.resolverBuilder = rb;
+        }
+        return super.provide(dependency);
     }
 
 }

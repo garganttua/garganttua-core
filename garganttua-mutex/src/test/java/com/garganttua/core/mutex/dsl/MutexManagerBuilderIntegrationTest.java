@@ -43,7 +43,7 @@ class MutexManagerBuilderIntegrationTest {
                 contextBuilder.build().onInit().onStart();
 
                 // Create mutex manager with auto-detection
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures")
                                 .autoDetect(true)
                                 .build();
@@ -60,7 +60,7 @@ class MutexManagerBuilderIntegrationTest {
                 contextBuilder.build().onInit().onStart();
 
                 // Build manager with auto-detection
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures")
                                 .autoDetect(true)
                                 .build();
@@ -85,7 +85,7 @@ class MutexManagerBuilderIntegrationTest {
                 contextBuilder.build().onInit().onStart();
 
                 // Build manager with both manual and auto-detected factories
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex")
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures")
                                 .autoDetect(true)
@@ -113,7 +113,7 @@ class MutexManagerBuilderIntegrationTest {
                 contextBuilder.build().onInit().onStart();
 
                 // Only scan the fixtures package
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex.dsl.fixtures")
                                 .autoDetect(true)
                                 .build();
@@ -136,7 +136,7 @@ class MutexManagerBuilderIntegrationTest {
 
                 contextBuilder.build().onInit().onStart();
 
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex")
                                 .autoDetect(true)
                                 .build();
@@ -159,7 +159,7 @@ class MutexManagerBuilderIntegrationTest {
 
                 contextBuilder.build().onInit().onStart();
 
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackage("com.garganttua.core.mutex")
                                 .autoDetect(true)
                                 .build();
@@ -183,7 +183,7 @@ class MutexManagerBuilderIntegrationTest {
 
                 contextBuilder.build().onInit().onStart();
 
-                IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+                IMutexManager manager = MutexManagerBuilder.builder()
                                 .withPackages(packages)
                                 .autoDetect(true)
                                 .build();

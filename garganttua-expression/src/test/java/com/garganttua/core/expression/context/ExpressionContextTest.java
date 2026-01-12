@@ -99,7 +99,7 @@ public class ExpressionContextTest {
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
-        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).context(injectionContextBuilder);
+        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
 
         injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();

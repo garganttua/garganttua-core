@@ -3,10 +3,14 @@ package com.garganttua.core.runtime.dsl;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
-import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.injection.IInjectableElementResolverBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntimeStep;
@@ -23,23 +27,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>
         extends
-        AbstractAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>
+        AbstractAutomaticLinkedDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>
         implements IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
     private String stepName;
     private String stageName;
     private String runtimeName;
     private ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier;
-    private IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> methodBuilder;
+    private RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> methodBuilder;
     private Class<ExecutionReturn> executionReturn;
-    private IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallbackBuilder;
-    private IInjectionContext context;
+    private RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallbackBuilder;
+    private IInjectableElementResolverBuilder resolverBuilder;
+    private IInjectionContextBuilder injectionContextBuilder;
 
     public RuntimeStepBuilder(RuntimeStageBuilder<InputType, OutputType> runtimeStageBuilder, String runtimeName,
             String stageName, String stepName,
             Class<ExecutionReturn> executionReturn,
             ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier) {
-        super(runtimeStageBuilder);
+        super(runtimeStageBuilder, Set.of(
+                new DependencySpecBuilder(IInjectionContextBuilder.class).useForAutoDetect().build()));
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
         this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
@@ -55,8 +61,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
             throws DslException {
         log.atTrace().log("{} Entering method() method", logLineHeader());
         if (this.methodBuilder == null) {
-            this.methodBuilder = new RuntimeStepMethodBuilder<>(runtimeName, stageName, stepName, this, supplier,
-                    context);
+            this.methodBuilder = new RuntimeStepMethodBuilder<>(runtimeName, stageName, stepName, this, supplier);
             this.methodBuilder.withReturn(executionReturn);
             log.atInfo().log("{} Method builder created", logLineHeader());
         } else {
@@ -71,8 +76,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
             throws DslException {
         log.atTrace().log("{} Entering fallBack() method", logLineHeader());
         if (this.fallbackBuilder == null) {
-            this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(runtimeName, stageName, stepName, this, supplier,
-                    context);
+            this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(runtimeName, stageName, stepName, this, supplier);
             this.fallbackBuilder.withReturn(executionReturn);
             log.atInfo().log("{} Fallback builder created", logLineHeader());
         } else {
@@ -96,7 +100,8 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
                 FallBack.class);
         if (fallbackMethod != null) {
             try {
-                fallBack().autoDetect(true).method(fallbackMethod).withReturn(executionReturn).handle(context);
+                fallBack().provide(this.resolverBuilder).autoDetect(true).method(fallbackMethod)
+                        .withReturn(executionReturn);
 
                 if (fallbackMethod.getAnnotation(Output.class) != null) {
                     fallBack().output(true);
@@ -128,7 +133,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
                     " does not declare any @Operation method");
         }
         this.executionReturn = (Class<ExecutionReturn>) method.getReturnType();
-        method().autoDetect(true).method(method).withReturn(executionReturn).handle(context);
+        this.method().provide(this.resolverBuilder).autoDetect(true).method(method).withReturn(executionReturn);
 
         log.atInfo().log("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
                 executionReturn.getSimpleName());
@@ -157,24 +162,29 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         return step;
     }
 
-    @Override
-    public void handle(IInjectionContext context) {
-        log.atTrace().log("{} Entering handle() method", logLineHeader());
-
-        this.context = Objects.requireNonNull(context, "Context cannot be null");
-        if (methodBuilder != null) {
-            methodBuilder.handle(context);
-            log.atDebug().log("{} Handled method builder", logLineHeader());
-        }
-        if (fallbackBuilder != null) {
-            fallbackBuilder.handle(context);
-            log.atDebug().log("{} Handled fallback builder", logLineHeader());
-        }
-
-        log.atTrace().log("{} Context handled for step", logLineHeader());
-    }
-
     private String logLineHeader() {
         return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "] ";
+    }
+
+    @Override
+    public IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> provide(
+            IObservableBuilder<?, ?> dependency) throws DslException {
+        if (dependency instanceof IInjectionContextBuilder icb) {
+            this.injectionContextBuilder = icb;
+            this.resolverBuilder = icb.resolvers();
+        }
+        return super.provide(dependency);
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
     }
 }

@@ -1,61 +1,57 @@
 package com.garganttua.core.injection.context.dsl;
 
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.dsl.dependency.DependentBuilderSupport;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Builder extends IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>>, Link>
-        extends AbstractConstructorBinderBuilder<Constructed, Builder, Link> {
+        extends AbstractConstructorBinderBuilder<Constructed, Builder, Link>
+        implements IDependentBuilder<Builder, IConstructorBinder<Constructed>> {
 
-    @Setter
-    private IInjectableElementResolver resolver;
+    private DependentBuilderSupport support;
 
-    protected AbstractConstructorArgInjectBinderBuilder(IInjectableElementResolver resolver, Link link,
+    protected AbstractConstructorArgInjectBinderBuilder(Link link,
             Class<Constructed> construcetd) {
         super(link, construcetd);
         log.atTrace().log(
-                "Entering AbstractConstructorArgInjectBinderBuilder constructor with resolver: {}, link: {}, constructed class: {}",
-                resolver, link, construcetd);
-        this.resolver = Objects.requireNonNull(resolver, "Injectable builder Registry cannot be null");
-        log.atInfo().log("AbstractConstructorArgInjectBinderBuilder initialized with resolver: {}", resolver);
-        log.atTrace().log("Exiting constructor");
-    }
-
-    protected AbstractConstructorArgInjectBinderBuilder(Optional<IInjectableElementResolver> resolver, Link link,
-            Class<Constructed> construcetd) {
-        super(link, construcetd);
-        log.atTrace().log(
-                "Entering AbstractConstructorArgInjectBinderBuilder constructor with optional resolver: {}, link: {}, constructed class: {}",
-                resolver, link, construcetd);
-        Objects.requireNonNull(resolver, "Injectable builder Registry cannot be null");
-        this.resolver = resolver.orElse(null);
-        log.atInfo().log("AbstractConstructorArgInjectBinderBuilder initialized with resolver: {}", this.resolver);
+                "Entering AbstractConstructorArgInjectBinderBuilder constructor with link: {}, constructed class: {}",
+                link, construcetd);
+        this.support = new DependentBuilderSupport(Set.of(new DependencySpec(IInjectableElementResolverBuilder.class, DependencyPhase.AUTO_DETECT, true)));
+        log.atInfo().log("AbstractConstructorArgInjectBinderBuilder initialized");
         log.atTrace().log("Exiting constructor");
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection");
-        if (this.resolver == null) {
-            log.atError().log("Cannot do auto detection without resolver");
-            throw new DslException("Cannot do auto detection without resolver");
-        }
+        this.support.processAutoDetectionWithDependencies(this::doAutoDetectionWithDependency);
+        log.atTrace().log("Exiting doAutoDetection");
+    }
 
+    private void doAutoDetectionWithDependency(Object dependency){
+        if( dependency instanceof IInjectableElementResolver resolver )
+            this.doAutoDetectionWithResolver(resolver);
+    }
+
+    private void doAutoDetectionWithResolver(IInjectableElementResolver resolver) {
         AtomicInteger counter = new AtomicInteger();
-        Set<Resolved> resolved = this.resolver.resolve(this.findConstructor());
+        Set<Resolved> resolved = resolver.resolve(this.findConstructor());
         log.atDebug().log("Resolved elements found: {}", resolved);
 
         resolved.stream().forEach(r -> {
@@ -71,7 +67,22 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
                         this.withParam(counter.getAndIncrement(), new NullSupplierBuilder<>(r.elementType()), n);
                     });
         });
+    }
 
-        log.atTrace().log("Exiting doAutoDetection");
+    @SuppressWarnings("unchecked")
+    @Override
+    public Builder provide(IObservableBuilder<?, ?> dependency) {
+        this.support.provide(dependency);
+        return (Builder) this;
+    }
+
+    @Override
+    public Set<Class<? extends IObservableBuilder<?, ?>>> use() {
+        return this.support.use();
+    }
+
+    @Override
+    public Set<Class<? extends IObservableBuilder<?, ?>>> require() {
+        return this.support.require();
     }
 }

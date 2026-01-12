@@ -3,6 +3,8 @@ package com.garganttua.core.runtime.dsl;
 import java.util.Map;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 
@@ -64,7 +66,7 @@ import com.garganttua.core.runtime.IRuntime;
  * @see com.garganttua.core.runtime.annotations.RuntimeDefinition
  */
 public interface IRuntimesBuilder
-                extends IAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>> {
+                extends IAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>, IPackageableBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>, IDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>> {
 
         /**
          * Creates a new runtime with the specified name and types.
@@ -85,20 +87,5 @@ public interface IRuntimesBuilder
         <InputType, OutputType> IRuntimeBuilder<InputType, OutputType> runtime(String string,
                         Class<InputType> inputType,
                         Class<OutputType> outputType);
-
-        /**
-         * Sets the dependency injection context for all runtimes.
-         *
-         * <p>
-         * The DI context provides access to beans, properties, and other resources
-         * that can be injected into runtime steps. All runtimes built by this builder
-         * will share the same DI context.
-         * </p>
-         *
-         * @param context the DI context builder to use
-         * @return this builder for method chaining
-         * @see com.garganttua.core.injection.context.dsl.IInjectionContextBuilder
-         */
-        IRuntimesBuilder context(IInjectionContextBuilder context);
 
 }

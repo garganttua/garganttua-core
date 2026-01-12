@@ -1,8 +1,11 @@
-package com.garganttua.core.dsl;
+package com.garganttua.core.dsl.dependency;
 
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import com.garganttua.core.dsl.IBuilderObserver;
+import com.garganttua.core.dsl.IObservableBuilder;
 
 public interface IBuilderDependency<Builder extends IObservableBuilder<Builder, Built>, Built> extends IBuilderObserver<Builder, Built> {
 
@@ -15,6 +18,8 @@ public interface IBuilderDependency<Builder extends IObservableBuilder<Builder, 
     Built get();
 
     Builder builder();
+
+    void requireNotEmpty();
 
     void ifReady(Consumer<Built> consumer);
 

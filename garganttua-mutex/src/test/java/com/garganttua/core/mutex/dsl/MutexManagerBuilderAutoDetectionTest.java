@@ -55,7 +55,7 @@ class MutexManagerBuilderAutoDetectionTest {
         contextBuilder.build().onInit().onStart();
 
         // Build with auto-detection enabled
-        IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+        IMutexManager manager = MutexManagerBuilder.builder()
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(true)
                 .build();
@@ -77,7 +77,7 @@ class MutexManagerBuilderAutoDetectionTest {
 
         contextBuilder.build().onInit().onStart();
 
-        IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+        IMutexManager manager = MutexManagerBuilder.builder()
                 .withPackages(new String[] {
                         "com.garganttua.core.mutex",
                         "com.garganttua.core.mutex.dsl"
@@ -156,7 +156,7 @@ class MutexManagerBuilderAutoDetectionTest {
         contextBuilder.build().onInit().onStart();
         InterruptibleLeaseMutexFactory factory = new InterruptibleLeaseMutexFactory();
 
-        IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+        IMutexManager manager = MutexManagerBuilder.builder()
                 .withFactory(InterruptibleLeaseMutex.class, factory)
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(true)
@@ -179,7 +179,7 @@ class MutexManagerBuilderAutoDetectionTest {
                 .withPackage("com.garganttua.core.mutex");
         contextBuilder.build().onInit().onStart();
 
-        IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+        IMutexManager manager = MutexManagerBuilder.builder()
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(false)
                 .build();
@@ -217,7 +217,7 @@ class MutexManagerBuilderAutoDetectionTest {
         // Build context to trigger observer
         contextBuilder.build().onInit().onStart();
 
-        IMutexManager manager = MutexManagerBuilder.builder(contextBuilder)
+        IMutexManager manager = MutexManagerBuilder.builder()
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(true)
                 .build();

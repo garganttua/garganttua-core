@@ -47,7 +47,7 @@ class OneStepRuntimeTest {
     private IRuntimesBuilder builder() {
         IInjectionContextBuilder ctx = contextBuilder();
         ctx.build().onInit().onStart();
-        return RuntimesBuilder.builder().context(ctx);
+        return RuntimesBuilder.builder().provide(ctx);
     }
 
     private IRuntime<String, String> get(IRuntimesBuilder b) {

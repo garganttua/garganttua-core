@@ -2,6 +2,7 @@ package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
@@ -47,8 +48,8 @@ import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
  * @see com.garganttua.core.runtime.annotations.Operation
  */
 public interface IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
-                IMethodBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>,
-                IContextBuilderObserver {
+                IDependentBuilder<IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>,
+                IMethodBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> {
 
         /**
          * Checks if the method throws a specific exception type.

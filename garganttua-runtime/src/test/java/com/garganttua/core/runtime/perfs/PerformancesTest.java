@@ -239,7 +239,7 @@ public class PerformancesTest {
                                 .withPackage("com.garganttua.core.runtime");
                 contextBuilder.build().onInit().onStart();
 
-                Map<String, IRuntime<?, ?>> runtimes = t.context(contextBuilder).autoDetect(true).build();
+                Map<String, IRuntime<?, ?>> runtimes = t.provide(contextBuilder).autoDetect(true).build();
                 return runtimes;
         }
 
