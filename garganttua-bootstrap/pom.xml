@@ -23,10 +23,6 @@
                   <artifactId>garganttua-injection</artifactId>
             </dependency>
             <dependency>
-                  <groupId>com.garganttua.core</groupId>
-                  <artifactId>garganttua-dsl</artifactId>
-            </dependency>
-            <dependency>
                   <groupId>javax.inject</groupId>
                   <artifactId>javax.inject</artifactId>
             </dependency>
@@ -36,12 +32,8 @@
             </dependency>
             <dependency>
                   <groupId>com.garganttua.core</groupId>
-                  <artifactId>garganttua-reflection</artifactId>
-            </dependency>
-            <dependency>
-                  <groupId>com.garganttua.core</groupId>
                   <artifactId>garganttua-reflections</artifactId>
-                  <scope>provided</scope>
+                  <scope>test</scope>
             </dependency>
       </dependencies>
 

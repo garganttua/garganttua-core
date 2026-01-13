@@ -16,19 +16,12 @@
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-commons</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-dsl</artifactId>
-		</dependency>
+
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-supply</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-reflections</artifactId>
-			<scope>test</scope>
-		</dependency>
+
 		<dependency>
 			<groupId>org.javatuples</groupId>
 			<artifactId>javatuples</artifactId>

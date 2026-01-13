@@ -2,6 +2,8 @@ package com.garganttua.core.dsl;
 
 import java.util.Objects;
 
+import com.garganttua.core.reflection.IAnnotationScanner;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -48,6 +50,17 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutom
 
         if (this.autoDetect.booleanValue()) {
             log.atInfo().log("Auto-detection is enabled, performing auto-detection");
+
+            // Scan for @Scan annotations if builder is packageable and has packages
+            if (this instanceof IPackageableBuilder) {
+                IAnnotationScanner scanner = getAnnotationScanner();
+                String[] packages = getPackagesForScanning();
+                if (scanner != null && packages != null && packages.length > 0) {
+                    log.atDebug().log("Scanning {} packages for @Scan annotations before business auto-detection", packages.length);
+                    PackageScanHelper.scanAndAddPackages(scanner, this, packages);
+                }
+            }
+
             this.doAutoDetection();
             log.atDebug().log("Auto-detection completed successfully");
         } else {
@@ -69,4 +82,33 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutom
     protected abstract Built doBuild() throws DslException;
 
     protected abstract void doAutoDetection() throws DslException;
+
+    /**
+     * Returns the packages to scan for @Scan annotations.
+     *
+     * <p>
+     * This method should be overridden by subclasses that implement IPackageableBuilder
+     * to return their configured packages. The default implementation returns an empty array.
+     * </p>
+     *
+     * @return array of package names to scan, or empty array if not applicable
+     */
+    protected String[] getPackagesForScanning() {
+        return new String[0];
+    }
+
+    /**
+     * Returns the annotation scanner to use for scanning @Scan annotations.
+     *
+     * <p>
+     * This method should be overridden by subclasses that want to enable @Scan annotation
+     * scanning during auto-detection. The default implementation returns null, which disables
+     * @Scan scanning.
+     * </p>
+     *
+     * @return the annotation scanner to use, or null to disable @Scan scanning
+     */
+    protected IAnnotationScanner getAnnotationScanner() {
+        return null;
+    }
 }

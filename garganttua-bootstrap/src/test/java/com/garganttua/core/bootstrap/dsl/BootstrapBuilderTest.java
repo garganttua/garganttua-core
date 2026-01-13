@@ -638,4 +638,128 @@ class BootstrapBuilderTest {
             return "MockPackageableBuilder{name='" + name + "'}";
         }
     }
+
+    @Nested
+    @DisplayName("@Scan Annotation Tests")
+    class ScanAnnotationTests {
+
+        @Test
+        @DisplayName("Should scan and add packages from @Scan annotations when auto-detecting")
+        void shouldScanAndAddPackagesFromScanAnnotations() throws DslException {
+            // Given
+            MockPackageableAutomaticBuilder packageableBuilder = new MockPackageableAutomaticBuilder("test");
+            bootstrap.withPackage("com.garganttua.core.bootstrap.dsl.test")
+                    .withBuilder(packageableBuilder);
+
+            // When
+            packageableBuilder.autoDetect(true);
+            packageableBuilder.build();
+
+            // Then
+            Set<String> packages = packageableBuilder.getPackagesSet();
+            assertTrue(packages.contains("com.garganttua.core.bootstrap.dsl.test"),
+                    "Should contain base package");
+            assertTrue(packages.contains("com.garganttua.scanned.package1"),
+                    "Should contain package from @Scan on TestScanClass1");
+            assertTrue(packages.contains("com.garganttua.scanned.package2"),
+                    "Should contain package from @Scan on TestScanClass2");
+        }
+
+        @Test
+        @DisplayName("Should not scan for @Scan when auto-detect is disabled")
+        void shouldNotScanWhenAutoDetectDisabled() throws DslException {
+            // Given
+            MockPackageableAutomaticBuilder packageableBuilder = new MockPackageableAutomaticBuilder("test");
+            bootstrap.withPackage("com.garganttua.core.bootstrap.dsl.test")
+                    .withBuilder(packageableBuilder);
+
+            // When
+            packageableBuilder.autoDetect(false);
+            packageableBuilder.build();
+
+            // Then
+            Set<String> packages = packageableBuilder.getPackagesSet();
+            assertTrue(packages.contains("com.garganttua.core.bootstrap.dsl.test"),
+                    "Should contain base package");
+            assertFalse(packages.contains("com.garganttua.scanned.package1"),
+                    "Should NOT contain scanned package when auto-detect is disabled");
+            assertFalse(packages.contains("com.garganttua.scanned.package2"),
+                    "Should NOT contain scanned package when auto-detect is disabled");
+        }
+
+        @Test
+        @DisplayName("Should only scan @Scan annotations for packageable builders")
+        void shouldOnlyScanForPackageableBuilders() throws DslException {
+            // Given
+            MockBuilder nonPackageableBuilder = new MockBuilder("non-packageable");
+            bootstrap.withPackage("com.garganttua.core.bootstrap.dsl.test")
+                    .withBuilder(nonPackageableBuilder);
+
+            // When
+            bootstrap.autoDetect(true);
+            Object result = bootstrap.build();
+
+            // Then - Should complete without error
+            assertNotNull(result, "Bootstrap should build successfully for non-packageable builders");
+        }
+    }
+
+    // Mock packageable builder with automatic detection support
+    static class MockPackageableAutomaticBuilder extends com.garganttua.core.dsl.AbstractAutomaticBuilder<MockPackageableAutomaticBuilder, String>
+            implements IPackageableBuilder<MockPackageableAutomaticBuilder, String> {
+        private final String name;
+        private final Set<String> packages = new HashSet<>();
+
+        MockPackageableAutomaticBuilder(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public MockPackageableAutomaticBuilder withPackage(String packageName) {
+            packages.add(packageName);
+            return this;
+        }
+
+        @Override
+        public MockPackageableAutomaticBuilder withPackages(String[] packageNames) {
+            for (String pkg : packageNames) {
+                packages.add(pkg);
+            }
+            return this;
+        }
+
+        @Override
+        public String[] getPackages() {
+            return packages.toArray(new String[0]);
+        }
+
+        @Override
+        protected String[] getPackagesForScanning() {
+            return packages.toArray(new String[0]);
+        }
+
+        @Override
+        protected com.garganttua.core.reflection.IAnnotationScanner getAnnotationScanner() {
+            return ObjectReflectionHelper.getAnnotationScanner();
+        }
+
+        public Set<String> getPackagesSet() {
+            return Set.copyOf(packages);
+        }
+
+        @Override
+        protected String doBuild() throws DslException {
+            return "Built: " + name;
+        }
+
+        @Override
+        protected void doAutoDetection() throws DslException {
+            // Business auto-detection logic (empty for this test)
+        }
+
+        @Override
+        public String toString() {
+            return "MockPackageableAutomaticBuilder{name='" + name + "'}";
+        }
+    }
 }

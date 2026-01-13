@@ -1,4 +1,4 @@
-package com.garganttua.core.bootstrap.annotations;
+package com.garganttua.core.dsl.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

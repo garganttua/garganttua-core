@@ -18,6 +18,7 @@ import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -493,5 +494,15 @@ public class BootstrapBuilder extends AbstractAutomaticBuilder<IBoostrap, Object
      */
     protected Set<String> getConfiguredPackages() {
         return Set.copyOf(packages);
+    }
+
+    @Override
+    protected String[] getPackagesForScanning() {
+        return packages.toArray(new String[0]);
+    }
+
+    @Override
+    protected IAnnotationScanner getAnnotationScanner() {
+        return ObjectReflectionHelper.getAnnotationScanner();
     }
 }
