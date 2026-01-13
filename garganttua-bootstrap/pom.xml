@@ -34,6 +34,15 @@
                   <groupId>jakarta.annotation</groupId>
                   <artifactId>jakarta.annotation-api</artifactId>
             </dependency>
+            <dependency>
+                  <groupId>com.garganttua.core</groupId>
+                  <artifactId>garganttua-reflection</artifactId>
+            </dependency>
+            <dependency>
+                  <groupId>com.garganttua.core</groupId>
+                  <artifactId>garganttua-reflections</artifactId>
+                  <scope>provided</scope>
+            </dependency>
       </dependencies>
 
 </project>
