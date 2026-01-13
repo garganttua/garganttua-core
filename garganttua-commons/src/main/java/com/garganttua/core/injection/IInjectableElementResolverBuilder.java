@@ -2,8 +2,10 @@ package com.garganttua.core.injection;
 
 import java.lang.annotation.Annotation;
 
+import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 
 /**
@@ -40,7 +42,7 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
  * @see IInjectionContextBuilder
  * @see ILinkedBuilder
  */
-public interface IInjectableElementResolverBuilder extends ILinkedBuilder<IInjectionContextBuilder, IInjectableElementResolver>, IObservableBuilder<IInjectableElementResolverBuilder, IInjectableElementResolver>{
+public interface IInjectableElementResolverBuilder extends IAutomaticLinkedBuilder<IInjectableElementResolverBuilder, IInjectionContextBuilder, IInjectableElementResolver>, IPackageableBuilder<IInjectableElementResolverBuilder, IInjectableElementResolver>, IObservableBuilder<IInjectableElementResolverBuilder, IInjectableElementResolver>{
 
     /**
      * Registers a custom resolver for a specific annotation type.

@@ -12,10 +12,12 @@ import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={Variable.class})
+@NoArgsConstructor
 public class VariableElementResolver implements IElementResolver {
 
     @Override

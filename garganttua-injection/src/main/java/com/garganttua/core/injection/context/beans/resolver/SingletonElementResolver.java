@@ -5,21 +5,17 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
-import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Resolver(annotations={Singleton.class, Inject.class})
+//@Resolver(annotations={Singleton.class, Inject.class})
 public class SingletonElementResolver extends BeanElementResolver implements IElementResolver {
 
     public SingletonElementResolver(Set<Class<? extends Annotation>> qualifiers) {

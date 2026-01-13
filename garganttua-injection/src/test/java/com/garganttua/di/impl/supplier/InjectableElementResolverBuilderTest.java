@@ -43,7 +43,7 @@ public class InjectableElementResolverBuilderTest {
                                 .build().onInit().onStart();
 
                 IInjectableElementResolverBuilder builder = new InjectableElementResolverBuilder(InjectionContext.builder());
-                InjectionContextBuilder.setBuiltInResolvers(builder, Set.of());
+                InjectionContextBuilder.setBuiltInResolvers(builder, Set.of(), false);
                 this.resolvers = builder.build();
 
         }

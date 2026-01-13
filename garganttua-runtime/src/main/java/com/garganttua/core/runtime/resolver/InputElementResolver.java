@@ -12,10 +12,12 @@ import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.runtime.annotations.Input;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={Input.class})
+@NoArgsConstructor
 public class InputElementResolver implements IElementResolver {
 
     @Override

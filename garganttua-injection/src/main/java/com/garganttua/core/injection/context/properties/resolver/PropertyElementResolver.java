@@ -15,10 +15,12 @@ import com.garganttua.core.injection.context.properties.Properties;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={Property.class})
+@NoArgsConstructor
 public class PropertyElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

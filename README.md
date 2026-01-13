@@ -80,10 +80,6 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 
 
-
-
-
-
 <!-- AUTO-GENERATED-ARCHITECTURE-STOP -->
 
 ## 📚 Module Categories

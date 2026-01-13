@@ -12,10 +12,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={Null.class})
+@NoArgsConstructor
 public class NullElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

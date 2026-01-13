@@ -14,10 +14,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={Fixed.class})
+@NoArgsConstructor
 public class FixedElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

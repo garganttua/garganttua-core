@@ -17,7 +17,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Resolver(annotations={Prototype.class})
+//@Resolver(annotations={Prototype.class})
 public class PrototypeElementResolver extends BeanElementResolver implements IElementResolver {
 
     public PrototypeElementResolver(Set<Class<? extends Annotation>> qualifiers) {

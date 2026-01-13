@@ -11,10 +11,12 @@ import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={com.garganttua.core.runtime.annotations.Exception.class})
+@NoArgsConstructor
 public class ExceptionElementResolver implements IElementResolver {
 
     @SuppressWarnings("unchecked")

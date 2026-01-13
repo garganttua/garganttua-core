@@ -14,10 +14,12 @@ import com.garganttua.core.runtime.annotations.Context;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Resolver(annotations={Context.class})
+@NoArgsConstructor
 public class ContextElementResolver implements IElementResolver {
 
     @Override

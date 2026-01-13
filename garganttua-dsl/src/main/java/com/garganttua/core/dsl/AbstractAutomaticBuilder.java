@@ -16,6 +16,11 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IAutom
         log.atTrace().log("Exiting AbstractAutomaticBuilder constructor, autoDetect set to false");
     }
 
+    @Override
+    public boolean isAutoDetected() {
+        return this.autoDetect.booleanValue();
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Builder autoDetect(boolean b) throws DslException {

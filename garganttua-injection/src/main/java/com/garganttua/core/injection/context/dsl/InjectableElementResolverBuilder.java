@@ -7,25 +7,27 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.dsl.AbstractLinkedBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
-import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.injection.context.resolver.InjectableElementResolver;
+import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class InjectableElementResolverBuilder
-        extends AbstractLinkedBuilder<IInjectionContextBuilder, IInjectableElementResolver>
+        extends
+        AbstractAutomaticLinkedBuilder<IInjectableElementResolverBuilder, IInjectionContextBuilder, IInjectableElementResolver>
         implements IInjectableElementResolverBuilder {
 
     private final Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
-    private IInjectableElementResolver built;
     private Set<IBuilderObserver<IInjectableElementResolverBuilder, IInjectableElementResolver>> observers = new HashSet<>();
+    private final Set<String> packages = new HashSet<>();
 
     public InjectableElementResolverBuilder(IInjectionContextBuilder link) {
         super(link);
@@ -54,20 +56,6 @@ public class InjectableElementResolverBuilder
     }
 
     @Override
-    public IInjectableElementResolver build() throws DslException {
-        log.atTrace().log("Entering build()");
-        if (this.built == null) {
-            this.built = new InjectableElementResolver(this.resolvers);
-            this.notifyObserver(this.built);
-            log.atInfo().log("Built new InjectableElementResolver with {} resolvers", this.resolvers.size());
-        } else {
-            log.atDebug().log("Returning existing built InjectableElementResolver");
-        }
-        log.atTrace().log("Exiting build()");
-        return this.built;
-    }
-
-    @Override
     public IInjectableElementResolverBuilder observer(
             IBuilderObserver<IInjectableElementResolverBuilder, IInjectableElementResolver> observer) {
         log.atTrace().log("Entering observer(observer={})", observer);
@@ -93,6 +81,64 @@ public class InjectableElementResolverBuilder
             log.atDebug().log("Notified observer: {}", observer);
         });
         log.atTrace().log("Exiting notifyObserver");
+    }
+
+    @Override
+    protected IInjectableElementResolver doBuild() throws DslException {
+        InjectableElementResolver b = new InjectableElementResolver(this.resolvers);
+        this.notifyObserver(b);
+        return b;
+    }
+
+    @Override
+    protected void doAutoDetection() throws DslException {
+        this.packages.stream()
+                .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, Resolver.class).stream())
+                .forEach(resolverClass -> {
+                    try {
+                        Resolver annotation = resolverClass.getAnnotation(Resolver.class);
+                        if (annotation != null && IElementResolver.class.isAssignableFrom(resolverClass)) {
+                            IElementResolver resolverInstance = (IElementResolver) resolverClass
+                                    .getDeclaredConstructor().newInstance();
+
+                            for (Class<? extends Annotation> annotationType : annotation.annotations()) {
+                                this.withResolver(annotationType, resolverInstance);
+                                log.atInfo().log("Auto-registered resolver {} for annotation {}",
+                                        resolverClass.getSimpleName(), annotationType.getSimpleName());
+                            }
+                        } else {
+                            log.atWarn().log(
+                                    "Class {} annotated with @Resolver but does not implement IInjectableElementResolver",
+                                    resolverClass.getName());
+                        }
+                    } catch (Exception e) {
+                        log.atError().log("Failed to instantiate resolver {}: {}", resolverClass.getName(),
+                                e.getMessage(), e);
+                        throw new DslException("Failed to auto-detect resolver: " + resolverClass.getName(), e);
+                    }
+                });
+    }
+
+    @Override
+    public IInjectableElementResolverBuilder withPackage(String packageName) {
+        log.atDebug().log("Adding package: {}", packageName);
+        this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
+        return this;
+    }
+
+    @Override
+    public IInjectableElementResolverBuilder withPackages(String[] packageNames) {
+        log.atDebug().log("Adding {} packages", packageNames.length);
+        Objects.requireNonNull(packageNames, "Package names cannot be null");
+        for (String pkg : packageNames) {
+            this.withPackage(pkg);
+        }
+        return this;
+    }
+
+    @Override
+    public String[] getPackages() {
+        return this.packages.toArray(new String[0]);
     }
 
 }

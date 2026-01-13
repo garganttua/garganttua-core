@@ -252,22 +252,22 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
 
         Objects.requireNonNull(context, "Context builder cannot be null");
 
-        // Note: Resolvers and child context factories are now auto-detected via @Resolver and @ChildContext annotations
-        // The auto-detection happens during the InjectionContextBuilder.doAutoDetection() phase
-        // when the builder has autoDetect(true) enabled and packages are configured.
-        //
-        // Legacy manual registration (kept for reference, can be removed after validation):
-        // context.childContextFactory(new RuntimeContextFactory());
-        // context.resolvers().withResolver(Input.class, new InputElementResolver());
-        // context.resolvers().withResolver(Variable.class, new VariableElementResolver());
-        // context.resolvers().withResolver(Context.class, new ContextElementResolver());
-        // context.resolvers().withResolver(Exception.class, new ExceptionElementResolver());
-        // context.resolvers().withResolver(Code.class, new CodeElementResolver());
-        // context.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
+        if (!context.isAutoDetected()) {
+            context.childContextFactory(new RuntimeContextFactory());
+            context.resolvers().withResolver(Input.class, new InputElementResolver());
+            context.resolvers().withResolver(Variable.class, new VariableElementResolver());
+            context.resolvers().withResolver(Context.class, new ContextElementResolver());
+            context.resolvers().withResolver(Exception.class, new ExceptionElementResolver());
+            context.resolvers().withResolver(Code.class, new CodeElementResolver());
+            context.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
 
-        log.atInfo().log("Context builder setup completed (using auto-detection for resolvers and child context factories)");
+            log.atInfo().log("Context builder configured with resolvers");
+        } else {
+            context.withPackage("com.garganttua.core.runtime");
+            log.atInfo().log("Context builder configured with packages for auto-detection");
+        }
 
-        log.atTrace().log("Exiting setupInjectionContext() method");
+        log.atTrace().log("Exiting context() method");
         return this;
     }
 
