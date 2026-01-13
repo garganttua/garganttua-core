@@ -25,10 +25,12 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
+import com.garganttua.core.injection.annotations.ChildContext;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.injection.annotations.Null;
 import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Prototype;
+import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
@@ -255,6 +257,8 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection()");
+
+        // Auto-detect qualifiers
         this.packages.stream()
                 .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, Qualifier.class)
                         .stream()
@@ -262,6 +266,56 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                 .map(clazz -> (Class<? extends Annotation>) clazz)
                 .forEach(this.qualifiers::add);
         log.atInfo().log("Auto-detected qualifiers: {}", this.qualifiers);
+
+        // Auto-detect @Resolver annotated classes
+        this.packages.stream()
+                .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, Resolver.class).stream())
+                .forEach(resolverClass -> {
+                    try {
+                        Resolver annotation = resolverClass.getAnnotation(Resolver.class);
+                        if (annotation != null && IInjectableElementResolver.class.isAssignableFrom(resolverClass)) {
+                            IInjectableElementResolver<?> resolverInstance =
+                                (IInjectableElementResolver<?>) resolverClass.getDeclaredConstructor().newInstance();
+
+                            for (Class<? extends Annotation> annotationType : annotation.annotations()) {
+                                this.resolvers.withResolver(annotationType, resolverInstance);
+                                log.atInfo().log("Auto-registered resolver {} for annotation {}",
+                                    resolverClass.getSimpleName(), annotationType.getSimpleName());
+                            }
+                        } else {
+                            log.atWarn().log("Class {} annotated with @Resolver but does not implement IInjectableElementResolver",
+                                resolverClass.getName());
+                        }
+                    } catch (Exception e) {
+                        log.atError().log("Failed to instantiate resolver {}: {}", resolverClass.getName(), e.getMessage(), e);
+                        throw new DslException("Failed to auto-detect resolver: " + resolverClass.getName(), e);
+                    }
+                });
+
+        // Auto-detect @ChildContext annotated classes
+        this.packages.stream()
+                .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, ChildContext.class).stream())
+                .forEach(factoryClass -> {
+                    try {
+                        if (IInjectionChildContextFactory.class.isAssignableFrom(factoryClass)) {
+                            IInjectionChildContextFactory<? extends IInjectionContext> factory =
+                                (IInjectionChildContextFactory<? extends IInjectionContext>)
+                                    factoryClass.getDeclaredConstructor().newInstance();
+
+                            this.childContextFactory(factory);
+                            log.atInfo().log("Auto-registered child context factory: {}",
+                                factoryClass.getSimpleName());
+                        } else {
+                            log.atWarn().log("Class {} annotated with @ChildContext but does not implement IInjectionChildContextFactory",
+                                factoryClass.getName());
+                        }
+                    } catch (Exception e) {
+                        log.atError().log("Failed to instantiate child context factory {}: {}",
+                            factoryClass.getName(), e.getMessage(), e);
+                        throw new DslException("Failed to auto-detect child context factory: " + factoryClass.getName(), e);
+                    }
+                });
+
         log.atTrace().log("Exiting doAutoDetection");
     }
 

@@ -108,7 +108,7 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
 
         try {
             // Phase 1: Auto-detection
-            if (this.autoDetect) {
+            if (this.autoDetect.booleanValue()) {
                 log.atInfo().log("Auto-detection is enabled, performing auto-detection");
                 this.doAutoDetection();
                 log.atDebug().log("Base auto-detection completed");
