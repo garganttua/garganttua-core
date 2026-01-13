@@ -762,4 +762,103 @@ class BootstrapBuilderTest {
             return "MockPackageableAutomaticBuilder{name='" + name + "'}";
         }
     }
+
+    @Nested
+    @DisplayName("Built Objects Registry Tests")
+    class BuiltObjectsRegistryTests {
+
+        @Test
+        @DisplayName("Should retrieve built object by class")
+        void shouldRetrieveBuiltObjectByClass() throws DslException {
+            // Given
+            MockBuilder builder = new MockBuilder("test");
+            bootstrap.withBuilder(builder);
+
+            // When
+            bootstrap.build();
+            java.util.Optional<String> result = bootstrap.getBuiltObject(String.class);
+
+            // Then
+            assertTrue(result.isPresent(), "Should find built String object");
+            assertEquals("Built: test", result.get());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for non-existent class")
+        void shouldReturnEmptyForNonExistentClass() throws DslException {
+            // Given
+            MockBuilder builder = new MockBuilder("test");
+            bootstrap.withBuilder(builder);
+
+            // When
+            bootstrap.build();
+            java.util.Optional<Integer> result = bootstrap.getBuiltObject(Integer.class);
+
+            // Then
+            assertFalse(result.isPresent(), "Should return empty Optional for non-existent class");
+        }
+
+        @Test
+        @DisplayName("Should throw exception when querying before build")
+        void shouldThrowExceptionWhenQueryingBeforeBuild() {
+            // When/Then
+            assertThrows(IllegalStateException.class,
+                    () -> bootstrap.getBuiltObject(String.class),
+                    "Should throw IllegalStateException when querying before build");
+        }
+
+        @Test
+        @DisplayName("Should retrieve all built objects")
+        void shouldRetrieveAllBuiltObjects() throws DslException {
+            // Given
+            MockBuilder builder1 = new MockBuilder("builder1");
+            MockBuilder builder2 = new MockBuilder("builder2");
+            bootstrap.withBuilder(builder1).withBuilder(builder2);
+
+            // When
+            bootstrap.build();
+            java.util.Map<Class<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
+
+            // Then
+            assertNotNull(allObjects);
+            assertEquals(1, allObjects.size(), "Should have 1 unique type (String)");
+            assertTrue(allObjects.containsKey(String.class));
+        }
+
+        @Test
+        @DisplayName("Should handle multiple builders with different return types")
+        void shouldHandleMultipleBuildersWithDifferentTypes() throws DslException {
+            // Given
+            MockBuilder stringBuilder = new MockBuilder("string");
+            MockObservableBuilder observableBuilder = new MockObservableBuilder("observable");
+            bootstrap.withBuilder(stringBuilder).withBuilder(observableBuilder);
+
+            // When
+            bootstrap.build();
+
+            // Then
+            java.util.Optional<String> stringResult = bootstrap.getBuiltObject(String.class);
+            assertTrue(stringResult.isPresent());
+
+            java.util.Map<Class<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
+            assertEquals(1, allObjects.size(), "MockObservableBuilder also returns String, so only 1 type");
+        }
+
+        @Test
+        @DisplayName("Registry should be immutable")
+        void registryShouldBeImmutable() throws DslException {
+            // Given
+            MockBuilder builder = new MockBuilder("test");
+            bootstrap.withBuilder(builder);
+            bootstrap.build();
+
+            // When
+            java.util.Map<Class<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
+
+            // Then
+            assertThrows(UnsupportedOperationException.class,
+                    () -> allObjects.put(Integer.class, 42),
+                    "Registry should be immutable");
+        }
+    }
 }

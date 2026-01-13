@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
@@ -61,6 +62,7 @@ public class BootstrapBuilder extends AbstractAutomaticBuilder<IBoostrap, Object
 
     private final Set<String> packages = new HashSet<>();
     private final List<IBuilder<?>> builders = new ArrayList<>();
+    private final Map<Class<?>, Object> builtObjectsRegistry = new HashMap<>();
 
     /**
      * Creates a new BootstrapBuilder instance.
@@ -191,12 +193,19 @@ public class BootstrapBuilder extends AbstractAutomaticBuilder<IBoostrap, Object
                         .map(b -> b.getClass().getSimpleName())
                         .toList());
 
-        // Phase 3: Build all builders in dependency order
+        // Phase 3: Build all builders in dependency order and register built objects
         List<Object> builtObjects = new ArrayList<>();
         for (IBuilder<?> builder : sortedBuilders) {
             log.atDebug().log("Building: {}", builder.getClass().getSimpleName());
             Object built = builder.build();
             builtObjects.add(built);
+
+            // Register the built object by its class
+            if (built != null) {
+                builtObjectsRegistry.put(built.getClass(), built);
+                log.atDebug().log("Registered built object of type: {}", built.getClass().getName());
+            }
+
             log.atInfo().log("Successfully built: {}", builder.getClass().getSimpleName());
         }
 
@@ -504,5 +513,49 @@ public class BootstrapBuilder extends AbstractAutomaticBuilder<IBoostrap, Object
     @Override
     protected IAnnotationScanner getAnnotationScanner() {
         return ObjectReflectionHelper.getAnnotationScanner();
+    }
+
+    /**
+     * Retrieves a built object from the registry by its class type.
+     *
+     * <p>
+     * This method allows querying the registry of built objects after the bootstrap
+     * process has completed. It returns an Optional containing the built object if
+     * found, or an empty Optional if no object of the specified type was built.
+     * </p>
+     *
+     * @param <T> the type of the object to retrieve
+     * @param clazz the class of the object to retrieve
+     * @return an Optional containing the built object, or empty if not found
+     * @throws IllegalStateException if called before build() has been executed
+     */
+    public <T> Optional<T> getBuiltObject(Class<T> clazz) {
+        if (this.built == null) {
+            throw new IllegalStateException("Cannot query registry before build() has been called");
+        }
+
+        Object obj = builtObjectsRegistry.get(clazz);
+        if (obj != null && clazz.isInstance(obj)) {
+            return Optional.of(clazz.cast(obj));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Gets all built objects from the registry.
+     *
+     * <p>
+     * Returns an unmodifiable map of all objects that were built during the bootstrap
+     * process, keyed by their runtime class.
+     * </p>
+     *
+     * @return unmodifiable map of built objects
+     * @throws IllegalStateException if called before build() has been executed
+     */
+    public Map<Class<?>, Object> getAllBuiltObjects() {
+        if (this.built == null) {
+            throw new IllegalStateException("Cannot query registry before build() has been called");
+        }
+        return Map.copyOf(builtObjectsRegistry);
     }
 }
