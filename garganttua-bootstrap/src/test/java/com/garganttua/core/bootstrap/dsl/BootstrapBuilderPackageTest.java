@@ -10,38 +10,38 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for BootstrapBuilder package management capabilities.
+ * Tests for Bootstrap package management capabilities.
  *
  * <p>
- * Validates that BootstrapBuilder correctly implements the IPackageableBuilder interface
+ * Validates that Bootstrap correctly implements the IPackageableBuilder interface
  * and properly manages package configuration for reflection and auto-detection.
  * </p>
  */
-@DisplayName("BootstrapBuilder Package Management Tests")
-class BootstrapBuilderPackageTest {
+@DisplayName("Bootstrap Package Management Tests")
+class BootstrapPackageTest {
 
     @Test
     @DisplayName("Should implement IPackageableBuilder interface")
     void testImplementsIPackageableBuilder() {
-        BootstrapBuilder bootstrap = new BootstrapBuilder();
+        Bootstrap bootstrap = new Bootstrap();
         assertInstanceOf(com.garganttua.core.dsl.IPackageableBuilder.class, bootstrap);
     }
 
     @Test
     @DisplayName("Should implement IBoostrap interface")
     void testImplementsIBoostrap() {
-        BootstrapBuilder bootstrap = new BootstrapBuilder();
+        Bootstrap bootstrap = new Bootstrap();
         assertInstanceOf(IBoostrap.class, bootstrap);
     }
 
     @Test
     @DisplayName("Should support fluent API pattern")
     void testFluentAPI() {
-        IBoostrap result = BootstrapBuilder.builder()
+        IBoostrap result = Bootstrap.builder()
                 .withPackage("com.example")
                 .withPackage("com.test")
-                .withBuilder(new BootstrapBuilderTest.MockBuilder("test1"))
-                .withBuilder(new BootstrapBuilderTest.MockBuilder("test2"))
+                .withBuilder(new BootstrapTest.MockBuilder("test1"))
+                .withBuilder(new BootstrapTest.MockBuilder("test2"))
                 .autoDetect(true);
 
         assertNotNull(result);
@@ -52,11 +52,11 @@ class BootstrapBuilderPackageTest {
     @DisplayName("Edge Cases Tests")
     class EdgeCaseTests {
 
-        private BootstrapBuilder bootstrap;
+        private Bootstrap bootstrap;
 
         @BeforeEach
         void setUp() {
-            bootstrap = new BootstrapBuilder();
+            bootstrap = new Bootstrap();
         }
 
         @Test

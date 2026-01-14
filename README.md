@@ -62,8 +62,10 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 |:--|:--|
 | [**garganttua-core**](././README.md) |  |
 | \|- [**garganttua-bindings**](./garganttua-bindings/README.md) | Modules providing bindings to external libs and frameworks. |
+| \|    \|- [**garganttua-mutex-redis**](./garganttua-bindings/garganttua-mutex-redis/README.md) | Distributed mutex over redis. |
 | \|    \|- [**garganttua-reflections**](./garganttua-bindings/garganttua-reflections/README.md) | Annotation scanner implementation based on org.reflections:reflections |
 | \|    \|- [**garganttua-spring**](./garganttua-bindings/garganttua-spring/README.md) | Spring framework integration for Garganttua Core modules. |
+| \|- [**garganttua-bootstrap**](./garganttua-bootstrap/README.md) | Bootstrap and application initialization framework. |
 | \|- [**garganttua-commons**](./garganttua-commons/README.md) | Shared components, interfaces, annotations, and exceptions. |
 | \|- [**garganttua-condition**](./garganttua-condition/README.md) | DSL to define, combine, and evaluate runtime conditions. |
 | \|- [**garganttua-crypto**](./garganttua-crypto/README.md) | Encryption, hashing, and secure key management utilities. |
@@ -73,11 +75,14 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-injection**](./garganttua-injection/README.md) | Dependency injection container with modular context support. |
 | \|- [**garganttua-lifecycle**](./garganttua-lifecycle/README.md) | Abstract lifecycle management with thread-safe state transitions. |
 | \|- [**garganttua-mapper**](./garganttua-mapper/README.md) | Declarative object-to-object mapping engine. |
+| \|- [**garganttua-mutex**](./garganttua-mutex/README.md) | Thread-safe mutex synchronization with configurable acquisition strategies. |
 | \|- [**garganttua-native**](./garganttua-native/README.md) | Low-level native integrations and system abstractions. |
 | \|- [**garganttua-native-image-maven-plugin**](./garganttua-native-image-maven-plugin/README.md) | Maven plugin to build native images (GraalVM support). |
 | \|- [**garganttua-reflection**](./garganttua-reflection/README.md) | Advanced reflection utilities for classes, methods, and annotations. |
 | \|- [**garganttua-runtime**](./garganttua-runtime/README.md) | Runtime context management and lifecycle orchestration. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
+
+
 
 
 <!-- AUTO-GENERATED-ARCHITECTURE-STOP -->
@@ -299,6 +304,7 @@ The module dependency structure follows these principles:
 ```mermaid
 graph TD
     garganttua-bindings["garganttua-bindings"]
+    garganttua-bootstrap["garganttua-bootstrap"]
     garganttua-commons["garganttua-commons"]
     garganttua-condition["garganttua-condition"]
     garganttua-core["garganttua-core"]
@@ -309,6 +315,7 @@ graph TD
     garganttua-injection["garganttua-injection"]
     garganttua-lifecycle["garganttua-lifecycle"]
     garganttua-mapper["garganttua-mapper"]
+    garganttua-mutex["garganttua-mutex"]
     garganttua-native["garganttua-native"]
     garganttua-native-image-maven-plugin["garganttua-native-image-maven-plugin"]
     garganttua-reflection["garganttua-reflection"]
@@ -318,15 +325,17 @@ graph TD
     garganttua-supply["garganttua-supply"]
 
     garganttua-reflection --> garganttua-commons
-    garganttua-reflection --> garganttua-dsl
     garganttua-reflection --> garganttua-supply
-    garganttua-reflection --> garganttua-reflections
     garganttua-injection --> garganttua-lifecycle
     garganttua-injection --> garganttua-supply
     garganttua-injection --> garganttua-dsl
     garganttua-injection --> garganttua-reflection
     garganttua-injection --> garganttua-reflections
     garganttua-injection --> garganttua-native
+    garganttua-mutex --> garganttua-commons
+    garganttua-mutex --> garganttua-dsl
+    garganttua-mutex --> garganttua-injection
+    garganttua-mutex --> garganttua-reflections
     garganttua-runtime --> garganttua-commons
     garganttua-runtime --> garganttua-injection
     garganttua-runtime --> garganttua-execution
@@ -336,6 +345,9 @@ graph TD
     garganttua-native --> garganttua-commons
     garganttua-native --> garganttua-reflection
     garganttua-native --> garganttua-reflections
+    garganttua-bootstrap --> garganttua-commons
+    garganttua-bootstrap --> garganttua-injection
+    garganttua-bootstrap --> garganttua-reflections
     garganttua-reflections --> garganttua-commons
     garganttua-spring --> garganttua-reflection
     garganttua-native-image-maven-plugin --> garganttua-commons
@@ -352,11 +364,10 @@ graph TD
     garganttua-mapper --> garganttua-reflection
     garganttua-mapper --> garganttua-native
     garganttua-expression --> garganttua-commons
-    garganttua-expression --> garganttua-dsl
-    garganttua-expression --> garganttua-supply
-    garganttua-expression --> garganttua-reflection
+    garganttua-expression --> garganttua-injection
     garganttua-expression --> garganttua-reflections
     garganttua-dsl --> garganttua-commons
+    garganttua-dsl --> garganttua-reflections
     garganttua-supply --> garganttua-commons
     garganttua-supply --> garganttua-dsl
     garganttua-execution --> garganttua-commons

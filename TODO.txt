@@ -1,5 +1,4 @@
 0/ Créer les ContextualSupplier
-4/ Create a @ScanPackage() auto detected by builders that implements IPackageableBuilder in order to auto-detect packages to scan for reflection, faire une classe PackageAutoDetect dans DSL
 6/ Implements distributed locks and mutex system over redis in a binding module
 7/ Add built-in conditions as expression nodes
 8/ Implémenter un nativeConfigurationbuilder pour garganttua-expression

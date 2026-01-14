@@ -21,7 +21,9 @@ The Garganttua Mutex module provides a thread-safe mutex synchronization framewo
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
- - `com.garganttua.core:garganttua-supply`
+ - `com.garganttua.core:garganttua-dsl`
+ - `com.garganttua.core:garganttua-injection`
+ - `com.garganttua.core:garganttua-reflections:test`
 
 <!-- AUTO-GENERATED-END -->
 

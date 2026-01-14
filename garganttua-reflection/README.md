@@ -34,9 +34,7 @@ Traditional Java reflection is verbose, error-prone, and difficult to work with 
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
- - `com.garganttua.core:garganttua-dsl`
  - `com.garganttua.core:garganttua-supply`
- - `com.garganttua.core:garganttua-reflections:test`
  - `org.javatuples:javatuples`
 
 <!-- AUTO-GENERATED-END -->

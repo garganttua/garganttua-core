@@ -21,22 +21,22 @@ import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 /**
- * Tests for BootstrapBuilder.
+ * Tests for Bootstrap.
  *
  * <p>
  * This test suite validates the configuration and initialization capabilities
  * of the bootstrap builder without implementing the full build() logic.
  * </p>
  */
-@DisplayName("BootstrapBuilder Tests")
-class BootstrapBuilderTest {
+@DisplayName("Bootstrap Tests")
+class BootstrapTest {
 
-    private BootstrapBuilder bootstrap;
+    private Bootstrap bootstrap;
 
     @BeforeEach
     void setUp() {
         ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-        bootstrap = new BootstrapBuilder();
+        bootstrap = new Bootstrap();
     }
 
     @Nested
@@ -220,9 +220,9 @@ class BootstrapBuilderTest {
             MockBuilder builder = new MockBuilder("test");
             bootstrap.withBuilder(builder);
 
-            Object result = bootstrap.build();
+            IBuiltRegistry result = bootstrap.build();
             assertNotNull(result);
-            assertEquals("Built: test", result);
+            assertEquals("Built: test", result.toList().get(0));
         }
 
         @Test
@@ -232,15 +232,12 @@ class BootstrapBuilderTest {
             MockBuilder builder2 = new MockBuilder("builder2");
             bootstrap.withBuilder(builder1).withBuilder(builder2);
 
-            Object result = bootstrap.build();
+            IBuiltRegistry result = bootstrap.build();
             assertNotNull(result);
-            assertInstanceOf(List.class, result);
-
-            @SuppressWarnings("unchecked")
-            List<Object> results = (List<Object>) result;
-            assertEquals(2, results.size());
-            assertTrue(results.contains("Built: builder1"));
-            assertTrue(results.contains("Built: builder2"));
+        
+            assertEquals(1, result.size());
+            assertTrue(!result.toList().contains("Built: builder1"));
+            assertTrue(result.toList().contains("Built: builder2"));
         }
 
         @Test
@@ -262,17 +259,17 @@ class BootstrapBuilderTest {
         @Test
         @DisplayName("Should create instance via builder() factory method")
         void testFactoryMethod() {
-            IBoostrap instance = BootstrapBuilder.builder();
+            IBoostrap instance = Bootstrap.builder();
 
             assertNotNull(instance);
-            assertInstanceOf(BootstrapBuilder.class, instance);
+            assertInstanceOf(Bootstrap.class, instance);
         }
 
         @Test
         @DisplayName("Should create new instance each time")
         void testFactoryCreatesNewInstances() {
-            IBoostrap instance1 = BootstrapBuilder.builder();
-            IBoostrap instance2 = BootstrapBuilder.builder();
+            IBoostrap instance1 = Bootstrap.builder();
+            IBoostrap instance2 = Bootstrap.builder();
 
             assertNotSame(instance1, instance2,
                 "Factory should create new instances");

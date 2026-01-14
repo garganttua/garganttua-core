@@ -34,10 +34,9 @@ The `garganttua-expression` module provides a powerful, extensible expression la
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
- - `com.garganttua.core:garganttua-dsl`
- - `com.garganttua.core:garganttua-supply`
- - `com.garganttua.core:garganttua-reflection`
+ - `com.garganttua.core:garganttua-injection`
  - `com.garganttua.core:garganttua-reflections:test`
+ - `ch.qos.logback:logback-classic:test`
  - `org.antlr:antlr4-runtime:4.13.0`
 
 <!-- AUTO-GENERATED-END -->
