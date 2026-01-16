@@ -29,7 +29,9 @@ expression
 // FONCTIONS
 // ===============================
 functionCall
-    : IDENTIFIER '(' arguments? ')'
+    : IDENTIFIER '(' arguments? ')'                      // Fonction classique: concatenate("a", "b")
+    | ':' IDENTIFIER '(' arguments ')'                   // Méthode d'instance ou statique: :equals(obj, "test") ou :copyValueOf(String.class, "")
+    | ':' '(' arguments ')'                              // Constructeur: :(String.class, "toto")
     ;
 
 arguments

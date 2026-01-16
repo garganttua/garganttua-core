@@ -226,6 +226,20 @@ public class ExpressionContext implements IExpressionContext {
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitFunctionCall(ExpressionParser.FunctionCallContext ctx) {
+            String text = ctx.getText();
+
+            // Check if it starts with ':' (method call or constructor)
+            if (text.startsWith(":")) {
+                if (ctx.IDENTIFIER() != null) {
+                    // Case: :methodName(args) - instance or static method call
+                    return visitMethodCall(ctx);
+                } else {
+                    // Case: :(args) - constructor call
+                    return visitConstructorCall(ctx);
+                }
+            }
+
+            // Case: functionName(args) - classic function call
             String functionName = ctx.IDENTIFIER().getText();
             log.atTrace().log("Visiting function call: {}", functionName);
             List<Object> arguments = new ArrayList<>();
@@ -258,6 +272,48 @@ public class ExpressionContext implements IExpressionContext {
 
             return node
                     .orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));
+        }
+
+        /**
+         * Handles method calls: :methodName(target, args...)
+         * - If first argument is a Class<?>, it's a static method call
+         * - Otherwise, it's an instance method call on the first argument
+         */
+        private IExpressionNode<?, ? extends ISupplier<?>> visitMethodCall(ExpressionParser.FunctionCallContext ctx) {
+            String methodName = ctx.IDENTIFIER().getText();
+            log.atTrace().log("Visiting method call: {}", methodName);
+
+            List<Object> arguments = new ArrayList<>();
+            if (ctx.arguments() != null) {
+                for (ExpressionParser.ExpressionContext argCtx : ctx.arguments().expression()) {
+                    IExpressionNode<?, ? extends ISupplier<?>> argNode = visit(argCtx);
+                    arguments.add(argNode);
+                }
+            }
+
+            // TODO: Implement method call logic
+            // For now, throw an exception indicating this is not yet implemented
+            throw new ExpressionException("Method call not yet implemented: :" + methodName);
+        }
+
+        /**
+         * Handles constructor calls: :(ClassName, args...)
+         * The first argument must be a Class<?> representing the class to instantiate
+         */
+        private IExpressionNode<?, ? extends ISupplier<?>> visitConstructorCall(ExpressionParser.FunctionCallContext ctx) {
+            log.atTrace().log("Visiting constructor call");
+
+            List<Object> arguments = new ArrayList<>();
+            if (ctx.arguments() != null) {
+                for (ExpressionParser.ExpressionContext argCtx : ctx.arguments().expression()) {
+                    IExpressionNode<?, ? extends ISupplier<?>> argNode = visit(argCtx);
+                    arguments.add(argNode);
+                }
+            }
+
+            // TODO: Implement constructor call logic
+            // For now, throw an exception indicating this is not yet implemented
+            throw new ExpressionException("Constructor call not yet implemented");
         }
 
         @Override
