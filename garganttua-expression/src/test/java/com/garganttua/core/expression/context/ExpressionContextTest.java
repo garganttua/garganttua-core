@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
@@ -104,13 +105,23 @@ public class ExpressionContextTest {
         injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        System.out.println(expressionContext.man());
-        System.out.println(expressionContext.man(7));
+        ISupplier<?> exp = expressionContext.expression("man()").evaluate();
 
-        ISupplier<?> toto = expressionContext.expression("man()").evaluate();
+        assertTrue( ((String) exp.supply().get()).contains("AVAILABLE EXPRESSION FUNCTIONS"));
+    }
 
-        System.out.println(toto.supply());
+    @Test
+    public void testUnknownMethod() {
 
+        IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
+        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
+
+        injectionContextBuilder.build().onInit().onStart();
+        IExpressionContext expressionContext = expressionContextBuilder.build();
+        ExpressionException exception = assertThrows(ExpressionException.class, () -> expressionContext.expression("unknown()").evaluate());
+
+        assertEquals("Unknown function: unknown()", exception.getMessage());
     }
 
     @SuppressWarnings("unchecked")
