@@ -56,7 +56,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
 
     private void doAutoDetectionWithResolver(IInjectableElementResolver resolver) {
         AtomicInteger counter = new AtomicInteger();
-        Set<Resolved> resolved = resolver.resolve(this.findMethod());
+        Set<Resolved> resolved = resolver.resolve(this.method());
         log.atDebug().log("Resolved elements found: {}", resolved);
 
         resolved.stream().forEach(r -> {

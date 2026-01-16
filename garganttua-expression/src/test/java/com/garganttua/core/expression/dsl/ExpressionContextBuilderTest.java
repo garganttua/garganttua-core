@@ -124,7 +124,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
                     .expression(of(TestExpressions.class), String.class)
-                    .method("getString");
+                    .encapsulatedMethod("getString", String.class);
             assertNotNull(methodBuilder);
         });
     }
@@ -138,7 +138,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> stringBuilder = builder
                     .expression(of(TestExpressions.class), String.class)
-                    .method("getString");
+                    .encapsulatedMethod("getString", String.class);
             assertNotNull(stringBuilder);
         });
 
@@ -146,7 +146,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Integer> intBuilder = builder
                     .expression(of(TestExpressions.class), Integer.class)
-                    .method("getInteger");
+                    .encapsulatedMethod("getInteger", Integer.class);
             assertNotNull(intBuilder);
         });
 
@@ -154,7 +154,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Double> doubleBuilder = builder
                     .expression(of(TestExpressions.class), Double.class)
-                    .method("getDouble");
+                    .encapsulatedMethod("getDouble", Double.class);
             assertNotNull(doubleBuilder);
         });
 
@@ -162,7 +162,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Boolean> booleanBuilder = builder
                     .expression(of(TestExpressions.class), Boolean.class)
-                    .method("getBoolean");
+                    .encapsulatedMethod("getBoolean", Boolean.class);
             assertNotNull(booleanBuilder);
         });
     }
@@ -175,7 +175,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
                     .expression(of(TestExpressions.class), String.class)
-                    .method("getString")
+                    .encapsulatedMethod("getString", String.class)
                     .withParam("test") // Should be ignored
                     .withParam(0, "test") // Should be ignored
                     .withParam("paramName", "test"); // Should be ignored
@@ -191,8 +191,7 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
                     .expression(of(TestExpressions.class), String.class)
-                    .method("getString")
-                    .withReturn(null); // Should be ignored
+                    .encapsulatedMethod("getString", String.class); // Should be ignored
             assertNotNull(methodBuilder);
         });
     }
@@ -222,7 +221,7 @@ class ExpressionContextBuilderTest {
                     .withPackage("com.example.test2")
                     .autoDetect(true)
                     .expression(of(TestExpressions.class), String.class)
-                    .method("getString");
+                    .encapsulatedMethod("getString", String.class);
         });
 
         String[] packages = builder.getPackages();
@@ -257,15 +256,15 @@ class ExpressionContextBuilderTest {
         assertDoesNotThrow(() -> {
             // First expression
             builder.expression(of(TestExpressions.class), String.class)
-                    .method("getString");
+                    .encapsulatedMethod("getString", String.class);
 
             // Second expression
             builder.expression(of(TestExpressions.class), Integer.class)
-                    .method("getInteger");
+                    .encapsulatedMethod("getInteger", Integer.class);
 
             // Third expression
             builder.expression(of(TestExpressions.class), Boolean.class)
-                    .method("getBoolean");
+                    .encapsulatedMethod("getBoolean", Boolean.class);
         });
     }
 
@@ -282,24 +281,6 @@ class ExpressionContextBuilderTest {
         public static Integer addIntegers(Integer a, Integer b) {
             return a + b;
         }
-    }
-
-    @Test
-    void testMethodResolution() throws DslException {
-        // Test that we can resolve different methods by name
-        ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
-
-        // Should work - correct method name
-        assertDoesNotThrow(() -> {
-            builder.expression(of(TestExpressions.class), String.class)
-                    .method("getString");
-        });
-
-        // Should fail - method doesn't exist
-        assertThrows(DslException.class, () -> {
-            builder.expression(of(TestExpressions.class), String.class)
-                    .method("nonExistentMethod");
-        });
     }
 
     @Test

@@ -55,7 +55,7 @@ import java.util.List;
  * @see ObjectAddress
  * @see ReflectionException
  */
-public interface IObjectQuery {
+public interface IObjectQuery<T> {
 
 	/**
 	 * Finds objects matching the specified address.
@@ -253,72 +253,72 @@ public interface IObjectQuery {
 	 * then invokes the method with the provided arguments.
 	 * </p>
 	 *
+	 * <p>
+	 * The return value is wrapped in an {@link IMethodReturn} which handles both
+	 * single results (when invoked on a single object) and multiple results
+	 * (when invoked on a collection/array of objects).
+	 * </p>
+	 *
+	 * @param <R> the return type of the method
 	 * @param methodAddress the dot-separated method address
+	 * @param returnType the expected return type
 	 * @param args the arguments to pass to the method
-	 * @return the method's return value, or {@code null} for void methods
+	 * @return an {@link IMethodReturn} containing the method's return value(s)
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
-	Object invoke(String methodAddress, Object ...args) throws ReflectionException;
+	<R> IMethodReturn<R> invoke(String methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	/**
 	 * Invokes a method using an ObjectAddress (context-based object resolution).
 	 *
-	 * <p>
-	 * This method resolves the target object and method from the query context,
-	 * then invokes the method with the provided arguments.
-	 * </p>
-	 *
+	 * @param <R> the return type of the method
 	 * @param methodAddress the object address representing the method path
+	 * @param returnType the expected return type
 	 * @param args the arguments to pass to the method
-	 * @return the method's return value, or {@code null} for void methods
+	 * @return an {@link IMethodReturn} containing the method's return value(s)
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
-	Object invoke(ObjectAddress methodAddress, Object ...args) throws ReflectionException;
-
-
-	Object invokeStatic(String methodAddress, Object ...args) throws ReflectionException;
-
-
-	Object invokeStatic(ObjectAddress methodAddress, Object ...args) throws ReflectionException;
+	<R> IMethodReturn<R> invoke(ObjectAddress methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	/**
 	 * Invokes a method on the specified object using an ObjectAddress.
 	 *
+	 * @param <R> the return type of the method
 	 * @param object the object on which to invoke the method
 	 * @param methodAddress the object address representing the method path
+	 * @param returnType the expected return type
 	 * @param args the arguments to pass to the method
-	 * @return the method's return value, or {@code null} for void methods
+	 * @return an {@link IMethodReturn} containing the method's return value(s)
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
-	Object invoke(Object object, ObjectAddress methodAddress, Object ...args) throws ReflectionException;
+	<R> IMethodReturn<R> invoke(T object, ObjectAddress methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	/**
-	 * Finds all objects (fields or methods) matching the specified address, including all overloaded methods.
+	 * Invokes a static method using a string address.
 	 *
-	 * <p>
-	 * Unlike {@link #find(ObjectAddress)}, this method returns ALL matching elements,
-	 * particularly useful for finding all overloaded variants of a method.
-	 * For fields, the behavior is identical to {@link #find(ObjectAddress)}.
-	 * </p>
-	 *
-	 * @param address the object address to search
-	 * @return a list of all objects found at the address (may be empty, never {@code null})
-	 * @throws ReflectionException if the address is invalid or search fails
+	 * @param <R> the return type of the method
+	 * @param methodAddress the dot-separated method address
+	 * @param returnType the expected return type
+	 * @param args the arguments to pass to the method
+	 * @return an {@link IMethodReturn} containing the method's return value(s)
+	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
-	List<Object> findAll(ObjectAddress address) throws ReflectionException;
+	<R> IMethodReturn<R> invokeStatic(String methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	/**
-	 * Finds all objects matching the specified address string, including all overloaded methods.
+	 * Invokes a static method using an ObjectAddress.
 	 *
-	 * <p>
-	 * Convenience method that constructs an {@link ObjectAddress} from the string
-	 * and delegates to {@link #findAll(ObjectAddress)}.
-	 * </p>
-	 *
-	 * @param address the dot-separated address string
-	 * @return a list of all objects found at the address (may be empty, never {@code null})
-	 * @throws ReflectionException if the address is invalid or search fails
+	 * @param <R> the return type of the method
+	 * @param methodAddress the object address representing the method path
+	 * @param returnType the expected return type
+	 * @param args the arguments to pass to the method
+	 * @return an {@link IMethodReturn} containing the method's return value(s)
+	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
-	List<Object> findAll(String address) throws ReflectionException;
+	<R> IMethodReturn<R> invokeStatic(ObjectAddress methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
+
+	List<List<Object>> findAll(ObjectAddress address) throws ReflectionException;
+
+	List<List<Object>> findAll(String address) throws ReflectionException;
 
 }

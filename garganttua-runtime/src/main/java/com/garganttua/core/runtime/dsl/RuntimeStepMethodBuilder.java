@@ -126,7 +126,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     public boolean isThrown(Class<? extends Throwable> exception) {
         log.atTrace().log("Checking if exception {} is thrown", exception);
         Objects.requireNonNull(exception, "Exception cannot be null");
-        boolean thrown = Arrays.stream(this.findMethod().getExceptionTypes())
+        boolean thrown = Arrays.stream(this.method().getExceptionTypes())
                 .anyMatch(e -> e.isAssignableFrom(exception));
         log.atDebug().log("isThrown result for {}: {}", exception.getSimpleName(), thrown);
         return thrown;
@@ -162,7 +162,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         log.atTrace().log("Entering doAutoDetection method");
         super.doAutoDetection();
 
-        Method method = this.findMethod();
+        Method method = this.method();
         detectAbortOnUncatchedException(method);
         detectCatches(method);
         detectCondition();

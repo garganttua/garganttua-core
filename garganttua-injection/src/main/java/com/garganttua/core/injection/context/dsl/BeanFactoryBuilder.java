@@ -114,7 +114,7 @@ public class BeanFactoryBuilder<Bean>
 
     private boolean isPostConstructMethodNotAlreadyBound(Method method) {
         return this.postConstructMethodBinderBuilders.stream().noneMatch(builder -> {
-            Method existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).findMethod();
+            Method existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).method();
             return method.equals(existing);
         });
     }
@@ -126,8 +126,7 @@ public class BeanFactoryBuilder<Bean>
                     this, this)
                     .provide(this.resolverBuilder)
                     .autoDetect(true)
-                    .method(method)
-                    .withReturn(Void.class);
+                    .method(method);
 
             Arrays.stream(method.getParameters()).forEach(parameter -> {
                 try {

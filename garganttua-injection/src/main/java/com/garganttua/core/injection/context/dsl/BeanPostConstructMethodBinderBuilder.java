@@ -2,7 +2,6 @@ package com.garganttua.core.injection.context.dsl;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
@@ -33,11 +32,9 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
         public IMethodBinder<Void> build(ISupplierBuilder<Bean, ISupplier<Bean>> supplierBuilder)
                         throws DslException {
                 log.atTrace().log("Entering build() for beanClass: {}", supplierBuilder.getSuppliedClass());
-                log.atDebug().log("Getting built parameter suppliers");
-                List<ISupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
-                log.atDebug().log("Built parameter suppliers count: {}", builtParameterSuppliers.size());
                 log.atDebug().log("Creating method binder");
-                IMethodBinder<Void> binder = this.createBinder(builtParameterSuppliers, supplierBuilder);
+                this.setSupplier(supplierBuilder);
+                IMethodBinder<Void> binder = this.createBinder();
                 log.atInfo().log("Method binder successfully built for beanClass: {}",
                                 supplierBuilder.getSuppliedClass());
                 log.atTrace().log("Exiting build()");

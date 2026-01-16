@@ -105,53 +105,7 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          */
         Method method() throws DslException;
 
-        /**
-         * Specifies the method to bind using a {@link Method} reference.
-         *
-         * @param method the Method object to bind
-         * @return this builder instance for method chaining
-         * @throws DslException if the method is null or incompatible
-         */
-        Builder method(Method method) throws DslException;
-
-        /**
-         * Specifies the method to bind using an {@link ObjectAddress}.
-         *
-         * @param methodAddress the symbolic address of the method
-         * @return this builder instance for method chaining
-         * @throws DslException if the address is invalid or the method cannot be found
-         */
-        Builder method(ObjectAddress methodAddress) throws DslException;
-
-        /**
-         * Specifies the expected return type of the method.
-         *
-         * <p>
-         * This helps with type safety and method resolution when dealing with
-         * generic methods or when the return type needs to be explicitly declared.
-         * </p>
-         *
-         * @param returnedType the expected return type
-         * @return this builder instance for method chaining
-         * @throws DslException if the return type is incompatible
-         */
-        Builder withReturn(Class<ExecutionReturn> returnedType) throws DslException;
-
-        /**
-         * Specifies the method to bind by name.
-         *
-         * <p>
-         * The method will be resolved based on the name and the parameters
-         * configured through {@code withParam} methods. For overloaded methods,
-         * parameter configuration is required to disambiguate.
-         * </p>
-         *
-         * @param methodName the name of the method
-         * @return this builder instance for method chaining
-         * @throws DslException if the method name is invalid or multiple matches are
-         *                      found
-         */
-        Builder method(String methodName) throws DslException;
+        ObjectAddress methodAddress() throws DslException;
 
         /**
          * Specifies the method to bind with full signature.
@@ -162,8 +116,7 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          * @return this builder instance for method chaining
          * @throws DslException if the signature doesn't match or is incompatible
          */
-        Builder method(Method method,
-                        Class<ExecutionReturn> returnType, Class<?>... parameterTypes) throws DslException;
+        Builder method(Method method) throws DslException;
 
         /**
          * Specifies the method to bind by address with full signature.

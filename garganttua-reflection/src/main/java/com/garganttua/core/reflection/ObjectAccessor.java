@@ -51,9 +51,9 @@ public class ObjectAccessor {
 		log.atTrace().log("Exiting setValue");
 	}
 
-	public static <Infos> Object invoke(Object object,
+	public static <Infos, R> R invoke(Object object,
 			ThrowingFunction<Class<?>, Infos> getInfosClassMethod,
-			ThrowingFunction<Infos, ObjectAddress> getMethodAddressMethod, Object... parameters)
+			ThrowingFunction<Infos, ObjectAddress> getMethodAddressMethod, Class<R> returnType, Object... parameters)
 			throws ReflectionException {
 		log.atTrace().log(
 				"invoke called with object={}, getInfosClassMethod={}, getMethodAddressMethod={}, parameters={}",
@@ -66,7 +66,7 @@ public class ObjectAccessor {
 		Infos infos = getInfosClassMethod.apply(object.getClass());
 		log.atDebug().log("Infos obtained: {}", infos);
 
-		Object result = ObjectAccessor.invoke(object, infos, getMethodAddressMethod, parameters);
+		R result = ObjectAccessor.invoke(object, infos, getMethodAddressMethod, returnType, parameters);
 		log.atDebug().log("Invocation result: {}", result);
 		log.atTrace().log("Exiting invoke");
 		return result;
@@ -110,9 +110,9 @@ public class ObjectAccessor {
 		log.atTrace().log("Exiting setValue with infosKeeper");
 	}
 
-	public static <Infos> Object invoke(Object object,
+	public static <Infos, T, R> R invoke(T object,
 			Infos infosKeeper,
-			ThrowingFunction<Infos, ObjectAddress> getMethodAddressMethod, Object... parameters)
+			ThrowingFunction<Infos, ObjectAddress> getMethodAddressMethod, Class<R> returnType, Object... parameters)
 			throws ReflectionException {
 		log.atTrace().log(
 				"invoke with infosKeeper called, object={}, infosKeeper={}, getMethodAddressMethod={}, parameters={}",
@@ -125,7 +125,19 @@ public class ObjectAccessor {
 		ObjectAddress methodAddress = getMethodAddressMethod.apply(infosKeeper);
 		log.atDebug().log("Method address resolved: {}", methodAddress);
 
-		Object result = ObjectQueryFactory.objectQuery(object).invoke(methodAddress, parameters);
+		IMethodReturn<R> methodReturn = ObjectQueryFactory.objectQuery((Class<T>) object.getClass(), object).invoke(methodAddress, returnType, parameters);
+
+		// Extract the result from IMethodReturn
+		R result = null;
+		if (methodReturn != null) {
+			if (methodReturn.isSingle()) {
+				result = methodReturn.single();
+			} else if (!methodReturn.isEmpty()) {
+				// For multiple results, get the first one
+				result = methodReturn.first();
+			}
+		}
+
 		log.atDebug().log("Invocation result: {}", result);
 		log.atTrace().log("Exiting invoke with infosKeeper");
 		return result;

@@ -107,6 +107,10 @@ public class ExpressionContextTest {
         System.out.println(expressionContext.man());
         System.out.println(expressionContext.man(7));
 
+        ISupplier<?> toto = expressionContext.expression("man()").evaluate();
+
+        System.out.println(toto.supply());
+
     }
 
     @SuppressWarnings("unchecked")

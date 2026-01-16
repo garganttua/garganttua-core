@@ -104,7 +104,7 @@
 # ------------------------------------------------------------------------------
 # Includes can be used when executing scripts through garganttua-scripts
 include(./my-package.jar) # Custom package that may includes custom expressions
-include(#garganttua-rest-client.jar)   # Standard Garganttua package defining
+include(garganttua-rest-client.jar)   # Standard Garganttua package defining
 #   some standard expressions
 include(./another-runtime-script.gs) # Import another runtime script ran before
 #   this one, the included script and current contexts are merged
@@ -114,7 +114,7 @@ include(./another-runtime-script.gs) # Import another runtime script ran before
 # ------------------------------------------------------------------------------
 threshold  = int("100")
 multiplier = double("1.5")
-output     = OK
+output     = "OK"
 code       = 200
 counter    = 0
 list       = string[1,2,3]
@@ -122,16 +122,23 @@ list       = string[1,2,3]
 # ------------------------------------------------------------------------------
 # STAGE: PROTOCOL
 # ------------------------------------------------------------------------------
+
+build(
+    
+)
+
+
+
 stage(protocol,
 
-    step(extract-format,
+    step("extract-format",
         ( # this is an example of one operation that integrate many others
             format = extractFormat(@input),
             variable = 12,
         )
     ),
 
-    step(example-many-parallel-operations,
+    step("example-many-parallel-operations",
         join(
             parallel( # this is an example of one operation that integrate many others
                 format = extractFormat(@input) -> 200,
@@ -141,48 +148,46 @@ stage(protocol,
     ),
 
     step(
-        example-nullable-return,
+        "example-nullable-return",
         while(null(@nullable-variable), #This is an infinite loop
             nullable-variable = nullable(null)
         )
     ),
 
-    parallel(
-        step(
-            serialize,
-            for(@counter, ++(@counter), lower(12),
-                else(
-                    return(Invalid format) -> 405,
+    step(
+        "serialize",
+        for(@counter, increment(@counter), lower(12),
+            else(
+                return(Invalid format) -> 405,
 
-                    elif(
-                        equals(@format, xml),
+                elif(
+                    equals(@format, xml),
+                    body = serialize(
+                        @input,
+                        bean(garganttua::com.garganttua.core.MyXmlParser!singleton#XmlParser)
+                    ) -> 200,
+
+                    if(
+                        and(equals(@format, json), null(@nullable-variable)),
                         body = serialize(
                             @input,
-                            bean(garganttua::com.garganttua.core.MyXmlParser!singleton#XmlParser)
-                        ) -> 200,
-
-                        if(
-                            and(equals(@format, json), null(@nullable-variable)),
-                            body = serialize(
-                                @input,
-                                bean(garganttua::com.garganttua.core.MyJsonParser!singleton#JsonParser)
-                            ) -> 200
-                        )
+                            bean(garganttua::com.garganttua.core.MyJsonParser!singleton#JsonParser)
+                        ) -> 200
                     )
-                ) -> 200,
-            )
+                )
+            ) -> 200,
+        )
 
-            # Parser-specific error handling with contextual analysis
-            catch(
-                ParserException,
-                output = parseParserException(@exception, @context) -> 400
-            ),
+        # Parser-specific error handling with contextual analysis
+        catch(
+            ParserException.class,
+            output = parseParserException(@exception, @context) -> 400
+        ),
 
-            # Fallback catch: must be used carefully
-            catch(
-                Any,
-                output = Unknown exception -> 500
-            )
+        # Fallback catch: must be used carefully
+        catch(
+            Any,
+            output = Unknown exception -> 500
         )
     )
 )
@@ -190,25 +195,25 @@ stage(protocol,
 # ------------------------------------------------------------------------------
 # STAGE: BUSINESS
 # ------------------------------------------------------------------------------
-stage(business-checks,
+stage("business-checks",
 
     step(
-        validate,
+        "validate",
         validate(@body) -> 200,
-        catch(ValidationException, output = @exceptionMessage) -> 400
+        catch(ValidationException.class, output = @exceptionMessage) -> 400
     ),
 
     step(
-        map-to-dto-1,
+        "map-to-dto-1",
         dto1 = map(@body, com.garganttua.core.example.Dto1) -> 200,
-        catch(MapperException, output = processMapperException(@exception, @context)),
+        catch(MapperException.class, output = processMapperException(@exception, @context)),
         catch(Any, output = Unknown exception -> 500)
     ),
 
     step(
-        map-to-dto-2,
+        "map-to-dto-2",
         dto2 = map(@body, com.garganttua.core.example.Dto2) -> 200,
-        catch(MapperException, output = processMapperException(@exception, @context)),
+        catch(MapperException.class, output = processMapperException(@exception, @context)),
         catch(Any, output = Unknown exception -> 500)
     )
 )
@@ -216,10 +221,10 @@ stage(business-checks,
 # ------------------------------------------------------------------------------
 # STAGE: UPDATE IN DATABASE
 # ------------------------------------------------------------------------------
-stage(update-in-db,
+stage("update-in-db",
 
     step(
-        update-dto-1,
+        "update-dto-1",
         retry(
             3, 10, seconds,
             synchronized(
@@ -232,7 +237,7 @@ stage(update-in-db,
         ) -> 200,
 
         catch(
-            RepositoryException,
+            RepositoryException.class,
             revertUpdate(
                 @exception,
                 @dto1,
@@ -242,7 +247,7 @@ stage(update-in-db,
     ),
 
     step(
-        update-dto-2,
+        "update-dto-2",
         retry(
             3, 10, seconds,
             synchronized(
@@ -255,7 +260,7 @@ stage(update-in-db,
         ) -> 200,
 
         catch(
-            RepositoryException,
+            RepositoryException.class,
             processRepositoryException(
                 @exception,
                 @dto2,
@@ -271,7 +276,7 @@ stage(update-in-db,
 stage(produce-answer,
 
     step(
-        set output,
+        "set-output",
         for(@list,
             output = @input -> code @for-element
         )

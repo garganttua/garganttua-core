@@ -62,7 +62,6 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         log.atTrace().log("{} Entering method() method", logLineHeader());
         if (this.methodBuilder == null) {
             this.methodBuilder = new RuntimeStepMethodBuilder<>(runtimeName, stageName, stepName, this, supplier);
-            this.methodBuilder.withReturn(executionReturn);
             log.atInfo().log("{} Method builder created", logLineHeader());
         } else {
             log.atDebug().log("{} Reusing existing method builder", logLineHeader());
@@ -77,7 +76,6 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         log.atTrace().log("{} Entering fallBack() method", logLineHeader());
         if (this.fallbackBuilder == null) {
             this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(runtimeName, stageName, stepName, this, supplier);
-            this.fallbackBuilder.withReturn(executionReturn);
             log.atInfo().log("{} Fallback builder created", logLineHeader());
         } else {
             log.atDebug().log("{} Reusing existing fallback builder", logLineHeader());
@@ -100,8 +98,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
                 FallBack.class);
         if (fallbackMethod != null) {
             try {
-                fallBack().provide(this.resolverBuilder).autoDetect(true).method(fallbackMethod)
-                        .withReturn(executionReturn);
+                fallBack().provide(this.resolverBuilder).autoDetect(true).method(fallbackMethod);
 
                 if (fallbackMethod.getAnnotation(Output.class) != null) {
                     fallBack().output(true);
@@ -133,7 +130,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
                     " does not declare any @Operation method");
         }
         this.executionReturn = (Class<ExecutionReturn>) method.getReturnType();
-        this.method().provide(this.resolverBuilder).autoDetect(true).method(method).withReturn(executionReturn);
+        this.method().provide(this.resolverBuilder).autoDetect(true).method(method);
 
         log.atInfo().log("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
                 executionReturn.getSimpleName());

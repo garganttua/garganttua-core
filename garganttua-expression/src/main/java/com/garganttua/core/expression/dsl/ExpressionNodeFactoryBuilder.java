@@ -10,8 +10,12 @@ import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
+import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
+import com.garganttua.core.reflection.methods.MethodResolver;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -55,6 +59,7 @@ public class ExpressionNodeFactoryBuilder<S>
     private Class<S> supplied;
     private String name;
     private String description = "No description";
+    private IObjectQuery<?> objectQuery;
 
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
@@ -65,15 +70,23 @@ public class ExpressionNodeFactoryBuilder<S>
                 methodOwnerSupplier, supplied);
         this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         this.supplied = Objects.requireNonNull(supplied, "Supplied type cannot be null");
+        try {
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.methodOwnerSupplier.getSuppliedClass());
+        } catch (ReflectionException e) {
+            log.atError().log("[MethodBinderBuilder] Error creating objectQuery for class {}",
+                    this.methodOwnerSupplier.getSuppliedClass(), e);
+            throw new DslException(e.getMessage(), e);
+        }
         log.atTrace().log("Exiting ExpressionMethodBinderBuilder constructor");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     protected IExpressionNodeFactory<S, ISupplier<S>> doBuild() throws DslException {
-        Method method = this.findMethod();
-        ObjectAddress methodAddress = new ObjectAddress(method.getName());
-        return new ExpressionNodeFactory<S, ISupplier<S>>(
+        Method method = method();
+        ObjectAddress methodAddress = this.methodAddress();
+
+        return new ExpressionNodeFactory<>(
                 this.methodOwnerSupplier.build(),
                 (Class<ISupplier<S>>) (Class<?>) ISupplier.class,
                 method,
@@ -85,7 +98,7 @@ public class ExpressionNodeFactoryBuilder<S>
 
     @Override
     protected void doAutoDetection() throws DslException {
-        Method m = this.findMethod();
+        Method m = method();
         Expression nodeInfos = m.getAnnotation(Expression.class);
         if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
             this.withName(nodeInfos.name());
@@ -106,6 +119,43 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     public IExpressionMethodBinderBuilder<S> withNullableParam(int i) {
         this.nullableParameter(i, true);
+        return this;
+    }
+
+    @Override
+    public IExpressionMethodBinderBuilder<S> encapsulatedMethod(ObjectAddress methodAddress, Class<S> returnType,
+            Class<?>... parameterTypes) throws DslException {
+        Method methodObject = (Method) MethodResolver
+                .selectBestMatch(this.objectQuery.findAll(methodAddress), returnType, parameterTypes,
+                        this.methodOwnerSupplier.getSuppliedClass())
+                .getLast();
+
+        this.method(methodObject);
+
+        return this;
+    }
+
+    @Override
+    public IExpressionMethodBinderBuilder<S> encapsulatedMethod(String methodName, Class<S> returnType,
+            Class<?>... parameterTypes) throws DslException {
+        ObjectAddress methodAddress = this.objectQuery.address(methodName);
+        return this.encapsulatedMethod(methodAddress, returnType, parameterTypes);
+    }
+
+    @Override
+    @Deprecated
+    public IExpressionMethodBinderBuilder<S> method(String methodName,
+            Class<IExpressionNode<S, ISupplier<S>>> returnType,
+            Class<?>... parameterTypes) throws DslException {
+        log.atWarn().log("method is not supported for ExpressionMethodBinderBuilder");
+        return this;
+    }
+
+    @Override
+    @Deprecated
+    public IExpressionMethodBinderBuilder<S> method(ObjectAddress methodAddress,
+            Class<IExpressionNode<S, ISupplier<S>>> returnType, Class<?>... parameterTypes) throws DslException {
+        log.atWarn().log("method is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
@@ -193,13 +243,6 @@ public class ExpressionNodeFactoryBuilder<S>
     }
 
     // ========== Override withReturn to make it inoperative ==========
-
-    @Override
-    public IExpressionMethodBinderBuilder<S> withReturn(Class<IExpressionNode<S, ISupplier<S>>> returnedType)
-            throws DslException {
-        log.atWarn().log("withReturn is not supported for ExpressionMethodBinderBuilder");
-        return this;
-    }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withName(String name) {

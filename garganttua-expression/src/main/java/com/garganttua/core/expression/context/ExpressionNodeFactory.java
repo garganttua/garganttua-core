@@ -88,6 +88,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
     private String name;
     private String description;
+    private ISupplier<?> methodOwnerSupplier;
 
     // ========== Constructors ==========
 
@@ -127,6 +128,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         log.atTrace().log("Creating ExpressionNodeFactory: method={}", method.getName());
 
+        this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         this.name = name.orElse(this.method.getName());
         this.description = description.orElse("No description");
@@ -244,7 +246,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      */
     @SuppressWarnings("unchecked")
     private IExpressionNode<R, S> createNonContextualNode(IExpressionNodeContext context) {
-        return (IExpressionNode<R, S>) new ExpressionNode<R>(
+        return (IExpressionNode<R, S>) new ExpressionNode<>(
                 getExecutableReference(),
                 this::bindNode,
                 getReturnType(),
@@ -259,7 +261,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      */
     @SuppressWarnings("unchecked")
     private IExpressionNode<R, S> createContextualNode(IExpressionNodeContext context) {
-        return (IExpressionNode<R, S>) new ContextualExpressionNode<R>(
+        return (IExpressionNode<R, S>) new ContextualExpressionNode<>(
                 getExecutableReference(),
                 (c, params) -> this.bindContextualNode(params),
                 getReturnType(),
@@ -280,7 +282,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
         return new ContextualMethodBinder<>(
-                createMethodOwnerSupplier(),
+                this.methodOwnerSupplier,
                 this.methodAddress,
                 encapsulatedParams,
                 getReturnType());
@@ -298,8 +300,8 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
-        return new MethodBinder<R>(
-                createMethodOwnerSupplier(),
+        return new MethodBinder<>(
+                this.methodOwnerSupplier,
                 this.methodAddress,
                 encapsulatedParams,
                 getReturnType());
@@ -329,15 +331,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         }
 
         return encapsulated;
-    }
-
-    /**
-     * Creates a supplier for the method owner.
-     *
-     * @return a null supplier for the declaring class
-     */
-    private ISupplier<?> createMethodOwnerSupplier() {
-        return new NullSupplier<>(this.method.getDeclaringClass());
     }
 
     /**
@@ -454,7 +447,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 manual.append("    ").append(this.method.getParameters()[i].getName()).append(" : ");
                 manual.append(this.parameterTypes[i].getSimpleName());
 
-                if (this.nullableParameters.get(i)) {
+                if (this.nullableParameters.get(i).booleanValue()) {
                     manual.append(" (nullable)");
                 } else {
                     manual.append(" (required)");

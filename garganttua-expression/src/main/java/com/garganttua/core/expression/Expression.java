@@ -41,18 +41,18 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
 
     public static ISupplier<?> evaluateNode(IExpressionNode<?, ?> node) {
         log.atTrace().log("Entering evaluateNode(node={})", node.getClass().getSimpleName());
-        if (node instanceof IContextualExpressionNode cNode) {
+        if (node instanceof IContextualExpressionNode<?,?> cNode) {
             log.atDebug().log("Node is contextual, evaluating with empty context");
             return cNode.evaluate(new ExpressionContext(Set.of()));
         }
         log.atDebug().log("Node is not contextual, evaluating directly");
-        return (ISupplier<?>) node.evaluate();
+        return node.evaluate();
     }
 
     public static ISupplier<?> evaluateNode(IExpressionNode<?, ?> node, IExpressionContext context) {
         log.atTrace().log("Entering evaluateNode(node={}, context={})",
                 node.getClass().getSimpleName(), context != null ? context.getClass().getSimpleName() : "null");
-        if (node instanceof IContextualExpressionNode cNode) {
+        if (node instanceof IContextualExpressionNode<?,?> cNode) {
             if( context == null ) {
                 log.atDebug().log("Context is null, creating empty context");
                 context = new ExpressionContext(Set.of());
@@ -61,7 +61,7 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
             return cNode.evaluate(context);
         }
         log.atDebug().log("Node is not contextual, evaluating directly");
-        return (ISupplier<?>) node.evaluate();
+        return node.evaluate();
     }
 
     @Override

@@ -33,8 +33,8 @@ public class BeanFactoryBuilderTest {
                 .field(String.class).field("anotherValue").withValue(FixedSupplierBuilder.of(random)).up()
                 .constructor()
                 .withParam(FixedSupplierBuilder.of("constructedWithParameter"))
-                .up()
-                .postConstruction().method("markPostConstruct").withReturn(Void.class)
+                .up()  
+                .postConstruction().method("markPostConstruct", void.class, new Class<?>[0])
                 .up()
                 .build();
 

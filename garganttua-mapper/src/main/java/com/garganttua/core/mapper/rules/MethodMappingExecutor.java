@@ -42,7 +42,7 @@ public class MethodMappingExecutor implements IMappingRuleExecutor {
 					log.atDebug().log("Source object is null, skipping mapping");
 					return destinationObject;
 				}
-				Object destinationMappedObject = ObjectReflectionHelper.invokeMethod(destinationObject, this.method.getName(), this.method , sourceObjectToMap);
+				Object destinationMappedObject = ObjectReflectionHelper.invokeMethod(destinationObject, this.method.getName(), this.method, this.method.getReturnType(), sourceObjectToMap);
 				log.atDebug().log("Method {} invoked, result: {}", this.method.getName(), destinationMappedObject);
 				ObjectReflectionHelper.setObjectFieldValue(destinationObject, this.destinationField, destinationMappedObject);
 				log.atInfo().log("REGULAR mapping completed for method {}", this.method.getName());
@@ -54,7 +54,7 @@ public class MethodMappingExecutor implements IMappingRuleExecutor {
 					log.atDebug().log("Source object is null, skipping mapping");
 					return destinationObject;
 				}
-				Object destinationMappedObject = ObjectReflectionHelper.invokeMethod(sourceObject, this.method.getName(), this.method , sourceObjectToMap);
+				Object destinationMappedObject = ObjectReflectionHelper.invokeMethod(sourceObject, this.method.getName(), this.method, this.method.getReturnType(), sourceObjectToMap);
 				log.atDebug().log("Method {} invoked on source, result: {}", this.method.getName(), destinationMappedObject);
 				ObjectReflectionHelper.setObjectFieldValue(destinationObject, this.destinationField, destinationMappedObject);
 				log.atInfo().log("REVERSE mapping completed for method {}", this.method.getName());

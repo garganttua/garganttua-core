@@ -64,14 +64,14 @@ public class ObjectQueryTest {
         IObjectQuery query = new ObjectQuery(TestClass.class);
 
         // findAll() should return all overloaded methods
-        List<Object> results = query.findAll("testMethod");
+        List<List<Object>> results = query.findAll("testMethod");
 
         assertEquals(4, results.size(), "findAll() should return all 4 overloaded methods");
 
         // Verify all results are Methods with the correct name
-        for (Object obj : results) {
-            assertTrue(obj instanceof Method, "Each result should be a Method");
-            assertEquals("testMethod", ((Method) obj).getName());
+        for (List<Object> obj : results) {
+            assertTrue(obj.get(0) instanceof Method, "Each result should be a Method");
+            assertEquals("testMethod", ((Method) obj.get(0)).getName());
         }
 
         // Verify different parameter counts
@@ -80,8 +80,8 @@ public class ObjectQueryTest {
         boolean twoArgs = false;
         boolean oneIntArg = false;
 
-        for (Object obj : results) {
-            Method m = (Method) obj;
+        for (List<Object> obj : results) {
+            Method m = (Method) obj.get(0);
             int paramCount = m.getParameterCount();
             Class<?>[] paramTypes = m.getParameterTypes();
 
@@ -107,7 +107,7 @@ public class ObjectQueryTest {
         IObjectQuery query = new ObjectQuery(TestClass.class);
 
         // Test findAll with String parameter
-        List<Object> results = query.findAll("testMethod");
+        List<List<Object>> results = query.findAll("testMethod");
 
         assertEquals(4, results.size(), "findAll(String) should return all 4 overloaded methods");
     }
@@ -118,7 +118,7 @@ public class ObjectQueryTest {
 
         // Test findAll with ObjectAddress parameter
         ObjectAddress address = new ObjectAddress("testMethod", true);
-        List<Object> results = query.findAll(address);
+        List<List<Object>> results = query.findAll(address);
 
         assertEquals(4, results.size(), "findAll(ObjectAddress) should return all 4 overloaded methods");
     }
@@ -128,11 +128,11 @@ public class ObjectQueryTest {
         IObjectQuery query = new ObjectQuery(TestClass.class);
 
         // Test with a method that has no overloads
-        List<Object> results = query.findAll("getName");
+        List<List<Object>> results = query.findAll("getName");
 
         assertEquals(1, results.size(), "findAll() should return 1 method when there's no overload");
-        assertTrue(results.get(0) instanceof Method);
-        assertEquals("getName", ((Method) results.get(0)).getName());
+        assertTrue(results.get(0).get(0) instanceof Method);
+        assertEquals("getName", ((Method) results.get(0).get(0)).getName());
     }
 
     @Test
@@ -141,11 +141,11 @@ public class ObjectQueryTest {
 
         // Find a field (behavior should be the same for find() and findAll())
         List<Object> findResults = query.find("name");
-        List<Object> findAllResults = query.findAll("name");
+        List<List<Object>> findAllResults = query.findAll("name");
 
         assertEquals(1, findResults.size(), "find() should return the field");
         assertEquals(1, findAllResults.size(), "findAll() should return the field");
-        assertEquals(findResults.get(0), findAllResults.get(0), "find() and findAll() should return same field");
+        assertEquals(findResults.get(0), findAllResults.get(0).get(0), "find() and findAll() should return same field");
     }
 
     @Test

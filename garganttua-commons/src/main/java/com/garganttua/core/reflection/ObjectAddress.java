@@ -12,14 +12,18 @@ import lombok.extern.slf4j.Slf4j;
  * Symbolic address for navigating object graphs through field paths.
  *
  * <p>
- * {@code ObjectAddress} represents a dot-separated path for accessing nested fields,
- * map values, and collection elements within object structures. It provides loop
+ * {@code ObjectAddress} represents a dot-separated path for accessing nested
+ * fields,
+ * map values, and collection elements within object structures. It provides
+ * loop
  * detection, path manipulation, and validation capabilities, making it safe for
- * traversing complex object graphs. This is fundamental for property path expressions,
+ * traversing complex object graphs. This is fundamental for property path
+ * expressions,
  * data binding, and reflective field access.
  * </p>
  *
  * <h2>Usage Example</h2>
+ * 
  * <pre>{@code
  * // Simple field path
  * ObjectAddress address = new ObjectAddress("user.profile.email");
@@ -34,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * // Sub-address extraction
  * ObjectAddress fullPath = new ObjectAddress("app.module.service.method");
- * ObjectAddress partial = fullPath.subAddress(2);  // "app.module.service"
+ * ObjectAddress partial = fullPath.subAddress(2); // "app.module.service"
  *
  * // Dynamic path building
  * ObjectAddress dynamic = new ObjectAddress("user.profile");
@@ -45,23 +49,30 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>Address Format</h2>
  * <ul>
- *   <li><b>Field navigation</b>: "field1.field2.field3" - Dot-separated field names</li>
- *   <li><b>Map keys</b>: "map#key" - Access map keys</li>
- *   <li><b>Map values</b>: "map#value" - Access map values</li>
- *   <li><b>Combined</b>: "user.settings.theme#value" - Nested navigation with map access</li>
+ * <li><b>Field navigation</b>: "field1.field2.field3" - Dot-separated field
+ * names</li>
+ * <li><b>Map keys</b>: "map#key" - Access map keys</li>
+ * <li><b>Map values</b>: "map#value" - Access map values</li>
+ * <li><b>Combined</b>: "user.settings.theme#value" - Nested navigation with map
+ * access</li>
  * </ul>
  *
  * <h2>Loop Detection</h2>
  * <p>
- * The address validates against circular references during construction and modification.
- * This prevents infinite loops when traversing object graphs with cyclic dependencies.
- * Loop detection can be disabled for performance when paths are known to be safe.
+ * The address validates against circular references during construction and
+ * modification.
+ * This prevents infinite loops when traversing object graphs with cyclic
+ * dependencies.
+ * Loop detection can be disabled for performance when paths are known to be
+ * safe.
  * </p>
  *
  * <h2>Thread Safety</h2>
  * <p>
- * {@code ObjectAddress} instances are mutable but use synchronized collections during
- * loop detection. For concurrent use, create separate instances per thread or use
+ * {@code ObjectAddress} instances are mutable but use synchronized collections
+ * during
+ * loop detection. For concurrent use, create separate instances per thread or
+ * use
  * the {@link #clone()} method.
  * </p>
  *
@@ -101,10 +112,14 @@ public class ObjectAddress implements Cloneable {
     /**
      * Constructs a new object address with optional loop detection.
      *
-     * @param address the dot-separated field path (must not be null, empty, or start/end with dots)
-     * @param detectLoops {@code true} to enable loop detection, {@code false} to disable
-     * @throws ReflectionException if the address is invalid or contains loops (when detection enabled)
-     * @throws IllegalArgumentException if the address is null, empty, or has invalid format
+     * @param address     the dot-separated field path (must not be null, empty, or
+     *                    start/end with dots)
+     * @param detectLoops {@code true} to enable loop detection, {@code false} to
+     *                    disable
+     * @throws ReflectionException      if the address is invalid or contains loops
+     *                                  (when detection enabled)
+     * @throws IllegalArgumentException if the address is null, empty, or has
+     *                                  invalid format
      */
     public ObjectAddress(String address, boolean detectLoops) throws ReflectionException {
         log.atTrace().log("Entering ObjectAddress constructor with address='{}', detectLoops={}", address, detectLoops);
@@ -130,9 +145,11 @@ public class ObjectAddress implements Cloneable {
     /**
      * Constructs a new object address with loop detection enabled.
      *
-     * @param address the dot-separated field path (must not be null, empty, or start/end with dots)
-     * @throws ReflectionException if the address is invalid or contains loops
-     * @throws IllegalArgumentException if the address is null, empty, or has invalid format
+     * @param address the dot-separated field path (must not be null, empty, or
+     *                start/end with dots)
+     * @throws ReflectionException      if the address is invalid or contains loops
+     * @throws IllegalArgumentException if the address is null, empty, or has
+     *                                  invalid format
      */
     public ObjectAddress(String address) throws ReflectionException {
         this(address, true);
@@ -211,11 +228,13 @@ public class ObjectAddress implements Cloneable {
     }
 
     /**
-     * Creates a sub-address from the beginning up to and including the specified index.
+     * Creates a sub-address from the beginning up to and including the specified
+     * index.
      *
-     * @param endIndex the zero-based index of the last element to include (inclusive)
+     * @param endIndex the zero-based index of the last element to include
+     *                 (inclusive)
      * @return a new ObjectAddress containing elements from 0 to endIndex
-     * @throws ReflectionException if loop detection fails on the new address
+     * @throws ReflectionException      if loop detection fails on the new address
      * @throws IllegalArgumentException if endIndex is invalid
      */
     public ObjectAddress subAddress(int endIndex) throws ReflectionException {
@@ -232,7 +251,8 @@ public class ObjectAddress implements Cloneable {
     /**
      * Detects loops (circular references) in the address path.
      *
-     * @throws ReflectionException if a loop is detected (same field appears multiple times)
+     * @throws ReflectionException if a loop is detected (same field appears
+     *                             multiple times)
      */
     private void detectLoop() throws ReflectionException {
         log.atTrace().log("detectLoop() called");
@@ -258,7 +278,8 @@ public class ObjectAddress implements Cloneable {
      *
      * @param newElement the field name to append (must not be null or empty)
      * @return this address instance for method chaining
-     * @throws ReflectionException if adding the element creates a loop (when detection enabled)
+     * @throws ReflectionException      if adding the element creates a loop (when
+     *                                  detection enabled)
      * @throws IllegalArgumentException if newElement is null or empty
      */
     public ObjectAddress addElement(String newElement) throws ReflectionException {
@@ -302,5 +323,9 @@ public class ObjectAddress implements Cloneable {
             log.atError().log("Exception during clone", e);
             throw new IllegalArgumentException(e);
         }
+    }
+
+    public String getLastElement() {
+        return this.fields[this.fields.length - 1];
     }
 }

@@ -32,13 +32,11 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
         this.returnedType = returnedType;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Type getSuppliedType() {
-        Type raw = ObjectReflectionHelper
+        return ObjectReflectionHelper
                 .getParameterizedType(ISupplier.class, this.returnedType)
                 .getRawType();
-        return (Class<ISupplier<R>>) raw;
     }
 
     @Override

@@ -104,7 +104,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         log.atTrace().log("{} Starting auto-detection for fallback builder", logLineHeader());
         super.doAutoDetection();
 
-        Method method = this.findMethod();
+        Method method = this.method();
         detectOutput(method);
         detectVariable(method);
         detectOnExceptions(method);

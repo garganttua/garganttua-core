@@ -45,7 +45,7 @@ public class MethodBinderTest {
     public void testEchoMethod() {
 
         ConcreteMethodBinderBuilder b = new ConcreteMethodBinderBuilder(new Object(), FixedSupplierBuilder.of(new MethodObject()))
-                .method("echo").withReturn(String.class).withParam("Hello");
+                .method("echo", String.class, String.class).withParam("Hello");
         IMethodBinder<String> mb = b.build();
 
         assertEquals("Hello", mb.supply().get());
@@ -56,7 +56,7 @@ public class MethodBinderTest {
     public void testStaticEchoMethod() {
 
         ConcreteMethodBinderBuilder b = new ConcreteMethodBinderBuilder(new Object(), new NullSupplierBuilder<>(MethodObject.class))
-                .method("staticEcho").withReturn(String.class).withParam("Hello");
+                .method("staticEcho", String.class, String.class).withParam("Hello");
         IMethodBinder<String> mb = b.build();
 
         assertEquals("Hello", mb.supply().get());

@@ -159,14 +159,18 @@ public class ObjectReflectionHelper {
 	}
 
 	/**
-	 * Gets all methods with the specified name from the given class, including overloaded variants.
+	 * Gets all methods with the specified name from the given class, including
+	 * overloaded variants.
 	 * This method searches the class hierarchy recursively.
 	 *
-	 * <p>Duplicate methods (same signature) inherited from superclasses are automatically filtered out
-	 * to avoid duplicates when a method is not overridden.</p>
+	 * <p>
+	 * Duplicate methods (same signature) inherited from superclasses are
+	 * automatically filtered out
+	 * to avoid duplicates when a method is not overridden.
+	 * </p>
 	 *
 	 * @param objectClass the class to search
-	 * @param methodName the name of the methods to find
+	 * @param methodName  the name of the methods to find
 	 * @return a list of all methods with the given name (may be empty, never null)
 	 */
 	public static List<Method> getMethods(Class<?> objectClass, String methodName) {
@@ -199,7 +203,8 @@ public class ObjectReflectionHelper {
 			}
 		}
 
-		log.atDebug().log("Found {} method(s) named {} in class hierarchy of {}", methods.size(), methodName, objectClass.getName());
+		log.atDebug().log("Found {} method(s) named {} in class hierarchy of {}", methods.size(), methodName,
+				objectClass.getName());
 		return methods;
 	}
 
@@ -349,15 +354,15 @@ public class ObjectReflectionHelper {
 		}
 	}
 
-	public static Object invokeMethod(Object object, String methodName, Method method, Object... args)
+	public static <T, R> R invokeMethod(T object, String methodName, Method method, Class<R> returnType, Object... args)
 			throws ReflectionException {
 		log.atTrace().log("Invoking method {} on object of type {} with {} args", methodName,
 				object != null ? object.getClass().getName() : "null",
 				args != null ? args.length : 0);
-		ObjectReflectionHelper.checkMethodAndParams(method, args);
+		ObjectReflectionHelper.checkMethodAndParams(method, returnType, args);
 
 		try (MethodAccessManager manager = new MethodAccessManager(method)) {
-			Object result = method.invoke(object, args);
+			R result = (R) method.invoke(object, args);
 			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName,
 					object != null ? object.getClass().getName() : "null");
 			return result;
@@ -368,10 +373,16 @@ public class ObjectReflectionHelper {
 		}
 	}
 
-	public static void checkMethodAndParams(Method method, Object... args) throws ReflectionException {
+	public static void checkMethodAndParams(Method method, Class<?> returnType, Object... args)
+			throws ReflectionException {
 		if (method.getParameterCount() != args.length) {
 			throw new ReflectionException("Method " + method.getName() + " needs " + method.getParameterCount() + " "
 					+ method.getParameterTypes() + " but " + args.length + " have been provided : " + args);
+		}
+
+		if (!equals(method.getReturnType(), returnType)) {
+			throw new ReflectionException("Method " + method.getName() + " needs to return " + returnType + " not "
+					+ method.getReturnType());
 		}
 
 		Class<?>[] params = method.getParameterTypes();
@@ -429,7 +440,7 @@ public class ObjectReflectionHelper {
 
 	/**
 	 * 
-	 * @param entityClass the class to inspect
+	 * @param entityClass      the class to inspect
 	 * @param methodAnnotation
 	 * @return
 	 * @throws ReflectionException
@@ -447,7 +458,7 @@ public class ObjectReflectionHelper {
 
 	/**
 	 * 
-	 * @param entityClass the class to inspect
+	 * @param entityClass      the class to inspect
 	 * @param methodAnnotation
 	 * @return
 	 */
@@ -703,6 +714,22 @@ public class ObjectReflectionHelper {
 			}
 		}
 		return true;
+	}
+
+	public static Class<?>[] parameterTypes(Object[] args) {
+		if (args == null)
+			return new Class<?>[0];
+
+		Class<?>[] types = new Class<?>[args.length];
+		for (int i = 0; i < args.length; i++) {
+			Object arg = args[i];
+			if (arg == null) {
+				types[i] = Object.class;
+			} else {
+				types[i] = arg.getClass();
+			}
+		}
+		return types;
 	}
 
 }

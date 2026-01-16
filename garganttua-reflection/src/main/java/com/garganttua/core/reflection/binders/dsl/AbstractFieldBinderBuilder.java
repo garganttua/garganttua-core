@@ -32,7 +32,7 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
     protected Class<FieldType> fieldType;
     protected ISupplierBuilder<OwnerType, ? extends ISupplier<OwnerType>> ownerSupplierBuilder;
     private Boolean allowNull = false;
-    private IObjectQuery query;
+    private IObjectQuery<?> query;
 
     @Override
     public boolean equals(Object obj) {

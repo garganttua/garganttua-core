@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
@@ -49,46 +50,53 @@ public class MethodBinder<Returned>
         this(objectSupplier, method, parameterSuppliers, returnedClass, false);
     }
 
-    public static <ReturnedType> Optional<ReturnedType> execute(
+    public static <T, ReturnedType> Optional<ReturnedType> execute(
             Object owner,
-            Class<?> ownerType,
+            Class<T> ownerType,
             ObjectAddress method,
-            Class<?> returnedClass,
+            Class<ReturnedType> returnedClass,
             boolean collectionTarget,
             Object[] args) throws ReflectionException {
 
         log.atTrace().log("Executing static method execute: owner={}, ownerType={}, method={}, collectionTarget={}",
                 owner, ownerType, method, collectionTarget);
         Boolean methodStatic = Methods.isStatic(ownerType, method);
-        if (!methodStatic)
+        if (!methodStatic.booleanValue())
             Objects.requireNonNull(owner, "Owner cannot be null");
         Objects.requireNonNull(ownerType, "Owner type cannot be null");
         Objects.requireNonNull(method, "Method cannot be null");
         Objects.requireNonNull(returnedClass, "Returned class cannot be null");
         Objects.requireNonNull(collectionTarget, "Collection target cannot be null");
 
-        IObjectQuery query = null;
-        if (owner != null)
-            query = ObjectQueryFactory.objectQuery(ownerType, owner);
-        else
-            query = ObjectQueryFactory.objectQuery(ownerType);
+        IObjectQuery<T> query = ObjectQueryFactory.objectQuery(ownerType);
 
         if (collectionTarget && owner instanceof Collection<?> col) {
             log.atDebug().log("Executing method {} on collection with {} elements", method, col.size());
             for (Object element : col) {
-                query.invoke(element, method, args);
+                query.invoke((T) element, method, returnedClass, args);
             }
             log.atInfo().log("Executed method {} on collection successfully", method);
             return Optional.empty();
         }
 
         log.atDebug().log("Invoking method {} on owner of type {}", method, ownerType);
-        Object result = null;
-        
-        if( !methodStatic )
-            result = query.invoke(owner, method, args);
-        else 
-            result = query.invokeStatic(method, args);
+        IMethodReturn<ReturnedType> methodReturn = null;
+
+        if (!methodStatic.booleanValue())
+            methodReturn = query.invoke((T) owner, method, returnedClass, args);
+        else
+            methodReturn = query.invokeStatic(method, returnedClass, args);
+
+        // Extract the result from IMethodReturn
+        ReturnedType result = null;
+        if (methodReturn != null) {
+            if (methodReturn.isSingle()) {
+                result = methodReturn.single();
+            } else if (!methodReturn.isEmpty()) {
+                // For multiple results, get the first one
+                result = methodReturn.first();
+            }
+        }
 
         if (result != null && !returnedClass.isInstance(result)) {
             log.atError().log("Method {} returned type {} but expected {}", method, result.getClass().getName(),
@@ -98,7 +106,7 @@ public class MethodBinder<Returned>
         }
 
         log.atDebug().log("Method {} executed successfully, result={}", method, result);
-        return (Optional<ReturnedType>) Optional.ofNullable(result);
+        return Optional.ofNullable(result);
 
     }
 

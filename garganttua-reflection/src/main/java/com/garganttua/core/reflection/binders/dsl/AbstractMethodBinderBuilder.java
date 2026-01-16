@@ -20,6 +20,7 @@ import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -27,19 +28,29 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         extends AbstractAutomaticLinkedBuilder<Builder, Link, Built>
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
 
+    @Setter
     private ISupplierBuilder<?, ?> supplier;
-    private ObjectAddress method = null;
+
+    // Method resolution is deferred until build time
+    private ObjectAddress methodAddress = null;
     /**
      * Stores the actual Method object when set via {@link #method(Method)}.
      * This prevents re-lookup issues with overloaded methods where
      * {@code objectQuery.find(address).getLast()} might return the wrong overload.
      */
     private Method methodObject = null;
+
+    // Method name for deferred resolution
+    private String methodName = null;
+
+    // Parameter configuration (set during builder phase)
     private List<ISupplierBuilder<?, ?>> parameters;
     private List<Boolean> parameterNullableAllowed;
+
+    // Resolved data (populated during build)
     private Class<?>[] parameterTypes;
 
-    private IObjectQuery objectQuery;
+    private IObjectQuery<?> objectQuery;
     private boolean collection = false;
     private Class<ExecutionReturn> returnedType;
     private ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex;
@@ -78,18 +89,27 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     public String getMethodName() {
-        return this.method != null ? this.method.getElement(this.method.length() - 1) : null;
+        if (this.methodName != null) {
+            return this.methodName;
+        }
+        if (this.methodObject != null) {
+            return this.methodObject.getName();
+        }
+        if (this.methodAddress != null) {
+            return this.methodAddress.getElement(this.methodAddress.length() - 1);
+        }
+
+        return null;
     }
 
     @Override
-    public Builder withReturn(Class<ExecutionReturn> returnedType) throws DslException {
-        this.returnedType = Objects.requireNonNull(returnedType, "Returned type cannot be null");
-        return (Builder) this;
+    public ObjectAddress methodAddress() throws DslException {
+        return this.methodAddress;
     }
 
     @Override
     public Method method() throws DslException {
-        return this.findMethod();
+        return this.methodObject;
     }
 
     /**
@@ -104,171 +124,68 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
      * </p>
      *
      * <p>
-     * The method also resolves an ObjectAddress for the method and initializes
-     * parameter metadata.
+     * The method resolution and parameter initialization are deferred until build
+     * time.
      * </p>
      *
      * @param method the Method object to bind
      * @return this builder instance for method chaining
-     * @throws DslException if method resolution or parameter initialization fails
+     * @throws DslException if method validation fails
      */
     @Override
     public Builder method(Method method) throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Resolving method {} in class {}", method.getName(),
-                this.supplier.getSuppliedClass());
+        log.atDebug().log("[MethodBinderBuilder] Storing method {} for deferred resolution", method.getName());
 
-        try {
-            // Store the actual Method object to avoid re-lookup issues with overloaded
-            // methods
-            this.methodObject = method;
+        this.methodObject = Objects.requireNonNull(method, "Method cannot be null");
+        this.methodName = method.getName();
+        this.returnedType = (Class<ExecutionReturn>) method.getReturnType();
+        this.parameterTypes = method.getParameterTypes();
+        this.methodAddress = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass(), returnedType,
+                parameterTypes);
 
-            if (this.returnedType != null)
-                this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass(),
-                        this.returnedType);
-            else
-                this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass());
-            this.initParameters();
-            return (Builder) this;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
-    }
+        this.initParameters();
 
-    @Override
-    public Builder method(ObjectAddress methodAddress) throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Resolving method by address={} in class {}", methodAddress,
-                this.supplier.getSuppliedClass());
-
-        try {
-            if (this.returnedType != null)
-                this.method = MethodResolver.methodByAddress(methodAddress, this.objectQuery,
-                        this.supplier.getSuppliedClass(), this.returnedType);
-            else
-                this.method = MethodResolver.methodByAddress(methodAddress, this.objectQuery,
-                        this.supplier.getSuppliedClass());
-            this.initParameters();
-            return (Builder) this;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Builder method(String methodName) throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Resolving method by name={} in class {}", methodName,
-                this.supplier.getSuppliedClass());
-
-        try {
-            if (this.returnedType != null)
-                this.method = MethodResolver.methodByName(methodName, this.objectQuery,
-                        this.supplier.getSuppliedClass(), this.returnedType);
-            else
-                this.method = MethodResolver.methodByName(methodName, this.objectQuery,
-                        this.supplier.getSuppliedClass());
-            this.initParameters();
-            return (Builder) this;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Builder method(Method method, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
-            throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Resolving method {} with returnType={} in class {}",
-                method.getName(), returnType, this.supplier.getSuppliedClass());
-
-        try {
-            this.method = MethodResolver.methodByMethod(method, this.supplier.getSuppliedClass(), returnType,
-                    parameterTypes);
-            this.initParameters();
-            return (Builder) this;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
+        return (Builder) this;
     }
 
     @Override
     public Builder method(ObjectAddress methodAddress, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
             throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Resolving method by address={} with returnType={} in class {}",
-                methodAddress, returnType, this.supplier.getSuppliedClass());
+        log.atDebug().log("[MethodBinderBuilder] Storing method address={} with returnType={} for deferred resolution",
+                methodAddress, returnType);
 
-        try {
-            this.method = MethodResolver.methodByAddress(methodAddress, this.objectQuery,
-                    this.supplier.getSuppliedClass(),
-                    returnType, parameterTypes);
-            this.initParameters();
-            return (Builder) this;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
+        this.methodAddress = Objects.requireNonNull(methodAddress, "Method address cannot be null");
+        this.methodName = methodAddress.getLastElement();
+        this.returnedType = returnType;
+        this.parameterTypes = parameterTypes;
+
+        MethodResolver.methodByAddress(methodAddress, objectQuery, this.supplier.getSuppliedClass(), returnedType,
+                parameterTypes);
+
+        this.initParameters();
+
+        return (Builder) this;
     }
 
     @Override
     public Builder method(String methodName, Class<ExecutionReturn> returnType, Class<?>... parameterTypes)
             throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Resolving method by name={} with returnType={} in class {}",
-                methodName, returnType, this.supplier.getSuppliedClass());
+        log.atDebug().log("[MethodBinderBuilder] Storing method name={} with returnType={} for deferred resolution",
+                methodName, returnType);
 
-        try {
-            this.method = MethodResolver.methodByName(methodName, this.objectQuery, this.supplier.getSuppliedClass(),
-                    returnType, parameterTypes);
-            this.initParameters();
-            return (Builder) this;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
-    }
+        this.methodName = Objects.requireNonNull(methodName, "Method name cannot be null");
+        this.returnedType = returnType;
+        this.parameterTypes = parameterTypes;
+        this.methodAddress = this.objectQuery.address(methodName);
 
-    /**
-     * Initializes the parameter metadata for the bound method.
-     *
-     * <p>
-     * This method extracts parameter types, return type, and nullability settings
-     * from the Method object.
-     * It uses the stored Method object (if available from {@link #method(Method)})
-     * or performs a lookup
-     * via ObjectAddress. The stored Method approach ensures correct parameter
-     * extraction for overloaded methods.
-     * </p>
-     *
-     * <p>
-     * By default, all parameters are marked as non-nullable unless explicitly
-     * specified otherwise.
-     * </p>
-     *
-     * @throws DslException if method or object query is not set, or if parameter
-     *                      extraction fails
-     */
-    private void initParameters() throws DslException {
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before initializing parameters");
-        Objects.requireNonNull(this.objectQuery, "[MethodBinderBuilder] Object query cannot be null");
+        this.methodObject = (Method) MethodResolver
+                .selectBestMatch(this.objectQuery.findAll(this.methodAddress), returnType, parameterTypes,
+                        this.supplier.getSuppliedClass())
+                .getLast();
 
-        try {
-            Method m;
-            // Use stored Method object if available to avoid wrong overload selection
-            if (this.methodObject != null) {
-                m = this.methodObject;
-                log.atDebug().log("[MethodBinderBuilder] Using stored Method object for parameter initialization");
-            } else {
-                m = (Method) this.objectQuery.find(this.method).getLast();
-                log.atDebug().log("[MethodBinderBuilder] Using ObjectAddress lookup for parameter initialization");
-            }
+        this.initParameters();
 
-            this.parameterTypes = m.getParameterTypes();
-            this.parameters = new ArrayList<>(Collections.nCopies(this.parameterTypes.length, null));
-            this.returnedType = (Class<ExecutionReturn>) m.getReturnType();
-            // default : parameters are NOT nullable unless specified
-            this.parameterNullableAllowed = new ArrayList<>(
-                    Collections.nCopies(this.parameterTypes.length, Boolean.FALSE));
-
-            log.atInfo().log("[MethodBinderBuilder] Successfully bound method {} with {} parameters",
-                    getMethodName(), this.parameterTypes.length);
-        } catch (ReflectionException e) {
-            log.atError().log("[MethodBinderBuilder] Error initializing parameters for method {}", getMethodName(), e);
-            throw new DslException(e.getMessage(), e);
-        }
+        return (Builder) this;
     }
 
     // --------------------------
@@ -290,26 +207,28 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     public Builder withParam(int i, Object object, boolean acceptNullable) throws DslException {
         log.atTrace().log("[MethodBinderBuilder] Binding parameter {} with value={} (acceptNullable={})", i, object,
                 acceptNullable);
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
 
-        if (!this.isValidParameterIndex(i)) {
-            log.atWarn().log("[MethodBinderBuilder] Invalid parameter index {} for method {}", i, getMethodName());
-            throw new DslException(
-                    "Method " + getMethodName() + " has only " + this.parameterTypes.length + " parameters");
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("[MethodBinderBuilder] Method must be set before setting parameters");
         }
 
-        if (!this.isValidParameterType(i, object)) {
-            log.atWarn().log("[MethodBinderBuilder] Invalid parameter type {} for method {} expected {}",
-                    object.getClass(), getMethodName(), this.parameterTypes[i]);
-            throw new DslException(
-                    "Parameter " + i + " of method " + getMethodName() + " is of type "
-                            + this.parameterTypes[i].getName()
-                            + " and cannot be assigned a value of type " + object.getClass().getName());
+        // Lazy initialize parameters list if needed
+        if (this.parameters == null) {
+            // We don't know the size yet, will be checked during build
+            this.parameters = new ArrayList<>();
+            this.parameterNullableAllowed = new ArrayList<>();
+        }
+
+        // Ensure the lists are large enough
+        while (this.parameters.size() <= i) {
+            this.parameters.add(null);
+            this.parameterNullableAllowed.add(Boolean.FALSE);
         }
 
         this.parameters.set(i, AbstractConstructorBinderBuilder.createFixedObjectSupplierBuilder(object));
-
         this.parameterNullableAllowed.set(i, acceptNullable);
+
         log.atInfo().log("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
                 object.getClass(), acceptNullable);
         return (Builder) this;
@@ -320,35 +239,31 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             boolean acceptNullable) throws DslException {
         log.atTrace().log("[MethodBinderBuilder] Binding parameter {} with supplier of type {} (acceptNullable={})", i,
                 object == null ? "null" : object.getSuppliedClass(), acceptNullable);
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
+
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("[MethodBinderBuilder] Method must be set before setting parameters");
+        }
         Objects.requireNonNull(object, "Supplier cannot be null");
 
-        if (!this.isValidParameterIndex(i)) {
-            log.atWarn().log("[MethodBinderBuilder] Invalid parameter index {} for method {}", i, getMethodName());
-            throw new DslException(
-                    "Method " + getMethodName() + " has only " + this.parameterTypes.length + " parameters");
+        // Lazy initialize parameters list if needed
+        if (this.parameters == null) {
+            this.parameters = new ArrayList<>();
+            this.parameterNullableAllowed = new ArrayList<>();
         }
-        // type check using supplier declared class
-        Class<?> suppliedClass = object.getSuppliedClass();
-        if (suppliedClass == null) {
-            log.atWarn().log("[MethodBinderBuilder] Supplier.getObjectClass() returned null for parameter {}", i);
-            throw new DslException(
-                    "Supplier for parameter " + i + " does not declare object class");
-        }
-        if (!this.isValidParameterType(i, suppliedClass)) {
-            log.atWarn().log("[MethodBinderBuilder] Invalid supplier type {} for parameter {} of method {} expected {}",
-                    suppliedClass, i, getMethodName(), this.parameterTypes[i]);
-            throw new DslException(
-                    "Parameter " + i + " of method " + getMethodName() + " is of type "
-                            + this.parameterTypes[i].getName()
-                            + " and cannot be assigned a value of type " + suppliedClass.getName());
+
+        // Ensure the lists are large enough
+        while (this.parameters.size() <= i) {
+            this.parameters.add(null);
+            this.parameterNullableAllowed.add(Boolean.FALSE);
         }
 
         this.parameters.set(i, object);
         this.parameterNullableAllowed.set(i, acceptNullable);
+
         log.atInfo().log(
                 "[MethodBinderBuilder] Parameter {} bound successfully with supplier type {} (acceptNullable={})", i,
-                suppliedClass, acceptNullable);
+                object.getSuppliedClass(), acceptNullable);
         return (Builder) this;
     }
 
@@ -366,16 +281,13 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     @Override
     public Builder withParam(String paramName, Object parameter, boolean acceptNullable) throws DslException {
         Objects.requireNonNull(paramName, "paramName cannot be null");
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
 
-        Method m;
-        try {
-            m = (Method) this.objectQuery.find(this.method).getLast();
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("[MethodBinderBuilder] Method must be set before setting parameters");
         }
 
-        java.lang.reflect.Parameter[] params = m.getParameters();
+        java.lang.reflect.Parameter[] params = this.methodObject.getParameters();
         Integer foundIdx = null;
         for (int i = 0; i < params.length; i++) {
             if (paramName.equals(params[i].getName())) {
@@ -398,16 +310,13 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             throws DslException {
         Objects.requireNonNull(paramName, "paramName cannot be null");
         Objects.requireNonNull(supplier, "supplier cannot be null");
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
 
-        Method m;
-        try {
-            m = (Method) this.objectQuery.find(this.method).getLast();
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("[MethodBinderBuilder] Method must be set before setting parameters");
         }
 
-        java.lang.reflect.Parameter[] params = m.getParameters();
+        java.lang.reflect.Parameter[] params = this.methodObject.getParameters();
         Integer foundIdx = null;
         for (int i = 0; i < params.length; i++) {
             if (paramName.equals(params[i].getName())) {
@@ -436,7 +345,11 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     @Override
     public Builder withParam(Object parameter, boolean acceptNullable) throws DslException {
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("[MethodBinderBuilder] Method must be set before setting parameters");
+        }
+
         int idx = findNextFreeParameterIndex();
         if (idx < 0) {
             log.atWarn().log("[MethodBinderBuilder] No free parameter slot available for method {}", getMethodName());
@@ -448,8 +361,12 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     @Override
     public Builder withParam(ISupplierBuilder<?, ? extends ISupplier<?>> supplier, boolean acceptNullable)
             throws DslException {
-        Objects.requireNonNull(this.method, "[MethodBinderBuilder] Method must be set before setting parameters");
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("[MethodBinderBuilder] Method must be set before setting parameters");
+        }
         Objects.requireNonNull(supplier, "supplier cannot be null");
+
         int idx = findNextFreeParameterIndex();
         if (idx < 0) {
             log.atWarn().log("[MethodBinderBuilder] No free parameter slot available for method {}", getMethodName());
@@ -459,29 +376,16 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     }
 
     private int findNextFreeParameterIndex() {
+        if (this.parameters == null) {
+            return 0;
+        }
         for (int i = 0; i < this.parameters.size(); i++) {
             if (this.parameters.get(i) == null) {
                 return i;
             }
         }
-        return -1;
-    }
-
-    private boolean isValidParameterIndex(int i) {
-        boolean valid = i >= 0 && i < this.parameterTypes.length;
-        log.atTrace().log("[MethodBinderBuilder] Parameter index {} validity: {}", i, valid);
-        return valid;
-    }
-
-    private boolean isValidParameterType(int index, Object object) {
-        return this.isValidParameterType(index, object.getClass());
-    }
-
-    private boolean isValidParameterType(int index, Class<?> objectType) {
-        boolean valid = objectType.isAssignableFrom(this.parameterTypes[index]);
-        log.atTrace().log("[MethodBinderBuilder] Parameter type check for index {} expected {} got {} validity={}",
-                index, this.parameterTypes[index], objectType, valid);
-        return valid;
+        // Return the next index (will be added to the list)
+        return this.parameters.size();
     }
 
     protected List<ISupplier<?>> getBuiltParameterSuppliers() throws DslException {
@@ -501,82 +405,61 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         return builtParameterSuppliers;
     }
 
-    /**
-     * Retrieves the Method object associated with this binder.
-     *
-     * <p>
-     * This method returns the Method object in one of two ways:
-     * </p>
-     * <ol>
-     * <li>If the method was set via {@link #method(Method)}, returns the stored
-     * Method object directly.
-     * This ensures correct handling of overloaded methods by avoiding
-     * re-lookup.</li>
-     * <li>If the method was set via {@link #method(String, Class[])}, performs a
-     * lookup using the
-     * ObjectAddress and returns the found Method.</li>
-     * </ol>
-     *
-     * @return the Method object associated with this binder
-     * @throws DslException if no method is set or if lookup fails
-     */
-    public Method findMethod() throws DslException {
-        // If we have the actual Method object stored (from method(Method) call), use it
-        // directly
-        // This avoids issues with overloaded methods where find() might return the
-        // wrong overload
-        if (this.methodObject != null) {
-            log.atDebug().log("[MethodBinderBuilder] Returning stored Method object: {}", this.methodObject);
-            return this.methodObject;
+    protected void initParameters() throws DslException {
+        // If parameters list wasn't initialized yet, create it
+        if (this.parameters == null) {
+            this.parameters = new ArrayList<>(Collections.nCopies(this.parameterTypes.length, null));
         }
 
-        // Fallback to old behavior for methods set via ObjectAddress
-        if (this.method == null) {
-            throw new DslException("Method is not set");
+        // Initialize nullability if not already done
+        if (this.parameterNullableAllowed == null) {
+            this.parameterNullableAllowed = new ArrayList<>(
+                    Collections.nCopies(this.parameterTypes.length, Boolean.FALSE));
         }
-        try {
-            Method found = (Method) this.objectQuery.find(this.method).getLast();
-            log.atDebug().log("[MethodBinderBuilder] Found method via ObjectAddress lookup: {}", found);
-            return found;
-        } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
-        }
+
+        log.atInfo().log("[MethodBinderBuilder] Successfully resolved method {} with {} parameters",
+                getMethodName(), this.parameterTypes.length);
     }
 
     @Override
     protected Built doBuild() throws DslException {
-        log.atTrace().log("[MethodBinderBuilder] Building MethodBinder");
-        Objects.requireNonNull(this.method, "Method is not set");
+        log.atTrace().log("[MethodBinderBuilder] Building MethodBinder - resolving method and parameters");
+
+        // Ensure method is set
+        if (this.methodObject == null && this.methodAddress == null && this.methodName == null) {
+            throw new DslException("Method is not set");
+        }
+
+        // Validate that all required data is now available
+        Objects.requireNonNull(this.methodAddress, "Resolved method is null after resolution");
         Objects.requireNonNull(this.parameters, "Parameters are not set");
         Objects.requireNonNull(this.parameterNullableAllowed, "Parameter nullability metadata not initialized");
         Objects.requireNonNull(this.returnedType, "Returned type cannot be null");
 
-        List<ISupplier<?>> builtParameterSuppliers = this.getBuiltParameterSuppliers();
+        // Validate parameter count matches
+        if (this.parameters.size() != this.parameterTypes.length) {
+            throw new DslException("Method " + getMethodName() + " expects " + this.parameterTypes.length
+                    + " parameters but " + this.parameters.size() + " were configured");
+        }
 
         if (this.buildContextual())
-            return this.createContextualBinder(builtParameterSuppliers, this.supplier);
-        return this.createBinder(builtParameterSuppliers, this.supplier);
+            return createContextualBinder();
+        return createBinder();
     }
 
-    @SuppressWarnings("rawtypes")
-    protected Built createContextualBinder(
-            List<ISupplier<?>> builtParameterSuppliers,
-            ISupplierBuilder<?, ?> supplier)
-            throws DslException {
-        return (Built) new ContextualMethodBinder(supplier.build(), this.method, builtParameterSuppliers,
+    private Built createContextualBinder() {
+        return (Built) new ContextualMethodBinder<>(this.supplier.build(), this.methodAddress,
+                this.getBuiltParameterSuppliers(),
                 this.returnedType, this.collection);
     }
 
-    @SuppressWarnings("rawtypes")
-    protected Built createBinder(List<ISupplier<?>> builtParameterSuppliers,
-            ISupplierBuilder<?, ?> supplier)
-            throws DslException {
-        return (Built) new MethodBinder(supplier.build(), this.method, builtParameterSuppliers,
+    protected Built createBinder() {
+        return (Built) new MethodBinder<>(this.supplier.build(), this.methodAddress, this.getBuiltParameterSuppliers(),
                 this.returnedType, this.collection);
     }
 
     protected Class<?>[] getParameterTypes() {
-        return this.parameters.stream().map(ISupplierBuilder::getSuppliedType).toArray(Class<?>[]::new);
+        return this.parameterTypes;
     }
 
     @Override

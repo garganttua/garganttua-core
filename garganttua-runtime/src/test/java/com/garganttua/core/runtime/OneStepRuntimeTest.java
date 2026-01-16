@@ -70,7 +70,8 @@ class OneStepRuntimeTest {
                 .condition(custom(of(10), i -> true))
                 .output(true)
                 .variable("method-returned")
-                .method("method")
+                .method("method", String.class, String.class, String.class,
+                        String.class, IRuntimeContext.class)
                 .code(201)
                 .katch(DiException.class).code(401).up()
                 .withParam(input(String.class))
@@ -85,7 +86,7 @@ class OneStepRuntimeTest {
                 .onException(DiException.class).up()
                 .output(true)
                 .variable("fallback-returned")
-                .method("fallbackMethod")
+                .method("fallbackMethod", String.class, String.class, String.class, DiException.class, Integer.class, String.class, IRuntimeContext.class)
                 .withParam(input(String.class))
                 .withParam(of("fixed-value-in-method"))
                 .withParam(exception(DiException.class))
