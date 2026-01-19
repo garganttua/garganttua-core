@@ -63,4 +63,15 @@ public class SupplyException extends CoreException {
         log.atTrace().log("Exiting SupplyException constructor");
     }
 
+    /**
+     * Constructs a new supply exception with the specified message and cause.
+     *
+     * @param message the detailed error message describing why supply failed
+     * @param cause the underlying exception that caused the supply failure
+     */
+    public SupplyException(String message, Throwable cause) {
+        super(CoreException.SUPPLY_ERROR, message, cause);
+        log.atTrace().log("Exiting SupplyException constructor");
+    }
+
 }

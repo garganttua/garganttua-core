@@ -2,6 +2,7 @@ package com.garganttua.core.expression.functions;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;

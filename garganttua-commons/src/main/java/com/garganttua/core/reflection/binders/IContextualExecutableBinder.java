@@ -2,6 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -73,7 +74,7 @@ import com.garganttua.core.supply.SupplyException;
  * @see IContextualConstructorBinder
  */
 public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
-                extends IExecutableBinder<ExecutionReturn>, IContextualSupplier<ExecutionReturn, OwnerContextType> {
+                extends IExecutableBinder<ExecutionReturn>, IContextualSupplier<IMethodReturn<ExecutionReturn>, OwnerContextType> {
 
         /**
          * Returns the required owner context type for this binder.
@@ -124,7 +125,7 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          *                             resolution
          *                             failures, or instantiation errors
          */
-        Optional<ExecutionReturn> execute(OwnerContextType ownerContext, Object... contexts)
+        Optional<IMethodReturn<ExecutionReturn>> execute(OwnerContextType ownerContext, Object... contexts)
                         throws ReflectionException;
 
         /**
@@ -140,7 +141,7 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          * @throws ReflectionException always, indicating that context is required
          */
         @Override
-        default Optional<ExecutionReturn> execute() throws ReflectionException {
+        default Optional<IMethodReturn<ExecutionReturn>> execute() throws ReflectionException {
                 if (getOwnerContextType() != Void.class)
                         throw new SupplyException("Owner context of type " + getOwnerContextType().getSimpleName()
                                         + " required for this supplier");
@@ -149,7 +150,7 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
         }
 
         @Override
-        default Optional<ExecutionReturn> supply() throws SupplyException {
+        default Optional<IMethodReturn<ExecutionReturn>> supply() throws SupplyException {
                 return this.execute();
         }
 

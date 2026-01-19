@@ -68,6 +68,17 @@ public class DiException extends CoreException {
     }
 
     /**
+     * Constructs a new dependency injection exception with a message and throwable cause.
+     *
+     * @param message the detailed error message
+     * @param cause the underlying throwable that caused this error
+     */
+    public DiException(String message, Throwable cause) {
+        super(CoreException.INJECTION_ERROR, message, cause);
+        log.atTrace().log("Exiting DiException constructor");
+    }
+
+    /**
      * Constructs a new dependency injection exception with a cause.
      *
      * <p>

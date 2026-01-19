@@ -9,6 +9,7 @@ import com.garganttua.core.CoreException;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.supply.FixedSupplier;
@@ -75,7 +76,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     }
 
     @Override
-    public Optional<ExecutionReturned> execute(IRuntimeContext<InputType, OutputType> ownerContext, Object... contexts)
+    public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext, Object... contexts)
             throws ReflectionException {
         log.atDebug().log("{}Executing method delegate", logLineHeader());
         return this.delegate.execute(ownerContext, contexts);
@@ -123,7 +124,14 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             log.atDebug().log("{}Invoking method", logLineHeader());
-            returned = execute(context).orElse(null);
+            Optional<IMethodReturn<ExecutionReturned>> result = execute(context);
+            if (result.isPresent()) {
+                IMethodReturn<ExecutionReturned> methodReturn = result.get();
+                if (methodReturn.hasException()) {
+                    throw new RuntimeException("Method threw exception", methodReturn.getException());
+                }
+                returned = methodReturn.single();
+            }
             log.atTrace().log("{}Returned value={}", logLineHeader(), returned);
             processExecutionReturn(context, variable, returned);
         } catch (Exception e) {
@@ -184,7 +192,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     }
 
     @Override
-    public Optional<ExecutionReturned> supply(IRuntimeContext<InputType, OutputType> ownerContext,
+    public Optional<IMethodReturn<ExecutionReturned>> supply(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... otherContexts) throws SupplyException {
         return this.execute(ownerContext, otherContexts);
     }

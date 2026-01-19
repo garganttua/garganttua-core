@@ -17,7 +17,6 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
         this.parameters = Objects.requireNonNull(parameters, "Parameters list cannot be null");
     }
 
-    
     @Override
     public boolean buildContextual() {
         return this.parameters.stream().anyMatch(s -> IContextualSupplier.class.isAssignableFrom(s.getClass()));
@@ -34,7 +33,7 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
 
         for (int i = 0; i < parameterTypes.length; i++) {
 
-            if( parameters().get(i) instanceof IExpressionNode<?, ?> node ) {
+            if (parameters().get(i) instanceof IExpressionNode<?, ?> node) {
                 if (!parameterTypes[i].isAssignableFrom(node.getFinalSuppliedClass())) {
                     log.atWarn()
                             .log("Expression node is expecting parameter " + i + " of type "
@@ -59,5 +58,16 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
     @Override
     public List<Object> parameters() {
         return this.parameters;
+    }
+
+    @Override
+    public Class<?>[] parameterTypes() {
+        return this.parameters.stream().map(p -> {
+            if (p instanceof IExpressionNode<?, ?> node) {
+                return node.getFinalSuppliedClass();
+            } else {
+                return p.getClass();
+            }
+        }).toArray(Class<?>[]::new);
     }
 }

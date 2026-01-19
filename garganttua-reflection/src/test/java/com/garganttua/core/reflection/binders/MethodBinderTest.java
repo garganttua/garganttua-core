@@ -48,7 +48,7 @@ public class MethodBinderTest {
                 .method("echo", String.class, String.class).withParam("Hello");
         IMethodBinder<String> mb = b.build();
 
-        assertEquals("Hello", mb.supply().get());
+        assertEquals("Hello", mb.supply().get().single());
 
     }
 
@@ -59,7 +59,7 @@ public class MethodBinderTest {
                 .method("staticEcho", String.class, String.class).withParam("Hello");
         IMethodBinder<String> mb = b.build();
 
-        assertEquals("Hello", mb.supply().get());
+        assertEquals("Hello", mb.supply().get().single());
 
     }
 

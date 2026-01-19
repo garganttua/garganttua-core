@@ -246,6 +246,8 @@ public interface IObjectQuery<T> {
 	Object getValue(ObjectAddress fieldAddress) throws ReflectionException;
 
 	/**
+	 * @deprecated Use {@link #MethodResolver()} and {@link #MethodInvoker()}instead
+	 * 
 	 * Invokes a method using a string address (context-based object resolution).
 	 *
 	 * <p>
@@ -266,9 +268,12 @@ public interface IObjectQuery<T> {
 	 * @return an {@link IMethodReturn} containing the method's return value(s)
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
+	@Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
 	<R> IMethodReturn<R> invoke(String methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	/**
+	 * @deprecated Use {@link #MethodResolver()} and {@link #MethodInvoker()}instead
+	 * 
 	 * Invokes a method using an ObjectAddress (context-based object resolution).
 	 *
 	 * @param <R> the return type of the method
@@ -278,9 +283,12 @@ public interface IObjectQuery<T> {
 	 * @return an {@link IMethodReturn} containing the method's return value(s)
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
+	@Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
 	<R> IMethodReturn<R> invoke(ObjectAddress methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	/**
+	 * @deprecated Use {@link #MethodResolver()} and {@link #MethodInvoker()}instead
+	 * 
 	 * Invokes a method on the specified object using an ObjectAddress.
 	 *
 	 * @param <R> the return type of the method
@@ -291,31 +299,9 @@ public interface IObjectQuery<T> {
 	 * @return an {@link IMethodReturn} containing the method's return value(s)
 	 * @throws ReflectionException if the method cannot be found or invoked
 	 */
+	@Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
 	<R> IMethodReturn<R> invoke(T object, ObjectAddress methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
-	/**
-	 * Invokes a static method using a string address.
-	 *
-	 * @param <R> the return type of the method
-	 * @param methodAddress the dot-separated method address
-	 * @param returnType the expected return type
-	 * @param args the arguments to pass to the method
-	 * @return an {@link IMethodReturn} containing the method's return value(s)
-	 * @throws ReflectionException if the method cannot be found or invoked
-	 */
-	<R> IMethodReturn<R> invokeStatic(String methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
-
-	/**
-	 * Invokes a static method using an ObjectAddress.
-	 *
-	 * @param <R> the return type of the method
-	 * @param methodAddress the object address representing the method path
-	 * @param returnType the expected return type
-	 * @param args the arguments to pass to the method
-	 * @return an {@link IMethodReturn} containing the method's return value(s)
-	 * @throws ReflectionException if the method cannot be found or invoked
-	 */
-	<R> IMethodReturn<R> invokeStatic(ObjectAddress methodAddress, Class<R> returnType, Object ...args) throws ReflectionException;
 
 	List<List<Object>> findAll(ObjectAddress address) throws ReflectionException;
 

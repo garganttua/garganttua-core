@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
 
@@ -33,17 +34,31 @@ public class NewContextualSupplier<SuppliedType>
         Objects.requireNonNull(ownerContext, "Owner cannot be null");
 
         try {
-            Optional<SuppliedType> result = this.constructorBinder.execute(ownerContext, contexts);
-            log.atInfo().log("Supply completed for new contextual object of type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
+            Optional<IMethodReturn<SuppliedType>> result = this.constructorBinder.execute(ownerContext, contexts);
+
+            if (result.isEmpty()) {
+                log.atWarn().log("Supply failed for type {}: result is empty", this.suppliedType.getSimpleName());
+                throw new SupplyException("Constructor binder returned empty result for type " + this.suppliedType.getSimpleName());
+            }
+
+            IMethodReturn<SuppliedType> methodReturn = result.get();
+
+            if (methodReturn.hasException()) {
+                Throwable exception = methodReturn.getException();
+                log.atWarn().log("Supply failed for type {} due to exception: {}", this.suppliedType.getSimpleName(), exception.getMessage());
+                throw new SupplyException("Constructor threw exception for type " + this.suppliedType.getSimpleName(), exception);
+            }
+
+            SuppliedType value = methodReturn.single();
+            log.atInfo().log("Supply completed for new contextual object of type {}", this.suppliedType.getSimpleName());
             log.atTrace().log("Exiting supply method");
-            return result;
+            return Optional.ofNullable(value);
         } catch (ReflectionException e) {
             log.atWarn().log("Supply failed for type {} due to ReflectionException: {}", this.suppliedType.getSimpleName(), e.getMessage());
-            log.atTrace().log("Exiting supply method with empty result");
-            return Optional.empty();
+            throw new SupplyException("Reflection error during supply of type " + this.suppliedType.getSimpleName(), e);
         }
     }
-    
+
     @Override
     public Type getSuppliedType() {
         return this.suppliedType;
@@ -53,6 +68,5 @@ public class NewContextualSupplier<SuppliedType>
     public Class<Void> getOwnerContextType() {
         return Void.class;
     }
-
 
 }

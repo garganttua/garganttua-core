@@ -12,6 +12,7 @@ import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
@@ -103,8 +104,10 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      * @param nullableParameters list indicating which parameters accept null values
      * @param leaf               true if this factory creates leaf nodes, false for
      *                           composite nodes
-     * @param name               optional custom name for the expression node (defaults to method name)
-     * @param description        optional description for the expression node (defaults to "No description")
+     * @param name               optional custom name for the expression node
+     *                           (defaults to method name)
+     * @param description        optional description for the expression node
+     *                           (defaults to "No description")
      *
      * @throws ExpressionException  if method is null, nullable parameters list is
      *                              null,
@@ -170,9 +173,13 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     /**
      * Returns the key identifier for this factory.
      *
-     * <p>Note: Multiple factories can have the same key if different classes have methods
-     * with the same name and parameters. The ExpressionContext handles duplicates by
-     * keeping the first factory registered.</p>
+     * <p>
+     * Note: Multiple factories can have the same key if different classes have
+     * methods
+     * with the same name and parameters. The ExpressionContext handles duplicates
+     * by
+     * keeping the first factory registered.
+     * </p>
      *
      * @return a string in the format "name(Type1,Type2,...)"
      */
@@ -192,6 +199,12 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         String keyString = key.toString();
         log.atDebug().log("Generated factory key: {}", keyString);
         return keyString;
+    }
+
+    @Override
+    public Optional<IExpressionNode<R, S>> execute(IExpressionNodeContext ownerContext, Object... contexts)
+            throws ReflectionException {
+        return this.supply(ownerContext, contexts);
     }
 
     /**
@@ -320,7 +333,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         for (int i = 0; i < parameters.length; i++) {
             ISupplier<?> supplier = null;
-            if( !(parameters[i] instanceof ISupplier<?>) ) {
+            if (!(parameters[i] instanceof ISupplier<?>)) {
                 supplier = new FixedSupplierBuilder<>(parameters[i]).build();
             } else {
                 supplier = (ISupplier<?>) parameters[i];
@@ -401,15 +414,18 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     }
 
     /**
-     * Generates a manual page (man-style) documentation for this expression node factory.
+     * Generates a manual page (man-style) documentation for this expression node
+     * factory.
      *
-     * <p>The manual includes:</p>
+     * <p>
+     * The manual includes:
+     * </p>
      * <ul>
-     *   <li>NAME - The function name</li>
-     *   <li>SYNOPSIS - The function signature with parameter types</li>
-     *   <li>DESCRIPTION - A detailed description of what the function does</li>
-     *   <li>PARAMETERS - List of parameter types and nullability</li>
-     *   <li>RETURN VALUE - The return type of the function</li>
+     * <li>NAME - The function name</li>
+     * <li>SYNOPSIS - The function signature with parameter types</li>
+     * <li>DESCRIPTION - A detailed description of what the function does</li>
+     * <li>PARAMETERS - List of parameter types and nullability</li>
+     * <li>RETURN VALUE - The return type of the function</li>
      * </ul>
      *
      * @return a formatted manual page string

@@ -38,13 +38,13 @@ public class ExpressionContext implements IExpressionContext {
         this.nodeFactories = nodeFactories.stream()
                 .collect(Collectors.toMap(
                         IExpressionNodeFactory::key,
-                        ef -> ef ,
+                        ef -> ef,
                         (existing, duplicate) -> {
-                            log.atWarn().log("Duplicate factory key detected: {}. Keeping first factory, ignoring duplicate.",
+                            log.atWarn().log(
+                                    "Duplicate factory key detected: {}. Keeping first factory, ignoring duplicate.",
                                     existing.key());
-                            return existing;  // Keep the first factory, ignore duplicates
-                        }
-                ));
+                            return existing; // Keep the first factory, ignore duplicates
+                        }));
 
         log.atInfo().log("ExpressionContext initialized with {} unique node factories (from {} total provided)",
                 this.nodeFactories.size(), nodeFactories.size());
@@ -123,7 +123,7 @@ public class ExpressionContext implements IExpressionContext {
         list.append("Total functions: ").append(this.nodeFactories.size()).append("\n\n");
 
         // Sort factories by key for consistent output and track index
-        final int[] index = {1};
+        final int[] index = { 1 };
         this.nodeFactories.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> {
@@ -162,10 +162,10 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         // Get sorted list of factories
-        List<Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>> sortedFactories =
-                this.nodeFactories.entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey())
-                        .toList();
+        List<Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>> sortedFactories = this.nodeFactories
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .toList();
 
         // Check if index is in bounds (1-based index)
         if (index > sortedFactories.size()) {
@@ -174,8 +174,7 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         // Get factory at index (convert from 1-based to 0-based)
-        Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry =
-                sortedFactories.get(index - 1);
+        Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry = sortedFactories.get(index - 1);
 
         String manual = entry.getValue().man();
         log.atDebug().log("Manual retrieved for index {} (key: {})", index, entry.getKey());
@@ -291,16 +290,26 @@ public class ExpressionContext implements IExpressionContext {
                 }
             }
 
-            // TODO: Implement method call logic
-            // For now, throw an exception indicating this is not yet implemented
-            throw new ExpressionException("Method call not yet implemented: :" + methodName);
+            String functionKey = buildNodeKey(":"+methodName, arguments);
+            IExpressionNodeContext context = new ExpressionNodeContext(arguments.subList(1, arguments.size()));
+
+            Object t = ((ISupplier<?>)arguments.get(0)).supply().get();
+
+            System.out.println("**** "+t);
+
+            IExpressionNodeFactory<?, ?> factory = new MethodCallExpressionNodeFactory<>((ISupplier<?>)arguments.get(0), methodName, context.parameterTypes());
+            Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
+
+            return node
+                    .orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));
         }
 
         /**
          * Handles constructor calls: :(ClassName, args...)
          * The first argument must be a Class<?> representing the class to instantiate
          */
-        private IExpressionNode<?, ? extends ISupplier<?>> visitConstructorCall(ExpressionParser.FunctionCallContext ctx) {
+        private IExpressionNode<?, ? extends ISupplier<?>> visitConstructorCall(
+                ExpressionParser.FunctionCallContext ctx) {
             log.atTrace().log("Visiting constructor call");
 
             List<Object> arguments = new ArrayList<>();
@@ -448,7 +457,8 @@ public class ExpressionContext implements IExpressionContext {
         }
 
         /**
-         * Builds a function key for direct parameters in the format "functionName(Type1,Type2,...)".
+         * Builds a function key for direct parameters in the format
+         * "functionName(Type1,Type2,...)".
          */
         private String buildKey(String functionName, Class<?>[] paramTypes) {
             StringBuilder keyBuilder = new StringBuilder(functionName);

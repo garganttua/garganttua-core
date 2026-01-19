@@ -165,6 +165,23 @@ public interface IMethodReturn<R> extends ISupplier<R> {
     }
 
     /**
+     * Checks if the return value is null.
+     *
+     * <p>
+     * For single values, returns true if the value is null.
+     * For multiple values, returns true if all values are null.
+     * </p>
+     *
+     * @return true if the value(s) is/are null
+     */
+    default boolean isNull() {
+        if (isSingle()) {
+            return single() == null;
+        }
+        return multiple().stream().allMatch(v -> v == null);
+    }
+
+    /**
      * Applies a transformation function to all values.
      *
      * @param <U> the type of the transformed values
@@ -212,5 +229,77 @@ public interface IMethodReturn<R> extends ISupplier<R> {
      */
     @Override
     Type getSuppliedType();
+
+    /**
+     * Checks if the method invocation threw an exception.
+     *
+     * @return true if an exception was thrown, false otherwise
+     */
+    boolean hasException();
+
+    /**
+     * Returns the exception that was thrown during method invocation.
+     *
+     * @return the exception, or null if no exception was thrown
+     */
+    Throwable getException();
+
+    /**
+     * Returns the exception as an Optional.
+     *
+     * @return Optional containing the exception, or empty if no exception was thrown
+     */
+    default Optional<Throwable> getExceptionOptional() {
+        return Optional.ofNullable(getException());
+    }
+
+    /**
+     * Rethrows the exception if one was thrown during method invocation.
+     *
+     * <p>
+     * This method allows callers to propagate the original exception after
+     * checking for its presence with {@link #hasException()}.
+     * </p>
+     *
+     * @throws Throwable the original exception if one was thrown
+     */
+    default void rethrow() throws Throwable {
+        if (hasException()) {
+            throw getException();
+        }
+    }
+
+    /**
+     * Rethrows the exception wrapped in a RuntimeException if one was thrown.
+     *
+     * <p>
+     * This is useful when you want to propagate the exception without declaring
+     * a throws clause.
+     * </p>
+     *
+     * @throws RuntimeException wrapping the original exception if one was thrown
+     */
+    default void rethrowUnchecked() {
+        if (hasException()) {
+            Throwable ex = getException();
+            if (ex instanceof RuntimeException) {
+                throw (RuntimeException) ex;
+            }
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Rethrows the exception if it is an instance of the specified type.
+     *
+     * @param <E> the exception type
+     * @param exceptionType the class of the exception to rethrow
+     * @throws E if the exception is an instance of the specified type
+     */
+    default <E extends Throwable> void rethrowIfInstanceOf(Class<E> exceptionType) throws E {
+        if (hasException() && exceptionType.isInstance(getException())) {
+            throw exceptionType.cast(getException());
+        }
+    }
 
 }

@@ -96,6 +96,36 @@ public class ExpressionContextTest {
     }
 
     @Test
+    public void testStaticMethodCall() {
+
+        IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
+        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
+
+        injectionContextBuilder.build().onInit().onStart();
+        IExpressionContext expressionContext = expressionContextBuilder.build();
+
+        ISupplier<?> exp = expressionContext.expression(":valueOf(String.class, 12)").evaluate();
+
+        assertTrue( ((String) exp.supply().get()).contains("AVAILABLE EXPRESSION FUNCTIONS"));
+    }
+
+    @Test
+    public void testObjectMethodCall() {
+
+        IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
+        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
+
+        injectionContextBuilder.build().onInit().onStart();
+        IExpressionContext expressionContext = expressionContextBuilder.build();
+
+        ISupplier<?> exp = expressionContext.expression(":equals(test1, test2)").evaluate();
+
+        assertTrue( ((String) exp.supply().get()).contains("AVAILABLE EXPRESSION FUNCTIONS"));
+    }
+
+    @Test
     public void test() {
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();

@@ -15,8 +15,9 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.fields.ObjectFieldGetter;
 import com.garganttua.core.reflection.fields.ObjectFieldSetter;
+import com.garganttua.core.reflection.methods.MethodInvoker;
 import com.garganttua.core.reflection.methods.MethodResolver;
-import com.garganttua.core.reflection.methods.ObjectMethodInvoker;
+import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -487,22 +488,11 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
     }
 
     @Override
-    public <R> IMethodReturn<R> invokeStatic(String methodAddress, Class<R> returnType, Object... args) throws ReflectionException {
-        return this.invokeStatic(new ObjectAddress(methodAddress, true), returnType, args);
-    }
-
-    @Override
-    public <R> IMethodReturn<R> invokeStatic(ObjectAddress methodAddress, Class<R> returnType, Object... args) throws ReflectionException {
-        List<Object> methodPath = MethodResolver.selectBestMatch(findAll(methodAddress), returnType, ObjectReflectionHelper.parameterTypes(args), objectClass);
-        return new ObjectMethodInvoker<>(this.objectClass, methodPath, methodAddress, returnType).invokeStatic(args);
-    }
-
-    @Override
     public <R> IMethodReturn<R> invoke(T object, ObjectAddress methodAddress, Class<R> returnType, Object... args) throws ReflectionException {
         log.atDebug().log("invoke called on object={} for methodAddress={} with args={}", object, methodAddress,
                 Arrays.toString(args));
-        List<Object> methodPath = MethodResolver.selectBestMatch(findAll(methodAddress), returnType, ObjectReflectionHelper.parameterTypes(args), objectClass);
-        return new ObjectMethodInvoker<>((Class<T>) object.getClass(), methodPath, methodAddress, returnType).invoke(object, args);
+        ResolvedMethod resolvedMethod = MethodResolver.methodByAddress(returnType, methodAddress, returnType, ObjectReflectionHelper.parameterTypes(args));
+        return (IMethodReturn<R>) new MethodInvoker<>(resolvedMethod).invoke(object, args);
     }
 
     private ObjectAddress doIfIsMap(Field f, String elementName, ObjectAddress address) throws ReflectionException {

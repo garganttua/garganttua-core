@@ -1,6 +1,7 @@
 package com.garganttua.core.reflection.methods;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,51 +14,45 @@ import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
+import com.garganttua.core.reflection.utils.MethodAccessManager;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ObjectMethodInvoker<T, R> {
+public class MethodInvoker<T, R> {
 
-	private Class<T> clazz;
+	private Class<T> ownerType;
 	private List<Object> methodPath;
 	private ObjectAddress address;
 	private Class<R> returnType;
+	private boolean statix;
 
-	public ObjectMethodInvoker(Class<T> clazz, List<Object> methodPath,
-			ObjectAddress address, Class<R> returnType) throws ReflectionException {
-		log.atTrace().log("Creating ObjectMethodInvoker for class={}, address={}, methodPath depth={}, return type={}", clazz, address,
-				methodPath != null ? methodPath.size() : 0, returnType);
+	public MethodInvoker(ResolvedMethod method) throws ReflectionException {
+		Objects.requireNonNull(method, "Resolved method cannot be null");
+		log.atTrace().log("Creating ObjectMethodInvoker for resolved method ={}", method);
 
-		this.returnType = Objects.requireNonNull(returnType, "Return type cannot be null");
-		this.clazz = Objects.requireNonNull(clazz, "Class cannot be null");
-		this.methodPath = Objects.requireNonNull(methodPath, "Method path cannot be null");
-		this.address = Objects.requireNonNull(address, "Address cannot be null");
-		log.atDebug().log("ObjectMethodInvoker initialized for class={}, address={}", clazz.getName(), address);
-	}
-
-	public IMethodReturn<R> invokeStatic(Object... args) throws ReflectionException {
-		return this.invoke(null, true, args);
+		this.returnType = (Class<R>) Objects.requireNonNull(method.returnType(), "Return type cannot be null");
+		this.ownerType = (Class<T>) Objects.requireNonNull(method.ownerType(), "Class cannot be null");
+		this.methodPath = Objects.requireNonNull(method.methodPath(), "Method path cannot be null");
+		this.address = Objects.requireNonNull(method.address(), "Address cannot be null");
+		this.statix = method.isStatic();
+		log.atDebug().log("ObjectMethodInvoker initialized for ownerType={}, address={}", ownerType.getName(), address);
 	}
 
 	public IMethodReturn<R> invoke(Object object, Object... args) throws ReflectionException {
-		return this.invoke(object, false, args);
-	}
-
-	public IMethodReturn<R> invoke(Object object, Boolean statix, Object... args) throws ReflectionException {
-		log.atTrace().log("invoke entry: object={}, class={}, address={}, args count={}", object, this.clazz,
+		log.atTrace().log("invoke entry: object={}, ownerType={}, address={}, args count={}", object, this.ownerType,
 				this.address, args != null ? args.length : 0);
-		log.atDebug().log("Invoking method: class={}, address={}, parameters count={}", this.clazz.getName(),
+		log.atDebug().log("Invoking method: ownerType={}, address={}, parameters count={}", this.ownerType.getName(),
 				this.address, args != null ? args.length : 0);
 
 		if (object == null && !statix) {
 			log.atError().log("object parameter is null");
 			throw new ReflectionException("object is null");
 		}
-		if (!statix && !object.getClass().isAssignableFrom(this.clazz)) {
-			log.atError().log("object type {} is not assignable from {}", object.getClass(), this.clazz);
-			throw new ReflectionException("object is not of type " + this.clazz);
+		if (!statix && !object.getClass().isAssignableFrom(this.ownerType)) {
+			log.atError().log("object type {} is not assignable from {}", object.getClass(), this.ownerType);
+			throw new ReflectionException("object is not of type " + this.ownerType);
 		}
 
 		if (this.methodPath.size() == 1) {
@@ -71,9 +66,9 @@ public class ObjectMethodInvoker<T, R> {
 						+ method.getName() + " do not match");
 			}
 
-			R result = ObjectReflectionHelper.invokeMethod(object, methodName, method, returnType, args);
-			log.atInfo().log("Successfully invoked method {} on class {}", methodName, this.clazz.getName());
-			return new SingleMethodReturn<>(result, returnType);
+			SingleMethodReturn<R> result = invokeMethodSafely(object, methodName, method, args);
+			log.atInfo().log("Successfully invoked method {} on ownerType {}", methodName, this.ownerType.getName());
+			return result;
 
 		} else {
 			log.atDebug().log("Recursive method invocation with {} fields", this.methodPath.size());
@@ -87,7 +82,7 @@ public class ObjectMethodInvoker<T, R> {
 			throws ReflectionException {
 		log.atTrace().log("invokeMethodRecursively: fieldIndex={}, fieldNameIndex={}", fieldIndex, fieldNameIndex);
 		log.atDebug().log("Invoking method recursively: class={}, address={}, fieldIndex={}, fieldNameIndex={}",
-				this.clazz.getName(), this.address, fieldIndex, fieldNameIndex);
+				this.ownerType.getName(), this.address, fieldIndex, fieldNameIndex);
 		boolean isLastIteration = (fieldIndex + 2 == this.methodPath.size());
 		Field field = (Field) this.methodPath.get(fieldIndex);
 		String fieldName = this.address.getElement(fieldNameIndex);
@@ -107,18 +102,17 @@ public class ObjectMethodInvoker<T, R> {
 
 		if (Fields.isArrayOrMapOrCollectionField(field)) {
 			log.atDebug().log("Field {} is array/map/collection type", fieldName);
-			List<R> returned = new ArrayList<>();
+			List<SingleMethodReturn<R>> returned = new ArrayList<>();
 			this.doIfIsCollection(fieldIndex, fieldNameIndex, isLastIteration, field, temp, returned, args);
 			this.doIfIsMap(fieldIndex, fieldNameIndex, isLastIteration, field, temp, returned, args);
 			this.doIfIsArray(fieldIndex, fieldNameIndex, isLastIteration, field, temp, returned, args);
-			return new MultipleMethodReturn<>(returned, returnType);
+			return new MultipleMethodReturn<>(returnType, returned);
 		} else {
 			if (isLastIteration) {
 				log.atDebug().log("Last iteration, invoking final method");
 				Method leafMethod = (Method) this.methodPath.get(fieldIndex + 1);
 				String methodName = this.address.getElement(fieldNameIndex + 1);
-				R result = ObjectReflectionHelper.invokeMethod(temp, methodName, leafMethod, returnType, args);
-				return new SingleMethodReturn<>(result, returnType);
+				return invokeMethodSafely(temp, methodName, leafMethod, args);
 			} else {
 				log.atTrace().log("Continuing recursive method invocation");
 				return this.invokeMethodRecursively(temp, fieldIndex + 1, fieldNameIndex + 1, args);
@@ -127,7 +121,7 @@ public class ObjectMethodInvoker<T, R> {
 	}
 
 	private void doIfIsArray(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
-			List<R> returned, Object[] args) throws ReflectionException {
+			List<SingleMethodReturn<R>> returned, Object[] args) throws ReflectionException {
 		if (field.getType().isArray()) {
 			log.atDebug().log("Processing array field: {}", field.getName());
 			Object[] array = (Object[]) temp;
@@ -136,22 +130,17 @@ public class ObjectMethodInvoker<T, R> {
 				if (isLastIteration) {
 					Method leafMethod = (Method) this.methodPath.get(fieldIndex + 1);
 					String methodName = this.address.getElement(fieldNameIndex + 1);
-					returned.add(ObjectReflectionHelper.invokeMethod(obj, methodName, leafMethod, returnType, args));
+					returned.add(invokeMethodSafely(obj, methodName, leafMethod, args));
 				} else {
 					IMethodReturn<R> result = this.invokeMethodRecursively(obj, fieldIndex + 1, fieldNameIndex + 1, args);
-					// If result is single, add it directly; if multiple, add all values
-					if (result.isSingle()) {
-						returned.add(result.single());
-					} else {
-						returned.addAll(result.multiple());
-					}
+					collectResults(result, returned);
 				}
 			}
 		}
 	}
 
 	private void doIfIsMap(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
-			List<R> returned, Object[] args) throws ReflectionException {
+			List<SingleMethodReturn<R>> returned, Object[] args) throws ReflectionException {
 		if (Map.class.isAssignableFrom(field.getType())) {
 			log.atDebug().log("Processing map field: {}", field.getName());
 			Map<Object, Object> sub = (Map<Object, Object>) temp;
@@ -174,22 +163,17 @@ public class ObjectMethodInvoker<T, R> {
 				if (isLastIteration) {
 					Method leafMethod = (Method) this.methodPath.get(fieldIndex + 2);
 					String methodName = this.address.getElement(fieldNameIndex + 2);
-					returned.add(ObjectReflectionHelper.invokeMethod(tempObject, methodName, leafMethod, returnType, args));
+					returned.add(invokeMethodSafely(tempObject, methodName, leafMethod, args));
 				} else {
 					IMethodReturn<R> result = this.invokeMethodRecursively(tempObject, fieldIndex + 2, fieldNameIndex + 2, args);
-					// If result is single, add it directly; if multiple, add all values
-					if (result.isSingle()) {
-						returned.add(result.single());
-					} else {
-						returned.addAll(result.multiple());
-					}
+					collectResults(result, returned);
 				}
 			}
 		}
 	}
 
 	private void doIfIsCollection(int fieldIndex, int fieldNameIndex, boolean isLastIteration, Field field, Object temp,
-			List<R> returned, Object... args)
+			List<SingleMethodReturn<R>> returned, Object... args)
 			throws ReflectionException {
 		if (Collection.class.isAssignableFrom(field.getType())) {
 			log.atDebug().log("Processing collection field: {}", field.getName());
@@ -198,16 +182,59 @@ public class ObjectMethodInvoker<T, R> {
 				if (isLastIteration) {
 					Method leafMethod = (Method) this.methodPath.get(fieldIndex + 1);
 					String methodName = this.address.getElement(fieldNameIndex + 1);
-					returned.add(ObjectReflectionHelper.invokeMethod(obj, methodName, leafMethod, returnType, args));
+					returned.add(invokeMethodSafely(obj, methodName, leafMethod, args));
 				} else {
 					IMethodReturn<R> result = this.invokeMethodRecursively(obj, fieldIndex + 1, fieldNameIndex + 1, args);
-					// If result is single, add it directly; if multiple, add all values
-					if (result.isSingle()) {
-						returned.add(result.single());
-					} else {
-						returned.addAll(result.multiple());
-					}
+					collectResults(result, returned);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Invokes a method and captures any exception instead of throwing it.
+	 * The exception is unwrapped from InvocationTargetException if present.
+	 */
+	private SingleMethodReturn<R> invokeMethodSafely(Object object, String methodName, Method method, Object... args) {
+		log.atTrace().log("Invoking method safely {} on object of type {}", methodName,
+				object != null ? object.getClass().getName() : "null");
+
+		ObjectReflectionHelper.checkMethodAndParams(method, returnType, args);
+
+		try (MethodAccessManager manager = new MethodAccessManager(method)) {
+			@SuppressWarnings("unchecked")
+			R result = (R) method.invoke(object, args);
+			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName,
+					object != null ? object.getClass().getName() : "null");
+			return new SingleMethodReturn<>(result, returnType);
+		} catch (InvocationTargetException e) {
+			// Unwrap the target exception
+			Throwable cause = e.getCause() != null ? e.getCause() : e;
+			log.atDebug().log("Method {} threw exception: {}", methodName, cause.getClass().getName());
+			return new SingleMethodReturn<>(cause, returnType);
+		} catch (IllegalAccessException e) {
+			log.atError().log("Cannot access method {} of object {}", methodName,
+					object != null ? object.getClass().getName() : "null", e);
+			return new SingleMethodReturn<>(e, returnType);
+		}
+	}
+
+	/**
+	 * Collects results from an IMethodReturn into a list of SingleMethodReturn.
+	 */
+	private void collectResults(IMethodReturn<R> result, List<SingleMethodReturn<R>> returned) {
+		if (result.isSingle()) {
+			if (result.hasException()) {
+				returned.add(new SingleMethodReturn<>(result.getException(), returnType));
+			} else {
+				returned.add(new SingleMethodReturn<>(result.single(), returnType));
+			}
+		} else if (result instanceof MultipleMethodReturn<R> multiple) {
+			returned.addAll(multiple.getReturns());
+		} else {
+			// Fallback for other implementations
+			for (R value : result.multiple()) {
+				returned.add(new SingleMethodReturn<>(value, returnType));
 			}
 		}
 	}

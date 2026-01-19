@@ -21,7 +21,7 @@ import com.garganttua.core.reflection.IMethodReturn;
  * @param <R> the type of the return values
  * @since 2.0.0-ALPHA01
  */
-final class MultipleMethodReturn<R> implements IMethodReturn<R> {
+public final class MultipleMethodReturn<R> implements IMethodReturn<R> {
 
     private final List<SingleMethodReturn<R>> returns;
     private final Type type;
@@ -67,6 +67,77 @@ final class MultipleMethodReturn<R> implements IMethodReturn<R> {
         this.type = type != null ? type : Object.class;
     }
 
+
+    MultipleMethodReturn(Class<R> type, List<SingleMethodReturn<R>> values) {
+        Objects.requireNonNull(values, "Values list cannot be null");
+        this.returns = Collections.unmodifiableList(values);
+        this.type = type != null ? type : Object.class;
+    }
+
+    /**
+     * Creates a multiple-value method return from a list of values.
+     *
+     * @param <R> the type of the return values
+     * @param values the list of return values (must not be null)
+     * @return a new MultipleMethodReturn containing the values
+     */
+    public static <R> MultipleMethodReturn<R> of(List<R> values) {
+        return new MultipleMethodReturn<>(values);
+    }
+
+    /**
+     * Creates a multiple-value method return from a list of values with explicit type.
+     *
+     * @param <R> the type of the return values
+     * @param values the list of return values (must not be null)
+     * @param type the runtime type of the values
+     * @return a new MultipleMethodReturn containing the values
+     */
+    public static <R> MultipleMethodReturn<R> of(List<R> values, Class<R> type) {
+        return new MultipleMethodReturn<>(values, type);
+    }
+
+    /**
+     * Creates a multiple-value method return from a list of SingleMethodReturn instances.
+     *
+     * @param <R> the type of the return values
+     * @param type the runtime type of the values
+     * @param returns the list of SingleMethodReturn instances (must not be null)
+     * @return a new MultipleMethodReturn containing the returns
+     */
+    public static <R> MultipleMethodReturn<R> ofReturns(Class<R> type, List<SingleMethodReturn<R>> returns) {
+        return new MultipleMethodReturn<>(type, returns);
+    }
+
+    /**
+     * Creates a multiple-value method return from a list of IMethodReturn instances.
+     * Each IMethodReturn is flattened into SingleMethodReturn instances.
+     *
+     * @param <R> the type of the return values
+     * @param returns the list of IMethodReturn instances (must not be null)
+     * @param type the runtime type of the values
+     * @return a new MultipleMethodReturn containing all the values
+     */
+    @SuppressWarnings("unchecked")
+    public static <R> MultipleMethodReturn<R> ofMethodReturns(List<IMethodReturn<R>> returns, Class<?> type) {
+        Objects.requireNonNull(returns, "Returns list cannot be null");
+        List<SingleMethodReturn<R>> collected = new ArrayList<>();
+        for (IMethodReturn<R> ret : returns) {
+            if (ret.hasException()) {
+                collected.add(SingleMethodReturn.ofException(ret.getException(), (Class<R>) type));
+            } else if (ret.isSingle()) {
+                collected.add(SingleMethodReturn.of(ret.single(), (Class<R>) type));
+            } else if (ret instanceof MultipleMethodReturn<R> multiple) {
+                collected.addAll(multiple.getReturns());
+            } else {
+                for (R value : ret.multiple()) {
+                    collected.add(SingleMethodReturn.of(value, (Class<R>) type));
+                }
+            }
+        }
+        return new MultipleMethodReturn<>((Class<R>) type, collected);
+    }
+
     @Override
     public boolean isSingle() {
         return false;
@@ -100,6 +171,20 @@ final class MultipleMethodReturn<R> implements IMethodReturn<R> {
     @Override
     public Type getSuppliedType() {
         return type;
+    }
+
+    @Override
+    public boolean hasException() {
+        return returns.stream().anyMatch(SingleMethodReturn::hasException);
+    }
+
+    @Override
+    public Throwable getException() {
+        return returns.stream()
+            .filter(SingleMethodReturn::hasException)
+            .map(SingleMethodReturn::getException)
+            .findFirst()
+            .orElse(null);
     }
 
     /**

@@ -54,7 +54,7 @@ import com.garganttua.core.reflection.binders.IContextualMethodBinder;
  * @see com.garganttua.core.runtime.dsl.IRuntimeStepFallbackBuilder
  * @see com.garganttua.core.reflection.binders.IContextualMethodBinder
  */
-public interface IRuntimeStepFallbackBinder<ExecutionReturned, OwnerContextType, InputType,OutputType> extends IContextualMethodBinder<ExecutionReturned, OwnerContextType>, IFallBackExecutor<OwnerContextType> {
+public interface IRuntimeStepFallbackBinder<ExecutionReturned, OwnerContextType, InputType, OutputType> extends IContextualMethodBinder<ExecutionReturned, OwnerContextType>, IFallBackExecutor<OwnerContextType> {
 
     /**
      * Indicates whether this fallback method produces the runtime output.

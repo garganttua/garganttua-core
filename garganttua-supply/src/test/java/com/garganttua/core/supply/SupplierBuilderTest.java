@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
@@ -28,7 +29,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Optional<T> execute() throws ReflectionException {
+        public Optional<IMethodReturn<T>> execute() throws ReflectionException {
             throw new UnsupportedOperationException("Unimplemented method 'execute'");
         }
 
@@ -48,7 +49,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Optional<T> supply() throws SupplyException {
+        public Optional<IMethodReturn<T>> supply() throws SupplyException {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'supply'");
         }
@@ -84,7 +85,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Optional<T> execute(Void ownerContext, Object... contexts) throws ReflectionException {
+        public Optional<IMethodReturn<T>> execute(Void ownerContext, Object... contexts) throws ReflectionException {
             throw new UnsupportedOperationException("Unimplemented method 'execute'");
         }
 
@@ -100,7 +101,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Optional<T> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
+        public Optional<IMethodReturn<T>> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'supply'");
         }

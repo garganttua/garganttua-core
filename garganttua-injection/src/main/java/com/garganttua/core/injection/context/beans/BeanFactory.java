@@ -111,9 +111,24 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private Optional<Bean> executeConstructorBinder() throws DiException {
 		log.atTrace().log("Executing constructor binder for definition: {}", definition);
 		try {
-			Optional<Bean> result = this.definition.constructorBinder().get().execute();
-			log.atDebug().log("Constructor binder result: {}", result.orElse(null));
-			return result;
+			var result = this.definition.constructorBinder().get().execute();
+
+			if (result.isEmpty()) {
+				log.atWarn().log("Constructor binder returned empty result for definition: {}", definition);
+				return Optional.empty();
+			}
+
+			var methodReturn = result.get();
+
+			if (methodReturn.hasException()) {
+				Throwable exception = methodReturn.getException();
+				log.atError().log("Constructor binder threw exception for definition {}: {}", definition, exception.getMessage());
+				throw new DiException("Constructor threw exception for bean of type " + this.definition.reference().effectiveName(), exception);
+			}
+
+			Bean constructedBean = methodReturn.single();
+			log.atDebug().log("Constructor binder result: {}", constructedBean);
+			return Optional.ofNullable(constructedBean);
 		} catch (ReflectionException e) {
 			log.atError().log("Constructor binder failed for definition {}: {}", definition, e.getMessage());
 			throw new DiException(e);

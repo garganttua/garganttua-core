@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.constructors.Constructors;
+import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -40,7 +42,7 @@ public class ContextualConstructorBinder<Constructed>
     }
 
     @Override
-    public Optional<Constructed> execute(Void ownerContext, Object... contexts) throws ReflectionException {
+    public Optional<IMethodReturn<Constructed>> execute(Void ownerContext, Object... contexts) throws ReflectionException {
         log.atTrace().log("Executing contextual constructor for class {}", objectClass.getName());
         try {
             Object[] args = this.buildArguments(contexts);
@@ -48,7 +50,7 @@ public class ContextualConstructorBinder<Constructed>
                     args.length);
             Constructed instance = this.constructor.newInstance(args);
             log.atInfo().log("Successfully created instance of class {}", objectClass.getName());
-            return Optional.ofNullable(instance);
+            return Optional.ofNullable(SingleMethodReturn.of(instance));
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             log.atError().log("Error creating new instance of class {}", objectClass.getName(), e);
             throw new ReflectionException("Error creating new instance of type " + objectClass.getSimpleName(), e);
@@ -71,7 +73,7 @@ public class ContextualConstructorBinder<Constructed>
     }
 
     @Override
-    public Optional<Constructed> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
+    public Optional<IMethodReturn<Constructed>> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
         return this.execute(ownerContext, otherContexts);
     }
 }

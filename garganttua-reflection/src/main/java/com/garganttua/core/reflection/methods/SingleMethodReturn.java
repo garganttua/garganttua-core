@@ -17,10 +17,11 @@ import com.garganttua.core.reflection.IMethodReturn;
  * @param <R> the type of the return value
  * @since 2.0.0-ALPHA01
  */
-final class SingleMethodReturn<R> implements IMethodReturn<R> {
+public final  class SingleMethodReturn<R> implements IMethodReturn<R> {
 
     private final R value;
     private final Type type;
+    private final Throwable exception;
 
     /**
      * Creates a single-value method return.
@@ -30,6 +31,7 @@ final class SingleMethodReturn<R> implements IMethodReturn<R> {
     SingleMethodReturn(R value) {
         this.value = value;
         this.type = value != null ? value.getClass() : Object.class;
+        this.exception = null;
     }
 
     /**
@@ -41,6 +43,54 @@ final class SingleMethodReturn<R> implements IMethodReturn<R> {
     SingleMethodReturn(R value, Class<R> type) {
         this.value = value;
         this.type = type != null ? type : Object.class;
+        this.exception = null;
+    }
+
+    /**
+     * Creates a method return representing an exception.
+     *
+     * @param exception the exception that was thrown
+     * @param type the expected return type
+     */
+    SingleMethodReturn(Throwable exception, Class<R> type) {
+        this.value = null;
+        this.type = type != null ? type : Object.class;
+        this.exception = exception;
+    }
+
+    /**
+     * Creates a single-value method return with a successful result.
+     *
+     * @param <R> the type of the return value
+     * @param value the return value (may be null)
+     * @return a new SingleMethodReturn containing the value
+     */
+    public static <R> SingleMethodReturn<R> of(R value) {
+        return new SingleMethodReturn<>(value);
+    }
+
+    /**
+     * Creates a single-value method return with a successful result and explicit type.
+     *
+     * @param <R> the type of the return value
+     * @param value the return value (may be null)
+     * @param type the runtime type of the value
+     * @return a new SingleMethodReturn containing the value
+     */
+    public static <R> SingleMethodReturn<R> of(R value, Class<R> type) {
+        return new SingleMethodReturn<>(value, type);
+    }
+
+    /**
+     * Creates a method return representing an exception.
+     *
+     * @param <R> the type of the expected return value
+     * @param exception the exception that was thrown
+     * @param type the expected return type
+     * @return a new SingleMethodReturn containing the exception
+     */
+    public static <R> SingleMethodReturn<R> ofException(Throwable exception, Class<R> type) {
+        return new SingleMethodReturn<>(exception, type);
     }
 
     @Override
@@ -66,6 +116,16 @@ final class SingleMethodReturn<R> implements IMethodReturn<R> {
     @Override
     public Type getSuppliedType() {
         return type;
+    }
+
+    @Override
+    public boolean hasException() {
+        return exception != null;
+    }
+
+    @Override
+    public Throwable getException() {
+        return exception;
     }
 
     @Override

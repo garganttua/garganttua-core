@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.supply.SupplyException;
@@ -64,7 +65,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     }
 
     @Override
-    public Optional<ExecutionReturned> execute(IRuntimeContext<InputType, OutputType> ownerContext, Object... contexts)
+    public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext, Object... contexts)
             throws ReflectionException {
         log.atDebug().log("{}Executing fallback method", logLineHeader());
         return this.delegate.execute(ownerContext, contexts);
@@ -120,7 +121,14 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             log.atDebug().log("{}Executing fallback method", logLineHeader());
-            returned = execute(context).orElse(null);
+            Optional<IMethodReturn<ExecutionReturned>> result = execute(context);
+            if (result.isPresent()) {
+                IMethodReturn<ExecutionReturned> methodReturn = result.get();
+                if (methodReturn.hasException()) {
+                    throw new RuntimeException("Fallback method threw exception", methodReturn.getException());
+                }
+                returned = methodReturn.single();
+            }
             log.atTrace().log("{}Fallback returned value={}", logLineHeader(), returned);
         } catch (Exception e) {
             log.atWarn().log("{}Exception occurred during fallback execution: {}", logLineHeader(), e.getMessage(), e);
@@ -163,7 +171,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     }
 
     @Override
-    public Optional<ExecutionReturned> supply(IRuntimeContext<InputType, OutputType> ownerContext,
+    public Optional<IMethodReturn<ExecutionReturned>> supply(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... otherContexts) throws SupplyException {
         return this.execute(ownerContext, otherContexts);
     }

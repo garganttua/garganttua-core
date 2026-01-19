@@ -2,6 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.supply.SupplyException;
 
 /**
@@ -95,7 +96,7 @@ public interface IContextualConstructorBinder<Constructed> extends IConstructorB
     }
 
     @Override
-    default Optional<Constructed> supply() throws SupplyException {
+    default Optional<IMethodReturn<Constructed>> supply() throws SupplyException {
         return this.execute();
     }
 

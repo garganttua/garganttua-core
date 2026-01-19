@@ -2,6 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -62,7 +63,7 @@ import com.garganttua.core.supply.SupplyException;
  * @see IContextualExecutableBinder
  * @see Dependent
  */
-public interface IExecutableBinder<ExecutionReturn> extends Dependent, ISupplier<ExecutionReturn> {
+public interface IExecutableBinder<ExecutionReturn> extends Dependent, ISupplier<IMethodReturn<ExecutionReturn>> {
 
     /**
      * Returns a string reference identifying the executable element.
@@ -93,6 +94,6 @@ public interface IExecutableBinder<ExecutionReturn> extends Dependent, ISupplier
      *                            invocation target exceptions, instantiation errors,
      *                            or parameter mismatch
      */
-    Optional<ExecutionReturn> execute() throws ReflectionException;
+    Optional<IMethodReturn<ExecutionReturn>> execute() throws ReflectionException;
 
 }

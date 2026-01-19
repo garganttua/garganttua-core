@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.constructors.Constructors;
+import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.reflection.utils.ConstructorAccessManager;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -34,14 +36,14 @@ public class ConstructorBinder<Constructed>
     }
 
     @Override
-    public Optional<Constructed> execute() throws ReflectionException {
+    public Optional<IMethodReturn<Constructed>> execute() throws ReflectionException {
         log.atTrace().log("Executing constructor for class {}", objectClass.getName());
         try(ConstructorAccessManager accessor = new ConstructorAccessManager(this.constructor) ) {
             Object[] args = this.buildArguments();
             log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(), args.length);
             Constructed instance = this.constructor.newInstance(args);
             log.atInfo().log("Successfully created instance of class {}", objectClass.getName());
-            return Optional.ofNullable(instance);
+            return Optional.ofNullable(SingleMethodReturn.of(instance));
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             log.atError().log("Error creating new instance of class {}", objectClass.getName(), e);
             throw new ReflectionException("Error creating new instance of type " + objectClass.getSimpleName(), e);
@@ -69,7 +71,7 @@ public class ConstructorBinder<Constructed>
     }
 
     @Override
-    public Optional<Constructed> supply() throws SupplyException {
+    public Optional<IMethodReturn<Constructed>> supply() throws SupplyException {
         try {
             return this.execute();
         } catch (ReflectionException e) {

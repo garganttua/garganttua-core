@@ -14,4 +14,6 @@ public interface IExpressionNodeContext {
     
     boolean matches(Class<?>[] parameterTypes);
 
+    Class<?>[] parameterTypes();
+
 }

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
@@ -63,10 +64,12 @@ public class ConstructorBinderBuilderTest {
         IConstructorBinder<TargetClass> binder = builder.build();
         assertNotNull(binder, "Binder should not be null");
 
-        Optional<? extends TargetClass> obj = binder.execute();
+        Optional<IMethodReturn<TargetClass>> obj = binder.execute();
         assertTrue(obj.isPresent(), "Object should be created");
-        assertInstanceOf(TargetClass.class, obj.get());
-        TargetClass tc = (TargetClass) obj.get();
+        IMethodReturn<TargetClass> methodReturn = obj.get();
+        assertFalse(methodReturn.hasException(), "Should not have exception");
+        TargetClass tc = methodReturn.single();
+        assertInstanceOf(TargetClass.class, tc);
         assertEquals("Hello", tc.name);
         assertEquals(123, tc.value);
     }
@@ -78,7 +81,7 @@ public class ConstructorBinderBuilderTest {
                 .withParam(new FixedSupplierBuilder<>(999));
 
         IConstructorBinder<TargetClass> binder = builder.build();
-        TargetClass tc = binder.execute().get();
+        TargetClass tc = binder.execute().get().single();
         assertEquals("Dynamic", tc.name);
         assertEquals(999, tc.value);
     }
@@ -86,7 +89,7 @@ public class ConstructorBinderBuilderTest {
     @Test
     void testBuildWithDefaultConstructor() throws DslException, ReflectionException {
         IConstructorBinder<TargetClass> binder = builder.build();
-        TargetClass tc = binder.execute().get();
+        TargetClass tc = binder.execute().get().single();
         assertEquals("default", tc.name);
         assertEquals(-1, tc.value);
     }
@@ -105,7 +108,7 @@ public class ConstructorBinderBuilderTest {
         builder.withParam(1, 77);
 
         IConstructorBinder<TargetClass> binder = builder.build();
-        TargetClass tc = binder.execute().get();
+        TargetClass tc = binder.execute().get().single();
         assertNull(tc.name);
         assertEquals(77, tc.value);
     }
