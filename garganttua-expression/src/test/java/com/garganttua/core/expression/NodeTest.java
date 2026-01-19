@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
@@ -26,6 +27,59 @@ public class NodeTest {
         static class StringConcatenator {
                 String concatenate(String string, String string2) {
                         return string + "" + string2;
+                }
+        }
+
+        /**
+         * Wrapper that extracts the value from IMethodReturn for non-contextual suppliers.
+         */
+        private static class MethodReturnUnwrappingSupplier<T> implements ISupplier<T> {
+                private final ISupplier<IMethodReturn<T>> delegate;
+                private final Class<T> returnType;
+
+                MethodReturnUnwrappingSupplier(ISupplier<IMethodReturn<T>> delegate, Class<T> returnType) {
+                        this.delegate = delegate;
+                        this.returnType = returnType;
+                }
+
+                @Override
+                public Optional<T> supply() throws SupplyException {
+                        return delegate.supply()
+                                        .flatMap(methodReturn -> methodReturn.firstOptional());
+                }
+
+                @Override
+                public Type getSuppliedType() {
+                        return returnType;
+                }
+        }
+
+        /**
+         * Wrapper that extracts the value from IMethodReturn for contextual suppliers.
+         */
+        private static class MethodReturnUnwrappingContextualSupplier<T, C> implements IContextualSupplier<T, C> {
+                private final IContextualSupplier<IMethodReturn<T>, C> delegate;
+                private final Class<T> returnType;
+
+                MethodReturnUnwrappingContextualSupplier(IContextualSupplier<IMethodReturn<T>, C> delegate, Class<T> returnType) {
+                        this.delegate = delegate;
+                        this.returnType = returnType;
+                }
+
+                @Override
+                public Optional<T> supply(C context, Object... otherContexts) throws SupplyException {
+                        return delegate.supply(context, otherContexts)
+                                        .flatMap(methodReturn -> methodReturn.firstOptional());
+                }
+
+                @Override
+                public Class<C> getOwnerContextType() {
+                        return delegate.getOwnerContextType();
+                }
+
+                @Override
+                public Type getSuppliedType() {
+                        return returnType;
                 }
         }
 
@@ -79,7 +133,7 @@ public class NodeTest {
                                                         new FixedSupplier<String>("")),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                 }, String.class);
 
                 ExpressionNode<String> node2 = new ExpressionNode<String>("", params -> {
@@ -92,7 +146,7 @@ public class NodeTest {
                                                         new FixedSupplier<String>(" node 2")),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                 }, String.class, List.of(node1));
 
                 ExpressionNode<String> node3 = new ExpressionNode<String>("", params -> {
@@ -105,7 +159,7 @@ public class NodeTest {
                                                         new FixedSupplier<String>(" node 3")),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                 }, String.class, List.of(node2));
 
                 Expression<String> exp = new Expression<>(node3);
@@ -131,7 +185,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>("")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class);
 
                 IExpressionNode<String, ? extends ISupplier<String>> node2 = new ContextualExpressionNode<String>("",
@@ -146,7 +200,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>(" node 2")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class, List.of(node1));
 
                 IExpressionNode<String, ? extends ISupplier<String>> node3 = new ContextualExpressionNode<String>("",
@@ -161,7 +215,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>(" node 3")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class, List.of(node2));
 
                 Expression<String> exp = new Expression<>(node3);
@@ -185,7 +239,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>("")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class);
 
                 IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
@@ -198,7 +252,7 @@ public class NodeTest {
                                                         new FixedSupplier<String>(" node 2")),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingSupplier<>(mb, String.class);
                 }, String.class, List.of(node1));
 
                 IExpressionNode<String, ? extends ISupplier<String>> node3 = new ContextualExpressionNode<>("",
@@ -212,7 +266,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>(" node 3")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class, List.of(node2));
 
                 Expression<String> exp = new Expression<>(node3);
@@ -236,7 +290,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>("")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class);
 
                 IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
@@ -267,7 +321,7 @@ public class NodeTest {
                                                         }),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                 }, String.class, List.of(node1));
 
                 Expression<String> exp = new Expression<>(node2);
@@ -311,7 +365,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>("")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class);
 
                 IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
@@ -324,7 +378,7 @@ public class NodeTest {
                                                         new FixedSupplier<String>(" node 2")),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingSupplier<>(mb, String.class);
                 }, String.class, List.of(node1));
 
                 Expression<String> exp = new Expression<>(node2);
@@ -369,7 +423,7 @@ public class NodeTest {
                                                                         new FixedSupplier<String>("")),
                                                         String.class);
 
-                                        return mb;
+                                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                                 }, String.class);
 
                 IExpressionNode<String, ? extends ISupplier<String>> node2 = new ExpressionNode<>("", (params) -> {
@@ -382,7 +436,7 @@ public class NodeTest {
                                                         new FixedSupplier<String>(" node 2")),
                                         String.class);
 
-                        return mb;
+                        return new MethodReturnUnwrappingContextualSupplier<>(mb, String.class);
                 }, String.class, List.of(node1));
 
                 Expression<String> exp = new Expression<>(node2);

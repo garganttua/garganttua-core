@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
 import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
@@ -46,11 +47,13 @@ public class ExpressionNodeFactoryTest {
                 Optional.of("greet"),
                 Optional.of("Greeting function"));
 
-        Optional<IExpressionNode<String,ISupplier<String>>> leaf = leafFactory.supply(new ExpressionNodeContext(List.of("greet")));
+        Optional<IMethodReturn<IExpressionNode<String,ISupplier<String>>>> leafReturn = leafFactory.supply(new ExpressionNodeContext(List.of("greet")));
+        IExpressionNode<String,ISupplier<String>> leaf = leafReturn.flatMap(IMethodReturn::firstOptional).get();
 
-        Optional<IExpressionNode<String,ISupplier<String>>> expression = nodefactory.supply(new ExpressionNodeContext(List.of(leaf.get())));
+        Optional<IMethodReturn<IExpressionNode<String,ISupplier<String>>>> expressionReturn = nodefactory.supply(new ExpressionNodeContext(List.of(leaf)));
+        IExpressionNode<String,ISupplier<String>> expression = expressionReturn.flatMap(IMethodReturn::firstOptional).get();
 
-        assertEquals("Hello, greet", expression.get().evaluate().supply().get());
+        assertEquals("Hello, greet", expression.evaluate().supply().get());
     }
 
     @SuppressWarnings("unchecked")
@@ -66,9 +69,10 @@ public class ExpressionNodeFactoryTest {
                 Optional.of("greet"),
                 Optional.of("Greeting function"));
 
-        Optional<IExpressionNode<String,ISupplier<String>>> expression = nodefactory.supply(new ExpressionNodeContext(List.of("greet")));
+        Optional<IMethodReturn<IExpressionNode<String,ISupplier<String>>>> expressionReturn = nodefactory.supply(new ExpressionNodeContext(List.of("greet")));
+        IExpressionNode<String,ISupplier<String>> expression = expressionReturn.flatMap(IMethodReturn::firstOptional).get();
 
-        assertEquals("Hello, greet", expression.get().evaluate().supply().get());
+        assertEquals("Hello, greet", expression.evaluate().supply().get());
     }
 
     @SuppressWarnings("unchecked")

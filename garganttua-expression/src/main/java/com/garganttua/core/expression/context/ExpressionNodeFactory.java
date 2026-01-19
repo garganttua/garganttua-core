@@ -11,12 +11,15 @@ import com.garganttua.core.expression.ContextualExpressionNode;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
+import com.garganttua.core.reflection.methods.MethodResolver;
+import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.NullSupplier;
@@ -85,6 +88,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     private final Method method;
     private final Class<?>[] parameterTypes;
     private final List<Boolean> nullableParameters;
+    @SuppressWarnings("java:S1068") // Field kept for API compatibility
     private final ObjectAddress methodAddress;
 
     private String name;
@@ -125,9 +129,8 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             Optional<String> name, Optional<String> description) throws ExpressionException {
 
         super(methodOwnerSupplier,
-                methodAddress,
-                List.of(),
-                (Class<IExpressionNode<R, S>>) (Class<?>) IExpressionNode.class);
+                MethodResolver.methodByMethod(methodOwnerSupplier.getSuppliedClass(), method),
+                List.of());
 
         log.atTrace().log("Creating ExpressionNodeFactory: method={}", method.getName());
 
@@ -155,15 +158,18 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     @Deprecated
     private ExpressionNodeFactory(
             ISupplier<?> objectSupplier,
-            ObjectAddress method,
+            ObjectAddress methodAddr,
             List<ISupplier<?>> parameterSuppliers,
             Class<IExpressionNode<R, S>> returnedClass) throws ExpressionException {
 
-        super(objectSupplier, method, parameterSuppliers, returnedClass);
+        super(objectSupplier,
+                MethodResolver.methodByAddress(objectSupplier.getSuppliedClass(), methodAddr, returnedClass,
+                    parameterSuppliers.stream().map(s -> s.getSuppliedClass()).toArray(Class[]::new)),
+                parameterSuppliers);
 
         // Default initialization for deprecated constructor
         this.method = null;
-        this.methodAddress = method;
+        this.methodAddress = methodAddr;
         this.parameterTypes = new Class<?>[0];
         this.nullableParameters = List.of();
     }
@@ -202,7 +208,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     }
 
     @Override
-    public Optional<IExpressionNode<R, S>> execute(IExpressionNodeContext ownerContext, Object... contexts)
+    public Optional<IMethodReturn<IExpressionNode<R, S>>> execute(IExpressionNodeContext ownerContext, Object... contexts)
             throws ReflectionException {
         return this.supply(ownerContext, contexts);
     }
@@ -221,14 +227,13 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      *                      configuration
      * @param otherContexts additional contexts (currently unused)
      *
-     * @return an Optional containing the created expression node, or empty if
-     *         context
-     *         doesn't match the expected parameter types
+     * @return an Optional containing the created expression node wrapped in IMethodReturn,
+     *         or empty if context doesn't match the expected parameter types
      *
      * @throws SupplyException if an error occurs during node creation or binding
      */
     @Override
-    public Optional<IExpressionNode<R, S>> supply(
+    public Optional<IMethodReturn<IExpressionNode<R, S>>> supply(
             IExpressionNodeContext context,
             Object... otherContexts) throws SupplyException {
 
@@ -246,7 +251,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         log.atDebug().log("Expression node created: type={}",
                 expressionNode != null ? expressionNode.getClass().getSimpleName() : "null");
 
-        return Optional.ofNullable(expressionNode);
+        return Optional.ofNullable(expressionNode).map(SingleMethodReturn::of);
     }
 
     // ========== Private Node Creation Methods ==========
@@ -294,11 +299,13 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
-        return new ContextualMethodBinder<>(
+        ContextualMethodBinder<R, IExpressionContext> binder = new ContextualMethodBinder<>(
                 this.methodOwnerSupplier,
-                this.methodAddress,
-                encapsulatedParams,
-                getReturnType());
+                MethodResolver.methodByMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
+                encapsulatedParams);
+
+        // Wrap to extract value from IMethodReturn
+        return new MethodReturnUnwrappingContextualSupplier<>(binder, getReturnType());
     }
 
     /**
@@ -313,11 +320,13 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
-        return new MethodBinder<>(
+        MethodBinder<R> binder = new MethodBinder<>(
                 this.methodOwnerSupplier,
-                this.methodAddress,
-                encapsulatedParams,
-                getReturnType());
+                MethodResolver.methodByMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
+                encapsulatedParams);
+
+        // Wrap to extract value from IMethodReturn
+        return new MethodReturnUnwrappingSupplier<>(binder, getReturnType());
     }
 
     // ========== Private Utility Methods ==========
@@ -374,6 +383,71 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     }
 
     // ========== Inner Classes ==========
+
+    /**
+     * Wrapper that extracts the value from IMethodReturn for non-contextual suppliers.
+     */
+    private static class MethodReturnUnwrappingSupplier<T> implements ISupplier<T> {
+        private final ISupplier<IMethodReturn<T>> delegate;
+        private final Class<T> returnType;
+
+        MethodReturnUnwrappingSupplier(ISupplier<IMethodReturn<T>> delegate, Class<T> returnType) {
+            this.delegate = delegate;
+            this.returnType = returnType;
+        }
+
+        @Override
+        public Optional<T> supply() throws SupplyException {
+            return delegate.supply()
+                    .flatMap(methodReturn -> {
+                        if (methodReturn.hasException()) {
+                            throw new RuntimeException(new SupplyException(
+                                    "Method invocation failed", methodReturn.getException()));
+                        }
+                        return methodReturn.firstOptional();
+                    });
+        }
+
+        @Override
+        public java.lang.reflect.Type getSuppliedType() {
+            return returnType;
+        }
+    }
+
+    /**
+     * Wrapper that extracts the value from IMethodReturn for contextual suppliers.
+     */
+    private static class MethodReturnUnwrappingContextualSupplier<T, C> implements IContextualSupplier<T, C> {
+        private final IContextualSupplier<IMethodReturn<T>, C> delegate;
+        private final Class<T> returnType;
+
+        MethodReturnUnwrappingContextualSupplier(IContextualSupplier<IMethodReturn<T>, C> delegate, Class<T> returnType) {
+            this.delegate = delegate;
+            this.returnType = returnType;
+        }
+
+        @Override
+        public Optional<T> supply(C context, Object... otherContexts) throws SupplyException {
+            return delegate.supply(context, otherContexts)
+                    .flatMap(methodReturn -> {
+                        if (methodReturn.hasException()) {
+                            throw new RuntimeException(new SupplyException(
+                                    "Method invocation failed", methodReturn.getException()));
+                        }
+                        return methodReturn.firstOptional();
+                    });
+        }
+
+        @Override
+        public Class<C> getOwnerContextType() {
+            return delegate.getOwnerContextType();
+        }
+
+        @Override
+        public java.lang.reflect.Type getSuppliedType() {
+            return returnType;
+        }
+    }
 
     /**
      * Internal builder for creating method binders for expression evaluation.

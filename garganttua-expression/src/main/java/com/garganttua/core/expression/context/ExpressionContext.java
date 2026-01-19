@@ -267,9 +267,8 @@ public class ExpressionContext implements IExpressionContext {
             log.atDebug().log("Creating node for function: {}", functionKey);
             // Create expression node context with IExpressionNode instances
             ExpressionNodeContext context = new ExpressionNodeContext(arguments);
-            Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
-
-            return node
+            return factory.supply(context)
+                    .flatMap(methodReturn -> methodReturn.firstOptional())
                     .orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));
         }
 
@@ -293,14 +292,9 @@ public class ExpressionContext implements IExpressionContext {
             String functionKey = buildNodeKey(":"+methodName, arguments);
             IExpressionNodeContext context = new ExpressionNodeContext(arguments.subList(1, arguments.size()));
 
-            Object t = ((ISupplier<?>)arguments.get(0)).supply().get();
-
-            System.out.println("**** "+t);
-
             IExpressionNodeFactory<?, ?> factory = new MethodCallExpressionNodeFactory<>((ISupplier<?>)arguments.get(0), methodName, context.parameterTypes());
-            Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
-
-            return node
+            return factory.supply(context)
+                    .flatMap(methodReturn -> methodReturn.firstOptional())
                     .orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));
         }
 
@@ -375,9 +369,9 @@ public class ExpressionContext implements IExpressionContext {
             }
 
             ExpressionNodeContext context = new ExpressionNodeContext(elements);
-            Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
-
-            return node.orElseThrow(() -> new ExpressionException("Failed to create array/list node"));
+            return factory.supply(context)
+                    .flatMap(methodReturn -> methodReturn.firstOptional())
+                    .orElseThrow(() -> new ExpressionException("Failed to create array/list node"));
         }
 
         @Override
@@ -451,9 +445,9 @@ public class ExpressionContext implements IExpressionContext {
             // Create context with actual parameter values
             List<Object> paramList = List.of(params);
             ExpressionNodeContext context = new ExpressionNodeContext(paramList);
-            Optional<? extends IExpressionNode<?, ? extends ISupplier<?>>> node = factory.supply(context);
-
-            return node.orElseThrow(() -> new ExpressionException("Failed to create node for: " + functionKey));
+            return factory.supply(context)
+                    .flatMap(methodReturn -> methodReturn.firstOptional())
+                    .orElseThrow(() -> new ExpressionException("Failed to create node for: " + functionKey));
         }
 
         /**

@@ -12,9 +12,10 @@ import java.util.Set;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
-import com.garganttua.core.reflection.methods.MethodResolution;
 import com.garganttua.core.reflection.methods.MethodResolver;
+import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -22,7 +23,7 @@ import jakarta.annotation.Nullable;
 
 public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implements IExpressionNodeFactory<R, S> {
 
-    private MethodResolution resolved;
+    private ResolvedMethod resolved;
     private ExpressionNodeFactory<R, S> factory;
     private List<Boolean> nullables;
 
@@ -79,13 +80,13 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
     }
 
     @Override
-    public Optional<IExpressionNode<R, S>> execute(IExpressionNodeContext ownerContext, Object... contexts)
+    public Optional<IMethodReturn<IExpressionNode<R, S>>> execute(IExpressionNodeContext ownerContext, Object... contexts)
             throws ReflectionException {
         return this.factory.execute(ownerContext, contexts);
     }
 
     @Override
-    public Optional<IExpressionNode<R, S>> supply(IExpressionNodeContext ownerContext, Object... otherContexts)
+    public Optional<IMethodReturn<IExpressionNode<R, S>>> supply(IExpressionNodeContext ownerContext, Object... otherContexts)
             throws SupplyException {
         return this.factory.supply(ownerContext, otherContexts);
     }

@@ -66,4 +66,17 @@ public record ResolvedMethod(ObjectAddress address, List<Object> methodPath) {
         return this.method().getParameterTypes();
     }
 
+    @Override
+    public final boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof ResolvedMethod(ObjectAddress otherAddress, List<Object> otherMethodPath))) return false;
+        return java.util.Objects.equals(address, otherAddress)
+                && java.util.Objects.equals(methodPath, otherMethodPath);
+    }
+
+    @Override
+    public final int hashCode() {
+        return java.util.Objects.hash(address, methodPath);
+    }
+
 }
