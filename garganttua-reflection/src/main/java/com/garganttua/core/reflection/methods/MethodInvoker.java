@@ -202,7 +202,6 @@ public class MethodInvoker<T, R> {
 		ObjectReflectionHelper.checkMethodAndParams(method, returnType, args);
 
 		try (MethodAccessManager manager = new MethodAccessManager(method)) {
-			@SuppressWarnings("unchecked")
 			R result = (R) method.invoke(object, args);
 			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName,
 					object != null ? object.getClass().getName() : "null");

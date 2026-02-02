@@ -2,7 +2,6 @@ package com.garganttua.core.expression.functions;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
-import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
@@ -53,7 +52,7 @@ public class Expressions {
      * @throws ExpressionException if value cannot be converted
      */
     @Expression(name = "string", description = "Converts a value to a String")
-    public static String String(@Nullable String value) {
+    public static String string(@Nullable String value) {
         return value;
     }
 
@@ -65,10 +64,10 @@ public class Expressions {
      * @throws ExpressionException if value cannot be parsed as integer
      */
     @Expression(name = "int", description = "Parses a string to an Integer")
-    public static Integer Integer(@Nullable String value) {
+    public static int integer(@Nullable String value) {
         log.atTrace().log("Converting '{}' to Integer", value);
         try {
-            Integer result = java.lang.Integer.parseInt(value);
+            int result = java.lang.Integer.parseInt(value);
             log.atDebug().log("Converted '{}' to Integer: {}", value, result);
             return result;
         } catch (NumberFormatException e) {
@@ -85,7 +84,7 @@ public class Expressions {
      * @throws ExpressionException if value cannot be parsed as long
      */
     @Expression(name = "long", description = "Parses a string to a Long")
-    public static Long Long(@Nullable String value) {
+    public static long longnumber(@Nullable String value) {
         try {
             return java.lang.Long.parseLong(value);
         } catch (NumberFormatException e) {
@@ -101,7 +100,7 @@ public class Expressions {
      * @throws ExpressionException if value cannot be parsed as double
      */
     @Expression(name = "double", description = "Parses a string to a Double")
-    public static Double Double(@Nullable String value) {
+    public static double doublenumber(@Nullable String value) {
         try {
             return java.lang.Double.parseDouble(value);
         } catch (NumberFormatException e) {
@@ -117,7 +116,7 @@ public class Expressions {
      * @throws ExpressionException if value cannot be parsed as float
      */
     @Expression(name = "float", description = "Parses a string to a Float")
-    public static Float Float(@Nullable String value) {
+    public static float floatnumber(@Nullable String value) {
         try {
             return java.lang.Float.parseFloat(value);
         } catch (NumberFormatException e) {
@@ -132,7 +131,7 @@ public class Expressions {
      * @return an ISupplier that supplies the parsed boolean value
      */
     @Expression(name = "boolean", description = "Parses a string to a Boolean (true/false)")
-    public static Boolean Boolean(@Nullable String value) {
+    public static boolean booleanValue(@Nullable String value) {
         return java.lang.Boolean.parseBoolean(value);
     }
 
@@ -144,7 +143,7 @@ public class Expressions {
      * @throws ExpressionException if value cannot be parsed as byte
      */
     @Expression(name = "byte", description = "Parses a string to a Byte (-128 to 127)")
-    public static Byte Byte(@Nullable String value) {
+    public static byte byteValue(@Nullable String value) {
         try {
             return java.lang.Byte.parseByte(value);
         } catch (NumberFormatException e) {
@@ -160,7 +159,7 @@ public class Expressions {
      * @throws ExpressionException if value cannot be parsed as short
      */
     @Expression(name = "short", description = "Parses a string to a Short")
-    public static Short Short(@Nullable String value) {
+    public static short shortNumber(@Nullable String value) {
         try {
             return java.lang.Short.parseShort(value);
         } catch (NumberFormatException e) {
@@ -176,7 +175,7 @@ public class Expressions {
      * @throws ExpressionException if value is empty
      */
     @Expression(name = "char", description = "Extracts first character from string as Character")
-    public static Character Character(@Nullable String value) {
+    public static char character(@Nullable String value) {
         if (value == null || value.isEmpty()) {
             throw new ExpressionException("Cannot convert empty string to Character");
         }

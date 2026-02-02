@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -292,7 +291,7 @@ public class ExpressionContext implements IExpressionContext {
             String functionKey = buildNodeKey(":"+methodName, arguments);
             IExpressionNodeContext context = new ExpressionNodeContext(arguments.subList(1, arguments.size()));
 
-            IExpressionNodeFactory<?, ?> factory = new MethodCallExpressionNodeFactory<>((ISupplier<?>)arguments.get(0), methodName, context.parameterTypes());
+            IExpressionNodeFactory<?, ?> factory = new MethodCallExpressionNodeFactory<>((IExpressionNode<?, ?>) arguments.get(0), methodName, context.parameterTypes());
             return factory.supply(context)
                     .flatMap(methodReturn -> methodReturn.firstOptional())
                     .orElseThrow(() -> new ExpressionException("Failed to create node for function: " + functionKey));

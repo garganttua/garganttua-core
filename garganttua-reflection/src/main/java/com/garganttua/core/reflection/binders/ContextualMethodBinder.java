@@ -1,18 +1,16 @@
 package com.garganttua.core.reflection.binders;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
@@ -47,6 +45,20 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
             ResolvedMethod method,
             List<ISupplier<?>> parameterSuppliers) {
         this(objectSupplier, method, parameterSuppliers, false);
+    }
+
+    /**
+     * Backward-compatible constructor using ObjectAddress.
+     * Resolves the method from the owner type and address.
+     */
+    public ContextualMethodBinder(ISupplier<?> objectSupplier,
+            ObjectAddress methodAddress,
+            List<ISupplier<?>> parameterSuppliers,
+            Class<?> returnType) {
+        this(objectSupplier,
+             MethodResolver.methodByAddress(objectSupplier.getSuppliedClass(), methodAddress, returnType,
+                 parameterSuppliers.stream().map(s -> s.getSuppliedClass()).toArray(Class[]::new)),
+             parameterSuppliers, false);
     }
 
     @Override

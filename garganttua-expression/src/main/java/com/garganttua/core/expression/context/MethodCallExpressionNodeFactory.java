@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.expression.ExpressionException;
-import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
@@ -28,17 +27,18 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
     private List<Boolean> nullables;
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public MethodCallExpressionNodeFactory(S onwerSupplier, String methodName, Class<?>[] parameterTypes)
+    public MethodCallExpressionNodeFactory(IExpressionNode<?, S> ownerNode, String methodName, Class<?>[] parameterTypes)
             throws ExpressionException {
+        Objects.requireNonNull(ownerNode, "Owner node cannot be null");
         Objects.requireNonNull(methodName, "Method name cannot be null");
         Objects.requireNonNull(parameterTypes, "Parameter types array cannot be null");
 
-        ISupplier supply = ((ExpressionNode) onwerSupplier).evaluate();
+        Class<?> ownerClass = ownerNode.getFinalSuppliedClass();
 
-        this.resolved = MethodResolver.methodByName(supply.getSuppliedClass(), methodName, null, parameterTypes);
+        this.resolved = MethodResolver.methodByName(ownerClass, methodName, null, parameterTypes);
         this.nullables = nullableMask(this.resolved.method());
 
-        this.factory = new ExpressionNodeFactory(onwerSupplier, this.resolved.method().getReturnType(),
+        this.factory = new ExpressionNodeFactory(ownerNode.evaluate(), this.resolved.method().getReturnType(),
                 this.resolved.method(), this.resolved.address(), nullables, Optional.of(methodName),
                 Optional.of("No description available"));
     }

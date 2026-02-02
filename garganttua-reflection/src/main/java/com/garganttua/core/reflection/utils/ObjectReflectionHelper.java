@@ -389,7 +389,7 @@ public class ObjectReflectionHelper {
 		for (int i = 0; i < args.length; i++) {
 			if (args[i] == null)
 				continue;
-			if (!equals(params[i], args[i].getClass())) {
+			if (!isAssignable(params[i], args[i].getClass())) {
 				throw new ReflectionException("Method " + method.getName() + " needs parameter " + i
 						+ " to be of type " + params[i] + ", not " + args[i].getClass());
 			}

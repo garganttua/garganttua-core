@@ -8,8 +8,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.MethodInvoker;
+import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.methods.MultipleMethodReturn;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
@@ -45,6 +47,20 @@ public class MethodBinder<Returned>
             ResolvedMethod method,
             List<ISupplier<?>> parameterSuppliers) {
         this(objectSupplier, method, parameterSuppliers, false);
+    }
+
+    /**
+     * Backward-compatible constructor using ObjectAddress.
+     * Resolves the method from the owner type and address.
+     */
+    public MethodBinder(ISupplier<?> objectSupplier,
+            ObjectAddress methodAddress,
+            List<ISupplier<?>> parameterSuppliers,
+            Class<?> returnType) {
+        this(objectSupplier,
+             MethodResolver.methodByAddress(objectSupplier.getSuppliedClass(), methodAddress, returnType,
+                 parameterSuppliers.stream().map(s -> s.getSuppliedClass()).toArray(Class[]::new)),
+             parameterSuppliers, false);
     }
 
     public static <T, ReturnedType> Optional<IMethodReturn<ReturnedType>> execute(

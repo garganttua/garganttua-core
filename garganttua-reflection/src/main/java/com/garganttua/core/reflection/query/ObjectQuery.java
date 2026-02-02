@@ -34,7 +34,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             throw new ReflectionException("class is null");
         }
         this.objectClass = objectClass;
-        this.object = ObjectReflectionHelper.instanciateNewObject(objectClass);
+        //this.object = ObjectReflectionHelper.instanciateNewObject(objectClass);
         log.atDebug().log("ObjectQuery initialized with objectClass={} and object={}", objectClass, object);
     }
 
@@ -337,7 +337,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
 
         // Search in nested fields (same logic as address method)
         for (Field f : objectClass.getDeclaredFields()) {
-            if (Fields.isNotPrimitive(f.getType())) {
+            if (Fields.isNotPrimitiveOrInternal(f.getType())) {
                 List<ObjectAddress> a;
                 if ((a = doIfIsCollectionForAddresses(f, elementName, baseAddress)) != null && !a.isEmpty())
                     return a;
@@ -383,7 +383,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
         }
 
         for (Field f : objectClass.getDeclaredFields()) {
-            if (Fields.isNotPrimitive(f.getType()) ) {
+            if (Fields.isNotPrimitiveOrInternal(f.getType())) {
                 ObjectAddress a;
                 if ((a = doIfIsCollection(f, elementName, address)) != null)
                     return a;
@@ -451,7 +451,6 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
         return new ObjectFieldGetter(this.objectClass, fieldStructure, fieldAddress).getValue(this.object);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object fieldValueStructure(ObjectAddress address) throws ReflectionException {
         log.atTrace().log("fieldValueStructure called for address={}", address);
@@ -544,7 +543,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
     }
 
     private ObjectAddress doIfNotEnum(Field f, String elementName, ObjectAddress address) throws ReflectionException {
-        if (!f.getType().isEnum()) {
+        if (!f.getType().isEnum() && Fields.isNotPrimitiveOrInternal(f.getType())) {
             log.atTrace().log("doIfNotEnum checking field '{}' for element '{}'", f.getName(), elementName);
             ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
                     : address.clone().addElement(f.getName());
@@ -645,7 +644,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
      * @throws ReflectionException if address resolution fails
      */
     private List<ObjectAddress> doIfNotEnumForAddresses(Field f, String elementName, ObjectAddress address) throws ReflectionException {
-        if (!f.getType().isEnum()) {
+        if (!f.getType().isEnum() && Fields.isNotPrimitiveOrInternal(f.getType())) {
             log.atTrace().log("doIfNotEnumForAddresses checking field '{}' for element '{}'", f.getName(), elementName);
             ObjectAddress newAddress = address == null ? new ObjectAddress(f.getName(), true)
                     : address.clone().addElement(f.getName());

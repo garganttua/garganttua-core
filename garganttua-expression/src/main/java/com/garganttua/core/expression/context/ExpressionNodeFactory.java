@@ -119,7 +119,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      *                              nullable parameters list
      * @throws NullPointerException if methodOwner or method is null
      */
-    @SuppressWarnings("unchecked")
     public ExpressionNodeFactory(
             ISupplier<?> methodOwnerSupplier,
             Class<S> supplied,
@@ -401,8 +400,8 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             return delegate.supply()
                     .flatMap(methodReturn -> {
                         if (methodReturn.hasException()) {
-                            throw new RuntimeException(new SupplyException(
-                                    "Method invocation failed", methodReturn.getException()));
+                            throw new SupplyException(
+                                    "Method invocation failed", methodReturn.getException());
                         }
                         return methodReturn.firstOptional();
                     });

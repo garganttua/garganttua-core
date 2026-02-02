@@ -95,7 +95,9 @@ public class Fields {
 		}
 
 		String packageName = package1.getName();
-		if (packageName.startsWith("java.") || packageName.startsWith("javax.")) {
+		// Exclude all JDK internal packages
+		if (packageName.startsWith("java.") || packageName.startsWith("javax.")
+				|| packageName.startsWith("sun.") || packageName.startsWith("jdk.")) {
 			return false;
 		}
 
