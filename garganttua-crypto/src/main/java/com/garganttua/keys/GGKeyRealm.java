@@ -127,13 +127,13 @@ public class GGKeyRealm implements IGGKeyRealm {
 			SecretKey key = this.keyAlgorithm.generateSymetricKey();
 			this.encryptionKey = new GGKey(GGKeyType.SECRET, this.keyAlgorithm, key.getEncoded(), this.initializationVector, this.encryptionMode, this.paddingMode, this.signatureAlgorithm);
 			this.decryptionKey = new GGKey(GGKeyType.SECRET, this.keyAlgorithm, key.getEncoded(), this.initializationVector, this.encryptionMode, this.paddingMode, this.signatureAlgorithm);
-			log.atInfo().log("Symmetric keys created for realm {}", this.name);
+			log.atDebug().log("Symmetric keys created for realm {}", this.name);
 		} else {
 			log.atDebug().log("Creating asymmetric key pair for realm {}", this.name);
 			KeyPair keyPair = this.keyAlgorithm.generateAsymetricKey();
 			this.encryptionKey = new GGKey(GGKeyType.PRIVATE, this.keyAlgorithm, keyPair.getPrivate().getEncoded(), this.initializationVector, this.encryptionMode, this.paddingMode, this.signatureAlgorithm);
 			this.decryptionKey = new GGKey(GGKeyType.PUBLIC, this.keyAlgorithm, keyPair.getPublic().getEncoded(), this.initializationVector, this.encryptionMode, this.paddingMode, this.signatureAlgorithm);
-			log.atInfo().log("Asymmetric key pair created for realm {}", this.name);
+			log.atDebug().log("Asymmetric key pair created for realm {}", this.name);
 		}
 		log.atTrace().log("Exiting createKeys");
 	}

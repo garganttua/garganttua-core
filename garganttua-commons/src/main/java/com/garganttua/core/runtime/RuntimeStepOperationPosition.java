@@ -10,7 +10,7 @@ package com.garganttua.core.runtime;
  * </p>
  *
  * <p>
- * Unlike {@link RuntimeStagePosition} and {@link RuntimeStepPosition} which use string names
+ * Unlike {@link RuntimeStepPosition} which uses string names
  * for reference, RuntimeStepOperationPosition uses class types to identify the reference element.
  * </p>
  *
@@ -28,7 +28,6 @@ package com.garganttua.core.runtime;
  * @param element the class of the existing operation to position relative to
  * @since 2.0.0-ALPHA01
  * @see Position
- * @see RuntimeStagePosition
  * @see RuntimeStepPosition
  */
 public record RuntimeStepOperationPosition(Position position,

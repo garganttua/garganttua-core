@@ -38,7 +38,7 @@ public class DependencyCycleDetector {
 
         for (Class<?> bean : state.keySet()) {
             if (state.get(bean) == VisitState.UNVISITED) {
-                log.atInfo().log("Starting DFS for bean {}", bean.getSimpleName());
+                log.atDebug().log("Starting DFS for bean {}", bean.getSimpleName());
                 dfs(graph, bean, state, new ArrayDeque<>());
             } else {
                 log.atTrace().log("Skipping bean {} as it is already visited", bean.getSimpleName());
@@ -70,7 +70,7 @@ public class DependencyCycleDetector {
                 log.atError().log("Circular dependency detected: {}", cycle);
                 throw new DiException("Circular dependency detected: " + cycle);
             } else if (depState == VisitState.UNVISITED) {
-                log.atInfo().log("Recursing into dependency {} from bean {}", dep.getSimpleName(), current.getSimpleName());
+                log.atDebug().log("Recursing into dependency {} from bean {}", dep.getSimpleName(), current.getSimpleName());
                 dfs(graph, dep, state, stack);
             } else {
                 log.atTrace().log("Dependency {} already visited", dep.getSimpleName());

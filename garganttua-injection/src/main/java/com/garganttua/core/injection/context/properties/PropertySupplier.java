@@ -41,7 +41,7 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
                 result = InjectionContext.context.getProperty(this.key, this.type);
             }
 
-            log.atInfo().log("Property supplied for key '{}': {}", key, result.orElse(null));
+            log.atDebug().log("Property supplied for key '{}': {}", key, result.orElse(null));
             log.atTrace().log("Exiting supply with result: {}", result);
             return result;
 

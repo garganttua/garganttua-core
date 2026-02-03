@@ -11,7 +11,7 @@ public class Properties {
     public static <Property> IPropertySupplierBuilder<Property> property(Class<Property> type) {
         log.atTrace().log("Entering property() with type={}", type);
         IPropertySupplierBuilder<Property> builder = new PropertySupplierBuilder<Property>(type);
-        log.atInfo().log("Created PropertySupplierBuilder for type={}", type.getSimpleName());
+        log.atDebug().log("Created PropertySupplierBuilder for type={}", type.getSimpleName());
         log.atTrace().log("Exiting property()");
         return builder;
     }

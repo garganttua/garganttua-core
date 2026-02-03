@@ -12,7 +12,7 @@ public class GGKeyRandoms {
         log.atDebug().log("Initializing SecureRandom instance");
         DEFAULT_SECURE_RANDOM = new SecureRandom();
         DEFAULT_SECURE_RANDOM.nextBytes(new byte[64]);
-        log.atInfo().log("SecureRandom initialized and seeded");
+        log.atDebug().log("SecureRandom initialized and seeded");
     }
 
     private GGKeyRandoms() {

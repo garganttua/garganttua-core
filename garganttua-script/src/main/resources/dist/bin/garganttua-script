@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Garganttua Script Engine launcher
+#
+
+INSTALL_DIR="/usr/local"
+LIB_DIR="$INSTALL_DIR/lib/garganttua-script"
+LOGBACK_CONFIG="$INSTALL_DIR/etc/garganttua-script/logback.xml"
+
+# Minimum required Java version
+MIN_JAVA_VERSION=21
+
+# Check if Java is installed
+if ! command -v java &> /dev/null; then
+    echo "Error: Java is not installed or not in PATH" >&2
+    echo "Please install Java $MIN_JAVA_VERSION or later" >&2
+    exit 1
+fi
+
+# Check Java version
+JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
+if [ -z "$JAVA_VERSION" ]; then
+    # Try alternative parsing for newer Java versions
+    JAVA_VERSION=$(java -version 2>&1 | head -n 1 | sed 's/.*version "\([0-9]*\).*/\1/')
+fi
+
+if [ "$JAVA_VERSION" -lt "$MIN_JAVA_VERSION" ] 2>/dev/null; then
+    echo "Error: Java $MIN_JAVA_VERSION or later is required (found Java $JAVA_VERSION)" >&2
+    echo "Please upgrade your Java installation" >&2
+    exit 1
+fi
+
+# Build classpath from all JARs in lib directory
+CLASSPATH=""
+for jar in "$LIB_DIR"/*.jar; do
+    if [ -f "$jar" ]; then
+        if [ -z "$CLASSPATH" ]; then
+            CLASSPATH="$jar"
+        else
+            CLASSPATH="$CLASSPATH:$jar"
+        fi
+    fi
+done
+
+if [ -z "$CLASSPATH" ]; then
+    echo "Error: No JAR files found in $LIB_DIR" >&2
+    exit 1
+fi
+
+# Java options
+JAVA_OPTS="${JAVA_OPTS:-}"
+
+# Add logback configuration if it exists
+if [ -f "$LOGBACK_CONFIG" ]; then
+    JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=$LOGBACK_CONFIG"
+fi
+
+# Execute with classpath (not -jar) to allow Reflections to scan properly
+exec java $JAVA_OPTS -cp "$CLASSPATH" com.garganttua.core.script.Main "$@"

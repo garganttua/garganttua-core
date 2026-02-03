@@ -1,0 +1,60 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 http://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <id>linux-installer</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>garganttua-script-${project.version}</baseDirectory>
+
+    <fileSets>
+        <!-- Install script -->
+        <fileSet>
+            <directory>src/main/resources/dist</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>install.sh</include>
+                <include>uninstall.sh</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- Wrapper scripts -->
+        <fileSet>
+            <directory>src/main/resources/dist/bin</directory>
+            <outputDirectory>/bin</outputDirectory>
+            <includes>
+                <include>garganttua-script</include>
+                <include>gs</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- Logback configuration -->
+        <fileSet>
+            <directory>src/main/resources/dist/conf</directory>
+            <outputDirectory>/conf</outputDirectory>
+            <includes>
+                <include>logback.xml</include>
+            </includes>
+        </fileSet>
+
+        <!-- Dependencies -->
+        <fileSet>
+            <directory>${project.build.directory}/dependency</directory>
+            <outputDirectory>/lib</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+
+    <files>
+        <!-- The main JAR (not shaded) -->
+        <file>
+            <source>${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
+            <outputDirectory>/lib</outputDirectory>
+        </file>
+    </files>
+</assembly>

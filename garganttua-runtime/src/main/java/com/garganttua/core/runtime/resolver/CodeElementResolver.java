@@ -41,7 +41,7 @@ public class CodeElementResolver implements IElementResolver {
 
                 boolean nullable = isNullable(element);
 
-                log.atInfo()
+                log.atDebug()
                                 .log("Resolved code element successfully");
 
                 return new Resolved(true, elementType, s, nullable);

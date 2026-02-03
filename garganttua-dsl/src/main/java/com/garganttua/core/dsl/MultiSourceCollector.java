@@ -149,7 +149,7 @@ public class MultiSourceCollector<K, V> {
         log.atTrace().log("Entering build()");
         List<Source<K, V>> sortedSources = sortSourcesByPriority(sources);
         Map<K, V> result = collectFromSources(sortedSources);
-        log.atInfo().log("Built final map with {} items from {} sources", result.size(), sources.size());
+        log.atDebug().log("Built final map with {} items from {} sources", result.size(), sources.size());
         log.atTrace().log("Exiting build()");
         return result;
     }
@@ -179,7 +179,7 @@ public class MultiSourceCollector<K, V> {
         validateSourceNames(includedSourceNames);
         List<Source<K, V>> filteredSources = filterAndSortSources(includedSourceNames);
         Map<K, V> result = collectFromSources(filteredSources);
-        log.atInfo().log("Built filtered map with {} items from {} sources (excluded {} sources)",
+        log.atDebug().log("Built filtered map with {} items from {} sources (excluded {} sources)",
                 result.size(), filteredSources.size(), sources.size() - filteredSources.size());
         log.atTrace().log("Exiting buildWithSources()");
         return result;
@@ -213,7 +213,7 @@ public class MultiSourceCollector<K, V> {
         Set<K> excludedKeys = collectKeysFromSources(excludedSourceNames);
         List<Source<K, V>> includedSources = filterAndSortSourcesExcluding(excludedSourceNames);
         Map<K, V> result = collectFromSourcesExcludingKeys(includedSources, excludedKeys);
-        log.atInfo().log("Built filtered map with {} items (excluded {} keys from {} sources)",
+        log.atDebug().log("Built filtered map with {} items (excluded {} keys from {} sources)",
                 result.size(), excludedKeys.size(), excludedSourceNames.size());
         log.atTrace().log("Exiting buildExcludingSourceItems()");
         return result;

@@ -70,7 +70,7 @@ public class FutureSupplierBuilder<Supplied>
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building FutureSupplier with timeout: {}", timeoutMillis);
         ISupplier<Supplied> result = new FutureSupplier<>(future, suppliedType, timeoutMillis);
-        log.atInfo().log("Build completed for FutureSupplier");
+        log.atDebug().log("Build completed for FutureSupplier");
         log.atTrace().log("Exiting build method");
         return result;
     }

@@ -33,7 +33,7 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
                 "Entering AbstractConstructorArgInjectBinderBuilder constructor with link: {}, constructed class: {}",
                 link, construcetd);
         this.support = new DependentBuilderSupport(Set.of(new DependencySpec(IInjectableElementResolverBuilder.class, DependencyPhase.AUTO_DETECT, true)));
-        log.atInfo().log("AbstractConstructorArgInjectBinderBuilder initialized");
+        log.atDebug().log("AbstractConstructorArgInjectBinderBuilder initialized");
         log.atTrace().log("Exiting constructor");
     }
 
@@ -57,7 +57,7 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
         resolved.stream().forEach(r -> {
             r.ifResolvedOrElse(
                     (b, n) -> {
-                        log.atInfo().log("Resolved constructor parameter {} with builder: {}", counter.get(), b);
+                        log.atDebug().log("Resolved constructor parameter {} with builder: {}", counter.get(), b);
                         this.withParam(counter.getAndIncrement(), b, n);
                     },
                     n -> {

@@ -42,7 +42,7 @@ public class VariableElementResolver implements IElementResolver {
 
         boolean nullable = isNullable(element);
 
-        log.atInfo()
+        log.atDebug()
                 .log("Resolved variable element successfully");
 
         return new Resolved(true, elementType, s, nullable);

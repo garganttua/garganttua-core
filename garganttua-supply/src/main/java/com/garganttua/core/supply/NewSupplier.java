@@ -31,7 +31,7 @@ public class NewSupplier<SuppliedType> implements ISupplier<SuppliedType> {
 
         try {
             Optional<SuppliedType> result = (Optional<SuppliedType>) this.constructorBinder.execute();
-            log.atInfo().log("Supply completed for new object of type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
+            log.atDebug().log("Supply completed for new object of type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
             log.atTrace().log("Exiting supply method");
             return result;
         } catch (ReflectionException e) {

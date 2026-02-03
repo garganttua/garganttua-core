@@ -18,6 +18,7 @@ import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
+import com.garganttua.core.runtime.MethodBinderExpression;
 import com.garganttua.core.runtime.RuntimeStepMethodBinder;
 import com.garganttua.core.runtime.annotations.Catch;
 import com.garganttua.core.runtime.annotations.Code;
@@ -43,26 +44,24 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     private Map<Class<? extends Throwable>, IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>> katches = new HashMap<>();
     private ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier;
     private String stepName;
-    private String stageName;
     private String runtimeName;
     private IConditionBuilder conditionBuilder;
     private Boolean abortOnUncatchedException = false;
     private Boolean nullable = false;
 
     protected RuntimeStepMethodBuilder(String runtimeName,
-            String stageName, String stepName,
+            String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
             ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier)
             throws DslException {
         super(up, supplier);
         log.atTrace().log(
-                "Entering RuntimeStepMethodBuilder constructor with runtimeName={}, stageName={}, stepName={}",
-                runtimeName, stageName, stepName);
+                "Entering RuntimeStepMethodBuilder constructor with runtimeName={}, stepName={}",
+                runtimeName, stepName);
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
-        this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
         this.supplier = supplier;
-        log.atInfo().log("RuntimeStepMethodBuilder constructed successfully for step '{}'", stepName);
+        log.atDebug().log("RuntimeStepMethodBuilder constructed successfully for step '{}'", stepName);
     }
 
     @Override
@@ -79,7 +78,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             String variableName) {
         log.atTrace().log("Entering variable method with variableName={}", variableName);
         this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
-        log.atInfo().log("Return variable set to '{}'", variableName);
+        log.atDebug().log("Return variable set to '{}'", variableName);
         return this;
     }
 
@@ -118,7 +117,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         log.atTrace().log("Entering output method with value={}", output);
         this.output = Objects.requireNonNull(output, "Output cannot be null");
-        log.atInfo().log("Output set to {}", output);
+        log.atDebug().log("Output set to {}", output);
         return this;
     }
 
@@ -137,23 +136,25 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             throws DslException {
         log.atTrace().log("Entering build method");
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
+        MethodBinderExpression<ExecutionReturn, IRuntimeContext<InputType, OutputType>> expression = new MethodBinderExpression<>(binder);
         ICondition condition = null;
         if (this.conditionBuilder != null) {
             condition = this.conditionBuilder.build();
         }
-        log.atInfo().log("Building RuntimeStepMethodBinder for step '{}'", this.stepName);
-        return new RuntimeStepMethodBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName, this.stageName,
-                this.stepName, binder,
+        log.atDebug().log("Building RuntimeStepMethodBinder for step '{}'", this.stepName);
+        return new RuntimeStepMethodBinder<ExecutionReturn, InputType, OutputType>(this.runtimeName,
+                this.stepName, expression,
                 Optional.ofNullable(this.storeReturnInVariable), this.output, this.successCode, this.katches.entrySet().stream().map(b -> b.getValue().build())
                 .collect(Collectors.toSet()),
-                Optional.ofNullable(condition), this.abortOnUncatchedException, this.nullable);
+                Optional.ofNullable(condition), this.abortOnUncatchedException, this.nullable,
+                binder.getExecutableReference());
     }
 
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> code(Integer code) {
         log.atTrace().log("Entering code method with value={}", code);
         this.successCode = Objects.requireNonNull(code, "Code cannot be null");
-        log.atInfo().log("Success code set to {}", code);
+        log.atDebug().log("Success code set to {}", code);
         return this;
     }
 
@@ -170,7 +171,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         detectVariable(method);
         detectCode(method);
         detectNullable(method);
-        log.atInfo().log("Auto-detection completed for method {}", method.getName());
+        log.atDebug().log("Auto-detection completed for method {}", method.getName());
     }
 
     private void detectNullable(Method operationMethod) {
@@ -213,7 +214,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             IConditionBuilder condition = (IConditionBuilder) ObjectQueryFactory.objectQuery(owner.get())
                     .getValue(conditionField);
             this.condition(condition);
-            log.atInfo().log("Condition detected and applied");
+            log.atDebug().log("Condition detected and applied");
         }
     }
 
@@ -248,7 +249,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             boolean abort) {
         log.atTrace().log("Entering abortOnUncatchedException method with value={}", abort);
         this.abortOnUncatchedException = Objects.requireNonNull(abort, "Abort cannot be null");
-        log.atInfo().log("abortOnUncatchedException set to {}", abort);
+        log.atDebug().log("abortOnUncatchedException set to {}", abort);
         return this;
     }
 
@@ -257,7 +258,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             boolean nullable) {
         log.atTrace().log("Entering nullable method with value={}", nullable);
         this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
-        log.atInfo().log("Nullable set to {}", nullable);
+        log.atDebug().log("Nullable set to {}", nullable);
         return this;
     }
 }

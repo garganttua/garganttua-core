@@ -11,9 +11,10 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStep;
+import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
 import com.garganttua.core.runtime.RuntimeStep;
 import com.garganttua.core.runtime.annotations.FallBack;
 import com.garganttua.core.runtime.annotations.Operation;
@@ -27,11 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>
         extends
-        AbstractAutomaticLinkedDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>
+        AbstractAutomaticLinkedDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>
         implements IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
     private String stepName;
-    private String stageName;
     private String runtimeName;
     private ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier;
     private RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> methodBuilder;
@@ -40,14 +40,13 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     private IInjectableElementResolverBuilder resolverBuilder;
     private IInjectionContextBuilder injectionContextBuilder;
 
-    public RuntimeStepBuilder(RuntimeStageBuilder<InputType, OutputType> runtimeStageBuilder, String runtimeName,
-            String stageName, String stepName,
+    public RuntimeStepBuilder(RuntimeBuilder<InputType, OutputType> runtimeBuilder, String runtimeName,
+            String stepName,
             Class<ExecutionReturn> executionReturn,
             ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier) {
-        super(runtimeStageBuilder, Set.of(
+        super(runtimeBuilder, Set.of(
                 new DependencySpecBuilder(IInjectionContextBuilder.class).useForAutoDetect().build()));
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
-        this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
         this.executionReturn = Objects.requireNonNull(executionReturn, "Execution return type cannot be null");
         this.supplier = Objects.requireNonNull(supplier, "Supplier builder cannot be null");
@@ -61,8 +60,8 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
             throws DslException {
         log.atTrace().log("{} Entering method() method", logLineHeader());
         if (this.methodBuilder == null) {
-            this.methodBuilder = new RuntimeStepMethodBuilder<>(runtimeName, stageName, stepName, this, supplier);
-            log.atInfo().log("{} Method builder created", logLineHeader());
+            this.methodBuilder = new RuntimeStepMethodBuilder<>(runtimeName, stepName, this, supplier);
+            log.atDebug().log("{} Method builder created", logLineHeader());
         } else {
             log.atDebug().log("{} Reusing existing method builder", logLineHeader());
         }
@@ -75,8 +74,8 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
             throws DslException {
         log.atTrace().log("{} Entering fallBack() method", logLineHeader());
         if (this.fallbackBuilder == null) {
-            this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(runtimeName, stageName, stepName, this, supplier);
-            log.atInfo().log("{} Fallback builder created", logLineHeader());
+            this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(runtimeName, stepName, this, supplier);
+            log.atDebug().log("{} Fallback builder created", logLineHeader());
         } else {
             log.atDebug().log("{} Reusing existing fallback builder", logLineHeader());
         }
@@ -132,7 +131,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         this.executionReturn = (Class<ExecutionReturn>) method.getReturnType();
         this.method().provide(this.resolverBuilder).autoDetect(true).method(method);
 
-        log.atInfo().log("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
+        log.atDebug().log("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
                 executionReturn.getSimpleName());
         return method;
     }
@@ -142,7 +141,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     protected IRuntimeStep<ExecutionReturn, InputType, OutputType> doBuild() throws DslException {
         log.atTrace().log("{} Entering doBuild() method", logLineHeader());
 
-        IMethodBinder<ExecutionReturn> fallback = null;
+        IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> fallback = null;
         if (this.fallbackBuilder != null) {
             fallback = this.fallbackBuilder.build();
             log.atDebug().log("{} Built fallback method", logLineHeader());
@@ -150,8 +149,8 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
             log.atDebug().log("{} No fallback to build", logLineHeader());
         }
 
-        log.atInfo().log("{} Building RuntimeStep", logLineHeader());
-        IRuntimeStep<ExecutionReturn, InputType, OutputType> step = new RuntimeStep(runtimeName, stageName, stepName,
+        log.atDebug().log("{} Building RuntimeStep", logLineHeader());
+        IRuntimeStep<ExecutionReturn, InputType, OutputType> step = new RuntimeStep(runtimeName, stepName,
                 executionReturn, this.methodBuilder.build(),
                 Optional.ofNullable(fallback));
 
@@ -160,7 +159,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     }
 
     private String logLineHeader() {
-        return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "] ";
+        return "[Runtime " + runtimeName + "][Step " + stepName + "] ";
     }
 
     @Override

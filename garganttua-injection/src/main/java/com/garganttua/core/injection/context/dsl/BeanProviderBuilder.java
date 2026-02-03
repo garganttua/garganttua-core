@@ -72,14 +72,14 @@ public class BeanProviderBuilder
 		log.atTrace().log("Entering doBuild() method");
 
 		Map<Class<?>, IBeanFactoryBuilder<?>> allBuilders = this.computeBeanFactoryBuilders();
-		log.atInfo().log("Building IBeanProvider with {} factories", allBuilders.size());
+		log.atDebug().log("Building IBeanProvider with {} factories", allBuilders.size());
 
 		IBeanProvider provider;
 		try {
 			provider = new BeanProvider(allBuilders.values().stream()
 					.map(IBeanFactoryBuilder::build)
 					.collect(Collectors.toList()), Optional.ofNullable(this.resolverBuilder), true);
-			log.atInfo().log("IBeanProvider successfully built with {} beans", provider.size());
+			log.atDebug().log("IBeanProvider successfully built with {} beans", provider.size());
 		} catch (Exception e) {
 			log.atError().log("Failed to build IBeanProvider. Error: {}", e.getMessage(), e);
 			throw new DslException("Error building IBeanProvider", e);

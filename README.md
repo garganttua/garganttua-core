@@ -11,9 +11,10 @@ If you need additional information, code snippets, examples, or further explanat
 
 ## 🎯 Key Features
 
-- **Modular Architecture** - 15 independent modules, each solving a specific technical concern
+- **Modular Architecture** - 18 independent modules, each solving a specific technical concern
 - **Dependency Injection** - Lightweight IoC container with context management and bean lifecycle
-- **Runtime Workflows** - Sophisticated orchestration engine with stages, steps, and exception handling
+- **Runtime Workflows** - Sophisticated orchestration engine with steps and exception handling
+- **Script Engine** - Scripting language for composing runtime steps with control flow and exception handling
 - **Advanced Reflection** - Type-safe reflection utilities with annotation scanning and dynamic binding
 - **Declarative DSL** - Fluent builder APIs for creating domain-specific languages
 - **Condition Engine** - Expressive DSL for defining and evaluating complex runtime conditions
@@ -60,7 +61,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 <!-- AUTO-GENERATED-ARCHITECTURE-START -->
 | Module | Description |
 |:--|:--|
-| [**garganttua-core**](././README.md) |  |
+| [**garganttua-core**](././README.md) | Garganttua Core - Foundational Java framework for dependency injection, workflow orchestration, reflection utilities, and more. |
 | \|- [**garganttua-bindings**](./garganttua-bindings/README.md) | Modules providing bindings to external libs and frameworks. |
 | \|    \|- [**garganttua-mutex-redis**](./garganttua-bindings/garganttua-mutex-redis/README.md) | Distributed mutex over redis. |
 | \|    \|- [**garganttua-reflections**](./garganttua-bindings/garganttua-reflections/README.md) | Annotation scanner implementation based on org.reflections:reflections |
@@ -80,7 +81,10 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-native-image-maven-plugin**](./garganttua-native-image-maven-plugin/README.md) | Maven plugin to build native images (GraalVM support). |
 | \|- [**garganttua-reflection**](./garganttua-reflection/README.md) | Advanced reflection utilities for classes, methods, and annotations. |
 | \|- [**garganttua-runtime**](./garganttua-runtime/README.md) | Runtime context management and lifecycle orchestration. |
+| \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
+| \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
+
 
 
 
@@ -107,7 +111,7 @@ These modules implement the primary framework capabilities:
 
 - **[garganttua-injection](./garganttua-injection/README.md)** - Lightweight dependency injection container supporting singleton and prototype scopes, property injection, provider methods, and child contexts.
 
-- **[garganttua-runtime](./garganttua-runtime/README.md)** - Sophisticated workflow orchestration engine with multi-stage execution, conditional steps, exception handling, and fallback mechanisms. Supports both annotation-based and programmatic definitions.
+- **[garganttua-runtime](./garganttua-runtime/README.md)** - Workflow orchestration engine with sequential step execution, conditional steps, exception handling, and fallback mechanisms. Supports both annotation-based and programmatic definitions.
 
 - **[garganttua-reflection](./garganttua-reflection/README.md)** - Advanced reflection utilities providing annotation scanning, object graph navigation via dot-notation paths, and type-safe field/method/constructor binding.
 
@@ -115,7 +119,9 @@ These modules implement the primary framework capabilities:
 
 - **[garganttua-condition](./garganttua-condition/README.md)** - Expressive DSL for building and evaluating runtime conditions with full boolean algebra support (AND, OR, XOR, NAND, NOR), custom predicates, and property extraction.
 
-- **[garganttua-expression](./garganttua-expression/README.md)** - 
+- **[garganttua-expression](./garganttua-expression/README.md)** - ANTLR4-based expression language supporting function calls, method invocations, constructors, and type-safe evaluation with supplier integration.
+
+- **[garganttua-script](./garganttua-script/README.md)** - Scripting language engine for composing runtime steps with variable assignment, exception handling, conditional pipes, and expression evaluation.
 
 ### Utility Modules
 
@@ -174,36 +180,32 @@ import com.garganttua.core.runtime.*;
 import com.garganttua.core.runtime.annotations.*;
 
 @RuntimeDefinition(input = Order.class, output = OrderResult.class)
-@Stages({
-    @Stage(name = "validation", steps = {
-        @Step(method = "validateOrder"),
-        @Step(method = "checkInventory")
-    }),
-    @Stage(name = "processing", steps = {
-        @Step(method = "processPayment"),
-        @Step(method = "shipOrder")
-    }),
-    @Stage(name = "notification", steps = {
-        @Step(method = "sendConfirmation")
-    })
-})
+@Named("order-processing")
 public class OrderProcessingRuntime {
 
+    @Steps
+    public List<Class<?>> steps = List.of(
+        ValidateOrderStep.class,
+        ProcessPaymentStep.class,
+        SendConfirmationStep.class
+    );
+}
+
+@Step
+@Named("validate-order")
+public class ValidateOrderStep {
+
+    @Operation(abortOnUncatchedException = true)
     public void validateOrder(@Input Order order) {
         if (order.getAmount() <= 0) {
             throw new RuntimeException("Invalid order amount");
         }
     }
-
-    @FallBack
-    public void handleFailure(@Exception Throwable ex, @Context IRuntimeContext ctx) {
-        // Rollback and notify
-    }
 }
 
 // Execute runtime
-IRuntime<Order, OrderResult> runtime = new RuntimeBuilder<>(OrderProcessingRuntime.class).build();
-IRuntimeResult<OrderResult> result = runtime.execute(myOrder);
+IRuntime<Order, OrderResult> runtime = ...;
+IRuntimeResult<Order, OrderResult> result = runtime.execute(myOrder).orElseThrow();
 ```
 
 ### Condition Evaluation
@@ -316,11 +318,14 @@ graph TD
     garganttua-lifecycle["garganttua-lifecycle"]
     garganttua-mapper["garganttua-mapper"]
     garganttua-mutex["garganttua-mutex"]
+    garganttua-mutex-redis["garganttua-mutex-redis"]
     garganttua-native["garganttua-native"]
     garganttua-native-image-maven-plugin["garganttua-native-image-maven-plugin"]
     garganttua-reflection["garganttua-reflection"]
     garganttua-reflections["garganttua-reflections"]
     garganttua-runtime["garganttua-runtime"]
+    garganttua-script["garganttua-script"]
+    garganttua-script-maven-plugin["garganttua-script-maven-plugin"]
     garganttua-spring["garganttua-spring"]
     garganttua-supply["garganttua-supply"]
 
@@ -343,6 +348,7 @@ graph TD
     garganttua-runtime --> garganttua-reflections
     garganttua-runtime --> garganttua-native
     garganttua-native --> garganttua-commons
+    garganttua-native --> garganttua-dsl
     garganttua-native --> garganttua-reflection
     garganttua-native --> garganttua-reflections
     garganttua-bootstrap --> garganttua-commons
@@ -350,6 +356,7 @@ graph TD
     garganttua-bootstrap --> garganttua-reflections
     garganttua-reflections --> garganttua-commons
     garganttua-spring --> garganttua-reflection
+    garganttua-mutex-redis --> garganttua-mutex
     garganttua-native-image-maven-plugin --> garganttua-commons
     garganttua-native-image-maven-plugin --> garganttua-dsl
     garganttua-native-image-maven-plugin --> garganttua-native
@@ -363,6 +370,16 @@ graph TD
     garganttua-lifecycle --> garganttua-reflection
     garganttua-mapper --> garganttua-reflection
     garganttua-mapper --> garganttua-native
+    garganttua-script --> garganttua-commons
+    garganttua-script --> garganttua-runtime
+    garganttua-script --> garganttua-expression
+    garganttua-script --> garganttua-injection
+    garganttua-script --> garganttua-reflections
+    garganttua-script --> garganttua-bootstrap
+    garganttua-script --> garganttua-condition
+    garganttua-script-maven-plugin --> garganttua-commons
+    garganttua-script-maven-plugin --> garganttua-reflection
+    garganttua-script-maven-plugin --> garganttua-reflections
     garganttua-expression --> garganttua-commons
     garganttua-expression --> garganttua-injection
     garganttua-expression --> garganttua-reflections
@@ -412,8 +429,9 @@ graph TD
 3. **Add Execution** - Chain executors for sequential processing with fallbacks.
 4. **Introduce Conditions** - Define business rules declaratively with the condition DSL.
 5. **Build Workflows** - Orchestrate complex processes with the runtime module.
-6. **Integrate Bindings** - Connect with Spring or use advanced reflection features.
-7. **Optimize with Native** - Compile to native images for production deployment.
+6. **Write Scripts** - Compose runtime steps using the scripting language.
+7. **Integrate Bindings** - Connect with Spring or use advanced reflection features.
+8. **Optimize with Native** - Compile to native images for production deployment.
 
 ## 🛠️ Development
 

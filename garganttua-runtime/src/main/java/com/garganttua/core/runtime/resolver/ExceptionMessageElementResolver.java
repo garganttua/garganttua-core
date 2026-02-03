@@ -41,7 +41,7 @@ public class ExceptionMessageElementResolver implements IElementResolver {
 
         boolean nullable = isNullable(element);
 
-        log.atInfo()
+        log.atDebug()
                 .addKeyValue("nullable", nullable)
                 .log("Resolved exception message element successfully");
 

@@ -44,10 +44,10 @@ public class FixedElementResolver implements IElementResolver {
         log.atDebug().log("Retrieved @Fixed annotation: {}", fixedAnnotation);
 
         Object fixedValue = getFixedValue(fixedAnnotation, elementType);
-        log.atInfo().log("Computed fixed value {} for elementType: {}", fixedValue, elementType.getSimpleName());
+        log.atDebug().log("Computed fixed value {} for elementType: {}", fixedValue, elementType.getSimpleName());
 
         ISupplierBuilder<?, ISupplier<?>> builder = new FixedSupplierBuilder(fixedValue);
-        log.atInfo().log("Created FixedSupplierBuilder for elementType: {}", elementType.getSimpleName());
+        log.atDebug().log("Created FixedSupplierBuilder for elementType: {}", elementType.getSimpleName());
 
         Resolved resolved = new Resolved(true, elementType, builder, IInjectableElementResolver.isNullable(element));
         log.atTrace().log("Exiting resolve with Resolved: {}", resolved);

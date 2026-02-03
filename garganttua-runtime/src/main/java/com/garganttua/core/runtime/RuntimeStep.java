@@ -14,24 +14,22 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
     private Class<ExecutionReturn> executionReturn;
     private IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> operationBinder;
     private Optional<IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> fallbackBinder;
-    private String stageName;
     private String runtimeName;
 
-    public RuntimeStep(String runtimeName, String stageName, String stepName, Class<ExecutionReturn> executionReturn,
+    public RuntimeStep(String runtimeName, String stepName, Class<ExecutionReturn> executionReturn,
             IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> operationBinder,
             Optional<IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> fallbackBinder) {
 
-        log.atTrace().log("[RuntimeStep.<init>] Initializing RuntimeStep: runtime={}, stage={}, step={}, executionReturn={}, hasFallback={}",
-                runtimeName, stageName, stepName, executionReturn, fallbackBinder.isPresent());
+        log.atTrace().log("[RuntimeStep.<init>] Initializing RuntimeStep: runtime={}, step={}, executionReturn={}, hasFallback={}",
+                runtimeName, stepName, executionReturn, fallbackBinder.isPresent());
 
         this.runtimeName = runtimeName;
-        this.stageName = stageName;
         this.stepName = stepName;
         this.executionReturn = executionReturn;
         this.operationBinder = operationBinder;
         this.fallbackBinder = fallbackBinder;
 
-        log.atInfo().log("{}Initialized RuntimeStep with executionReturn={}, fallbackPresent={}", 
+        log.atDebug().log("{}Initialized RuntimeStep with executionReturn={}, fallbackPresent={}",
                 logLineHeader(), executionReturn, fallbackBinder.isPresent());
     }
 
@@ -46,16 +44,16 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         log.atDebug().log("{}Defining execution step in chain. Fallback present: {}", logLineHeader(), fallbackBinder.isPresent());
 
         if (this.fallbackBinder.isPresent()) {
-            log.atInfo().log("{}Adding executor with fallback", logLineHeader());
+            log.atDebug().log("{}Adding executor with fallback", logLineHeader());
             chain.addExecutor(operationBinder, fallbackBinder.get());
         } else {
-            log.atInfo().log("{}Adding executor without fallback", logLineHeader());
+            log.atDebug().log("{}Adding executor without fallback", logLineHeader());
             chain.addExecutor(operationBinder);
         }
     }
 
     private String logLineHeader() {
-        return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "] ";
+        return "[Runtime " + runtimeName + "][Step " + stepName + "] ";
     }
 
 }

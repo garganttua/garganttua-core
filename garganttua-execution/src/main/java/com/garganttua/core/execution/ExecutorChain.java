@@ -50,7 +50,7 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 				return arg0;
 			}
 		});
-		log.atInfo().log("Executor added without fallback: {}", executor);
+		log.atDebug().log("Executor added without fallback: {}", executor);
 		log.atTrace().log("Exiting addExecutor(IExecutor)");
 	}
 
@@ -65,13 +65,13 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 				log.atDebug().log("Fallback executor added to front of queue: {}", executor.getValue());
 			}
 			try {
-				log.atInfo().log("Executing executor: {}", executor.getKey());
+				log.atDebug().log("Executing executor: {}", executor.getKey());
 				executor.getKey().execute(request, this);
-				log.atInfo().log("Executor executed successfully: {}", executor.getKey());
+				log.atDebug().log("Executor executed successfully: {}", executor.getKey());
 			} catch (ExecutorException e) {
 				log.atWarn().log("Error during executor chain execution for executor: {}", executor.getKey(), e);
 				if (!this.fallBackExecutors.isEmpty()) {
-					log.atInfo().log("Executing fallback executors");
+					log.atDebug().log("Executing fallback executors");
 					this.executeFallBack(request);
 				}
 				if (this.rethrow) {
@@ -90,9 +90,9 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		log.atTrace().log("Entering executeFallBack() with request={}", request);
 		IFallBackExecutor<T> executor = this.fallBackExecutors.poll();
 		if (executor != null) {
-			log.atInfo().log("Executing fallback executor: {}", executor);
+			log.atDebug().log("Executing fallback executor: {}", executor);
 			executor.fallBack(request, this);
-			log.atInfo().log("Fallback executor executed successfully: {}", executor);
+			log.atDebug().log("Fallback executor executed successfully: {}", executor);
 		} else {
 			log.atDebug().log("No fallback executor available to execute");
 		}
@@ -119,7 +119,7 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 				return arg0;
 			}
 		});
-		log.atInfo().log("Executor added with fallback: {} -> {}", executor, fallBackExecutor);
+		log.atDebug().log("Executor added with fallback: {} -> {}", executor, fallBackExecutor);
 		log.atTrace().log("Exiting addExecutor(IExecutor, IFallBackExecutor)");
 	}
 }

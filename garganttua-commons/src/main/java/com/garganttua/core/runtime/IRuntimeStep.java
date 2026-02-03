@@ -3,12 +3,12 @@ package com.garganttua.core.runtime;
 import com.garganttua.core.execution.IExecutorChain;
 
 /**
- * Represents an atomic unit of work within a runtime workflow stage.
+ * Represents an atomic unit of work within a runtime workflow.
  *
  * <p>
  * A runtime step is the smallest executable unit in a workflow. Each step typically performs
  * a single, well-defined operation such as validation, transformation, or persistence. Steps
- * are organized into stages and execute sequentially within their containing stage.
+ * execute sequentially within the runtime.
  * </p>
  *
  * <h2>Key Concepts</h2>
@@ -70,33 +70,31 @@ import com.garganttua.core.execution.IExecutorChain;
  * <h2>Usage Example - DSL-Based</h2>
  * <pre>{@code
  * runtimeBuilder
- *     .stage("processing")
- *         .step("validateOrder", () -> new OrderValidator(), Void.class)
- *             .method()
- *                 .name("validate")
- *                 .parameter(Input.class)
- *                 .katch(IllegalArgumentException.class).code(400).end()
- *                 .end()
- *             .fallBack()
- *                 .name("handleError")
- *                 .parameter(Exception.class)
- *                 .output(true)
- *                 .end()
+ *     .step("validateOrder", () -> new OrderValidator(), Void.class)
+ *         .method()
+ *             .name("validate")
+ *             .parameter(Input.class)
+ *             .katch(IllegalArgumentException.class).code(400).end()
  *             .end()
- *         .step("processOrder", () -> new OrderProcessor(), OrderResult.class)
- *             .method()
- *                 .name("process")
- *                 .parameter(Input.class)
- *                 .output(true)
- *                 .end()
- *             .end();
+ *         .fallBack()
+ *             .name("handleError")
+ *             .parameter(Exception.class)
+ *             .output(true)
+ *             .end()
+ *         .end()
+ *     .step("processOrder", () -> new OrderProcessor(), OrderResult.class)
+ *         .method()
+ *             .name("process")
+ *             .parameter(Input.class)
+ *             .output(true)
+ *             .end()
+ *         .end();
  * }</pre>
  *
  * @param <ExecutionReturn> the return type of the step's main method
  * @param <InputType> the input type for the runtime containing this step
  * @param <OutputType> the output type for the runtime containing this step
  * @since 2.0.0-ALPHA01
- * @see IRuntimeStage
  * @see IRuntime
  * @see IRuntimeContext
  * @see com.garganttua.core.runtime.annotations.Operation

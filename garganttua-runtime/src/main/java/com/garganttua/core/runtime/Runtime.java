@@ -23,23 +23,23 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
         private final IInjectionContext injectionContext;
         private final Class<InputType> inputType;
         private final Class<OutputType> outputType;
-        private final Map<String, IRuntimeStage<InputType, OutputType>> stages;
+        private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;
         private final Map<String, ISupplier<?>> presetVariables;
 
         public Runtime(
                         String name,
-                        Map<String, IRuntimeStage<InputType, OutputType>> stages,
+                        Map<String, IRuntimeStep<?, InputType, OutputType>> steps,
                         IInjectionContext injectionContext,
                         Class<InputType> inputType,
                         Class<OutputType> outputType,
                         Map<String, ISupplier<?>> variables) {
 
                 log.atTrace().log(
-                                "[Runtime.<init>] Initializing Runtime with name={}, inputType={}, outputType={}, stages={}, presetVariables={}",
-                                name, inputType, outputType, stages, variables);
+                                "[Runtime.<init>] Initializing Runtime with name={}, inputType={}, outputType={}, steps={}, presetVariables={}",
+                                name, inputType, outputType, steps, variables);
 
-                this.stages = Collections.synchronizedMap(
-                                Map.copyOf(Objects.requireNonNull(stages, "Stages map cannot be null")));
+                this.steps = Collections.synchronizedMap(
+                                new java.util.LinkedHashMap<>(Objects.requireNonNull(steps, "Steps map cannot be null")));
 
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
@@ -48,7 +48,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
                 this.presetVariables = Collections.synchronizedMap(
                                 Map.copyOf(Objects.requireNonNull(variables, "Preset variables map cannot be null")));
 
-                log.atInfo().log("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
+                log.atDebug().log("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
         }
 
         @Override
@@ -85,17 +85,13 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
 
                         IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>(false);
 
-                        this.stages.values().forEach(stage -> {
-                                log.atTrace().log("Registering stage steps into chain");
-
-                                stage.getSteps().values().forEach(step -> {
-                                        log.atTrace().log("Registering step");
-                                        step.defineExecutionStep(chain);
-                                });
+                        this.steps.values().forEach(step -> {
+                                log.atTrace().log("Registering step");
+                                step.defineExecutionStep(chain);
                         });
 
                         // EXECUTE
-                        log.atInfo().log("Executing runtime chain");
+                        log.atDebug().log("Executing runtime chain");
 
                         chain.execute(runtimeContext);
 

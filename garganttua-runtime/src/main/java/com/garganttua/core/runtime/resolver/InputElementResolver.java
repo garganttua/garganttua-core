@@ -33,7 +33,7 @@ public class InputElementResolver implements IElementResolver {
 
         boolean nullable = isNullable(element);
 
-        log.atInfo()
+        log.atDebug()
                 .log("Resolved input element successfully");
 
         return new Resolved(true, elementType, s, nullable);

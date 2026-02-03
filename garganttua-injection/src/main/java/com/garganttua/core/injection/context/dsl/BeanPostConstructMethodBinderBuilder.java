@@ -23,7 +23,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 log.atTrace().log(
                                 "Entering BeanPostConstructMethodBinderBuilder constructor with up: {}, supplier: {}, no resolver",
                                 up, supplier);
-                log.atInfo().log("BeanPostConstructMethodBinderBuilder initialized without resolver for beanClass: {}",
+                log.atDebug().log("BeanPostConstructMethodBinderBuilder initialized without resolver for beanClass: {}",
                                 up.getSuppliedClass());
                 log.atTrace().log("Exiting BeanPostConstructMethodBinderBuilder constructor");
         }
@@ -35,7 +35,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 log.atDebug().log("Creating method binder");
                 this.setSupplier(supplierBuilder);
                 IMethodBinder<Void> binder = this.createBinder();
-                log.atInfo().log("Method binder successfully built for beanClass: {}",
+                log.atDebug().log("Method binder successfully built for beanClass: {}",
                                 supplierBuilder.getSuppliedClass());
                 log.atTrace().log("Exiting build()");
                 return binder;

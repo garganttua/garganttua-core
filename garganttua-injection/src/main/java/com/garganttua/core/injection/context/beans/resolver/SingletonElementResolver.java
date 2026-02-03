@@ -21,7 +21,7 @@ public class SingletonElementResolver extends BeanElementResolver implements IEl
     public SingletonElementResolver(Set<Class<? extends Annotation>> qualifiers) {
         super(qualifiers);
         log.atTrace().log("Entering SingletonElementResolver constructor with qualifiers: {}", qualifiers);
-        log.atInfo().log("SingletonElementResolver initialized with qualifiers: {}", qualifiers);
+        log.atDebug().log("SingletonElementResolver initialized with qualifiers: {}", qualifiers);
         log.atTrace().log("Exiting SingletonElementResolver constructor");
     }
 
@@ -33,7 +33,7 @@ public class SingletonElementResolver extends BeanElementResolver implements IEl
                 BeanStrategy.singleton);
 
         if (builder.isPresent()) {
-            log.atInfo().log("Resolved singleton elementType {} with builder: {}", elementType, builder.get());
+            log.atDebug().log("Resolved singleton elementType {} with builder: {}", elementType, builder.get());
         } else {
             log.atWarn().log("Could not resolve singleton elementType: {}", elementType);
         }

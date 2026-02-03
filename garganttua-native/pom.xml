@@ -15,7 +15,10 @@
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-commons</artifactId>
-			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-dsl</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>

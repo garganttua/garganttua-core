@@ -32,7 +32,7 @@ public class OrCondition implements ICondition {
 
         Boolean result = or(this.conditions);
 
-        log.atInfo().log("OR condition evaluation complete: {}", result);
+        log.atDebug().log("OR condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }
@@ -44,7 +44,7 @@ public class OrCondition implements ICondition {
             boolean conditionResult = c.fullEvaluate();
             log.atDebug().log("Condition {} result: {}", conditionIndex++, conditionResult);
             if (conditionResult) {
-                log.atInfo().log("OR condition evaluation complete: true (short-circuited)");
+                log.atDebug().log("OR condition evaluation complete: true (short-circuited)");
                 log.atTrace().log("Exiting evaluate() with result: true");
                 return conditionResult;
             }

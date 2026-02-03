@@ -29,7 +29,7 @@ public class NullCondition implements ICondition {
 
         Boolean result = Null(this.supplier.supply().orElse(null));
 
-        log.atInfo().log("NULL condition evaluation complete: {}", result);
+        log.atDebug().log("NULL condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

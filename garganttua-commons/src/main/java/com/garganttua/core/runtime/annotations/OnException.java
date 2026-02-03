@@ -96,17 +96,4 @@ public @interface OnException {
      */
     String fromStep() default "";
 
-    /**
-     * The source stage name to filter exceptions by.
-     *
-     * <p>
-     * When specified, the fallback will only be triggered for exceptions from steps
-     * in the stage with this name. An empty string (default) acts as a wildcard,
-     * matching exceptions from any stage.
-     * </p>
-     *
-     * @return the stage name to match, or empty string for any stage
-     */
-    String fromStage() default "";
-
 }

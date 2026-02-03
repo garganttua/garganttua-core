@@ -64,7 +64,7 @@ public class ContextualBeanSupplier<Bean> implements IContextualBeanSupplier<Bea
                 result = context.queryBean(query);
             }
 
-            log.atInfo().log("Bean supplied: {}", result.orElse(null));
+            log.atDebug().log("Bean supplied: {}", result.orElse(null));
             log.atTrace().log("Exiting supply with result: {}", result);
             return result;
 

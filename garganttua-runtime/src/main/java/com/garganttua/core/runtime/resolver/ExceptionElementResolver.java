@@ -40,7 +40,7 @@ public class ExceptionElementResolver implements IElementResolver {
 
         boolean nullable = isNullable(element);
 
-        log.atInfo()
+        log.atDebug()
                 .log("Resolved exception element successfully");
 
         return new Resolved(true, elementType, s, nullable);

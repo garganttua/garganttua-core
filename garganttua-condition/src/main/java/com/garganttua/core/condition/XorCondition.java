@@ -32,7 +32,7 @@ public class XorCondition implements ICondition {
 
         Boolean result = or(this.conditions);
 
-        log.atInfo().log("XOR condition evaluation complete: {}", result);
+        log.atDebug().log("XOR condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

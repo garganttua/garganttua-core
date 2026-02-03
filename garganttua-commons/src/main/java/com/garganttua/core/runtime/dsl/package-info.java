@@ -12,7 +12,6 @@
  * <ul>
  *   <li>{@link com.garganttua.core.runtime.dsl.IRuntimeBuilder} - Main runtime workflow builder</li>
  *   <li>{@link com.garganttua.core.runtime.dsl.IRuntimesBuilder} - Builder for multiple runtimes</li>
- *   <li>{@link com.garganttua.core.runtime.dsl.IRuntimeStageBuilder} - Stage configuration builder</li>
  *   <li>{@link com.garganttua.core.runtime.dsl.IRuntimeStepBuilder} - Step configuration builder</li>
  *   <li>{@link com.garganttua.core.runtime.dsl.IRuntimeStepMethodBuilder} - Method binding builder</li>
  * </ul>
@@ -27,131 +26,93 @@
  * <h2>Usage Example: Simple Runtime</h2>
  * <pre>{@code
  * IRuntime<OrderRequest, OrderResponse> orderRuntime =
- *     new RuntimeBuilder<OrderRequest, OrderResponse>()
- *         .input(OrderRequest.class)
- *         .output(OrderResponse.class)
- *
- *         .stage("validation")
- *             .step("validateOrder")
- *                 .method(orderService, "validate")
- *                     .parameter(0).input()
- *                     .done()
- *                 .done()
- *             .done()
- *
- *         .stage("processing")
- *             .step("processPayment")
- *                 .method(paymentService, "process")
- *                     .parameter(0).input()
- *                     .parameter(1).output()
- *                     .done()
- *                 .done()
- *             .step("fulfillOrder")
- *                 .method(fulfillmentService, "fulfill")
- *                     .parameter(0).output()
- *                     .done()
- *                 .done()
- *             .done()
- *
+ *     new RuntimesBuilder()
+ *         .runtime("order", OrderRequest.class, OrderResponse.class)
+ *             .step("validateOrder", () -> orderValidator, Void.class)
+ *                 .method().name("validate").parameter(Input.class).end()
+ *                 .end()
+ *             .step("processPayment", () -> paymentService, Void.class)
+ *                 .method().name("process").parameter(Input.class).end()
+ *                 .end()
+ *             .step("fulfillOrder", () -> fulfillmentService, OrderResponse.class)
+ *                 .method().name("fulfill").parameter(Input.class).output(true).end()
+ *                 .end()
  *         .build();
  *
  * // Execute runtime
- * OrderResponse response = orderRuntime.execute(orderRequest);
+ * Optional<IRuntimeResult<OrderRequest, OrderResponse>> result = orderRuntime.execute(orderRequest);
  * }</pre>
  *
  * <h2>Usage Example: Exception Handling</h2>
  * <pre>{@code
  * IRuntime<DataRequest, DataResponse> dataRuntime =
- *     new RuntimeBuilder<DataRequest, DataResponse>()
- *         .input(DataRequest.class)
- *         .output(DataResponse.class)
- *
- *         .stage("dataProcessing")
- *             .step("fetchData")
- *                 .method(dataService, "fetch")
- *                     .parameter(0).input()
- *                     .done()
- *                 .catchException(IOException.class)
- *                     .onException()
- *                         .method(errorHandler, "handleIOError")
- *                             .parameter(0).exception()
- *                             .parameter(1).output()
- *                             .done()
- *                         .done()
- *                     .fallback()
- *                         .method(dataService, "fetchFromCache")
- *                             .parameter(0).input()
- *                             .done()
- *                         .done()
- *                     .done()
- *                 .done()
- *             .done()
- *
+ *     new RuntimesBuilder()
+ *         .runtime("data", DataRequest.class, DataResponse.class)
+ *             .step("fetchData", () -> dataService, DataResponse.class)
+ *                 .method()
+ *                     .name("fetch")
+ *                     .parameter(Input.class)
+ *                     .katch(IOException.class).code(500).end()
+ *                     .output(true)
+ *                     .end()
+ *                 .fallBack()
+ *                     .name("fetchFromCache")
+ *                     .parameter(Input.class)
+ *                     .output(true)
+ *                     .end()
+ *                 .end()
  *         .build();
  * }</pre>
  *
  * <h2>Usage Example: Variables and Context</h2>
  * <pre>{@code
  * IRuntime<UserInput, UserOutput> userRuntime =
- *     new RuntimeBuilder<UserInput, UserOutput>()
- *         .input(UserInput.class)
- *         .output(UserOutput.class)
- *
- *         .variable("userId", String.class)
- *         .variable("timestamp", Long.class)
- *
- *         .stage("extraction")
- *             .step("extractUserId")
- *                 .method(extractor, "extract")
- *                     .parameter(0).input()
- *                     .parameter(1).context()
- *                     .done()
- *                 .done()
- *             .done()
- *
- *         .stage("processing")
- *             .step("processUser")
- *                 .method(processor, "process")
- *                     .parameter(0).variable("userId")
- *                     .parameter(1).variable("timestamp")
- *                     .parameter(2).output()
- *                     .done()
- *                 .done()
- *             .done()
- *
+ *     new RuntimesBuilder()
+ *         .runtime("user", UserInput.class, UserOutput.class)
+ *             .step("extractUserId", () -> extractor, String.class)
+ *                 .method()
+ *                     .name("extract")
+ *                     .parameter(Input.class)
+ *                     .variable("userId")
+ *                     .end()
+ *                 .end()
+ *             .step("processUser", () -> processor, UserOutput.class)
+ *                 .method()
+ *                     .name("process")
+ *                     .parameter(Variable.class, "userId")
+ *                     .parameter(Context.class)
+ *                     .output(true)
+ *                     .end()
+ *                 .end()
  *         .build();
  * }</pre>
  *
  * <h2>Usage Example: Conditional Steps</h2>
  * <pre>{@code
  * IRuntime<PaymentRequest, PaymentResponse> paymentRuntime =
- *     new RuntimeBuilder<PaymentRequest, PaymentResponse>()
- *         .input(PaymentRequest.class)
- *         .output(PaymentResponse.class)
- *
- *         .stage("processing")
- *             .step("validateAmount")
- *                 .condition(ctx -> ctx.getInput().getAmount() > 0)
- *                 .method(validator, "validate")
- *                     .parameter(0).input()
- *                     .done()
- *                 .done()
- *
- *             .step("applyDiscount")
- *                 .condition(ctx -> "PREMIUM".equals(ctx.getInput().getCustomerType()))
- *                 .method(discountService, "apply")
- *                     .parameter(0).input()
- *                     .done()
- *                 .done()
- *
- *             .step("processPayment")
- *                 .method(paymentService, "process")
- *                     .parameter(0).input()
- *                     .parameter(1).output()
- *                     .done()
- *                 .done()
- *             .done()
- *
+ *     new RuntimesBuilder()
+ *         .runtime("payment", PaymentRequest.class, PaymentResponse.class)
+ *             .step("validateAmount", () -> validator, Void.class)
+ *                 .method()
+ *                     .name("validate")
+ *                     .parameter(Input.class)
+ *                     .condition("amount > 0")
+ *                     .end()
+ *                 .end()
+ *             .step("applyDiscount", () -> discountService, Void.class)
+ *                 .method()
+ *                     .name("apply")
+ *                     .parameter(Input.class)
+ *                     .condition("customerType == 'PREMIUM'")
+ *                     .end()
+ *                 .end()
+ *             .step("processPayment", () -> paymentService, PaymentResponse.class)
+ *                 .method()
+ *                     .name("process")
+ *                     .parameter(Input.class)
+ *                     .output(true)
+ *                     .end()
+ *                 .end()
  *         .build();
  * }</pre>
  *
@@ -174,7 +135,7 @@
  * </p>
  * <ul>
  *   <li>Method chaining for fluent configuration</li>
- *   <li>{@code done()} returns to parent builder</li>
+ *   <li>{@code end()} returns to parent builder</li>
  *   <li>{@code build()} creates the runtime</li>
  *   <li>Type parameters preserve type safety</li>
  *   <li>Clear builder hierarchy</li>

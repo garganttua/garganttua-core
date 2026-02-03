@@ -41,7 +41,7 @@ public class CustomCondition<T> implements ICondition  {
         boolean result = predicate.test(value.get());
         log.atDebug().log("Predicate test result: {}", result);
 
-        log.atInfo().log("CUSTOM condition evaluation complete: {}", result);
+        log.atDebug().log("CUSTOM condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

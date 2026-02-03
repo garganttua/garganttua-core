@@ -60,16 +60,16 @@ import com.garganttua.core.nativve.annotations.Native;
  * }
  * }</pre>
  *
- * <h2>Usage Example - Complex Runtime with Stages</h2>
+ * <h2>Usage Example - Complex Runtime with Steps</h2>
  * <pre>{@code
  * @RuntimeDefinition(input = Order.class, output = OrderResult.class)
  * public class ComplexOrderRuntime {
  *
- *     @Stages
- *     private List<Stage> stages = Arrays.asList(
- *         new ValidationStage(),
- *         new ProcessingStage(),
- *         new PersistenceStage()
+ *     @Steps
+ *     private List<Class<?>> steps = Arrays.asList(
+ *         ValidationStep.class,
+ *         ProcessingStep.class,
+ *         PersistenceStep.class
  *     );
  *
  *     @Variables
@@ -85,7 +85,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see FallBack
  * @see Input
  * @see Output
- * @see Stages
+ * @see Steps
  * @see Variables
  * @see com.garganttua.core.runtime.IRuntime
  */

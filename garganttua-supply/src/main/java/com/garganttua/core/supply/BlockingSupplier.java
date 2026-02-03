@@ -76,11 +76,11 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
                 if (result == null) {
                     log.atWarn().log("Queue poll timed out after {} ms", timeoutMillis);
                 } else {
-                    log.atInfo().log("Queue poll completed within timeout of {} ms", timeoutMillis);
+                    log.atDebug().log("Queue poll completed within timeout of {} ms", timeoutMillis);
                 }
             } else {
                 result = queue.take();
-                log.atInfo().log("Queue take completed");
+                log.atDebug().log("Queue take completed");
             }
 
             log.atTrace().log("Exiting supply method");

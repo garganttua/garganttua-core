@@ -240,7 +240,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	@Override
 	protected IReflectionConfigurationEntry doBuild() throws DslException {
 		log.atTrace().log("Building reflection configuration entry for: {}", entry.getName());
-		log.atInfo().log("Reflection configuration entry built for: {}", entry.getName());
+		log.atDebug().log("Reflection configuration entry built for: {}", entry.getName());
 		return entry;
 	}
 

@@ -107,11 +107,11 @@ public class Supplier {
             }
 
             obj = contextual.supply(matchingContext, contexts).orElse(null);
-            log.atInfo().log("Contextual supply completed, result is {}", obj != null ? "present" : "null");
+            log.atDebug().log("Contextual supply completed, result is {}", obj != null ? "present" : "null");
         } else {
             log.atDebug().log("Supplier is non-contextual, calling supply() directly");
             obj = supplier.supply().orElse(null);
-            log.atInfo().log("Non-contextual supply completed, result is {}", obj != null ? "present" : "null");
+            log.atDebug().log("Non-contextual supply completed, result is {}", obj != null ? "present" : "null");
         }
 
         log.atTrace().log("Exiting contextualSupply");

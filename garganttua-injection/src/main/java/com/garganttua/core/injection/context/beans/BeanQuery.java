@@ -31,14 +31,14 @@ public class BeanQuery<Bean> implements IBeanQuery<Bean> {
 
         this.query = query;
 
-        log.atInfo().log("BeanQuery initialized with definition: {} and query: {}", query, this.provider);
+        log.atDebug().log("BeanQuery initialized with definition: {} and query: {}", query, this.provider);
         log.atTrace().log("Exiting BeanQuery constructor");
     }
 
     public static IBeanQueryBuilder<?> builder() {
         log.atTrace().log("Creating BeanQueryBuilder");
         IBeanQueryBuilder<?> builder = new BeanQueryBuilder<>();
-        log.atInfo().log("BeanQueryBuilder created: {}", builder);
+        log.atDebug().log("BeanQueryBuilder created: {}", builder);
         return builder;
     }
 
@@ -52,7 +52,7 @@ public class BeanQuery<Bean> implements IBeanQuery<Bean> {
         }
 
         Optional<Bean> result = InjectionContext.context.queryBean(Optional.ofNullable(this.provider), this.query);
-        log.atInfo().log("BeanQuery executed, result: {}", result.orElse(null));
+        log.atDebug().log("BeanQuery executed, result: {}", result.orElse(null));
         log.atTrace().log("Exiting execute with result: {}", result);
 
         return result;

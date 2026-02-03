@@ -30,7 +30,7 @@ public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPro
                                                                 PropertyType property) throws DslException {
         log.atTrace().log("Entering withProperty(propertyType={}, key={}, property={})", propertyType, key, property);
         this.propertyBuilders.add(new PropertyBuilder<>(key, property));
-        log.atInfo().log("Added property with key={} and type={}", key, propertyType.getSimpleName());
+        log.atDebug().log("Added property with key={} and type={}", key, propertyType.getSimpleName());
         log.atTrace().log("Exiting withProperty");
         return this;
     }
@@ -53,7 +53,7 @@ public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPro
                         Map.Entry::getKey,
                         Map.Entry::getValue
                 ));
-        log.atInfo().log("Built PropertyProvider with {} properties", properties.size());
+        log.atDebug().log("Built PropertyProvider with {} properties", properties.size());
         IPropertyProvider provider = new PropertyProvider(properties);
         log.atTrace().log("Exiting doBuild()");
         return provider;

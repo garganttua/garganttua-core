@@ -50,7 +50,7 @@ public class NewContextualSupplier<SuppliedType>
             }
 
             SuppliedType value = methodReturn.single();
-            log.atInfo().log("Supply completed for new contextual object of type {}", this.suppliedType.getSimpleName());
+            log.atDebug().log("Supply completed for new contextual object of type {}", this.suppliedType.getSimpleName());
             log.atTrace().log("Exiting supply method");
             return Optional.ofNullable(value);
         } catch (ReflectionException e) {

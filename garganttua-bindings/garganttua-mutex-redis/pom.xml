@@ -18,9 +18,6 @@
 		<dependency>
 			<groupId>com.github.siahsang</groupId>
 			<artifactId>red-utils</artifactId>
-			<version>1.0.4</version>
-			<!--<scope>system</scope>
-			<systemPath>${project.basedir}/src/main/lib/red-utils-1.0.4.jar</systemPath>-->
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>

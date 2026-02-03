@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RuntimeStepExecutionTools {
 
-    static public void validateAndStoreReturnedValueInVariable(String runtimeName, String stageName, String stepName,
+    static public void validateAndStoreReturnedValueInVariable(String runtimeName, String stepName,
             String variableName,
             Object returned,
             IRuntimeContext<?, ?> context, boolean nullable, String logLineHeader, String executableReference)
@@ -23,7 +23,6 @@ public class RuntimeStepExecutionTools {
             log.atWarn().log("{}Returned value is null but variable '{}' is not nullable", logLineHeader, variableName);
             handleException(
                     runtimeName,
-                    stageName,
                     stepName,
                     context,
                     new ExecutorException(
@@ -41,7 +40,7 @@ public class RuntimeStepExecutionTools {
         }
     }
 
-    static public void handleException(String runtimeName, String stageName, String stepName,
+    static public void handleException(String runtimeName, String stepName,
             IRuntimeContext<?, ?> context,
             Throwable exception,
             boolean forceAbort, String executableReference, IRuntimeStepCatch matchedCatch, String logLineHeader)
@@ -58,7 +57,7 @@ public class RuntimeStepExecutionTools {
             if (matchedCatch != null) {
                 reportCode = matchedCatch.code();
                 aborted = true;
-                log.atInfo().log("{}Matched catch found, setting report code={} and aborting", logLineHeader,
+                log.atDebug().log("{}Matched catch found, setting report code={} and aborting", logLineHeader,
                         reportCode);
                 throw new ExecutorException(logLineHeader + " Error during step execution", exception);
             }
@@ -72,7 +71,6 @@ public class RuntimeStepExecutionTools {
             log.atDebug().log("{}Recording exception in context, aborted={}", logLineHeader, aborted);
             context.recordException(new RuntimeExceptionRecord(
                     runtimeName,
-                    stageName,
                     stepName,
                     reportException.getClass(),
                     reportException,
@@ -105,7 +103,7 @@ public class RuntimeStepExecutionTools {
 
     @SuppressWarnings("unchecked")
     static public <InputType, OutputType, ExecutionReturned> void validateReturnedForOutput(String runtimeName,
-            String stageName, String stepName,
+            String stepName,
             ExecutionReturned returned,
             IRuntimeContext<InputType, OutputType> context, boolean nullable, String logLineHeader,
             String executableReference)
@@ -117,7 +115,6 @@ public class RuntimeStepExecutionTools {
             log.atWarn().log("{}Returned value is null but output is not nullable", logLineHeader);
             handleException(
                     runtimeName,
-                    stageName,
                     stepName,
                     context,
                     new ExecutorException(
@@ -132,7 +129,6 @@ public class RuntimeStepExecutionTools {
                     returned.getClass().getSimpleName(), context.getOutputType().getSimpleName());
             handleException(
                     runtimeName,
-                    stageName,
                     stepName,
                     context,
                     new ExecutorException(

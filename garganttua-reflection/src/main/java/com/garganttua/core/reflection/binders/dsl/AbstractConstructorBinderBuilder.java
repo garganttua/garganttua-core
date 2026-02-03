@@ -157,7 +157,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
             throw new DslException(msg);
         }
 
-        log.atInfo().log("[ConstructorBinderBuilder] Matched constructor {}({})",
+        log.atDebug().log("[ConstructorBinderBuilder] Matched constructor {}({})",
                 objectClass.getSimpleName(), formatTypes(this.getParameterTypes()));
 
         if (this.buildContextual())

@@ -25,7 +25,7 @@ public class NullSupplierBuilder<SuppliedType>
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building NullSupplier for type: {}", this.class1.getSimpleName());
         ISupplier<SuppliedType> result = new NullSupplier<>(this.class1);
-        log.atInfo().log("Build completed for NullSupplier of type {}", this.class1.getSimpleName());
+        log.atDebug().log("Build completed for NullSupplier of type {}", this.class1.getSimpleName());
         log.atTrace().log("Exiting build method");
         return result;
     }

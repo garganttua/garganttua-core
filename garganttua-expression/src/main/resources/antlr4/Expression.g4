@@ -21,8 +21,17 @@ root
 expression
     : functionCall
     | literal
+    | variableReference  // Référence à une variable du contexte: @myVar
     | IDENTIFIER     // Identifiants simples traités comme strings
     | type           // Types (int, boolean, java.lang.String, Class<?>, etc.)
+    ;
+
+// ===============================
+// VARIABLE REFERENCE
+// ===============================
+variableReference
+    : '@' IDENTIFIER          // Variable reference: @myVar
+    | '@' INT_LITERAL         // Argument reference: @0, @1, @2...
     ;
 
 // ===============================

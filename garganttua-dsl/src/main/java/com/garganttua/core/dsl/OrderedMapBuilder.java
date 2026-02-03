@@ -20,7 +20,7 @@ public class OrderedMapBuilder<K, V extends IBuilder<B>, B> extends OrderedMap<K
             (m1, m2) -> m2.forEach(m1::put)
         );
 
-        log.atInfo().log("OrderedMap build complete with {} entries", result.size());
+        log.atDebug().log("OrderedMap build complete with {} entries", result.size());
         log.atTrace().log("Exiting build() method");
         return result;
     }

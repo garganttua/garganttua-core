@@ -52,7 +52,7 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
                             Optional.ofNullable(this.strategy),
                             Optional.ofNullable(this.name),
                             qualifiers));
-            log.atInfo().log("BeanQuery successfully built for type: {}", getTypeSimpleName());
+            log.atDebug().log("BeanQuery successfully built for type: {}", getTypeSimpleName());
         } catch (Exception e) {
             log.atError().log("Failed to build BeanQuery for type: {}. Error: {}", getTypeSimpleName(),
                     e.getMessage());

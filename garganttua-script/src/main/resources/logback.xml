@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+    </appender>
+
+    <root level="WARN">
+        <appender-ref ref="STDERR"/>
+    </root>
+
+    <!-- Reduce noise from internal libraries -->
+    <logger name="org.reflections" level="ERROR"/>
+    <logger name="com.garganttua.core.injection" level="ERROR"/>
+    <logger name="com.garganttua.core.lifecycle" level="ERROR"/>
+</configuration>

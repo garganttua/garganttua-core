@@ -1,6 +1,7 @@
 package com.garganttua.core.runtime;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -52,7 +53,7 @@ import java.util.Set;
  *         // Get all exceptions
  *         Set<RuntimeExceptionRecord> exceptions = result.getExceptions();
  *         exceptions.forEach(ex ->
- *             System.err.println("Exception in " + ex.stageName() + "." + ex.stepName())
+ *             System.err.println("Exception in " + ex.stepName())
  *         );
  *     }
  *
@@ -217,5 +218,18 @@ public interface IRuntimeResult<InputType, OutputType> {
      * @see IRuntimeContext#uuid()
      */
     Object uuid();
+
+    /**
+     * Returns the variables that were set during execution.
+     *
+     * <p>
+     * Variables are captured from the runtime context before it is flushed.
+     * They include all values set via {@link IRuntimeContext#setVariable(String, Object)}
+     * during the workflow execution.
+     * </p>
+     *
+     * @return a map of variable names to their values, never null
+     */
+    Map<String, Object> variables();
 
 }

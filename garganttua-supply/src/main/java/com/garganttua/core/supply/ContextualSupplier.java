@@ -44,7 +44,7 @@ public class ContextualSupplier<Supplied, Context> implements IContextualSupplie
         }
 
         Optional<Supplied> result = this.supply.supply(ownerContext, otherContexts);
-        log.atInfo().log("Supply completed for type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
+        log.atDebug().log("Supply completed for type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
         log.atTrace().log("Exiting supply method");
         return result;
     }

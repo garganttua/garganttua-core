@@ -46,7 +46,7 @@ public class NullableContextualSupplier<SuppliedType, ContextType>
         }
 
         Optional<SuppliedType> result = o == null ? Optional.empty() : o;
-        log.atInfo().log("Supply completed for nullable contextual object of type {}, result present: {}", this.delegate.getSuppliedClass().getSimpleName(), result.isPresent());
+        log.atDebug().log("Supply completed for nullable contextual object of type {}, result present: {}", this.delegate.getSuppliedClass().getSimpleName(), result.isPresent());
         log.atTrace().log("Exiting supply method");
         return result;
     }

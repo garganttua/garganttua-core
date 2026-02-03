@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.annotations.Native;
@@ -14,6 +15,7 @@ import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Bootstrap
 public class NativeConfigurationBuilder
         extends AbstractAutomaticBuilder<INativeConfigurationBuilder, INativeConfiguration>
         implements INativeConfigurationBuilder {
@@ -60,7 +62,7 @@ public class NativeConfigurationBuilder
                 this.resources,
                 this.resourcesPath,
                 this.reflectionPath);
-        log.atInfo().log("Native configuration built successfully");
+        log.atDebug().log("Native configuration built successfully");
         return config;
     }
 
@@ -86,7 +88,7 @@ public class NativeConfigurationBuilder
                                 nativeBuilder.withPackages(getPackages());
                                 INativeReflectionConfiguration nativeConfiguration = nativeBuilder.build();
                                 reflectionEntries.addAll(nativeConfiguration.nativeConfiguration());
-                                log.atInfo().log("Loaded native configuration from builder: {}", c.getName());
+                                log.atDebug().log("Loaded native configuration from builder: {}", c.getName());
                             }
                         });
                 });

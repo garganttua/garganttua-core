@@ -43,7 +43,7 @@ public class InjectableElementResolverBuilder
         Objects.requireNonNull(resolver, "Resolver cannot be null");
 
         resolvers.put(annotation, resolver);
-        log.atInfo().log("Added resolver for annotation: {}", annotation);
+        log.atDebug().log("Added resolver for annotation: {}", annotation);
 
         if (this.built != null) {
             this.built.addResolver(annotation, resolver);
@@ -67,7 +67,7 @@ public class InjectableElementResolverBuilder
         // If context is already built, notify the observer immediately
         if (this.built != null) {
             observer.handle(this.built);
-            log.atInfo().log("Context already built, immediately notified observer: {}", observer);
+            log.atDebug().log("Context already built, immediately notified observer: {}", observer);
         }
 
         log.atTrace().log("Exiting observer");
@@ -103,7 +103,7 @@ public class InjectableElementResolverBuilder
 
                             for (Class<? extends Annotation> annotationType : annotation.annotations()) {
                                 this.withResolver(annotationType, resolverInstance);
-                                log.atInfo().log("Auto-registered resolver {} for annotation {}",
+                                log.atDebug().log("Auto-registered resolver {} for annotation {}",
                                         resolverClass.getSimpleName(), annotationType.getSimpleName());
                             }
                         } else {

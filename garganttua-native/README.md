@@ -32,7 +32,8 @@ When compiling Java applications to native images with GraalVM, reflection-based
 2.0.0-ALPHA01
 
 ### Dependencies
- - `com.garganttua.core:garganttua-commons:provided`
+ - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-dsl`
  - `com.garganttua.core:garganttua-reflection:provided`
  - `com.garganttua.core:garganttua-reflections:provided`
  - `com.fasterxml.jackson.core:jackson-databind`

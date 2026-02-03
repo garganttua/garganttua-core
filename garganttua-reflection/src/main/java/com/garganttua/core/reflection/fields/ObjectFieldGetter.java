@@ -67,7 +67,7 @@ public class ObjectFieldGetter {
 			value = this.getValueRecursively(object, 0, 0);
 		}
 
-		log.atInfo().log("Successfully retrieved value for address={}", this.address);
+		log.atDebug().log("Successfully retrieved value for address={}", this.address);
 		return value;
 	}
 

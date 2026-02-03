@@ -242,7 +242,7 @@ public class ObjectReflectionHelper {
 		if (ctor != null) {
 			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {
 				destination result = (destination) ctor.newInstance(params);
-				log.atInfo().log("Successfully instantiated new object of class: {}", clazz.getName());
+				log.atDebug().log("Successfully instantiated new object of class: {}", clazz.getName());
 				return result;
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
@@ -262,7 +262,7 @@ public class ObjectReflectionHelper {
 		if (ctor != null) {
 			try (ConstructorAccessManager accessor = new ConstructorAccessManager(ctor)) {
 				destination result = (destination) ctor.newInstance();
-				log.atInfo().log("Successfully instantiated new object of class: {}", clazz.getName());
+				log.atDebug().log("Successfully instantiated new object of class: {}", clazz.getName());
 				return result;
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {

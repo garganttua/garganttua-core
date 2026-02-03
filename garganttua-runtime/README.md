@@ -2,13 +2,13 @@
 
 ## Description
 
-Garganttua Runtime is a **high-level orchestration framework** that provides a structured, type-safe approach to building complex execution workflows in Java. It combines dependency injection, lifecycle management, and execution chains into a unified runtime system for processing inputs and producing outputs through configurable stages and steps.
+Garganttua Runtime is a **high-level orchestration framework** that provides a structured, type-safe approach to building complex execution workflows in Java. It combines dependency injection, lifecycle management, and execution chains into a unified runtime system for processing inputs and producing outputs through configurable steps.
 
-The Runtime framework enables you to define **multi-stage execution pipelines** where each stage consists of multiple steps that can access shared context, handle exceptions, and manage variables. It's designed for building robust, maintainable business processes, data pipelines, request handlers, and workflow engines.
+The Runtime framework enables you to define **execution pipelines** where steps can access shared context, handle exceptions, and manage variables. It's designed for building robust, maintainable business processes, data pipelines, request handlers, and workflow engines.
 
 **Key Features:**
 - **Type-Safe Pipelines** - Generic `<InputType, OutputType>` for compile-time safety
-- **Multi-Stage Execution** - Organize work into logical stages with ordered steps
+- **Sequential Step Execution** - Organize work into ordered steps
 - **Dependency Injection Integration** - Full integration with Garganttua DI container
 - **Exception Handling** - Declarative catch blocks and fallback mechanisms
 - **Variable Management** - Shared variables accessible across all steps
@@ -55,7 +55,7 @@ The Runtime framework enables you to define **multi-stage execution pipelines** 
 
 A `Runtime<InputType, OutputType>` represents a complete execution pipeline that processes input of type `InputType` and produces output of type `OutputType`. It consists of:
 - **Name** - Unique identifier for the runtime
-- **Stages** - Ordered collection of execution stages
+- **Steps** - Ordered collection of execution steps
 - **DI Context** - Dependency injection container for bean resolution
 - **Preset Variables** - Initial variables available at runtime start
 - **Input/Output Types** - Generic type parameters for type safety
@@ -63,29 +63,20 @@ A `Runtime<InputType, OutputType>` represents a complete execution pipeline that
 **Lifecycle:**
 1. Create `RuntimeContext` with input
 2. Initialize and start context
-3. Build execution chain from stages/steps
+3. Build execution chain from steps
 4. Execute chain
 5. Collect result
 6. Stop and flush context
 
-### Runtime Stage
-
-A `RuntimeStage` is a logical grouping of related steps within a runtime. Stages execute sequentially, and each stage contains one or more steps that execute in order.
-
-**Characteristics:**
-- **Name** - Stage identifier
-- **Steps** - Ordered map of runtime steps
-- **Sequential Execution** - Steps execute in definition order
-
 ### Runtime Step
 
-A `RuntimeStep` is the basic unit of execution within a stage. Each step executes a method on a bean with optional exception handling.
+A `RuntimeStep` is the basic unit of execution within a runtime. Each step executes an expression on a bean with optional exception handling.
 
 **Components:**
 - **Operation Binder** - Method to execute
 - **Fallback Binder** - Optional exception handler
 - **Execution Return** - Return type of the operation
-- **Step Name** - Unique identifier within the stage
+- **Step Name** - Unique identifier within the runtime
 
 ### Runtime Context
 
@@ -114,7 +105,6 @@ A `RuntimeStep` is the basic unit of execution within a stage. Each step execute
 The framework provides a fluent DSL for defining runtimes:
 - `RuntimesBuilder` - Root builder for multiple runtimes
 - `RuntimeBuilder` - Builds a single runtime
-- `RuntimeStageBuilder` - Builds a stage
 - `RuntimeStepBuilder` - Builds a step
 - `RuntimeStepMethodBuilder` - Configures step method binding
 - `RuntimeStepCatchBuilder` - Configures exception handling
@@ -134,9 +124,8 @@ import static com.garganttua.core.supply.dsl.FixedSupplierBuilder.of;
 @Named("runtime-1")
 public class OneStepRuntime {
 
-    @Stages
-    public Map<String, List<Class<?>>> stages = Map.of(
-            "stage-1", List.of(DummyRuntimeProcessOutputStep.class));
+    @Steps
+    public List<Class<?>> steps = List.of(DummyRuntimeProcessOutputStep.class);
 
     @Variables
     public Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> presetVariables =
@@ -232,31 +221,30 @@ DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 IRuntimesBuilder builder = RuntimesBuilder.builder()
     .context(contextBuilder)
     .runtime("runtime-1", String.class, String.class)
-        .stage("stage-1")
-            .step("step-1", of(step), String.class)
-                .method()
-                    .condition(custom(of(10), i -> true))
-                    .output(true)
-                    .variable("method-returned")
-                    .method("method")
-                    .code(201)
-                    .katch(DiException.class).code(401).up()
-                    .withParam(input(String.class))
-                    .withParam(of("fixed-value-in-method"))
-                    .withParam(variable("variable", String.class))
-                    .withParam(context()).up()
-                .fallBack()
-                    .onException(DiException.class).up()
-                    .output(true)
-                    .variable("fallback-returned")
-                    .method("fallbackMethod")
-                    .withParam(input(String.class))
-                    .withParam(of("fixed-value-in-method"))
-                    .withParam(exception(DiException.class))
-                    .withParam(code())
-                    .withParam(exceptionMessage())
-                    .withParam(context())
-                    .up().up().up()
+        .step("step-1", of(step), String.class)
+            .method()
+                .condition(custom(of(10), i -> true))
+                .output(true)
+                .variable("method-returned")
+                .method("method")
+                .code(201)
+                .katch(DiException.class).code(401).up()
+                .withParam(input(String.class))
+                .withParam(of("fixed-value-in-method"))
+                .withParam(variable("variable", String.class))
+                .withParam(context()).up()
+            .fallBack()
+                .onException(DiException.class).up()
+                .output(true)
+                .variable("fallback-returned")
+                .method("fallbackMethod")
+                .withParam(input(String.class))
+                .withParam(of("fixed-value-in-method"))
+                .withParam(exception(DiException.class))
+                .withParam(code())
+                .withParam(exceptionMessage())
+                .withParam(context())
+                .up().up()
         .variable("variable", of("preset-variable"))
         .up();
 
@@ -273,9 +261,8 @@ Create a runtime with multiple steps that share state via variables:
 @RuntimeDefinition(input = String.class, output = String.class)
 @Named("two-steps-runtime")
 public class TwoStepsRuntimeDefinition {
-    @Stages
-    public Map<String, List<Class<?>>> stages = Map.of(
-        "stage-1", List.of(StepOne.class, StepOutput.class));
+    @Steps
+    public List<Class<?>> steps = List.of(StepOne.class, StepOutput.class);
 }
 
 // First step
@@ -570,9 +557,8 @@ Runtime execution introduces minimal overhead:
 
 1. **Single Responsibility** - Each runtime should handle one business process
 2. **Type Safety** - Use specific input/output types, avoid Object
-3. **Meaningful Names** - Name runtimes, stages, and steps descriptively
-4. **Stage Granularity** - Group related steps into logical stages
-5. **Step Atomicity** - Each step should perform one clear action
+3. **Meaningful Names** - Name runtimes and steps descriptively
+4. **Step Atomicity** - Each step should perform one clear action
 
 ### Error Handling
 
@@ -593,7 +579,7 @@ Runtime execution introduces minimal overhead:
 ### Context Usage
 
 16. **Input Immutability** - Don't modify input objects
-17. **Output Setting** - Set output in the last stage
+17. **Output Setting** - Set output in the appropriate step
 18. **Context Reuse** - Don't try to reuse contexts across executions
 19. **Resource Cleanup** - Context lifecycle handles cleanup automatically
 20. **Thread Safety** - Contexts are not thread-safe; one per execution
@@ -612,7 +598,7 @@ Runtime execution introduces minimal overhead:
 27. **Log Levels** - TRACE for details, DEBUG for flow, INFO for milestones
 28. **Performance Logging** - Log execution times for monitoring
 29. **Exception Logging** - Log exceptions at appropriate levels
-30. **Log Context** - Include runtime/stage/step names in logs
+30. **Log Context** - Include runtime/step names in logs
 
 ### Testing
 

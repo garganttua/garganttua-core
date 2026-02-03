@@ -23,6 +23,7 @@ import com.garganttua.core.mutex.MutexManager;
 import com.garganttua.core.mutex.annotations.Mutex;
 import com.garganttua.core.mutex.annotations.MutexFactory;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.FixedSupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutexFactory
  */
 @Slf4j
+@Bootstrap
 public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMutexManagerBuilder, IMutexManager>
         implements IMutexManagerBuilder {
 
@@ -89,7 +91,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         collector.source(new FixedSupplier<>(contextFactories), 1, SOURCE_CONTEXT);
         collector.source(new FixedSupplier<>(reflexionFactories), 2, SOURCE_REFLECTION);
         
-        log.atInfo().log("MutexManagerBuilder initialized");
+        log.atDebug().log("MutexManagerBuilder initialized");
     }
 
     @Override
@@ -123,7 +125,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
 
         this.manualFactories.put(type, factory);
 
-        log.atInfo().log("Registered factory {} for mutex type {}",
+        log.atDebug().log("Registered factory {} for mutex type {}",
                 factory.getClass().getSimpleName(), type.getSimpleName());
 
         log.atTrace().log("Exiting withFactory()");
@@ -134,7 +136,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     protected IMutexManager doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
         Map<Class<? extends IMutex>, IMutexFactory> factories = this.collector.build();
-        log.atInfo().log("Building MutexManager with {} registered factories", factories.size());
+        log.atDebug().log("Building MutexManager with {} registered factories", factories.size());
         IMutexManager manager = new MutexManager(factories);
 
         log.atTrace().log("Exiting doBuild() method");
@@ -144,7 +146,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection() method");
-        log.atInfo().log("Auto-detecting mutex factories in {} packages", packages.size());
+        log.atDebug().log("Auto-detecting mutex factories in {} packages", packages.size());
 
         for (String packageName : packages) {
             try {
@@ -190,34 +192,30 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
         if (dependency instanceof IInjectionContext context) {
+            String providerName = Predefined.BeanProviders.garganttua.toString();
 
             final Map<Class<? extends IMutex>, IMutexFactory> factoriesToBeAddedToContext = this
                     .collector.buildExcludingSourceItems(Set.of(SOURCE_CONTEXT));
 
+            // Use addBean directly to avoid lifecycle check - the context may not be started yet
+            // during Bootstrap's build phase
             factoriesToBeAddedToContext.forEach((type, factory) -> {
                 BeanReference<IMutexFactory> beanRef = new BeanReference<>(
                         IMutexFactory.class,
                         Optional.of(BeanStrategy.singleton),
                         Optional.empty(),
                         Set.of(MutexFactory.class));
-
-                context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
-                        .ifPresent(provider -> provider.add(beanRef, factory));
+                context.addBean(providerName, beanRef, factory);
             });
-        }
 
-        if (dependency instanceof IInjectionContext context) {
             log.atDebug().log("Registering IMutexManager as bean in InjectionContext");
-            context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
-                    .ifPresent(provider -> {
-                        BeanReference<IMutexManager> beanRef = new BeanReference<>(
-                                IMutexManager.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.empty(),
-                                Set.of());
-                        provider.add(beanRef, this.built);
-                        log.atInfo().log("IMutexManager successfully registered as bean");
-                    });
+            BeanReference<IMutexManager> managerBeanRef = new BeanReference<>(
+                    IMutexManager.class,
+                    Optional.of(BeanStrategy.singleton),
+                    Optional.empty(),
+                    Set.of());
+            context.addBean(providerName, managerBeanRef, this.built);
+            log.atDebug().log("IMutexManager successfully registered as bean");
         }
 
         log.atTrace().log("Exiting doPostBuildWithDependency() method");
@@ -244,7 +242,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         log.atTrace().log("Entering addResolverToInjectionContext() method");
         Objects.requireNonNull(context, "Context builder cannot be null");
         context.resolvers().withResolver(Mutex.class, new MutexResolver());
-        log.atInfo().log("Context builder configured");
+        log.atDebug().log("Context builder configured");
         log.atTrace().log("Exiting addResolverToInjectionContext() method");
     }
 

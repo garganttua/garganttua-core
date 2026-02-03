@@ -231,7 +231,7 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
                     return new IllegalArgumentException("Unsupported size or algorithm "+input);
                 });
 
-        log.atInfo().log("Validated key algorithm: {}", result);
+        log.atDebug().log("Validated key algorithm: {}", result);
         log.atTrace().log("Exiting validateKeyAlgorithm");
         return result;
     }
@@ -297,7 +297,7 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
 			keyGen.init(this.keySize, GGKeyRandoms.secureRandom());
 			log.atDebug().log("Generating symmetric key for algorithm: {}, size: {}", this.algorithm, this.keySize);
 			SecretKey key = keyGen.generateKey();
-			log.atInfo().log("Successfully generated symmetric key for {}", this.algorithm);
+			log.atDebug().log("Successfully generated symmetric key for {}", this.algorithm);
 			log.atTrace().log("Exiting generateSymetricKey");
 			return key;
 		} catch (NoSuchAlgorithmException e) {
@@ -327,7 +327,7 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
 			}
 			log.atDebug().log("Generating asymmetric key pair for algorithm: {}", this.algorithm);
 			KeyPair keyPair = keyGen.generateKeyPair();
-			log.atInfo().log("Successfully generated asymmetric key pair for {}", this.algorithm);
+			log.atDebug().log("Successfully generated asymmetric key pair for {}", this.algorithm);
 			log.atTrace().log("Exiting generateAsymetricKey");
 			return keyPair;
 		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException  e) {

@@ -1,5 +1,10 @@
 package com.garganttua.core.bootstrap.dsl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,12 +16,19 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
+import com.garganttua.core.bootstrap.banner.BannerMode;
+import com.garganttua.core.bootstrap.banner.BootstrapSummary;
+import com.garganttua.core.bootstrap.banner.FileBanner;
+import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
+import com.garganttua.core.bootstrap.banner.IBanner;
+import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
+import com.garganttua.core.dsl.IRebuildableBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -61,9 +73,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistry> implements IBoostrap {
 
+    private static final String DEFAULT_VERSION = "2.0.0-ALPHA01";
+
     private final Set<String> packages = new HashSet<>();
     private final List<IBuilder<?>> builders = new ArrayList<>();
     private final Map<Class<?>, Object> builtObjectsRegistry = new HashMap<>();
+
+    // Banner configuration
+    private IBanner banner;
+    private BannerMode bannerMode = BannerMode.CONSOLE;
+    private String applicationName = "Garganttua";
+    private String applicationVersion = DEFAULT_VERSION;
+    private boolean bannerPrinted = false;
 
     /**
      * Creates a new BootstrapBuilder instance.
@@ -80,6 +101,90 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
      */
     public Bootstrap() {
         log.atDebug().log("Bootstrap initialized");
+    }
+
+    @Override
+    public IBoostrap withBanner(IBanner banner) {
+        log.atTrace().log("Setting custom banner");
+        this.banner = banner;
+        return this;
+    }
+
+    @Override
+    public IBoostrap withBannerMode(BannerMode mode) {
+        log.atTrace().log("Setting banner mode: {}", mode);
+        this.bannerMode = Objects.requireNonNull(mode, "Banner mode cannot be null");
+        return this;
+    }
+
+    @Override
+    public IBoostrap withApplicationName(String name) {
+        log.atTrace().log("Setting application name: {}", name);
+        this.applicationName = name != null ? name : "Garganttua";
+        return this;
+    }
+
+    @Override
+    public IBoostrap withApplicationVersion(String version) {
+        log.atTrace().log("Setting application version: {}", version);
+        this.applicationVersion = version != null ? version : DEFAULT_VERSION;
+        return this;
+    }
+
+    /**
+     * Prints the banner according to the configured mode.
+     */
+    private void printBanner() {
+        if (bannerPrinted || bannerMode == BannerMode.OFF) {
+            return;
+        }
+
+        IBanner bannerToPrint = resolveBanner();
+        if (bannerToPrint == null || bannerToPrint == IBanner.OFF) {
+            return;
+        }
+
+        switch (bannerMode) {
+            case CONSOLE:
+                bannerToPrint.print(System.out);
+                break;
+            case LOG:
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bannerToPrint.print(new PrintStream(baos, true, StandardCharsets.UTF_8));
+                String bannerText = baos.toString(StandardCharsets.UTF_8);
+                for (String line : bannerText.split("\n")) {
+                    log.atInfo().log(line);
+                }
+                break;
+            case OFF:
+                // Do nothing
+                break;
+        }
+
+        bannerPrinted = true;
+    }
+
+    /**
+     * Resolves the banner to use.
+     * Priority: custom banner > classpath banner.txt > default Garganttua banner
+     */
+    private IBanner resolveBanner() {
+        if (banner != null) {
+            return banner;
+        }
+
+        // Try to load banner.txt from classpath
+        FileBanner fileBanner = FileBanner.fromClasspath(
+                FileBanner.DEFAULT_BANNER_LOCATION,
+                applicationVersion,
+                applicationName);
+        if (fileBanner != null) {
+            log.atDebug().log("Using banner from classpath: {}", FileBanner.DEFAULT_BANNER_LOCATION);
+            return fileBanner;
+        }
+
+        // Use default Garganttua banner
+        return new GarganttuaBanner(applicationVersion, true);
     }
 
     @Override
@@ -128,7 +233,7 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
                     this.packages.size(), builder.getClass().getSimpleName());
         }
 
-        log.atInfo().log("Builder added: {}", builder.getClass().getSimpleName());
+        log.atDebug().log("Builder added: {}", builder.getClass().getSimpleName());
         return this;
     }
 
@@ -153,10 +258,10 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
                             if (builderInstance instanceof IAutomaticBuilder) {
                                 IAutomaticBuilder<?, ?> automaticBuilder = (IAutomaticBuilder<?, ?>) builderInstance;
                                 automaticBuilder.autoDetect(true);
-                                log.atInfo().log("Auto-detected builder {} with auto-detection enabled",
+                                log.atDebug().log("Auto-detected builder {} with auto-detection enabled",
                                         builderClass.getSimpleName());
                             } else {
-                                log.atInfo().log("Auto-detected builder {} (not automatic)",
+                                log.atDebug().log("Auto-detected builder {} (not automatic)",
                                         builderClass.getSimpleName());
                             }
                             this.withBuilder(builderInstance);
@@ -169,58 +274,63 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
                     }
                 });
 
-        log.atInfo().log("Auto-detection completed for {} packages", packages.size());
+        log.atDebug().log("Auto-detection completed for {} packages", packages.size());
         log.atTrace().log("Exiting doAutoDetection()");
     }
 
     @Override
     protected IBuiltRegistry doBuild() throws DslException {
         log.atTrace().log("Entering doBuild()");
+        Instant startTime = Instant.now();
+
+        // Print banner at the start of build
+        printBanner();
 
         if (this.builders.isEmpty()) {
             log.atWarn().log("No builders registered, returning null");
             return null;
         }
 
-        log.atInfo().log("Building {} builders", this.builders.size());
+        printPhase(1, "Resolving dependencies", this.builders.size() + " builders");
 
         // Phase 1: Resolve dependencies between builders
         resolveDependencies();
 
         // Phase 2: Sort builders by dependency order (topological sort)
         List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
-        log.atInfo().log("Builders sorted by dependency order: {}",
+        log.atDebug().log("Builders sorted by dependency order: {}",
                 sortedBuilders.stream()
                         .map(b -> b.getClass().getSimpleName())
                         .toList());
 
+        printPhase(2, "Building components", sortedBuilders.size() + " builders");
+
         // Phase 3: Build all builders in dependency order and register built objects
         List<Object> builtObjects = new ArrayList<>();
         for (IBuilder<?> builder : sortedBuilders) {
-            log.atDebug().log("Building: {}", builder.getClass().getSimpleName());
+            printBuilderStart(builder.getClass().getSimpleName());
             Object built = builder.build();
             builtObjects.add(built);
 
             // Register the built object by its class
             if (built != null) {
                 builtObjectsRegistry.put(built.getClass(), built);
-                log.atDebug().log("Registered built object of type: {}", built.getClass().getName());
             }
 
-            log.atInfo().log("Successfully built: {}", builder.getClass().getSimpleName());
+            printBuilderComplete(builder.getClass().getSimpleName());
         }
+
+        printPhase(3, "Starting lifecycle", builtObjects.size() + " components");
 
         // Phase 4: Initialize and start lifecycle-managed objects
         for (Object built : builtObjects) {
             if (built instanceof ILifecycle lifecycleObject) {
                 try {
-                    log.atDebug().log("Initializing lifecycle object: {}", built.getClass().getSimpleName());
+                    printLifecycleAction("Initializing", built.getClass().getSimpleName());
                     lifecycleObject.onInit();
-                    log.atInfo().log("Initialized: {}", built.getClass().getSimpleName());
 
-                    log.atDebug().log("Starting lifecycle object: {}", built.getClass().getSimpleName());
+                    printLifecycleAction("Starting", built.getClass().getSimpleName());
                     lifecycleObject.onStart();
-                    log.atInfo().log("Started: {}", built.getClass().getSimpleName());
                 } catch (LifecycleException e) {
                     log.atError().log("Failed to initialize/start lifecycle object: {}",
                             built.getClass().getSimpleName(), e);
@@ -230,10 +340,224 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
             }
         }
 
-        log.atInfo().log("Successfully built all {} builders", builtObjects.size());
+        Duration startupTime = Duration.between(startTime, Instant.now());
+
+        // Print summary
+        printSummary(builtObjects, startupTime);
+
         log.atTrace().log("Exiting doBuild()");
 
         return new BuiltRegistry(builtObjectsRegistry);
+    }
+
+    /**
+     * Prints a phase header with colored output.
+     */
+    private void printPhase(int phaseNumber, String phaseName, String details) {
+        if (bannerMode == BannerMode.OFF) {
+            log.atDebug().log("Phase {}: {} ({})", phaseNumber, phaseName, details);
+            return;
+        }
+
+        String CYAN = "\u001B[36m";
+        String BOLD = "\u001B[1m";
+        String RESET = "\u001B[0m";
+        String DIM = "\u001B[2m";
+
+        System.out.println();
+        System.out.println(CYAN + BOLD + "  ▶ Phase " + phaseNumber + ": " + phaseName + RESET +
+                DIM + " (" + details + ")" + RESET);
+    }
+
+    /**
+     * Prints builder start indicator.
+     */
+    private void printBuilderStart(String builderName) {
+        if (bannerMode == BannerMode.OFF) {
+            log.atDebug().log("Building: {}", builderName);
+            return;
+        }
+
+        String DIM = "\u001B[2m";
+        String RESET = "\u001B[0m";
+        String YELLOW = "\u001B[33m";
+
+        System.out.println(DIM + "     ○ " + RESET + YELLOW + builderName + RESET + DIM + " ..." + RESET);
+    }
+
+    /**
+     * Prints builder completion indicator.
+     */
+    private void printBuilderComplete(String builderName) {
+        if (bannerMode == BannerMode.OFF) {
+            log.atDebug().log("Built: {}", builderName);
+            return;
+        }
+
+        // Move cursor up and overwrite
+        String GREEN = "\u001B[32m";
+        String RESET = "\u001B[0m";
+        String DIM = "\u001B[2m";
+
+        System.out.print("\u001B[1A"); // Move up one line
+        System.out.print("\u001B[2K"); // Clear line
+        System.out.println(GREEN + "     ✓ " + RESET + builderName + DIM + " ready" + RESET);
+    }
+
+    /**
+     * Prints lifecycle action.
+     */
+    private void printLifecycleAction(String action, String componentName) {
+        if (bannerMode == BannerMode.OFF) {
+            log.atDebug().log("{}: {}", action, componentName);
+            return;
+        }
+
+        String BLUE = "\u001B[34m";
+        String RESET = "\u001B[0m";
+        String DIM = "\u001B[2m";
+
+        System.out.println(BLUE + "     → " + RESET + action + " " + DIM + componentName + RESET);
+    }
+
+    /**
+     * Prints the bootstrap summary.
+     */
+    private void printSummary(List<Object> builtObjects, Duration startupTime) {
+        BootstrapSummary summary = new BootstrapSummary(bannerMode != BannerMode.OFF)
+                .applicationName(applicationName)
+                .applicationVersion(applicationVersion)
+                .startupTime(startupTime)
+                .buildersCount(this.builders.size())
+                .builtObjectsCount(builtObjects.size());
+
+        // Collect summary contributions from built objects
+        for (Object built : builtObjects) {
+            if (built instanceof IBootstrapSummaryContributor contributor) {
+                String category = contributor.getSummaryCategory();
+                contributor.getSummaryItems().forEach((name, value) ->
+                        summary.addItem(category, name, value));
+            }
+        }
+
+        if (bannerMode == BannerMode.CONSOLE) {
+            summary.print(System.out);
+        } else if (bannerMode == BannerMode.LOG) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            summary.print(new PrintStream(baos, true, StandardCharsets.UTF_8));
+            String summaryText = baos.toString(StandardCharsets.UTF_8);
+            for (String line : summaryText.split("\n")) {
+                if (!line.isBlank()) {
+                    log.atInfo().log(line);
+                }
+            }
+        }
+    }
+
+    /**
+     * Rebuilds all managed builders, integrating any new packages or components.
+     *
+     * <p>
+     * This method overrides the default rebuild behavior to provide coordinated
+     * lifecycle management across all built objects. The rebuild process:
+     * </p>
+     * <ol>
+     *   <li>Validates that initial build() has been called</li>
+     *   <li>Stops all lifecycle-managed objects in reverse order</li>
+     *   <li>Re-runs auto-detection to discover new @Bootstrap builders</li>
+     *   <li>Rebuilds each builder in dependency order</li>
+     *   <li>Re-initializes and starts all lifecycle-managed objects</li>
+     * </ol>
+     *
+     * @return the updated built registry
+     * @throws DslException if rebuild fails or if called before initial build()
+     */
+    @Override
+    public IBuiltRegistry rebuild() throws DslException {
+        log.atTrace().log("Entering rebuild()");
+
+        if (this.built == null) {
+            log.atError().log("Cannot rebuild before initial build()");
+            throw new DslException("Cannot rebuild before initial build() has been called");
+        }
+
+        // Phase 1: Stop lifecycle objects (reverse order)
+        log.atDebug().log("Phase 1: Stopping lifecycle objects in reverse order");
+        List<Object> builtObjectsList = new ArrayList<>(builtObjectsRegistry.values());
+        java.util.Collections.reverse(builtObjectsList);
+        for (Object obj : builtObjectsList) {
+            if (obj instanceof ILifecycle lifecycleObject) {
+                try {
+                    log.atDebug().log("Stopping lifecycle object: {}", obj.getClass().getSimpleName());
+                    lifecycleObject.onStop();
+                    log.atDebug().log("Stopped: {}", obj.getClass().getSimpleName());
+                } catch (LifecycleException e) {
+                    log.atWarn().log("Failed to stop lifecycle object: {} - continuing with rebuild",
+                            obj.getClass().getSimpleName(), e);
+                }
+            }
+        }
+
+        // Phase 2: Re-run auto-detection for new @Bootstrap builders
+        if (this.autoDetect.booleanValue()) {
+            log.atDebug().log("Phase 2: Re-running auto-detection for new builders");
+            this.doAutoDetection();
+            log.atDebug().log("Auto-detection completed during rebuild");
+        }
+
+        // Phase 3: Rebuild each builder in dependency order
+        log.atDebug().log("Phase 3: Rebuilding {} builders in dependency order", this.builders.size());
+        List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
+        List<Object> newBuiltObjects = new ArrayList<>();
+
+        for (IBuilder<?> builder : sortedBuilders) {
+            log.atDebug().log("Rebuilding: {}", builder.getClass().getSimpleName());
+            Object rebuilt;
+
+            if (builder instanceof IRebuildableBuilder<?, ?> rebuildable) {
+                rebuilt = rebuildable.rebuild();
+                log.atDebug().log("Used rebuild() for builder: {}", builder.getClass().getSimpleName());
+            } else {
+                // For non-rebuildable builders, just call build() which returns cached instance
+                rebuilt = builder.build();
+                log.atDebug().log("Used build() (cached) for builder: {}", builder.getClass().getSimpleName());
+            }
+
+            if (rebuilt != null) {
+                builtObjectsRegistry.put(rebuilt.getClass(), rebuilt);
+                newBuiltObjects.add(rebuilt);
+                log.atDebug().log("Registered rebuilt object of type: {}", rebuilt.getClass().getName());
+            }
+
+            log.atDebug().log("Successfully rebuilt: {}", builder.getClass().getSimpleName());
+        }
+
+        // Phase 4: Re-init and start lifecycle objects
+        log.atDebug().log("Phase 4: Re-initializing and starting lifecycle objects");
+        for (Object obj : newBuiltObjects) {
+            if (obj instanceof ILifecycle lifecycleObject) {
+                try {
+                    log.atDebug().log("Initializing lifecycle object: {}", obj.getClass().getSimpleName());
+                    lifecycleObject.onInit();
+                    log.atDebug().log("Initialized: {}", obj.getClass().getSimpleName());
+
+                    log.atDebug().log("Starting lifecycle object: {}", obj.getClass().getSimpleName());
+                    lifecycleObject.onStart();
+                    log.atDebug().log("Started: {}", obj.getClass().getSimpleName());
+                } catch (LifecycleException e) {
+                    log.atError().log("Failed to initialize/start lifecycle object during rebuild: {}",
+                            obj.getClass().getSimpleName(), e);
+                    throw new DslException("Failed to initialize/start lifecycle object during rebuild: "
+                            + obj.getClass().getSimpleName(), e);
+                }
+            }
+        }
+
+        this.built = new BuiltRegistry(builtObjectsRegistry);
+        log.atDebug().log("Rebuild completed successfully with {} objects", builtObjectsRegistry.size());
+        log.atTrace().log("Exiting rebuild()");
+
+        return this.built;
     }
 
     /**

@@ -2,6 +2,8 @@
 
 ## Description
 
+The **garganttua-bootstrap** module provides application initialization and bootstrapping utilities for Garganttua Core applications. It simplifies the setup of dependency injection contexts and module discovery for standalone applications.
+
 ## Installation
 
 <!-- AUTO-GENERATED-START -->

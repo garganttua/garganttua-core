@@ -76,10 +76,10 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
             Supplied result;
             if (timeoutMillis != null) {
                 result = future.get(timeoutMillis, TimeUnit.MILLISECONDS);
-                log.atInfo().log("Future completed within timeout of {} ms", timeoutMillis);
+                log.atDebug().log("Future completed within timeout of {} ms", timeoutMillis);
             } else {
                 result = future.get();
-                log.atInfo().log("Future completed without timeout");
+                log.atDebug().log("Future completed without timeout");
             }
 
             log.atTrace().log("Exiting supply method");

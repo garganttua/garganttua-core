@@ -44,14 +44,14 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		this.bean = bean;
 		if (bean != null) {
 			// If bean is provided, force singleton strategy
-			log.atInfo().log("BeanFactory initialized with predefined bean, forcing singleton strategy");
+			log.atDebug().log("BeanFactory initialized with predefined bean, forcing singleton strategy");
 			this.definition = new BeanDefinition<>(
 					new BeanReference<>(definition.reference().type(), Optional.of(BeanStrategy.singleton),
 							definition.reference().name(), definition.reference().qualifiers()),
 					definition.constructorBinder(), definition.postConstructMethodBinderBuilders(),
 					definition.injectableFields());
 		}
-		log.atInfo().log("BeanFactory initialized for definition: {}", definition);
+		log.atDebug().log("BeanFactory initialized for definition: {}", definition);
 		log.atTrace().log("Exiting BeanFactory constructor");
 	}
 
@@ -78,7 +78,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private Bean getBean() throws DiException {
 		log.atTrace().log("Creating new bean instance for definition: {}", definition);
 		Bean bean = createBeanInstance();
-		log.atInfo().log("Bean instance created: {}", bean);
+		log.atDebug().log("Bean instance created: {}", bean);
 		return bean;
 	}
 
@@ -174,7 +174,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 			} else {
 				bean = createAnInitializeSingleton(bean);
 			}
-			log.atInfo().log("Bean supplied: {}", bean);
+			log.atDebug().log("Bean supplied: {}", bean);
 			return Optional.ofNullable(bean);
 		} catch (DiException e) {
 			log.atError().log("Failed to supply bean for definition {}: {}", definition, e.getMessage());
@@ -264,7 +264,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 				definition.postConstructMethodBinderBuilders().size());
 		definition.postConstructMethodBinderBuilders().forEach(m -> eb.method(m.method()));
 
-		log.atInfo().log("Native configuration entry built for type: {}", definition.reference().type());
+		log.atDebug().log("Native configuration entry built for type: {}", definition.reference().type());
 		return eb;
 	}
 }

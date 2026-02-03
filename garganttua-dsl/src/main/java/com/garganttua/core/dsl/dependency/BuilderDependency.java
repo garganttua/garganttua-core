@@ -169,7 +169,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         this.builder = (Builder) observableBuilder;
         try {
             this.builtObject = this.builder.build();
-            log.atInfo().log("Dependency ready: {} -> {}, isReady: {}", 
+            log.atDebug().log("Dependency ready: {} -> {}, isReady: {}", 
                 dependencyClass.getName(), builtObject, isReady());
         } catch (DslException e) {
             log.atError().log("Failed to build dependency: {}", dependencyClass.getName(), e);

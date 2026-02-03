@@ -24,7 +24,7 @@ import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntry;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
-@Mojo(name = "native-config", defaultPhase = LifecyclePhase.PROCESS_RESOURCES, requiresDependencyResolution = ResolutionScope.RUNTIME)
+@Mojo(name = "native-config", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class NativeConfigMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project.build.directory}", readonly = true)

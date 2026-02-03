@@ -51,7 +51,7 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
             log.atDebug().log("Adding new pattern to resource config: {}", newPattern);
             includes.add(Map.of("pattern", newPattern));
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(resourceConfigFile, resourceConfig);
-            log.atInfo().log("Resource pattern added successfully: {}", newPattern);
+            log.atDebug().log("Resource pattern added successfully: {}", newPattern);
         } else {
             log.atDebug().log("Pattern already exists in resource config: {}", newPattern);
         }
@@ -98,7 +98,7 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
         if (removed) {
             log.atDebug().log("Removing pattern from resource config: {}", patternToRemove);
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(resourceConfigFile, resourceConfig);
-            log.atInfo().log("Resource pattern removed successfully: {}", patternToRemove);
+            log.atDebug().log("Resource pattern removed successfully: {}", patternToRemove);
         } else {
             log.atWarn().log("No matching pattern found for removal: {}", patternToRemove);
         }

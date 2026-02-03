@@ -25,7 +25,7 @@ public class ReflectionConfiguration implements IReflectionConfiguration{
 			log.atDebug().log("Loading reflection configuration from file: {}", file);
 			entries = objectMapper.readValue(file,
 					objectMapper.getTypeFactory().constructCollectionType(List.class, ReflectConfigEntry.class));
-			log.atInfo().log("Loaded {} reflection configuration entries from file", entries.size());
+			log.atDebug().log("Loaded {} reflection configuration entries from file", entries.size());
 		} catch (IOException e) {
 			log.atWarn().log("Failed to load reflection configuration from file, initializing empty list: {}", file);
 			entries = new ArrayList<>();
@@ -84,7 +84,7 @@ public class ReflectionConfiguration implements IReflectionConfiguration{
 		log.atTrace().log("Entering saveToFile with file: {}", file);
 		log.atDebug().log("Saving {} reflection configuration entries to file: {}", entries.size(), file);
 		objectMapper.writeValue(file, this.entries);
-		log.atInfo().log("Reflection configuration saved successfully to file: {}", file);
+		log.atDebug().log("Reflection configuration saved successfully to file: {}", file);
 		log.atTrace().log("Exiting saveToFile");
 	}
 

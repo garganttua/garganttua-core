@@ -67,7 +67,7 @@ public class BeanFactoryBuilder<Bean>
                         : Optional.empty(),
                 this.postConstructMethodBinderBuilders,
                 new HashSet<>(this.injectableFields));
-        log.atInfo().log("Building BeanFactory for beanClass: {} with definition: {}", this.beanClass, definition);
+        log.atDebug().log("Building BeanFactory for beanClass: {} with definition: {}", this.beanClass, definition);
         BeanFactory<Bean> factory = new BeanFactory<>(definition, Optional.ofNullable(this.bean));
         log.atTrace().log("Exiting doBuild");
         return factory;
@@ -95,7 +95,7 @@ public class BeanFactoryBuilder<Bean>
             IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
                     field.getType()).field(field).withValue(b).allowNull(n).autoDetect(true);
             this.injectableFields.add(injectable);
-            log.atInfo().log("Registered injectable field: {} with builder: {}", field.getName(), b);
+            log.atDebug().log("Registered injectable field: {} with builder: {}", field.getName(), b);
         });
     }
 
@@ -140,7 +140,7 @@ public class BeanFactoryBuilder<Bean>
             });
 
             this.postConstructMethodBinderBuilders.add(methodBinderBuilder);
-            log.atInfo().log("Registered post construct method: {}", method.getName());
+            log.atDebug().log("Registered post construct method: {}", method.getName());
         } catch (DslException e) {
             log.atWarn().log("Failed to register post construct method {}: {}", method.getName(), e.getMessage());
         }
@@ -152,7 +152,7 @@ public class BeanFactoryBuilder<Bean>
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
                 .findFirst()
                 .ifPresent(constructor -> {
-                    log.atInfo().log("Found @Inject constructor: {}", constructor);
+                    log.atDebug().log("Found @Inject constructor: {}", constructor);
                     this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass).provide(this.resolverBuilder)
                             .autoDetect(true);
 
@@ -175,7 +175,7 @@ public class BeanFactoryBuilder<Bean>
     @Override
     public IBeanFactoryBuilder<Bean> strategy(BeanStrategy strategy) {
         this.strategy = Objects.requireNonNull(strategy, "Bean strategy cannot be null");
-        log.atInfo().log("BeanFactoryBuilder strategy set to {}", strategy);
+        log.atDebug().log("BeanFactoryBuilder strategy set to {}", strategy);
         return this;
     }
 
@@ -183,7 +183,7 @@ public class BeanFactoryBuilder<Bean>
     public IBeanConstructorBinderBuilder<Bean> constructor() {
         if (this.constructorBinderBuilder == null) {
             this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass);
-            log.atInfo().log("Initialized constructorBinderBuilder for beanClass: {}", this.beanClass);
+            log.atDebug().log("Initialized constructorBinderBuilder for beanClass: {}", this.beanClass);
         }
         return this.constructorBinderBuilder;
     }
@@ -191,7 +191,7 @@ public class BeanFactoryBuilder<Bean>
     @Override
     public IBeanFactoryBuilder<Bean> name(String name) {
         this.name = Objects.requireNonNull(name, "Bean name cannot be null");
-        log.atInfo().log("BeanFactoryBuilder name set to {}", name);
+        log.atDebug().log("BeanFactoryBuilder name set to {}", name);
         return this;
     }
 
@@ -202,7 +202,7 @@ public class BeanFactoryBuilder<Bean>
             throw new DslException("Provided qualifier " + qualifier.getName() + " is not annotated with @Qualifier");
         }
         this.qualifiers.add(qualifier);
-        log.atInfo().log("Added qualifier {}", qualifier.getName());
+        log.atDebug().log("Added qualifier {}", qualifier.getName());
         return this;
     }
 
@@ -211,7 +211,7 @@ public class BeanFactoryBuilder<Bean>
         IBeanPostConstructMethodBinderBuilder<Bean> builder = new BeanPostConstructMethodBinderBuilder<>(this,
                 this);
         this.postConstructMethodBinderBuilders.add(builder);
-        log.atInfo().log("Added post construct method builder: {}", builder);
+        log.atDebug().log("Added post construct method builder: {}", builder);
         return builder;
     }
 
@@ -226,7 +226,7 @@ public class BeanFactoryBuilder<Bean>
                 .filter(q -> q.getAnnotation(Qualifier.class) != null)
                 .collect(Collectors.toSet());
         this.qualifiers.addAll(verifiedQualifiers);
-        log.atInfo().log("Added multiple qualifiers: {}", verifiedQualifiers);
+        log.atDebug().log("Added multiple qualifiers: {}", verifiedQualifiers);
         return this;
     }
 
@@ -242,7 +242,7 @@ public class BeanFactoryBuilder<Bean>
         IBeanInjectableFieldBuilder<FieldType, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
                 fieldType);
         this.injectableFields.add(injectable);
-        log.atInfo().log("Added injectable field of type: {}", fieldType);
+        log.atDebug().log("Added injectable field of type: {}", fieldType);
         return injectable;
     }
 
@@ -253,7 +253,7 @@ public class BeanFactoryBuilder<Bean>
         this.injectableFields.forEach(f -> dependencies.addAll(f.dependencies()));
         Optional.ofNullable(this.constructorBinderBuilder).ifPresent(c -> dependencies.addAll(c.dependencies()));
         this.postConstructMethodBinderBuilders.forEach(m -> dependencies.addAll(m.dependencies()));
-        log.atInfo().log("Dependencies for beanClass {}: {}", this.beanClass, dependencies);
+        log.atDebug().log("Dependencies for beanClass {}: {}", this.beanClass, dependencies);
         return dependencies;
     }
 

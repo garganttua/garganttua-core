@@ -42,7 +42,7 @@ public class ExpressionContextTest {
         ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<>(
                 of(Expressions.class).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                Expressions.class.getMethod("string", String.class),
+                Expressions.class.getMethod("string", Object.class),
                 new ObjectAddress("string"),
                 List.of(false),
                 Optional.of("string"),
@@ -95,7 +95,6 @@ public class ExpressionContextTest {
         expressionContext = new ExpressionContext(factories);
     }
 
-    @Disabled("Method call feature for static methods is not yet fully implemented")
     @Test
     public void testStaticMethodCall() {
 
@@ -108,10 +107,10 @@ public class ExpressionContextTest {
 
         ISupplier<?> exp = expressionContext.expression(":valueOf(String.class, 12)").evaluate();
 
-        assertTrue( ((String) exp.supply().get()).contains("AVAILABLE EXPRESSION FUNCTIONS"));
+        assertEquals("12", exp.supply().get());
     }
 
-    @Disabled("Method call feature for instance methods is not yet fully implemented")
+    @Disabled("Instance method calls fail because auto-detected expression factories use BeanSupplierBuilder which returns empty for non-bean classes like Expressions")
     @Test
     public void testObjectMethodCall() {
 
@@ -135,6 +134,17 @@ public class ExpressionContextTest {
         ISupplier<?> expComplexLen = expressionContext.expression(":equals(:substring(test1,2),:substring(test2,2))").evaluate();
         assertFalse((Boolean) expComplexLen.supply().get());
 
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testConstructorCall() throws Exception {
+        // :(String.class, "hello") should call new String("hello")
+        IExpression<?, ? extends ISupplier<?>> expression = expressionContext.expression(":(String.class, \"hello\")");
+        ISupplier<?> result = expression.evaluate();
+        Optional<String> value = (Optional<String>) result.supply();
+        assertTrue(value.isPresent(), "Value should be present");
+        assertEquals("hello", value.get());
     }
 
     @Test
@@ -336,14 +346,14 @@ public class ExpressionContextTest {
 
     @Test
     public void testManualPageRetrievalForString() {
-        // Test retrieving manual for the "string" function
-        String manual = expressionContext.man("string(String)");
+        // Test retrieving manual for the "string" function (now uses Object param)
+        String manual = expressionContext.man("string(Object)");
 
         assertNotNull(manual, "Manual should not be null");
         assertTrue(manual.contains("string"), "Manual should contain function name");
         assertTrue(manual.contains("Converts a value to a String supplier"), "Manual should contain description");
 
-        System.out.println("\n=== Manual for string(String) ===");
+        System.out.println("\n=== Manual for string(Object) ===");
         System.out.println(manual);
     }
 
@@ -372,7 +382,7 @@ public class ExpressionContextTest {
         assertTrue(factoryList.contains("AVAILABLE EXPRESSION FUNCTIONS"), "Should contain header");
         assertTrue(factoryList.contains("Total functions:"), "Should contain total count");
         assertTrue(factoryList.contains("add(int,int)"), "Should contain add function");
-        assertTrue(factoryList.contains("string(String)"), "Should contain string function");
+        assertTrue(factoryList.contains("string(Object)"), "Should contain string function");
         assertTrue(factoryList.contains("int(String)"), "Should contain int function");
         assertTrue(factoryList.contains("boolean(String)"), "Should contain boolean function");
         assertTrue(factoryList.contains("class(String)"), "Should contain class function");

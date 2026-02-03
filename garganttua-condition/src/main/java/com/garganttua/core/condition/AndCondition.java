@@ -31,7 +31,7 @@ public class AndCondition implements ICondition {
 
         Boolean result = and(this.conditions);
 
-        log.atInfo().log("AND condition evaluation complete: {}", result);
+        log.atDebug().log("AND condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

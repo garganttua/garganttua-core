@@ -64,7 +64,6 @@ class OneStepRuntimeTest {
     private IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> baseRuntime(IRuntimesBuilder b,
             DummyRuntimeProcessOutputStep step) {
         return b.runtime("runtime-1", String.class, String.class)
-                .stage("stage-1")
                 .step("step-1", of(step), String.class)
                 .method()
                 .condition(custom(of(10), i -> true))
@@ -114,7 +113,7 @@ class OneStepRuntimeTest {
         DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(
-                baseRuntime(builder(), step)).up().up().variable("variable", of("preset-variable")).up();
+                baseRuntime(builder(), step)).up().variable("variable", of("preset-variable")).up();
 
         IRuntime<String, String> runtime = get(b);
 
@@ -129,7 +128,7 @@ class OneStepRuntimeTest {
         DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
-                .abortOnUncatchedException(true).up()).up().up().variable("variable", of("custom-exception")).up();
+                .abortOnUncatchedException(true).up()).up().variable("variable", of("custom-exception")).up();
 
         IRuntime<String, String> runtime = get(b);
 
@@ -146,7 +145,7 @@ class OneStepRuntimeTest {
         DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
-                .abortOnUncatchedException(false).up()).up().up().variable("variable", of("custom-exception"))
+                .abortOnUncatchedException(false).up()).up().variable("variable", of("custom-exception"))
                 .up();
 
         IRuntime<String, String> runtime = get(b);
@@ -162,7 +161,7 @@ class OneStepRuntimeTest {
         DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
         IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step).method()
-                .nullable(true).abortOnUncatchedException(false).up()).up().up().variable("variable", of("custom-exception"))
+                .nullable(true).abortOnUncatchedException(false).up()).up().variable("variable", of("custom-exception"))
                 .up();
 
         IRuntime<String, String> runtime = get(b);
@@ -178,7 +177,7 @@ class OneStepRuntimeTest {
     void catchedExceptionHandledByFallback() {
         DummyRuntimeProcessOutputStep step = new DummyRuntimeProcessOutputStep();
 
-        IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step)).up().up().variable("variable", of("di-exception")).up();
+        IRuntimesBuilder b = baseFallback(baseRuntime(builder(), step)).up().variable("variable", of("di-exception")).up();
 
         IRuntime<String, String> runtime = get(b);
 

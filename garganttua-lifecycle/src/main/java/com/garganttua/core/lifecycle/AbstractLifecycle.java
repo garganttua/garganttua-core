@@ -70,11 +70,11 @@ public abstract class AbstractLifecycle implements ILifecycle {
         log.atTrace().log("Entering onInit()");
         synchronized (this.lifecycleMutex) {
             ensureNotInitialized();
-            log.atInfo().log("Initializing lifecycle");
+            log.atDebug().log("Initializing lifecycle");
             doInit();
             initialized.set(true);
             stopped.set(false);
-            log.atInfo().log("Lifecycle initialized successfully");
+            log.atDebug().log("Lifecycle initialized successfully");
         }
         log.atTrace().log("Exiting onInit()");
         return this;
@@ -86,10 +86,10 @@ public abstract class AbstractLifecycle implements ILifecycle {
         synchronized (this.lifecycleMutex) {
             ensureInitialized();
             ensureNotStarted();
-            log.atInfo().log("Starting lifecycle");
+            log.atDebug().log("Starting lifecycle");
             doStart();
             started.set(true);
-            log.atInfo().log("Lifecycle started successfully");
+            log.atDebug().log("Lifecycle started successfully");
         }
         log.atTrace().log("Exiting onStart()");
         return this;
@@ -100,10 +100,10 @@ public abstract class AbstractLifecycle implements ILifecycle {
         log.atTrace().log("Entering onFlush()");
         synchronized (this.lifecycleMutex) {
             ensureStopped();
-            log.atInfo().log("Flushing lifecycle");
+            log.atDebug().log("Flushing lifecycle");
             doFlush();
             flushed.set(true);
-            log.atInfo().log("Lifecycle flushed successfully");
+            log.atDebug().log("Lifecycle flushed successfully");
         }
         log.atTrace().log("Exiting onFlush()");
         return this;
@@ -118,11 +118,11 @@ public abstract class AbstractLifecycle implements ILifecycle {
                 log.atDebug().log("Lifecycle not started, skipping onStop");
                 return this;
             }
-            log.atInfo().log("Stopping lifecycle");
+            log.atDebug().log("Stopping lifecycle");
             doStop();
             started.set(false);
             stopped.set(true);
-            log.atInfo().log("Lifecycle stopped successfully");
+            log.atDebug().log("Lifecycle stopped successfully");
         }
         log.atTrace().log("Exiting onStop()");
         return this;
@@ -137,16 +137,16 @@ public abstract class AbstractLifecycle implements ILifecycle {
                 throw new LifecycleException("Lifecycle not initialized or started");
             }
 
-            log.atInfo().log("Reloading lifecycle: stopping");
+            log.atDebug().log("Reloading lifecycle: stopping");
             this.onStop();
-            log.atInfo().log("Reloading lifecycle: flushing");
+            log.atDebug().log("Reloading lifecycle: flushing");
             this.onFlush();
             initialized.set(false);
-            log.atInfo().log("Reloading lifecycle: re-initializing");
+            log.atDebug().log("Reloading lifecycle: re-initializing");
             this.onInit();
-            log.atInfo().log("Reloading lifecycle: starting");
+            log.atDebug().log("Reloading lifecycle: starting");
             this.onStart();
-            log.atInfo().log("Lifecycle reloaded successfully");
+            log.atDebug().log("Lifecycle reloaded successfully");
         }
         log.atTrace().log("Exiting onReload()");
         return this;

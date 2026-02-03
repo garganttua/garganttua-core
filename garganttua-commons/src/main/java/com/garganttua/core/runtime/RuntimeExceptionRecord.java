@@ -73,7 +73,7 @@ package com.garganttua.core.runtime;
  * @see IRuntimeContext#findException(RuntimeExceptionRecord)
  * @see IRuntimeResult#getExceptions()
  */
-public record RuntimeExceptionRecord(String runtimeName, String stageName, String stepName, Class<? extends Throwable> exceptionType, Throwable exception, Integer code, Boolean hasAborted, String executableReference) {
+public record RuntimeExceptionRecord(String runtimeName, String stepName, Class<? extends Throwable> exceptionType, Throwable exception, Integer code, Boolean hasAborted, String executableReference) {
 
     /**
      * Checks if this exception record matches a given pattern.
@@ -104,9 +104,6 @@ public record RuntimeExceptionRecord(String runtimeName, String stageName, Strin
         if (pattern == null) return false;
 
         if (pattern.runtimeName != null && !pattern.runtimeName.equals(this.runtimeName))
-            return false;
-
-        if (pattern.stageName != null && !pattern.stageName.equals(this.stageName))
             return false;
 
         if (pattern.stepName != null && !pattern.stepName.equals(this.stepName))
@@ -146,7 +143,7 @@ public record RuntimeExceptionRecord(String runtimeName, String stageName, Strin
      * @see com.garganttua.core.runtime.annotations.OnException
      */
     public boolean matches(IRuntimeStepOnException onException) {
-        return this.matches(new RuntimeExceptionRecord(onException.runtimeName(), onException.fromStage(), onException.fromStep(), onException.exception(), null, null, true, null));
+        return this.matches(new RuntimeExceptionRecord(onException.runtimeName(), onException.fromStep(), onException.exception(), null, null, true, null));
     }
 
     /**

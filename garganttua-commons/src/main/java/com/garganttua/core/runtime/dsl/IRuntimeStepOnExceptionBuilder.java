@@ -58,20 +58,6 @@ public interface IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType,
         IAutomaticLinkedBuilder<IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepOnException> {
 
     /**
-     * Specifies the source stage name to filter exceptions by.
-     *
-     * <p>
-     * The fallback will only be triggered for exceptions from steps in the stage
-     * with this name. If not specified, exceptions from any stage will match.
-     * </p>
-     *
-     * @param stageName the stage name to match
-     * @return this builder for method chaining
-     * @see com.garganttua.core.runtime.annotations.OnException#fromStage()
-     */
-    IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fromStage(String stageName);
-
-    /**
      * Specifies the source step name to filter exceptions by.
      *
      * <p>

@@ -19,9 +19,8 @@ import java.util.UUID;
  *
  * <h2>Core Concepts</h2>
  * <ul>
- *   <li><b>Stages</b> - Logical groups of related processing steps executed sequentially</li>
- *   <li><b>Steps</b> - Atomic units of work within a stage that transform data</li>
- *   <li><b>Context</b> - Shared state accessible across all stages and steps during execution</li>
+ *   <li><b>Steps</b> - Atomic units of work that transform data, executed sequentially</li>
+ *   <li><b>Context</b> - Shared state accessible across all steps during execution</li>
  *   <li><b>Variables</b> - Named values stored in context for inter-step communication</li>
  *   <li><b>Exception Handling</b> - Catch blocks and fallback mechanisms for error recovery</li>
  * </ul>
@@ -61,15 +60,11 @@ import java.util.UUID;
  * <pre>{@code
  * IRuntimeBuilder<Order, OrderResult> builder = new RuntimesBuilder()
  *     .runtime("orderProcessing", Order.class, OrderResult.class)
- *         .stage("validation")
- *             .step("validateOrder", () -> new OrderValidator(), Void.class)
- *                 .method().name("validate").parameter(Input.class).end()
- *                 .end()
+ *         .step("validateOrder", () -> new OrderValidator(), Void.class)
+ *             .method().name("validate").parameter(Input.class).end()
  *             .end()
- *         .stage("processing")
- *             .step("processOrder", () -> new OrderProcessor(), OrderResult.class)
- *                 .method().name("process").parameter(Input.class).output(true).end()
- *                 .end()
+ *         .step("processOrder", () -> new OrderProcessor(), OrderResult.class)
+ *             .method().name("process").parameter(Input.class).output(true).end()
  *             .end();
  *
  * IRuntime<Order, OrderResult> runtime = builder.build();
@@ -81,7 +76,7 @@ import java.util.UUID;
  * @since 2.0.0-ALPHA01
  * @see IRuntimeContext
  * @see IRuntimeResult
- * @see IRuntimeStage
+ * @see IRuntimeStep
  * @see com.garganttua.core.runtime.annotations.RuntimeDefinition
  * @see com.garganttua.core.runtime.dsl.IRuntimeBuilder
  */

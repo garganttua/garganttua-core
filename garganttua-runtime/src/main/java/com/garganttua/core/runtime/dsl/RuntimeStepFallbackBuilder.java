@@ -12,6 +12,7 @@ import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBu
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
+import com.garganttua.core.runtime.MethodBinderExpression;
 import com.garganttua.core.runtime.RuntimeStepFallbackBinder;
 import com.garganttua.core.runtime.annotations.OnException;
 import com.garganttua.core.runtime.annotations.Output;
@@ -31,18 +32,16 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     private Boolean output = false;
     private List<IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>> onExceptions = new ArrayList<>();
     private String stepName;
-    private String stageName;
     private String runtimeName;
     private Boolean nullable = false;
 
     protected RuntimeStepFallbackBuilder(String runtimeName,
-            String stageName, String stepName,
+            String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
             ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier)
             throws DslException {
         super(up, supplier);
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
-        this.stageName = Objects.requireNonNull(stageName, "Stage name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
         log.atTrace().log("{} Initialized RuntimeStepFallbackBuilder", logLineHeader());
     }
@@ -51,14 +50,14 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(
             String variableName) {
         this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
-        log.atInfo().log("{} Variable set for fallback", logLineHeader());
+        log.atDebug().log("{} Variable set for fallback", logLineHeader());
         return this;
     }
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         this.output = Objects.requireNonNull(output, "Output cannot be null");
-        log.atInfo().log("{} Output flag set for fallback", logLineHeader());
+        log.atDebug().log("{} Output flag set for fallback", logLineHeader());
         return this;
     }
 
@@ -67,11 +66,13 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
             throws DslException {
         log.atTrace().log("{} Entering build() method", logLineHeader());
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
+        MethodBinderExpression<ExecutionReturn, IRuntimeContext<InputType, OutputType>> expression = new MethodBinderExpression<>(binder);
         RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType> fallbackBinder = new RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType>(
-                this.runtimeName, this.stageName,
-                this.stepName, binder, Optional.ofNullable(this.storeReturnInVariable), this.output,
-                this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()), this.nullable);
-        log.atInfo()
+                this.runtimeName,
+                this.stepName, expression, Optional.ofNullable(this.storeReturnInVariable), this.output,
+                this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()), this.nullable,
+                binder.getExecutableReference());
+        log.atDebug()
                 .log("{} RuntimeStepFallbackBinder built successfully", logLineHeader());
         log.atTrace().log("{} Exiting build() method", logLineHeader());
         return fallbackBinder;
@@ -83,7 +84,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
                 this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"));
         this.onExceptions.add(onException);
-        log.atInfo()
+        log.atDebug()
                 .log("{} Added onException handler", logLineHeader());
         return onException;
     }
@@ -94,7 +95,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
                 this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"),
                 Objects.requireNonNull(oneException, "On exception annotation cannot be null"));
         this.onExceptions.add(onException);
-        log.atInfo()
+        log.atDebug()
                 .log("{} Added onException handler with annotation", logLineHeader());
         return onException;
     }
@@ -149,11 +150,11 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
             boolean nullable) {
         this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
-        log.atInfo().log("{} Nullable flag set manually", logLineHeader());
+        log.atDebug().log("{} Nullable flag set manually", logLineHeader());
         return this;
     }
 
     private String logLineHeader() {
-        return "[Runtime " + runtimeName + "][Stage " + stageName + "][Step " + stepName + "][Fallback] ";
+        return "[Runtime " + runtimeName + "][Step " + stepName + "][Fallback] ";
     }
 }

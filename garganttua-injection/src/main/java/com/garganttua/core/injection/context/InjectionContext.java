@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
@@ -38,7 +40,7 @@ import com.garganttua.core.utils.CopyException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class InjectionContext extends AbstractLifecycle implements IInjectionContext {
+public class InjectionContext extends AbstractLifecycle implements IInjectionContext, IBootstrapSummaryContributor {
 
     public volatile static IInjectionContext context = null;
 
@@ -65,7 +67,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
             List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories) {
         log.atTrace().log("Creating master InjectionContext");
         IInjectionContext ctx = new InjectionContext(true, resolver, beanProviders, propertyProviders, childContextFactories);
-        log.atInfo().log("Master InjectionContext created");
+        log.atDebug().log("Master InjectionContext created");
         return ctx;
     }
 
@@ -75,7 +77,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
             List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories) {
         log.atTrace().log("Creating child InjectionContext");
         IInjectionContext ctx = new InjectionContext(false, resolver, beanProviders, propertyProviders, childContextFactories);
-        log.atInfo().log("Child InjectionContext created");
+        log.atDebug().log("Child InjectionContext created");
         return ctx;
     }
 
@@ -106,7 +108,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     private void setupMasterContextSingleton() {
         synchronized (this.singletonMutex) {
             InjectionContext.context = this;
-            log.atInfo().log("Master context singleton assigned");
+            log.atDebug().log("Master context singleton assigned");
         }
     }
 
@@ -197,7 +199,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
                     return new DiException("PropertyProvider " + providerName + " not found or immutable");
                 })
                 .getValue().setProperty(key, value);
-        log.atInfo().log("Property set successfully for provider: {}, key: {}", providerName, key);
+        log.atDebug().log("Property set successfully for provider: {}, key: {}", providerName, key);
     }
 
     @Override
@@ -218,7 +220,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
                         return new DiException(
                                 "No child context factory registered for context class " + contextClass.getName());
                     });
-            log.atInfo().log("Child context created: {}", ctx);
+            log.atDebug().log("Child context created: {}", ctx);
             return ctx;
         }
     }
@@ -284,7 +286,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         }
         this.beanProviders.clear();
         this.propertyProviders.clear();
-        log.atInfo().log("Providers cleared");
+        log.atDebug().log("Providers cleared");
         return this;
     }
 
@@ -439,7 +441,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
             Objects.requireNonNull(factory, "Factory cannot be null");
             if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
                 childContextFactories.add(factory);
-                log.atInfo().log("Child context factory registered: {}", factory);
+                log.atDebug().log("Child context factory registered: {}", factory);
             } else {
                 log.atWarn().log("Child context factory already registered: {}", factory);
             }
@@ -470,7 +472,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         synchronized (this.mutex) {
             this.resolverDelegate.addResolver(annotation, resolver);
-            log.atInfo().log("Resolver added for annotation: {}", annotation);
+            log.atDebug().log("Resolver added for annotation: {}", annotation);
         }
     }
 
@@ -495,7 +497,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
                     new HashMap<>(propertyProvidersCopy),
                     new ArrayList<>(childFactoriesCopy));
 
-            log.atInfo().log("InjectionContext copied successfully");
+            log.atDebug().log("InjectionContext copied successfully");
             return copy;
         }
     }
@@ -542,5 +544,34 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
         this.addBean(provider, reference, Optional.empty(), autoDetect);
+    }
+
+    // --- IBootstrapSummaryContributor implementation ---
+
+    @Override
+    public String getSummaryCategory() {
+        return "Injection Context";
+    }
+
+    @Override
+    public Map<String, String> getSummaryItems() {
+        Map<String, String> items = new LinkedHashMap<>();
+        items.put("Bean providers", String.valueOf(beanProviders.size()));
+        items.put("Property providers", String.valueOf(propertyProviders.size()));
+        items.put("Child context factories", String.valueOf(childContextFactories.size()));
+
+        // Count total beans across all providers
+        int totalBeans = beanProviders.values().stream()
+                .mapToInt(provider -> {
+                    try {
+                        return provider.queries(new BeanReference<>(Object.class, Optional.empty(), Optional.empty(), Set.of())).size();
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                })
+                .sum();
+        items.put("Total beans registered", String.valueOf(totalBeans));
+
+        return items;
     }
 }

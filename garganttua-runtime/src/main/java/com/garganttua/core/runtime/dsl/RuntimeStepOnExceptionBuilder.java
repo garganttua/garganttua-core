@@ -16,7 +16,6 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
         implements IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
     private Class<? extends Throwable> exception;
-    private String stageName = null;
     private String stepName = null;
     private OnException onExceptionForAutoDetection;
     private String runtimeName;
@@ -30,7 +29,7 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
                 runtimeName, exception);
         this.exception = Objects.requireNonNull(exception, "Exception cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
-        log.atInfo().log("RuntimeStepOnExceptionBuilder constructed successfully for exception {}",
+        log.atDebug().log("RuntimeStepOnExceptionBuilder constructed successfully for exception {}",
                 exception.getSimpleName());
     }
 
@@ -50,16 +49,7 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
                 "Entering secondary RuntimeStepOnExceptionBuilder constructor with runtimeName={}, exception={}, onException={}",
                 runtimeName, exception, onException);
         this.onExceptionForAutoDetection = Objects.requireNonNull(onException, "OnException annotation cannot be null");
-        log.atInfo().log("OnException annotation set for auto-detection");
-    }
-
-    @Override
-    public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fromStage(
-            String stageName) {
-        log.atTrace().log("Entering fromStage method with stageName={}", stageName);
-        this.stageName = Objects.requireNonNull(stageName, "stageName cannot be null");
-        log.atInfo().log("Stage name set to '{}'", stageName);
-        return this;
+        log.atDebug().log("OnException annotation set for auto-detection");
     }
 
     @Override
@@ -67,16 +57,16 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
             String stepName) {
         log.atTrace().log("Entering fromStep method with stepName={}", stepName);
         this.stepName = Objects.requireNonNull(stepName, "stepName cannot be null");
-        log.atInfo().log("Step name set to '{}'", stepName);
+        log.atDebug().log("Step name set to '{}'", stepName);
         return this;
     }
 
     @Override
     protected IRuntimeStepOnException doBuild() throws DslException {
         log.atTrace().log("Entering doBuild method");
-        RuntimeStepOnException result = new RuntimeStepOnException(exception, this.runtimeName, this.stageName,
+        RuntimeStepOnException result = new RuntimeStepOnException(exception, this.runtimeName,
                 this.stepName);
-        log.atInfo().log("RuntimeStepOnException built successfully for exception {}", exception.getSimpleName());
+        log.atDebug().log("RuntimeStepOnException built successfully for exception {}", exception.getSimpleName());
         return result;
     }
 
@@ -85,14 +75,10 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
         log.atTrace().log("Entering doAutoDetection method");
         Objects.requireNonNull(onExceptionForAutoDetection, "onExceptionForAutoDetection cannot be null");
 
-        if (onExceptionForAutoDetection.fromStage() != null && !onExceptionForAutoDetection.fromStage().isEmpty()) {
-            this.stageName = onExceptionForAutoDetection.fromStage();
-            log.atDebug().log("Auto-detected stageName: {}", this.stageName);
-        }
         if (onExceptionForAutoDetection.fromStep() != null && !onExceptionForAutoDetection.fromStep().isEmpty()) {
             this.stepName = onExceptionForAutoDetection.fromStep();
             log.atDebug().log("Auto-detected stepName: {}", this.stepName);
         }
-        log.atInfo().log("Auto-detection completed for exception {}", exception.getSimpleName());
+        log.atDebug().log("Auto-detection completed for exception {}", exception.getSimpleName());
     }
 }

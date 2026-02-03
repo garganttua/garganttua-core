@@ -16,7 +16,7 @@ public class NullSupplier<SuppliedType> implements ISupplier<SuppliedType>{
     public Optional<SuppliedType> supply() throws SupplyException {
         log.atTrace().log("Entering supply method");
         log.atDebug().log("Supplying null object for type {}", this.suppliedType.getSimpleName());
-        log.atInfo().log("Supply completed for null object of type {}", this.suppliedType.getSimpleName());
+        log.atDebug().log("Supply completed for null object of type {}", this.suppliedType.getSimpleName());
         log.atTrace().log("Exiting supply method with empty result");
         return Optional.empty();
     }

@@ -66,19 +66,6 @@ public interface IRuntimeStepOnException {
     String runtimeName();
 
     /**
-     * Returns the stage name to filter exceptions by.
-     *
-     * <p>
-     * When specified, the fallback will only be triggered for exceptions from
-     * steps in the stage with this name. An empty or null value acts as a wildcard,
-     * matching exceptions from any stage.
-     * </p>
-     *
-     * @return the stage name to match, or null/empty for any stage
-     */
-    String fromStage();
-
-    /**
      * Returns the step name to filter exceptions by.
      *
      * <p>

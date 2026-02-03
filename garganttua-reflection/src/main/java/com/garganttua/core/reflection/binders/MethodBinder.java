@@ -40,7 +40,7 @@ public class MethodBinder<Returned>
         this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         this.collection = collection;
-        log.atInfo().log("MethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
+        log.atDebug().log("MethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
     }
 
     public MethodBinder(ISupplier<?> objectSupplier,
@@ -85,7 +85,7 @@ public class MethodBinder<Returned>
             for (Object element : col) {
                 results.add((IMethodReturn<ReturnedType>) new MethodInvoker<>(method).invoke(element, args));
             }
-            log.atInfo().log("Executed method {} on collection successfully", method);
+            log.atDebug().log("Executed method {} on collection successfully", method);
             return Optional.of(MultipleMethodReturn.ofMethodReturns(results, method.returnType()));
         }
 

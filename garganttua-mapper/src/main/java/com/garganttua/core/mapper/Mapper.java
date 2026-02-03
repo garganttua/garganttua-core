@@ -70,21 +70,21 @@ public class Mapper implements IMapper {
 					log.atDebug().log("Applying REGULAR mapping with {} destination rules", mappingConfiguration.destinationRules().size());
 					destination result = this.doMapping(mappingConfiguration.mappingDirection(), destinationClass, destination,
 							source, mappingConfiguration.destinationRules());
-					log.atInfo().log("Mapping complete: {} -> {}", source.getClass().getSimpleName(), destinationClass.getSimpleName());
+					log.atDebug().log("Mapping complete: {} -> {}", source.getClass().getSimpleName(), destinationClass.getSimpleName());
 					log.atTrace().log("Exiting map() with result={}", result);
 					return result;
 				case REVERSE:
 					log.atDebug().log("Applying REVERSE mapping with {} source rules", mappingConfiguration.sourceRules().size());
 					destination result2 = this.doMapping(mappingConfiguration.mappingDirection(), destinationClass, destination,
 							source, mappingConfiguration.sourceRules());
-					log.atInfo().log("Mapping complete: {} -> {}", source.getClass().getSimpleName(), destinationClass.getSimpleName());
+					log.atDebug().log("Mapping complete: {} -> {}", source.getClass().getSimpleName(), destinationClass.getSimpleName());
 					log.atTrace().log("Exiting map() with result={}", result2);
 					return result2;
 			}
 
 			destination result3 = this.doMapping(mappingConfiguration.mappingDirection(), destinationClass, destination, source,
 					mappingConfiguration.destinationRules());
-			log.atInfo().log("Mapping complete: {} -> {}", source.getClass().getSimpleName(), destinationClass.getSimpleName());
+			log.atDebug().log("Mapping complete: {} -> {}", source.getClass().getSimpleName(), destinationClass.getSimpleName());
 			log.atTrace().log("Exiting map() with result={}", result3);
 			return result3;
 

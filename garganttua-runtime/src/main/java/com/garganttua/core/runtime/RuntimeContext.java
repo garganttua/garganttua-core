@@ -44,6 +44,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     private final Class<OutputType> outputType;
     private OutputType output;
     private final Map<String, ISupplier<?>> presetVariables = new HashMap<>();
+    private final Map<String, Object> variables = new HashMap<>();
     private Instant start;
     private Instant stop;
     private long startNano;
@@ -66,7 +67,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         this.outputType = Objects.requireNonNull(outputType, "Output type cannot be null");
         this.presetVariables
                 .putAll(Map.copyOf(Objects.requireNonNull(presetVariables, "Preset variables map cannot be null")));
-        log.atInfo().log("[RuntimeContext.<init>] RuntimeContext created with uuid={}", this.uuid);
+        log.atDebug().log("[RuntimeContext.<init>] RuntimeContext created with uuid={}", this.uuid);
     }
 
     @Override
@@ -76,8 +77,8 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         wrapLifecycle(this::ensureNotFlushed, RuntimeException.class);
 
         IRuntimeResult<InputType, OutputType> result = new RuntimeResult<>(uuid, input, output, start, stop, startNano,
-                stopNano, code, this.recordedException);
-        log.atInfo().log("[RuntimeContext.getResult] Returning result with uuid={}, code={}", uuid, code);
+                stopNano, code, this.recordedException, Map.copyOf(this.variables));
+        log.atDebug().log("[RuntimeContext.getResult] Returning result with uuid={}, code={}", uuid, code);
         return result;
     }
 
@@ -195,6 +196,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         wrapLifecycle(this::ensureInitialized, RuntimeException.class);
         this.delegateContext.setProperty(Predefined.PropertyProviders.garganttua.toString(), variableName,
                 variable);
+        this.variables.put(variableName, variable);
     }
 
     @Override
@@ -228,7 +230,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
             this.presetVariables.entrySet().forEach(e -> this.setVariable(e.getKey(), e.getValue().supply().get()));
             this.start = Instant.now();
             this.startNano = System.nanoTime();
-            log.atInfo().log("[RuntimeContext.doStart] Lifecycle started at {} (nano={})", this.start, this.startNano);
+            log.atDebug().log("[RuntimeContext.doStart] Lifecycle started at {} (nano={})", this.start, this.startNano);
             return this;
         }
     }
@@ -239,7 +241,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         synchronized (this.lifecycleMutex) {
             this.delegateContext.onFlush();
             this.presetVariables.clear();
-            log.atInfo().log("[RuntimeContext.doFlush] Preset variables cleared");
+            log.atDebug().log("[RuntimeContext.doFlush] Preset variables cleared");
         }
         return this;
     }
@@ -251,7 +253,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
             this.delegateContext.onStop();
             this.stop = Instant.now();
             this.stopNano = System.nanoTime();
-            log.atInfo().log("[RuntimeContext.doStop] Lifecycle stopped at {} (nano={})", this.stop, this.stopNano);
+            log.atDebug().log("[RuntimeContext.doStop] Lifecycle stopped at {} (nano={})", this.stop, this.stopNano);
         }
         return this;
     }

@@ -64,7 +64,7 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
             log.atDebug().log("Setting field {} value", address);
             ObjectQueryFactory.objectQuery(owner).setValue(this.address,
                     value);
-            log.atInfo().log("Successfully set field {} value", address);
+            log.atDebug().log("Successfully set field {} value", address);
 
         } catch (SupplyException e) {
             log.atError().log("Supply error setting field {}", address, e);

@@ -16,6 +16,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.NullSupplier;
 import com.garganttua.core.supply.SupplyException;
 
 import jakarta.annotation.Nullable;
@@ -34,11 +35,23 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
         Objects.requireNonNull(parameterTypes, "Parameter types array cannot be null");
 
         Class<?> ownerClass = ownerNode.getFinalSuppliedClass();
+        ISupplier<?> ownerSupplier;
+
+        if (ownerClass == Class.class) {
+            // Static method call - evaluate the owner node to get the actual target class
+            Class<?> actualClass = (Class<?>) ownerNode.evaluate().supply()
+                    .orElseThrow(() -> new ExpressionException("Cannot resolve class for static method call: " + methodName));
+            ownerClass = actualClass;
+            ownerSupplier = new NullSupplier<>(actualClass);
+        } else {
+            // Instance method call
+            ownerSupplier = ownerNode.evaluate();
+        }
 
         this.resolved = MethodResolver.methodByName(ownerClass, methodName, null, parameterTypes);
         this.nullables = nullableMask(this.resolved.method());
 
-        this.factory = new ExpressionNodeFactory(ownerNode.evaluate(), this.resolved.method().getReturnType(),
+        this.factory = new ExpressionNodeFactory(ownerSupplier, this.resolved.method().getReturnType(),
                 this.resolved.method(), this.resolved.address(), nullables, Optional.of(methodName),
                 Optional.of("No description available"));
     }

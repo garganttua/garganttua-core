@@ -26,7 +26,7 @@ public class FixedSupplierBuilder<Supplied>
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building FixedSupplier for object type: {}", this.object.getClass().getSimpleName());
         ISupplier<Supplied> result = new FixedSupplier<>(this.object);
-        log.atInfo().log("Build completed for FixedSupplier of type {}", this.object.getClass().getSimpleName());
+        log.atDebug().log("Build completed for FixedSupplier of type {}", this.object.getClass().getSimpleName());
         log.atTrace().log("Exiting build method");
         return result;
     }

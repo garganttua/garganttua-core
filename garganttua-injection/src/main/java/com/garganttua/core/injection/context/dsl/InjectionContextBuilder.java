@@ -36,12 +36,14 @@ import com.garganttua.core.injection.context.beans.resolver.SingletonElementReso
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;
 import com.garganttua.core.injection.context.resolver.FixedElementResolver;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Bootstrap
 @NativeConfigurationBuilder
 public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
@@ -92,7 +94,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         }
         if (this.built != null) {
             this.built.registerChildContextFactory(factory);
-            log.atInfo().log("Registered child context factory to built context: {}", factory);
+            log.atDebug().log("Registered child context factory to built context: {}", factory);
         }
         log.atTrace().log("Exiting childContextFactory");
         return this;
@@ -137,7 +139,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         provider.autoDetect(isAutoDetected());
         beanProviders.put(scope, provider);
         provider.withPackages(this.packages.stream().toArray(String[]::new));
-        log.atInfo().log("Added bean provider for scope: {}", scope);
+        log.atDebug().log("Added bean provider for scope: {}", scope);
         log.atTrace().log("Exiting beanProvider");
         return provider;
     }
@@ -158,7 +160,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         Objects.requireNonNull(provider, "PropertyProvider cannot be null");
         provider.setUp(this);
         propertyProviders.put(scope, provider);
-        log.atInfo().log("Added property provider for scope: {}", scope);
+        log.atDebug().log("Added property provider for scope: {}", scope);
         log.atTrace().log("Exiting propertyProvider");
         return provider;
     }
@@ -178,7 +180,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         this.packages.addAll(Set.of(packageNames));
         this.beanProviders.values().stream().forEach(p -> p.withPackages(packageNames));
         this.resolvers.withPackages(packageNames);
-        log.atInfo().log("Added packages: {}", Arrays.toString(packageNames));
+        log.atDebug().log("Added packages: {}", Arrays.toString(packageNames));
         log.atTrace().log("Exiting withPackages");
         return this;
     }
@@ -189,7 +191,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         this.packages.add(packageName);
         this.beanProviders.values().stream().forEach(p -> p.withPackage(packageName));
         this.resolvers.withPackage(packageName);
-        log.atInfo().log("Added package: {}", packageName);
+        log.atDebug().log("Added package: {}", packageName);
         log.atTrace().log("Exiting withPackage");
         return this;
     }
@@ -205,7 +207,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     public IInjectionContextBuilder withQualifier(Class<? extends Annotation> qualifier) {
         log.atTrace().log("Entering withQualifier(qualifier={})", qualifier);
         this.qualifiers.add(Objects.requireNonNull(qualifier, "Qualifier cannot be null"));
-        log.atInfo().log("Added qualifier: {}", qualifier);
+        log.atDebug().log("Added qualifier: {}", qualifier);
         log.atTrace().log("Exiting withQualifier");
         return this;
     }
@@ -235,7 +237,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                 this.buildPropertyProviders(),
                 new ArrayList<>(childContextFactories));
 
-        log.atInfo().log("Constructed IInjectionContext master instance");
+        log.atDebug().log("Constructed IInjectionContext master instance");
         this.notifyObserver(built);
         log.atTrace().log("Exiting doBuild()");
         return built;
@@ -277,7 +279,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                         .filter(clazz -> clazz.getAnnotation(Qualifier.class) != null))
                 .map(clazz -> (Class<? extends Annotation>) clazz)
                 .forEach(this.qualifiers::add);
-        log.atInfo().log("Auto-detected qualifiers: {}", this.qualifiers);
+        log.atDebug().log("Auto-detected qualifiers: {}", this.qualifiers);
 
         // Auto-detect @ChildContext annotated classes
         this.packages.stream()
@@ -290,7 +292,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                                     .getDeclaredConstructor().newInstance();
 
                             this.childContextFactory(factory);
-                            log.atInfo().log("Auto-registered child context factory: {}",
+                            log.atDebug().log("Auto-registered child context factory: {}",
                                     factoryClass.getSimpleName());
                         } else {
                             log.atWarn().log(
@@ -327,7 +329,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         // If context is already built, notify the observer immediately
         if (this.built != null) {
             observer.handle(this.built);
-            log.atInfo().log("Context already built, immediately notified observer: {}", observer);
+            log.atDebug().log("Context already built, immediately notified observer: {}", observer);
         }
 
         log.atTrace().log("Exiting observer");

@@ -37,7 +37,7 @@ public class RuntimeContextFactory implements IInjectionChildContextFactory<IRun
 
         log.atDebug().log("[RuntimeContextFactory.createChildContext] Creating RuntimeContext with input={}, outputType={}, presetVariables={}", input, outputType, presetVariables);
         IRuntimeContext<?, ?> context = new RuntimeContext<>(parent, input, outputType, presetVariables, uuid);
-        log.atInfo().log("[RuntimeContextFactory.createChildContext] RuntimeContext created with uuid={}", context.uuid());
+        log.atDebug().log("[RuntimeContextFactory.createChildContext] RuntimeContext created with uuid={}", context.uuid());
 
         return context;
     }

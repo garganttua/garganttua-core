@@ -34,7 +34,7 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
         log.atTrace().log("Entering evaluate()");
         log.atDebug().log("Evaluating expression");
         ISupplier<?> evaluation = Expression.evaluateNode(root);
-        log.atInfo().log("Expression evaluated successfully");
+        log.atDebug().log("Expression evaluated successfully");
         log.atTrace().log("Exiting evaluate()");
         return (ISupplier<R>) evaluation;
     }

@@ -29,7 +29,7 @@ public class NorCondition implements ICondition {
         log.atDebug().log("Evaluating NOR condition - negation of OR condition");
 
         boolean result = nor(this.conditions);
-        log.atInfo().log("NOR condition evaluation complete: {}", result);
+        log.atDebug().log("NOR condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

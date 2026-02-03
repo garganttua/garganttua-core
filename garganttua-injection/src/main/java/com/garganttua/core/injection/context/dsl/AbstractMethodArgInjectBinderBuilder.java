@@ -62,7 +62,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
         resolved.stream().forEach(r -> {
             r.ifResolvedOrElse(
                     (b, n) -> {
-                        log.atInfo().log("Resolved method parameter {} with builder: {}", counter.get(), b);
+                        log.atDebug().log("Resolved method parameter {} with builder: {}", counter.get(), b);
                         this.withParam(counter.getAndIncrement(), b, n);
                     },
                     n -> {

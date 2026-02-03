@@ -147,7 +147,7 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
         try {
             // Phase 1: Auto-detection
             if (this.autoDetect.booleanValue()) {
-                log.atInfo().log("Auto-detection is enabled, performing auto-detection");
+                log.atDebug().log("Auto-detection is enabled, performing auto-detection");
                 this.doAutoDetection();
                 log.atDebug().log("Base auto-detection completed");
 
@@ -161,7 +161,7 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
             this.support.processPreBuildDependencies(this::doPreBuildWithDependency);
 
             // Phase 3: Build the target object
-            log.atInfo().log("Building the instance");
+            log.atDebug().log("Building the instance");
             this.built = this.doBuild();
             log.atDebug().log("Built instance: {}", this.built);
 

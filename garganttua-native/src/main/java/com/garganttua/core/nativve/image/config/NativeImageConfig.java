@@ -44,7 +44,7 @@ public class NativeImageConfig {
                 log.atError().log("Failed to create directory: {}", dir.getAbsolutePath());
                 throw new IOException("Failed to create directory: " + dir.getAbsolutePath());
             }
-            log.atInfo().log("Created native image directory: {}", dir);
+            log.atDebug().log("Created native image directory: {}", dir);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.garganttua.core.runtime;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -18,7 +19,8 @@ public record RuntimeResult<InputType, OutputType>(
         long startNano,
         long stopNano,
         Integer code,
-        Set<RuntimeExceptionRecord> recordedExceptions) implements IRuntimeResult<InputType, OutputType> {
+        Set<RuntimeExceptionRecord> recordedExceptions,
+        Map<String, Object> variables) implements IRuntimeResult<InputType, OutputType> {
 
     @Override
     public boolean hasAborted(){

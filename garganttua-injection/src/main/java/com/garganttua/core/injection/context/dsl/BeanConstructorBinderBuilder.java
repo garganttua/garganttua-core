@@ -18,7 +18,7 @@ public class BeanConstructorBinderBuilder<Bean> extends
         this.beanType = beanType;
         log.atTrace().log("Entering BeanConstructorBinderBuilder constructor with link: {}, beanType: {}", link,
                 beanType);
-        log.atInfo().log("BeanConstructorBinderBuilder initialized without resolver for beanType: {}", beanType);
+        log.atDebug().log("BeanConstructorBinderBuilder initialized without resolver for beanType: {}", beanType);
         log.atTrace().log("Exiting constructor");
     }
 
@@ -26,7 +26,7 @@ public class BeanConstructorBinderBuilder<Bean> extends
     public Set<Class<?>> dependencies() {
         log.atTrace().log("Entering getDependencies for beanType: {}", this.beanType.getSimpleName());
         Set<Class<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));
-        log.atInfo().log("Dependencies for beanType {}: {}", this.beanType.getSimpleName(), dependencies);
+        log.atDebug().log("Dependencies for beanType {}: {}", this.beanType.getSimpleName(), dependencies);
         log.atTrace().log("Exiting getDependencies");
         return dependencies;
     }

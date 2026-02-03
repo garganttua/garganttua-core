@@ -26,6 +26,7 @@ import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.RuntimeContextFactory;
+import com.garganttua.core.runtime.RuntimesRegistry;
 import com.garganttua.core.runtime.annotations.Code;
 import com.garganttua.core.runtime.annotations.Context;
 import com.garganttua.core.runtime.annotations.Exception;
@@ -39,11 +40,13 @@ import com.garganttua.core.runtime.resolver.ExceptionElementResolver;
 import com.garganttua.core.runtime.resolver.ExceptionMessageElementResolver;
 import com.garganttua.core.runtime.resolver.InputElementResolver;
 import com.garganttua.core.runtime.resolver.VariableElementResolver;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.FixedSupplier;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Bootstrap
 public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>
         implements IRuntimesBuilder {
 
@@ -70,7 +73,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         collector.source(new FixedSupplier<>(contextRuntimeBuilders), 1, SOURCE_CONTEXT);
         collector.source(new FixedSupplier<>(reflexionRuntimeBuilders), 2, SOURCE_REFLECTION);
 
-        log.atInfo().log("RuntimesBuilder initialized with phase-aware dependencies");
+        log.atDebug().log("RuntimesBuilder initialized with phase-aware dependencies");
     }
 
     @Override
@@ -108,7 +111,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         if (!this.manualRuntimeBuilders.containsKey(name)) {
             runtimeBuilder = new RuntimeBuilder<>(this, name, inputType, outputType);
             this.manualRuntimeBuilders.put(name, runtimeBuilder);
-            log.atInfo().log("Created new runtime builder {}", name);
+            log.atDebug().log("Created new runtime builder {}", name);
         } else {
             runtimeBuilder = (IRuntimeBuilder<InputType, OutputType>) this.manualRuntimeBuilders.get(name);
             log.atDebug().log("Reusing existing runtime builder {}", name);
@@ -122,14 +125,17 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
     @Override
     protected Map<String, IRuntime<?, ?>> doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
-        log.atInfo().log("Building all runtimes");
+        log.atDebug().log("Building all runtimes");
 
-        Map<String, IRuntime<?, ?>> result = this.collector.build().entrySet().stream().collect(Collectors.toMap(
+        Map<String, IRuntime<?, ?>> runtimesMap = this.collector.build().entrySet().stream().collect(Collectors.toMap(
                 Entry::getKey,
                 e -> {
                     log.atDebug().log("Building individual runtime");
                     return e.getValue().provide(this.injectionContextBuilder).build();
                 }));
+
+        // Wrap in RuntimesRegistry to provide summary information
+        RuntimesRegistry result = new RuntimesRegistry(runtimesMap);
 
         log.atTrace().log("Exiting doBuild() method");
         return result;
@@ -149,7 +155,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         if (dependency instanceof IInjectionContext context) {
             List<?> definitions = context.queryBeans(
                     new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
-            log.atInfo().log("Auto-detecting runtimes from InjectionContext");
+            log.atDebug().log("Auto-detecting runtimes from InjectionContext");
             definitions.forEach(this::createAutoDetectedFromInjectionContextRuntime);
         }
         log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
@@ -176,31 +182,30 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
     @SuppressWarnings("unchecked")
     private void registerBuiltObjectInContext(IInjectionContext context, Map<String, IRuntime<?, ?>> result) {
         log.atDebug().log("Registering Map<String, IRuntime<?, ?>> as bean in InjectionContext");
-        Optional<IBeanProvider> beanProvider = context
-                .getBeanProvider(Predefined.BeanProviders.garganttua.toString());
+        String providerName = Predefined.BeanProviders.garganttua.toString();
 
-        beanProvider.ifPresent(provider -> {
-            BeanReference<Map<String, IRuntime<?, ?>>> beanRef = new BeanReference<>(
-                    (Class<Map<String, IRuntime<?, ?>>>) (Class<?>) Map.class,
-                    Optional.of(BeanStrategy.singleton),
-                    Optional.of("Runtimes"),
-                    Set.of());
-            provider.add(beanRef, result);
-            log.atInfo().log(
-                    "Map<String, IRuntime<?, ?>> successfully registered as bean with {} runtimes with 'runtimes' name",
-                    result.size());
-        });
+        // Use addBean directly to avoid lifecycle check - the context may not be started yet
+        // during Bootstrap's build phase
+        BeanReference<Map<String, IRuntime<?, ?>>> mapBeanRef = new BeanReference<>(
+                (Class<Map<String, IRuntime<?, ?>>>) (Class<?>) Map.class,
+                Optional.of(BeanStrategy.singleton),
+                Optional.of("Runtimes"),
+                Set.of());
+        context.addBean(providerName, mapBeanRef, result);
+        log.atDebug().log(
+                "Map<String, IRuntime<?, ?>> successfully registered as bean with {} runtimes with 'runtimes' name",
+                result.size());
 
-        result.entrySet().forEach(e -> beanProvider.ifPresent(provider -> {
+        result.entrySet().forEach(e -> {
             BeanReference<IRuntime<?, ?>> beanRef = new BeanReference<>(
                     (Class<IRuntime<?, ?>>) (Class<?>) IRuntime.class,
                     Optional.of(BeanStrategy.singleton),
                     Optional.of(e.getKey()),
                     Set.of(RuntimeDefinition.class));
-            provider.add(beanRef, e.getValue());
-            log.atInfo().log(
+            context.addBean(providerName, beanRef, e.getValue());
+            log.atDebug().log(
                     "IRuntime<?, ?> successfully registered as bean with '" + e.getKey() + "' name");
-        }));
+        });
     }
 
     private void createAutoDetectedFromInjectionContextRuntime(Object runtimeDefinitionObject) {
@@ -228,7 +233,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
                     .provide(injectionContextBuilder);
         }
         this.contextRuntimeBuilders.put(runtimeName, existingBuilder);
-        log.atInfo().log("Auto-detected runtime {} registered", runtimeName);
+        log.atDebug().log("Auto-detected runtime {} registered", runtimeName);
     }
 
     public static IRuntimesBuilder builder() {
@@ -261,10 +266,10 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
             context.resolvers().withResolver(Code.class, new CodeElementResolver());
             context.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
 
-            log.atInfo().log("Context builder configured with resolvers");
+            log.atDebug().log("Context builder configured with resolvers");
         } else {
             context.withPackage("com.garganttua.core.runtime");
-            log.atInfo().log("Context builder configured with packages for auto-detection");
+            log.atDebug().log("Context builder configured with packages for auto-detection");
         }
 
         log.atTrace().log("Exiting context() method");

@@ -23,7 +23,7 @@ public class PrototypeElementResolver extends BeanElementResolver implements IEl
     public PrototypeElementResolver(Set<Class<? extends Annotation>> qualifiers) {
         super(qualifiers);
         log.atTrace().log("Entering PrototypeElementResolver constructor with qualifiers: {}", qualifiers);
-        log.atInfo().log("PrototypeElementResolver initialized with qualifiers: {}", qualifiers);
+        log.atDebug().log("PrototypeElementResolver initialized with qualifiers: {}", qualifiers);
         log.atTrace().log("Exiting PrototypeElementResolver constructor");
     }
 
@@ -35,7 +35,7 @@ public class PrototypeElementResolver extends BeanElementResolver implements IEl
                 BeanStrategy.prototype);
 
         if (builder.isPresent()) {
-            log.atInfo().log("Resolved prototype elementType {} with builder: {}", elementType, builder.get());
+            log.atDebug().log("Resolved prototype elementType {} with builder: {}", elementType, builder.get());
         } else {
             log.atWarn().log("Could not resolve prototype elementType: {}", elementType);
         }

@@ -26,7 +26,7 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         this.address = Objects.requireNonNull(fieldAddress, "Address cannot be null");
         this.valueSupplier = Objects.requireNonNull(valueSupplier, "Value supplier cannot be null");
         this.ownerSupplier = Objects.requireNonNull(ownerSupplier, "Owner supplier cannot be null");
-        log.atInfo().log("FieldBinder created for field {}", fieldAddress);
+        log.atDebug().log("FieldBinder created for field {}", fieldAddress);
     }
 
     @Override

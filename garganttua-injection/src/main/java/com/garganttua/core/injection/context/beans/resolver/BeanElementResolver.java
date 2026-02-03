@@ -26,7 +26,7 @@ public class BeanElementResolver {
     protected BeanElementResolver(Set<Class<? extends Annotation>> qualifiers) {
         log.atTrace().log("Entering BeanElementResolver constructor with qualifiers: {}", qualifiers);
         this.qualifiers = Objects.requireNonNull(qualifiers, "Qualifiers cannot be null");
-        log.atInfo().log("BeanElementResolver initialized with qualifiers: {}", qualifiers);
+        log.atDebug().log("BeanElementResolver initialized with qualifiers: {}", qualifiers);
         log.atTrace().log("Exiting BeanElementResolver constructor");
     }
 
@@ -70,7 +70,7 @@ public class BeanElementResolver {
                 new BeanReference<>(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
                         paramQualifiers));
 
-        log.atInfo().log("Bean supplier builder created for elementType: {} with provider: {} and name: {}",
+        log.atDebug().log("Bean supplier builder created for elementType: {} with provider: {} and name: {}",
                 elementType, provider, name);
         log.atTrace().log("Exiting resolve with builder: {}", beanSupplierBuilder);
 

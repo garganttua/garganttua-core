@@ -7,7 +7,7 @@
   <artifactId>garganttua-core</artifactId>
   <packaging>pom</packaging>
   <version>2.0.0-ALPHA01</version>
-  <description></description>
+  <description>Garganttua Core - Foundational Java framework for dependency injection, workflow orchestration, reflection utilities, and more.</description>
   <licenses>
     <license>
       <name>MIT License</name>
@@ -51,6 +51,7 @@
     <jfreechart.version>1.5.4</jfreechart.version>
     <openpdf.version>1.3.40</openpdf.version>
     <antlr4.version>4.13.0</antlr4.version>
+    <red.utils.version>1.0.4</red.utils.version>
 
     <!-- Maven Plugin Versions -->
     <maven.core.version>3.8.6</maven.core.version>
@@ -64,6 +65,7 @@
     <maven.shade.plugin.version>3.5.0</maven.shade.plugin.version>
     <build.helper.maven.plugin.version>3.4.0</build.helper.maven.plugin.version>
     <jacoco.maven.plugin.version>0.8.11</jacoco.maven.plugin.version>
+    <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
 
     <!-- Compiler Configuration -->
     <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -154,13 +156,28 @@
         <artifactId>garganttua-mutex</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-script</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-bootstrap</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-script-maven-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- External Dependencies -->
 
       <dependency>
         <groupId>jakarta.annotation</groupId>
         <artifactId>jakarta.annotation-api</artifactId>
-        <version>${jakarta.annotations.api.version}</version> 
+        <version>${jakarta.annotations.api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.plugin-tools</groupId>
@@ -229,6 +246,11 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.databind.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.siahsang</groupId>
+        <artifactId>red-utils</artifactId>
+        <version>${red.utils.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -339,5 +361,7 @@
     <module>garganttua-expression</module>
     <module>garganttua-mutex</module>
     <module>garganttua-bootstrap</module>
+    <module>garganttua-script</module>
+    <module>garganttua-script-maven-plugin</module>
   </modules>
 </project>

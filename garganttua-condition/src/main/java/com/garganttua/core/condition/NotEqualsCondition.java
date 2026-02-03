@@ -32,7 +32,7 @@ public class NotEqualsCondition<T> implements ICondition {
         log.atDebug().log("Evaluating NOT EQUALS condition - negation of EQUALS condition");
 
         boolean result = notEquals(this.supplier1.supply().orElseGet(null), this.supplier2.supply().orElseGet(null));
-        log.atInfo().log("NOT EQUALS condition evaluation complete: {}", result);
+        log.atDebug().log("NOT EQUALS condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

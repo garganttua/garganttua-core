@@ -29,6 +29,7 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import jakarta.annotation.Nullable;
@@ -58,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
+@Bootstrap
 public class ExpressionContextBuilder
         extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
@@ -217,16 +219,15 @@ public class ExpressionContextBuilder
 
         if (dependency instanceof IInjectionContext context) {
             log.atDebug().log("Registering IExpressionContext as bean in InjectionContext");
-            context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
-                    .ifPresent(provider -> {
-                        BeanReference<IExpressionContext> beanRef = new BeanReference<>(
-                                IExpressionContext.class,
-                                Optional.of(BeanStrategy.singleton),
-                                Optional.empty(),
-                                Set.of());
-                        provider.add(beanRef, this.built);
-                        log.atInfo().log("IExpressionContext successfully registered as bean");
-                    });
+            BeanReference<IExpressionContext> beanRef = new BeanReference<>(
+                    IExpressionContext.class,
+                    Optional.of(BeanStrategy.singleton),
+                    Optional.empty(),
+                    Set.of());
+            // Use addBean directly to avoid lifecycle check - the context may not be started yet
+            // during Bootstrap's build phase
+            context.addBean(Predefined.BeanProviders.garganttua.toString(), beanRef, this.built);
+            log.atDebug().log("IExpressionContext successfully registered as bean");
         }
 
         log.atTrace().log("Exiting doPostBuildWithDependency() method");

@@ -14,26 +14,25 @@ import com.garganttua.core.nativve.annotations.Native;
  *
  * <p>
  * The Step annotation is applied to classes that represent individual steps within a
- * runtime stage. Step classes contain {@code @Operation} methods that define the step's
+ * runtime. Step classes contain {@code @Operation} methods that define the step's
  * execution logic, along with optional {@code @FallBack} methods for error handling.
  * </p>
  *
  * <p>
- * Step classes are typically used in conjunction with the {@code @Stages} annotation to
- * organize complex runtimes into logical groups. Each step represents an atomic unit of
- * work within a stage.
+ * Step classes are typically used in conjunction with the {@code @Steps} annotation to
+ * define the workflow sequence. Each step represents an atomic unit of work.
  * </p>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * // Runtime definition with stages
+ * // Runtime definition with steps
  * @RuntimeDefinition(input = Order.class, output = OrderResult.class)
  * public class OrderRuntime {
  *
- *     @Stages
- *     private List<Object> stages = Arrays.asList(
- *         new ValidationStep(),
- *         new ProcessingStep()
+ *     @Steps
+ *     private List<Class<?>> steps = Arrays.asList(
+ *         ValidationStep.class,
+ *         ProcessingStep.class
  *     );
  * }
  *
@@ -76,7 +75,7 @@ import com.garganttua.core.nativve.annotations.Native;
  *
  * @since 2.0.0-ALPHA01
  * @see RuntimeDefinition
- * @see Stages
+ * @see Steps
  * @see Operation
  * @see FallBack
  * @see com.garganttua.core.runtime.IRuntimeStep

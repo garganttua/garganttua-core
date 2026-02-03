@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Garganttua Script Engine - Short alias
+#
+# This is a shortcut for 'garganttua-script'
+#
+
+INSTALL_DIR="/usr/local"
+
+exec "$INSTALL_DIR/bin/garganttua-script" "$@"

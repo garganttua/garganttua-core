@@ -73,11 +73,11 @@ public class ObjectFieldSetter {
 						+ field.getName() + " do not match");
 			}
 			ObjectReflectionHelper.setObjectFieldValue(object, field, value);
-			log.atInfo().log("Successfully set field {} on class {}", fieldName, this.clazz.getName());
+			log.atDebug().log("Successfully set field {} on class {}", fieldName, this.clazz.getName());
 		} else {
 			log.atDebug().log("Recursive field assignment with {} fields", this.fields.size());
 			this.setValueRecursively(object, value, 0, 0);
-			log.atInfo().log("Successfully set field recursively for address={}", this.address);
+			log.atDebug().log("Successfully set field recursively for address={}", this.address);
 		}
 		return object;
 	}

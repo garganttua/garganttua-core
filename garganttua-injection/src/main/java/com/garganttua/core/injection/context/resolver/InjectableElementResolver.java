@@ -42,7 +42,7 @@ public class InjectableElementResolver implements IInjectableElementResolver {
             IElementResolver resolver = this.resolvers.get(type);
             log.atDebug().log("Checking resolver for annotation: {}", type.getSimpleName());
             if (resolver != null) {
-                log.atInfo().log("Found resolver for annotation: {}, delegating resolve", type.getSimpleName());
+                log.atDebug().log("Found resolver for annotation: {}, delegating resolve", type.getSimpleName());
                 Resolved resolved = resolver.resolve(elementType, element);
                 log.atTrace().log("Resolved result: {}", resolved);
                 return resolved;
@@ -50,7 +50,7 @@ public class InjectableElementResolver implements IInjectableElementResolver {
         }
 
         boolean nullable = isNullable(element);
-        log.atInfo().log("No specific resolver found, returning default Resolved (nullable: {}) for elementType: {}", nullable, elementType.getSimpleName());
+        log.atDebug().log("No specific resolver found, returning default Resolved (nullable: {}) for elementType: {}", nullable, elementType.getSimpleName());
         Resolved resolved = new Resolved(false, elementType, null, nullable);
         log.atTrace().log("Exiting resolve with Resolved: {}", resolved);
         return resolved;
@@ -74,7 +74,7 @@ public class InjectableElementResolver implements IInjectableElementResolver {
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(resolver, "Resolver cannot be null");
         this.resolvers.put(annotation, resolver);
-        log.atInfo().log("Added resolver for annotation: {}", annotation.getSimpleName());
+        log.atDebug().log("Added resolver for annotation: {}", annotation.getSimpleName());
         log.atTrace().log("Exiting addResolver");
     }
 }

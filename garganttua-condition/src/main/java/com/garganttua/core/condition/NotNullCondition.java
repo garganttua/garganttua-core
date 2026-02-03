@@ -28,7 +28,7 @@ public class NotNullCondition implements ICondition {
         log.atDebug().log("Evaluating NOT NULL condition - negation of NULL condition");
 
         boolean result = notNull(this.supplier.supply().orElse(null));
-        log.atInfo().log("NOT NULL condition evaluation complete: {}", result);
+        log.atDebug().log("NOT NULL condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

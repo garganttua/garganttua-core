@@ -6,7 +6,7 @@ The Garganttua Commons module is the foundational library of the Garganttua Core
 
 This module serves as the central dependency for the entire framework, offering:
 - **Dependency Injection** framework with context management and bean lifecycle
-- **Runtime workflow** engine with stages, steps, and exception handling
+- **Runtime workflow** engine with steps and exception handling
 - **Reflection utilities** for introspection and dynamic binding
 - **Common patterns** including builders, conditions, executors, and mappers
 - **Shared annotations** for declarative configuration
@@ -40,7 +40,7 @@ This module serves as the central dependency for the entire framework, offering:
 Garganttua Commons is organized around three major subsystems:
 
 1. **Dependency Injection System** - Complete IoC container with context management, bean factories, lifecycle hooks, and annotation-based configuration
-2. **Runtime Workflow Engine** - Sophisticated orchestration framework for defining and executing multi-stage workflows with conditions, exception handling, and fallback mechanisms
+2. **Runtime Workflow Engine** - Orchestration framework for defining and executing workflows with conditions, exception handling, and fallback mechanisms
 3. **Reflection Framework** - Comprehensive utilities for introspection, annotation scanning, and dynamic field/method/constructor binding
 
 ### Cross-Cutting Patterns
@@ -173,22 +173,20 @@ Core Interfaces:
 - `IEvent` - Event definition interface
 
 Workflow Components:
-- `IRuntimeStage` - Stage within a runtime workflow
-- `IRuntimeStep` - Step within a stage
+- `IRuntimeStep` - Step within a runtime
 - `IRuntimeStepCatch` - Catch clause for exception handling
 - `IRuntimeStepOnException` - Exception handler definition
-- `IRuntimeStepMethodBinder` / `IRuntimeStepFallbackBinder` - Bind methods to steps
+- `IRuntimeStepMethodBinder` / `IRuntimeStepFallbackBinder` - Bind methods/expressions to steps
 
 Position Enums:
 - `Position` - `BEFORE` / `AFTER` positioning
-- `RuntimeStagePosition` - Stage positioning in workflow
-- `RuntimeStepPosition` - Step positioning in stage
+- `RuntimeStepPosition` - Step positioning in runtime
 - `RuntimeStepOperationPosition` - Operation positioning in step
 
-Annotations (in `runtime.annotations` - 16 total):
+Annotations (in `runtime.annotations`):
 - `@RuntimeDefinition` - Marks runtime definitions with input/output types
-- `@Stages` / `@Stage` - Define workflow stages
-- `@Step` - Step within stage
+- `@Steps` - Define runtime steps
+- `@Step` - Mark a class as a runtime step
 - `@Operation` - Operations on steps
 - `@Code` - Code snippet in operation
 - `@Input` / `@Output` - Input/output parameters
@@ -203,7 +201,6 @@ Annotations (in `runtime.annotations` - 16 total):
 DSL Builders (in `runtime.dsl`):
 - `IRuntimeBuilder` - Builds runtime definitions
 - `IRuntimesBuilder` - Builds multiple runtimes
-- `IRuntimeStageBuilder` - Builds stages
 - `IRuntimeStepBuilder` - Builds steps
 - `IRuntimeStepCatchBuilder` - Builds catch clauses
 - `IRuntimeStepOnExceptionBuilder` - Builds exception handlers
@@ -468,7 +465,7 @@ String result5 = Supplier.contextualSupply(voidSupplier);
 5. **Use child contexts** for request-scoped or module-scoped bean isolation
 
 ### Runtime Workflows
-1. **Design stages logically** - Group related steps into stages for better organization
+1. **Design steps logically** - Each step should perform one clear action
 2. **Add fallback handlers** to critical steps that may fail but have recovery strategies
 3. **Use conditions** to create dynamic workflows that adapt based on input
 4. **Leverage annotations** for declarative workflow definitions when possible

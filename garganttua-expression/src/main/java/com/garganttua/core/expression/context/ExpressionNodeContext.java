@@ -34,7 +34,9 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
         for (int i = 0; i < parameterTypes.length; i++) {
 
             if (parameters().get(i) instanceof IExpressionNode<?, ?> node) {
-                if (!parameterTypes[i].isAssignableFrom(node.getFinalSuppliedClass())) {
+                // Object.class means the type is dynamic (e.g. variable references) - accept any target type
+                if (node.getFinalSuppliedClass() != Object.class
+                        && !parameterTypes[i].isAssignableFrom(node.getFinalSuppliedClass())) {
                     log.atWarn()
                             .log("Expression node is expecting parameter " + i + " of type "
                                     + parameterTypes[i].getSimpleName() + " but context provided "

@@ -1,6 +1,7 @@
 package com.garganttua.core.expression.context;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,8 +11,11 @@ import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
+import com.garganttua.core.expression.ExpressionNode;
+import com.garganttua.core.expression.ForLoopExpressionNode;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.antlr4.ExpressionLexer;
@@ -23,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @NoArgsConstructor
-public class ExpressionContext implements IExpressionContext {
+public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
 
@@ -45,9 +49,18 @@ public class ExpressionContext implements IExpressionContext {
                             return existing; // Keep the first factory, ignore duplicates
                         }));
 
-        log.atInfo().log("ExpressionContext initialized with {} unique node factories (from {} total provided)",
+        log.atDebug().log("ExpressionContext initialized with {} unique node factories (from {} total provided)",
                 this.nodeFactories.size(), nodeFactories.size());
         log.atTrace().log("Exiting ExpressionContext constructor");
+    }
+
+    @Override
+    public void register(String key, IExpressionNodeFactory<?, ? extends ISupplier<?>> factory) {
+        log.atDebug().log("Registering expression factory with key: {}", key);
+        Objects.requireNonNull(key, "Key cannot be null");
+        Objects.requireNonNull(factory, "Factory cannot be null");
+        this.nodeFactories.put(key, factory);
+        log.atDebug().log("Expression factory registered: {}", key);
     }
 
     @Override
@@ -77,7 +90,7 @@ public class ExpressionContext implements IExpressionContext {
                 throw new ExpressionException("Failed to parse expression: " + expressionString);
             }
 
-            log.atInfo().log("Expression parsed successfully: {}", expressionString);
+            log.atDebug().log("Expression parsed successfully: {}", expressionString);
             log.atTrace().log("Exiting expression");
             return new Expression<>(rootNode);
 
@@ -210,6 +223,9 @@ public class ExpressionContext implements IExpressionContext {
             } else if (ctx.literal() != null) {
                 log.atDebug().log("Expression is a literal");
                 return visit(ctx.literal());
+            } else if (ctx.variableReference() != null) {
+                log.atDebug().log("Expression is a variable reference");
+                return visit(ctx.variableReference());
             } else if (ctx.type() != null) {
                 log.atDebug().log("Expression is a type");
                 return visit(ctx.type());
@@ -220,6 +236,41 @@ public class ExpressionContext implements IExpressionContext {
             }
             log.atError().log("Unknown expression type in context: {}", ctx.getText());
             throw new ExpressionException("Unknown expression type");
+        }
+
+        @Override
+        public IExpressionNode<?, ? extends ISupplier<?>> visitVariableReference(
+                ExpressionParser.VariableReferenceContext ctx) {
+            // Handle both @IDENTIFIER (variable) and @INT_LITERAL (argument index)
+            final String varName;
+            if (ctx.IDENTIFIER() != null) {
+                varName = ctx.IDENTIFIER().getText();
+                log.atDebug().log("Visiting variable reference: @{}", varName);
+            } else if (ctx.INT_LITERAL() != null) {
+                // Argument index - prefix with "$" to distinguish from variables
+                varName = "$" + ctx.INT_LITERAL().getText();
+                log.atDebug().log("Visiting argument reference: @{}", ctx.INT_LITERAL().getText());
+            } else {
+                throw new ExpressionException("Invalid variable reference: " + ctx.getText());
+            }
+            return new ExpressionNode<>("@" + varName, (params) -> {
+                return new ISupplier<Object>() {
+                    @Override
+                    public java.util.Optional<Object> supply() throws com.garganttua.core.supply.SupplyException {
+                        IExpressionVariableResolver resolver = ExpressionVariableContext.get();
+                        if (resolver == null) {
+                            throw new com.garganttua.core.supply.SupplyException(
+                                    "No variable resolver available for @" + varName);
+                        }
+                        return resolver.resolve(varName, Object.class);
+                    }
+
+                    @Override
+                    public java.lang.reflect.Type getSuppliedType() {
+                        return Object.class;
+                    }
+                };
+            }, Object.class);
         }
 
         @Override
@@ -240,6 +291,12 @@ public class ExpressionContext implements IExpressionContext {
             // Case: functionName(args) - classic function call
             String functionName = ctx.IDENTIFIER().getText();
             log.atTrace().log("Visiting function call: {}", functionName);
+
+            // Special handling for 'for' loop expression
+            if ("for".equals(functionName)) {
+                return visitForLoop(ctx);
+            }
+
             List<Object> arguments = new ArrayList<>();
 
             if (ctx.arguments() != null) {
@@ -259,6 +316,11 @@ public class ExpressionContext implements IExpressionContext {
             IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
             if (factory == null) {
+                // Fallback: search for a factory with matching name and arity when Object types are involved
+                factory = findCompatibleFactory(functionName, arguments);
+            }
+
+            if (factory == null) {
                 log.atError().log("Unknown function: {}", functionKey);
                 throw new ExpressionException("Unknown function: " + functionKey);
             }
@@ -276,6 +338,25 @@ public class ExpressionContext implements IExpressionContext {
          * - If first argument is a Class<?>, it's a static method call
          * - Otherwise, it's an instance method call on the first argument
          */
+        private IExpressionNode<?, ? extends ISupplier<?>> visitForLoop(ExpressionParser.FunctionCallContext ctx) {
+            if (ctx.arguments() == null || ctx.arguments().expression().size() != 4) {
+                throw new ExpressionException("for() requires 4 arguments: for(\"varName\", updateExpr, conditionExpr, bodyExpr)");
+            }
+            List<ExpressionParser.ExpressionContext> args = ctx.arguments().expression();
+            // First arg: variable name (must be a string literal)
+            IExpressionNode<?, ? extends ISupplier<?>> varNameNode = visit(args.get(0));
+            ISupplier<?> varNameSupplier = Expression.evaluateNode(varNameNode);
+            Object varNameObj = varNameSupplier.supply().orElse(null);
+            if (!(varNameObj instanceof String varName)) {
+                throw new ExpressionException("for() first argument must be a string (variable name)");
+            }
+            // Remaining args: update, condition, body - kept as expression nodes for re-evaluation
+            IExpressionNode<?, ? extends ISupplier<?>> updateNode = visit(args.get(1));
+            IExpressionNode<?, ? extends ISupplier<?>> conditionNode = visit(args.get(2));
+            IExpressionNode<?, ? extends ISupplier<?>> bodyNode = visit(args.get(3));
+            return new ForLoopExpressionNode(varName, updateNode, conditionNode, bodyNode);
+        }
+
         private IExpressionNode<?, ? extends ISupplier<?>> visitMethodCall(ExpressionParser.FunctionCallContext ctx) {
             String methodName = ctx.IDENTIFIER().getText();
             log.atTrace().log("Visiting method call: {}", methodName);
@@ -313,9 +394,23 @@ public class ExpressionContext implements IExpressionContext {
                 }
             }
 
-            // TODO: Implement constructor call logic
-            // For now, throw an exception indicating this is not yet implemented
-            throw new ExpressionException("Constructor call not yet implemented");
+            if (arguments.isEmpty()) {
+                throw new ExpressionException("Constructor call requires at least a class argument");
+            }
+
+            // First argument is the class to instantiate
+            IExpressionNode<?, ?> classNode = (IExpressionNode<?, ?>) arguments.get(0);
+
+            // Remaining arguments are constructor parameters
+            IExpressionNodeContext context = new ExpressionNodeContext(arguments.subList(1, arguments.size()));
+
+            IExpressionNodeFactory<?, ?> factory = new ConstructorCallExpressionNodeFactory<>(
+                    classNode, context.parameterTypes());
+
+            String functionKey = buildNodeKey(":", arguments);
+            return factory.supply(context)
+                    .flatMap(methodReturn -> methodReturn.firstOptional())
+                    .orElseThrow(() -> new ExpressionException("Failed to create node for constructor: " + functionKey));
         }
 
         @Override
@@ -407,12 +502,18 @@ public class ExpressionContext implements IExpressionContext {
 
         /**
          * Extracts the full class name from a classType context.
+         * Handles the ".class" suffix convention (e.g., "String.class" -> "java.lang.String").
          */
         private String getFullClassName(ExpressionParser.ClassTypeContext ctx) {
             if (ctx.className() != null) {
                 // Build the full class name from identifiers
                 StringBuilder className = new StringBuilder();
-                for (int i = 0; i < ctx.className().IDENTIFIER().size(); i++) {
+                int size = ctx.className().IDENTIFIER().size();
+                // If last identifier is "class", strip it (e.g., String.class -> String)
+                int end = (size > 1 && "class".equals(ctx.className().IDENTIFIER(size - 1).getText()))
+                        ? size - 1
+                        : size;
+                for (int i = 0; i < end; i++) {
                     if (i > 0)
                         className.append(".");
                     className.append(ctx.className().IDENTIFIER(i).getText());
@@ -437,6 +538,11 @@ public class ExpressionContext implements IExpressionContext {
 
             IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = nodeFactories.get(functionKey);
 
+            // If exact match not found, try type-compatible match
+            if (factory == null) {
+                factory = findCompatibleFactoryForDirectParams(functionName, paramTypes);
+            }
+
             if (factory == null) {
                 throw new ExpressionException("Function not found: " + functionKey);
             }
@@ -447,6 +553,46 @@ public class ExpressionContext implements IExpressionContext {
             return factory.supply(context)
                     .flatMap(methodReturn -> methodReturn.firstOptional())
                     .orElseThrow(() -> new ExpressionException("Failed to create node for: " + functionKey));
+        }
+
+        /**
+         * Finds a compatible factory for direct parameters (not IExpressionNode arguments).
+         */
+        private IExpressionNodeFactory<?, ? extends ISupplier<?>> findCompatibleFactoryForDirectParams(
+                String functionName, Class<?>[] argTypes) {
+            String prefix = functionName + "(";
+            int arity = argTypes.length;
+
+            for (Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry : nodeFactories.entrySet()) {
+                String key = entry.getKey();
+                if (!key.startsWith(prefix)) continue;
+
+                String paramPart = key.substring(prefix.length(), key.length() - 1);
+                String[] paramTypeNames = paramPart.isEmpty() ? new String[0] : paramPart.split(",");
+                int keyArity = paramTypeNames.length;
+
+                if (keyArity != arity) continue;
+
+                // Check if all argument types are assignable to factory parameter types
+                boolean compatible = true;
+                for (int i = 0; i < keyArity && compatible; i++) {
+                    Class<?> factoryParamType = resolveSimpleTypeName(paramTypeNames[i].trim());
+                    if (factoryParamType == null) {
+                        compatible = false;
+                    } else if (!factoryParamType.isAssignableFrom(argTypes[i])) {
+                        if (!isPrimitiveCompatible(factoryParamType, argTypes[i])) {
+                            compatible = false;
+                        }
+                    }
+                }
+
+                if (compatible) {
+                    log.atDebug().log("Found compatible factory for direct params: {} for {}({})",
+                            key, functionName, java.util.Arrays.toString(argTypes));
+                    return entry.getValue();
+                }
+            }
+            return null;
         }
 
         /**
@@ -491,5 +637,138 @@ public class ExpressionContext implements IExpressionContext {
             log.atDebug().log("Built node key: {}", key);
             return key;
         }
+
+        private IExpressionNodeFactory<?, ? extends ISupplier<?>> findCompatibleFactory(String functionName, List<Object> arguments) {
+            String prefix = functionName + "(";
+            int arity = arguments.size();
+
+            // Extract argument types
+            Class<?>[] argTypes = new Class<?>[arguments.size()];
+            for (int i = 0; i < arguments.size(); i++) {
+                if (arguments.get(i) instanceof IExpressionNode<?, ?> node) {
+                    argTypes[i] = node.getFinalSuppliedClass();
+                } else {
+                    argTypes[i] = arguments.get(i).getClass();
+                }
+            }
+
+            // Search for compatible factory with type matching
+            for (Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry : nodeFactories.entrySet()) {
+                String key = entry.getKey();
+                if (!key.startsWith(prefix)) continue;
+
+                String paramPart = key.substring(prefix.length(), key.length() - 1);
+                String[] paramTypeNames = paramPart.isEmpty() ? new String[0] : paramPart.split(",");
+                int keyArity = paramTypeNames.length;
+
+                if (keyArity != arity) continue;
+
+                // Check if all argument types are assignable to factory parameter types
+                boolean compatible = true;
+                for (int i = 0; i < keyArity && compatible; i++) {
+                    Class<?> factoryParamType = resolveSimpleTypeName(paramTypeNames[i].trim());
+                    if (factoryParamType == null) {
+                        compatible = false;
+                    } else if (!factoryParamType.isAssignableFrom(argTypes[i])) {
+                        // Also check primitive/wrapper compatibility
+                        if (!isPrimitiveCompatible(factoryParamType, argTypes[i])) {
+                            compatible = false;
+                        }
+                    }
+                }
+
+                if (compatible) {
+                    log.atDebug().log("Found compatible factory via type matching: {} for {}({})",
+                            key, functionName, java.util.Arrays.toString(argTypes));
+                    return entry.getValue();
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Resolves a simple type name to its Class.
+         * Handles primitives and common types using simple names.
+         */
+        private Class<?> resolveSimpleTypeName(String simpleName) {
+            return switch (simpleName) {
+                case "Object" -> Object.class;
+                case "String" -> String.class;
+                case "Integer", "int" -> Integer.class;
+                case "Long", "long" -> Long.class;
+                case "Double", "double" -> Double.class;
+                case "Float", "float" -> Float.class;
+                case "Boolean", "boolean" -> Boolean.class;
+                case "Byte", "byte" -> Byte.class;
+                case "Short", "short" -> Short.class;
+                case "Character", "char" -> Character.class;
+                case "Class" -> Class.class;
+                case "Set" -> java.util.Set.class;
+                case "List" -> java.util.List.class;
+                case "Map" -> java.util.Map.class;
+                case "Optional" -> java.util.Optional.class;
+                case "BeanReference" -> com.garganttua.core.injection.BeanReference.class;
+                default -> {
+                    // Try to load class by simple name in common packages
+                    try {
+                        yield Class.forName("java.lang." + simpleName);
+                    } catch (ClassNotFoundException e1) {
+                        try {
+                            yield Class.forName("java.util." + simpleName);
+                        } catch (ClassNotFoundException e2) {
+                            log.atTrace().log("Could not resolve type name: {}", simpleName);
+                            yield null;
+                        }
+                    }
+                }
+            };
+        }
+
+        /**
+         * Checks if the argument type is compatible with the parameter type
+         * considering primitive/wrapper conversions.
+         */
+        private boolean isPrimitiveCompatible(Class<?> paramType, Class<?> argType) {
+            if (paramType == int.class || paramType == Integer.class) {
+                return argType == int.class || argType == Integer.class;
+            }
+            if (paramType == long.class || paramType == Long.class) {
+                return argType == long.class || argType == Long.class;
+            }
+            if (paramType == double.class || paramType == Double.class) {
+                return argType == double.class || argType == Double.class;
+            }
+            if (paramType == float.class || paramType == Float.class) {
+                return argType == float.class || argType == Float.class;
+            }
+            if (paramType == boolean.class || paramType == Boolean.class) {
+                return argType == boolean.class || argType == Boolean.class;
+            }
+            if (paramType == byte.class || paramType == Byte.class) {
+                return argType == byte.class || argType == Byte.class;
+            }
+            if (paramType == short.class || paramType == Short.class) {
+                return argType == short.class || argType == Short.class;
+            }
+            if (paramType == char.class || paramType == Character.class) {
+                return argType == char.class || argType == Character.class;
+            }
+            return false;
+        }
+    }
+
+    // --- IBootstrapSummaryContributor implementation ---
+
+    @Override
+    public String getSummaryCategory() {
+        return "Expression Engine";
+    }
+
+    @Override
+    public Map<String, String> getSummaryItems() {
+        Map<String, String> items = new LinkedHashMap<>();
+        int factoryCount = nodeFactories != null ? nodeFactories.size() : 0;
+        items.put("Expression functions", String.valueOf(factoryCount));
+        return items;
     }
 }

@@ -20,11 +20,11 @@ public class RuntimeProcess {
         stages.forEach((stage, stepMap) -> copy.put(stage, Collections.unmodifiableMap(new LinkedHashMap<>(stepMap))));
         this.stages = Collections.unmodifiableMap(copy);
 
-        log.atInfo().log("[RuntimeProcess.<init>] RuntimeProcess initialized with {} stages", this.stages.size());
+        log.atDebug().log("[RuntimeProcess.<init>] RuntimeProcess initialized with {} stages", this.stages.size());
     }
 
     public void print() {
-        log.atInfo().log("[RuntimeProcess.print] Printing runtime process");
+        log.atDebug().log("[RuntimeProcess.print] Printing runtime process");
 
         System.out.println("==== Runtime Process ====");
         stages.forEach((stage, stepMap) -> {
@@ -37,7 +37,7 @@ public class RuntimeProcess {
         });
         System.out.println("=========================");
 
-        log.atInfo().log("[RuntimeProcess.print] Finished printing runtime process");
+        log.atDebug().log("[RuntimeProcess.print] Finished printing runtime process");
     }
 
 }

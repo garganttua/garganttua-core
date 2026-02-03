@@ -53,13 +53,13 @@ import com.garganttua.core.runtime.IRuntimeStep;
  * @param <InputType> the runtime input type
  * @param <OutputType> the runtime output type
  * @since 2.0.0-ALPHA01
- * @see IRuntimeStageBuilder
+ * @see IRuntimeBuilder
  * @see IRuntimeStepMethodBuilder
  * @see IRuntimeStepFallbackBuilder
  * @see IRuntimeStep
  */
 public interface IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
-                IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStageBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>,
+                IAutomaticLinkedBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>,
                 IDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> {
 
         /**

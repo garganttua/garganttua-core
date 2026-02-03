@@ -42,7 +42,7 @@ public class ConstructorBinder<Constructed>
             Object[] args = this.buildArguments();
             log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(), args.length);
             Constructed instance = this.constructor.newInstance(args);
-            log.atInfo().log("Successfully created instance of class {}", objectClass.getName());
+            log.atDebug().log("Successfully created instance of class {}", objectClass.getName());
             return Optional.ofNullable(SingleMethodReturn.of(instance));
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             log.atError().log("Error creating new instance of class {}", objectClass.getName(), e);

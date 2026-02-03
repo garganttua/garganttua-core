@@ -59,6 +59,14 @@ import com.garganttua.core.supply.ISupplier;
 public interface IExpressionContext {
 
     /**
+     * Registers a new expression node factory dynamically.
+     *
+     * @param key the function key in format "functionName(Type1,Type2,...)"
+     * @param factory the factory to register
+     */
+    void register(String key, IExpressionNodeFactory<?, ? extends ISupplier<?>> factory);
+
+    /**
      * Parses an expression string into an evaluable expression object.
      *
      * <p>The expression string is parsed according to the expression grammar,

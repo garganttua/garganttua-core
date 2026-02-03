@@ -48,7 +48,7 @@ public class CustomExtractedCondition<T, R> implements ICondition {
         boolean result = predicate.test(extracted);
         log.atDebug().log("Predicate test result: {}", result);
 
-        log.atInfo().log("CUSTOM EXTRACTED condition evaluation complete: {}", result);
+        log.atDebug().log("CUSTOM EXTRACTED condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

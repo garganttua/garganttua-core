@@ -95,7 +95,7 @@ public class FieldResolver {
                                                                 + " does not match the provided Field object");
                         }
 
-                        log.atInfo().log("[fieldByField] Successfully resolved field {} in entity {}", field.getName(),
+                        log.atDebug().log("[fieldByField] Successfully resolved field {} in entity {}", field.getName(),
                                         entityClass.getName());
                         return address;
 
@@ -139,7 +139,7 @@ public class FieldResolver {
                                                                 + " is not of type " + fieldType.getName());
                         }
 
-                        log.atInfo().log("[fieldByAddress] Successfully resolved field {} in entity {}",
+                        log.atDebug().log("[fieldByAddress] Successfully resolved field {} in entity {}",
                                         field.getName(),
                                         entityClass.getName());
                         return fieldAddress;

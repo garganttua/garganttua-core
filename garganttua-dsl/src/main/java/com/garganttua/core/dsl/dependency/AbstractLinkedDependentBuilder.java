@@ -121,7 +121,7 @@ public abstract class AbstractLinkedDependentBuilder<B extends IBuilder<T>, L, T
             this.support.processPreBuildDependencies(this::doPreBuildWithDependency);
 
             // Phase 2: Build the target object
-            log.atInfo().log("Building the instance");
+            log.atDebug().log("Building the instance");
             this.built = this.doBuild();
             log.atDebug().log("Built instance: {}", this.built);
 

@@ -138,7 +138,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             newPath.add(field);
 
             if (index == address.length() - 1) {
-                log.atInfo().log("Resolved field '{}' fully in {}", element, clazz);
+                log.atDebug().log("Resolved field '{}' fully in {}", element, clazz);
                 List<List<Object>> result = new ArrayList<>();
                 result.add(newPath);
                 return result;
@@ -218,7 +218,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             log.atDebug().log("Field '{}' found in {}", field.getName(), clazz.getName());
             list.add(field);
             if (index == address.length() - 1) {
-                log.atInfo().log("Resolved field '{}' fully in {}", element, clazz);
+                log.atDebug().log("Resolved field '{}' fully in {}", element, clazz);
                 return list;
             }
             Class<?> fieldType = field.getType();
@@ -322,7 +322,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
 
         // If we found something in this class, return it
         if (!result.isEmpty()) {
-            log.atInfo().log("Resolved {} address(es) for element '{}' in {}", result.size(), elementName, objectClass);
+            log.atDebug().log("Resolved {} address(es) for element '{}' in {}", result.size(), elementName, objectClass);
             return result;
         }
 

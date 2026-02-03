@@ -1,0 +1,147 @@
+name: Build Garganttua Script Installer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'garganttua-script/**'
+      - 'garganttua-commons/**'
+      - 'garganttua-expression/**'
+      - 'garganttua-runtime/**'
+      - 'garganttua-injection/**'
+      - 'garganttua-condition/**'
+      - '.github/workflows/build-script-installer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'garganttua-script/**'
+      - 'garganttua-commons/**'
+      - 'garganttua-expression/**'
+      - 'garganttua-runtime/**'
+      - 'garganttua-injection/**'
+      - 'garganttua-condition/**'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub release'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build all modules
+        run: mvn install -DskipTests -Djacoco.skip=true -q
+
+      - name: Build Linux installer
+        run: mvn package -pl garganttua-script -Plinux-installer -DskipTests -Djacoco.skip=true
+
+      - name: Run tests
+        run: mvn test -pl garganttua-script -Djacoco.skip=true
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -pl garganttua-script)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload Linux installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: garganttua-script-${{ steps.version.outputs.version }}-linux-installer
+          path: garganttua-script/target/garganttua-script-${{ steps.version.outputs.version }}-linux-installer.tar.gz
+          if-no-files-found: error
+
+      - name: Upload executable JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: garganttua-script-${{ steps.version.outputs.version }}-executable
+          path: garganttua-script/target/garganttua-script-${{ steps.version.outputs.version }}-executable.jar
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -pl garganttua-script)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download Linux installer
+        uses: actions/download-artifact@v4
+        with:
+          name: garganttua-script-${{ steps.version.outputs.version }}-linux-installer
+          path: ./release
+
+      - name: Download executable JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: garganttua-script-${{ steps.version.outputs.version }}-executable
+          path: ./release
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: garganttua-script-v${{ steps.version.outputs.version }}
+          name: Garganttua Script ${{ steps.version.outputs.version }}
+          body: |
+            ## Garganttua Script Engine ${{ steps.version.outputs.version }}
+
+            ### Installation (Linux)
+
+            ```bash
+            # Download and extract
+            tar -xzf garganttua-script-${{ steps.version.outputs.version }}-linux-installer.tar.gz
+            cd garganttua-script-${{ steps.version.outputs.version }}
+
+            # Install (requires Java 21+)
+            sudo ./install.sh
+
+            # Or install to custom location
+            ./install.sh --prefix=$HOME/.local
+            ```
+
+            ### Usage
+
+            ```bash
+            garganttua-script script.gs [args...]
+            gs script.gs [args...]  # Short alias
+            ```
+
+            ### Requirements
+
+            - Java 21 or later
+          files: |
+            ./release/garganttua-script-${{ steps.version.outputs.version }}-linux-installer.tar.gz
+            ./release/garganttua-script-${{ steps.version.outputs.version }}-executable.jar
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, 'ALPHA') || contains(steps.version.outputs.version, 'BETA') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

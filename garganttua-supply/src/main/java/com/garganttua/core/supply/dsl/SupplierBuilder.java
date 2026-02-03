@@ -63,7 +63,7 @@ public class SupplierBuilder<Supplied>
         if (this.future != null) {
             log.atDebug().log("Building FutureSupplier with timeout={}", this.timeoutMillis);
             supplier = new FutureSupplier<>(this.future, this.suppliedType, this.timeoutMillis);
-            log.atInfo().log("Built FutureSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
+            log.atDebug().log("Built FutureSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
             log.atTrace().log("Exiting build");
             return wrapNullable(supplier, this.nullable);
         }
@@ -71,7 +71,7 @@ public class SupplierBuilder<Supplied>
         if (this.blockingQueue != null) {
             log.atDebug().log("Building BlockingSupplier with timeout={}", this.timeoutMillis);
             supplier = new BlockingSupplier<>(this.blockingQueue, this.suppliedType, this.timeoutMillis);
-            log.atInfo().log("Built BlockingSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
+            log.atDebug().log("Built BlockingSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
             log.atTrace().log("Exiting build");
             return wrapNullable(supplier, this.nullable);
         }
@@ -79,7 +79,7 @@ public class SupplierBuilder<Supplied>
         if (this.value != null) {
             log.atDebug().log("Building FixedSupplier with value of type {}", this.value.getClass().getName());
             supplier = new FixedSupplier<>(this.value);
-            log.atInfo().log("Built FixedSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
+            log.atDebug().log("Built FixedSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
             log.atTrace().log("Exiting build");
             return wrapNullable(supplier, this.nullable);
         }
@@ -101,7 +101,7 @@ public class SupplierBuilder<Supplied>
                 supplier = new ContextualSupplier(this.supply, this.suppliedType, this.contextType);
             }
 
-            log.atInfo().log("Built contextual supplier for type {}, contextType={}, nullable={}", this.suppliedType, this.contextType, this.nullable);
+            log.atDebug().log("Built contextual supplier for type {}, contextType={}, nullable={}", this.suppliedType, this.contextType, this.nullable);
             log.atTrace().log("Exiting build");
             return wrapNullableContextual(
                     (IContextualSupplier<Supplied, ?>) supplier,
@@ -111,14 +111,14 @@ public class SupplierBuilder<Supplied>
         if (this.constructorBinder != null) {
             log.atDebug().log("Building NewSupplier with constructorBinder");
             supplier = new NewSupplier<>(this.suppliedType, this.constructorBinder);
-            log.atInfo().log("Built NewSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
+            log.atDebug().log("Built NewSupplier for type {}, nullable={}", this.suppliedType, this.nullable);
             log.atTrace().log("Exiting build");
             return wrapNullable(supplier, this.nullable);
         }
 
         log.atDebug().log("Building NullSupplier for type {}", this.suppliedType);
         supplier = new NullSupplier<>(this.suppliedType);
-        log.atInfo().log("Built NullSupplier for type {}", this.suppliedType);
+        log.atDebug().log("Built NullSupplier for type {}", this.suppliedType);
         log.atTrace().log("Exiting build");
         return wrapNullable(supplier, true);
     }

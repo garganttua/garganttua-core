@@ -66,7 +66,7 @@ public class PackageScanHelper {
                     if (scanAnnotation != null) {
                         String scanPackage = scanAnnotation.scan();
                         packageableBuilder.withPackage(scanPackage);
-                        log.atInfo().log("Added scan package '{}' from @Scan on class {} to builder {}",
+                        log.atDebug().log("Added scan package '{}' from @Scan on class {} to builder {}",
                                 scanPackage, clazz.getSimpleName(), builder.getClass().getSimpleName());
                     }
                 }

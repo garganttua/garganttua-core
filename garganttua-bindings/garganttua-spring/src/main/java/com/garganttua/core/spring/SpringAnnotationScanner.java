@@ -30,13 +30,13 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
         log.atDebug().log("Created ClassPathScanningCandidateComponentProvider");
 
         scanner.addIncludeFilter(new AnnotationTypeFilter(annotation));
-        log.atInfo().log("Added include filter for annotation: {}", annotation.getSimpleName());
+        log.atDebug().log("Added include filter for annotation: {}", annotation.getSimpleName());
 
         scanner.findCandidateComponents(package_).forEach(beanDefinition -> {
             try {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
                 annotatedClasses.add(clazz);
-                log.atInfo().log("Found class with annotation {}: {}", annotation.getSimpleName(), clazz.getName());
+                log.atDebug().log("Found class with annotation {}: {}", annotation.getSimpleName(), clazz.getName());
             } catch (ClassNotFoundException e) {
                 log.atWarn().log("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
             }
@@ -73,7 +73,7 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
                 for (Method method : clazz.getDeclaredMethods()) {
                     if (method.isAnnotationPresent(annotation)) {
                         annotatedMethods.add(method);
-                        log.atInfo().log("Found method with annotation {}: {}.{}",
+                        log.atDebug().log("Found method with annotation {}: {}.{}",
                                 annotation.getSimpleName(), clazz.getName(), method.getName());
                     }
                 }

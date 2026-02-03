@@ -70,7 +70,7 @@ public class BlockingSupplierBuilder<Supplied>
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building BlockingSupplier with timeout: {}", timeoutMillis);
         ISupplier<Supplied> result = new BlockingSupplier<>(queue, suppliedType, timeoutMillis);
-        log.atInfo().log("Build completed for BlockingSupplier");
+        log.atDebug().log("Build completed for BlockingSupplier");
         log.atTrace().log("Exiting build method");
         return result;
     }

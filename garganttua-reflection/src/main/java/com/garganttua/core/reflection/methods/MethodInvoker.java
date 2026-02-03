@@ -67,13 +67,13 @@ public class MethodInvoker<T, R> {
 			}
 
 			SingleMethodReturn<R> result = invokeMethodSafely(object, methodName, method, args);
-			log.atInfo().log("Successfully invoked method {} on ownerType {}", methodName, this.ownerType.getName());
+			log.atDebug().log("Successfully invoked method {} on ownerType {}", methodName, this.ownerType.getName());
 			return result;
 
 		} else {
 			log.atDebug().log("Recursive method invocation with {} fields", this.methodPath.size());
 			IMethodReturn<R> result = this.invokeMethodRecursively(object, 0, 0, args);
-			log.atInfo().log("Successfully invoked method recursively for address={}", this.address);
+			log.atDebug().log("Successfully invoked method recursively for address={}", this.address);
 			return result;
 		}
 	}

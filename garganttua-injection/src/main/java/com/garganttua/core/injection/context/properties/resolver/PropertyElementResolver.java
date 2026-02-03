@@ -40,14 +40,14 @@ public class PropertyElementResolver implements IElementResolver {
         log.atDebug().log("Retrieved @Property annotation: {}", property);
 
         String key = property.value();
-        log.atInfo().log("Property key: {}", key);
+        log.atDebug().log("Property key: {}", key);
 
         for (Annotation annotation : element.getAnnotations()) {
             if (annotation.annotationType().equals(Provider.class)) {
                 Provider prov = (Provider) annotation;
                 if (prov.value() != null && !prov.value().isBlank()) {
                     provider = prov.value();
-                    log.atInfo().log("Found provider annotation with value: {}", provider);
+                    log.atDebug().log("Found provider annotation with value: {}", provider);
                 } else {
                     log.atDebug().log("Provider annotation value is null or blank");
                 }
@@ -61,11 +61,11 @@ public class PropertyElementResolver implements IElementResolver {
 
         if (provider != null && !provider.isEmpty()) {
             propertySupplierBuilder.provider(provider);
-            log.atInfo().log("Set provider '{}' on propertySupplierBuilder", provider);
+            log.atDebug().log("Set provider '{}' on propertySupplierBuilder", provider);
         }
 
         propertySupplierBuilder.key(key);
-        log.atInfo().log("Set key '{}' on propertySupplierBuilder", key);
+        log.atDebug().log("Set key '{}' on propertySupplierBuilder", key);
 
         ISupplierBuilder<?, ISupplier<?>> result = (ISupplierBuilder) propertySupplierBuilder;
         log.atTrace().log("Exiting resolve with Resolved for elementType: {}", elementType.getSimpleName());

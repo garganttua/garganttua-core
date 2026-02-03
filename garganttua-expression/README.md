@@ -430,6 +430,31 @@ functionName(arg1, arg2, ...)     // Multiple arguments
 functionName(nested())            // Nested calls
 ```
 
+### Method Calls
+
+```antlr4
+:methodName()                     // No arguments
+:methodName(arg1, arg2)           // With arguments
+:methodName("literal", 42)        // Mixed argument types
+```
+
+Method calls invoke a method on the current context object. The method is resolved by name and parameter types.
+
+### Constructor Calls
+
+```antlr4
+:(ClassName.class)                // No-arg constructor
+:(ClassName.class, arg1, arg2)    // Constructor with arguments
+```
+
+Constructor calls create a new instance of the specified class using the matching constructor.
+
+### Variable References
+
+```antlr4
+@myVariable                       // Reference a named variable
+```
+
 ### Identifiers
 
 Simple identifiers are treated as string literals:
@@ -925,10 +950,9 @@ assertThrows(DslException.class, () -> {
 ## Limitations and Known Issues
 
 1. **No Operator Support**: Currently only supports function call syntax, no infix operators (`+`, `-`, `*`, `/`)
-2. **No Variable Binding**: Expressions cannot reference variables or scopes
-3. **No Control Flow**: No support for `if`, `while`, or other control structures
-4. **Limited Array Support**: Array literal syntax defined but not fully implemented
-5. **No Type Coercion**: Strict type matching required for function calls
+2. **No Control Flow**: No support for `if`, `while`, or other control structures
+3. **Limited Array Support**: Array literal syntax defined but not fully implemented
+4. **No Type Coercion**: Strict type matching required for function calls
 
 ## Integration with Other Modules
 
@@ -959,5 +983,4 @@ This module is distributed under the MIT License.
 ---
 
 **Version**: 2.0.0-ALPHA01
-**Last Updated**: December 2024
 **Maintainer**: Garganttua Team

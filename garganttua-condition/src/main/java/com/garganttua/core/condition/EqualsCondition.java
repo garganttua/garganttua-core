@@ -42,7 +42,7 @@ public class EqualsCondition<T> implements ICondition {
         log.atDebug().log("Supplier 2 provided a non-empty value");
 
         boolean result = equals(this.supplier1.supply().get(),this.supplier2.supply().get());
-        log.atInfo().log("EQUALS condition evaluation complete: {}", result);
+        log.atDebug().log("EQUALS condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

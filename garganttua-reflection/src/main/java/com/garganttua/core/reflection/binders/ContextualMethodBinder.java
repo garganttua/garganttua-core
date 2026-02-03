@@ -91,7 +91,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
                     method,
                     collection,
                     args);
-            log.atInfo().log("Successfully executed contextual method {}", method);
+            log.atDebug().log("Successfully executed contextual method {}", method);
             return result;
         } catch (SupplyException e) {
             log.atError().log("Supply error executing contextual method {}", method, e);

@@ -41,7 +41,7 @@ public class ContextElementResolver implements IElementResolver {
 
         boolean nullable = isNullable(element);
 
-        log.atInfo()
+        log.atDebug()
                 .log("Resolved context element successfully");
 
         return new Resolved(true, elementType, s, nullable);

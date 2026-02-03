@@ -13,6 +13,15 @@
       <artifactId>garganttua-bootstrap</artifactId>
       <description>Bootstrap and application initialization framework.</description>
 
+      <build>
+            <resources>
+                  <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                  </resource>
+            </resources>
+      </build>
+
       <dependencies>
             <dependency>
                   <groupId>com.garganttua.core</groupId>

@@ -22,7 +22,7 @@ public class FixedSupplier<Supplied> implements ISupplier<Supplied> {
         log.atTrace().log("Entering supply method");
         log.atDebug().log("Supplying fixed object of type {}", this.object.getClass().getSimpleName());
         Optional<Supplied> result = Optional.of(this.object);
-        log.atInfo().log("Supply completed for fixed object of type {}", this.object.getClass().getSimpleName());
+        log.atDebug().log("Supply completed for fixed object of type {}", this.object.getClass().getSimpleName());
         log.atTrace().log("Exiting supply method");
         return result;
     }

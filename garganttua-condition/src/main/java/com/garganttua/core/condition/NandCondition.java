@@ -31,7 +31,7 @@ public class NandCondition implements ICondition {
         log.atDebug().log("Evaluating NAND condition - negation of AND condition");
 
         Boolean result = nand(this.conditions);
-        log.atInfo().log("NAND condition evaluation complete: {}", result);
+        log.atDebug().log("NAND condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
     }

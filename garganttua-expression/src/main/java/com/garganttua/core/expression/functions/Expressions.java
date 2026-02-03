@@ -45,15 +45,21 @@ public class Expressions {
     // ========== Primitive Type Converters ==========
 
     /**
-     * Converts a String value to an ISupplier&lt;String&gt;.
+     * Converts any value to its String representation.
+     * Handles both direct String values and any other Object types via toString().
      *
-     * @param value the string value
-     * @return an ISupplier that supplies the string value
-     * @throws ExpressionException if value cannot be converted
+     * @param value the value to convert
+     * @return the string representation of the value, or null if value is null
      */
-    @Expression(name = "string", description = "Converts a value to a String")
-    public static String string(@Nullable String value) {
-        return value;
+    @Expression(name = "string", description = "Converts any value to its String representation")
+    public static String string(@Nullable Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String s) {
+            return s;
+        }
+        return value.toString();
     }
 
     /**
@@ -237,12 +243,52 @@ public class Expressions {
             log.atDebug().log("Loaded class: {}", className);
             return clazz;
         } catch (ClassNotFoundException e) {
+            // Try with java.lang. prefix for common classes (e.g., "String" -> "java.lang.String")
+            if (!className.contains(".")) {
+                try {
+                    Class<?> clazz = java.lang.Class.forName("java.lang." + className);
+                    log.atDebug().log("Loaded class with java.lang prefix: {}", className);
+                    return clazz;
+                } catch (ClassNotFoundException e2) {
+                    // Fall through to original error
+                }
+            }
             log.atError().log("Failed to load class: {}", className, e);
             throw new ExpressionException("Cannot load class '" + className + "': " + e.getMessage());
         }
     }
 
-    // ========== Collection Type Converters ==========
+    // ========== Arithmetic Functions ==========
+
+    @Expression(name = "increment", description = "Increments an integer value by 1")
+    public static int increment(@Nullable Object value) {
+        if (value instanceof Number n) {
+            return n.intValue() + 1;
+        }
+        if (value instanceof String s) {
+            try {
+                return java.lang.Integer.parseInt(s) + 1;
+            } catch (NumberFormatException e) {
+                throw new ExpressionException("Cannot increment non-numeric value: '" + s + "'");
+            }
+        }
+        throw new ExpressionException("Cannot increment value of type: " + (value == null ? "null" : value.getClass().getName()));
+    }
+
+    @Expression(name = "decrement", description = "Decrements an integer value by 1")
+    public static int decrement(@Nullable Object value) {
+        if (value instanceof Number n) {
+            return n.intValue() - 1;
+        }
+        if (value instanceof String s) {
+            try {
+                return java.lang.Integer.parseInt(s) - 1;
+            } catch (NumberFormatException e) {
+                throw new ExpressionException("Cannot decrement non-numeric value: '" + s + "'");
+            }
+        }
+        throw new ExpressionException("Cannot decrement value of type: " + (value == null ? "null" : value.getClass().getName()));
+    }
 
     /**
      * Private constructor to prevent instantiation.

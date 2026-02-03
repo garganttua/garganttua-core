@@ -35,7 +35,7 @@ public class ContextualSupplierBuilder<Supplied, Context> implements ISupplierBu
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building ContextualSupplier for suppliedType: {}, contextType: {}", this.suppliedType.getSimpleName(), this.contextType.getSimpleName());
         IContextualSupplier<Supplied, Context> result = new ContextualSupplier<>(this.supply, this.suppliedType, this.contextType);
-        log.atInfo().log("Build completed for ContextualSupplier of type {}", this.suppliedType.getSimpleName());
+        log.atDebug().log("Build completed for ContextualSupplier of type {}", this.suppliedType.getSimpleName());
         log.atTrace().log("Exiting build method");
         return result;
     }

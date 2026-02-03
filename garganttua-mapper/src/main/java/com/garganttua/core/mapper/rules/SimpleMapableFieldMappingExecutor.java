@@ -49,7 +49,7 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 				destination destinationObjectMapped = (destination) this.mapper.map(sourceObjectToMap, this.destinationFieldLeaf.getType());
 				log.atDebug().log("Object mapped, setting destination field");
 				ObjectReflectionHelper.setObjectFieldValue(destinationObject, this.destinationFieldLeaf, destinationObjectMapped);
-				log.atInfo().log("Mapable field mapping completed for {} -> {}", this.sourceFieldLeaf.getName(), this.destinationFieldLeaf.getName());
+				log.atDebug().log("Mapable field mapping completed for {} -> {}", this.sourceFieldLeaf.getName(), this.destinationFieldLeaf.getName());
 			} else {
 				log.atDebug().log("Source object is null, skipping mapping");
 			}

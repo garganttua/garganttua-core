@@ -114,7 +114,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
                 new BeanReference<>(this.type, Optional.ofNullable(this.strategy),
                         Optional.ofNullable(this.name), qualifiers));
 
-        log.atInfo().log("BeanSupplier built successfully for type: {}, provider: {}, name: {}",
+        log.atDebug().log("BeanSupplier built successfully for type: {}, provider: {}, name: {}",
                 this.type.getSimpleName(), this.provider, this.name);
         log.atTrace().log("Exiting build() method");
         return supplier;
