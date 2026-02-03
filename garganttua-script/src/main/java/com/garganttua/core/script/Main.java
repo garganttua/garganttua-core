@@ -12,6 +12,7 @@ import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.script.console.ScriptConsole;
 import com.garganttua.core.script.context.ScriptContext;
 
 public class Main {
@@ -20,9 +21,10 @@ public class Main {
     private static final String SHEBANG_PREFIX = "#!";
 
     public static void main(String[] args) {
+        // No arguments: start interactive console
         if (args.length == 0) {
-            printUsage();
-            System.exit(1);
+            startConsole();
+            return;
         }
 
         String firstArg = args[0];
@@ -35,6 +37,11 @@ public class Main {
         if ("--version".equals(firstArg) || "-v".equals(firstArg)) {
             System.out.println("garganttua-script " + VERSION);
             System.exit(0);
+        }
+
+        if ("--console".equals(firstArg) || "-c".equals(firstArg)) {
+            startConsole();
+            return;
         }
 
         if ("--syntax".equals(firstArg) || "-s".equals(firstArg)) {
@@ -131,28 +138,38 @@ public class Main {
         return content;
     }
 
+    private static void startConsole() {
+        ScriptConsole console = new ScriptConsole();
+        console.start();
+    }
+
     private static void printUsage() {
         System.out.println("Garganttua Script Engine " + VERSION);
         System.out.println();
-        System.out.println("Usage: garganttua-script <script.gs> [args...]");
-        System.out.println("       garganttua-script --help");
-        System.out.println("       garganttua-script --version");
-        System.out.println("       garganttua-script --man [function]");
-        System.out.println("       garganttua-script --syntax");
+        System.out.println("Usage: garganttua-script                    Start interactive console");
+        System.out.println("       garganttua-script <script.gs> [args] Execute a script file");
+        System.out.println("       garganttua-script [options]");
         System.out.println();
         System.out.println("Options:");
+        System.out.println("  -c, --console      Start interactive console (REPL)");
         System.out.println("  -h, --help         Show this help message");
         System.out.println("  -v, --version      Show version information");
         System.out.println("  -m, --man          List all available expression functions");
         System.out.println("  -m, --man <name>   Show documentation for a specific function");
-        System.out.println("  -m, --man <index>  Show documentation for function at index");
         System.out.println("  -s, --syntax       Show script syntax reference");
         System.out.println();
-        System.out.println("The script file can start with a shebang line:");
-        System.out.println("  #!/usr/bin/env garganttua-script");
+        System.out.println("Interactive Console:");
+        System.out.println("  When started without arguments, the console allows you to");
+        System.out.println("  enter script statements interactively. Type :help for commands.");
         System.out.println();
-        System.out.println("Example:");
-        System.out.println("  garganttua-script myscript.gs arg1 arg2");
+        System.out.println("Script Files:");
+        System.out.println("  Scripts can start with a shebang line:");
+        System.out.println("    #!/usr/bin/env garganttua-script");
+        System.out.println();
+        System.out.println("Examples:");
+        System.out.println("  garganttua-script                     # Start console");
+        System.out.println("  garganttua-script myscript.gs         # Run script");
+        System.out.println("  garganttua-script script.gs arg1 arg2 # Run with arguments");
     }
 
     private static IExpressionContext buildExpressionContext() {
