@@ -58,6 +58,12 @@
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-condition</artifactId>
     </dependency>
+    <!-- Mutex module for synchronized functions (test scope) -->
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-mutex</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
