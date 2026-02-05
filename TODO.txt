@@ -1,5 +1,0 @@
-0/ Créer les ContextualSupplier
-6/ Implements distributed locks and mutex system over redis in a binding module
-7/ Add built-in conditions as expression nodes
-8/ Implémenter un nativeConfigurationbuilder pour garganttua-expression
-10/ Implémenter un nativeConfigurationbuilder pour garganttua-runtime

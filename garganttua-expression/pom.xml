@@ -25,6 +25,11 @@
         </dependency>
         <dependency>
             <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-native</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-reflections</artifactId>
             <scope>test</scope>
         </dependency>
