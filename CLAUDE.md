@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Additional per-topic rules are in `.claude/rules/` (module-architecture, dependency-injection, runtime-workflow, testing, java-conventions, design-patterns, antlr-grammar) — they are auto-loaded based on file path patterns.
+
 ## Build Commands
 
 ```bash
@@ -45,6 +47,13 @@ java -jar garganttua-script/target/garganttua-script-*-executable.jar --console
 # Build native image (in application module)
 mvn package -Pnative
 ```
+
+## Build Caveats
+
+- The `garganttua-reflection` module has a pre-existing compilation issue (`FieldBinder` missing `ISupplier` import) when building from root. Use `-pl <module>` to build specific modules when the root build fails.
+- When modifying `garganttua-script` and testing from `garganttua-workflow`, you must `mvn install -pl garganttua-script -DskipTests` first so the workflow module picks up the updated JAR.
+- The shade plugin in `garganttua-script` uses `AppendingTransformer` to merge annotation index files from multiple JARs. This must be updated when adding new `@Indexed` annotations.
+- The `garganttua-annotation-processor` module disables annotation processing (`-proc:none`) to avoid self-processing.
 
 ## Architecture Overview
 
@@ -153,12 +162,23 @@ Orchestrates multi-stage workflows with annotation or programmatic definition:
 
 ## Code Conventions
 
-- Uses Lombok for boilerplate reduction (`@Getter`, `@Setter`, `@Builder`, etc.)
-- Interfaces prefixed with `I` (e.g., `IBuilder`, `ISupplier`, `IBeanProvider`)
-- Java records for immutable value objects (`BeanDefinition`, `BeanReference`)
-- `Optional<T>` for nullable/conditional values
-- Thread-safe collections via `Collections.synchronizedMap/List`
-- SLF4J for logging (`@Slf4j` Lombok annotation)
+- All modules must be thread-safe. Use `Collections.synchronizedMap/List` or concurrent collections for shared state.
+- See `.claude/rules/java-conventions.md` for full naming and style conventions.
+- Key points: Lombok for boilerplate, `I` prefix for interfaces, Java records for value objects, `Optional<T>` for nullable values, SLF4J logging via `@Slf4j`.
+
+## Cross-Module Concerns
+
+### Identifier Sanitization
+
+Variable names in generated scripts must be valid identifiers (alphanumeric + underscore). When script/stage names contain hyphens or special characters, sanitize them before constructing variable names:
+```java
+name.replaceAll("[^a-zA-Z0-9_]", "_")
+```
+Both `ScriptGenerator` and `Workflow.collectVariables()` must use the same sanitization logic for variable name lookup to match.
+
+### Annotation Processor Indexing
+
+`@Expression(name = "foo")` on a static method registers it as `foo(ParamTypes)` in the expression context. Index entries are generated at compile time into `META-INF/garganttua/index/`. New expression functions are auto-discovered when the JAR is rebuilt. The `include()` + `execute_script()` + `script_variable()` pattern is used by the workflow generator for file-based scripts.
 
 ## Module Dependencies
 
