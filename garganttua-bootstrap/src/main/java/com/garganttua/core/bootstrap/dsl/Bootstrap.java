@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -75,9 +76,9 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
 
     private static final String DEFAULT_VERSION = "2.0.0-ALPHA01";
 
-    private final Set<String> packages = new HashSet<>();
-    private final List<IBuilder<?>> builders = new ArrayList<>();
-    private final Map<Class<?>, Object> builtObjectsRegistry = new HashMap<>();
+    private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
+    private final List<IBuilder<?>> builders = Collections.synchronizedList(new ArrayList<>());
+    private final Map<Class<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
 
     // Banner configuration
     private IBanner banner;
@@ -194,12 +195,14 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
         this.packages.add(packageName);
 
         // Propagate package to all IPackageableBuilder instances
-        for (IBuilder<?> builder : this.builders) {
-            if (builder instanceof IPackageableBuilder) {
-                IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
-                packageableBuilder.withPackage(packageName);
-                log.atDebug().log("Package '{}' propagated to builder: {}",
-                        packageName, builder.getClass().getSimpleName());
+        synchronized (this.builders) {
+            for (IBuilder<?> builder : this.builders) {
+                if (builder instanceof IPackageableBuilder) {
+                    IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
+                    packageableBuilder.withPackage(packageName);
+                    log.atDebug().log("Package '{}' propagated to builder: {}",
+                            packageName, builder.getClass().getSimpleName());
+                }
             }
         }
 
@@ -226,8 +229,10 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
 
         if (builder instanceof IPackageableBuilder && !this.packages.isEmpty()) {
             IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
-            for (String packageName : this.packages) {
-                packageableBuilder.withPackage(packageName);
+            synchronized (this.packages) {
+                for (String packageName : this.packages) {
+                    packageableBuilder.withPackage(packageName);
+                }
             }
             log.atDebug().log("Propagated {} packages to builder: {}",
                     this.packages.size(), builder.getClass().getSimpleName());

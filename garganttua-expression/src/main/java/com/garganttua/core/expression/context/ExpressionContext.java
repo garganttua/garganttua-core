@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStreams;
@@ -29,25 +30,18 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
 
-    private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
+    private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();
 
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         log.atTrace().log("Entering ExpressionContext constructor");
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");
 
-        // Convert to map with merge function to handle duplicates
+        // Populate ConcurrentHashMap with merge function to handle duplicates
         // Duplicates can occur when the same method is registered multiple times
         // (e.g., through auto-detection and manual registration)
-        this.nodeFactories = nodeFactories.stream()
-                .collect(Collectors.toMap(
-                        IExpressionNodeFactory::key,
-                        ef -> ef,
-                        (existing, duplicate) -> {
-                            log.atWarn().log(
-                                    "Duplicate factory key detected: {}. Keeping first factory, ignoring duplicate.",
-                                    existing.key());
-                            return existing; // Keep the first factory, ignore duplicates
-                        }));
+        for (IExpressionNodeFactory<?, ? extends ISupplier<?>> ef : nodeFactories) {
+            this.nodeFactories.putIfAbsent(ef.key(), ef);
+        }
 
         log.atDebug().log("ExpressionContext initialized with {} unique node factories (from {} total provided)",
                 this.nodeFactories.size(), nodeFactories.size());

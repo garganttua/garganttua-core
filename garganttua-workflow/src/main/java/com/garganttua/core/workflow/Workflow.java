@@ -64,8 +64,8 @@ public class Workflow implements IWorkflow {
             IInjectionContext injectionContext, boolean inlineAll) {
         this.name = name;
         this.generatedScript = generatedScript;
-        this.stages = stages;
-        this.presetVariables = presetVariables;
+        this.stages = List.copyOf(stages);
+        this.presetVariables = Map.copyOf(presetVariables);
         this.expressionContext = expressionContext;
         this.injectionContext = injectionContext;
         this.inlineAll = inlineAll;

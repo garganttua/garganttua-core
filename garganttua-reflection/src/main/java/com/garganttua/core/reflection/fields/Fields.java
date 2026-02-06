@@ -4,7 +4,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Fields {
 
 	public static class BlackList {
-		private static List<Class<?>> blackList = new ArrayList<>();
+		private static List<Class<?>> blackList = new CopyOnWriteArrayList<>();
 
 		public static void addClassToBlackList(Class<?> clazz) {
 			log.atDebug().log("Adding class {} to blacklist", clazz.getName());

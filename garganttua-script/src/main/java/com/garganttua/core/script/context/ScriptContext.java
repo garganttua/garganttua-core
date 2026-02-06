@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,14 +34,14 @@ public class ScriptContext implements IScript {
     private final IExpressionContext expressionContext;
     private final IInjectionContext injectionContext;
     private final IBoostrap bootstrap;
-    private String scriptSource;
-    private IRuntime<Object[], Object> runtime;
-    private Map<String, Object> lastVariables = Map.of();
-    private Object lastOutput = null;
-    private Throwable lastException = null;
-    private boolean aborted = false;
-    private final Map<String, Object> initialVariables = new HashMap<>();
-    private final Map<String, IScript> includedScripts = new HashMap<>();
+    private volatile String scriptSource;
+    private volatile IRuntime<Object[], Object> runtime;
+    private volatile Map<String, Object> lastVariables = Map.of();
+    private volatile Object lastOutput = null;
+    private volatile Throwable lastException = null;
+    private volatile boolean aborted = false;
+    private final Map<String, Object> initialVariables = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, IScript> includedScripts = new ConcurrentHashMap<>();
 
     /**
      * Creates a new ScriptContext with expression and injection contexts.

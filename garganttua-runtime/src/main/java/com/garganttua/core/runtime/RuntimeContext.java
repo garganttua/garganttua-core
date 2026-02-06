@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,8 +44,8 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Getter
     private final Class<OutputType> outputType;
     private OutputType output;
-    private final Map<String, ISupplier<?>> presetVariables = new HashMap<>();
-    private final Map<String, Object> variables = new HashMap<>();
+    private final Map<String, ISupplier<?>> presetVariables = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Object> variables = Collections.synchronizedMap(new HashMap<>());
     private Instant start;
     private Instant stop;
     private long startNano;
@@ -54,7 +55,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     private final IInjectionContext delegateContext;
 
     private final Object lifecycleMutex = new Object();
-    private final Set<RuntimeExceptionRecord> recordedException = new HashSet<>();
+    private final Set<RuntimeExceptionRecord> recordedException = Collections.synchronizedSet(new HashSet<>());
 
     public RuntimeContext(IInjectionContext parent, InputType input, Class<OutputType> outputType,
             Map<String, ISupplier<?>> presetVariables, UUID uuid) {
@@ -76,8 +77,12 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         wrapLifecycle(this::ensureStopped, RuntimeException.class);
         wrapLifecycle(this::ensureNotFlushed, RuntimeException.class);
 
+        Set<RuntimeExceptionRecord> exceptionsCopy;
+        synchronized (this.recordedException) {
+            exceptionsCopy = Set.copyOf(this.recordedException);
+        }
         IRuntimeResult<InputType, OutputType> result = new RuntimeResult<>(uuid, input, output, start, stop, startNano,
-                stopNano, code, this.recordedException, Map.copyOf(this.variables));
+                stopNano, code, exceptionsCopy, Map.copyOf(this.variables));
         log.atDebug().log("[RuntimeContext.getResult] Returning result with uuid={}, code={}", uuid, code);
         return result;
     }
@@ -415,13 +420,17 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public Optional<RuntimeExceptionRecord> findException(RuntimeExceptionRecord pattern) {
         log.atTrace().log("[RuntimeContext.findException] Searching exception matching {}", pattern);
-        return this.recordedException.stream().filter(e -> e.matches(pattern)).findAny();
+        synchronized (this.recordedException) {
+            return this.recordedException.stream().filter(e -> e.matches(pattern)).findAny();
+        }
     }
 
     @Override
     public Optional<RuntimeExceptionRecord> findAbortingExceptionReport() {
         log.atTrace().log("[RuntimeContext.findAbortingExceptionReport] Searching for aborting exception report");
-        return this.recordedException.stream().filter(e -> e.hasAborted()).findAny();
+        synchronized (this.recordedException) {
+            return this.recordedException.stream().filter(e -> e.hasAborted()).findAny();
+        }
     }
 
     @Override

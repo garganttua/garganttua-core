@@ -6,11 +6,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InjectableElementResolver implements IInjectableElementResolver {
 
-    private Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
+    private Map<Class<? extends Annotation>, IElementResolver> resolvers = new ConcurrentHashMap<>();
 
     public InjectableElementResolver(Map<Class<? extends Annotation>, IElementResolver> resolvers) {
         log.atTrace().log("Entering InjectableElementResolver constructor with resolvers map: {}", resolvers);
