@@ -2,6 +2,7 @@ package com.garganttua.core.workflow.dsl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
 
     private String name = "unnamed-workflow";
-    private final Map<String, Object> presetVariables = new HashMap<>();
+    private final Map<String, Object> presetVariables = new LinkedHashMap<>();
     private final List<WorkflowStage> stages = new ArrayList<>();
     private IExpressionContext expressionContext;
     private IInjectionContext injectionContext;
@@ -109,7 +110,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
                 name,
                 generatedScript,
                 new ArrayList<>(stages),
-                new HashMap<>(presetVariables),
+                new LinkedHashMap<>(presetVariables),
                 expressionContext,
                 injectionContext,
                 inlineAll);
@@ -576,7 +577,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         return new WorkflowDescriptor(
                 name,
                 inlineAll,
-                new HashMap<>(presetVariables),
+                new LinkedHashMap<>(presetVariables),
                 stageDescriptors);
     }
 }

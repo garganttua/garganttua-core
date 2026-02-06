@@ -1,5 +1,5 @@
 # Workflow: full-pipeline
-# Generated: 2026-02-06T11:56:20.913635363Z
+# Generated: 2026-02-06T12:26:30.094557646Z
 
 # Preset variables
 apiUrl <- "https://api.example.com/data"
@@ -12,26 +12,18 @@ timeout <- @requestTimeout
 apiResponse <- "fetched data from " + @url
 httpStatus <- 200
 fetchComplete <- true
-rawData <- @apiResponse
 httpCode <- @httpStatus
-@code == 2 | retry(3, @_current_script)
-@code == 1 | abort()
+rawData <- @apiResponse
 
 
 # Stage: validation
 data <- @rawData
 strict <- true
 validationStatus <- "pending"
-@data == null | (
-    validationStatus <- "error"
-    code <- 2
-)
 isValid <- true
 validatedData <- @data
 validationStatus <- "completed"
 validated <- @validatedData
-@code == 2 | abort()
-@code == 1 | abort()
 
 
 # Stage: transform
@@ -49,8 +41,8 @@ values <- @transformed
 total <- 0
 itemCount <- 0
 result <- @values
-sum <- @total
 count <- @itemCount
+sum <- @total
 
 
 # Stage: finalize

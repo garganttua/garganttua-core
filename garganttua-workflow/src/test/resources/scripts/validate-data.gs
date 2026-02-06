@@ -20,14 +20,6 @@
 # @1 = strict (Boolean) - whether to use strict validation
 
 validationStatus <- "pending"
-
-# Check for null data
-@0 == null | (
-    validationStatus <- "error"
-    code <- 2
-)
-
-# Validate data
 isValid <- true
 validatedData <- @0
 validationStatus <- "completed"

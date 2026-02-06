@@ -1,6 +1,7 @@
 package com.garganttua.core.workflow.dsl;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.garganttua.core.dsl.DslException;
@@ -21,7 +22,7 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
     private boolean inline = false;
     private String catchExpression;
     private String catchDownstreamExpression;
-    private final Map<String, String> inputs = new HashMap<>();
+    private final Map<String, String> inputs = new LinkedHashMap<>();
     private final Map<String, String> outputs = new HashMap<>();
     private final Map<Integer, CodeAction> codeActions = new HashMap<>();
 
@@ -94,7 +95,7 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
                 .inline(inline)
                 .catchExpression(catchExpression)
                 .catchDownstreamExpression(catchDownstreamExpression)
-                .inputs(new HashMap<>(inputs))
+                .inputs(new LinkedHashMap<>(inputs))
                 .outputs(new HashMap<>(outputs))
                 .codeActions(new HashMap<>(codeActions))
                 .build();
