@@ -209,6 +209,17 @@ Exception Classes:
 - `RuntimeException` - Base exception for runtime errors
 - `RuntimeExceptionRecord` - Records exception information
 
+**workflow** - Workflow orchestration interfaces
+- `IWorkflow` - Workflow execution interface with `execute()` and `getGeneratedScript()` methods
+- `WorkflowResult` - Execution result record with success status, exit code, variables, stage outputs, and timing
+- `WorkflowInput` - Input payload record with parameters
+- `WorkflowExecutionOptions` - Runtime stage filtering (startFrom, stopAfter, skipStages)
+- `WorkflowDescriptor` - Structured workflow metadata for introspection
+
+**script** - Script engine interfaces
+- `IScript` - Script loading, compilation, and execution interface
+- `ScriptException` - Exception hierarchy for script errors
+
 ### Placeholder Packages
 
 **binding** - Reserved for future binding utilities

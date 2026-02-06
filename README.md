@@ -11,10 +11,12 @@ If you need additional information, code snippets, examples, or further explanat
 
 ## 🎯 Key Features
 
-- **Modular Architecture** - 18 independent modules, each solving a specific technical concern
+- **Modular Architecture** - 20+ independent modules, each solving a specific technical concern
 - **Dependency Injection** - Lightweight IoC container with context management and bean lifecycle
 - **Runtime Workflows** - Sophisticated orchestration engine with steps and exception handling
-- **Script Engine** - Scripting language for composing runtime steps with control flow and exception handling
+- **Script Engine** - Scripting language with REPL console, retry logic, synchronization, and expression evaluation
+- **Workflow Orchestration** - High-level DSL for composing multi-stage pipelines with script generation
+- **Compile-Time Indexing** - Annotation processor for zero-overhead annotation discovery at startup
 - **Advanced Reflection** - Type-safe reflection utilities with annotation scanning and dynamic binding
 - **Declarative DSL** - Fluent builder APIs for creating domain-specific languages
 - **Condition Engine** - Expressive DSL for defining and evaluating complex runtime conditions
@@ -81,9 +83,11 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-native-image-maven-plugin**](./garganttua-native-image-maven-plugin/README.md) | Maven plugin to build native images (GraalVM support). |
 | \|- [**garganttua-reflection**](./garganttua-reflection/README.md) | Advanced reflection utilities for classes, methods, and annotations. |
 | \|- [**garganttua-runtime**](./garganttua-runtime/README.md) | Runtime context management and lifecycle orchestration. |
-| \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
+| \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with REPL console, variables, control flow, and expression evaluation. |
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
+| \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | High-level workflow orchestration DSL with multi-stage pipeline composition and script generation. |
+| \|- [**garganttua-annotation-processor**](./garganttua-annotation-processor/README.md) | Compile-time annotation indexing for zero-overhead annotation discovery at runtime. |
 
 
 
@@ -121,7 +125,9 @@ These modules implement the primary framework capabilities:
 
 - **[garganttua-expression](./garganttua-expression/README.md)** - ANTLR4-based expression language supporting function calls, method invocations, constructors, and type-safe evaluation with supplier integration.
 
-- **[garganttua-script](./garganttua-script/README.md)** - Scripting language engine for composing runtime steps with variable assignment, exception handling, conditional pipes, and expression evaluation.
+- **[garganttua-script](./garganttua-script/README.md)** - Scripting language engine with interactive REPL console, retry logic, synchronization primitives, and composable runtime steps with exception handling.
+
+- **[garganttua-workflow](./garganttua-workflow/README.md)** - High-level orchestration DSL for composing multi-stage pipelines. Generates Garganttua Script code from a fluent builder API with automatic variable management, input/output mapping, and runtime stage filtering.
 
 ### Utility Modules
 
@@ -143,9 +149,13 @@ Modules providing integration with external frameworks and tools:
 
 Modules for build-time tooling and native compilation:
 
+- **[garganttua-annotation-processor](./garganttua-annotation-processor/README.md)** - Compile-time annotation indexing processor. Generates index files in `META-INF/garganttua/index/` for zero-overhead annotation discovery at runtime, replacing expensive classpath scanning.
+
 - **[garganttua-native](./garganttua-native/README.md)** - Low-level native integrations and system abstractions for platform-specific functionality.
 
 - **[garganttua-native-image-maven-plugin](./garganttua-native-image-maven-plugin/README.md)** - Maven plugin for building GraalVM native images with automatic reflection configuration generation.
+
+- **[garganttua-script-maven-plugin](./garganttua-script-maven-plugin/README.md)** - Maven plugin for packaging JARs for dynamic inclusion in scripts via `include()`.
 
 ## 🚀 Quick Start
 
@@ -297,10 +307,11 @@ The module dependency structure follows these principles:
 ### Dependency Layers
 
 1. **Foundation Layer** - commons, dsl, supply, lifecycle
-2. **Infrastructure Layer** - reflection, condition, execution
+2. **Infrastructure Layer** - reflection, condition, execution, annotation-processor
 3. **Framework Layer** - injection, runtime, mapper, expression
-4. **Integration Layer** - bindings (reflections, spring)
-5. **Build Layer** - native, native-image-maven-plugin
+4. **Application Layer** - script, workflow
+5. **Integration Layer** - bindings (reflections, spring)
+6. **Build Layer** - native, native-image-maven-plugin, script-maven-plugin
 
 <!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-START -->
 ```mermaid
@@ -328,6 +339,8 @@ graph TD
     garganttua-script-maven-plugin["garganttua-script-maven-plugin"]
     garganttua-spring["garganttua-spring"]
     garganttua-supply["garganttua-supply"]
+    garganttua-workflow["garganttua-workflow"]
+    garganttua-annotation-processor["garganttua-annotation-processor"]
 
     garganttua-reflection --> garganttua-commons
     garganttua-reflection --> garganttua-supply
@@ -388,6 +401,12 @@ graph TD
     garganttua-supply --> garganttua-commons
     garganttua-supply --> garganttua-dsl
     garganttua-execution --> garganttua-commons
+    garganttua-workflow --> garganttua-commons
+    garganttua-workflow --> garganttua-script
+    garganttua-workflow --> garganttua-dsl
+    garganttua-workflow --> garganttua-expression
+    garganttua-workflow --> garganttua-injection
+    garganttua-annotation-processor --> garganttua-commons
 ```
 <!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-STOP -->
 
@@ -429,9 +448,10 @@ graph TD
 3. **Add Execution** - Chain executors for sequential processing with fallbacks.
 4. **Introduce Conditions** - Define business rules declaratively with the condition DSL.
 5. **Build Workflows** - Orchestrate complex processes with the runtime module.
-6. **Write Scripts** - Compose runtime steps using the scripting language.
-7. **Integrate Bindings** - Connect with Spring or use advanced reflection features.
-8. **Optimize with Native** - Compile to native images for production deployment.
+6. **Write Scripts** - Compose runtime steps using the scripting language and REPL console.
+7. **Build Workflows** - Orchestrate multi-stage pipelines with the workflow DSL.
+8. **Integrate Bindings** - Connect with Spring or use advanced reflection features.
+9. **Optimize with Native** - Compile to native images for production deployment.
 
 ## 🛠️ Development
 
