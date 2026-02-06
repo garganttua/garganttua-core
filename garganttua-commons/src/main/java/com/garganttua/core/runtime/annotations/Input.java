@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a parameter to inject the runtime input.
@@ -59,6 +60,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see Context
  * @see com.garganttua.core.runtime.IRuntimeContext#getInput()
  */
+@Indexed
 @Native
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

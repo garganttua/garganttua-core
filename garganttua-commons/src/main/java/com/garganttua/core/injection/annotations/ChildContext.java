@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Annotation to mark a class as a child context factory for automatic registration.
@@ -43,6 +44,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.injection.IInjectionChildContextFactory
  * @see com.garganttua.core.injection.IInjectionContext#registerChildContextFactory
  */
+@Indexed
 @Native
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

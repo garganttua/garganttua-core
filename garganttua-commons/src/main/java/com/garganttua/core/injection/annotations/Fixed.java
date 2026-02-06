@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Injects a fixed literal value into a field or parameter.
@@ -62,6 +63,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @since 2.0.0-ALPHA01
  * @see Property
  */
+@Indexed
 @Native
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

@@ -29,9 +29,15 @@
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-injection</artifactId>
     </dependency>
+    <!-- Reflections only needed for tests (runtime annotation scanning) -->
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-reflections</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-annotation-processor</artifactId>
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
@@ -62,7 +68,12 @@
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-mutex</artifactId>
-      <scope>test</scope>
+    </dependency>
+    <!-- JLine for terminal handling with history support -->
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline</artifactId>
+      <version>${jline.version}</version>
     </dependency>
   </dependencies>
 
@@ -125,6 +136,13 @@
                   <mainClass>com.garganttua.core.script.Main</mainClass>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <!-- Merge annotation index files from all JARs -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
+                </transformer>
               </transformers>
               <filters>
                 <filter>
@@ -147,6 +165,77 @@
   </build>
 
   <profiles>
+    <!-- Debug/Profiling profile -->
+    <profile>
+      <id>debug</id>
+      <build>
+        <resources>
+          <!-- Include debug logback configuration -->
+          <resource>
+            <directory>src/main/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+              <include>logback-debug.xml</include>
+            </includes>
+          </resource>
+          <resource>
+            <directory>src/main/resources</directory>
+            <filtering>false</filtering>
+            <excludes>
+              <exclude>logback.xml</exclude>
+            </excludes>
+          </resource>
+        </resources>
+        <plugins>
+          <!-- Rename logback-debug.xml to logback.xml in the JAR -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>rename-debug-logback</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.outputDirectory}/logback-debug.xml"
+                          tofile="${project.build.outputDirectory}/logback.xml"
+                          overwrite="true"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Create debug distribution archive -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>${maven.assembly.plugin.version}</version>
+            <executions>
+              <execution>
+                <id>create-debug-distribution</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <descriptors>
+                    <descriptor>src/main/resources/assembly/debug-distribution.xml</descriptor>
+                  </descriptors>
+                  <finalName>garganttua-script-${project.version}</finalName>
+                  <appendAssemblyId>true</appendAssemblyId>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <!-- Linux installer profile -->
     <profile>
       <id>linux-installer</id>

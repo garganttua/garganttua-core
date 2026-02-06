@@ -116,6 +116,76 @@ class ScriptIncludeTest {
         assertTrue(code == 400 || code == 50 || code == 0);
     }
 
+    // ---- execute_script and script_variable ----
+
+    @Test
+    void testIncludeReturnsScriptName() throws IOException {
+        File subScript = tempDir.resolve("my-script.gs").toFile();
+        Files.writeString(subScript.toPath(), "\"done\" -> 0");
+
+        String mainSource = String.format("""
+                ref <- include("%s") -> 100
+                """, subScript.getAbsolutePath().replace("\\", "\\\\"));
+
+        IScript s = createScript(mainSource);
+        int code = s.execute();
+        assertEquals(100, code);
+        // include() for .gs files should return the script name (without extension)
+        assertEquals("my-script", s.getVariable("ref", String.class).orElse(null));
+    }
+
+    @Test
+    void testExecuteScriptWithArguments() throws IOException {
+        // Child script uses positional args @0 and @1
+        File subScript = tempDir.resolve("adder.gs").toFile();
+        Files.writeString(subScript.toPath(), """
+                result <- concatenate(@0, "-", @1) -> 0
+                """);
+
+        String mainSource = String.format("""
+                ref <- include("%s")
+                code <- execute_script(@ref, "hello", "world") -> 200
+                """, subScript.getAbsolutePath().replace("\\", "\\\\"));
+
+        IScript s = createScript(mainSource);
+        int code = s.execute();
+        assertEquals(200, code);
+        assertEquals(0, s.getVariable("code", Integer.class).orElse(null));
+    }
+
+    @Test
+    void testScriptVariable() throws IOException {
+        File subScript = tempDir.resolve("producer.gs").toFile();
+        Files.writeString(subScript.toPath(), """
+                myOutput <- "produced-value" -> 0
+                """);
+
+        String mainSource = String.format("""
+                ref <- include("%s")
+                execute_script(@ref)
+                extracted <- script_variable(@ref, "myOutput") -> 300
+                """, subScript.getAbsolutePath().replace("\\", "\\\\"));
+
+        IScript s = createScript(mainSource);
+        int code = s.execute();
+        assertEquals(300, code);
+        assertEquals("produced-value", s.getVariable("extracted", String.class).orElse(null));
+    }
+
+    @Test
+    void testExecuteScriptNonExistentThrows() {
+        IScript s = createScript("execute_script(\"nonexistent\")");
+        int code = s.execute();
+        assertEquals(50, code);
+    }
+
+    @Test
+    void testScriptVariableNonExistentScriptThrows() {
+        IScript s = createScript("script_variable(\"nonexistent\", \"var\")");
+        int code = s.execute();
+        assertEquals(50, code);
+    }
+
     @Test
     void testMultipleIncludesAndCalls() throws IOException {
         File script1 = tempDir.resolve("alpha.gs").toFile();

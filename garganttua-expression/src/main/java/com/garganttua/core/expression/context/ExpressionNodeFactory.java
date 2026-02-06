@@ -88,6 +88,11 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     private final Method method;
     private final Class<?>[] parameterTypes;
     private final List<Boolean> nullableParameters;
+    /**
+     * Indicates which parameters are "lazy" - i.e., they expect an ISupplier
+     * and the argument expression should NOT be evaluated before being passed.
+     */
+    private final List<Boolean> lazyParameters;
     @SuppressWarnings("java:S1068") // Field kept for API compatibility
     private final ObjectAddress methodAddress;
 
@@ -141,6 +146,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         this.parameterTypes = this.method.getParameterTypes();
         this.nullableParameters = Objects.requireNonNull(nullableParameters,
                 "Nullable parameters list cannot be null");
+        this.lazyParameters = detectLazyParameters();
 
         validateParameterConfiguration();
 
@@ -171,6 +177,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         this.methodAddress = methodAddr;
         this.parameterTypes = new Class<?>[0];
         this.nullableParameters = List.of();
+        this.lazyParameters = List.of();
     }
 
     // ========== Public Methods ==========
@@ -186,6 +193,11 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
      * keeping the first factory registered.
      * </p>
      *
+     * <p>
+     * For lazy parameters (parameters expecting ISupplier), the key uses "ISupplier"
+     * to indicate that any expression type can be passed and will be wrapped lazily.
+     * </p>
+     *
      * @return a string in the format "name(Type1,Type2,...)"
      */
     @Override
@@ -197,7 +209,12 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             if (i > 0) {
                 key.append(",");
             }
-            key.append(this.parameterTypes[i].getSimpleName());
+            // For lazy parameters, use "ISupplier" in the key to indicate any type is accepted
+            if (isLazyParameter(i)) {
+                key.append("ISupplier");
+            } else {
+                key.append(this.parameterTypes[i].getSimpleName());
+            }
         }
 
         key.append(")");
@@ -267,7 +284,8 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 getExecutableReference(),
                 this::bindNode,
                 getReturnType(),
-                context.parameters());
+                context.parameters(),
+                this.lazyParameters);
     }
 
     /**
@@ -282,7 +300,8 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 getExecutableReference(),
                 (c, params) -> this.bindContextualNode(params),
                 getReturnType(),
-                context.parameters());
+                context.parameters(),
+                this.lazyParameters);
     }
 
     // ========== Private Binding Methods ==========
@@ -333,6 +352,9 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     /**
      * Encapsulates parameters with nullable wrappers based on configuration.
      *
+     * <p>For lazy parameters (expecting ISupplier), the supplier is wrapped in another
+     * supplier so that the method receives the ISupplier itself, not the evaluated result.</p>
+     *
      * @param parameters the parameters to encapsulate
      * @return a list of encapsulated suppliers
      */
@@ -340,8 +362,21 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         List<ISupplier<?>> encapsulated = new ArrayList<>(parameters.length);
 
         for (int i = 0; i < parameters.length; i++) {
+            boolean isLazy = isLazyParameter(i);
             ISupplier<?> supplier = null;
-            if (!(parameters[i] instanceof ISupplier<?>)) {
+
+            if (isLazy) {
+                // For lazy parameters, the method expects an ISupplier
+                if (parameters[i] instanceof ISupplier<?> lazySupplier) {
+                    // Already an ISupplier (from expression node) - wrap it so method receives the ISupplier
+                    supplier = new FixedSupplierBuilder<>(lazySupplier).build();
+                    log.atTrace().log("Encapsulating lazy parameter {} as ISupplier wrapper", i);
+                } else {
+                    // Not an ISupplier (e.g., string literal) - wrap in ISupplier so method can call supply()
+                    supplier = new FixedSupplierBuilder<>(createLiteralSupplier(parameters[i])).build();
+                    log.atTrace().log("Encapsulating lazy parameter {} as literal ISupplier wrapper", i);
+                }
+            } else if (!(parameters[i] instanceof ISupplier<?>)) {
                 supplier = new FixedSupplierBuilder<>(parameters[i]).build();
             } else {
                 supplier = (ISupplier<?>) parameters[i];
@@ -352,6 +387,27 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         }
 
         return encapsulated;
+    }
+
+    /**
+     * Creates an ISupplier that wraps a literal value.
+     * Used when a lazy parameter receives a non-expression value (like a string literal).
+     *
+     * @param value the literal value to wrap
+     * @return an ISupplier that returns the value
+     */
+    private ISupplier<?> createLiteralSupplier(Object value) {
+        return new ISupplier<Object>() {
+            @Override
+            public Optional<Object> supply() {
+                return Optional.ofNullable(value);
+            }
+
+            @Override
+            public java.lang.reflect.Type getSuppliedType() {
+                return value == null ? Object.class : value.getClass();
+            }
+        };
     }
 
     /**
@@ -379,6 +435,41 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             log.atError().log(errorMsg);
             throw new ExpressionException(errorMsg);
         }
+    }
+
+    /**
+     * Detects which parameters are "lazy" - i.e., they expect an ISupplier
+     * and the argument expression should NOT be evaluated before being passed.
+     *
+     * @return a list of booleans indicating which parameters are lazy
+     */
+    private List<Boolean> detectLazyParameters() {
+        List<Boolean> lazy = new ArrayList<>(this.parameterTypes.length);
+        for (Class<?> paramType : this.parameterTypes) {
+            // A parameter is lazy if it expects an ISupplier
+            lazy.add(ISupplier.class.isAssignableFrom(paramType));
+        }
+        log.atTrace().log("Detected lazy parameters for {}: {}", this.method.getName(), lazy);
+        return lazy;
+    }
+
+    /**
+     * Returns whether the parameter at the given index is lazy.
+     *
+     * @param index the parameter index
+     * @return true if the parameter is lazy
+     */
+    public boolean isLazyParameter(int index) {
+        return index >= 0 && index < lazyParameters.size() && Boolean.TRUE.equals(lazyParameters.get(index));
+    }
+
+    /**
+     * Returns the list of lazy parameter flags.
+     *
+     * @return list of booleans indicating which parameters are lazy
+     */
+    public List<Boolean> getLazyParameters() {
+        return lazyParameters;
     }
 
     // ========== Inner Classes ==========

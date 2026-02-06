@@ -241,28 +241,56 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitVariableReference(
                 ExpressionParser.VariableReferenceContext ctx) {
-            // Handle both @IDENTIFIER (variable) and @INT_LITERAL (argument index)
+            // Handle @IDENTIFIER (variable), @INT_LITERAL (argument index), and .IDENTIFIER (eager evaluation)
             final String varName;
-            if (ctx.IDENTIFIER() != null) {
+            final boolean eagerEval;
+
+            String text = ctx.getText();
+            if (text.startsWith(".") && ctx.IDENTIFIER() != null) {
+                // Eager evaluation: .varName - evaluate stored expression immediately
                 varName = ctx.IDENTIFIER().getText();
+                eagerEval = true;
+                log.atDebug().log("Visiting eager variable reference: .{}", varName);
+            } else if (ctx.IDENTIFIER() != null) {
+                varName = ctx.IDENTIFIER().getText();
+                eagerEval = false;
                 log.atDebug().log("Visiting variable reference: @{}", varName);
             } else if (ctx.INT_LITERAL() != null) {
                 // Argument index - prefix with "$" to distinguish from variables
                 varName = "$" + ctx.INT_LITERAL().getText();
+                eagerEval = false;
                 log.atDebug().log("Visiting argument reference: @{}", ctx.INT_LITERAL().getText());
             } else {
                 throw new ExpressionException("Invalid variable reference: " + ctx.getText());
             }
-            return new ExpressionNode<>("@" + varName, (params) -> {
+
+            String nodeName = eagerEval ? "." + varName : "@" + varName;
+            return new ExpressionNode<>(nodeName, (params) -> {
                 return new ISupplier<Object>() {
                     @Override
                     public java.util.Optional<Object> supply() throws com.garganttua.core.supply.SupplyException {
                         IExpressionVariableResolver resolver = ExpressionVariableContext.get();
                         if (resolver == null) {
                             throw new com.garganttua.core.supply.SupplyException(
-                                    "No variable resolver available for @" + varName);
+                                    "No variable resolver available for " + nodeName);
                         }
-                        return resolver.resolve(varName, Object.class);
+                        java.util.Optional<Object> resolved = resolver.resolve(varName, Object.class);
+
+                        if (eagerEval && resolved.isPresent()) {
+                            Object value = resolved.get();
+                            // If value is a supplier (stored expression), evaluate it
+                            if (value instanceof ISupplier<?> supplier) {
+                                log.atTrace().log("Eager evaluating supplier for .{}", varName);
+                                return supplier.supply().map(r -> (Object) r);
+                            }
+                            // If value is an IExpression, evaluate it
+                            if (value instanceof IExpression<?, ?> expr) {
+                                log.atTrace().log("Eager evaluating expression for .{}", varName);
+                                ISupplier<?> supplier = expr.evaluate();
+                                return supplier.supply().map(r -> (Object) r);
+                            }
+                        }
+                        return resolved;
                     }
 
                     @Override
@@ -653,6 +681,10 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             }
 
             // Search for compatible factory with type matching
+            // First pass: look for exact matches or narrowing (argType extends factoryParamType)
+            IExpressionNodeFactory<?, ? extends ISupplier<?>> bestMatch = null;
+            int bestScore = -1;
+
             for (Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry : nodeFactories.entrySet()) {
                 String key = entry.getKey();
                 if (!key.startsWith(prefix)) continue;
@@ -663,27 +695,47 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
                 if (keyArity != arity) continue;
 
-                // Check if all argument types are assignable to factory parameter types
+                // Check if all argument types are compatible with factory parameter types
                 boolean compatible = true;
+                int score = 0; // Higher score = better match
                 for (int i = 0; i < keyArity && compatible; i++) {
-                    Class<?> factoryParamType = resolveSimpleTypeName(paramTypeNames[i].trim());
+                    String paramTypeName = paramTypeNames[i].trim();
+
+                    // Special handling for ISupplier (lazy) parameters - they accept any type
+                    if ("ISupplier".equals(paramTypeName)) {
+                        // ISupplier parameters accept any argument type (they'll be wrapped lazily)
+                        // Score 3 for ISupplier match (high priority for lazy evaluation)
+                        score += 3;
+                        continue;
+                    }
+
+                    Class<?> factoryParamType = resolveSimpleTypeName(paramTypeName);
                     if (factoryParamType == null) {
                         compatible = false;
-                    } else if (!factoryParamType.isAssignableFrom(argTypes[i])) {
-                        // Also check primitive/wrapper compatibility
-                        if (!isPrimitiveCompatible(factoryParamType, argTypes[i])) {
-                            compatible = false;
-                        }
+                    } else if (argTypes[i] == Object.class) {
+                        // Object type from variable reference - compatible with any parameter type
+                        // Score 0 for Object (lowest priority)
+                        score += 0;
+                    } else if (factoryParamType.isAssignableFrom(argTypes[i])) {
+                        // Exact match or argType is subtype of factoryParamType
+                        // Score 2 for exact match, 1 for subtype
+                        score += (factoryParamType == argTypes[i]) ? 2 : 1;
+                    } else if (isPrimitiveCompatible(factoryParamType, argTypes[i])) {
+                        // Primitive/wrapper compatibility
+                        score += 2;
+                    } else {
+                        compatible = false;
                     }
                 }
 
-                if (compatible) {
-                    log.atDebug().log("Found compatible factory via type matching: {} for {}({})",
-                            key, functionName, java.util.Arrays.toString(argTypes));
-                    return entry.getValue();
+                if (compatible && score > bestScore) {
+                    bestScore = score;
+                    bestMatch = entry.getValue();
+                    log.atDebug().log("Found compatible factory via type matching: {} (score={}) for {}({})",
+                            key, score, functionName, java.util.Arrays.toString(argTypes));
                 }
             }
-            return null;
+            return bestMatch;
         }
 
         /**

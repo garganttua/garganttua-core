@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionContext;
@@ -66,6 +67,7 @@ public class ExpressionContextBuilder
 
     private final Set<String> packages = new HashSet<>();
     private final Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
+    private Set<IBuilderObserver<IExpressionContextBuilder, IExpressionContext>> observers = new HashSet<>();
 
     protected ExpressionContextBuilder() {
         super(Set.of(IInjectionContextBuilder.class), Set.of());
@@ -81,6 +83,33 @@ public class ExpressionContextBuilder
     public static ExpressionContextBuilder builder() {
         log.atTrace().log("Creating new ExpressionBuilder");
         return new ExpressionContextBuilder();
+    }
+
+    @Override
+    public IExpressionContextBuilder observer(IBuilderObserver<IExpressionContextBuilder, IExpressionContext> observer) {
+        log.atTrace().log("Entering observer(observer={})", observer);
+        Objects.requireNonNull(observer, "Observer cannot be null");
+
+        this.observers.add(observer);
+        log.atDebug().log("Added observer: {}", observer);
+
+        // If context is already built, notify the observer immediately
+        if (this.built != null) {
+            observer.handle(this.built);
+            log.atDebug().log("Context already built, immediately notified observer: {}", observer);
+        }
+
+        log.atTrace().log("Exiting observer");
+        return this;
+    }
+
+     private void notifyObservers(IExpressionContext built) {
+        log.atTrace().log("Entering notifyObserver(built={})", built);
+        this.observers.parallelStream().forEach(observer -> {
+            observer.handle(built);
+            log.atDebug().log("Notified observer: {}", observer);
+        });
+        log.atTrace().log("Exiting notifyObserver");
     }
 
     @Override
@@ -136,6 +165,8 @@ public class ExpressionContextBuilder
 
         ExpressionContext context = new ExpressionContext(builtNodes);
         futur.complete(context);
+
+        this.notifyObservers(context);
 
         return context;
     }

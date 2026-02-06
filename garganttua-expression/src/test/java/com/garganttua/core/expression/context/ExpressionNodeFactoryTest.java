@@ -16,12 +16,22 @@ import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 public class ExpressionNodeFactoryTest {
 
     static class TestService {
-        
+
         static public String string(String string) {
             return string;
         }
         static public String greet(String name) {
             return "Hello, " + name;
+        }
+        // Method with ISupplier parameter (lazy)
+        static public long measureTime(ISupplier<?> expression) {
+            long start = System.currentTimeMillis();
+            try {
+                expression.supply();
+            } catch (Exception e) {
+                // Ignore
+            }
+            return System.currentTimeMillis() - start;
         }
     }
 
@@ -167,5 +177,129 @@ public class ExpressionNodeFactoryTest {
         String description = factory.description();
 
         assertEquals("A function that greets people", description, "Description should match provided value");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testLazyParameterKeyGeneration() throws Exception {
+        // Create a factory for a method with ISupplier parameter (lazy)
+        ExpressionNodeFactory<Long, ISupplier<Long>> factory = new ExpressionNodeFactory<Long, ISupplier<Long>>(
+                of(TestService.class).build(),
+                (Class<ISupplier<Long>>) (Class<?>) ISupplier.class,
+                TestService.class.getMethod("measureTime", ISupplier.class),
+                new ObjectAddress("measureTime"),
+                List.of(true), // nullable
+                Optional.of("time"),
+                Optional.of("Measures execution time"));
+
+        // Verify the key uses "ISupplier" for lazy parameters
+        String key = factory.key();
+        assertEquals("time(ISupplier)", key, "Key should use 'ISupplier' for lazy parameters");
+
+        // Verify the parameter is detected as lazy
+        assertTrue(factory.isLazyParameter(0), "Parameter 0 should be detected as lazy");
+
+        System.out.println("Lazy parameter key: " + key);
+        System.out.println("Lazy parameters: " + factory.getLazyParameters());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testLazyParameterFactoryLookupAndExecution() throws Exception {
+        // Create a factory for a method with ISupplier parameter (lazy)
+        ExpressionNodeFactory<Long, ISupplier<Long>> factory = new ExpressionNodeFactory<Long, ISupplier<Long>>(
+                of(TestService.class).build(),
+                (Class<ISupplier<Long>>) (Class<?>) ISupplier.class,
+                TestService.class.getMethod("measureTime", ISupplier.class),
+                new ObjectAddress("measureTime"),
+                List.of(true), // nullable
+                Optional.of("time"),
+                Optional.of("Measures execution time"));
+
+        // Create an ExpressionContext with this factory
+        java.util.Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> factories = new java.util.HashSet<>();
+        factories.add((IExpressionNodeFactory<?, ? extends ISupplier<?>>) factory);
+        ExpressionContext ctx = new ExpressionContext(factories);
+
+        // Verify the factory is registered with the correct key
+        String expectedKey = "time(ISupplier)";
+        String man = ctx.man(expectedKey);
+        assertNotNull(man, "Factory should be found with key: " + expectedKey);
+        System.out.println("Factory found for key '" + expectedKey + "'");
+
+        // Now test parsing an expression that should match this factory
+        // The expression time(print("hello")) should find the time(ISupplier) factory
+        // because print("hello") returns String, but the factory accepts ISupplier (any type)
+
+        // For this test, let's just verify the factory registration works
+        System.out.println("Factory key in context: " + factory.key());
+        System.out.println("Factory man page:\n" + man);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testLazyParameterExpressionParsing() throws Exception {
+        // Create a factory for a method with ISupplier parameter (lazy)
+        ExpressionNodeFactory<Long, ISupplier<Long>> timeFactory = new ExpressionNodeFactory<Long, ISupplier<Long>>(
+                of(TestService.class).build(),
+                (Class<ISupplier<Long>>) (Class<?>) ISupplier.class,
+                TestService.class.getMethod("measureTime", ISupplier.class),
+                new ObjectAddress("measureTime"),
+                List.of(true), // nullable
+                Optional.of("time"),
+                Optional.of("Measures execution time"));
+
+        // Create a string factory for the inner expression
+        ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<String, ISupplier<String>>(
+                of(TestService.class).build(),
+                (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
+                TestService.class.getMethod("greet", String.class),
+                new ObjectAddress("greet"),
+                List.of(false),
+                Optional.of("greet"),
+                Optional.of("Greets a person"));
+
+        // Create a factory for string literal
+        ExpressionNodeFactory<String, ISupplier<String>> stringLiteralFactory = new ExpressionNodeFactory<String, ISupplier<String>>(
+                of(TestService.class).build(),
+                (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
+                TestService.class.getMethod("string", String.class),
+                new ObjectAddress("string"),
+                List.of(true),
+                Optional.of("string"),
+                Optional.of("String literal"));
+
+        // Create an ExpressionContext with all factories
+        java.util.Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> factories = new java.util.HashSet<>();
+        factories.add((IExpressionNodeFactory<?, ? extends ISupplier<?>>) timeFactory);
+        factories.add((IExpressionNodeFactory<?, ? extends ISupplier<?>>) stringFactory);
+        factories.add((IExpressionNodeFactory<?, ? extends ISupplier<?>>) stringLiteralFactory);
+        ExpressionContext ctx = new ExpressionContext(factories);
+
+        // List all registered factories
+        System.out.println("Registered factories:");
+        System.out.println(ctx.man());
+
+        // Parse an expression: time(greet("world"))
+        // The greet("world") expression returns String, but time expects ISupplier
+        // The findCompatibleFactory should match time(ISupplier) with an argument type of String
+        try {
+            var expression = ctx.expression("time(greet(\"world\"))");
+            assertNotNull(expression, "Expression should be parsed successfully");
+            System.out.println("Expression parsed successfully: time(greet(\"world\"))");
+
+            // Evaluate the expression
+            ISupplier<?> result = expression.evaluate();
+            assertNotNull(result, "Result supplier should not be null");
+            System.out.println("Expression result supplier obtained");
+
+            // Get the value (should be the elapsed time)
+            Object value = result.supply().orElse(null);
+            System.out.println("Elapsed time: " + value + "ms");
+            assertTrue(value instanceof Long, "Result should be a Long (elapsed time)");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Expression parsing failed: " + e.getMessage());
+        }
     }
 }

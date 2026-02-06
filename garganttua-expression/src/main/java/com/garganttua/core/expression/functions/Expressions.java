@@ -77,7 +77,6 @@ public class Expressions {
             log.atDebug().log("Converted '{}' to Integer: {}", value, result);
             return result;
         } catch (NumberFormatException e) {
-            log.atError().log("Failed to convert '{}' to Integer", value, e);
             throw new ExpressionException("Cannot convert '" + value + "' to Integer: " + e.getMessage());
         }
     }
@@ -202,7 +201,6 @@ public class Expressions {
     public static Class<?> Class(@Nullable String className) {
         log.atTrace().log("Loading class: {}", className);
         if (className == null) {
-            log.atError().log("Class name is null");
             throw new ExpressionException("Class name cannot be null");
         }
 
@@ -253,9 +251,40 @@ public class Expressions {
                     // Fall through to original error
                 }
             }
-            log.atError().log("Failed to load class: {}", className, e);
             throw new ExpressionException("Cannot load class '" + className + "': " + e.getMessage());
         }
+    }
+
+    // ========== String Functions ==========
+
+    /**
+     * Concatenates two values into a single string.
+     *
+     * @param value1 the first value
+     * @param value2 the second value
+     * @return the concatenation of both values as strings
+     */
+    @Expression(name = "concatenate", description = "Concatenates two values into a string")
+    public static String concatenate(@Nullable Object value1, @Nullable Object value2) {
+        String s1 = value1 == null ? "" : value1.toString();
+        String s2 = value2 == null ? "" : value2.toString();
+        return s1 + s2;
+    }
+
+    /**
+     * Concatenates three values into a single string.
+     *
+     * @param value1 the first value
+     * @param value2 the second value
+     * @param value3 the third value
+     * @return the concatenation of all values as strings
+     */
+    @Expression(name = "concatenate", description = "Concatenates three values into a string")
+    public static String concatenate(@Nullable Object value1, @Nullable Object value2, @Nullable Object value3) {
+        String s1 = value1 == null ? "" : value1.toString();
+        String s2 = value2 == null ? "" : value2.toString();
+        String s3 = value3 == null ? "" : value3.toString();
+        return s1 + s2 + s3;
     }
 
     // ========== Arithmetic Functions ==========

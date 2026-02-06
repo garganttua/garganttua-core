@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Defines field-level mapping rules for property transformations.
@@ -77,6 +78,7 @@ import com.garganttua.core.nativve.annotations.Native;
  *
  * @since 2.0.0-ALPHA01
  */
+@Indexed
 @Native
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

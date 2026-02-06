@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Specifies which bean provider should be used to resolve a dependency.
@@ -60,6 +61,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.injection.IBeanProvider
  * @see com.garganttua.core.injection.context.dsl.IBeanProviderBuilder
  */
+@Indexed
 @Native
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

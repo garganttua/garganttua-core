@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 import com.garganttua.core.runtime.IRuntime;
 
 /**
@@ -45,6 +46,7 @@ import com.garganttua.core.runtime.IRuntime;
  * @see Code
  * @see com.garganttua.core.runtime.IRuntimeStepCatch
  */
+@Indexed
 @Native
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

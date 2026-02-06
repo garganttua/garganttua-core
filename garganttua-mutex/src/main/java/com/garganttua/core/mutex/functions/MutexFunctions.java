@@ -61,17 +61,18 @@ public final class MutexFunctions {
      * across all threads using the same mutex name.
      * </p>
      *
-     * @param mutexName the name of the mutex to acquire
+     * @param mutexName the name of the mutex to acquire (converted to String via toString())
      * @param expression the expression (supplier) to execute while holding the mutex
      * @return the result of the expression evaluation
      * @throws ExpressionException if mutex manager is not available,
      *         mutex acquisition fails, or expression evaluation fails
      */
     @Expression(name = "sync", description = "Synchronizes execution using a local JVM mutex")
-    public static Object sync(@Nullable String mutexName, @Nullable ISupplier<?> expression) {
-        log.atTrace().log("Entering sync(mutexName={}, expression={})", mutexName, expression);
+    public static Object sync(@Nullable Object mutexName, @Nullable ISupplier<?> expression) {
+        String nameStr = mutexName == null ? null : mutexName.toString();
+        log.atTrace().log("Entering sync(mutexName={}, expression={})", nameStr, expression);
 
-        if (mutexName == null || mutexName.isBlank()) {
+        if (nameStr == null || nameStr.isBlank()) {
             throw new ExpressionException("sync: mutex name cannot be null or blank");
         }
 
@@ -87,7 +88,7 @@ public final class MutexFunctions {
 
         try {
             // Create mutex name with default local mutex type
-            MutexName name = new MutexName(InterruptibleLeaseMutex.class, mutexName);
+            MutexName name = new MutexName(InterruptibleLeaseMutex.class, nameStr);
             IMutex mutex = manager.mutex(name);
 
             log.atDebug().log("Acquiring mutex: {}", name);
@@ -102,26 +103,11 @@ public final class MutexFunctions {
             return result;
 
         } catch (MutexException e) {
-            log.atError().log("sync: mutex operation failed for '{}'", mutexName, e);
+            log.atError().log("sync: mutex operation failed for '{}'", nameStr, e);
             throw new ExpressionException("sync: mutex operation failed - " + e.getMessage());
         } catch (Exception e) {
             log.atError().log("sync: expression evaluation failed", e);
             throw new ExpressionException("sync: expression evaluation failed - " + e.getMessage());
         }
-    }
-
-    /**
-     * Synchronizes execution of an expression using a named mutex with Object parameter.
-     * This overload handles dynamic types from variable references.
-     *
-     * @param mutexName the name of the mutex (will be converted to String)
-     * @param expression the expression (supplier) to execute while holding the mutex
-     * @return the result of the expression evaluation
-     * @throws ExpressionException if parameters are invalid or execution fails
-     */
-    @Expression(name = "sync", description = "Synchronizes execution using a local JVM mutex")
-    public static Object sync(@Nullable Object mutexName, @Nullable ISupplier<?> expression) {
-        String nameStr = mutexName == null ? null : mutexName.toString();
-        return sync(nameStr, expression);
     }
 }

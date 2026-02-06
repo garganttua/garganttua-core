@@ -19,8 +19,23 @@ script
 // STATEMENT
 // ===============================
 statement
-    : (IDENTIFIER LARROW)? expression (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)*     # resultAssignStatement
+    : (IDENTIFIER LARROW)? statementGroup (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)* # groupStatement
+    | (IDENTIFIER LARROW)? expression (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)*     # resultAssignStatement
     | (IDENTIFIER '=')? expression (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)*        # expressionAssignStatement
+    ;
+
+// ===============================
+// STATEMENT GROUP - Multiple statements grouped with parentheses
+// Example:
+//   (
+//     print("coucou") -> 20
+//     data <- "bonjour" -> 21
+//   ) -> 60
+//   | condition => handler
+//   ! => catchHandler
+// ===============================
+statementGroup
+    : '(' NL* statement (NL+ statement)* NL* ')'
     ;
 
 // ===============================

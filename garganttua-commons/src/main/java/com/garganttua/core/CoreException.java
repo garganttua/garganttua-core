@@ -185,9 +185,25 @@ public class CoreException extends RuntimeException {
 
     public static final int MUTEX_ERROR = 11;
 
-    private static final long serialVersionUID = 7855765591949705798L;
-
     public static final int EXPRESSION_ERROR = 12;
+
+    /**
+     * Error code for script execution errors.
+     * <p>
+     * Used when errors occur during script parsing, compilation, or execution.
+     * </p>
+     */
+    public static final int SCRIPT_ERROR = 13;
+
+    /**
+     * Error code for workflow execution errors.
+     * <p>
+     * Used when errors occur during workflow building, script generation, or execution.
+     * </p>
+     */
+    public static final int WORKFLOW_ERROR = 14;
+
+    private static final long serialVersionUID = 7855765591949705798L;
 
     /**
      * The error code categorizing this exception.

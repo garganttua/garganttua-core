@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a type as requiring mutex synchronization support.
@@ -48,6 +49,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.mutex.IMutexManager
  * @see Native
  */
+@Indexed
 @Native
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

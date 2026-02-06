@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a method to store its return value as a variable, or a parameter to inject a variable value.
@@ -74,6 +75,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.runtime.IRuntimeContext#setVariable(String, Object)
  * @see com.garganttua.core.runtime.IRuntimeContext#getVariable(String, Class)
  */
+@Indexed
 @Native
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

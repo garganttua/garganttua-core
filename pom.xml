@@ -52,6 +52,7 @@
     <openpdf.version>1.3.40</openpdf.version>
     <antlr4.version>4.13.0</antlr4.version>
     <red.utils.version>1.0.4</red.utils.version>
+    <jline.version>3.25.1</jline.version>
 
     <!-- Maven Plugin Versions -->
     <maven.core.version>3.8.6</maven.core.version>
@@ -169,6 +170,16 @@
       <dependency>
         <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-script-maven-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-annotation-processor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-workflow</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -302,6 +313,11 @@
               <artifactId>lombok</artifactId>
               <version>${lombok.version}</version>
             </path>
+            <path>
+              <groupId>com.garganttua.core</groupId>
+              <artifactId>garganttua-annotation-processor</artifactId>
+              <version>${project.version}</version>
+            </path>
           </annotationProcessorPaths>
         </configuration>
       </plugin>
@@ -344,6 +360,8 @@
     </plugins>
   </build>
   <modules>
+    <module>garganttua-commons</module>
+    <module>garganttua-annotation-processor</module>
     <module>garganttua-reflection</module>
     <module>garganttua-mapper</module>
     <module>garganttua-execution</module>
@@ -354,7 +372,6 @@
     <module>garganttua-injection</module>
     <module>garganttua-runtime</module>
     <module>garganttua-bindings</module>
-    <module>garganttua-commons</module>
     <module>garganttua-lifecycle</module>
     <module>garganttua-supply</module>
     <module>garganttua-condition</module>
@@ -363,5 +380,6 @@
     <module>garganttua-bootstrap</module>
     <module>garganttua-script</module>
     <module>garganttua-script-maven-plugin</module>
+    <module>garganttua-workflow</module>
   </modules>
 </project>

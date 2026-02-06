@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a parameter to inject the exception message in fallback methods.
@@ -45,6 +46,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see FallBack
  * @see com.garganttua.core.runtime.IRuntimeContext#getExceptionMessage()
  */
+@Indexed
 @Native
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

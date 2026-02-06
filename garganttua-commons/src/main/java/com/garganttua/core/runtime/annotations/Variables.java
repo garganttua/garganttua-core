@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a field containing initial variable definitions for a runtime.
@@ -71,6 +72,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.runtime.IRuntimeContext#setVariable(String, Object)
  * @see com.garganttua.core.runtime.IRuntimeContext#getVariable(String, Class)
  */
+@Indexed
 @Native
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

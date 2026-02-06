@@ -32,6 +32,7 @@ expression
 variableReference
     : '@' IDENTIFIER          // Variable reference: @myVar
     | '@' INT_LITERAL         // Argument reference: @0, @1, @2...
+    | '.' IDENTIFIER          // Eager evaluation: .myVar (evaluates stored expression)
     ;
 
 // ===============================

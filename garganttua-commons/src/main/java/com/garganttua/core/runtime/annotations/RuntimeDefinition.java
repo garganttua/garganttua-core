@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 import javax.inject.Qualifier;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a class as a declarative runtime definition.
@@ -89,6 +90,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see Variables
  * @see com.garganttua.core.runtime.IRuntime
  */
+@Indexed
 @Native
 @Qualifier
 @Target({ElementType.TYPE})

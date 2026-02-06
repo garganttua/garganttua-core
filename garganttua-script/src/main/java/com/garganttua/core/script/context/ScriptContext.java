@@ -35,6 +35,10 @@ public class ScriptContext implements IScript {
     private String scriptSource;
     private IRuntime<Object[], Object> runtime;
     private Map<String, Object> lastVariables = Map.of();
+    private Object lastOutput = null;
+    private Throwable lastException = null;
+    private boolean aborted = false;
+    private final Map<String, Object> initialVariables = new HashMap<>();
     private final Map<String, IScript> includedScripts = new HashMap<>();
 
     /**
@@ -121,13 +125,30 @@ public class ScriptContext implements IScript {
             steps.put("step-" + i, new ScriptRuntimeStep("step-" + i, statements.get(i)));
         }
 
+        // Convert initial variables to suppliers
+        Map<String, ISupplier<?>> variableSuppliers = new HashMap<>();
+        for (Map.Entry<String, Object> entry : this.initialVariables.entrySet()) {
+            Object value = entry.getValue();
+            variableSuppliers.put(entry.getKey(), new ISupplier<Object>() {
+                @Override
+                public Optional<Object> supply() {
+                    return Optional.ofNullable(value);
+                }
+
+                @Override
+                public java.lang.reflect.Type getSuppliedType() {
+                    return value != null ? value.getClass() : Object.class;
+                }
+            });
+        }
+
         this.runtime = new Runtime<>(
                 "script",
                 steps,
                 this.injectionContext,
                 Object[].class,
                 Object.class,
-                Map.<String, ISupplier<?>>of()
+                variableSuppliers
         );
     }
 
@@ -137,6 +158,10 @@ public class ScriptContext implements IScript {
             throw new ScriptException("No script compiled. Call compile() before execute()");
         }
 
+        // Reset exception state
+        this.lastException = null;
+        this.aborted = false;
+
         ScriptContext previous = ScriptExecutionContext.get();
         ScriptExecutionContext.set(this);
         try {
@@ -144,12 +169,28 @@ public class ScriptContext implements IScript {
             if (result.isPresent()) {
                 IRuntimeResult<Object[], Object> r = result.get();
                 this.lastVariables = r.variables() != null ? r.variables() : Map.of();
+                this.lastOutput = r.output();
+
+                // Check if the runtime aborted due to an exception
+                if (r.hasAborted()) {
+                    this.aborted = true;
+                    r.getAbortingException().ifPresent(exRecord -> {
+                        this.lastException = exRecord.exception();
+                    });
+                }
+
                 return r.code() != null ? r.code() : IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
             }
             this.lastVariables = Map.of();
+            this.lastOutput = null;
             return IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
         } catch (com.garganttua.core.runtime.RuntimeException e) {
-            throw new ScriptException("Script execution failed", e);
+            // Capture the exception instead of rethrowing
+            this.lastException = e;
+            this.aborted = true;
+            this.lastVariables = Map.of();
+            this.lastOutput = null;
+            return IRuntime.GENERIC_RUNTIME_ERROR_CODE;
         } finally {
             if (previous != null) {
                 ScriptExecutionContext.set(previous);
@@ -166,6 +207,32 @@ public class ScriptContext implements IScript {
             return Optional.of(type.cast(val));
         }
         return Optional.empty();
+    }
+
+    @Override
+    public void setVariable(String name, Object value) {
+        this.initialVariables.put(name, value);
+    }
+
+    @Override
+    public Optional<Object> getOutput() {
+        return Optional.ofNullable(this.lastOutput);
+    }
+
+    @Override
+    public Optional<Throwable> getLastException() {
+        return Optional.ofNullable(this.lastException);
+    }
+
+    @Override
+    public Optional<String> getLastExceptionMessage() {
+        return Optional.ofNullable(this.lastException)
+                .map(Throwable::getMessage);
+    }
+
+    @Override
+    public boolean hasAborted() {
+        return this.aborted;
     }
 
     public ScriptContext createChildScript() {

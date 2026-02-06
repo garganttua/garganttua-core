@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.garganttua.core.reflection.annotations.Indexed;
+
 /**
  * Annotation to mark types, fields, constructors, or methods for GraalVM native image reflection.
  *
@@ -51,6 +53,7 @@ import java.lang.annotation.Target;
  * @see com.garganttua.core.nativve.IReflectionConfigurationEntry
  * @see NativeConfigurationBuilder
  */
+@Indexed
 @Target({ ElementType.TYPE, ElementType.FIELD, ElementType.CONSTRUCTOR, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Native {

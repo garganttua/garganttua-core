@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 import javax.inject.Qualifier;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a class as a runtime step definition.
@@ -80,6 +81,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see FallBack
  * @see com.garganttua.core.runtime.IRuntimeStep
  */
+@Indexed
 @Native
 @Qualifier
 @Target({ElementType.TYPE})

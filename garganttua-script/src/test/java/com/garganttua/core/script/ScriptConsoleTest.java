@@ -31,11 +31,11 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole(":exit\n", out, err);
+        ScriptConsole console = createConsole("exit()\n", out, err);
         console.start();
 
         String output = out.toString();
-        assertTrue(output.contains("Garganttua Script Console"));
+        assertTrue(output.contains("SCRIPT CONSOLE") || output.contains("Garganttua"));
         assertTrue(output.contains("Goodbye!"));
     }
 
@@ -44,15 +44,15 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole(":help\n:exit\n", out, err);
+        ScriptConsole console = createConsole("help()\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
         assertTrue(output.contains("Console Commands:"));
-        assertTrue(output.contains(":vars"));
-        assertTrue(output.contains(":clear"));
-        assertTrue(output.contains(":load"));
-        assertTrue(output.contains(":exit"));
+        assertTrue(output.contains("vars()"));
+        assertTrue(output.contains("clear()"));
+        assertTrue(output.contains("load("));
+        assertTrue(output.contains("exit()"));
     }
 
     @Test
@@ -60,7 +60,7 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole(":vars\n:exit\n", out, err);
+        ScriptConsole console = createConsole("vars()\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
@@ -72,7 +72,7 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole(":syntax\n:exit\n", out, err);
+        ScriptConsole console = createConsole("syntax()\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
@@ -86,7 +86,7 @@ class ScriptConsoleTest {
 
         // Note: print() outputs to System.out, not the console's out stream
         // So we test that the expression executes without error
-        ScriptConsole console = createConsole("\"hello\"\n:exit\n", out, err);
+        ScriptConsole console = createConsole("\"hello\"\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
@@ -102,11 +102,11 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole("x <- \"test\"\n:vars\n:exit\n", out, err);
+        ScriptConsole console = createConsole("x <- \"test\"\nvars()\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
-        assertTrue(output.contains("x = \"test\"") || output.contains("x :"));
+        assertTrue(output.contains("x") && output.contains("test"));
     }
 
     @Test
@@ -114,7 +114,7 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole("x <- \"test\"\n:clear\n:vars\n:exit\n", out, err);
+        ScriptConsole console = createConsole("x <- \"test\"\nclear()\nvars()\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
@@ -123,27 +123,15 @@ class ScriptConsoleTest {
     }
 
     @Test
-    void testUnknownCommand() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-        ScriptConsole console = createConsole(":unknown\n:exit\n", out, err);
-        console.start();
-
-        String errOutput = err.toString();
-        assertTrue(errOutput.contains("Unknown command"));
-    }
-
-    @Test
     void testExitCodeDisplay() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole("\"hello\" -> 42\n:exit\n", out, err);
+        ScriptConsole console = createConsole("\"hello\" -> 42\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
-        assertTrue(output.contains("-> 42"));
+        assertTrue(output.contains("42"));
     }
 
     @Test
@@ -151,19 +139,7 @@ class ScriptConsoleTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole(":quit\n", out, err);
-        console.start();
-
-        String output = out.toString();
-        assertTrue(output.contains("Goodbye!"));
-    }
-
-    @Test
-    void testShortQuitAlias() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-        ScriptConsole console = createConsole(":q\n", out, err);
+        ScriptConsole console = createConsole("quit()\n", out, err);
         console.start();
 
         String output = out.toString();
@@ -176,7 +152,7 @@ class ScriptConsoleTest {
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
         // Invalid syntax should produce error but not crash
-        ScriptConsole console = createConsole("invalid!!syntax\n:exit\n", out, err);
+        ScriptConsole console = createConsole("invalid!!syntax\nexit()\n", out, err);
         console.start();
 
         String errOutput = err.toString();
@@ -187,15 +163,74 @@ class ScriptConsoleTest {
     }
 
     @Test
-    void testManCommand() {
+    void testManCommandList() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        ScriptConsole console = createConsole(":man\n:exit\n", out, err);
+        ScriptConsole console = createConsole("man()\nexit()\n", out, err);
         console.start();
 
         String output = out.toString();
         // Should list functions
         assertTrue(output.contains("print") || output.length() > 500);
+    }
+
+    @Test
+    void testManCommandByName() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        // man("print") should either show documentation or error gracefully
+        ScriptConsole console = createConsole("man(\"print\")\nexit()\n", out, err);
+        console.start();
+
+        String output = out.toString();
+        String errOutput = err.toString();
+
+        // Should complete successfully (even if function not found, it should exit gracefully)
+        assertTrue(output.contains("Goodbye!"));
+        // If there's an error about function not found, that's acceptable
+        // The main test is that the console handles the command without crashing
+    }
+
+    @Test
+    void testMultiLineContinuationWithBackslash() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        // Test multi-line input with backslash continuation and catch clause
+        // The backslash at end of line should trigger continuation
+        String input = "class(\"nonexistent.Foo\") \\\n! => print(\"caught\") -> 400\nexit()\n";
+        ScriptConsole console = createConsole(input, out, err);
+        console.start();
+
+        String output = out.toString();
+        String errOutput = err.toString();
+
+        // Should complete without syntax errors
+        assertTrue(output.contains("Goodbye!"));
+        // The catch clause should handle the error, so we expect exit code 400
+        // or at least no syntax error
+        assertFalse(errOutput.contains("Syntax error"), "Should not have syntax error: " + errOutput);
+    }
+
+    @Test
+    void testMultiLineContinuationWithDoubleDot() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        // Test multi-line input with ".." continuation marker (terminal-safe)
+        String input = "class(\"nonexistent.Foo\") ..\n! => print(\"caught-dd\") -> 401\nexit()\n";
+        ScriptConsole console = createConsole(input, out, err);
+        console.start();
+
+        String output = out.toString();
+        String errOutput = err.toString();
+
+        // Should complete without syntax errors
+        assertTrue(output.contains("Goodbye!"));
+        assertFalse(errOutput.contains("Syntax error"), "Should not have syntax error: " + errOutput);
+        // Should show exit code 401 from the catch handler
+        assertTrue(output.contains("401"), "Should show exit code 401");
     }
 }

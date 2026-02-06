@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.garganttua.core.reflection.annotations.Indexed;
+
 /**
  * Annotation to mark classes as native image configuration builders.
  *
@@ -45,6 +47,7 @@ import java.lang.annotation.Target;
  * @see com.garganttua.core.nativve.INativeConfiguration
  * @see com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder
  */
+@Indexed
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NativeConfigurationBuilder {

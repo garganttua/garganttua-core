@@ -92,7 +92,7 @@ public class BeanProviderBuilder
 	@Override
 	protected void doAutoDetection() throws DslException {
 		log.atTrace().log("Entering doAutoDetection() method");
-		this.packages.forEach(pkg -> {
+		this.packages.parallelStream().forEach(pkg -> {
 			log.atDebug().log("Auto-detecting beans in package: {}", pkg);
 
 			// 1. Singleton
@@ -100,9 +100,11 @@ public class BeanProviderBuilder
 					.forEach(singletonClass -> {
 						try {
 							log.atTrace().log("Detected @Singleton class: {}", singletonClass.getSimpleName());
-							this.autoDetectedBeanFactoryBuilders.put(singletonClass,
-									this.createBeanFactory(qualifierAnnotations, singletonClass)
-											.strategy(BeanStrategy.singleton));
+							synchronized (this.autoDetectedBeanFactoryBuilders) {
+								this.autoDetectedBeanFactoryBuilders.put(singletonClass,
+										this.createBeanFactory(qualifierAnnotations, singletonClass)
+												.strategy(BeanStrategy.singleton));
+							}
 						} catch (DslException e) {
 							log.atError().log("Failed to create singleton bean factory for {}",
 									singletonClass.getSimpleName(), e);
@@ -114,9 +116,11 @@ public class BeanProviderBuilder
 					.forEach(prototypeClass -> {
 						try {
 							log.atTrace().log("Detected @Prototype class: {}", prototypeClass.getSimpleName());
-							this.autoDetectedBeanFactoryBuilders.put(prototypeClass,
-									this.createBeanFactory(qualifierAnnotations, prototypeClass)
-											.strategy(BeanStrategy.prototype));
+							synchronized (this.autoDetectedBeanFactoryBuilders) {
+								this.autoDetectedBeanFactoryBuilders.put(prototypeClass,
+										this.createBeanFactory(qualifierAnnotations, prototypeClass)
+												.strategy(BeanStrategy.prototype));
+							}
 						} catch (DslException e) {
 							log.atError().log("Failed to create prototype bean factory for {}",
 									prototypeClass.getSimpleName(), e);
@@ -130,9 +134,11 @@ public class BeanProviderBuilder
 							try {
 								log.atTrace().log("Detected @Qualifier class: {} with qualifier {}",
 										qualifiedClass.getSimpleName(), qualifierAnnotation.getSimpleName());
-								this.autoDetectedBeanFactoryBuilders.put(qualifiedClass,
-										this.createBeanFactory(qualifierAnnotations, qualifiedClass)
-												.strategy(BeanStrategy.singleton));
+								synchronized (this.autoDetectedBeanFactoryBuilders) {
+									this.autoDetectedBeanFactoryBuilders.put(qualifiedClass,
+											this.createBeanFactory(qualifierAnnotations, qualifiedClass)
+													.strategy(BeanStrategy.singleton));
+								}
 							} catch (DslException e) {
 								log.atError().log("Failed to create bean factory for qualifier class {}",
 										qualifiedClass.getSimpleName(), e);

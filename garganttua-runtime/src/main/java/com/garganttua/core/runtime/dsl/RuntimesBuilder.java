@@ -12,15 +12,15 @@ import java.util.stream.Collectors;
 
 import javax.inject.Named;
 
-import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
-import com.garganttua.core.dsl.dependency.DependencyPhase;
-import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.MultiSourceCollector;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
-import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
@@ -40,7 +40,6 @@ import com.garganttua.core.runtime.resolver.ExceptionElementResolver;
 import com.garganttua.core.runtime.resolver.ExceptionMessageElementResolver;
 import com.garganttua.core.runtime.resolver.InputElementResolver;
 import com.garganttua.core.runtime.resolver.VariableElementResolver;
-import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.FixedSupplier;
 
 import lombok.extern.slf4j.Slf4j;

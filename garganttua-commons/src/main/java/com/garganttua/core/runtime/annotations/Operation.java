@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a method as a runtime operation within a step.
@@ -91,6 +92,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see FallBack
  * @see com.garganttua.core.runtime.IRuntimeStep
  */
+@Indexed
 @Native
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

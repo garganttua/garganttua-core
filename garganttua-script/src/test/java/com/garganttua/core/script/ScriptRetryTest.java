@@ -14,6 +14,7 @@ import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.script.functions.ScriptFunctions;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 class ScriptRetryTest {
 
@@ -171,30 +172,30 @@ class ScriptRetryTest {
 
     @Test
     void testRetryInvalidMaxAttempts() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retry(0, 10, "value"));
+        assertThrows(Exception.class, () -> ScriptFunctions.retry(0, 10, new FixedSupplierBuilder<>("value").build()));
     }
 
     // ---- Retry validates delay ----
 
     @Test
     void testRetryInvalidDelay() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retry(3, -1, "value"));
+        assertThrows(Exception.class, () -> ScriptFunctions.retry(3, -1, new FixedSupplierBuilder<>("value").build()));
     }
 
     // ---- RetryWithBackoff validates parameters ----
 
     @Test
     void testRetryWithBackoffInvalidMaxAttempts() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(0, 10, 100, "value"));
+        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(0, 10, 100, new FixedSupplierBuilder<>("value").build()));
     }
 
     @Test
     void testRetryWithBackoffInvalidDelay() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, -1, 100, "value"));
+        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, -1, 100, new FixedSupplierBuilder<>("value").build()));
     }
 
     @Test
     void testRetryWithBackoffMaxDelayLessThanInitial() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, 100, 10, "value"));
+        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, 100, 10, new FixedSupplierBuilder<>("value").build()));
     }
 }

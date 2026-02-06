@@ -29,20 +29,43 @@ public class ScriptFunctions {
     private ScriptFunctions() {
     }
 
+    /**
+     * Prints a single value to standard output.
+     *
+     * @param value the value to print
+     * @return the printed string (allows chaining, e.g., time(print("hello")))
+     */
     @Expression(name = "print", description = "Prints a single value to standard output")
-    public static void print(@Nullable Object value) {
-        System.out.println(value == null ? "null" : value.toString());
+    public static String print(@Nullable Object value) {
+        String str = value == null ? "null" : value.toString();
+        System.out.println(str);
+        return str;
     }
 
+    /**
+     * Prints String and int to standard output.
+     *
+     * @param value1 the string value
+     * @param value2 the int value
+     * @return the printed string
+     */
     @Expression(name = "print", description = "Prints String and int to standard output")
-    public static void print(@Nullable String value1, int value2) {
+    public static String print(@Nullable String value1, int value2) {
         String s1 = value1 == null ? "null" : value1;
-        System.out.println(s1 + value2);
+        String result = s1 + value2;
+        System.out.println(result);
+        return result;
     }
 
+    /**
+     * Prints a value to standard output with newline.
+     *
+     * @param value the value to print
+     * @return the printed string
+     */
     @Expression(name = "println", description = "Prints a value to standard output with newline")
-    public static void println(@Nullable Object value) {
-        print(value);
+    public static String println(@Nullable Object value) {
+        return print(value);
     }
 
     @Expression(name = "include", description = "Includes a JAR or a script file (.gs)")
@@ -59,14 +82,13 @@ public class ScriptFunctions {
 
         if (path.endsWith(".jar")) {
             includeJar(ctx, path);
+            return path;
         } else if (path.endsWith(".gs")) {
-            includeScript(ctx, path);
+            return includeScript(ctx, path);
         } else {
             throw new ExpressionException("include: unsupported file type: " + path
                     + ". Expected .jar or .gs");
         }
-
-        return path;
     }
 
     @Expression(name = "call", description = "Calls an included script by name")
@@ -88,6 +110,99 @@ public class ScriptFunctions {
         }
 
         return script.execute();
+    }
+
+    // ========== Time Measurement Functions ==========
+
+    /**
+     * Measures the execution time of an expression.
+     *
+     * <p>The expression is passed lazily as an ISupplier, meaning it is NOT evaluated
+     * before being passed to this function. The execution time is measured when the
+     * supplier is invoked.</p>
+     *
+     * <p>Usage examples in script:</p>
+     * <pre>
+     * // Measure time of any expression (expression is passed lazily)
+     * elapsed <- time(print("hello"))
+     * elapsed <- time(someExpensiveOperation())
+     *
+     * // Measure time of a stored expression
+     * expr = someExpensiveOperation()
+     * elapsed <- time(@expr)
+     * print(concatenate("Operation took ", string(elapsed), "ms"))
+     * </pre>
+     *
+     * @param expression the expression to measure (passed lazily as ISupplier)
+     * @return the elapsed time in milliseconds
+     */
+    @Expression(name = "time", description = "Measures execution time of an expression in milliseconds")
+    public static long time(@Nullable ISupplier<?> expression) {
+        log.atDebug().log("time(ISupplier)");
+
+        if (expression == null) {
+            return 0L;
+        }
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            expression.supply();
+        } catch (Exception e) {
+            // Still return elapsed time even on failure
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.atDebug().log("time: expression failed after {}ms: {}", elapsed, e.getMessage());
+            throw new ExpressionException("time: expression execution failed: " + e.getMessage());
+        }
+
+        long elapsed = System.currentTimeMillis() - startTime;
+        log.atDebug().log("time: execution completed in {}ms", elapsed);
+        return elapsed;
+    }
+
+    /**
+     * Measures the execution time of an expression and returns both time and result.
+     *
+     * <p>Returns an array where [0] is the elapsed time in milliseconds and [1] is the result.</p>
+     *
+     * <p>The expression is passed lazily as an ISupplier, meaning it is NOT evaluated
+     * before being passed to this function.</p>
+     *
+     * <p>Usage examples in script:</p>
+     * <pre>
+     * // Measure and get result
+     * result <- timeWithResult(someOperation())
+     * // result[0] = elapsed time, result[1] = operation result
+     *
+     * // Or with stored expression
+     * expr = someOperation()
+     * result <- timeWithResult(@expr)
+     * </pre>
+     *
+     * @param expression the expression to measure (passed lazily as ISupplier)
+     * @return array of [elapsedMs, result]
+     */
+    @Expression(name = "timeWithResult", description = "Measures execution time and returns [timeMs, result]")
+    public static Object[] timeWithResult(@Nullable ISupplier<?> expression) {
+        log.atDebug().log("timeWithResult(ISupplier)");
+
+        if (expression == null) {
+            return new Object[] { 0L, null };
+        }
+
+        long startTime = System.currentTimeMillis();
+        Object result = null;
+
+        try {
+            result = expression.supply().orElse(null);
+        } catch (Exception e) {
+            long elapsed = System.currentTimeMillis() - startTime;
+            throw new ExpressionException("timeWithResult: expression execution failed after " + elapsed + "ms: " + e.getMessage());
+        }
+
+        long elapsed = System.currentTimeMillis() - startTime;
+        log.atDebug().log("timeWithResult: execution completed in {}ms", elapsed);
+        return new Object[] { elapsed, result };
     }
 
     // ========== Time Unit Functions ==========
@@ -137,30 +252,28 @@ public class ScriptFunctions {
     /**
      * Retries the execution of a supplier until it succeeds or max attempts are reached.
      *
-     * <p>If the expression parameter is an ISupplier (from an expression stored via '=' assignment),
-     * it will be re-evaluated on each retry attempt. If it's a regular value (already evaluated),
-     * it will be returned immediately.</p>
+     * <p>The expression is passed lazily as an ISupplier and will be re-evaluated
+     * on each retry attempt.</p>
      *
      * <p>Usage examples in script:</p>
      * <pre>
-     * // With supplier (re-evaluates on each attempt):
-     * expr = riskyOperation()
-     * result &lt;- retry(3, seconds(10), $expr)
+     * // Re-evaluates on each attempt:
+     * result &lt;- retry(3, seconds(10), riskyOperation())
      *
-     * // With direct expression (evaluated once, then returned):
-     * result &lt;- retry(3, seconds(10), "already-evaluated")
+     * // With stored expression (also re-evaluates):
+     * expr = riskyOperation()
+     * result &lt;- retry(3, seconds(10), @expr)
      * </pre>
      *
      * @param maxAttempts maximum number of attempts (must be >= 1)
      * @param delayMs delay between attempts in milliseconds
-     * @param expression the expression/supplier to execute, or an already-evaluated value
+     * @param expression the expression to execute (passed lazily as ISupplier)
      * @return the result of the successful execution
      * @throws ExpressionException if all attempts fail
      */
     @Expression(name = "retry", description = "Retries a supplier expression with delay between attempts")
-    public static Object retry(int maxAttempts, long delayMs, @Nullable Object expression) {
-        log.atDebug().log("retry({}, {}ms, {})", maxAttempts, delayMs,
-                expression == null ? "null" : expression.getClass().getSimpleName());
+    public static Object retry(int maxAttempts, long delayMs, @Nullable ISupplier<?> expression) {
+        log.atDebug().log("retry({}, {}ms, ISupplier)", maxAttempts, delayMs);
 
         if (maxAttempts < 1) {
             throw new ExpressionException("retry: maxAttempts must be >= 1, got: " + maxAttempts);
@@ -174,17 +287,11 @@ public class ScriptFunctions {
             return null;
         }
 
-        // If expression is not a supplier, it's already evaluated - return it
-        if (!(expression instanceof ISupplier<?> supplier)) {
-            log.atDebug().log("retry: expression is not a supplier, returning value directly");
-            return expression;
-        }
-
         Throwable lastException = null;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 log.atTrace().log("retry: attempt {}/{}", attempt, maxAttempts);
-                Object result = supplier.supply().orElse(null);
+                Object result = expression.supply().orElse(null);
                 log.atDebug().log("retry: succeeded on attempt {}", attempt);
                 return result;
             } catch (Exception e) {
@@ -215,22 +322,21 @@ public class ScriptFunctions {
      *
      * <p>The delay doubles after each failed attempt, starting from initialDelayMs.</p>
      *
-     * <p>If the expression parameter is an ISupplier, it will be re-evaluated on each retry.
-     * If it's a regular value (already evaluated), it will be returned immediately.</p>
+     * <p>The expression is passed lazily as an ISupplier and will be re-evaluated
+     * on each retry attempt.</p>
      *
      * @param maxAttempts maximum number of attempts (must be >= 1)
      * @param initialDelayMs initial delay in milliseconds (doubles after each failure)
      * @param maxDelayMs maximum delay cap in milliseconds
-     * @param expression the expression/supplier to execute, or an already-evaluated value
+     * @param expression the expression to execute (passed lazily as ISupplier)
      * @return the result of the successful execution
      * @throws ExpressionException if all attempts fail
      */
     @Expression(name = "retryWithBackoff", description = "Retries with exponential backoff (delay doubles after each failure)")
     public static Object retryWithBackoff(int maxAttempts, long initialDelayMs, long maxDelayMs,
-            @Nullable Object expression) {
-        log.atDebug().log("retryWithBackoff({}, {}ms initial, {}ms max, {})",
-                maxAttempts, initialDelayMs, maxDelayMs,
-                expression == null ? "null" : expression.getClass().getSimpleName());
+            @Nullable ISupplier<?> expression) {
+        log.atDebug().log("retryWithBackoff({}, {}ms initial, {}ms max, ISupplier)",
+                maxAttempts, initialDelayMs, maxDelayMs);
 
         if (maxAttempts < 1) {
             throw new ExpressionException("retryWithBackoff: maxAttempts must be >= 1, got: " + maxAttempts);
@@ -247,19 +353,13 @@ public class ScriptFunctions {
             return null;
         }
 
-        // If expression is not a supplier, it's already evaluated - return it
-        if (!(expression instanceof ISupplier<?> supplier)) {
-            log.atDebug().log("retryWithBackoff: expression is not a supplier, returning value directly");
-            return expression;
-        }
-
         Throwable lastException = null;
         long currentDelay = initialDelayMs;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 log.atTrace().log("retryWithBackoff: attempt {}/{}", attempt, maxAttempts);
-                Object result = supplier.supply().orElse(null);
+                Object result = expression.supply().orElse(null);
                 log.atDebug().log("retryWithBackoff: succeeded on attempt {}", attempt);
                 return result;
             } catch (Exception e) {
@@ -295,6 +395,8 @@ public class ScriptFunctions {
      * for critical sections. The mutex implementation (IMutex) determines
      * whether the lock is local (JVM) or distributed (e.g., Redis).</p>
      *
+     * <p>The expression is passed lazily and executed only after the lock is acquired.</p>
+     *
      * <p>Usage examples in script:</p>
      * <pre>
      * // Acquire mode - waits for lock with timeout
@@ -311,7 +413,7 @@ public class ScriptFunctions {
      * @param mutex the IMutex implementation to use (local or distributed)
      * @param mode acquisition mode: "acquire" (wait with timeout) or "tryAcquire" (immediate)
      * @param timeoutMs timeout in milliseconds (use seconds(), milliseconds(), etc.)
-     * @param expression the expression to execute within the lock
+     * @param expression the expression to execute within the lock (passed lazily as ISupplier)
      * @return the result of the expression execution
      * @throws ExpressionException if lock acquisition fails or expression execution fails
      */
@@ -321,9 +423,9 @@ public class ScriptFunctions {
             @Nullable IMutex mutex,
             @Nullable String mode,
             long timeoutMs,
-            @Nullable Object expression) {
+            @Nullable ISupplier<?> expression) {
 
-        log.atDebug().log("synchronized('{}', mutex, '{}', {}ms, expression)",
+        log.atDebug().log("synchronized('{}', mutex, '{}', {}ms, ISupplier)",
                 mutexName, mode, timeoutMs);
 
         // Validate parameters
@@ -346,19 +448,13 @@ public class ScriptFunctions {
         MutexStrategy strategy = createStrategy(mode, timeoutMs);
 
         try {
-            // If expression is a supplier, wrap it in ThrowingFunction
-            if (expression instanceof ISupplier<?> supplier) {
-                return mutex.acquire(() -> {
-                    try {
-                        return supplier.supply().orElse(null);
-                    } catch (Exception e) {
-                        throw new MutexException("Expression execution failed: " + e.getMessage(), e);
-                    }
-                }, strategy);
-            } else {
-                // Already evaluated value - just return it within the lock
-                return mutex.acquire(() -> expression, strategy);
-            }
+            return mutex.acquire(() -> {
+                try {
+                    return expression.supply().orElse(null);
+                } catch (Exception e) {
+                    throw new MutexException("Expression execution failed: " + e.getMessage(), e);
+                }
+            }, strategy);
         } catch (MutexException e) {
             throw new ExpressionException("synchronized: failed to acquire mutex '" + mutexName + "': " + e.getMessage());
         }
@@ -367,6 +463,8 @@ public class ScriptFunctions {
     /**
      * Simplified synchronized execution with default acquire mode and no timeout (wait forever).
      *
+     * <p>The expression is passed lazily and executed only after the lock is acquired.</p>
+     *
      * <p>Usage in script:</p>
      * <pre>
      * result &lt;- sync("my-mutex", $mutex, myExpression())
@@ -374,16 +472,16 @@ public class ScriptFunctions {
      *
      * @param mutexName the name/identifier for the mutex lock
      * @param mutex the IMutex implementation to use
-     * @param expression the expression to execute within the lock
+     * @param expression the expression to execute within the lock (passed lazily as ISupplier)
      * @return the result of the expression execution
      */
     @Expression(name = "sync", description = "Simplified synchronized execution (waits forever for lock)")
     public static Object sync(
             @Nullable String mutexName,
             @Nullable IMutex mutex,
-            @Nullable Object expression) {
+            @Nullable ISupplier<?> expression) {
 
-        log.atDebug().log("sync('{}', mutex, expression)", mutexName);
+        log.atDebug().log("sync('{}', mutex, ISupplier)", mutexName);
 
         if (mutexName == null || mutexName.isBlank()) {
             throw new ExpressionException("sync: mutexName cannot be null or blank");
@@ -396,17 +494,13 @@ public class ScriptFunctions {
         }
 
         try {
-            if (expression instanceof ISupplier<?> supplier) {
-                return mutex.acquire(() -> {
-                    try {
-                        return supplier.supply().orElse(null);
-                    } catch (Exception e) {
-                        throw new MutexException("Expression execution failed: " + e.getMessage(), e);
-                    }
-                });
-            } else {
-                return mutex.acquire(() -> expression);
-            }
+            return mutex.acquire(() -> {
+                try {
+                    return expression.supply().orElse(null);
+                } catch (Exception e) {
+                    throw new MutexException("Expression execution failed: " + e.getMessage(), e);
+                }
+            });
         } catch (MutexException e) {
             throw new ExpressionException("sync: failed to acquire mutex '" + mutexName + "': " + e.getMessage());
         }
@@ -501,7 +595,7 @@ public class ScriptFunctions {
         }
     }
 
-    private static void includeScript(ScriptContext ctx, String path) {
+    private static String includeScript(ScriptContext ctx, String path) {
         try {
             File scriptFile = new File(path);
             if (!scriptFile.exists()) {
@@ -516,8 +610,126 @@ public class ScriptFunctions {
             ctx.registerIncludedScript(name, subScript);
 
             log.atDebug().log("Script included as '{}' from {}", name, path);
+            return name;
         } catch (ScriptException e) {
             throw new ExpressionException("include: failed to load script: " + path + " - " + e.getMessage());
         }
+    }
+
+    // ========== Execute Script Functions ==========
+
+    private static int executeScriptImpl(Object name, Object... args) {
+        log.atDebug().log("execute_script({}, {} args)", name, args != null ? args.length : 0);
+        if (name == null) {
+            throw new ExpressionException("execute_script: script name cannot be null");
+        }
+
+        ScriptContext ctx = ScriptExecutionContext.get();
+        if (ctx == null) {
+            throw new ExpressionException("execute_script: no script execution context available");
+        }
+
+        String scriptName = name.toString();
+        IScript script = ctx.getIncludedScript(scriptName);
+        if (script == null) {
+            throw new ExpressionException("execute_script: script not found: " + scriptName
+                    + ". Did you call include() first?");
+        }
+
+        return script.execute(args != null ? args : new Object[0]);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with no arguments")
+    public static int executeScript(@Nullable Object name) {
+        return executeScriptImpl(name);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 1 argument")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0) {
+        return executeScriptImpl(name, arg0);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 2 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1) {
+        return executeScriptImpl(name, arg0, arg1);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 3 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2) {
+        return executeScriptImpl(name, arg0, arg1, arg2);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 4 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 5 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 6 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 7 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
+            @Nullable Object arg6) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 8 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
+            @Nullable Object arg6, @Nullable Object arg7) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 9 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
+            @Nullable Object arg6, @Nullable Object arg7, @Nullable Object arg8) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+    }
+
+    @Expression(name = "execute_script", description = "Executes an included script with 10 arguments")
+    public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
+            @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
+            @Nullable Object arg6, @Nullable Object arg7, @Nullable Object arg8, @Nullable Object arg9) {
+        return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+    }
+
+    // ========== Script Variable Function ==========
+
+    @Expression(name = "script_variable", description = "Retrieves a variable from an included script after execution")
+    public static Object scriptVariable(@Nullable Object scriptName, @Nullable String varName) {
+        log.atDebug().log("script_variable({}, {})", scriptName, varName);
+        if (scriptName == null) {
+            throw new ExpressionException("script_variable: script name cannot be null");
+        }
+        if (varName == null || varName.isBlank()) {
+            throw new ExpressionException("script_variable: variable name cannot be null or blank");
+        }
+
+        ScriptContext ctx = ScriptExecutionContext.get();
+        if (ctx == null) {
+            throw new ExpressionException("script_variable: no script execution context available");
+        }
+
+        String name = scriptName.toString();
+        IScript script = ctx.getIncludedScript(name);
+        if (script == null) {
+            throw new ExpressionException("script_variable: script not found: " + name
+                    + ". Did you call include() and execute_script() first?");
+        }
+
+        return script.getVariable(varName, Object.class).orElse(null);
     }
 }

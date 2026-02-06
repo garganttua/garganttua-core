@@ -498,4 +498,11 @@ public class ExpressionContextTest {
         String beyondTotal = expressionContext.man(totalFunctions + 1);
         assertNull(beyondTotal, "Manual should be null for index beyond total");
     }
+
+    @Test
+    public void testEagerVariableReferenceParsing() {
+        // Test that .variableName is parsed correctly (eager evaluation syntax)
+        IExpression<?, ?> expr = expressionContext.expression(".myVar");
+        assertNotNull(expr, "Expression .myVar should be parsed");
+    }
 }

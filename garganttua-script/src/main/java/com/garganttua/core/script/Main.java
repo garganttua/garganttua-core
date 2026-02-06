@@ -10,8 +10,8 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.script.console.ScriptConsole;
 import com.garganttua.core.script.context.ScriptContext;
 
@@ -90,7 +90,7 @@ public class Main {
     }
 
     private static int executeScript(File scriptFile, String[] args) throws ScriptException, IOException {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        ObjectReflectionHelper.setAnnotationScanner(new IndexedAnnotationScanner());
 
         // Build injection context
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
@@ -173,7 +173,7 @@ public class Main {
     }
 
     private static IExpressionContext buildExpressionContext() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        ObjectReflectionHelper.setAnnotationScanner(new IndexedAnnotationScanner());
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
                 .autoDetect(true)

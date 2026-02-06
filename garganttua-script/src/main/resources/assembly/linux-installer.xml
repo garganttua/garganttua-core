@@ -23,7 +23,7 @@
         <!-- Wrapper scripts -->
         <fileSet>
             <directory>src/main/resources/dist/bin</directory>
-            <outputDirectory>/bin</outputDirectory>
+            <outputDirectory>${project.build.directory}/bin</outputDirectory>
             <includes>
                 <include>garganttua-script</include>
                 <include>gs</include>

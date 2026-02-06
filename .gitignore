@@ -82,3 +82,4 @@ node_modules/
 **/.VSCodeCounter/
 
 .claude/
+bin/

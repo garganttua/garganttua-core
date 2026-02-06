@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0
+                              http://maven.apache.org/xsd/assembly-2.2.0.xsd">
+
+    <id>debug</id>
+    <formats>
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>garganttua-script-${project.version}-debug</baseDirectory>
+
+    <fileSets>
+        <!-- Include the debug shell script -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/debug</directory>
+            <outputDirectory>${project.build.directory}/bin</outputDirectory>
+            <includes>
+                <include>garganttua-script-debug.sh</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- Include debug logback configuration -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <outputDirectory>${project.build.directory}/conf</outputDirectory>
+            <includes>
+                <include>logback-debug.xml</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+
+    <files>
+        <!-- Include the shaded JAR renamed as debug JAR -->
+        <file>
+            <source>${project.build.directory}/${project.artifactId}-${project.version}-executable.jar</source>
+            <outputDirectory>${project.build.directory}/bin</outputDirectory>
+            <destName>garganttua-script-debug.jar</destName>
+        </file>
+    </files>
+</assembly>

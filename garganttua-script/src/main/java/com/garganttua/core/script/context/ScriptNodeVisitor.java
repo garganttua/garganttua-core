@@ -10,6 +10,7 @@ import com.garganttua.core.script.antlr4.ScriptParser;
 import com.garganttua.core.script.nodes.CatchClause;
 import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.PipeClause;
+import com.garganttua.core.script.nodes.StatementGroupNode;
 import com.garganttua.core.script.nodes.StatementNode;
 import com.garganttua.core.supply.ISupplier;
 
@@ -56,6 +57,33 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
                 ctx.expression().getText(),
                 ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null,
                 catchClauses, downstreamCatchClauses, pipeClauses);
+    }
+
+    @Override
+    public Object visitGroupStatement(ScriptParser.GroupStatementContext ctx) {
+        // Parse statements inside the group
+        List<IScriptNode> groupStatements = new ArrayList<>();
+        ScriptNodeVisitor groupVisitor = new ScriptNodeVisitor(this.expressionContext);
+        for (ScriptParser.StatementContext stmt : ctx.statementGroup().statement()) {
+            groupVisitor.visit(stmt);
+        }
+        groupStatements.addAll(groupVisitor.getStatements());
+
+        // Build catch and pipe clauses for the group
+        List<CatchClause> catchClauses = buildCatchClauses(ctx.catchClause());
+        List<CatchClause> downstreamCatchClauses = buildCatchClauses(ctx.downstreamCatchClause());
+        List<PipeClause> pipeClauses = buildPipeClauses(ctx.pipeClause());
+
+        // Get variable name and code
+        String variableName = ctx.IDENTIFIER() != null ? ctx.IDENTIFIER().getText() : null;
+        Integer code = ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null;
+
+        // Create and add the group node
+        StatementGroupNode groupNode = new StatementGroupNode(
+                groupStatements, variableName, code,
+                catchClauses, downstreamCatchClauses, pipeClauses);
+        this.statements.add(groupNode);
+        return null;
     }
 
     private List<CatchClause> buildCatchClauses(List<? extends org.antlr.v4.runtime.ParserRuleContext> clauses) {

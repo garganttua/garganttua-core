@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Debug appender with detailed timing information -->
+    <appender name="DEBUG_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Performance metrics appender (separate file) -->
+    <appender name="PERF_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>garganttua-script-perf.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Timing appender for script execution phases -->
+    <appender name="TIMING" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [TIMING] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger at DEBUG level -->
+    <root level="DEBUG">
+        <appender-ref ref="DEBUG_CONSOLE"/>
+    </root>
+
+    <!-- Script execution - TRACE for detailed timing -->
+    <logger name="com.garganttua.core.script" level="TRACE"/>
+    <logger name="com.garganttua.core.script.context" level="TRACE"/>
+    <logger name="com.garganttua.core.script.console" level="DEBUG"/>
+
+    <!-- Expression parsing and evaluation -->
+    <logger name="com.garganttua.core.expression" level="DEBUG"/>
+    <logger name="com.garganttua.core.expression.context" level="TRACE"/>
+    <logger name="com.garganttua.core.expression.parser" level="DEBUG"/>
+
+    <!-- Runtime execution -->
+    <logger name="com.garganttua.core.runtime" level="DEBUG"/>
+    <logger name="com.garganttua.core.execution" level="DEBUG"/>
+
+    <!-- Injection context -->
+    <logger name="com.garganttua.core.injection" level="DEBUG"/>
+    <logger name="com.garganttua.core.injection.context" level="DEBUG"/>
+
+    <!-- Annotation scanning -->
+    <logger name="com.garganttua.core.annotation.processor" level="DEBUG"/>
+
+    <!-- Reflection operations -->
+    <logger name="com.garganttua.core.reflection" level="DEBUG"/>
+
+    <!-- Reduce noise from external libraries -->
+    <logger name="org.reflections" level="WARN"/>
+    <logger name="org.jline" level="WARN"/>
+    <logger name="org.antlr" level="WARN"/>
+</configuration>

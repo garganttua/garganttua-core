@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a bean or injection point as using prototype scope strategy.
@@ -62,6 +63,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.injection.BeanStrategy#prototype
  */
+@Indexed
 @Native
 @Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

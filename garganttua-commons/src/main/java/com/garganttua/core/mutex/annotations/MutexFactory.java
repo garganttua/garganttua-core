@@ -9,7 +9,9 @@ import javax.inject.Qualifier;
 
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
+@Indexed
 @Native
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

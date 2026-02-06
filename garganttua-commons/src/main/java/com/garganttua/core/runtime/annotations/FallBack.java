@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a method as a fallback handler for error recovery in a runtime step.
@@ -68,6 +69,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see Output
  * @see com.garganttua.core.runtime.IRuntimeStepFallbackBinder
  */
+@Indexed
 @Native
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)

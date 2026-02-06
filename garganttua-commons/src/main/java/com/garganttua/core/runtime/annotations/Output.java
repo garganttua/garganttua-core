@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks a method to produce the final runtime output.
@@ -69,6 +70,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.runtime.IRuntimeContext#setOutput(Object)
  * @see com.garganttua.core.runtime.IRuntimeResult#output()
  */
+@Indexed
 @Native
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

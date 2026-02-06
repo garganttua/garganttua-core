@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Indicates that a field or parameter should be injected with a configuration property value.
@@ -70,6 +71,7 @@ import com.garganttua.core.nativve.annotations.Native;
  * @see com.garganttua.core.injection.IPropertyProvider
  * @see com.garganttua.core.injection.IPropertySupplier
  */
+@Indexed
 @Native
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

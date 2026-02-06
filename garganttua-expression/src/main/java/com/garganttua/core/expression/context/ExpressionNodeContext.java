@@ -32,6 +32,11 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
         }
 
         for (int i = 0; i < parameterTypes.length; i++) {
+            // If the factory expects an ISupplier (lazy parameter), accept any argument type
+            if (com.garganttua.core.supply.ISupplier.class.isAssignableFrom(parameterTypes[i])) {
+                // Lazy parameters accept any type - they'll be wrapped in a supplier
+                continue;
+            }
 
             if (parameters().get(i) instanceof IExpressionNode<?, ?> node) {
                 // Object.class means the type is dynamic (e.g. variable references) - accept any target type
