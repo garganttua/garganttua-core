@@ -1,19 +1,18 @@
 #!/usr/bin/env gs
 
 #@workflow
-#  description: Fetches data from a remote API endpoint with timeout handling.
-#               Returns the API response and HTTP status code.
-#  inputs:
-#    - name: url position: 0 type: String
-#    - name: timeout position: 1 type: Integer
-#  outputs:
-#    - name: response variable: apiResponse type: Object
-#    - name: statusCode variable: httpStatus type: Integer
-#  returnCodes:
-#    0: SUCCESS
-#    1: CONNECTION_ERROR
-#    2: TIMEOUT_ERROR
-#    3: HTTP_ERROR
+#  Fetches data from a remote API endpoint with timeout handling.
+#  Returns the API response and HTTP status code.
+#
+#  @in  url: String
+#  @in  timeout: Integer
+#  @out response -> apiResponse: Object
+#  @out statusCode -> httpStatus: Integer
+#  @return 0: SUCCESS
+#  @return 1: CONNECTION_ERROR
+#  @return 2: TIMEOUT_ERROR
+#  @return 3: HTTP_ERROR
+#  @catch handleError(@exception)
 #@end
 
 # API Fetch Script

@@ -10,6 +10,14 @@ import com.garganttua.core.workflow.WorkflowStage;
 
 public interface IWorkflowStageBuilder extends ILinkedBuilder<IWorkflowBuilder, WorkflowStage> {
 
+    /**
+     * Sets a condition for this stage. All scripts in the stage will only be
+     * executed if the condition expression evaluates to true at runtime.
+     *
+     * @param expression the Garganttua expression to evaluate (e.g., "equals(@env, \"prod\")")
+     */
+    IWorkflowStageBuilder when(String expression);
+
     IWorkflowScriptBuilder script(String content);
 
     IWorkflowScriptBuilder script(File file);

@@ -1,4 +1,4 @@
-package com.garganttua.core.script.console;
+package com.garganttua.core.console;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import org.jline.terminal.Terminal;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.IExpressionContext;
-import com.garganttua.core.script.console.ConsoleExecutionContext.ConsoleContext;
+import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;

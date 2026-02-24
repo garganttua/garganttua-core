@@ -1,4 +1,4 @@
-package com.garganttua.core.script.console;
+package com.garganttua.core.console;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -17,7 +17,7 @@ import com.garganttua.core.expression.context.IExpressionContext;
  * </p>
  */
 public class ConsoleExecutionContext {
-    
+
     private ConsoleExecutionContext() {
         /* This utility class should not be instantiated */
     }

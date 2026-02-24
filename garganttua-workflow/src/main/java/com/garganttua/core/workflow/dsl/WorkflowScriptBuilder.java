@@ -19,6 +19,7 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
     private final ScriptSource source;
     private String name;
     private String description;
+    private String condition;
     private boolean inline = false;
     private String catchExpression;
     private String catchDownstreamExpression;
@@ -39,6 +40,12 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
     @Override
     public IWorkflowScriptBuilder description(String description) {
         this.description = description;
+        return this;
+    }
+
+    @Override
+    public IWorkflowScriptBuilder when(String expression) {
+        this.condition = expression;
         return this;
     }
 
@@ -93,6 +100,7 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
                 .description(description)
                 .source(source)
                 .inline(inline)
+                .condition(condition)
                 .catchExpression(catchExpression)
                 .catchDownstreamExpression(catchDownstreamExpression)
                 .inputs(new LinkedHashMap<>(inputs))

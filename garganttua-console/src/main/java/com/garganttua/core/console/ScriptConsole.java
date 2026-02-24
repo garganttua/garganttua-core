@@ -1,4 +1,4 @@
-package com.garganttua.core.script.console;
+package com.garganttua.core.console;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import com.garganttua.core.mutex.dsl.MutexManagerBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
-import com.garganttua.core.script.console.ConsoleExecutionContext.ConsoleContext;
+import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
 import com.garganttua.core.script.context.ScriptContext;
 
 /**
@@ -105,6 +105,7 @@ public class ScriptConsole {
     private Terminal terminal;
     private LineReader lineReader;
     private History history;
+    private ScriptCompleter completer;
 
     // Fallback reader for testing
     private final BufferedReader fallbackReader;
@@ -175,10 +176,12 @@ public class ScriptConsole {
             // Set up history with file persistence
             Path historyPath = getHistoryPath();
             this.history = new DefaultHistory();
+            this.completer = new ScriptCompleter();
 
             this.lineReader = LineReaderBuilder.builder()
                     .terminal(terminal)
                     .history(history)
+                    .completer(completer)
                     .variable(LineReader.HISTORY_FILE, historyPath)
                     .option(LineReader.Option.HISTORY_BEEP, false)
                     .option(LineReader.Option.HISTORY_IGNORE_DUPS, true)
@@ -308,7 +311,7 @@ public class ScriptConsole {
             closeTerminal();
         }
 
-        out.println(color("Goodbye!", BRIGHT_CYAN) + " " + color("👋", RESET));
+        out.println(color("Goodbye!", BRIGHT_CYAN) + " " + color("\uD83D\uDC4B", RESET));
     }
 
     /**
@@ -364,7 +367,7 @@ public class ScriptConsole {
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder
                 .withPackage("com.garganttua.core.expression.functions")
-                .withPackage("com.garganttua.core.script.console")
+                .withPackage("com.garganttua.core.console")
                 .withPackage("com.garganttua.core.script.functions")
                 .withPackage("com.garganttua.core.condition")
                 .withPackage("com.garganttua.core.injection.functions")
@@ -381,6 +384,12 @@ public class ScriptConsole {
         MutexContext.set(mutexManager);
 
         this.expressionContext = expressionContextBuilder.build();
+
+        // Configure the completer now that contexts are ready
+        if (completer != null) {
+            completer.setExpressionContext(this.expressionContext);
+            completer.setSessionVariables(this.sessionVariables);
+        }
 
         out.println(color(" Done!", BRIGHT_GREEN, BOLD));
 
@@ -596,16 +605,16 @@ public class ScriptConsole {
 
             // Show result if there's a meaningful exit code
             if (exitCode != 0) {
-                out.println(color("→ ", BRIGHT_BLACK) + color(String.valueOf(exitCode), BRIGHT_YELLOW));
+                out.println(color("\u2192 ", BRIGHT_BLACK) + color(String.valueOf(exitCode), BRIGHT_YELLOW));
             }
 
         } catch (ScriptException e) {
-            err.println(color("✗ Error: ", BRIGHT_RED, BOLD) + color(e.getMessage(), RED));
+            err.println(color("\u2717 Error: ", BRIGHT_RED, BOLD) + color(e.getMessage(), RED));
             if (e.getCause() != null && e.getCause().getMessage() != null) {
-                err.println(color("  ↳ ", BRIGHT_BLACK) + color(e.getCause().getMessage(), DIM));
+                err.println(color("  \u21B3 ", BRIGHT_BLACK) + color(e.getCause().getMessage(), DIM));
             }
         } catch (Exception e) {
-            err.println(color("✗ Unexpected error: ", BRIGHT_RED, BOLD) + color(e.getMessage(), RED));
+            err.println(color("\u2717 Unexpected error: ", BRIGHT_RED, BOLD) + color(e.getMessage(), RED));
         }
     }
 
@@ -628,7 +637,7 @@ public class ScriptConsole {
             // Skip if the result is a trivial value or already printed by the expression
             // itself
             if (value != null && !isVoidResult(value)) {
-                out.println(color("⇒ ", BRIGHT_CYAN) + formatValueColored(value));
+                out.println(color("\u21D2 ", BRIGHT_CYAN) + formatValueColored(value));
             }
         }
     }

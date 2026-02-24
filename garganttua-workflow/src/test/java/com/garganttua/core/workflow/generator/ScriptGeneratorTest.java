@@ -38,7 +38,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of())
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -64,7 +64,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of())
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -85,7 +85,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of())
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -103,7 +103,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of())
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -124,7 +124,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of())
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -155,7 +155,7 @@ class ScriptGeneratorTest {
                 .codeActions(Map.of(1, CodeAction.ABORT))
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("process", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("process", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -198,7 +198,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of("out", "result"))
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("run", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("run", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -226,7 +226,7 @@ class ScriptGeneratorTest {
                 .outputs(Map.of())
                 .build();
 
-        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null);
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
 
         String generated = generator.generate("test-workflow", List.of(stage), null);
 
@@ -234,5 +234,202 @@ class ScriptGeneratorTest {
                 "@0 should be replaced with @url");
         assertTrue(generated.contains("process(@data, @timeout)"),
                 "@1 should be replaced with @timeout");
+    }
+
+    @Test
+    void testConditionalFileScript() throws WorkflowException {
+        // File-based script with a condition
+        Map<String, String> inputs = new LinkedHashMap<>();
+        inputs.put("env", "@environment");
+
+        Map<String, String> outputs = new LinkedHashMap<>();
+        outputs.put("deployResult", "result");
+
+        File scriptFile = new File("/tmp/deploy.gs");
+
+        WorkflowScript script = WorkflowScript.builder()
+                .name("deploy")
+                .source(WorkflowScript.ScriptSource.of(scriptFile))
+                .condition("equals(@env, \"prod\")")
+                .inputs(inputs)
+                .outputs(outputs)
+                .codeActions(Map.of(1, CodeAction.ABORT))
+                .build();
+
+        WorkflowStage stage = new WorkflowStage("run", List.of(script), null, null, null, null);
+
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        // Should have condition variable
+        assertTrue(generated.contains("_run_deploy_cond <- equals(@env, \"prod\")"),
+                "Should emit condition variable: " + generated);
+
+        // Include should be unconditional
+        assertTrue(generated.contains("_run_deploy_ref <- include("),
+                "Include should be unconditional: " + generated);
+
+        // Should use noop() -> 0 for default code
+        assertTrue(generated.contains("_run_deploy_code <- noop() -> 0"),
+                "Should have noop() -> 0 for default code: " + generated);
+
+        // Should have conditional execute_script via pipe
+        assertTrue(generated.contains("| @_run_deploy_cond => _run_deploy_code <- execute_script(@_run_deploy_ref, @env)"),
+                "Should have conditional execute_script: " + generated);
+
+        // Code actions should use combined condition
+        assertTrue(generated.contains("| and(@_run_deploy_cond, equals(@_run_deploy_code, 1)) => abort()"),
+                "Code actions should use combined condition: " + generated);
+
+        // Output mappings should be conditional via noop + pipe
+        assertTrue(generated.contains("noop()\n    | @_run_deploy_cond => deployResult <- script_variable(@_run_deploy_ref, \"result\")"),
+                "Output mappings should be conditional: " + generated);
+
+        // Should NOT have catch clauses (omitted when conditional)
+        assertFalse(generated.contains("! =>"),
+                "Catch clauses should be omitted when conditional: " + generated);
+    }
+
+    @Test
+    void testConditionalInlineScript() throws WorkflowException {
+        // Inline script with a condition
+        Map<String, String> inputs = new LinkedHashMap<>();
+        inputs.put("data", "@inputData");
+
+        String scriptContent = "result <- process(@0)\noutput <- transform(@result)";
+
+        WorkflowScript script = WorkflowScript.builder()
+                .name("processor")
+                .source(WorkflowScript.ScriptSource.of(scriptContent))
+                .condition("equals(@mode, \"active\")")
+                .inputs(inputs)
+                .outputs(Map.of("workflowResult", "output"))
+                .build();
+
+        WorkflowStage stage = new WorkflowStage("test", List.of(script), null, null, null, null);
+
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        // Should have condition variable
+        assertTrue(generated.contains("_test_processor_cond <- equals(@mode, \"active\")"),
+                "Should emit condition variable: " + generated);
+
+        // Each line should be guarded with noop + pipe
+        assertTrue(generated.contains("noop()\n    | @_test_processor_cond => result <- process(@data)"),
+                "First line should be guarded: " + generated);
+        assertTrue(generated.contains("noop()\n    | @_test_processor_cond => output <- transform(@result)"),
+                "Second line should be guarded: " + generated);
+
+        // Output mappings should be conditional
+        assertTrue(generated.contains("noop()\n    | @_test_processor_cond => workflowResult <- @output"),
+                "Output mappings should be conditional: " + generated);
+    }
+
+    @Test
+    void testConditionalStage() throws WorkflowException {
+        // Stage with a condition gates all scripts
+        File scriptFile = new File("/tmp/deploy.gs");
+
+        WorkflowScript script1 = WorkflowScript.builder()
+                .name("script1")
+                .source(WorkflowScript.ScriptSource.of(scriptFile))
+                .inputs(Map.of())
+                .outputs(Map.of())
+                .build();
+
+        WorkflowScript script2 = WorkflowScript.builder()
+                .name("script2")
+                .source(WorkflowScript.ScriptSource.of(scriptFile))
+                .inputs(Map.of())
+                .outputs(Map.of())
+                .build();
+
+        WorkflowStage stage = new WorkflowStage("deploy", List.of(script1, script2),
+                null, null, null, "equals(@environment, \"prod\")");
+
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        // Stage condition variable should be emitted once
+        assertTrue(generated.contains("_deploy_cond <- equals(@environment, \"prod\")"),
+                "Should emit stage condition variable: " + generated);
+
+        // Both scripts should reference the stage condition
+        assertTrue(generated.contains("_deploy_script1_cond <- @_deploy_cond"),
+                "Script1 should reference stage condition: " + generated);
+        assertTrue(generated.contains("_deploy_script2_cond <- @_deploy_cond"),
+                "Script2 should reference stage condition: " + generated);
+
+        // Both scripts should use conditional execution
+        assertTrue(generated.contains("| @_deploy_script1_cond => _deploy_script1_code <- execute_script("),
+                "Script1 should have conditional execute_script: " + generated);
+        assertTrue(generated.contains("| @_deploy_script2_cond => _deploy_script2_code <- execute_script("),
+                "Script2 should have conditional execute_script: " + generated);
+    }
+
+    @Test
+    void testConditionalStageAndScript() throws WorkflowException {
+        // Stage condition AND script condition should be combined with and()
+        File scriptFile = new File("/tmp/deploy.gs");
+
+        WorkflowScript script = WorkflowScript.builder()
+                .name("deploy")
+                .source(WorkflowScript.ScriptSource.of(scriptFile))
+                .condition("equals(@region, \"us\")")
+                .inputs(Map.of())
+                .outputs(Map.of())
+                .build();
+
+        WorkflowStage stage = new WorkflowStage("prod", List.of(script),
+                null, null, null, "equals(@environment, \"prod\")");
+
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        // Stage condition should be emitted
+        assertTrue(generated.contains("_prod_cond <- equals(@environment, \"prod\")"),
+                "Should emit stage condition: " + generated);
+
+        // Script condition should combine stage + script with and()
+        assertTrue(generated.contains("_prod_deploy_cond <- and(@_prod_cond, equals(@region, \"us\"))"),
+                "Should combine conditions with and(): " + generated);
+    }
+
+    @Test
+    void testNoConditionUnchanged() throws WorkflowException {
+        // Verify that without conditions, the generated code is the same as before
+        Map<String, String> inputs = new LinkedHashMap<>();
+        inputs.put("data", "@inputData");
+
+        File scriptFile = new File("/tmp/test.gs");
+
+        WorkflowScript script = WorkflowScript.builder()
+                .name("processor")
+                .source(WorkflowScript.ScriptSource.of(scriptFile))
+                .inputs(inputs)
+                .outputs(Map.of("result", "output"))
+                .catchExpression("handleError(@exception)")
+                .build();
+
+        WorkflowStage stage = new WorkflowStage("run", List.of(script), null, null, null, null);
+
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        // Should NOT have any condition variables
+        assertFalse(generated.contains("_cond"),
+                "Should not have condition variables without conditions: " + generated);
+
+        // Should NOT have noop() for conditionals
+        assertFalse(generated.contains("noop()"),
+                "Should not have noop() without conditions: " + generated);
+
+        // Should have normal execute_script
+        assertTrue(generated.contains("_run_processor_code <- execute_script(@_run_processor_ref, @data)"),
+                "Should have normal execute_script: " + generated);
+
+        // Should have catch clause
+        assertTrue(generated.contains("! => handleError(@exception)"),
+                "Should have catch clause: " + generated);
+
+        // Should have normal output mapping
+        assertTrue(generated.contains("result <- script_variable(@_run_processor_ref, \"output\")"),
+                "Should have normal output mapping: " + generated);
     }
 }

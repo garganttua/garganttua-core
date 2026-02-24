@@ -23,6 +23,7 @@ public class WorkflowScript {
     private final String description;
     private final ScriptSource source;
     private final boolean inline;
+    private final String condition;
     private final String catchExpression;
     private final String catchDownstreamExpression;
 

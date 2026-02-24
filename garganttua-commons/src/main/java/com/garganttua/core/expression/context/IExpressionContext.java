@@ -1,5 +1,7 @@
 package com.garganttua.core.expression.context;
 
+import java.util.Set;
+
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.supply.ISupplier;
 
@@ -109,5 +111,27 @@ public interface IExpressionContext {
      * @return the manual page documentation, or null if the index is out of bounds
      */
     String man(int index);
+
+    /**
+     * Registers a variable type hint for compile-time method resolution.
+     *
+     * <p>When a variable reference like {@code @varName} is encountered during parsing,
+     * the expression engine uses the registered type instead of {@code Object.class}
+     * to resolve method calls (e.g., {@code :methodName(@varName)}).</p>
+     *
+     * @param name the variable name (without @ prefix)
+     * @param type the declared type of the variable
+     */
+    void registerVariableType(String name, Class<?> type);
+
+    /**
+     * Returns the keys of all registered expression node factories.
+     *
+     * <p>Each key is in the format "functionName(Type1,Type2,...)" as used
+     * by {@link #register(String, IExpressionNodeFactory)} and {@link #man(String)}.</p>
+     *
+     * @return an unmodifiable set of factory keys
+     */
+    Set<String> getFactoryKeys();
 
 }

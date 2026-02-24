@@ -1,6 +1,7 @@
 package com.garganttua.core.expression.context;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
+import com.garganttua.core.expression.IEvaluateNode;
 import com.garganttua.core.expression.ForLoopExpressionNode;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.IExpressionNode;
@@ -31,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();
+    private final Map<String, Class<?>> variableTypes = new ConcurrentHashMap<>();
 
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         log.atTrace().log("Entering ExpressionContext constructor");
@@ -58,6 +61,14 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
     }
 
     @Override
+    public void registerVariableType(String name, Class<?> type) {
+        Objects.requireNonNull(name, "Variable name cannot be null");
+        Objects.requireNonNull(type, "Variable type cannot be null");
+        this.variableTypes.put(name, type);
+        log.atDebug().log("Registered variable type: @{} -> {}", name, type.getName());
+    }
+
+    @Override
     public IExpression<?, ? extends ISupplier<?>> expression(String expressionString) {
         log.atTrace().log("Entering expression(expressionString={})", expressionString);
         log.atDebug().log("Parsing expression: {}", expressionString);
@@ -76,7 +87,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             log.atDebug().log("Expression parsed by ANTLR4");
 
             // Visit and build the expression tree
-            ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories);
+            ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories, this.variableTypes);
             IExpressionNode<?, ? extends ISupplier<?>> rootNode = visitor.visit(rootContext);
 
             if (rootNode == null) {
@@ -197,9 +208,12 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             com.garganttua.core.expression.antlr4.ExpressionBaseVisitor<IExpressionNode<?, ? extends ISupplier<?>>> {
 
         private final Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
+        private final Map<String, Class<?>> variableTypes;
 
-        public ExpressionVisitor(Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
+        public ExpressionVisitor(Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories,
+                Map<String, Class<?>> variableTypes) {
             this.nodeFactories = nodeFactories;
+            this.variableTypes = variableTypes;
         }
 
         @Override
@@ -259,7 +273,15 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             }
 
             String nodeName = eagerEval ? "." + varName : "@" + varName;
-            return new ExpressionNode<>(nodeName, (params) -> {
+
+            // Look up registered type for this variable, default to Object.class
+            final Class<?> resolvedType = variableTypes.getOrDefault(varName, Object.class);
+            if (resolvedType != Object.class) {
+                log.atDebug().log("Using registered type {} for variable {}", resolvedType.getName(), nodeName);
+            }
+
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            ExpressionNode node = new ExpressionNode(nodeName, (IEvaluateNode) (params) -> {
                 return new ISupplier<Object>() {
                     @Override
                     public java.util.Optional<Object> supply() throws com.garganttua.core.supply.SupplyException {
@@ -289,10 +311,11 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
                     @Override
                     public java.lang.reflect.Type getSuppliedType() {
-                        return Object.class;
+                        return resolvedType;
                     }
                 };
-            }, Object.class);
+            }, resolvedType);
+            return node;
         }
 
         @Override
@@ -801,6 +824,11 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             }
             return false;
         }
+    }
+
+    @Override
+    public Set<String> getFactoryKeys() {
+        return Collections.unmodifiableSet(nodeFactories.keySet());
     }
 
     // --- IBootstrapSummaryContributor implementation ---

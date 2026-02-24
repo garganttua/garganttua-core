@@ -8,13 +8,22 @@ public record ScriptHeader(
     String description,
     List<HeaderInput> inputs,
     List<HeaderOutput> outputs,
-    Map<Integer, String> returnCodes
+    Map<Integer, String> returnCodes,
+    String catchExpression,
+    String catchDownstreamExpression
 ) {
     public ScriptHeader {
         description = description != null ? description.trim() : null;
         inputs = inputs != null ? Collections.unmodifiableList(inputs) : Collections.emptyList();
         outputs = outputs != null ? Collections.unmodifiableList(outputs) : Collections.emptyList();
         returnCodes = returnCodes != null ? Collections.unmodifiableMap(returnCodes) : Collections.emptyMap();
+        catchExpression = catchExpression != null ? catchExpression.trim() : null;
+        catchDownstreamExpression = catchDownstreamExpression != null ? catchDownstreamExpression.trim() : null;
+    }
+
+    public ScriptHeader(String description, List<HeaderInput> inputs, List<HeaderOutput> outputs,
+            Map<Integer, String> returnCodes) {
+        this(description, inputs, outputs, returnCodes, null, null);
     }
 
     /**
@@ -22,6 +31,20 @@ public record ScriptHeader(
      */
     public boolean hasDescription() {
         return description != null && !description.isEmpty();
+    }
+
+    /**
+     * Returns true if this header has a catch expression.
+     */
+    public boolean hasCatch() {
+        return catchExpression != null && !catchExpression.isEmpty();
+    }
+
+    /**
+     * Returns true if this header has a catchDownstream expression.
+     */
+    public boolean hasCatchDownstream() {
+        return catchDownstreamExpression != null && !catchDownstreamExpression.isEmpty();
     }
 
     /**
@@ -56,6 +79,6 @@ public record ScriptHeader(
     }
 
     public static ScriptHeader empty() {
-        return new ScriptHeader(null, Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
+        return new ScriptHeader(null, Collections.emptyList(), Collections.emptyList(), Collections.emptyMap(), null, null);
     }
 }

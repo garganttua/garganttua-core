@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.garganttua</groupId>
+    <artifactId>garganttua-core</artifactId>
+    <version>2.0.0-ALPHA01</version>
+  </parent>
+  <groupId>com.garganttua.core</groupId>
+  <artifactId>garganttua-console</artifactId>
+  <description>Interactive REPL console for Garganttua Script.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-script</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-expression</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-injection</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-bootstrap</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-annotation-processor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-mutex</artifactId>
+    </dependency>
+    <!-- JLine for terminal handling with history support -->
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline</artifactId>
+      <version>${jline.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <!-- Reflections only needed for tests (runtime annotation scanning) -->
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-reflections</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Create executable fat JAR -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven.shade.plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.garganttua.core.console.ConsoleMain</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <!-- Merge annotation index files from all JARs -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
+                </transformer>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>executable</shadedClassifierName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -9,6 +9,14 @@ public interface IWorkflowScriptBuilder extends ILinkedBuilder<IWorkflowStageBui
     IWorkflowScriptBuilder name(String name);
 
     /**
+     * Sets a condition for this script. The script will only be executed
+     * if the condition expression evaluates to true at runtime.
+     *
+     * @param expression the Garganttua expression to evaluate (e.g., "equals(@env, \"prod\")")
+     */
+    IWorkflowScriptBuilder when(String expression);
+
+    /**
      * Sets a description for this script.
      * This description will be shown in workflow cartography.
      *

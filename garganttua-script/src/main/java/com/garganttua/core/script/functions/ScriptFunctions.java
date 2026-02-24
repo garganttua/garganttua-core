@@ -68,6 +68,98 @@ public class ScriptFunctions {
         return print(value);
     }
 
+    // ========== No-Operation Function ==========
+
+    @Expression(name = "noop", description = "No-operation, returns null")
+    public static Object noop() {
+        return null;
+    }
+
+    // ========== Standard Error Output Functions ==========
+
+    /**
+     * Prints a value to standard error.
+     *
+     * @param value the value to print
+     * @return the printed string
+     */
+    @Expression(name = "eprint", description = "Prints a value to standard error")
+    public static String eprint(@Nullable Object value) {
+        String str = value == null ? "null" : value.toString();
+        System.err.println(str);
+        return str;
+    }
+
+    /**
+     * Prints a value to standard error with newline (alias for eprint).
+     *
+     * @param value the value to print
+     * @return the printed string
+     */
+    @Expression(name = "eprintln", description = "Prints a value to standard error with newline")
+    public static String eprintln(@Nullable Object value) {
+        return eprint(value);
+    }
+
+    // ========== Format Functions ==========
+
+    /**
+     * Formats a string using {@link String#format} with one argument.
+     *
+     * <p>Usage in script:</p>
+     * <pre>
+     * msg <- format("Hello %s", @name)
+     * msg <- format("Count: %d", @count)
+     * </pre>
+     *
+     * @param pattern the format pattern (see {@link java.util.Formatter})
+     * @param arg1 the first argument
+     * @return the formatted string
+     */
+    @Expression(name = "format", description = "Formats a string using String.format with 1 argument")
+    public static String format(@Nullable Object pattern, @Nullable Object arg1) {
+        if (pattern == null) {
+            return "null";
+        }
+        return String.format(pattern.toString(), arg1);
+    }
+
+    /**
+     * Formats a string using {@link String#format} with two arguments.
+     *
+     * @param pattern the format pattern
+     * @param arg1 the first argument
+     * @param arg2 the second argument
+     * @return the formatted string
+     */
+    @Expression(name = "format", description = "Formats a string using String.format with 2 arguments")
+    public static String format(@Nullable Object pattern, @Nullable Object arg1, @Nullable Object arg2) {
+        if (pattern == null) {
+            return "null";
+        }
+        return String.format(pattern.toString(), arg1, arg2);
+    }
+
+    /**
+     * Formats a string using {@link String#format} with three arguments.
+     *
+     * @param pattern the format pattern
+     * @param arg1 the first argument
+     * @param arg2 the second argument
+     * @param arg3 the third argument
+     * @return the formatted string
+     */
+    @Expression(name = "format", description = "Formats a string using String.format with 3 arguments")
+    public static String format(@Nullable Object pattern, @Nullable Object arg1, @Nullable Object arg2,
+            @Nullable Object arg3) {
+        if (pattern == null) {
+            return "null";
+        }
+        return String.format(pattern.toString(), arg1, arg2, arg3);
+    }
+
+    // ========== Include/Call Functions ==========
+
     @Expression(name = "include", description = "Includes a JAR or a script file (.gs)")
     public static String include(@Nullable String path) {
         log.atDebug().log("include({})", path);

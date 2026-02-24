@@ -1,17 +1,15 @@
 #!/usr/bin/env gs
 
 #@workflow
-#  description: Transforms input data to the specified output format.
-#               Supports JSON, XML, and CSV formats.
-#  inputs:
-#    - name: inputData position: 0 type: Object
-#    - name: format position: 1 type: String
-#  outputs:
-#    - name: result variable: transformedData type: Object
-#    - name: outputFormat variable: outputFormat type: String
-#  returnCodes:
-#    0: SUCCESS
-#    1: TRANSFORM_ERROR
+#  Transforms input data to the specified output format.
+#  Supports JSON, XML, and CSV formats.
+#
+#  @in  inputData: Object
+#  @in  format: String
+#  @out result -> transformedData: Object
+#  @out outputFormat -> outputFormat: String
+#  @return 0: SUCCESS
+#  @return 1: TRANSFORM_ERROR
 #@end
 
 # Data Transformation Script

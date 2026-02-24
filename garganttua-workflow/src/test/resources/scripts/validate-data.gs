@@ -1,18 +1,16 @@
 #!/usr/bin/env gs
 
 #@workflow
-#  description: Validates input data and ensures data quality before processing.
-#               Returns validation status and validated data.
-#  inputs:
-#    - name: data position: 0 type: Object
-#    - name: strict position: 1 type: Boolean
-#  outputs:
-#    - name: validated variable: validatedData type: Object
-#    - name: status variable: validationStatus type: String
-#  returnCodes:
-#    0: SUCCESS
-#    1: VALIDATION_ERROR
-#    2: NULL_DATA_ERROR
+#  Validates input data and ensures data quality before processing.
+#  Returns validation status and validated data.
+#
+#  @in  data: Object
+#  @in  strict: Boolean
+#  @out validated -> validatedData: Object
+#  @out status -> validationStatus: String
+#  @return 0: SUCCESS
+#  @return 1: VALIDATION_ERROR
+#  @return 2: NULL_DATA_ERROR
 #@end
 
 # Data Validation Script

@@ -12,7 +12,6 @@ import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.script.console.ScriptConsole;
 import com.garganttua.core.script.context.ScriptContext;
 
 public class Main {
@@ -139,19 +138,30 @@ public class Main {
     }
 
     private static void startConsole() {
-        ScriptConsole console = new ScriptConsole();
-        console.start();
+        try {
+            Class<?> consoleClass = Class.forName("com.garganttua.core.console.ScriptConsole");
+            Object console = consoleClass.getDeclaredConstructor().newInstance();
+            consoleClass.getMethod("start").invoke(console);
+        } catch (ClassNotFoundException e) {
+            System.err.println("Console module not available.");
+            System.err.println("Install garganttua-console or use: gs <script.gs>");
+            printUsage();
+            System.exit(1);
+        } catch (Exception e) {
+            System.err.println("Error starting console: " + e.getMessage());
+            System.exit(1);
+        }
     }
 
     private static void printUsage() {
         System.out.println("Garganttua Script Engine " + VERSION);
         System.out.println();
-        System.out.println("Usage: garganttua-script                    Start interactive console");
+        System.out.println("Usage: garganttua-script                    Start interactive console (requires garganttua-console)");
         System.out.println("       garganttua-script <script.gs> [args] Execute a script file");
         System.out.println("       garganttua-script [options]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("  -c, --console      Start interactive console (REPL)");
+        System.out.println("  -c, --console      Start interactive console (REPL, requires garganttua-console)");
         System.out.println("  -h, --help         Show this help message");
         System.out.println("  -v, --version      Show version information");
         System.out.println("  -m, --man          List all available expression functions");

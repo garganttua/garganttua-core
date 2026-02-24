@@ -69,12 +69,6 @@
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-mutex</artifactId>
     </dependency>
-    <!-- JLine for terminal handling with history support -->
-    <dependency>
-      <groupId>org.jline</groupId>
-      <artifactId>jline</artifactId>
-      <version>${jline.version}</version>
-    </dependency>
   </dependencies>
 
   <build>

@@ -50,7 +50,14 @@ public class ScriptGenerator {
     }
 
     private void appendStage(StringBuilder script, WorkflowStage stage, boolean inlineAll) throws WorkflowException {
+        String stageName = sanitizeIdentifier(stage.name());
         script.append("# Stage: ").append(stage.name()).append("\n");
+
+        // Emit stage condition guard variable if present
+        String stageCondition = stage.condition();
+        if (stageCondition != null && !stageCondition.isEmpty()) {
+            script.append("_").append(stageName).append("_cond <- ").append(stageCondition).append("\n");
+        }
 
         boolean hasWrap = stage.hasWrap();
         boolean hasCatch = stage.hasCatch();
@@ -59,18 +66,18 @@ public class ScriptGenerator {
             // Generate stage content into a temporary buffer
             StringBuilder stageContent = new StringBuilder();
             for (WorkflowScript ws : stage.scripts()) {
-                appendScript(stageContent, stage.name(), ws, inlineAll);
+                appendScript(stageContent, stageName, ws, inlineAll, stageCondition);
             }
 
             // Apply wrapper if present
             if (hasWrap) {
                 // Wrap the stage content: the wrap expression should use @0 or similar placeholder
                 String wrapExpr = stage.wrapExpression();
-                script.append("_").append(stage.name()).append("_result <- ");
+                script.append("_").append(stageName).append("_result <- ");
                 script.append(wrapExpr.replace("@0", "(\n" + indent(stageContent.toString(), "    ") + ")"));
             } else {
                 // Just group the content
-                script.append("_").append(stage.name()).append("_result <- (\n");
+                script.append("_").append(stageName).append("_result <- (\n");
                 script.append(indent(stageContent.toString(), "    "));
                 script.append(")");
             }
@@ -87,7 +94,7 @@ public class ScriptGenerator {
         } else {
             // No wrap or catch - emit scripts directly
             for (WorkflowScript ws : stage.scripts()) {
-                appendScript(script, stage.name(), ws, inlineAll);
+                appendScript(script, stageName, ws, inlineAll, stageCondition);
             }
         }
 
@@ -106,14 +113,35 @@ public class ScriptGenerator {
         return result.toString();
     }
 
-    private void appendScript(StringBuilder script, String stageName, WorkflowScript ws, boolean inlineAll)
-            throws WorkflowException {
+    private void appendScript(StringBuilder script, String stageName, WorkflowScript ws, boolean inlineAll,
+            String stageCondition) throws WorkflowException {
         String scriptName = sanitizeIdentifier(ws.getName() != null ? ws.getName() : "script");
 
-        // Input mappings
+        // Input mappings (always emitted — needed for condition evaluation)
         for (var input : ws.getInputs().entrySet()) {
             script.append(input.getKey())
                   .append(" <- ").append(input.getValue()).append("\n");
+        }
+
+        // Compute effective condition
+        boolean hasStageCondition = stageCondition != null && !stageCondition.isEmpty();
+        boolean hasScriptCondition = ws.getCondition() != null && !ws.getCondition().isEmpty();
+
+        String effectiveCondition = null;
+        if (hasStageCondition && hasScriptCondition) {
+            effectiveCondition = "and(@_" + stageName + "_cond, " + ws.getCondition() + ")";
+        } else if (hasStageCondition) {
+            effectiveCondition = "@_" + stageName + "_cond";
+        } else if (hasScriptCondition) {
+            effectiveCondition = ws.getCondition();
+        }
+
+        boolean isConditional = effectiveCondition != null;
+
+        // Emit condition variable if conditional
+        String condVarName = "_" + stageName + "_" + scriptName + "_cond";
+        if (isConditional) {
+            script.append(condVarName).append(" <- ").append(effectiveCondition).append("\n");
         }
 
         // Determine if this script should be inlined
@@ -125,42 +153,77 @@ public class ScriptGenerator {
             String refVarName = "_" + stageName + "_" + scriptName + "_ref";
             String codeVarName = "_" + stageName + "_" + scriptName + "_code";
 
-            // Include: loads, compiles, returns script name
+            // Include: loads, compiles, returns script name (unconditional — lightweight)
             script.append(refVarName).append(" <- ");
             script.append("include(\"").append(escapeString(ws.getPath())).append("\")\n");
 
-            // Execute with input variables as positional arguments
-            script.append(codeVarName).append(" <- ");
-            script.append("execute_script(@").append(refVarName);
-            for (var input : ws.getInputs().entrySet()) {
-                script.append(", @").append(input.getKey());
-            }
-            script.append(")");
-
-            // Catch clauses on execute_script statement
-            if (ws.getCatchExpression() != null && !ws.getCatchExpression().isEmpty()) {
-                script.append("\n    ! => ").append(ws.getCatchExpression());
-            }
-            if (ws.getCatchDownstreamExpression() != null && !ws.getCatchDownstreamExpression().isEmpty()) {
-                script.append("\n    * => ").append(ws.getCatchDownstreamExpression());
-            }
-
-            // Code actions as pipe clauses on execute_script statement
-            for (var codeAction : ws.getCodeActions().entrySet()) {
-                if (codeAction.getValue() != CodeAction.CONTINUE) {
-                    script.append("\n    | equals(@").append(codeVarName).append(", ")
-                          .append(codeAction.getKey()).append(") => ")
-                          .append(codeAction.getValue().toScript());
+            if (isConditional) {
+                // Conditional execution via noop + pipe
+                script.append(codeVarName).append(" <- noop() -> 0\n");
+                script.append("    | @").append(condVarName).append(" => ")
+                      .append(codeVarName).append(" <- execute_script(@").append(refVarName);
+                for (var input : ws.getInputs().entrySet()) {
+                    script.append(", @").append(input.getKey());
                 }
-            }
+                script.append(")\n");
 
-            script.append("\n");
+                // Code actions as separate conditional pipes
+                boolean hasNonContinueCodeActions = ws.getCodeActions().entrySet().stream()
+                        .anyMatch(e -> e.getValue() != CodeAction.CONTINUE);
+                if (hasNonContinueCodeActions) {
+                    script.append("noop()\n");
+                    for (var codeAction : ws.getCodeActions().entrySet()) {
+                        if (codeAction.getValue() != CodeAction.CONTINUE) {
+                            script.append("    | and(@").append(condVarName)
+                                  .append(", equals(@").append(codeVarName).append(", ")
+                                  .append(codeAction.getKey()).append(")) => ")
+                                  .append(codeAction.getValue().toScript()).append("\n");
+                        }
+                    }
+                }
 
-            // Output mappings using script_variable()
-            for (var output : ws.getOutputs().entrySet()) {
-                script.append(output.getKey())
-                      .append(" <- script_variable(@").append(refVarName)
-                      .append(", \"").append(escapeString(output.getValue())).append("\")\n");
+                // Output mappings (conditional via noop + pipe)
+                for (var output : ws.getOutputs().entrySet()) {
+                    script.append("noop()\n");
+                    script.append("    | @").append(condVarName).append(" => ")
+                          .append(output.getKey())
+                          .append(" <- script_variable(@").append(refVarName)
+                          .append(", \"").append(escapeString(output.getValue())).append("\")\n");
+                }
+            } else {
+                // Unconditional execution
+                script.append(codeVarName).append(" <- ");
+                script.append("execute_script(@").append(refVarName);
+                for (var input : ws.getInputs().entrySet()) {
+                    script.append(", @").append(input.getKey());
+                }
+                script.append(")");
+
+                // Catch clauses on execute_script statement
+                if (ws.getCatchExpression() != null && !ws.getCatchExpression().isEmpty()) {
+                    script.append("\n    ! => ").append(ws.getCatchExpression());
+                }
+                if (ws.getCatchDownstreamExpression() != null && !ws.getCatchDownstreamExpression().isEmpty()) {
+                    script.append("\n    * => ").append(ws.getCatchDownstreamExpression());
+                }
+
+                // Code actions as pipe clauses on execute_script statement
+                for (var codeAction : ws.getCodeActions().entrySet()) {
+                    if (codeAction.getValue() != CodeAction.CONTINUE) {
+                        script.append("\n    | equals(@").append(codeVarName).append(", ")
+                              .append(codeAction.getKey()).append(") => ")
+                              .append(codeAction.getValue().toScript());
+                    }
+                }
+
+                script.append("\n");
+
+                // Output mappings using script_variable()
+                for (var output : ws.getOutputs().entrySet()) {
+                    script.append(output.getKey())
+                          .append(" <- script_variable(@").append(refVarName)
+                          .append(", \"").append(escapeString(output.getValue())).append("\")\n");
+                }
             }
         } else {
             // Inline script (string or file with inline()) - insert content directly
@@ -169,32 +232,54 @@ public class ScriptGenerator {
             // Replace positional variables (@0, @1, ...) with named input variables
             content = replacePositionalVariables(content, ws.getInputs());
 
-            // Add each line of the script content, stripping comments and shebang
-            for (String line : content.split("\n")) {
-                String trimmed = line.trim();
-                if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//")) {
-                    continue;
+            if (isConditional) {
+                // Guard each non-empty/non-comment line with noop + pipe
+                for (String line : content.split("\n")) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//")) {
+                        continue;
+                    }
+                    script.append("noop()\n");
+                    script.append("    | @").append(condVarName).append(" => ").append(line).append("\n");
                 }
-                script.append(line).append("\n");
-            }
 
-            // For inline scripts, output mappings copy script variables to workflow variables
-            for (var output : ws.getOutputs().entrySet()) {
-                String workflowVar = output.getKey();
-                String scriptVar = output.getValue();
-                // Only generate mapping if workflow var differs from script var
-                if (!workflowVar.equals(scriptVar)) {
-                    script.append(workflowVar).append(" <- @").append(scriptVar).append("\n");
+                // Output mappings (conditional via noop + pipe)
+                for (var output : ws.getOutputs().entrySet()) {
+                    String workflowVar = output.getKey();
+                    String scriptVar = output.getValue();
+                    if (!workflowVar.equals(scriptVar)) {
+                        script.append("noop()\n");
+                        script.append("    | @").append(condVarName).append(" => ")
+                              .append(workflowVar).append(" <- @").append(scriptVar).append("\n");
+                    }
                 }
-            }
-        }
+            } else {
+                // Unconditional inline
+                // Add each line of the script content, stripping comments and shebang
+                for (String line : content.split("\n")) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//")) {
+                        continue;
+                    }
+                    script.append(line).append("\n");
+                }
 
-        // Code actions for inline scripts (include case handles them as pipe clauses on execute_script)
-        if (shouldInline || !ws.isFile()) {
-            for (var codeAction : ws.getCodeActions().entrySet()) {
-                if (codeAction.getValue() != CodeAction.CONTINUE) {
-                    script.append("@code == ").append(codeAction.getKey())
-                          .append(" | ").append(codeAction.getValue().toScript()).append("\n");
+                // For inline scripts, output mappings copy script variables to workflow variables
+                for (var output : ws.getOutputs().entrySet()) {
+                    String workflowVar = output.getKey();
+                    String scriptVar = output.getValue();
+                    // Only generate mapping if workflow var differs from script var
+                    if (!workflowVar.equals(scriptVar)) {
+                        script.append(workflowVar).append(" <- @").append(scriptVar).append("\n");
+                    }
+                }
+
+                // Code actions for inline scripts (only when not conditional)
+                for (var codeAction : ws.getCodeActions().entrySet()) {
+                    if (codeAction.getValue() != CodeAction.CONTINUE) {
+                        script.append("@code == ").append(codeAction.getKey())
+                              .append(" | ").append(codeAction.getValue().toScript()).append("\n");
+                    }
                 }
             }
         }

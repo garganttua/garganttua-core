@@ -8,6 +8,7 @@ import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,6 +35,27 @@ public class AndCondition implements ICondition {
         log.atDebug().log("AND condition evaluation complete: {}", result);
         log.atTrace().log("Exiting evaluate() with result: {}", result);
         return new FixedSupplier<Boolean>(result);
+    }
+
+    @Expression(name = "and", description = "Logical AND of two boolean values")
+    public static boolean and(@Nullable Object value1, @Nullable Object value2) {
+        return toBoolean(value1) && toBoolean(value2);
+    }
+
+    private static boolean toBoolean(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean b) {
+            return b;
+        }
+        if (value instanceof Number n) {
+            return n.doubleValue() != 0.0;
+        }
+        if (value instanceof String s) {
+            return !s.isEmpty() && !"false".equalsIgnoreCase(s);
+        }
+        return true;
     }
 
     @Expression(name = "and", description = "Logical AND of multiple conditions")

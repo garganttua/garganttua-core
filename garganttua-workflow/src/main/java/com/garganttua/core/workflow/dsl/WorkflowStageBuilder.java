@@ -21,6 +21,7 @@ public class WorkflowStageBuilder implements IWorkflowStageBuilder {
 
     private final String name;
     private final List<WorkflowScript> scripts = new ArrayList<>();
+    private String condition;
     private String wrapExpression;
     private String catchExpression;
     private String catchDownstreamExpression;
@@ -65,6 +66,12 @@ public class WorkflowStageBuilder implements IWorkflowStageBuilder {
     }
 
     @Override
+    public IWorkflowStageBuilder when(String expression) {
+        this.condition = expression;
+        return this;
+    }
+
+    @Override
     public IWorkflowStageBuilder wrap(String expression) {
         this.wrapExpression = expression;
         return this;
@@ -92,6 +99,6 @@ public class WorkflowStageBuilder implements IWorkflowStageBuilder {
 
     @Override
     public WorkflowStage build() throws DslException {
-        return new WorkflowStage(name, new ArrayList<>(scripts), wrapExpression, catchExpression, catchDownstreamExpression);
+        return new WorkflowStage(name, new ArrayList<>(scripts), wrapExpression, catchExpression, catchDownstreamExpression, condition);
     }
 }

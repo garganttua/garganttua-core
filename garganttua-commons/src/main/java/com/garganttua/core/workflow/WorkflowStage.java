@@ -9,7 +9,8 @@ public record WorkflowStage(
     List<WorkflowScript> scripts,
     String wrapExpression,
     String catchExpression,
-    String catchDownstreamExpression
+    String catchDownstreamExpression,
+    String condition
 ) {
     public WorkflowStage {
         scripts = scripts != null ? Collections.unmodifiableList(new ArrayList<>(scripts)) : Collections.emptyList();
@@ -31,10 +32,10 @@ public record WorkflowStage(
     }
 
     public static WorkflowStage of(String name, List<WorkflowScript> scripts) {
-        return new WorkflowStage(name, scripts, null, null, null);
+        return new WorkflowStage(name, scripts, null, null, null, null);
     }
 
     public static WorkflowStage of(String name, WorkflowScript... scripts) {
-        return new WorkflowStage(name, List.of(scripts), null, null, null);
+        return new WorkflowStage(name, List.of(scripts), null, null, null, null);
     }
 }

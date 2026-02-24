@@ -1,4 +1,4 @@
-package com.garganttua.core.script;
+package com.garganttua.core.console;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-import com.garganttua.core.script.console.ScriptConsole;
 
 class ScriptConsoleTest {
 

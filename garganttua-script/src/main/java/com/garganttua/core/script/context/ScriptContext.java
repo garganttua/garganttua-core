@@ -107,6 +107,13 @@ public class ScriptContext implements IScript {
             throw new ScriptException("No script loaded. Call load() before compile()");
         }
 
+        // Register variable types before parsing so expressions can resolve method calls
+        for (Map.Entry<String, Object> entry : this.initialVariables.entrySet()) {
+            if (entry.getValue() != null) {
+                this.expressionContext.registerVariableType(entry.getKey(), entry.getValue().getClass());
+            }
+        }
+
         ScriptLexer lexer = new ScriptLexer(CharStreams.fromString(this.scriptSource));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         ScriptParser parser = new ScriptParser(tokens);

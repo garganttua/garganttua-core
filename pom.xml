@@ -182,6 +182,11 @@
         <artifactId>garganttua-workflow</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-console</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- External Dependencies -->
 
@@ -379,6 +384,7 @@
     <module>garganttua-mutex</module>
     <module>garganttua-bootstrap</module>
     <module>garganttua-script</module>
+    <module>garganttua-console</module>
     <module>garganttua-script-maven-plugin</module>
     <module>garganttua-workflow</module>
   </modules>
