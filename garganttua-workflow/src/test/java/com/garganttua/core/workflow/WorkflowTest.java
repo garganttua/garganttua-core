@@ -17,6 +17,7 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
 
 class WorkflowTest {
 
@@ -422,17 +423,14 @@ class WorkflowTest {
         // Script with full header
         String scriptWithHeader = """
             #@workflow
-            #  inputs:
-            #    - name: data type: Map
-            #    - name: config type: String
-            #  outputs:
-            #    - name: result variable: processedResult type: Object
-            #    - name: status variable: processingStatus type: String
-            #  returnCodes:
-            #    0: SUCCESS
-            #    1: VALIDATION_ERROR
-            #    2: PROCESSING_ERROR
-            #    99: UNKNOWN_ERROR
+            #  @in  data: Map
+            #  @in  config: String
+            #  @out result -> processedResult: Object
+            #  @out status -> processingStatus: String
+            #  @return 0: SUCCESS
+            #  @return 1: VALIDATION_ERROR
+            #  @return 2: PROCESSING_ERROR
+            #  @return 99: UNKNOWN_ERROR
             #@end
 
             # Actual script code starts here
@@ -647,6 +645,161 @@ class WorkflowTest {
     }
 
     @Test
+    void testScriptHeaderWithCatch() throws Exception {
+        String scriptWithCatch = """
+            #@workflow
+            #  Fetches data from a remote API.
+            #
+            #  @in  url: String
+            #  @out response -> apiResponse: Object
+            #  @return 0: SUCCESS
+            #  @return 1: ERROR
+            #  @catch handleError(@exception)
+            #  @catchDownstream logDownstreamError(@exception)
+            #@end
+
+            apiResponse <- fetch(@0)
+            """;
+
+        var parser = new com.garganttua.core.workflow.header.ScriptHeaderParser();
+        var headerOpt = parser.parse(scriptWithCatch);
+
+        assertTrue(headerOpt.isPresent(), "Header should be parsed");
+
+        var header = headerOpt.get();
+
+        // Verify standard fields
+        assertTrue(header.hasDescription());
+        assertEquals(1, header.inputs().size());
+        assertEquals("url", header.inputs().get(0).name());
+        assertEquals(1, header.outputs().size());
+        assertEquals("response", header.outputs().get(0).name());
+        assertEquals(2, header.returnCodes().size());
+
+        // Verify catch fields
+        assertTrue(header.hasCatch());
+        assertEquals("handleError(@exception)", header.catchExpression());
+        assertTrue(header.hasCatchDownstream());
+        assertEquals("logDownstreamError(@exception)", header.catchDownstreamExpression());
+
+        // Verify empty() has no catch
+        var empty = com.garganttua.core.workflow.header.ScriptHeader.empty();
+        assertFalse(empty.hasCatch());
+        assertFalse(empty.hasCatchDownstream());
+    }
+
+    @Test
+    void testConditionalScriptExecution_ConditionTrue() throws Exception {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("cond-true-workflow")
+                .variable("shouldRun", "yes")
+                .stage("conditional")
+                    .script("result <- \"executed\"")
+                        .name("guarded")
+                        .when("equals(@shouldRun, \"yes\")")
+                        .output("greeting", "result")
+                        .up()
+                    .up()
+                .build();
+
+        String script = workflow.getGeneratedScript();
+        System.out.println("Conditional TRUE script:\n" + script);
+
+        // Verify generated code has condition guard
+        assertTrue(script.contains("_conditional_guarded_cond"), "Should have condition variable");
+        assertTrue(script.contains("noop()"), "Should use noop() for conditional guards");
+
+        WorkflowResult result = workflow.execute();
+
+        System.out.println("Result: success=" + result.isSuccess() + " code=" + result.code());
+        System.out.println("Variables: " + result.variables());
+        result.exception().ifPresent(e -> e.printStackTrace());
+
+        assertTrue(result.isSuccess(), "Workflow should succeed");
+        assertEquals(0, result.code());
+    }
+
+    @Test
+    void testConditionalScriptExecution_ConditionFalse() throws Exception {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("cond-false-workflow")
+                .variable("shouldRun", "no")
+                .stage("conditional")
+                    .script("result <- \"executed\"")
+                        .name("guarded")
+                        .when("equals(@shouldRun, \"yes\")")
+                        .output("greeting", "result")
+                        .up()
+                    .up()
+                .build();
+
+        String script = workflow.getGeneratedScript();
+        System.out.println("Conditional FALSE script:\n" + script);
+
+        WorkflowResult result = workflow.execute();
+
+        System.out.println("Result: success=" + result.isSuccess() + " code=" + result.code());
+        System.out.println("Variables: " + result.variables());
+
+        assertTrue(result.isSuccess(), "Workflow should succeed even when script is skipped");
+        assertEquals(0, result.code());
+
+        // The "greeting" output variable should NOT be set because the condition was false
+        assertFalse(result.variables().containsKey("greeting"),
+                "Output variable 'greeting' should not be set when condition is false");
+    }
+
+    @Test
+    void testConditionalStageExecution() throws Exception {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("cond-stage-workflow")
+                .variable("env", "dev")
+                .stage("deploy")
+                    .when("equals(@env, \"prod\")")
+                    .script("deployed <- \"yes\"")
+                        .name("deployer")
+                        .output("deployResult", "deployed")
+                        .up()
+                    .up()
+                .stage("always")
+                    .script("status <- \"done\"")
+                        .name("status")
+                        .output("finalStatus", "status")
+                        .up()
+                    .up()
+                .build();
+
+        String script = workflow.getGeneratedScript();
+        System.out.println("Conditional STAGE script:\n" + script);
+
+        // Verify stage condition is in the generated script
+        assertTrue(script.contains("_deploy_cond"), "Should have stage condition variable");
+
+        WorkflowResult result = workflow.execute();
+
+        System.out.println("Result: success=" + result.isSuccess() + " code=" + result.code());
+        System.out.println("Variables: " + result.variables());
+        result.exception().ifPresent(e -> e.printStackTrace());
+
+        assertTrue(result.isSuccess(), "Workflow should succeed");
+
+        // The deploy stage was skipped (env != "prod"), so its output should not be present
+        assertFalse(result.variables().containsKey("deployResult"),
+                "Deploy output should not be set when stage condition is false");
+
+        // The always stage should run normally
+        assertTrue(result.variables().containsKey("finalStatus"),
+                "Always stage output should be set");
+        assertEquals("done", result.variables().get("finalStatus"));
+    }
+
+    @Test
     void testInlineAll() throws Exception {
         // Create a temporary script file
         Path scriptPath = tempDir.resolve("inline-test.gs");
@@ -673,5 +826,69 @@ class WorkflowTest {
         // Execute and verify success
         WorkflowResult result = workflow.execute();
         assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void testDescribeWorkflowOnBuiltWorkflow() throws Exception {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("describe-test")
+                .variable("config", "production")
+                .variable("maxRetries", 3)
+                .stage("fetch")
+                    .script("response <- fetch(@url)")
+                        .name("api-fetcher")
+                        .input("url", "@apiUrl")
+                        .output("data", "response")
+                        .catch_("handleError(@exception)")
+                        .catchDownstream("logDownstream(@exception)")
+                        .up()
+                    .up()
+                .stage("process")
+                    .when("equals(@config, \"production\")")
+                    .script("result <- process(@data)")
+                        .name("processor")
+                        .input("data", "@data")
+                        .when("equals(@config, \"production\")")
+                        .output("processed", "result")
+                        .up()
+                    .up()
+                .build();
+
+        // Test describeWorkflow() on built workflow
+        String description = workflow.describeWorkflow();
+        System.out.println("=".repeat(80));
+        System.out.println("DESCRIBE WORKFLOW ON BUILT WORKFLOW");
+        System.out.println("=".repeat(80));
+        System.out.println(description);
+        System.out.println("=".repeat(80));
+
+        assertNotNull(description);
+        assertTrue(description.contains("describe-test"), "Should contain workflow name");
+        assertTrue(description.contains("FETCH"), "Should contain stage name");
+        assertTrue(description.contains("PROCESS"), "Should contain stage name");
+        assertTrue(description.contains("api-fetcher"), "Should contain script name");
+        assertTrue(description.contains("processor"), "Should contain script name");
+
+        // Test getDescriptor() on built workflow
+        WorkflowDescriptor descriptor = workflow.getDescriptor();
+        assertEquals("describe-test", descriptor.name());
+        assertEquals(2, descriptor.stages().size());
+        assertEquals("fetch", descriptor.stages().get(0).name());
+        assertEquals("process", descriptor.stages().get(1).name());
+        assertNull(descriptor.stages().get(0).condition());
+        assertEquals("equals(@config, \"production\")", descriptor.stages().get(1).condition());
+
+        // Script-level checks
+        var fetchScript = descriptor.stages().get(0).scripts().get(0);
+        assertEquals("api-fetcher", fetchScript.name());
+        assertEquals("handleError(@exception)", fetchScript.catchExpression());
+        assertEquals("logDownstream(@exception)", fetchScript.catchDownstreamExpression());
+        assertNull(fetchScript.condition());
+
+        var processScript = descriptor.stages().get(1).scripts().get(0);
+        assertEquals("processor", processScript.name());
+        assertEquals("equals(@config, \"production\")", processScript.condition());
     }
 }

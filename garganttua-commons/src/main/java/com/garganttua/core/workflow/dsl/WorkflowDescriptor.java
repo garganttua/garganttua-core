@@ -31,6 +31,7 @@ public record WorkflowDescriptor(
      * @param wrapExpression            the wrapper expression (e.g., "retry(3, @0)")
      * @param catchExpression           the stage-level catch expression
      * @param catchDownstreamExpression the stage-level downstream catch expression
+     * @param condition                 the stage condition expression (when clause)
      * @param scripts                   the list of script descriptors in this stage
      */
     public record StageDescriptor(
@@ -38,6 +39,7 @@ public record WorkflowDescriptor(
             String wrapExpression,
             String catchExpression,
             String catchDownstreamExpression,
+            String condition,
             List<ScriptDescriptor> scripts) {
     }
 
@@ -54,6 +56,7 @@ public record WorkflowDescriptor(
      * @param catchExpression          the immediate catch expression (! syntax)
      * @param catchDownstreamExpression the downstream catch expression (* syntax)
      * @param codeActions              the code actions (code -> action)
+     * @param condition                the script condition expression (when clause)
      */
     public record ScriptDescriptor(
             String name,
@@ -65,6 +68,7 @@ public record WorkflowDescriptor(
             Map<String, String> outputMappings,
             String catchExpression,
             String catchDownstreamExpression,
-            Map<Integer, String> codeActions) {
+            Map<Integer, String> codeActions,
+            String condition) {
     }
 }

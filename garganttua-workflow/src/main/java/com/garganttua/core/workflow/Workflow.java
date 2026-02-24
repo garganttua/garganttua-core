@@ -3,6 +3,7 @@ package com.garganttua.core.workflow;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,7 +16,9 @@ import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.context.ScriptContext;
+import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
 import com.garganttua.core.workflow.generator.ScriptGenerator;
+import com.garganttua.core.workflow.renderer.WorkflowRenderer;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,6 +50,7 @@ public class Workflow implements IWorkflow {
     private final IInjectionContext injectionContext;
     private final boolean inlineAll;
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
+    private final WorkflowRenderer renderer = new WorkflowRenderer();
 
     /**
      * Creates a new Workflow with all required components.
@@ -134,6 +138,7 @@ public class Workflow implements IWorkflow {
         // 2. Inject initial variables
         if (input.payload() != null) {
             script.setVariable("input", input.payload());
+            script.setVariable("$0", input.payload());
         }
         for (var param : input.parameters().entrySet()) {
             script.setVariable(param.getKey(), param.getValue());
@@ -144,7 +149,9 @@ public class Workflow implements IWorkflow {
 
         // 3. Compile and execute
         script.compile();
-        int code = script.execute();
+        int code = input.payload() != null
+                ? script.execute(input.payload())
+                : script.execute();
 
         // 4. Check for execution errors
         if (script.hasAborted()) {
@@ -169,6 +176,46 @@ public class Workflow implements IWorkflow {
                 stageOutputs,
                 start,
                 stop);
+    }
+
+    @Override
+    public String describeWorkflow() {
+        return renderer.render(name, stages, presetVariables, inlineAll);
+    }
+
+    @Override
+    public WorkflowDescriptor getDescriptor() {
+        List<WorkflowDescriptor.StageDescriptor> stageDescriptors = stages.stream()
+                .map(stage -> new WorkflowDescriptor.StageDescriptor(
+                        stage.name(),
+                        stage.wrapExpression(),
+                        stage.catchExpression(),
+                        stage.catchDownstreamExpression(),
+                        stage.condition(),
+                        stage.scripts().stream()
+                                .map(script -> new WorkflowDescriptor.ScriptDescriptor(
+                                        script.getName(),
+                                        script.getDescription(),
+                                        script.getSource().type().name(),
+                                        script.getPath(),
+                                        script.isInline(),
+                                        new HashMap<>(script.getInputs()),
+                                        new HashMap<>(script.getOutputs()),
+                                        script.getCatchExpression(),
+                                        script.getCatchDownstreamExpression(),
+                                        script.getCodeActions().entrySet().stream()
+                                                .collect(Collectors.toMap(
+                                                        Map.Entry::getKey,
+                                                        e -> e.getValue().name())),
+                                        script.getCondition()))
+                                .toList()))
+                .toList();
+
+        return new WorkflowDescriptor(
+                name,
+                inlineAll,
+                new LinkedHashMap<>(presetVariables),
+                stageDescriptors);
     }
 
     /**

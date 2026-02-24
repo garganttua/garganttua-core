@@ -1,5 +1,7 @@
 package com.garganttua.core.workflow;
 
+import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
+
 /**
  * Interface for workflow execution.
  *
@@ -56,4 +58,21 @@ public interface IWorkflow {
      * @return the generated script
      */
     String getGeneratedScript();
+
+    /**
+     * Returns a textual representation of the workflow structure.
+     * This provides the same visual output as
+     * {@link com.garganttua.core.workflow.dsl.IWorkflowBuilder#describeWorkflow()}
+     * but can be called on a built workflow instance.
+     *
+     * @return a formatted string showing the workflow structure
+     */
+    String describeWorkflow();
+
+    /**
+     * Returns the workflow structure as a data object.
+     *
+     * @return the workflow descriptor containing all configuration
+     */
+    WorkflowDescriptor getDescriptor();
 }
