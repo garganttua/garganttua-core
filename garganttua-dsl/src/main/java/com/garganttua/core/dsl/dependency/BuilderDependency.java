@@ -117,24 +117,6 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     private final Set<String> packages = new HashSet<>();
 
     /**
-     * Creates a new builder dependency for the specified class.
-     *
-     * @param dependencyClass the class of the builder being depended upon
-     * @deprecated Use {@link #BuilderDependency(Class, DependencySpec)} instead
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    @SuppressWarnings("unchecked")
-    public BuilderDependency(Class<? extends IObservableBuilder<?, ?>> dependencyClass) {
-        log.atTrace().log("Creating BuilderDependency for class: {} (deprecated)", dependencyClass);
-        this.dependencyClass = (Class<Builder>) Objects.requireNonNull(dependencyClass,
-            "Dependency class cannot be null");
-        // Default to BOTH phases when using deprecated constructor
-        this.spec = new DependencySpec(dependencyClass, DependencyPhase.BOTH, false);
-        log.atDebug().log("BuilderDependency created for: {}, isReady: {}, isEmpty: {}",
-            this.dependencyClass.getName(), isReady(), isEmpty());
-    }
-
-    /**
      * Creates a new phase-aware builder dependency.
      *
      * @param dependencyClass the class of the builder being depended upon

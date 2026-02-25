@@ -93,43 +93,36 @@ public class DummyBeanProvider implements IBeanProvider {
 
     @Override
     public <T> void add(BeanReference<T> query, T bean) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
     @Override
     public <T> void add(BeanReference<T> reference, T bean, boolean autoDetect) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
     @Override
     public <T> void add(BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
     @Override
     public <T> void add(BeanReference<T> reference, Optional<T> bean) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
     @Override
     public <T> void add(BeanReference<T> reference) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
     @Override
     public <T> void add(BeanReference<T> reference, boolean autoDetect) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'add'");
     }
 
     @Override
     public LifecycleStatus status() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'status'");
     }
 

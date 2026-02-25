@@ -51,7 +51,6 @@ class MultiSourceCollectorTest {
 
             @Override
             public Type getSuppliedType() {
-                // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
             }
         };
@@ -230,7 +229,6 @@ class MultiSourceCollectorTest {
 
             @Override
             public Type getSuppliedType() {
-                // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
             }
         }, 0, "context");
@@ -255,7 +253,6 @@ class MultiSourceCollectorTest {
 
             @Override
             public Type getSuppliedType() {
-                // TODO Auto-generated method stub
                 throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
             }
         }, 0, "context");

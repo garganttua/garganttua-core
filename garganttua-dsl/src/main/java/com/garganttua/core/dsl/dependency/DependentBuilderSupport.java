@@ -113,40 +113,6 @@ public class DependentBuilderSupport {
     protected final Set<IBuilderDependency<?, ?>> allDependencies;
 
     /**
-     * Constructs a new DependentBuilderSupport with specified dependency sets.
-     *
-     * @param useDependencies     the set of optional dependency classes
-     * @param requireDependencies the set of required dependency classes
-     * @throws NullPointerException if either parameter is null
-     * @deprecated Use {@link #DependentBuilderSupport(Set)} with DependencySpec
-     *             instead
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    public DependentBuilderSupport(
-            Set<Class<? extends IObservableBuilder<?, ?>>> useDependencies,
-            Set<Class<? extends IObservableBuilder<?, ?>>> requireDependencies) {
-        log.atTrace().log("Entering DependentBuilderSupport constructor (deprecated)");
-        Objects.requireNonNull(useDependencies, "Use dependency set cannot be null");
-        Objects.requireNonNull(requireDependencies, "Require dependency set cannot be null");
-
-        this.useDependencies = useDependencies.stream()
-                .map(BuilderDependency::new)
-                .collect(Collectors.toSet());
-
-        this.requireDependencies = requireDependencies.stream()
-                .map(BuilderDependency::new)
-                .collect(Collectors.toSet());
-
-        this.allDependencies = new HashSet<>();
-        this.allDependencies.addAll(this.useDependencies);
-        this.allDependencies.addAll(this.requireDependencies);
-
-        log.atDebug().log("DependentBuilderSupport initialized with {} use and {} require dependencies",
-                this.useDependencies.size(), this.requireDependencies.size());
-        log.atTrace().log("Exiting DependentBuilderSupport constructor (deprecated)");
-    }
-
-    /**
      * Constructs a new DependentBuilderSupport with phase-aware dependency
      * specifications.
      *

@@ -49,22 +49,6 @@ public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
     protected final DependentBuilderSupport support;
     protected T built;
 
-    /**
-     * Constructs a new AbstractDependentBuilder with specified dependency sets.
-     *
-     * @param useDependencies    the set of optional dependency classes
-     * @param requireDependencies the set of required dependency classes
-     * @throws NullPointerException if either parameter is null
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    protected AbstractDependentBuilder(
-            Set<Class<? extends IObservableBuilder<?, ?>>> useDependencies,
-            Set<Class<? extends IObservableBuilder<?, ?>>> requireDependencies) {
-        log.atTrace().log("Entering AbstractDependentBuilder constructor");
-        this.support = new DependentBuilderSupport(useDependencies, requireDependencies);
-        log.atTrace().log("Exiting AbstractDependentBuilder constructor");
-    }
-
     protected AbstractDependentBuilder(
             Set<DependencySpec> dependencies) {
         log.atTrace().log("Entering AbstractDependentBuilder constructor");

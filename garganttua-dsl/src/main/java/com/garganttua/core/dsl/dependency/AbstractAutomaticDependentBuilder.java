@@ -61,16 +61,6 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
      * @param requireDependencies the set of required dependency classes
      * @throws NullPointerException if either parameter is null
      */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    protected AbstractAutomaticDependentBuilder(
-            Set<Class<? extends IObservableBuilder<?, ?>>> useDependencies,
-            Set<Class<? extends IObservableBuilder<?, ?>>> requireDependencies) {
-        super();
-        log.atTrace().log("Entering AbstractAutomaticDependentBuilder constructor");
-        this.support = new DependentBuilderSupport(useDependencies, requireDependencies);
-        log.atTrace().log("Exiting AbstractAutomaticDependentBuilder constructor");
-    }
-
     protected AbstractAutomaticDependentBuilder(
             Set<DependencySpec> dependencies) {
         super();

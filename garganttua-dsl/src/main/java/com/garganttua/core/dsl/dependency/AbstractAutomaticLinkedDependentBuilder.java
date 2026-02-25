@@ -63,29 +63,6 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
     private L link;
     protected final DependentBuilderSupport support;
 
-    /**
-     * Constructs a new AbstractAutomaticLinkedDependentBuilder with specified link and dependency sets.
-     *
-     * @param link                the parent builder to link to
-     * @param useDependencies    the set of optional dependency classes
-     * @param requireDependencies the set of required dependency classes
-     * @throws NullPointerException if any parameter is null
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    protected AbstractAutomaticLinkedDependentBuilder(
-            L link,
-            Set<Class<? extends IObservableBuilder<?, ?>>> useDependencies,
-            Set<Class<? extends IObservableBuilder<?, ?>>> requireDependencies) {
-        super();
-        log.atTrace().log("Entering AbstractAutomaticLinkedDependentBuilder constructor");
-        this.link = Objects.requireNonNull(link, "Link cannot be null");
-        this.support = new DependentBuilderSupport(useDependencies, requireDependencies);
-        this.autoDetect = false;
-        log.atDebug().log("AbstractAutomaticLinkedDependentBuilder initialized with link, {} use and {} require dependencies",
-            useDependencies.size(), requireDependencies.size());
-        log.atTrace().log("Exiting AbstractAutomaticLinkedDependentBuilder constructor");
-    }
-
     protected AbstractAutomaticLinkedDependentBuilder(
             L link,
             Set<DependencySpec> dependencies) {

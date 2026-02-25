@@ -68,7 +68,6 @@ public class DummyPropertyProvider implements IPropertyProvider {
 
     @Override
     public LifecycleStatus status() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'status'");
     }
 

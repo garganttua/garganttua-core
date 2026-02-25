@@ -161,44 +161,37 @@ public class DummyChildContext implements IInjectionContext{
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, T bean, boolean autoDetect)
             throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean, boolean autoDetect)
             throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, T bean) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addBean'");
     }
 
     @Override
     public LifecycleStatus status() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'status'");
     }
 

@@ -60,26 +60,6 @@ public abstract class AbstractLinkedDependentBuilder<B extends IBuilder<T>, L, T
     protected final DependentBuilderSupport support;
     protected T built;
 
-    /**
-     * Constructs a new AbstractLinkedDependentBuilder with specified link and
-     * dependency sets.
-     *
-     * @param link                the parent builder to link to
-     * @param useDependencies     the set of optional dependency classes
-     * @param requireDependencies the set of required dependency classes
-     * @throws NullPointerException if any parameter is null
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    protected AbstractLinkedDependentBuilder(
-            L link,
-            Set<Class<? extends IObservableBuilder<?, ?>>> useDependencies,
-            Set<Class<? extends IObservableBuilder<?, ?>>> requireDependencies) {
-        super(link);
-        log.atTrace().log("Entering AbstractLinkedDependentBuilder constructor");
-        this.support = new DependentBuilderSupport(useDependencies, requireDependencies);
-        log.atTrace().log("Exiting AbstractLinkedDependentBuilder constructor");
-    }
-
     protected AbstractLinkedDependentBuilder(
             L link,
             Set<DependencySpec> dependencies) {

@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -70,7 +71,7 @@ public class ExpressionContextBuilder
     private Set<IBuilderObserver<IExpressionContextBuilder, IExpressionContext>> observers = new HashSet<>();
 
     protected ExpressionContextBuilder() {
-        super(Set.of(IInjectionContextBuilder.class), Set.of());
+        super(Set.of(DependencySpec.use(IInjectionContextBuilder.class)));
         log.atTrace().log("Entering ExpressionBuilder constructor");
         log.atTrace().log("Exiting ExpressionBuilder constructor");
     }

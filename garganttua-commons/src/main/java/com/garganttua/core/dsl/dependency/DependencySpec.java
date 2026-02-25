@@ -69,25 +69,6 @@ public record DependencySpec(
     }
 
     /**
-     * Deprecated constructor for backward compatibility.
-     *
-     * @param dependencyClass the class of the dependency builder
-     * @param phase           the lifecycle phase when this dependency is needed
-     * @param required        whether this dependency is mandatory
-     * @deprecated Use
-     *             {@link #DependencySpec(Class, DependencyPhase, DependencyRequirement)}
-     *             instead
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    public DependencySpec(
-            Class<? extends IObservableBuilder<?, ?>> dependencyClass,
-            DependencyPhase phase,
-            boolean required) {
-        this(dependencyClass, phase,
-                required ? DependencyRequirement.REQUIRED : DependencyRequirement.OPTIONAL);
-    }
-
-    /**
      * Creates an optional dependency specification.
      *
      * @param dependencyClass the class of the dependency builder
@@ -197,17 +178,4 @@ public record DependencySpec(
         return requirement.isOptionalForBuild(phase);
     }
 
-    /**
-     * Legacy method for backward compatibility.
-     *
-     * @return true if requirement is REQUIRED or phase-specific required
-     * @deprecated Use {@link #isRequiredForAutoDetect()} or
-     *             {@link #isRequiredForBuild()} instead
-     */
-    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
-    public boolean required() {
-        return requirement == DependencyRequirement.REQUIRED ||
-                requirement == DependencyRequirement.REQUIRED_FOR_AUTO_DETECT ||
-                requirement == DependencyRequirement.REQUIRED_FOR_BUILD;
-    }
 }

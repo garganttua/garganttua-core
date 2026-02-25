@@ -50,13 +50,11 @@ class SupplierBuilderTest {
 
         @Override
         public Optional<IMethodReturn<T>> supply() throws SupplyException {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'supply'");
         }
 
         @Override
         public Type getSuppliedType() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
         }
     }
@@ -96,13 +94,11 @@ class SupplierBuilderTest {
 
         @Override
         public Type getSuppliedType() {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
         }
 
         @Override
         public Optional<IMethodReturn<T>> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'supply'");
         }
     }

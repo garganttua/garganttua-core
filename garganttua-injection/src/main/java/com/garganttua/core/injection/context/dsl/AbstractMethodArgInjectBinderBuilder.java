@@ -3,7 +3,6 @@ package com.garganttua.core.injection.context.dsl;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.DependentBuilderSupport;
 import com.garganttua.core.dsl.DslException;
@@ -38,7 +37,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
         log.atTrace().log("Entering constructor with link: {}, supplier: {}, collection: {}",
                 up, supplier, collection);
         this.support = new DependentBuilderSupport(
-                Set.of(new DependencySpec(IInjectableElementResolverBuilder.class, DependencyPhase.AUTO_DETECT, true)));
+                Set.of(DependencySpec.require(IInjectableElementResolverBuilder.class)));
         log.atTrace().log("Exiting constructor");
     }
 

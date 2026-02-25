@@ -35,7 +35,6 @@ public class MethodBinderTest {
 
         @Override
         protected void doAutoDetection() throws DslException {
-            // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
         }
 
