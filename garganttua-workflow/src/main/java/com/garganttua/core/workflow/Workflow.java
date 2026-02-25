@@ -132,7 +132,7 @@ public class Workflow implements IWorkflow {
     private WorkflowResult executeScript(UUID uuid, Instant start, String scriptSource,
             WorkflowInput input, List<WorkflowStage> stagesToCollect) throws ScriptException {
         // 1. Create and configure the ScriptContext
-        IScript script = new ScriptContext(expressionContext, injectionContext);
+        IScript script = new ScriptContext(expressionContext, injectionContext, null);
         script.load(scriptSource);
 
         // 2. Inject initial variables

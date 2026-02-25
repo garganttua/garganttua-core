@@ -94,11 +94,6 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
-        <artifactId>garganttua-native-image-utils</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-native</artifactId>
         <version>${project.version}</version>
       </dependency>
