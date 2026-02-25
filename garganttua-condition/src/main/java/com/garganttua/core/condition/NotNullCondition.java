@@ -1,9 +1,10 @@
 package com.garganttua.core.condition;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.core.expression.annotations.Expression;
-import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,18 +20,20 @@ public class NotNullCondition implements ICondition {
         log.atTrace().log("Exiting NotNullCondition constructor");
     }
 
-    /*
-        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
-    */
     @Override
     public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for NotNullCondition");
-        log.atDebug().log("Evaluating NOT NULL condition - negation of NULL condition");
-
-        boolean result = notNull(this.supplier.supply().orElse(null));
-        log.atDebug().log("NOT NULL condition evaluation complete: {}", result);
-        log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return new FixedSupplier<Boolean>(result);
+        return new ISupplier<Boolean>() {
+            @Override
+            public Optional<Boolean> supply() {
+                log.atDebug().log("Evaluating NOT NULL condition - negation of NULL condition");
+                boolean result = notNull(supplier.supply().orElse(null));
+                log.atDebug().log("NOT NULL condition evaluation complete: {}", result);
+                return Optional.of(result);
+            }
+            @Override
+            public Type getSuppliedType() { return Boolean.class; }
+        };
     }
 
     @Expression(name = "notNull", description = "Checks if an object is not null")

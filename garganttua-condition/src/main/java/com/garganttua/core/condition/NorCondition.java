@@ -1,10 +1,11 @@
 package com.garganttua.core.condition;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.expression.annotations.Expression;
-import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,18 +21,20 @@ public class NorCondition implements ICondition {
         log.atTrace().log("Exiting NorCondition constructor");
     }
 
-    /*
-        TODO: this method do a full evaluation, find a way to delegate the effective evaluation within the returned supplier
-    */
     @Override
     public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for NorCondition with {} conditions", conditions.size());
-        log.atDebug().log("Evaluating NOR condition - negation of OR condition");
-
-        boolean result = nor(this.conditions);
-        log.atDebug().log("NOR condition evaluation complete: {}", result);
-        log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return new FixedSupplier<Boolean>(result);
+        return new ISupplier<Boolean>() {
+            @Override
+            public Optional<Boolean> supply() {
+                log.atDebug().log("Evaluating NOR condition - negation of OR condition");
+                boolean result = nor(conditions);
+                log.atDebug().log("NOR condition evaluation complete: {}", result);
+                return Optional.of(result);
+            }
+            @Override
+            public Type getSuppliedType() { return Boolean.class; }
+        };
     }
 
     @Expression(name = "nor", description = "Logical NOR of multiple conditions")

@@ -553,7 +553,7 @@ class WorkflowTest {
                 Generated: fetchedData <- @response (inline)
                        or: fetchedData <- @_result.response (include)
 
-            .onCode(code, action)  [TODO: pipe clause syntax]
+            .onCode(code, action)
                 React to specific return codes
                 Actions: CONTINUE, ABORT, SKIP_STAGE, RETRY
 

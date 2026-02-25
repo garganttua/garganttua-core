@@ -1,10 +1,11 @@
 package com.garganttua.core.condition;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.expression.annotations.Expression;
-import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,19 +22,20 @@ public class NandCondition implements ICondition {
         log.atTrace().log("Exiting NandCondition constructor");
     }
 
-    /*
-     * TODO: this method do a full evaluation, find a way to delegate the effective
-     * evaluation within the returned supplier
-     */
     @Override
     public ISupplier<Boolean> evaluate() throws ConditionException {
         log.atTrace().log("Entering evaluate() for NandCondition with {} conditions", conditions.size());
-        log.atDebug().log("Evaluating NAND condition - negation of AND condition");
-
-        Boolean result = nand(this.conditions);
-        log.atDebug().log("NAND condition evaluation complete: {}", result);
-        log.atTrace().log("Exiting evaluate() with result: {}", result);
-        return new FixedSupplier<Boolean>(result);
+        return new ISupplier<Boolean>() {
+            @Override
+            public Optional<Boolean> supply() {
+                log.atDebug().log("Evaluating NAND condition - negation of AND condition");
+                Boolean result = nand(conditions);
+                log.atDebug().log("NAND condition evaluation complete: {}", result);
+                return Optional.of(result);
+            }
+            @Override
+            public Type getSuppliedType() { return Boolean.class; }
+        };
     }
 
     @Expression(name = "nand", description = "Logical AND of multiple conditions")
