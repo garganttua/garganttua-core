@@ -5,15 +5,28 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import static com.garganttua.core.supply.dsl.NullSupplierBuilder.*;
 
 public class ExpressionNodeFactoryTest {
+
+    @BeforeEach
+    void setUp() {
+        IReflection reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider(), 1)
+                .build();
+        IClass.setReflection(reflection);
+    }
 
     static class TestService {
 
@@ -40,18 +53,18 @@ public class ExpressionNodeFactoryTest {
     public void testExpressionNodeFactoryCreation() throws Exception {
 
         ExpressionNodeFactory<String, ISupplier<String>> leafFactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("string", String.class),
+                IClass.getClass(TestService.class).getMethod("string", IClass.getClass(String.class)),
                 new ObjectAddress("string"),
                 List.of(false),
                 Optional.of("string"),
                 Optional.of("String converter"));
 
         ExpressionNodeFactory<String, ISupplier<String>> nodefactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("greet", String.class),
+                IClass.getClass(TestService.class).getMethod("greet", IClass.getClass(String.class)),
                 new ObjectAddress("greet"),
                 List.of(false),
                 Optional.of("greet"),
@@ -71,9 +84,9 @@ public class ExpressionNodeFactoryTest {
     public void testExpressionNodeCanHandleEitherOtherExpressionNodeAndObject() throws Exception {
 
         ExpressionNodeFactory<String, ISupplier<String>> nodefactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("greet", String.class),
+                IClass.getClass(TestService.class).getMethod("greet", IClass.getClass(String.class)),
                 new ObjectAddress("greet"),
                 List.of(false),
                 Optional.of("greet"),
@@ -90,9 +103,9 @@ public class ExpressionNodeFactoryTest {
     public void testManualPageGeneration() throws Exception {
         // Create a factory with detailed documentation
         ExpressionNodeFactory<String, ISupplier<String>> factory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("greet", String.class),
+                IClass.getClass(TestService.class).getMethod("greet", IClass.getClass(String.class)),
                 new ObjectAddress("greet"),
                 List.of(false),
                 Optional.of("greet"),
@@ -127,9 +140,9 @@ public class ExpressionNodeFactoryTest {
     public void testManualPageWithNullableParameter() throws Exception {
         // Create a test method with nullable parameter
         ExpressionNodeFactory<String, ISupplier<String>> factory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("string", String.class),
+                IClass.getClass(TestService.class).getMethod("string", IClass.getClass(String.class)),
                 new ObjectAddress("string"),
                 List.of(true), // Parameter is nullable
                 Optional.of("string"),
@@ -149,9 +162,9 @@ public class ExpressionNodeFactoryTest {
     @Test
     public void testKeyGeneration() throws Exception {
         ExpressionNodeFactory<String, ISupplier<String>> factory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("greet", String.class),
+                IClass.getClass(TestService.class).getMethod("greet", IClass.getClass(String.class)),
                 new ObjectAddress("greet"),
                 List.of(false),
                 Optional.of("greet"),
@@ -166,9 +179,9 @@ public class ExpressionNodeFactoryTest {
     @Test
     public void testDescriptionRetrieval() throws Exception {
         ExpressionNodeFactory<String, ISupplier<String>> factory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("greet", String.class),
+                IClass.getClass(TestService.class).getMethod("greet", IClass.getClass(String.class)),
                 new ObjectAddress("greet"),
                 List.of(false),
                 Optional.of("greet"),
@@ -184,9 +197,9 @@ public class ExpressionNodeFactoryTest {
     public void testLazyParameterKeyGeneration() throws Exception {
         // Create a factory for a method with ISupplier parameter (lazy)
         ExpressionNodeFactory<Long, ISupplier<Long>> factory = new ExpressionNodeFactory<Long, ISupplier<Long>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<Long>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("measureTime", ISupplier.class),
+                IClass.getClass(TestService.class).getMethod("measureTime", IClass.getClass(ISupplier.class)),
                 new ObjectAddress("measureTime"),
                 List.of(true), // nullable
                 Optional.of("time"),
@@ -208,9 +221,9 @@ public class ExpressionNodeFactoryTest {
     public void testLazyParameterFactoryLookupAndExecution() throws Exception {
         // Create a factory for a method with ISupplier parameter (lazy)
         ExpressionNodeFactory<Long, ISupplier<Long>> factory = new ExpressionNodeFactory<Long, ISupplier<Long>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<Long>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("measureTime", ISupplier.class),
+                IClass.getClass(TestService.class).getMethod("measureTime", IClass.getClass(ISupplier.class)),
                 new ObjectAddress("measureTime"),
                 List.of(true), // nullable
                 Optional.of("time"),
@@ -241,9 +254,9 @@ public class ExpressionNodeFactoryTest {
     public void testLazyParameterExpressionParsing() throws Exception {
         // Create a factory for a method with ISupplier parameter (lazy)
         ExpressionNodeFactory<Long, ISupplier<Long>> timeFactory = new ExpressionNodeFactory<Long, ISupplier<Long>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<Long>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("measureTime", ISupplier.class),
+                IClass.getClass(TestService.class).getMethod("measureTime", IClass.getClass(ISupplier.class)),
                 new ObjectAddress("measureTime"),
                 List.of(true), // nullable
                 Optional.of("time"),
@@ -251,9 +264,9 @@ public class ExpressionNodeFactoryTest {
 
         // Create a string factory for the inner expression
         ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("greet", String.class),
+                IClass.getClass(TestService.class).getMethod("greet", IClass.getClass(String.class)),
                 new ObjectAddress("greet"),
                 List.of(false),
                 Optional.of("greet"),
@@ -261,9 +274,9 @@ public class ExpressionNodeFactoryTest {
 
         // Create a factory for string literal
         ExpressionNodeFactory<String, ISupplier<String>> stringLiteralFactory = new ExpressionNodeFactory<String, ISupplier<String>>(
-                of(TestService.class).build(),
+                of(IClass.getClass(TestService.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                TestService.class.getMethod("string", String.class),
+                IClass.getClass(TestService.class).getMethod("string", IClass.getClass(String.class)),
                 new ObjectAddress("string"),
                 List.of(true),
                 Optional.of("string"),

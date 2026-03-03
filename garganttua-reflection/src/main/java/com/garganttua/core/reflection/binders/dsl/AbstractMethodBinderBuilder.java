@@ -62,7 +62,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                 up,
                 Stream.concat(
                         dependencies.stream(),
-                        Stream.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)))
+                        Stream.of(DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)))
                         .collect(Collectors.toUnmodifiableSet()));
         log.atTrace().log("[MethodBinderBuilder] Creating with up={} and supplier={}", up, supplier);
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");

@@ -1,6 +1,5 @@
 package com.garganttua.core.expression.dsl;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -28,7 +27,8 @@ import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
@@ -115,7 +115,7 @@ public class ExpressionContextBuilder
 
     @Override
     public <T> IExpressionMethodBinderBuilder<T> expression(
-            ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, Class<T> supplied) {
+            ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, IClass<T> supplied) {
         log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
                 methodOwnerSupplier, supplied);
         Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
@@ -152,12 +152,14 @@ public class ExpressionContextBuilder
     protected IExpressionContext doBuild() throws DslException {
         CompletableFuture<ExpressionContext> futur = new CompletableFuture<>();
         try {
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class)
-                    .method(ExpressionContext.class.getMethod("man")).withDescription("the description");
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class)
-                    .method(ExpressionContext.class.getMethod("man", int.class)).withDescription("the description");
-            this.expression(new FutureSupplierBuilder<>(futur, ExpressionContext.class), String.class)
-                    .method(ExpressionContext.class.getMethod("man", String.class)).withDescription("the description");
+            IClass<ExpressionContext> ecClass = IClass.getClass(ExpressionContext.class);
+            IClass<String> stringClass = IClass.getClass(String.class);
+            this.expression(new FutureSupplierBuilder<>(futur, ecClass), stringClass)
+                    .method(ecClass.getMethod("man")).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ecClass), stringClass)
+                    .method(ecClass.getMethod("man", IClass.getClass(int.class))).withDescription("the description");
+            this.expression(new FutureSupplierBuilder<>(futur, ecClass), stringClass)
+                    .method(ecClass.getMethod("man", IClass.getClass(String.class))).withDescription("the description");
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
@@ -200,21 +202,23 @@ public class ExpressionContextBuilder
      * @throws DslException if the builder is not authorized to build (missing
      *                      injection context)
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected void doAutoDetection() throws DslException {
         // Synchronize packages from InjectionContextBuilder before scanning
         synchronizePackagesFromContext();
 
-        List<Method> expressions = new ArrayList<>();
+        IClass<Expression> expressionAnnotation = IClass.getClass(Expression.class);
+        List<IMethod> expressions = new ArrayList<>();
         this.packages
-                .forEach(p -> expressions.addAll(ObjectReflectionHelper.getMethodsWithAnnotation(p, Expression.class)));
+                .forEach(p -> expressions.addAll(IClass.getReflection().getMethodsWithAnnotation(p, expressionAnnotation)));
 
         // Deduplicate methods by signature (declaring class + method name + parameter
         // types)
         // because distinct() only works with object identity, not method equivalence
-        Map<String, Method> uniqueMethods = new LinkedHashMap<>();
+        Map<String, IMethod> uniqueMethods = new LinkedHashMap<>();
         int duplicateCount = 0;
-        for (Method m : expressions) {
+        for (IMethod m : expressions) {
             String signature = buildMethodSignature(m);
             if (uniqueMethods.putIfAbsent(signature, m) != null) {
                 duplicateCount++;
@@ -227,7 +231,9 @@ public class ExpressionContextBuilder
 
         // Create factories for unique methods only
         uniqueMethods.values()
-                .forEach(m -> this.expression(new BeanSupplierBuilder<>(m.getDeclaringClass()), m.getReturnType())
+                .forEach(m -> this.expression(
+                        new BeanSupplierBuilder<>(m.getDeclaringClass()),
+                        (IClass) m.getReturnType())
                         .method(m).autoDetect(true));
     }
 
@@ -252,7 +258,7 @@ public class ExpressionContextBuilder
         if (dependency instanceof IInjectionContext context) {
             log.atDebug().log("Registering IExpressionContext as bean in InjectionContext");
             BeanReference<IExpressionContext> beanRef = new BeanReference<>(
-                    IExpressionContext.class,
+                    IClass.getClass(IExpressionContext.class),
                     Optional.of(BeanStrategy.singleton),
                     Optional.empty(),
                     Set.of());
@@ -297,14 +303,14 @@ public class ExpressionContextBuilder
      * @return a unique string signature like
      *         "com.example.Beans.bean(java.lang.Class,java.lang.String)"
      */
-    private String buildMethodSignature(Method method) {
+    private String buildMethodSignature(IMethod method) {
         StringBuilder signature = new StringBuilder();
         signature.append(method.getDeclaringClass().getName());
         signature.append(".");
         signature.append(method.getName());
         signature.append("(");
 
-        Class<?>[] paramTypes = method.getParameterTypes();
+        IClass<?>[] paramTypes = method.getParameterTypes();
         for (int i = 0; i < paramTypes.length; i++) {
             if (i > 0) {
                 signature.append(",");
@@ -324,13 +330,16 @@ public class ExpressionContextBuilder
         return super.provide(dependency);
     }
 
+    @SuppressWarnings("unchecked")
     private void addResolverToInjectionContext(IInjectionContextBuilder context) {
-        context.resolvers().withResolver(Expression.class, (t, e) -> {
-            Expression expression = e.getAnnotation(Expression.class);
+        IClass<Expression> expressionClass = IClass.getClass(Expression.class);
+        IClass<Nullable> nullableClass = IClass.getClass(Nullable.class);
+        context.resolvers().withResolver((IClass) expressionClass, (t, e) -> {
+            Expression expression = e.getAnnotation(expressionClass);
             if (expression == null)
                 return Resolved.notResolved(t, e);
             return new Resolved(true, t, this.built.expression(expression.value()),
-                    e.isAnnotationPresent(Nullable.class));
+                    e.isAnnotationPresent(nullableClass));
         });
     }
 }

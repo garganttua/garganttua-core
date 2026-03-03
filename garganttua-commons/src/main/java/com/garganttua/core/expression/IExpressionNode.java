@@ -79,4 +79,10 @@ public interface IExpressionNode<R, S extends ISupplier<R>> extends ISupplier<S>
      */
     IClass<R> getFinalSuppliedClass();
 
+    @SuppressWarnings("unchecked")
+    @Override
+    default IClass<S> getSuppliedClass() {
+        return (IClass<S>) (IClass<?>) IClass.getClass(ISupplier.class);
+    }
+
 }

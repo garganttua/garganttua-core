@@ -21,6 +21,7 @@ import com.garganttua.core.expression.IEvaluateNode;
 import com.garganttua.core.expression.ForLoopExpressionNode;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.expression.antlr4.ExpressionLexer;
 import com.garganttua.core.expression.antlr4.ExpressionParser;
 import com.garganttua.core.supply.ISupplier;
@@ -33,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();
-    private final Map<String, Class<?>> variableTypes = new ConcurrentHashMap<>();
+    private final Map<String, IClass<?>> variableTypes = new ConcurrentHashMap<>();
 
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         log.atTrace().log("Entering ExpressionContext constructor");
@@ -61,7 +62,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
     }
 
     @Override
-    public void registerVariableType(String name, Class<?> type) {
+    public void registerVariableType(String name, IClass<?> type) {
         Objects.requireNonNull(name, "Variable name cannot be null");
         Objects.requireNonNull(type, "Variable type cannot be null");
         this.variableTypes.put(name, type);
@@ -208,10 +209,10 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             com.garganttua.core.expression.antlr4.ExpressionBaseVisitor<IExpressionNode<?, ? extends ISupplier<?>>> {
 
         private final Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
-        private final Map<String, Class<?>> variableTypes;
+        private final Map<String, IClass<?>> variableTypes;
 
         public ExpressionVisitor(Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories,
-                Map<String, Class<?>> variableTypes) {
+                Map<String, IClass<?>> variableTypes) {
             this.nodeFactories = nodeFactories;
             this.variableTypes = variableTypes;
         }
@@ -275,9 +276,9 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             String nodeName = eagerEval ? "." + varName : "@" + varName;
 
             // Look up registered type for this variable, default to Object.class
-            final Class<?> resolvedType = variableTypes.getOrDefault(varName, Object.class);
-            if (resolvedType != Object.class) {
-                log.atDebug().log("Using registered type {} for variable {}", resolvedType.getName(), nodeName);
+            final IClass<?> resolvedIClass = variableTypes.getOrDefault(varName, IClass.getClass(Object.class));
+            if (resolvedIClass.getType() != Object.class) {
+                log.atDebug().log("Using registered type {} for variable {}", resolvedIClass.getName(), nodeName);
             }
 
             @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -290,7 +291,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                             throw new com.garganttua.core.supply.SupplyException(
                                     "No variable resolver available for " + nodeName);
                         }
-                        java.util.Optional<Object> resolved = resolver.resolve(varName, Object.class);
+                        java.util.Optional<Object> resolved = resolver.resolve(varName, IClass.getClass(Object.class));
 
                         if (eagerEval && resolved.isPresent()) {
                             Object value = resolved.get();
@@ -311,10 +312,16 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
                     @Override
                     public java.lang.reflect.Type getSuppliedType() {
-                        return resolvedType;
+                        return resolvedIClass.getType();
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public IClass<Object> getSuppliedClass() {
+                        return (IClass<Object>) (IClass<?>) resolvedIClass;
                     }
                 };
-            }, resolvedType);
+            }, (IClass) resolvedIClass);
             return node;
         }
 
@@ -691,7 +698,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             Class<?>[] argTypes = new Class<?>[arguments.size()];
             for (int i = 0; i < arguments.size(); i++) {
                 if (arguments.get(i) instanceof IExpressionNode<?, ?> node) {
-                    argTypes[i] = node.getFinalSuppliedClass();
+                    argTypes[i] = (Class<?>) node.getFinalSuppliedClass().getType();
                 } else {
                     argTypes[i] = arguments.get(i).getClass();
                 }

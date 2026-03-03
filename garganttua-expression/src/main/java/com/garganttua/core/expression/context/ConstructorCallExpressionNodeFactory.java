@@ -1,7 +1,5 @@
 package com.garganttua.core.expression.context;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +10,10 @@ import java.util.Set;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.ConstructorBinder;
 import com.garganttua.core.reflection.methods.SingleMethodReturn;
@@ -25,12 +26,11 @@ import jakarta.annotation.Nullable;
 
 public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> implements IExpressionNodeFactory<R, S> {
 
-    private final Constructor<R> constructor;
-    private final Class<R> targetClass;
+    private final IConstructor<R> constructor;
+    private final IClass<R> targetIClass;
     private final List<Boolean> nullables;
 
-    @SuppressWarnings("unchecked")
-    public ConstructorCallExpressionNodeFactory(IExpressionNode<?, ?> classNode, Class<?>[] parameterTypes)
+    public ConstructorCallExpressionNodeFactory(IExpressionNode<?, ?> classNode, IClass<?>[] parameterTypes)
             throws ExpressionException {
         Objects.requireNonNull(classNode, "Class node cannot be null");
         Objects.requireNonNull(parameterTypes, "Parameter types array cannot be null");
@@ -39,10 +39,10 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
         Class<?> actualClass = (Class<?>) classNode.evaluate().supply()
                 .orElseThrow(() -> new ExpressionException("Cannot resolve class for constructor call"));
 
-        this.targetClass = (Class<R>) actualClass;
+        this.targetIClass = (IClass<R>) IClass.getClass(actualClass);
 
         try {
-            this.constructor = (Constructor<R>) findConstructor(actualClass, parameterTypes);
+            this.constructor = (IConstructor<R>) findConstructor(this.targetIClass, parameterTypes);
         } catch (NoSuchMethodException e) {
             throw new ExpressionException(
                     "No constructor found for class " + actualClass.getName()
@@ -52,14 +52,14 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
         this.nullables = nullableMask(this.constructor);
     }
 
-    private Constructor<?> findConstructor(Class<?> clazz, Class<?>[] parameterTypes) throws NoSuchMethodException {
+    private IConstructor<?> findConstructor(IClass<?> clazz, IClass<?>[] parameterTypes) throws NoSuchMethodException {
         // Try exact match first
         try {
             return clazz.getConstructor(parameterTypes);
         } catch (NoSuchMethodException e) {
             // Try assignable match
-            for (Constructor<?> c : clazz.getConstructors()) {
-                Class<?>[] ctorParams = c.getParameterTypes();
+            for (IConstructor<?> c : clazz.getConstructors()) {
+                IClass<?>[] ctorParams = c.getParameterTypes();
                 if (ctorParams.length != parameterTypes.length) continue;
                 boolean matches = true;
                 for (int i = 0; i < ctorParams.length; i++) {
@@ -74,11 +74,12 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
         }
     }
 
-    private List<Boolean> nullableMask(Constructor<?> ctor) {
-        Parameter[] parameters = ctor.getParameters();
+    private List<Boolean> nullableMask(IConstructor<?> ctor) {
+        IClass<Nullable> nullableClass = IClass.getClass(Nullable.class);
+        IParameter[] parameters = ctor.getParameters();
         List<Boolean> result = new ArrayList<>(parameters.length);
-        for (Parameter parameter : parameters) {
-            result.add(parameter.isAnnotationPresent(Nullable.class));
+        for (IParameter parameter : parameters) {
+            result.add(parameter.isAnnotationPresent(nullableClass));
         }
         return result;
     }
@@ -87,9 +88,9 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
     public String key() {
         StringBuilder key = new StringBuilder(":");
         key.append("(");
-        key.append(targetClass.getSimpleName());
-        Class<?>[] paramTypes = constructor.getParameterTypes();
-        for (Class<?> paramType : paramTypes) {
+        key.append(targetIClass.getSimpleName());
+        IClass<?>[] paramTypes = constructor.getParameterTypes();
+        for (IClass<?> paramType : paramTypes) {
             key.append(",");
             key.append(paramType.getSimpleName());
         }
@@ -99,14 +100,14 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
 
     @Override
     public String description() {
-        return "Constructor for " + targetClass.getSimpleName();
+        return "Constructor for " + targetIClass.getSimpleName();
     }
 
     @Override
     public String man() {
-        return "Constructor: " + targetClass.getName() + "(" +
+        return "Constructor: " + targetIClass.getName() + "(" +
                 java.util.Arrays.stream(constructor.getParameterTypes())
-                        .map(Class::getSimpleName)
+                        .map(IClass::getSimpleName)
                         .reduce((a, b) -> a + ", " + b)
                         .orElse("")
                 + ")";
@@ -114,26 +115,32 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
 
     @Override
     public String getExecutableReference() {
-        return targetClass.getName() + ".<init>";
+        return targetIClass.getName() + ".<init>";
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         return Set.of();
     }
 
     @Override
     public Type getSuppliedType() {
-        return targetClass;
+        return targetIClass.getType();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public IClass<IMethodReturn<IExpressionNode<R, S>>> getSuppliedClass() {
+        return (IClass<IMethodReturn<IExpressionNode<R, S>>>) (IClass<?>) IClass.getClass(IMethodReturn.class);
     }
 
     @Override
-    public Class<IExpressionNodeContext> getOwnerContextType() {
-        return IExpressionNodeContext.class;
+    public IClass<IExpressionNodeContext> getOwnerContextType() {
+        return IClass.getClass(IExpressionNodeContext.class);
     }
 
     @Override
-    public Class<?>[] getParametersContextTypes() {
+    public IClass<?>[] getParametersContextTypes() {
         return constructor.getParameterTypes();
     }
 
@@ -157,26 +164,28 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
                         if (params[i] instanceof ISupplier<?>) {
                             supplier = (ISupplier<?>) params[i];
                         } else {
-                            supplier = new FixedSupplierBuilder<>(params[i]).build();
+                            supplier = FixedSupplierBuilder.of(params[i]).build();
                         }
                         boolean nullable = this.nullables.get(i);
                         paramSuppliers.add(new NullableSupplier<>(supplier, nullable));
                     }
 
-                    ConstructorBinder<R> binder = new ConstructorBinder<>(targetClass, constructor, paramSuppliers);
-                    return new ConstructorUnwrappingSupplier<>(binder, targetClass);
+                    ConstructorBinder<R> binder = new ConstructorBinder<>(targetIClass, constructor, paramSuppliers);
+                    return new ConstructorUnwrappingSupplier<>(binder, targetIClass);
                 },
-                targetClass,
+                targetIClass,
                 context.parameters());
 
-        return Optional.of(SingleMethodReturn.of(node));
+        @SuppressWarnings("unchecked")
+        IClass<IExpressionNode<R, S>> nodeClass = (IClass<IExpressionNode<R, S>>) (IClass<?>) IClass.getClass(IExpressionNode.class);
+        return Optional.of(SingleMethodReturn.of(node, nodeClass));
     }
 
     private static class ConstructorUnwrappingSupplier<T> implements ISupplier<T> {
         private final ConstructorBinder<T> binder;
-        private final Class<T> returnType;
+        private final IClass<T> returnType;
 
-        ConstructorUnwrappingSupplier(ConstructorBinder<T> binder, Class<T> returnType) {
+        ConstructorUnwrappingSupplier(ConstructorBinder<T> binder, IClass<T> returnType) {
             this.binder = binder;
             this.returnType = returnType;
         }
@@ -195,6 +204,11 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
 
         @Override
         public Type getSuppliedType() {
+            return returnType.getType();
+        }
+
+        @Override
+        public IClass<T> getSuppliedClass() {
             return returnType;
         }
     }

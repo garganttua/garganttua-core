@@ -17,9 +17,13 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.functions.Expressions;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 
 public class ExpressionContextTest {
@@ -36,49 +40,56 @@ public class ExpressionContextTest {
     @SuppressWarnings("unchecked")
     @BeforeEach
     public void setUp() throws Exception {
-        // Create factories for StandardExpressionLeafs methods as expression leaves
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        // Set up IReflection with runtime provider and reflections scanner
+        IReflection reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider(), 1)
+                .withScanner(new ReflectionsAnnotationScanner(), 1)
+                .build();
+        IClass.setReflection(reflection);
+
+        IClass<Expressions> expressionsClass = IClass.getClass(Expressions.class);
+        IClass<TestFunctions> testFunctionsClass = IClass.getClass(TestFunctions.class);
 
         ExpressionNodeFactory<String, ISupplier<String>> stringFactory = new ExpressionNodeFactory<>(
-                of(Expressions.class).build(),
+                of(IClass.getClass(Expressions.class)).build(),
                 (Class<ISupplier<String>>) (Class<?>) ISupplier.class,
-                Expressions.class.getMethod("string", Object.class),
+                expressionsClass.getMethod("string", IClass.getClass(Object.class)),
                 new ObjectAddress("string"),
                 List.of(false),
                 Optional.of("string"),
                 Optional.of("Converts a value to a String supplier"));
 
         ExpressionNodeFactory<Integer, ISupplier<Integer>> intFactory = new ExpressionNodeFactory<>(
-                of(Expressions.class).build(),
+                of(IClass.getClass(Expressions.class)).build(),
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
-                Expressions.class.getMethod("integer", String.class),
+                expressionsClass.getMethod("integer", IClass.getClass(String.class)),
                 new ObjectAddress("integer"),
                 List.of(false),
                 Optional.of("int"),
                 Optional.of("Parses a string to an Integer supplier"));
 
         ExpressionNodeFactory<Boolean, ISupplier<Boolean>> booleanFactory = new ExpressionNodeFactory<>(
-                of(Expressions.class).build(),
+                of(IClass.getClass(Expressions.class)).build(),
                 (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class,
-                Expressions.class.getMethod("booleanValue", String.class),
+                expressionsClass.getMethod("booleanValue", IClass.getClass(String.class)),
                 new ObjectAddress("booleanValue"),
                 List.of(false),
                 Optional.of("boolean"),
                 Optional.of("Parses a string to a Boolean supplier"));
 
         ExpressionNodeFactory<Integer, ISupplier<Integer>> addFactory = new ExpressionNodeFactory<>(
-                of(TestFunctions.class).build(),
+                of(IClass.getClass(TestFunctions.class)).build(),
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
-                TestFunctions.class.getMethod("add", int.class, int.class),
+                testFunctionsClass.getMethod("add", IClass.getClass(int.class), IClass.getClass(int.class)),
                 new ObjectAddress("add"),
                 List.of(false, false),
                 Optional.of("add"),
                 Optional.of("Adds two integer suppliers"));
 
         ExpressionNodeFactory<Integer, ISupplier<Integer>> classFactory = new ExpressionNodeFactory<>(
-                of(Expressions.class).build(),
+                of(IClass.getClass(Expressions.class)).build(),
                 (Class<ISupplier<Integer>>) (Class<?>) ISupplier.class,
-                Expressions.class.getMethod("Class", String.class),
+                expressionsClass.getMethod("Class", IClass.getClass(String.class)),
                 new ObjectAddress("Class"),
                 List.of(false),
                 Optional.of("class"),
@@ -99,6 +110,9 @@ public class ExpressionContextTest {
     public void testStaticMethodCall() {
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        injectionContextBuilder.provide(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner()));
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
 
@@ -115,6 +129,7 @@ public class ExpressionContextTest {
     public void testObjectMethodCall() {
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        injectionContextBuilder.provide(ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()));
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
 
@@ -151,6 +166,7 @@ public class ExpressionContextTest {
     public void test() {
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        injectionContextBuilder.provide(ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()));
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
 
@@ -165,6 +181,7 @@ public class ExpressionContextTest {
     @Test
     public void testUnknownMethod() {
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder();
+        injectionContextBuilder.provide(ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()));
         ExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
 

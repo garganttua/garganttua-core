@@ -6,9 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -19,7 +18,7 @@ public class ContextualExpressionNode<R>
 
     private IContextualEvaluate<R> evaluate;
 
-    private Class<R> returnedType;
+    private IClass<R> returnedType;
 
     private String name;
 
@@ -28,14 +27,14 @@ public class ContextualExpressionNode<R>
      */
     private List<Boolean> lazyParameters;
 
-    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, Class<R> returnedType) {
+    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, IClass<R> returnedType) {
         this.returnedType = returnedType;
         this.params = List.of();
         this.lazyParameters = List.of();
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
-    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, Class<R> returnedType,
+    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, IClass<R> returnedType,
             List<Object> params) {
         this(name, evaluate, returnedType, params, null);
     }
@@ -49,7 +48,7 @@ public class ContextualExpressionNode<R>
      * @param params the parameters
      * @param lazyParameters list indicating which parameters are lazy (true = don't evaluate, pass as ISupplier)
      */
-    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, Class<R> returnedType,
+    public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, IClass<R> returnedType,
             List<Object> params, List<Boolean> lazyParameters) {
         this.params = Objects.requireNonNull(params, "Childs list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
@@ -68,11 +67,7 @@ public class ContextualExpressionNode<R>
     @SuppressWarnings("unchecked")
     @Override
     public Type getSuppliedType() {
-        Type raw = ObjectReflectionHelper
-                .getParameterizedType(IContextualSupplier.class, this.returnedType, ExpressionContext.class)
-                .getRawType();
-
-        return (Class<IContextualSupplier<R, IExpressionContext>>) raw;
+        return (Class<IContextualSupplier<R, IExpressionContext>>) (Class<?>) IContextualSupplier.class;
     }
 
     @Override
@@ -122,13 +117,19 @@ public class ContextualExpressionNode<R>
 
             @Override
             public Type getSuppliedType() {
-                return node.getFinalSuppliedClass();
+                return node.getFinalSuppliedClass().getType();
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public IClass<Object> getSuppliedClass() {
+                return (IClass<Object>) (IClass<?>) node.getFinalSuppliedClass();
             }
         };
     }
 
     @Override
-    public Class<R> getFinalSuppliedClass() {
+    public IClass<R> getFinalSuppliedClass() {
         return this.returnedType;
     }
 

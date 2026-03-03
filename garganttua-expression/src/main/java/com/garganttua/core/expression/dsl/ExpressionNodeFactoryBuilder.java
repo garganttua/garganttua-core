@@ -1,7 +1,5 @@
 package com.garganttua.core.expression.dsl;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -10,44 +8,20 @@ import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionNodeFactory;
 import com.garganttua.core.expression.context.IExpressionNodeFactory;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.reflection.methods.MethodResolver;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Builder for constructing ExpressionNodeFactory instances with fluent API.
- *
- * <p>
- * {@code ExpressionMethodBinderBuilder} extends
- * {@link AbstractMethodBinderBuilder}
- * to provide specialized building of method binders for expression contexts.
- * It allows binding methods to expressions with parameters and return to the
- * parent expression builder.
- * </p>
- *
- * <h2>Usage Example</h2>
- * 
- * <pre>{@code
- * ExpressionBuilder builder = ExpressionBuilder.create();
- *
- * builder.withExpression(StringUtils.class, String.class)
- *         .method("concat")
- *         .withParam("Hello")
- *         .withParam(" World")
- *         .end();
- * }</pre>
- *
- * @param <S> the supplied type
- * @since 2.0.0-ALPHA01
- */
 @Slf4j
 public class ExpressionNodeFactoryBuilder<S>
         extends
@@ -56,22 +30,22 @@ public class ExpressionNodeFactoryBuilder<S>
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier;
     @SuppressWarnings("unused")
-    private Class<S> supplied;
+    private IClass<S> supplied;
     private String name;
     private String description = "No description";
     private IObjectQuery<?> objectQuery;
 
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
-            Class<S> supplied) throws DslException {
-        super(parent, methodOwnerSupplier);
+            IClass<S> supplied) throws DslException {
+        super(parent, methodOwnerSupplier, java.util.Set.of());
         log.atTrace().log(
                 "Entering ExpressionMethodBinderBuilder constructor with methodOwnerSupplier={}, supplied={}",
                 methodOwnerSupplier, supplied);
         this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         this.supplied = Objects.requireNonNull(supplied, "Supplied type cannot be null");
         try {
-            this.objectQuery = ObjectQueryFactory.objectQuery(this.methodOwnerSupplier.getSuppliedClass());
+            this.objectQuery = IClass.getReflection().query(this.methodOwnerSupplier.getSuppliedClass());
         } catch (ReflectionException e) {
             log.atError().log("[MethodBinderBuilder] Error creating objectQuery for class {}",
                     this.methodOwnerSupplier.getSuppliedClass(), e);
@@ -80,10 +54,9 @@ public class ExpressionNodeFactoryBuilder<S>
         log.atTrace().log("Exiting ExpressionMethodBinderBuilder constructor");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected IExpressionNodeFactory<S, ISupplier<S>> doBuild() throws DslException {
-        Method method = method();
+        IMethod method = method();
         ObjectAddress methodAddress = this.methodAddress();
 
         return new ExpressionNodeFactory<>(
@@ -98,8 +71,9 @@ public class ExpressionNodeFactoryBuilder<S>
 
     @Override
     protected void doAutoDetection() throws DslException {
-        Method m = method();
-        Expression nodeInfos = m.getAnnotation(Expression.class);
+        IMethod m = method();
+        IClass<Expression> expressionClass = IClass.getClass(Expression.class);
+        Expression nodeInfos = m.getAnnotation(expressionClass);
         if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
             this.withName(nodeInfos.name());
         } else {
@@ -108,9 +82,10 @@ public class ExpressionNodeFactoryBuilder<S>
         if (nodeInfos.description() != null && !nodeInfos.description().isBlank()) {
             this.withDescription(nodeInfos.description());
         }
-        Parameter[] params = m.getParameters();
+        IClass<Nullable> nullableClass = IClass.getClass(Nullable.class);
+        IParameter[] params = m.getParameters();
         for (int i = 0; i < params.length; i++) {
-            if (params[i].isAnnotationPresent(Nullable.class)) {
+            if (params[i].isAnnotationPresent(nullableClass)) {
                 this.withNullableParam(i);
             }
         }
@@ -123,9 +98,9 @@ public class ExpressionNodeFactoryBuilder<S>
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> encapsulatedMethod(ObjectAddress methodAddress, Class<S> returnType,
-            Class<?>... parameterTypes) throws DslException {
-        Method methodObject = (Method) MethodResolver
+    public IExpressionMethodBinderBuilder<S> encapsulatedMethod(ObjectAddress methodAddress, IClass<S> returnType,
+            IClass<?>... parameterTypes) throws DslException {
+        IMethod methodObject = (IMethod) MethodResolver
                 .selectBestMatch(this.objectQuery.findAll(methodAddress), returnType, parameterTypes,
                         this.methodOwnerSupplier.getSuppliedClass())
                 .getLast();
@@ -136,8 +111,8 @@ public class ExpressionNodeFactoryBuilder<S>
     }
 
     @Override
-    public IExpressionMethodBinderBuilder<S> encapsulatedMethod(String methodName, Class<S> returnType,
-            Class<?>... parameterTypes) throws DslException {
+    public IExpressionMethodBinderBuilder<S> encapsulatedMethod(String methodName, IClass<S> returnType,
+            IClass<?>... parameterTypes) throws DslException {
         ObjectAddress methodAddress = this.objectQuery.address(methodName);
         return this.encapsulatedMethod(methodAddress, returnType, parameterTypes);
     }
@@ -145,8 +120,8 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     @Deprecated
     public IExpressionMethodBinderBuilder<S> method(String methodName,
-            Class<IExpressionNode<S, ISupplier<S>>> returnType,
-            Class<?>... parameterTypes) throws DslException {
+            IClass<IExpressionNode<S, ISupplier<S>>> returnType,
+            IClass<?>... parameterTypes) throws DslException {
         log.atWarn().log("method is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
@@ -154,7 +129,7 @@ public class ExpressionNodeFactoryBuilder<S>
     @Override
     @Deprecated
     public IExpressionMethodBinderBuilder<S> method(ObjectAddress methodAddress,
-            Class<IExpressionNode<S, ISupplier<S>>> returnType, Class<?>... parameterTypes) throws DslException {
+            IClass<IExpressionNode<S, ISupplier<S>>> returnType, IClass<?>... parameterTypes) throws DslException {
         log.atWarn().log("method is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
@@ -254,5 +229,17 @@ public class ExpressionNodeFactoryBuilder<S>
     public IExpressionMethodBinderBuilder<S> withDescription(String description) {
         this.description = Objects.requireNonNull(description, "Description cannot be null");
         return this;
+    }
+
+    @Override
+    protected void doPreBuildWithDependency_(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) {
     }
 }

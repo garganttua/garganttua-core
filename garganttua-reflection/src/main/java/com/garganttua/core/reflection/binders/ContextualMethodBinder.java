@@ -51,7 +51,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         if (this.objectSupplier instanceof IContextualSupplier<?, ?> contextual) {
             return (IClass<OwnerContextType>) contextual.getOwnerContextType();
         }
-        return (IClass<OwnerContextType>) IClass.getClass(Void.class);
+        return null;
     }
 
     @Override

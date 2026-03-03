@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -67,5 +68,10 @@ public class Expression<R> implements IExpression<R, ISupplier<R>> {
     @Override
     public boolean isContextual() {
         return root.isContextual();
+    }
+
+    @Override
+    public IClass<R> getSuppliedClass() {
+        return root.getFinalSuppliedClass();
     }
 }

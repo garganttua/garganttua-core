@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
@@ -18,6 +19,7 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Bootstrap
 public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuilder, IReflection>
         implements IReflectionBuilder {
 

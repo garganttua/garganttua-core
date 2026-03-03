@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
@@ -15,7 +15,7 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     private IEvaluateNode<R> evaluate;
 
-    private Class<R> returnedType;
+    private IClass<R> returnedType;
 
     private String name;
 
@@ -26,14 +26,14 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
      */
     private List<Boolean> lazyParameters;
 
-    public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType) {
+    public ExpressionNode(String name, IEvaluateNode<R> evaluate, IClass<R> returnedType) {
         this.returnedType = returnedType;
         this.params = List.of();
         this.lazyParameters = List.of();
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
-    public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType,
+    public ExpressionNode(String name, IEvaluateNode<R> evaluate, IClass<R> returnedType,
             List<Object> params) {
         this(name, evaluate, returnedType, params, null);
     }
@@ -47,7 +47,7 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
      * @param params the parameters
      * @param lazyParameters list indicating which parameters are lazy (true = don't evaluate, pass as ISupplier)
      */
-    public ExpressionNode(String name, IEvaluateNode<R> evaluate, Class<R> returnedType,
+    public ExpressionNode(String name, IEvaluateNode<R> evaluate, IClass<R> returnedType,
             List<Object> params, List<Boolean> lazyParameters) {
         this.params = Objects.requireNonNull(params, "Params list cannot be null");
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
@@ -65,9 +65,7 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     @Override
     public Type getSuppliedType() {
-        return ObjectReflectionHelper
-                .getParameterizedType(ISupplier.class, this.returnedType)
-                .getRawType();
+        return ISupplier.class;
     }
 
     @Override
@@ -113,13 +111,19 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
             @Override
             public Type getSuppliedType() {
-                return node.getFinalSuppliedClass();
+                return node.getFinalSuppliedClass().getType();
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public IClass<Object> getSuppliedClass() {
+                return (IClass<Object>) (IClass<?>) node.getFinalSuppliedClass();
             }
         };
     }
 
     @Override
-    public Class<R> getFinalSuppliedClass() {
+    public IClass<R> getFinalSuppliedClass() {
         return this.returnedType;
     }
 

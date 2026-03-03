@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.garganttua.core.expression.context.ExpressionVariableContext;
 import com.garganttua.core.expression.context.IExpressionVariableResolver;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -32,6 +33,10 @@ public class ForLoopExpressionNode implements IExpressionNode<Object, ISupplier<
             @Override
             public java.lang.reflect.Type getSuppliedType() {
                 return Object.class;
+            }
+            @Override
+            public IClass<Object> getSuppliedClass() {
+                return IClass.getClass(Object.class);
             }
             @Override
             public Optional<Object> supply() throws SupplyException {
@@ -77,8 +82,8 @@ public class ForLoopExpressionNode implements IExpressionNode<Object, ISupplier<
     }
 
     @Override
-    public Class<Object> getFinalSuppliedClass() {
-        return Object.class;
+    public IClass<Object> getFinalSuppliedClass() {
+        return IClass.getClass(Object.class);
     }
 
     @Override

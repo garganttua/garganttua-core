@@ -52,7 +52,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
                 link,
                 Stream.concat(
                         dependencies.stream(),
-                        Stream.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)))
+                        Stream.of(DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)))
                         .collect(Collectors.toUnmodifiableSet()));
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
         this.parameterEntries = new ArrayList<>();
@@ -68,6 +68,10 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
     }
 
     protected abstract void doPreBuildWithDependency_(Object dependency);
+
+    private IReflection effectiveReflection() {
+        return this.reflection != null ? this.reflection : IClass.getReflection();
+    }
 
     @Override
     public Builder withParam(int i, Object parameter) throws DslException {
@@ -161,14 +165,14 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
 
     @Override
     public IConstructorBinder<Constructed> doBuild() throws DslException {
-        Objects.requireNonNull(this.reflection, "IReflection must be provided before building");
+        IReflection reflection = effectiveReflection();
         log.atDebug().log("[ConstructorBinderBuilder] Building constructor binder for {}", objectClass.getName());
 
         try {
             if (parameterEntries.isEmpty()) {
                 log.atTrace().log("[ConstructorBinderBuilder] No parameters provided, searching for default constructor");
                 ResolvedConstructor<Constructed> resolved = ConstructorResolver.defaultConstructor(
-                        objectClass, this.reflection);
+                        objectClass, reflection);
                 return new ConstructorBinder<>(objectClass, resolved.constructor(), Collections.emptyList());
             }
 
@@ -197,7 +201,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
 
             // Find constructor via ConstructorResolver
             ResolvedConstructor<Constructed> resolved = ConstructorResolver.constructorByParameterTypes(
-                    objectClass, this.reflection, paramTypes);
+                    objectClass, reflection, paramTypes);
 
             log.atDebug().log("[ConstructorBinderBuilder] Matched constructor {}({})",
                     objectClass.getSimpleName(), formatTypes(paramTypes));
@@ -221,7 +225,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
             if (entry == null) {
                 resolved.add(null);
             } else if (rawParamIndices.contains(i)) {
-                IClass<?> clz = this.reflection.getClass(entry.getClass());
+                IClass<?> clz = effectiveReflection().getClass(entry.getClass());
                 resolved.add(new FixedSupplierBuilder(entry, clz));
             } else {
                 resolved.add((ISupplierBuilder<?, ?>) entry);

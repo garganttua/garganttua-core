@@ -8,8 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.annotations.Expression;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 import lombok.NonNull;
 
@@ -32,7 +35,11 @@ class ExpressionContextBuilderTest {
 
     @BeforeEach
     void setUp() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        IReflection reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider(), 1)
+                .withScanner(new ReflectionsAnnotationScanner(), 1)
+                .build();
+        IClass.setReflection(reflection);
     }
 
     /**
@@ -110,8 +117,8 @@ class ExpressionContextBuilderTest {
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertDoesNotThrow(() -> {
-            IExpressionMethodBinderBuilder<String> methodBuilder = builder.expression(of(TestExpressions.class),
-                    String.class);
+            IExpressionMethodBinderBuilder<String> methodBuilder = builder.expression(of(IClass.getClass(TestExpressions.class)),
+                    IClass.getClass(String.class));
             assertNotNull(methodBuilder);
         });
     }
@@ -123,8 +130,8 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
-                    .expression(of(TestExpressions.class), String.class)
-                    .encapsulatedMethod("getString", String.class);
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(String.class))
+                    .encapsulatedMethod("getString", IClass.getClass(String.class));
             assertNotNull(methodBuilder);
         });
     }
@@ -137,32 +144,32 @@ class ExpressionContextBuilderTest {
         // String
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> stringBuilder = builder
-                    .expression(of(TestExpressions.class), String.class)
-                    .encapsulatedMethod("getString", String.class);
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(String.class))
+                    .encapsulatedMethod("getString", IClass.getClass(String.class));
             assertNotNull(stringBuilder);
         });
 
         // Integer
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Integer> intBuilder = builder
-                    .expression(of(TestExpressions.class), Integer.class)
-                    .encapsulatedMethod("getInteger", Integer.class);
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(Integer.class))
+                    .encapsulatedMethod("getInteger", IClass.getClass(Integer.class));
             assertNotNull(intBuilder);
         });
 
         // Double
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Double> doubleBuilder = builder
-                    .expression(of(TestExpressions.class), Double.class)
-                    .encapsulatedMethod("getDouble", Double.class);
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(Double.class))
+                    .encapsulatedMethod("getDouble", IClass.getClass(Double.class));
             assertNotNull(doubleBuilder);
         });
 
         // Boolean
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<Boolean> booleanBuilder = builder
-                    .expression(of(TestExpressions.class), Boolean.class)
-                    .encapsulatedMethod("getBoolean", Boolean.class);
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(Boolean.class))
+                    .encapsulatedMethod("getBoolean", IClass.getClass(Boolean.class));
             assertNotNull(booleanBuilder);
         });
     }
@@ -174,8 +181,8 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
-                    .expression(of(TestExpressions.class), String.class)
-                    .encapsulatedMethod("getString", String.class)
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(String.class))
+                    .encapsulatedMethod("getString", IClass.getClass(String.class))
                     .withParam("test") // Should be ignored
                     .withParam(0, "test") // Should be ignored
                     .withParam("paramName", "test"); // Should be ignored
@@ -190,8 +197,8 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             IExpressionMethodBinderBuilder<String> methodBuilder = builder
-                    .expression(of(TestExpressions.class), String.class)
-                    .encapsulatedMethod("getString", String.class); // Should be ignored
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(String.class))
+                    .encapsulatedMethod("getString", IClass.getClass(String.class)); // Should be ignored
             assertNotNull(methodBuilder);
         });
     }
@@ -220,8 +227,8 @@ class ExpressionContextBuilderTest {
                     .withPackage("com.example.test1")
                     .withPackage("com.example.test2")
                     .autoDetect(true)
-                    .expression(of(TestExpressions.class), String.class)
-                    .encapsulatedMethod("getString", String.class);
+                    .expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(String.class))
+                    .encapsulatedMethod("getString", IClass.getClass(String.class));
         });
 
         String[] packages = builder.getPackages();
@@ -255,16 +262,16 @@ class ExpressionContextBuilderTest {
 
         assertDoesNotThrow(() -> {
             // First expression
-            builder.expression(of(TestExpressions.class), String.class)
-                    .encapsulatedMethod("getString", String.class);
+            builder.expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(String.class))
+                    .encapsulatedMethod("getString", IClass.getClass(String.class));
 
             // Second expression
-            builder.expression(of(TestExpressions.class), Integer.class)
-                    .encapsulatedMethod("getInteger", Integer.class);
+            builder.expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(Integer.class))
+                    .encapsulatedMethod("getInteger", IClass.getClass(Integer.class));
 
             // Third expression
-            builder.expression(of(TestExpressions.class), Boolean.class)
-                    .encapsulatedMethod("getBoolean", Boolean.class);
+            builder.expression(of(IClass.getClass(TestExpressions.class)), IClass.getClass(Boolean.class))
+                    .encapsulatedMethod("getBoolean", IClass.getClass(Boolean.class));
         });
     }
 
@@ -289,8 +296,8 @@ class ExpressionContextBuilderTest {
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
-            Class<?> type = null;
-            builder.expression(of(type), String.class);
+            IClass<?> type = null;
+            builder.expression(of(type), IClass.getClass(String.class));
         });
     }
 
@@ -300,7 +307,7 @@ class ExpressionContextBuilderTest {
         ExpressionContextBuilder builder = ExpressionContextBuilder.builder();
 
         assertThrows(NullPointerException.class, () -> {
-            builder.expression(of(TestExpressions.class), null);
+            builder.expression(of(IClass.getClass(TestExpressions.class)), null);
         });
     }
 
