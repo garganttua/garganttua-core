@@ -1,5 +1,6 @@
 package com.garganttua.core.mutex.dsl;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,49 +24,15 @@ import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.MutexManager;
 import com.garganttua.core.mutex.annotations.Mutex;
 import com.garganttua.core.mutex.annotations.MutexFactory;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.supply.FixedSupplier;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Builder for constructing {@link IMutexManager} instances with configurable
- * mutex factories.
- *
- * <p>
- * This builder allows configuring different mutex factories for different mutex
- * types,
- * enabling flexible mutex management strategies within an application.
- * </p>
- *
- * <h2>Usage Example</h2>
- *
- * <pre>{@code
- * IMutexManager manager = MutexManagerBuilder.builder()
- *         .withFactory(InterruptibleLeaseMutex.class, new InterruptibleLeaseMutexFactory())
- *         .build();
- * }</pre>
- *
- * <h2>Auto-detection</h2>
- * <p>
- * When auto-detection is enabled, the builder will scan the dependency
- * injection context
- * for beans annotated with {@code @MutexFactory} and automatically register
- * them.
- * </p>
- *
- * <h2>Thread Safety</h2>
- * <p>
- * This builder is not thread-safe. Each instance should be used by a single
- * thread
- * during construction.
- * </p>
- *
- * @since 2.0.0-ALPHA01
- * @see IMutexManager
- * @see IMutexFactory
- */
 @Slf4j
 @Bootstrap
 public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMutexManagerBuilder, IMutexManager>
@@ -76,21 +43,41 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     private static final String SOURCE_REFLECTION = "reflection";
 
     private final Set<String> packages = new HashSet<>();
-    private final Map<Class<? extends IMutex>, IMutexFactory> manualFactories = new HashMap<>();
-    private final Map<Class<? extends IMutex>, IMutexFactory> contextFactories = new HashMap<>();
-    private final Map<Class<? extends IMutex>, IMutexFactory> reflexionFactories = new HashMap<>();
+    private final Map<IClass<? extends IMutex>, IMutexFactory> manualFactories = new HashMap<>();
+    private final Map<IClass<? extends IMutex>, IMutexFactory> contextFactories = new HashMap<>();
+    private final Map<IClass<? extends IMutex>, IMutexFactory> reflexionFactories = new HashMap<>();
 
-    private final MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector;
+    private final MultiSourceCollector<IClass<? extends IMutex>, IMutexFactory> collector;
 
     private MutexManagerBuilder() {
         super(Set.of(DependencySpec.use(IInjectionContextBuilder.class)));
-                
+
         this.collector = new MultiSourceCollector<>();
-        collector.source(new FixedSupplier<>(manualFactories), 0, SOURCE_MANUAL);
-        collector.source(new FixedSupplier<>(contextFactories), 1, SOURCE_CONTEXT);
-        collector.source(new FixedSupplier<>(reflexionFactories), 2, SOURCE_REFLECTION);
-        
+        collector.source(mapSupplier(manualFactories), 0, SOURCE_MANUAL);
+        collector.source(mapSupplier(contextFactories), 1, SOURCE_CONTEXT);
+        collector.source(mapSupplier(reflexionFactories), 2, SOURCE_REFLECTION);
+
         log.atDebug().log("MutexManagerBuilder initialized");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <K, V> ISupplier<Map<K, V>> mapSupplier(Map<K, V> map) {
+        return new ISupplier<>() {
+            @Override
+            public Optional<Map<K, V>> supply() throws SupplyException {
+                return Optional.of(map);
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return Map.class;
+            }
+
+            @Override
+            public IClass<Map<K, V>> getSuppliedClass() {
+                return (IClass<Map<K, V>>) (IClass<?>) IClass.getClass(Map.class);
+            }
+        };
     }
 
     @Override
@@ -116,7 +103,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     }
 
     @Override
-    public IMutexManagerBuilder withFactory(Class<? extends IMutex> type, IMutexFactory factory) {
+    public IMutexManagerBuilder withFactory(IClass<? extends IMutex> type, IMutexFactory factory) {
         log.atTrace().log("Entering withFactory({}, {})", type.getSimpleName(), factory.getClass().getSimpleName());
 
         Objects.requireNonNull(type, "Mutex type cannot be null");
@@ -134,7 +121,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     @Override
     protected IMutexManager doBuild() throws DslException {
         log.atTrace().log("Entering doBuild() method");
-        Map<Class<? extends IMutex>, IMutexFactory> factories = this.collector.build();
+        Map<IClass<? extends IMutex>, IMutexFactory> factories = this.collector.build();
         log.atDebug().log("Building MutexManager with {} registered factories", factories.size());
         IMutexManager manager = new MutexManager(factories);
 
@@ -167,14 +154,19 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
             log.atDebug().log("Collecting factories from InjectionContext");
 
             BeanReference<IMutexFactory> beanRef = new BeanReference<>(
-                    IMutexFactory.class,
+                    IClass.getClass(IMutexFactory.class),
                     Optional.of(BeanStrategy.singleton),
                     Optional.empty(),
-                    Set.of(MutexFactory.class));
+                    Set.of(IClass.getClass(MutexFactory.class)));
 
             context.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
                     .ifPresent(provider -> provider.queries(beanRef).forEach(
-                            f -> this.contextFactories.put(f.getClass().getAnnotation(MutexFactory.class).type(), f)));
+                            f -> {
+                                MutexFactory ann = f.getClass().getAnnotation(MutexFactory.class);
+                                if (ann != null) {
+                                    this.contextFactories.put(IClass.getClass(ann.type()), f);
+                                }
+                            }));
         }
 
         log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
@@ -193,23 +185,21 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         if (dependency instanceof IInjectionContext context) {
             String providerName = Predefined.BeanProviders.garganttua.toString();
 
-            final Map<Class<? extends IMutex>, IMutexFactory> factoriesToBeAddedToContext = this
+            final Map<IClass<? extends IMutex>, IMutexFactory> factoriesToBeAddedToContext = this
                     .collector.buildExcludingSourceItems(Set.of(SOURCE_CONTEXT));
 
-            // Use addBean directly to avoid lifecycle check - the context may not be started yet
-            // during Bootstrap's build phase
             factoriesToBeAddedToContext.forEach((type, factory) -> {
                 BeanReference<IMutexFactory> beanRef = new BeanReference<>(
-                        IMutexFactory.class,
+                        IClass.getClass(IMutexFactory.class),
                         Optional.of(BeanStrategy.singleton),
                         Optional.empty(),
-                        Set.of(MutexFactory.class));
+                        Set.of(IClass.getClass(MutexFactory.class)));
                 context.addBean(providerName, beanRef, factory);
             });
 
             log.atDebug().log("Registering IMutexManager as bean in InjectionContext");
             BeanReference<IMutexManager> managerBeanRef = new BeanReference<>(
-                    IMutexManager.class,
+                    IClass.getClass(IMutexManager.class),
                     Optional.of(BeanStrategy.singleton),
                     Optional.empty(),
                     Set.of());
@@ -220,12 +210,20 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         log.atTrace().log("Exiting doPostBuildWithDependency() method");
     }
 
-    private void collectFactoriesFromReflexion(String packageName) {
+    @SuppressWarnings("unchecked")
+    private void collectFactoriesFromReflexion(String packageName) throws DslException {
         log.atDebug().log("Scanning package: {}", packageName);
-        for (Class<?> factoryClass : ObjectReflectionHelper.getClassesWithAnnotation(packageName, MutexFactory.class)) {
-            Class<? extends IMutex> mutexType = factoryClass.getAnnotation(MutexFactory.class).type();
-            IMutexFactory factory = (IMutexFactory) ObjectReflectionHelper.instanciateNewObject(factoryClass);
-            this.reflexionFactories.putIfAbsent(mutexType, factory);
+        IReflection reflection = IClass.getReflection();
+        IClass<MutexFactory> mutexFactoryAnnotation = IClass.getClass(MutexFactory.class);
+        for (IClass<?> factoryClass : reflection.getClassesWithAnnotation(packageName, mutexFactoryAnnotation)) {
+            MutexFactory annotation = factoryClass.getAnnotation(mutexFactoryAnnotation);
+            IClass<? extends IMutex> mutexType = IClass.getClass(annotation.type());
+            try {
+                IMutexFactory factory = (IMutexFactory) reflection.newInstance(factoryClass);
+                this.reflexionFactories.putIfAbsent(mutexType, factory);
+            } catch (ReflectionException e) {
+                throw new DslException("Failed to instantiate mutex factory: " + factoryClass.getName(), e);
+            }
         }
     }
 
@@ -240,16 +238,11 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     private void addResolverToInjectionContext(IInjectionContextBuilder context) {
         log.atTrace().log("Entering addResolverToInjectionContext() method");
         Objects.requireNonNull(context, "Context builder cannot be null");
-        context.resolvers().withResolver(Mutex.class, new MutexResolver());
+        context.resolvers().withResolver(IClass.getClass(Mutex.class), new MutexResolver());
         log.atDebug().log("Context builder configured");
         log.atTrace().log("Exiting addResolverToInjectionContext() method");
     }
 
-    /**
-     * Creates a new builder instance without a dependency injection context.
-     *
-     * @return a new MutexManagerBuilder instance
-     */
     public static IMutexManagerBuilder builder() {
         log.atTrace().log("Entering builder() with no parameters");
         IMutexManagerBuilder result = new MutexManagerBuilder();

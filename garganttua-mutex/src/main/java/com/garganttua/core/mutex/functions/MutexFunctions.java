@@ -8,6 +8,7 @@ import com.garganttua.core.mutex.InterruptibleLeaseMutex;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexName;
 import com.garganttua.core.mutex.context.MutexContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
@@ -88,7 +89,7 @@ public final class MutexFunctions {
 
         try {
             // Create mutex name with default local mutex type
-            MutexName name = new MutexName(InterruptibleLeaseMutex.class, nameStr);
+            MutexName name = new MutexName(IClass.getClass(InterruptibleLeaseMutex.class), nameStr);
             IMutex mutex = manager.mutex(name);
 
             log.atDebug().log("Acquiring mutex: {}", name);

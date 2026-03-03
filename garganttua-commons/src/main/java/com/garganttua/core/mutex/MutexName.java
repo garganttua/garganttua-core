@@ -163,10 +163,20 @@ public record MutexName(IClass<? extends IMutex> type, String name) {
      * @return the loaded mutex class
      * @throws IllegalArgumentException if the class cannot be found or doesn't implement IMutex
      */
+    @SuppressWarnings("unchecked")
     private static IClass<? extends IMutex> loadMutexClass(String className) {
-        // TODO: requires IReflectionProvider to load class by name and wrap into IClass
-        throw new UnsupportedOperationException(
-            "MutexName.loadMutexClass() needs IReflectionProvider to resolve class: " + className);
+        try {
+            IClass<?> clazz = IClass.forName(className);
+            IClass<IMutex> iMutexClass = IClass.getClass(IMutex.class);
+            if (!iMutexClass.isAssignableFrom(clazz)) {
+                throw new IllegalArgumentException(
+                    "Class " + className + " does not implement IMutex");
+            }
+            return (IClass<? extends IMutex>) clazz;
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(
+                "Mutex class not found: " + className, e);
+        }
     }
 
     /**

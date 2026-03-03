@@ -2,13 +2,26 @@ package com.garganttua.core.mutex;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.mutex.dsl.IMutexManagerBuilder;
 import com.garganttua.core.mutex.dsl.MutexManagerBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 class MutexManagerBuilderTest {
+
+    @BeforeAll
+    static void setup() {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner())
+                .build());
+    }
 
     @Test
     void testBuilderWithNoFactories() throws DslException {
@@ -23,7 +36,7 @@ class MutexManagerBuilderTest {
         IMutexFactory factory = new InterruptibleLeaseMutexFactory();
 
         IMutexManager manager = MutexManagerBuilder.builder()
-                .withFactory(InterruptibleLeaseMutex.class, factory)
+                .withFactory(IClass.getClass(InterruptibleLeaseMutex.class), factory)
                 .build();
 
         assertNotNull(manager, "Manager should not be null");
@@ -34,7 +47,7 @@ class MutexManagerBuilderTest {
         IMutexFactory factory1 = new InterruptibleLeaseMutexFactory();
 
         IMutexManager manager = MutexManagerBuilder.builder()
-                .withFactory(InterruptibleLeaseMutex.class, factory1)
+                .withFactory(IClass.getClass(InterruptibleLeaseMutex.class), factory1)
                 .build();
 
         assertNotNull(manager, "Manager should not be null");
@@ -44,7 +57,7 @@ class MutexManagerBuilderTest {
     void testBuilderWithNullFactoryThrows() {
         assertThrows(NullPointerException.class, () -> {
             MutexManagerBuilder.builder()
-                    .withFactory(InterruptibleLeaseMutex.class, null);
+                    .withFactory(IClass.getClass(InterruptibleLeaseMutex.class), null);
         }, "Should throw when factory is null");
     }
 
@@ -63,7 +76,7 @@ class MutexManagerBuilderTest {
         IMutexManagerBuilder builder = MutexManagerBuilder.builder();
         IMutexFactory factory = new InterruptibleLeaseMutexFactory();
 
-        IMutexManagerBuilder result = builder.withFactory(InterruptibleLeaseMutex.class, factory);
+        IMutexManagerBuilder result = builder.withFactory(IClass.getClass(InterruptibleLeaseMutex.class), factory);
 
         assertSame(builder, result, "Builder should return itself for method chaining");
     }
@@ -73,7 +86,7 @@ class MutexManagerBuilderTest {
         IMutexFactory factory = new InterruptibleLeaseMutexFactory();
 
         IMutexManager manager = MutexManagerBuilder.builder()
-                .withFactory(InterruptibleLeaseMutex.class, factory)
+                .withFactory(IClass.getClass(InterruptibleLeaseMutex.class), factory)
                 .build();
 
         MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test");

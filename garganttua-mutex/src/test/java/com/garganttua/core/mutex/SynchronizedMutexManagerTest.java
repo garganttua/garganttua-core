@@ -9,12 +9,24 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 class SynchronizedMutexManagerTest {
 
     private IMutexManager manager;
+
+    @BeforeAll
+    static void setupReflection() {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build());
+    }
 
     @BeforeEach
     void setUp() {
@@ -164,12 +176,12 @@ class SynchronizedMutexManagerTest {
 
     @Test
     void testGetOwnerContextType() {
-        assertEquals(MutexName.class, manager.getOwnerContextType());
+        assertEquals(IClass.getClass(MutexName.class), manager.getOwnerContextType());
     }
 
     @Test
     void testGetSuppliedType() {
-        assertEquals(IMutex.class, manager.getSuppliedType());
+        assertEquals(IClass.getClass(IMutex.class).getType(), manager.getSuppliedType());
     }
 
     @Test

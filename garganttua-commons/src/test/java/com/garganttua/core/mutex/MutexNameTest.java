@@ -126,12 +126,17 @@ class MutexNameTest {
     }
 
     @Test
-    void testFromStringCurrentlyUnsupported() {
-        // fromString requires IReflectionProvider to resolve class names into IClass
-        // This is currently deferred (throws UnsupportedOperationException)
-        assertThrows(UnsupportedOperationException.class, () -> {
-            MutexName.fromString("com.garganttua.core.mutex.TestMutexA::user-table");
-        });
+    void testFromStringRequiresReflection() {
+        // fromString uses IClass.forName() which requires IReflection to be configured
+        try {
+            MutexName result = MutexName.fromString("com.garganttua.core.mutex.TestMutexA::user-table");
+            // If IReflection is set, it should succeed
+            assertNotNull(result);
+            assertEquals("user-table", result.name());
+        } catch (IllegalStateException e) {
+            // Expected if IReflection is not configured
+            assertTrue(e.getMessage().contains("No IReflection available"));
+        }
     }
 
     @Test

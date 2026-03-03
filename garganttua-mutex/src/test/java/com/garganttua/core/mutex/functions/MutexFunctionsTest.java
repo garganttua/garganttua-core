@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,9 @@ import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.MutexManager;
 import com.garganttua.core.mutex.context.MutexContext;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -27,6 +31,13 @@ import com.garganttua.core.supply.SupplyException;
 public class MutexFunctionsTest {
 
     private IMutexManager mutexManager;
+
+    @BeforeAll
+    static void setupReflection() {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build());
+    }
 
     @BeforeEach
     void setUp() {
@@ -40,6 +51,7 @@ public class MutexFunctionsTest {
     }
 
     // Helper method to create a simple supplier
+    @SuppressWarnings("unchecked")
     private <T> ISupplier<T> supplierOf(T value) {
         return new ISupplier<T>() {
             @Override
@@ -51,10 +63,16 @@ public class MutexFunctionsTest {
             public Type getSuppliedType() {
                 return value != null ? value.getClass() : Object.class;
             }
+
+            @Override
+            public IClass<T> getSuppliedClass() {
+                return value != null ? (IClass<T>) IClass.getClass(value.getClass()) : (IClass<T>) IClass.getClass(Object.class);
+            }
         };
     }
 
     // Helper method to create a supplier with a callable
+    @SuppressWarnings("unchecked")
     private <T> ISupplier<T> supplierOf(java.util.concurrent.Callable<T> callable) {
         return new ISupplier<T>() {
             @Override
@@ -69,6 +87,11 @@ public class MutexFunctionsTest {
             @Override
             public Type getSuppliedType() {
                 return Object.class;
+            }
+
+            @Override
+            public IClass<T> getSuppliedClass() {
+                return (IClass<T>) IClass.getClass(Object.class);
             }
         };
     }

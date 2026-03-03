@@ -9,43 +9,39 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.mutex.IMutexManager;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-/**
- * Tests for package synchronization between MutexManagerBuilder and InjectionContextBuilder.
- *
- * <p>
- * This test suite verifies that packages declared in the InjectionContextBuilder
- * are automatically synchronized to the MutexManagerBuilder during auto-detection.
- * </p>
- */
 class MutexManagerBuilderPackageSyncTest {
+
+    private static IReflectionBuilder reflectionBuilder;
 
     @BeforeAll
     static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     @Test
     void testPackageSynchronizationFromContextBuilder() throws DslException {
-        // Create a DI context builder with packages
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackage("com.garganttua.core.mutex")
                 .withPackage("com.garganttua.core.mutex.dsl");
 
         contextBuilder.build().onInit().onStart();
 
-        // Create MutexManagerBuilder WITHOUT specifying packages
-        // It should synchronize packages from InjectionContextBuilder during auto-detection
         IMutexManagerBuilder mutexBuilder = MutexManagerBuilder.builder().provide(contextBuilder)
                 .autoDetect(true);
 
-        // Before build, packages should be empty in MutexManagerBuilder
         String[] packagesBefore = mutexBuilder.getPackages();
         assertEquals(0, packagesBefore.length, "MutexManagerBuilder should start with no packages");
 
-        // Build - this should trigger auto-detection and package synchronization
         IMutexManager manager = mutexBuilder.build();
 
         assertNotNull(manager, "Manager should be built successfully");
@@ -53,24 +49,21 @@ class MutexManagerBuilderPackageSyncTest {
 
     @Test
     void testPackageSynchronizationMergesWithExistingPackages() throws DslException {
-        // Create a DI context builder with packages
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackage("com.garganttua.core.mutex")
                 .withPackage("com.garganttua.core.mutex.dsl");
 
         contextBuilder.build().onInit().onStart();
 
-        // Create MutexManagerBuilder WITH one package specified
         IMutexManagerBuilder mutexBuilder = MutexManagerBuilder.builder().provide(contextBuilder)
                 .withPackage("com.garganttua.core.mutex.annotations")
                 .autoDetect(true);
 
-        // Before build, should have only the manually added package
         String[] packagesBefore = mutexBuilder.getPackages();
         assertEquals(1, packagesBefore.length, "Should have one manually added package");
         assertEquals("com.garganttua.core.mutex.annotations", packagesBefore[0]);
 
-        // Build - this should merge InjectionContextBuilder packages with existing ones
         IMutexManager manager = mutexBuilder.build();
 
         assertNotNull(manager, "Manager should be built successfully");
@@ -78,20 +71,16 @@ class MutexManagerBuilderPackageSyncTest {
 
     @Test
     void testPackageSynchronizationWithLateContextBuilderPackageAddition() throws DslException {
-        // Create a DI context builder
-        IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder();
+        IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder);
 
-        // Build the context first
         contextBuilder.build().onInit().onStart();
 
-        // Create MutexManagerBuilder and link it to the context
         IMutexManagerBuilder mutexBuilder = MutexManagerBuilder.builder().provide(contextBuilder);
 
-        // NOW add packages to the InjectionContextBuilder AFTER linking
         contextBuilder.withPackage("com.garganttua.core.mutex")
                 .withPackage("com.garganttua.core.mutex.dsl");
 
-        // Enable auto-detection and build
         mutexBuilder.autoDetect(true);
         IMutexManager manager = mutexBuilder.build();
 
@@ -100,7 +89,6 @@ class MutexManagerBuilderPackageSyncTest {
 
     @Test
     void testNoSynchronizationWhenNoContextBuilder() throws DslException {
-        // Create MutexManagerBuilder WITHOUT context builder
         IMutexManagerBuilder mutexBuilder = MutexManagerBuilder.builder()
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(false);
@@ -108,18 +96,16 @@ class MutexManagerBuilderPackageSyncTest {
         String[] packages = mutexBuilder.getPackages();
         assertEquals(1, packages.length, "Should have only manually added package");
 
-        // Build should work without context
         IMutexManager manager = mutexBuilder.build();
         assertNotNull(manager, "Manager should be built without context");
     }
 
     @Test
     void testContextBuilderWithNoPackages() throws DslException {
-        // Create a DI context builder with NO packages
-        IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder();
+        IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder);
         contextBuilder.build().onInit().onStart();
 
-        // Create MutexManagerBuilder with one package
         IMutexManagerBuilder mutexBuilder = MutexManagerBuilder.builder().provide(contextBuilder)
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(true);

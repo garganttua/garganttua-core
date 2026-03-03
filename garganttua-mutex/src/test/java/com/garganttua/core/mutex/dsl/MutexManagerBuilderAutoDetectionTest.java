@@ -15,29 +15,26 @@ import com.garganttua.core.mutex.InterruptibleLeaseMutexFactory;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexName;
 import com.garganttua.core.mutex.dsl.fixtures.TestMutex;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-/**
- * Tests for MutexManagerBuilder auto-detection functionality.
- *
- * <p>
- * This test suite verifies that the builder can automatically discover and
- * register
- * mutex factories annotated with @MutexFactory when scanning specified
- * packages.
- * </p>
- */
 class MutexManagerBuilderAutoDetectionTest {
+
+    private static IReflectionBuilder reflectionBuilder;
 
     @BeforeAll
     static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     @Test
     void testAutoDetectionWithNoContext() {
-        // Auto-detection without DI context should not throw
         assertDoesNotThrow(() -> {
             MutexManagerBuilder.builder()
                     .withPackage("com.garganttua.core.mutex")
@@ -48,13 +45,12 @@ class MutexManagerBuilderAutoDetectionTest {
 
     @Test
     void testAutoDetectionWithContext() throws DslException {
-        // Create a DI context builder
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackage("com.garganttua.core.mutex");
 
         contextBuilder.build().onInit().onStart();
 
-        // Build with auto-detection enabled
         IMutexManager manager = MutexManagerBuilder.builder()
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(true)
@@ -62,7 +58,7 @@ class MutexManagerBuilderAutoDetectionTest {
 
         assertNotNull(manager, "Manager should be built successfully");
 
-        IMutex mutex = manager.mutex(new MutexName(TestMutex.class, "TestMutexFactory"));
+        IMutex mutex = manager.mutex(new MutexName(IClass.getClass(TestMutex.class), "TestMutexFactory"));
         assertNotNull(mutex);
         mutex.acquire(() -> {System.out.println("Hello World");return 2;});
     }
@@ -70,6 +66,7 @@ class MutexManagerBuilderAutoDetectionTest {
     @Test
     void testAutoDetectionScansMultiplePackages() throws DslException {
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackages(new String[] {
                         "com.garganttua.core.mutex",
                         "com.garganttua.core.mutex.dsl"
@@ -149,22 +146,21 @@ class MutexManagerBuilderAutoDetectionTest {
 
     @Test
     void testAutoDetectionWithManualFactories() throws DslException, MutexException {
-        // Test that auto-detection works alongside manually registered factories
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackage("com.garganttua.core.mutex");
 
         contextBuilder.build().onInit().onStart();
         InterruptibleLeaseMutexFactory factory = new InterruptibleLeaseMutexFactory();
 
         IMutexManager manager = MutexManagerBuilder.builder()
-                .withFactory(InterruptibleLeaseMutex.class, factory)
+                .withFactory(IClass.getClass(InterruptibleLeaseMutex.class), factory)
                 .withPackage("com.garganttua.core.mutex")
                 .autoDetect(true)
                 .build();
 
         assertNotNull(manager, "Manager should be built");
 
-        // Verify we can create a mutex using the manually registered factory
         MutexName name = MutexName.fromString("com.garganttua.core.mutex.InterruptibleLeaseMutex::test");
         assertDoesNotThrow(() -> {
             manager.mutex(name);
@@ -173,9 +169,8 @@ class MutexManagerBuilderAutoDetectionTest {
 
     @Test
     void testAutoDetectionDisabled() throws DslException {
-        // When auto-detection is disabled, only manually registered factories should be
-        // used
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackage("com.garganttua.core.mutex");
         contextBuilder.build().onInit().onStart();
 
@@ -210,11 +205,10 @@ class MutexManagerBuilderAutoDetectionTest {
 
     @Test
     void testAutoDetectionWithContextAndObserver() throws DslException {
-        // Create context builder that will build the context
         IInjectionContextBuilder contextBuilder = InjectionContextBuilder.builder()
+                .provide(reflectionBuilder)
                 .withPackage("com.garganttua.core.mutex");
 
-        // Build context to trigger observer
         contextBuilder.build().onInit().onStart();
 
         IMutexManager manager = MutexManagerBuilder.builder()
