@@ -1,12 +1,9 @@
 package com.garganttua.core.supply.dsl;
 
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 
 import com.garganttua.core.dsl.IBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 /**
@@ -23,14 +20,14 @@ import com.garganttua.core.supply.ISupplier;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Building a simple supplier
  * ISupplierBuilder<Logger, ?> builder = SupplierBuilder.forType(Logger.class);
  *
  * // Check properties before building
- * Class<?> type = builder.getSuppliedClass(); // Returns Logger.class
- * boolean needsContext = builder.isContextual(); // Returns false
+ * IClass<?> type = builder.getSuppliedClass();
+ * boolean needsContext = builder.isContextual();
  *
  * // Complete the build
  * ISupplier<Logger> supplier = builder
@@ -62,47 +59,9 @@ public interface ISupplierBuilder<Supplied, Built extends ISupplier<Supplied>> e
      * construction is complete, enabling type-based logic and validation.
      * </p>
      *
-     * @return the {@link Class} representing the type to be supplied
+     * @return the {@link IClass} representing the type to be supplied
      */
-    @SuppressWarnings("unchecked")
-    default Class<Supplied> getSuppliedClass() {
-        Type type = this.getSuppliedType();
-        return (Class<Supplied>) extractClass(type);
-    }
-
-    /**
-     * Helper method to extract a Class from a Type.
-     *
-     * @param type the Type to extract from
-     * @return the extracted Class
-     */
-    public static Class<?> extractClass(Type type) {
-        if (type instanceof Class<?>) {
-            return (Class<?>) type;
-        }
-
-        if (type instanceof ParameterizedType) {
-            return extractClass(((ParameterizedType) type).getRawType());
-        }
-
-        if (type instanceof GenericArrayType) {
-            Type componentType = ((GenericArrayType) type).getGenericComponentType();
-            Class<?> componentClass = extractClass(componentType);
-            return java.lang.reflect.Array.newInstance(componentClass, 0).getClass();
-        }
-
-        if (type instanceof TypeVariable) {
-            Type[] bounds = ((TypeVariable<?>) type).getBounds();
-            return bounds.length == 0 ? Object.class : extractClass(bounds[0]);
-        }
-
-        if (type instanceof WildcardType) {
-            Type[] upperBounds = ((WildcardType) type).getUpperBounds();
-            return upperBounds.length == 0 ? Object.class : extractClass(upperBounds[0]);
-        }
-
-        throw new IllegalArgumentException("Impossible de convertir en Class<?> : " + type);
-    }
+    IClass<Supplied> getSuppliedClass();
 
     Type getSuppliedType();
 

@@ -64,6 +64,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | Module | Description |
 |:--|:--|
 | [**garganttua-core**](././README.md) | Garganttua Core - Foundational Java framework for dependency injection, workflow orchestration, reflection utilities, and more. |
+| \|- [**garganttua-annotation-processor**](./garganttua-annotation-processor/README.md) | Compile-time annotation processor for generating annotation indices. |
 | \|- [**garganttua-bindings**](./garganttua-bindings/README.md) | Modules providing bindings to external libs and frameworks. |
 | \|    \|- [**garganttua-mutex-redis**](./garganttua-bindings/garganttua-mutex-redis/README.md) | Distributed mutex over redis. |
 | \|    \|- [**garganttua-reflections**](./garganttua-bindings/garganttua-reflections/README.md) | Annotation scanner implementation based on org.reflections:reflections |
@@ -71,6 +72,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-bootstrap**](./garganttua-bootstrap/README.md) | Bootstrap and application initialization framework. |
 | \|- [**garganttua-commons**](./garganttua-commons/README.md) | Shared components, interfaces, annotations, and exceptions. |
 | \|- [**garganttua-condition**](./garganttua-condition/README.md) | DSL to define, combine, and evaluate runtime conditions. |
+| \|- [**garganttua-console**](./garganttua-console/README.md) | Interactive REPL console for Garganttua Script. |
 | \|- [**garganttua-crypto**](./garganttua-crypto/README.md) | Encryption, hashing, and secure key management utilities. |
 | \|- [**garganttua-dsl**](./garganttua-dsl/README.md) | Declarative language and builder framework for Garganttua DSLs. |
 | \|- [**garganttua-execution**](./garganttua-execution/README.md) | Task execution, orchestration, and fallback handling engine. |
@@ -83,11 +85,12 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-native-image-maven-plugin**](./garganttua-native-image-maven-plugin/README.md) | Maven plugin to build native images (GraalVM support). |
 | \|- [**garganttua-reflection**](./garganttua-reflection/README.md) | Advanced reflection utilities for classes, methods, and annotations. |
 | \|- [**garganttua-runtime**](./garganttua-runtime/README.md) | Runtime context management and lifecycle orchestration. |
-| \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with REPL console, variables, control flow, and expression evaluation. |
+| \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
-| \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | High-level workflow orchestration DSL with multi-stage pipeline composition and script generation. |
-| \|- [**garganttua-annotation-processor**](./garganttua-annotation-processor/README.md) | Compile-time annotation indexing for zero-overhead annotation discovery at runtime. |
+| \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
 
 
 
@@ -149,7 +152,7 @@ Modules providing integration with external frameworks and tools:
 
 Modules for build-time tooling and native compilation:
 
-- **[garganttua-annotation-processor](./garganttua-annotation-processor/README.md)** - Compile-time annotation indexing processor. Generates index files in `META-INF/garganttua/index/` for zero-overhead annotation discovery at runtime, replacing expensive classpath scanning.
+- **[garganttua-annotation-processor](./garganttua-annotation-processor/README.md)** - Compile-time annotation indexing processor. Generates index files in `META-INF/garganttua/index/` for zero-overhead annotation discovery at runtime, replacing expensive classpath scanning. Also generates direct-call binder classes for `@Expression` methods and DI bean constructors, eliminating `Method.invoke()` / `Constructor.newInstance()` overhead (toggleable via `-Dgarganttua.direct.binders=false`).
 
 - **[garganttua-native](./garganttua-native/README.md)** - Low-level native integrations and system abstractions for platform-specific functionality.
 
@@ -316,10 +319,12 @@ The module dependency structure follows these principles:
 <!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-START -->
 ```mermaid
 graph TD
+    garganttua-annotation-processor["garganttua-annotation-processor"]
     garganttua-bindings["garganttua-bindings"]
     garganttua-bootstrap["garganttua-bootstrap"]
     garganttua-commons["garganttua-commons"]
     garganttua-condition["garganttua-condition"]
+    garganttua-console["garganttua-console"]
     garganttua-core["garganttua-core"]
     garganttua-crypto["garganttua-crypto"]
     garganttua-dsl["garganttua-dsl"]
@@ -340,10 +345,10 @@ graph TD
     garganttua-spring["garganttua-spring"]
     garganttua-supply["garganttua-supply"]
     garganttua-workflow["garganttua-workflow"]
-    garganttua-annotation-processor["garganttua-annotation-processor"]
 
     garganttua-reflection --> garganttua-commons
     garganttua-reflection --> garganttua-supply
+    garganttua-annotation-processor --> garganttua-commons
     garganttua-injection --> garganttua-lifecycle
     garganttua-injection --> garganttua-supply
     garganttua-injection --> garganttua-dsl
@@ -354,6 +359,20 @@ graph TD
     garganttua-mutex --> garganttua-dsl
     garganttua-mutex --> garganttua-injection
     garganttua-mutex --> garganttua-reflections
+    garganttua-workflow --> garganttua-commons
+    garganttua-workflow --> garganttua-script
+    garganttua-workflow --> garganttua-dsl
+    garganttua-workflow --> garganttua-expression
+    garganttua-workflow --> garganttua-injection
+    garganttua-workflow --> garganttua-reflections
+    garganttua-console --> garganttua-commons
+    garganttua-console --> garganttua-script
+    garganttua-console --> garganttua-expression
+    garganttua-console --> garganttua-injection
+    garganttua-console --> garganttua-bootstrap
+    garganttua-console --> garganttua-annotation-processor
+    garganttua-console --> garganttua-mutex
+    garganttua-console --> garganttua-reflections
     garganttua-runtime --> garganttua-commons
     garganttua-runtime --> garganttua-injection
     garganttua-runtime --> garganttua-execution
@@ -388,37 +407,78 @@ graph TD
     garganttua-script --> garganttua-expression
     garganttua-script --> garganttua-injection
     garganttua-script --> garganttua-reflections
+    garganttua-script --> garganttua-annotation-processor
     garganttua-script --> garganttua-bootstrap
     garganttua-script --> garganttua-condition
+    garganttua-script --> garganttua-mutex
     garganttua-script-maven-plugin --> garganttua-commons
     garganttua-script-maven-plugin --> garganttua-reflection
     garganttua-script-maven-plugin --> garganttua-reflections
     garganttua-expression --> garganttua-commons
     garganttua-expression --> garganttua-injection
+    garganttua-expression --> garganttua-native
     garganttua-expression --> garganttua-reflections
     garganttua-dsl --> garganttua-commons
     garganttua-dsl --> garganttua-reflections
     garganttua-supply --> garganttua-commons
     garganttua-supply --> garganttua-dsl
     garganttua-execution --> garganttua-commons
-    garganttua-workflow --> garganttua-commons
-    garganttua-workflow --> garganttua-script
-    garganttua-workflow --> garganttua-dsl
-    garganttua-workflow --> garganttua-expression
-    garganttua-workflow --> garganttua-injection
-    garganttua-annotation-processor --> garganttua-commons
 ```
 <!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-STOP -->
 
 ## 🔧 Technology Stack
 
-- **Java 21** - Modern Java with records, pattern matching, and sealed types
-- **Lombok** - Annotation-based code generation for reducing boilerplate
-- **SLF4J** - Logging facade for flexible logging implementation
-- **JUnit 5** - Modern testing framework with parameterized tests and extensions
-- **Maven** - Build automation and dependency management
-- **GraalVM** - Native image compilation for optimal startup and memory footprint
-- **ANTLR4** - Parser generator for grammar definition and automatic lexer and parser generation for building language processors.
+### Build & Runtime
+
+| Technology | Version | Description |
+|:--|:--|:--|
+| **Java 21** | 21 | Modern Java with records, pattern matching, and sealed types |
+| **Maven** | 3.8+ | Build automation, dependency management, and multi-module reactor |
+| **GraalVM** | - | Native image compilation for optimal startup and memory footprint |
+
+### Core Dependencies
+
+| Library | Version | Scope | Used By |
+|:--|:--|:--|:--|
+| **[Lombok](https://projectlombok.org/)** | 1.18.36 | provided | All modules - annotation-based code generation for reducing boilerplate |
+| **[SLF4J](https://www.slf4j.org/)** | 2.0.17 | provided | All modules - logging facade for flexible logging implementation |
+| **[Logback](https://logback.qos.ch/)** | 1.5.16 | compile/test | `script`, `console` - logging implementation for runtime and tests |
+| **[ANTLR4](https://www.antlr.org/)** | 4.13.0 | compile | `expression`, `script` - parser generator for grammar-based language processing |
+| **[JLine3](https://github.com/jline/jline3)** | 3.25.1 | compile | `console` - terminal handling for the interactive REPL (line editing, history, completion) |
+| **[Jackson Databind](https://github.com/FasterXML/jackson-databind)** | 2.15.2 | compile | `native` - JSON serialization for GraalVM reflection configuration |
+| **[Javatuples](https://www.javatuples.org/)** | 1.2 | compile | `reflection` - type-safe tuple classes for multi-value returns |
+| **[UUID Creator](https://github.com/f4b6a3/uuid-creator)** | 5.0.0 | compile | `runtime` - fast, spec-compliant UUID generation |
+| **[Reflections](https://github.com/ronmamo/reflections)** | 0.10.2 | compile | `reflections` binding - runtime annotation and classpath scanning |
+
+### Standards & Specifications
+
+| Library | Version | Scope | Used By |
+|:--|:--|:--|:--|
+| **[javax.inject (JSR-330)](https://javax-inject.github.io/javax-inject/)** | 1 | compile | `commons`, `bootstrap`, `script-maven-plugin` - standard DI annotations |
+| **[Jakarta Annotations](https://jakarta.ee/specifications/annotations/)** | 2.1.1 | compile | `commons`, `bootstrap` - standard lifecycle annotations (`@PostConstruct`, etc.) |
+
+### Optional Integrations
+
+| Library | Version | Scope | Used By |
+|:--|:--|:--|:--|
+| **[Spring Framework](https://spring.io/projects/spring-framework)** | 6.2.1 | provided | `spring` binding - Spring context and core integration |
+| **[Red Utils](https://github.com/siahsang/red-utils)** | 1.0.4 | compile | `mutex-redis` binding - Redis-based distributed mutex |
+
+### Testing
+
+| Library | Version | Scope | Used By |
+|:--|:--|:--|:--|
+| **[JUnit 5](https://junit.org/junit5/)** | 5.9.1 | test | All modules - modern testing framework with parameterized tests and extensions |
+| **[JFreeChart](https://www.jfree.org/jfreechart/)** | 1.5.4 | test | `runtime` - chart generation for performance test reporting |
+| **[OpenPDF](https://github.com/LibrePDF/OpenPDF)** | 1.3.40 | test | `runtime` - PDF export for performance test reports |
+
+### Maven Plugin Development
+
+| Library | Version | Scope | Used By |
+|:--|:--|:--|:--|
+| **Maven Plugin API** | 3.0 | provided | `native-image-maven-plugin`, `script-maven-plugin` |
+| **Maven Core** | 3.8.6 | provided | `native-image-maven-plugin`, `script-maven-plugin` |
+| **Maven Plugin Annotations** | 3.5 | provided | `native-image-maven-plugin`, `script-maven-plugin` |
 
 ## 📖 Use Cases
 
@@ -532,21 +592,8 @@ This project is distributed under the MIT License. See individual module READMEs
 - Core modules stabilization
 - Comprehensive documentation
 - Performance benchmarks
+- Cryptographic features development
 - Native image support
-
-### Version 2.1 (Planned)
-
-- Async/reactive execution support
-- Enhanced DSL capabilities
-- Additional Spring Boot starters
-- Kotlin extensions
-
-### Version 3.0 (Future)
-
-- Distributed runtime coordination
-- Cloud-native integrations (Kubernetes, AWS Lambda)
-- Advanced monitoring and observability
-- GraphQL and gRPC support
 
 ---
 

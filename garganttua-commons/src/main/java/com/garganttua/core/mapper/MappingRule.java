@@ -2,6 +2,7 @@ package com.garganttua.core.mapper;
 
 import java.util.Objects;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 /**
@@ -62,7 +63,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 public record MappingRule (
 		ObjectAddress sourceFieldAddress,
 		ObjectAddress destinationFieldAddress,
-		Class<?> destinationClass,
+		IClass<?> destinationClass,
 		ObjectAddress fromSourceMethodAddress,
 		ObjectAddress toSourceMethodAddress
 	){

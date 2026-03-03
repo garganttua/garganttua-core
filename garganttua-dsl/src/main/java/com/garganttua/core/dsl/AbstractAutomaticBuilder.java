@@ -2,7 +2,7 @@ package com.garganttua.core.dsl;
 
 import java.util.Objects;
 
-import com.garganttua.core.reflection.IAnnotationScanner;
+import com.garganttua.core.reflection.IReflection;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,11 +54,11 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
 
             // Scan for @Scan annotations if builder is packageable and has packages
             if (this instanceof IPackageableBuilder) {
-                IAnnotationScanner scanner = getAnnotationScanner();
+                IReflection reflect = getReflection();
                 String[] packages = getPackagesForScanning();
-                if (scanner != null && packages != null && packages.length > 0) {
+                if (reflect != null && packages != null && packages.length > 0) {
                     log.atDebug().log("Scanning {} packages for @Scan annotations before business auto-detection", packages.length);
-                    PackageScanHelper.scanAndAddPackages(scanner, this, packages);
+                    new PackageScanHelper(reflect).scanAndAddPackages(this, packages);
                 }
             }
 
@@ -117,11 +117,11 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
 
             // Scan for @Scan annotations if builder is packageable and has packages
             if (this instanceof IPackageableBuilder) {
-                IAnnotationScanner scanner = getAnnotationScanner();
+                IReflection reflect = getReflection();
                 String[] packages = getPackagesForScanning();
-                if (scanner != null && packages != null && packages.length > 0) {
+                if (reflect != null && packages != null && packages.length > 0) {
                     log.atDebug().log("Scanning {} packages for @Scan annotations during rebuild", packages.length);
-                    PackageScanHelper.scanAndAddPackages(scanner, this, packages);
+                    new PackageScanHelper(reflect).scanAndAddPackages(this, packages);
                 }
             }
 
@@ -185,18 +185,8 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
         return new String[0];
     }
 
-    /**
-     * Returns the annotation scanner to use for scanning @Scan annotations.
-     *
-     * <p>
-     * This method should be overridden by subclasses that want to enable @Scan annotation
-     * scanning during auto-detection. The default implementation returns null, which disables
-     * @Scan scanning.
-     * </p>
-     *
-     * @return the annotation scanner to use, or null to disable @Scan scanning
-     */
-    protected IAnnotationScanner getAnnotationScanner() {
+
+    protected IReflection getReflection() {
         return null;
     }
 }

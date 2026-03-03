@@ -1,7 +1,6 @@
 package com.garganttua.core.injection.context.beans.resolver;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,6 +12,8 @@ import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.context.beans.Beans;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -21,9 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BeanElementResolver {
 
-    private Set<Class<? extends Annotation>> qualifiers;
+    private Set<IClass<? extends Annotation>> qualifiers;
 
-    protected BeanElementResolver(Set<Class<? extends Annotation>> qualifiers) {
+    protected BeanElementResolver(Set<IClass<? extends Annotation>> qualifiers) {
         log.atTrace().log("Entering BeanElementResolver constructor with qualifiers: {}", qualifiers);
         this.qualifiers = Objects.requireNonNull(qualifiers, "Qualifiers cannot be null");
         log.atDebug().log("BeanElementResolver initialized with qualifiers: {}", qualifiers);
@@ -31,8 +32,8 @@ public class BeanElementResolver {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected Optional<ISupplierBuilder<?, ISupplier<?>>> resolve(Class<?> elementType,
-            AnnotatedElement parameter,
+    protected Optional<ISupplierBuilder<?, ISupplier<?>>> resolve(IClass<?> elementType,
+            IAnnotatedElement parameter,
             BeanStrategy strategy) {
         log.atTrace().log("Entering resolve with elementType: {}, parameter: {}, strategy: {}", elementType, parameter,
                 strategy);
@@ -42,7 +43,7 @@ public class BeanElementResolver {
 
         String name = null;
         String provider = null;
-        Set<Class<? extends Annotation>> paramQualifiers = new HashSet<>();
+        Set<IClass<? extends Annotation>> paramQualifiers = new HashSet<>();
 
         for (Annotation annotation : parameter.getAnnotations()) {
             log.atDebug().log("Inspecting annotation: {}", annotation);
@@ -59,9 +60,13 @@ public class BeanElementResolver {
                     provider = prov.value();
                     log.atDebug().log("Provider annotation found with value: {}", provider);
                 }
-            } else if (qualifiers.contains(annotation.getClass())) {
-                paramQualifiers.add(annotation.getClass());
-                log.atDebug().log("Qualifier annotation found: {}", annotation.getClass());
+            } else {
+                @SuppressWarnings("unchecked")
+                IClass<? extends Annotation> annotationIClass = (IClass<? extends Annotation>) IClass.getClass(annotation.annotationType());
+                if (qualifiers.stream().anyMatch(q -> q.getName().equals(annotationIClass.getName()))) {
+                    paramQualifiers.add(annotationIClass);
+                    log.atDebug().log("Qualifier annotation found: {}", annotation.annotationType());
+                }
             }
         }
 

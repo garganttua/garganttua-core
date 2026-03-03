@@ -13,6 +13,7 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.context.beans.BeanSupplier;
 import com.garganttua.core.injection.context.beans.ContextualBeanSupplier;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,12 +22,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
 
     private String name = null;
     private String provider = null;
-    private Class<Bean> type;
+    private IClass<Bean> type;
     private BeanStrategy strategy;
-    private Class<? extends Annotation> qualifier;
+    private IClass<? extends Annotation> qualifier;
     private boolean useStaticContext = true;
 
-    public BeanSupplierBuilder(Class<Bean> type) {
+    public BeanSupplierBuilder(IClass<Bean> type) {
         log.atTrace().log("Entering BeanSupplierBuilder constructor with type: {}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
         log.atDebug().log("Type set to: {}", this.type.getSimpleName());
@@ -86,7 +87,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     public Type getSuppliedType() {
         log.atTrace().log("Entering getSuppliedType() method");
         log.atTrace().log("Exiting getSuppliedType() method with type: {}", this.type);
-        return type;
+        return type.getType();
+    }
+
+    @Override
+    public IClass<Bean> getSuppliedClass() {
+        return this.type;
     }
 
     @Override
@@ -97,14 +103,14 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
             throw new DslException("Bean type must be provided");
         }
 
-        Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
+        Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
         if (this.qualifier != null) {
             qualifiers.add(this.qualifier);
             log.atDebug().log("Added qualifier to build: {}", this.qualifier.getSimpleName());
         }
 
         IBeanSupplier<Bean> supplier = null;
-        
+
         if( this.useStaticContext )
             supplier = new BeanSupplier<>(Optional.ofNullable(this.provider),
                 new BeanReference<>(this.type, Optional.ofNullable(this.strategy),
@@ -148,7 +154,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     }
 
     @Override
-    public IBeanSupplierBuilder<Bean> qualifier(Class<? extends Annotation> qualifier) {
+    public IBeanSupplierBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) {
         log.atTrace().log("Entering qualifier() method with qualifier: {}", qualifier);
         this.qualifier = Objects.requireNonNull(qualifier, "Qualifier cannot be null");
         log.atDebug().log("Qualifier set to: {}", this.qualifier.getSimpleName());
@@ -157,7 +163,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         log.atTrace().log("Entering getDependencies() method");
         log.atTrace().log("Exiting getDependencies() method with empty set");
         return Set.of();

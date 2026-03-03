@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 public class ObjectAddressTest {
-	
+
     @Test
     public void testValidAddressCreation() throws ReflectionException {
         ObjectAddress address = new ObjectAddress("field1.field2.field3");
@@ -48,6 +48,63 @@ public class ObjectAddressTest {
         assertThrows(IllegalArgumentException.class, () -> address.getElement(-1));
         assertThrows(IllegalArgumentException.class, () -> address.getElement(3));
     }
-}
 
-	
+    @Test
+    public void testAddElementReturnsNewInstance() throws ReflectionException {
+        ObjectAddress original = new ObjectAddress("field1.field2");
+        ObjectAddress extended = original.addElement("field3");
+
+        // Original is unchanged (immutable)
+        assertEquals(2, original.length());
+        assertEquals("field1.field2", original.toString());
+
+        // Extended has the new element
+        assertEquals(3, extended.length());
+        assertEquals("field1.field2.field3", extended.toString());
+
+        // They are different instances
+        assertNotSame(original, extended);
+    }
+
+    @Test
+    public void testAddElementLoopDetection() throws ReflectionException {
+        ObjectAddress address = new ObjectAddress("field1.field2");
+        assertThrows(ReflectionException.class, () -> address.addElement("field1"));
+    }
+
+    @Test
+    public void testAddElementNullOrEmpty() throws ReflectionException {
+        ObjectAddress address = new ObjectAddress("field1");
+        assertThrows(IllegalArgumentException.class, () -> address.addElement(null));
+        assertThrows(IllegalArgumentException.class, () -> address.addElement(""));
+    }
+
+    @Test
+    public void testCloneReturnsSameInstance() throws ReflectionException {
+        ObjectAddress address = new ObjectAddress("field1.field2");
+        ObjectAddress cloned = address.clone();
+        assertSame(address, cloned);
+    }
+
+    @Test
+    public void testSubAddress() throws ReflectionException {
+        ObjectAddress address = new ObjectAddress("field1.field2.field3");
+        ObjectAddress sub = address.subAddress(1);
+        assertEquals("field1.field2", sub.toString());
+        assertEquals(2, sub.length());
+    }
+
+    @Test
+    public void testGetLastElement() throws ReflectionException {
+        ObjectAddress address = new ObjectAddress("field1.field2.field3");
+        assertEquals("field3", address.getLastElement());
+    }
+
+    @Test
+    public void testMapIndicatorsNotDetectedAsLoops() throws ReflectionException {
+        ObjectAddress address = new ObjectAddress("map", false);
+        ObjectAddress withKey = address.addElement(ObjectAddress.MAP_KEY_INDICATOR);
+        assertNotNull(withKey);
+        assertEquals("map.#key", withKey.toString());
+    }
+}

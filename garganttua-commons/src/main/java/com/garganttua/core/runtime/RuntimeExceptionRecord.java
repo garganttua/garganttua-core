@@ -1,5 +1,7 @@
 package com.garganttua.core.runtime;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Immutable record containing detailed information about an exception that occurred during runtime execution.
  *
@@ -56,7 +58,7 @@ package com.garganttua.core.runtime;
  *
  * // Access exception details
  * String message = record.exceptionMessage();
- * Class<? extends Throwable> type = record.exceptionType();
+ * IClass<? extends Throwable> type = record.exceptionType();
  * boolean aborted = record.hasAborted();
  * }</pre>
  *
@@ -73,7 +75,7 @@ package com.garganttua.core.runtime;
  * @see IRuntimeContext#findException(RuntimeExceptionRecord)
  * @see IRuntimeResult#getExceptions()
  */
-public record RuntimeExceptionRecord(String runtimeName, String stepName, Class<? extends Throwable> exceptionType, Throwable exception, Integer code, Boolean hasAborted, String executableReference) {
+public record RuntimeExceptionRecord(String runtimeName, String stepName, IClass<? extends Throwable> exceptionType, Throwable exception, Integer code, Boolean hasAborted, String executableReference) {
 
     /**
      * Checks if this exception record matches a given pattern.
@@ -112,8 +114,8 @@ public record RuntimeExceptionRecord(String runtimeName, String stepName, Class<
         if (pattern.exceptionType != null) {
             if (this.exceptionType == null) return false;
 
-            Class<?> expected = pattern.exceptionType;
-            Class<?> actual = this.exceptionType;
+            IClass<?> expected = pattern.exceptionType;
+            IClass<?> actual = this.exceptionType;
 
             if (!expected.isAssignableFrom(actual))
                 return false;

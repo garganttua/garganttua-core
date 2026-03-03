@@ -41,19 +41,27 @@ mvn clean package -pl garganttua-script -Plinux-installer
 # Run a script file
 java -jar garganttua-script/target/garganttua-script-*-executable.jar script.gs [args...]
 
-# Start the REPL console
-java -jar garganttua-script/target/garganttua-script-*-executable.jar --console
+# Build and run the REPL console (separate module from script)
+mvn clean package -pl garganttua-console
+java -jar garganttua-console/target/garganttua-console-*-executable.jar
 
 # Build native image (in application module)
 mvn package -Pnative
+
+# Bump project version (requires xmllint / libxml2-utils)
+./new-major.sh   # or new-minor.sh / new-patch.sh
+
+# Regenerate README architecture/dependency sections
+python3 scripts/run_all.py
 ```
 
 ## Build Caveats
 
 - The `garganttua-reflection` module has a pre-existing compilation issue (`FieldBinder` missing `ISupplier` import) when building from root. Use `-pl <module>` to build specific modules when the root build fails.
 - When modifying `garganttua-script` and testing from `garganttua-workflow`, you must `mvn install -pl garganttua-script -DskipTests` first so the workflow module picks up the updated JAR.
-- The shade plugin in `garganttua-script` uses `AppendingTransformer` to merge annotation index files from multiple JARs. This must be updated when adding new `@Indexed` annotations.
-- The `garganttua-annotation-processor` module disables annotation processing (`-proc:none`) to avoid self-processing.
+- The shade plugin in `garganttua-script` and `garganttua-console` uses `AppendingTransformer` to merge annotation index files from multiple JARs. This must be updated when adding new `@Indexed` annotations.
+- The `garganttua-annotation-processor` module disables annotation processing (`-proc:none`) to avoid self-processing. It is **commented out** of the root reactor `<modules>` — it must be pre-installed separately (`mvn install -pl garganttua-annotation-processor`).
+- `garganttua-bindings` is also commented out of the root reactor (Spring/Reflections library bindings).
 
 ## Architecture Overview
 
@@ -63,15 +71,17 @@ Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA01`) is a modular Ja
 
 1. **Foundation**: `garganttua-commons` (shared interfaces, annotations, exceptions), `garganttua-dsl` (builder framework), `garganttua-supply` (supplier/provider pattern), `garganttua-lifecycle` (state management), `garganttua-mutex` (locking primitives)
 
-2. **Infrastructure**: `garganttua-reflection` (type-safe reflection binders), `garganttua-condition` (boolean condition DSL), `garganttua-execution` (chain-of-responsibility), `garganttua-crypto` (cryptographic utilities)
+2. **Infrastructure**: `garganttua-reflection` (type-safe reflection binders + composite `IReflection` facade), `garganttua-runtime-reflection` (JVM runtime reflection provider), `garganttua-condition` (boolean condition DSL), `garganttua-execution` (chain-of-responsibility), `garganttua-crypto` (cryptographic utilities), `garganttua-configuration` (multi-format config loading & builder population)
 
 3. **Framework**: `garganttua-injection` (DI container), `garganttua-runtime` (workflow engine), `garganttua-mapper` (object mapping), `garganttua-expression` (ANTLR4 expression language), `garganttua-bootstrap` (application bootstrapping)
 
-4. **Application**: `garganttua-script` (scripting engine & REPL), `garganttua-workflow` (high-level workflow DSL with script generation)
+4. **Application**: `garganttua-script` (scripting engine), `garganttua-console` (interactive REPL, extracted from script), `garganttua-workflow` (high-level workflow DSL with script generation)
 
-5. **Integration**: `garganttua-bindings/` (Spring, Reflections library bindings)
+5. **Integration**: `garganttua-bindings/` (Spring, Reflections library bindings — commented out of reactor)
 
-6. **Build Tools**: `garganttua-native`, `garganttua-native-image-maven-plugin` (GraalVM support), `garganttua-annotation-processor` (compile-time annotation indexing), `garganttua-script-maven-plugin` (script plugin JAR packaging)
+6. **Build Tools**: `garganttua-native`, `garganttua-native-image-maven-plugin` (GraalVM support), `garganttua-annotation-processor` (compile-time annotation indexing — commented out of reactor), `garganttua-script-maven-plugin` (script plugin JAR packaging)
+
+7. **AOT (Work in Progress)**: `garganttua-aot-common` (shared AOT interfaces), `garganttua-aot/` (parent with submodules: `garganttua-aot-reflection`, `garganttua-aot-annotation-scanner`, `garganttua-aot-annotation-processor`, `garganttua-aot-maven-plugin`)
 
 ### Key Design Patterns
 
@@ -134,9 +144,15 @@ Script syntax:
 
 Script files use the `.gs` extension and support shebang lines (`#!/usr/bin/env garganttua-script`). Positional script arguments are accessed via `@0`, `@1`, etc.
 
-CLI entry point: `com.garganttua.core.script.Main` with flags `--console` (REPL), `--syntax`, `--man`, `--help`, `--version`. The REPL (`ScriptConsole`) uses JLine for terminal support with built-in functions: `help()`, `vars()`, `clear()`, `load("file")`, `man()`, `syntax()`, `exit()`.
+CLI entry point: `com.garganttua.core.script.Main` with flags `--syntax`, `--man`, `--help`, `--version`.
 
-The shade plugin produces an executable fat JAR (`garganttua-script-*-executable.jar`).
+The shade plugin produces an executable fat JAR (`garganttua-script-*-executable.jar`). Linux installer (`-Plinux-installer`) installs as `garganttua-script` and `gs` CLI aliases.
+
+### Console Module (REPL)
+
+The interactive REPL was extracted from `garganttua-script` into its own module `garganttua-console`. Entry point: `com.garganttua.core.console.ConsoleMain`. Uses JLine for terminal support with tab completion for expression functions, session variables, and keywords. History file: `~/.garganttua_script_history`.
+
+Built-in REPL functions: `help()`, `vars()`, `clear()`, `load("file")`, `man()`, `syntax()`, `exit()` / `quit()`.
 
 ### Workflow Module
 
@@ -156,9 +172,28 @@ Orchestrates multi-stage workflows with annotation or programmatic definition:
 - `@Input`, `@Output`, `@Context`, `@Variable` - parameter injection
 - `@Catch`, `@FallBack` - exception handling
 
-### Reflection Utilities
+### Reflection Abstraction (`IReflection` Facade)
+
+The reflection subsystem uses a pluggable provider architecture:
+- `IReflection` — unified facade combining `IReflectionProvider` (class resolution) and `IAnnotationScanner` (annotation discovery).
+- `IReflectionProvider` — pluggable provider with `getClass(Class)`, `forName(...)`, `supports(Class)`. Multiple providers are prioritized (higher priority wins).
+- `IClass<T>`, `IMethod`, `IField`, `IConstructor`, `IParameter`, `IRecordComponent` — abstract mirrors of `java.lang.reflect` types, enabling AOT-compatible implementations.
+- `ReflectionBuilder.builder()` → `CompositeReflection` — built via `withProvider(provider, priority)` and `withScanner(scanner, priority)`.
+- `garganttua-runtime-reflection` provides `RuntimeReflectionProvider` — the standard JVM runtime implementation.
+- Old utility classes (`ObjectReflectionHelper`, `FieldAccessManager`, `MethodAccessManager`, `ConstructorAccessManager`, `ObjectAccessor`) are deleted, replaced by this abstraction.
 
 `MethodResolver` finds methods by name/signature/return type. `MethodInvoker` handles execution with nested field traversal for deep object paths. All binders use `ISupplier<?>` for parameter values.
+
+### Configuration Module
+
+`garganttua-configuration` provides multi-format configuration loading and automatic builder population:
+- **Formats**: JSON (built-in), YAML, XML, TOML, Properties — format support is conditional on classpath (optional Jackson dataformat dependencies).
+- **Sources**: `FileConfigurationSource`, `ClasspathConfigurationSource`, `StringConfigurationSource`, `InputStreamConfigurationSource`, `EnvironmentConfigurationSource`.
+- **Builder population**: Recursively maps config keys to builder methods. Auto-detects child `IBuilder`/`ILinkedBuilder` and recurses, calling `up()` when done.
+- **Method mapping strategies**: `SMART` (default), `DIRECT`, `CAMEL_CASE`, `KEBAB_CASE`.
+- **DI integration**: `ConfigurationPropertyProvider` adapts a parsed config tree as an `IPropertyProvider` (flat dot-notation + `[index]` for arrays).
+- **Annotations**: `@Configurable`, `@ConfigProperty("key")`, `@ConfigIgnore`, `@ConfigurationFormat`.
+- **Strict/lax modes**: strict mode fails on unknown config keys.
 
 ## Code Conventions
 
@@ -188,5 +223,14 @@ All modules depend on `garganttua-commons`. Key dependency chains:
 - `expression` → `injection`
 - `mutex` → `dsl`, `injection`
 - `script` → `expression`, `runtime`, `bootstrap`, `condition`, `mutex`, `annotation-processor`
+- `console` → `script`, `expression`, `injection`, `bootstrap`, `annotation-processor`, `mutex`, `reflections`
 - `workflow` → `script`, `expression`, `injection`, `dsl` (execution requires both `IInjectionContext` and `IExpressionContext`)
 - `reflection` → `commons`, `supply`
+- `configuration` → `commons`, `dsl`, `reflection`, `jackson-databind`; `injection` as `provided`
+- `runtime-reflection` → `commons`
+
+## CI/CD
+
+Two GitHub Actions workflows in `.github/workflows/`:
+- **`maven-publish.yml`**: Builds on any branch push; deploys to GitHub Packages on tag creation.
+- **`build-script-installer.yml`**: Builds script installer on pushes/PRs to `main` touching script-related modules. Manual trigger with optional `create_release` input creates a GitHub release tagged `garganttua-script-v{version}`.

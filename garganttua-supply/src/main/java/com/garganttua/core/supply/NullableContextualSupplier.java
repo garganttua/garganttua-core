@@ -4,6 +4,8 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -23,12 +25,17 @@ public class NullableContextualSupplier<SuppliedType, ContextType>
 
     @Override
     public Type getSuppliedType() {
-        return delegate.getSuppliedClass();
+        return delegate.getSuppliedType();
     }
 
     @Override
-    public Class<ContextType> getOwnerContextType() {
+    public IClass<ContextType> getOwnerContextType() {
         return this.delegate.getOwnerContextType();
+    }
+
+    @Override
+    public IClass<SuppliedType> getSuppliedClass() {
+        return this.delegate.getSuppliedClass();
     }
 
     @Override

@@ -36,6 +36,8 @@ The **garganttua-workflow** module provides a high-level orchestration DSL for c
  - `com.garganttua.core:garganttua-dsl`
  - `com.garganttua.core:garganttua-expression`
  - `com.garganttua.core:garganttua-injection`
+ - `com.garganttua.core:garganttua-reflections:test`
+ - `ch.qos.logback:logback-classic:test`
 
 <!-- AUTO-GENERATED-END -->
 

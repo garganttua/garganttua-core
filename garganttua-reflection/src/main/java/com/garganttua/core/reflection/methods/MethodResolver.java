@@ -1,10 +1,12 @@
 package com.garganttua.core.reflection.methods;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
@@ -14,11 +16,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MethodResolver {
 
-        public static ResolvedMethod methodByName(Class<?> ownerType, String methodName, Class<?> returnType,
-                        Class<?>... parameterTypes) throws ReflectionException {
+        // ========================================================================
+        // Provider-based API (preferred)
+        // ========================================================================
+
+        public static ResolvedMethod methodByName(IClass<?> ownerType, IReflectionProvider provider,
+                        String methodName, IClass<?> returnType,
+                        IClass<?>... parameterTypes) throws ReflectionException {
                 log.atTrace().log("[methodByName] Start: methodName={}, ownerType={}", methodName, ownerType);
 
-                IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType);
+                IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType, provider);
 
                 List<ResolvedMethod> methods = query.addresses(methodName).stream()
                                 .flatMap(a -> query.findAll(a).stream().map(m -> new ResolvedMethod(a, m)).toList()
@@ -48,9 +55,10 @@ public class MethodResolver {
 
         }
 
-        public static ResolvedMethod methodByName(Class<?> ownerType, String methodName)
+        public static ResolvedMethod methodByName(IClass<?> ownerType, IReflectionProvider provider,
+                        String methodName)
                         throws ReflectionException {
-                IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType);
+                IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType, provider);
 
                 List<ResolvedMethod> found = query.addresses(methodName).stream()
                                 .flatMap(a -> query.findAll(a).stream().map(m -> new ResolvedMethod(a, m)).toList()
@@ -74,38 +82,40 @@ public class MethodResolver {
                 return found.get(0);
         }
 
-        public static ResolvedMethod methodByMethod(Class<?> ownerType, Method method) throws ReflectionException {
-                return methodByName(ownerType, method.getName(), method.getReturnType(),
+        public static ResolvedMethod methodByMethod(IClass<?> ownerType, IReflectionProvider provider,
+                        IMethod method) throws ReflectionException {
+                return methodByName(ownerType, provider, method.getName(), method.getReturnType(),
                                 method.getParameterTypes());
         }
 
-        public static ResolvedMethod methodByAddress(Class<?> ownerType, ObjectAddress methodAddress)
+        public static ResolvedMethod methodByAddress(IClass<?> ownerType, IReflectionProvider provider,
+                        ObjectAddress methodAddress)
                         throws ReflectionException {
                 log.atTrace().log("[methodByAddress] Start: methodAddress={}, ownerType={}", methodAddress,
                                 ownerType);
-                return MethodResolver.methodByName(ownerType, methodAddress.getLastElement());
+                return MethodResolver.methodByName(ownerType, provider, methodAddress.getLastElement());
         }
 
-        public static ResolvedMethod methodByAddress(Class<?> ownerType, ObjectAddress methodAddress,
-                        Class<?> returnType, Class<?>... parameterTypes)
+        public static ResolvedMethod methodByAddress(IClass<?> ownerType, IReflectionProvider provider,
+                        ObjectAddress methodAddress,
+                        IClass<?> returnType, IClass<?>... parameterTypes)
                         throws ReflectionException {
-                return MethodResolver.methodByName(ownerType, methodAddress.getLastElement(), returnType,
+                return MethodResolver.methodByName(ownerType, provider, methodAddress.getLastElement(), returnType,
                                 parameterTypes);
         }
 
+        // ========================================================================
+        // Signature matching utilities
+        // ========================================================================
+
         /**
-         * Selects the best matching method path from a list of candidates based on return type and parameter types.
-         *
-         * @param methodPaths the list of method paths (each path is a List of Objects ending with a Method)
-         * @param returnType the expected return type (can be null to skip return type check)
-         * @param parameterTypes the expected parameter types
-         * @param ownerType the declaring class type (unused, kept for API compatibility)
-         * @return the best matching method path
-         * @throws ReflectionException if no matching method is found or multiple matches exist
+         * Selects the best matching method path from a list of candidates based on
+         * return type and parameter types.
          */
         @SuppressWarnings("java:S1172") // ownerType kept for API compatibility
-        public static List<Object> selectBestMatch(List<List<Object>> methodPaths, Class<?> returnType,
-                        Class<?>[] parameterTypes, Class<?> ownerType) throws ReflectionException {
+        @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
+        public static List<Object> selectBestMatch(List<List<Object>> methodPaths, IClass<?> returnType,
+                        IClass<?>[] parameterTypes, IClass<?> ownerType) throws ReflectionException {
 
                 List<List<Object>> matches = methodPaths.stream()
                                 .filter(path -> matchesSignature(path, returnType, parameterTypes))
@@ -121,23 +131,27 @@ public class MethodResolver {
                 return matches.get(0);
         }
 
-        private static boolean matchesSignature(List<Object> path, Class<?> returnType, Class<?>[] parameterTypes) {
-                if (path.isEmpty()) return false;
+        private static boolean matchesSignature(List<Object> path, IClass<?> returnType, IClass<?>[] parameterTypes) {
+                if (path.isEmpty())
+                        return false;
                 Object last = path.getLast();
-                if (!(last instanceof Method method)) return false;
+                if (!(last instanceof IMethod method))
+                        return false;
 
-                if (!matchesReturnType(method, returnType)) return false;
+                if (!matchesReturnType(method, returnType))
+                        return false;
                 return matchesParameterTypes(method, parameterTypes);
         }
 
-        private static boolean matchesReturnType(Method method, Class<?> returnType) {
-                if (returnType == null) return true;
+        private static boolean matchesReturnType(IMethod method, IClass<?> returnType) {
+                if (returnType == null)
+                        return true;
                 return method.getReturnType().isAssignableFrom(returnType)
                                 || returnType.isAssignableFrom(method.getReturnType());
         }
 
-        private static boolean matchesParameterTypes(Method method, Class<?>[] parameterTypes) {
-                Class<?>[] actualParams = method.getParameterTypes();
+        private static boolean matchesParameterTypes(IMethod method, IClass<?>[] parameterTypes) {
+                IClass<?>[] actualParams = method.getParameterTypes();
                 if (parameterTypes == null || parameterTypes.length == 0) {
                         return actualParams.length == 0;
                 }

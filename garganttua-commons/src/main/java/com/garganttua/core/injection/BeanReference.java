@@ -8,12 +8,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 /** Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
 @Slf4j
-public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
-        Set<Class<? extends Annotation>> qualifiers) {
+public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
+        Set<IClass<? extends Annotation>> qualifiers) {
 
     /**
      * Returns the effective name of the bean.
@@ -49,7 +51,7 @@ public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strat
         name.ifPresent(n -> sb.append("#").append(n));
 
         if (qualifiers != null && !qualifiers.isEmpty()) {
-            for (Class<? extends Annotation> q : qualifiers) {
+            for (IClass<? extends Annotation> q : qualifiers) {
                 sb.append("@").append(q.getName());
             }
         }
@@ -178,31 +180,14 @@ public record BeanReference<Bean>(Class<Bean> type, Optional<BeanStrategy> strat
         Optional<String> clsStr = extractClass(ref);
         Optional<BeanStrategy> strategy = extractStrategy(ref).map(s -> BeanStrategy.valueOf(s.toLowerCase()));
         Optional<String> name = extractName(ref);
-        Set<Class<? extends Annotation>> qualifierClasses = new HashSet<>();
+        Set<IClass<? extends Annotation>> qualifierClasses = new HashSet<>();
 
-        for (String q : extractQualifiers(ref)) {
-            try {
-                if (q.contains(".")) {
-                    qualifierClasses.add((Class<? extends Annotation>) Class.forName(q));
-                } 
-            } catch (ClassNotFoundException e) {
-                throw new DiException("Qualifier class not found: " + q, e);
-            }
-        }
+        // TODO: qualifier resolution requires IReflectionProvider.forName()
+        // For now, qualifier resolution from strings is deferred to callers
 
-        Class<?> type = null;
-        if (clsStr.isPresent()) {
-            String clsName = clsStr.get();
-            try {
-                if (clsName.contains(".")) {
-                    type = Class.forName(clsName);
-                } else {
-                    type = null;
-                }
-            } catch (ClassNotFoundException e) {
-                throw new DiException("Class not found: " + clsName, e);
-            }
-        }
+        IClass<?> type = null;
+        // TODO: class resolution requires IReflectionProvider.forName()
+        // For now, class resolution from strings is deferred to callers
 
         BeanReference<?> reference = new BeanReference<>(type, strategy, name, qualifierClasses);
 

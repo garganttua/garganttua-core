@@ -8,6 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.injection.context.validation.DependencyGraph;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link DependencyGraph}.
@@ -19,36 +22,37 @@ public class DependencyGraphTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
         graph = new DependencyGraph();
     }
 
     @Test
     void testAddSingleDependency() {
-        graph.addDependency(String.class, Integer.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
 
-        Set<Class<?>> dependencies = graph.getDependencies(String.class);
+        Set<IClass<?>> dependencies = graph.getDependencies(IClass.getClass(String.class));
         assertNotNull(dependencies);
         assertEquals(1, dependencies.size());
-        assertTrue(dependencies.contains(Integer.class));
+        assertTrue(dependencies.contains(IClass.getClass(Integer.class)));
     }
 
     @Test
     void testAddMultipleDependencies() {
-        graph.addDependency(String.class, Integer.class);
-        graph.addDependency(String.class, Double.class);
-        graph.addDependency(String.class, Boolean.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Double.class));
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Boolean.class));
 
-        Set<Class<?>> dependencies = graph.getDependencies(String.class);
+        Set<IClass<?>> dependencies = graph.getDependencies(IClass.getClass(String.class));
         assertNotNull(dependencies);
         assertEquals(3, dependencies.size());
-        assertTrue(dependencies.contains(Integer.class));
-        assertTrue(dependencies.contains(Double.class));
-        assertTrue(dependencies.contains(Boolean.class));
+        assertTrue(dependencies.contains(IClass.getClass(Integer.class)));
+        assertTrue(dependencies.contains(IClass.getClass(Double.class)));
+        assertTrue(dependencies.contains(IClass.getClass(Boolean.class)));
     }
 
     @Test
     void testGetDependenciesForBeanWithNoDependencies() {
-        Set<Class<?>> dependencies = graph.getDependencies(String.class);
+        Set<IClass<?>> dependencies = graph.getDependencies(IClass.getClass(String.class));
 
         assertNotNull(dependencies);
         assertEquals(0, dependencies.size());
@@ -56,42 +60,42 @@ public class DependencyGraphTest {
 
     @Test
     void testMultipleBeans() {
-        graph.addDependency(String.class, Integer.class);
-        graph.addDependency(Integer.class, Double.class);
-        graph.addDependency(Double.class, Boolean.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
+        graph.addDependency(IClass.getClass(Integer.class), IClass.getClass(Double.class));
+        graph.addDependency(IClass.getClass(Double.class), IClass.getClass(Boolean.class));
 
-        Set<Class<?>> stringDeps = graph.getDependencies(String.class);
-        Set<Class<?>> integerDeps = graph.getDependencies(Integer.class);
-        Set<Class<?>> doubleDeps = graph.getDependencies(Double.class);
+        Set<IClass<?>> stringDeps = graph.getDependencies(IClass.getClass(String.class));
+        Set<IClass<?>> integerDeps = graph.getDependencies(IClass.getClass(Integer.class));
+        Set<IClass<?>> doubleDeps = graph.getDependencies(IClass.getClass(Double.class));
 
         assertEquals(1, stringDeps.size());
-        assertTrue(stringDeps.contains(Integer.class));
+        assertTrue(stringDeps.contains(IClass.getClass(Integer.class)));
 
         assertEquals(1, integerDeps.size());
-        assertTrue(integerDeps.contains(Double.class));
+        assertTrue(integerDeps.contains(IClass.getClass(Double.class)));
 
         assertEquals(1, doubleDeps.size());
-        assertTrue(doubleDeps.contains(Boolean.class));
+        assertTrue(doubleDeps.contains(IClass.getClass(Boolean.class)));
     }
 
     @Test
     void testGetAllBeans() {
-        graph.addDependency(String.class, Integer.class);
-        graph.addDependency(Integer.class, Double.class);
-        graph.addDependency(Double.class, Boolean.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
+        graph.addDependency(IClass.getClass(Integer.class), IClass.getClass(Double.class));
+        graph.addDependency(IClass.getClass(Double.class), IClass.getClass(Boolean.class));
 
-        Set<Class<?>> allBeans = graph.getAllBeans();
+        Set<IClass<?>> allBeans = graph.getAllBeans();
 
         assertNotNull(allBeans);
         assertEquals(3, allBeans.size());
-        assertTrue(allBeans.contains(String.class));
-        assertTrue(allBeans.contains(Integer.class));
-        assertTrue(allBeans.contains(Double.class));
+        assertTrue(allBeans.contains(IClass.getClass(String.class)));
+        assertTrue(allBeans.contains(IClass.getClass(Integer.class)));
+        assertTrue(allBeans.contains(IClass.getClass(Double.class)));
     }
 
     @Test
     void testGetAllBeansEmpty() {
-        Set<Class<?>> allBeans = graph.getAllBeans();
+        Set<IClass<?>> allBeans = graph.getAllBeans();
 
         assertNotNull(allBeans);
         assertEquals(0, allBeans.size());
@@ -99,49 +103,49 @@ public class DependencyGraphTest {
 
     @Test
     void testAddDuplicateDependency() {
-        graph.addDependency(String.class, Integer.class);
-        graph.addDependency(String.class, Integer.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
 
-        Set<Class<?>> dependencies = graph.getDependencies(String.class);
+        Set<IClass<?>> dependencies = graph.getDependencies(IClass.getClass(String.class));
         assertEquals(1, dependencies.size());
-        assertTrue(dependencies.contains(Integer.class));
+        assertTrue(dependencies.contains(IClass.getClass(Integer.class)));
     }
 
     @Test
     void testComplexDependencyGraph() {
         // ServiceA depends on ServiceB and ServiceC
-        graph.addDependency(ServiceA.class, ServiceB.class);
-        graph.addDependency(ServiceA.class, ServiceC.class);
+        graph.addDependency(IClass.getClass(ServiceA.class), IClass.getClass(ServiceB.class));
+        graph.addDependency(IClass.getClass(ServiceA.class), IClass.getClass(ServiceC.class));
 
         // ServiceB depends on ServiceD
-        graph.addDependency(ServiceB.class, ServiceD.class);
+        graph.addDependency(IClass.getClass(ServiceB.class), IClass.getClass(ServiceD.class));
 
         // ServiceC depends on ServiceD and ServiceE
-        graph.addDependency(ServiceC.class, ServiceD.class);
-        graph.addDependency(ServiceC.class, ServiceE.class);
+        graph.addDependency(IClass.getClass(ServiceC.class), IClass.getClass(ServiceD.class));
+        graph.addDependency(IClass.getClass(ServiceC.class), IClass.getClass(ServiceE.class));
 
-        Set<Class<?>> allBeans = graph.getAllBeans();
+        Set<IClass<?>> allBeans = graph.getAllBeans();
         assertEquals(3, allBeans.size());
 
-        Set<Class<?>> serviceADeps = graph.getDependencies(ServiceA.class);
+        Set<IClass<?>> serviceADeps = graph.getDependencies(IClass.getClass(ServiceA.class));
         assertEquals(2, serviceADeps.size());
-        assertTrue(serviceADeps.contains(ServiceB.class));
-        assertTrue(serviceADeps.contains(ServiceC.class));
+        assertTrue(serviceADeps.contains(IClass.getClass(ServiceB.class)));
+        assertTrue(serviceADeps.contains(IClass.getClass(ServiceC.class)));
 
-        Set<Class<?>> serviceBDeps = graph.getDependencies(ServiceB.class);
+        Set<IClass<?>> serviceBDeps = graph.getDependencies(IClass.getClass(ServiceB.class));
         assertEquals(1, serviceBDeps.size());
-        assertTrue(serviceBDeps.contains(ServiceD.class));
+        assertTrue(serviceBDeps.contains(IClass.getClass(ServiceD.class)));
 
-        Set<Class<?>> serviceCDeps = graph.getDependencies(ServiceC.class);
+        Set<IClass<?>> serviceCDeps = graph.getDependencies(IClass.getClass(ServiceC.class));
         assertEquals(2, serviceCDeps.size());
-        assertTrue(serviceCDeps.contains(ServiceD.class));
-        assertTrue(serviceCDeps.contains(ServiceE.class));
+        assertTrue(serviceCDeps.contains(IClass.getClass(ServiceD.class)));
+        assertTrue(serviceCDeps.contains(IClass.getClass(ServiceE.class)));
     }
 
     @Test
     void testToString() {
-        graph.addDependency(String.class, Integer.class);
-        graph.addDependency(Integer.class, Double.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
+        graph.addDependency(IClass.getClass(Integer.class), IClass.getClass(Double.class));
 
         String result = graph.toString();
 
@@ -162,7 +166,7 @@ public class DependencyGraphTest {
 
     @Test
     void testToStringBeanWithNoDependencies() {
-        graph.addDependency(String.class, Integer.class);
+        graph.addDependency(IClass.getClass(String.class), IClass.getClass(Integer.class));
 
         // Create a bean entry with no dependencies by querying an unregistered bean
         // then adding it manually with empty set

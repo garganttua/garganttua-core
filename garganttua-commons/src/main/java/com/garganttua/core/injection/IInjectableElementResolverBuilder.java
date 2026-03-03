@@ -7,6 +7,7 @@ import com.garganttua.core.dsl.ILinkedBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for constructing injectable element resolvers with custom resolvers.
@@ -57,6 +58,6 @@ public interface IInjectableElementResolverBuilder extends IAutomaticLinkedBuild
      * @param resolver the resolver to handle elements with this annotation
      * @return this builder for method chaining
      */
-    IInjectableElementResolverBuilder withResolver(Class<? extends Annotation> annotation, IElementResolver resolver);
+    IInjectableElementResolverBuilder withResolver(IClass<? extends Annotation> annotation, IElementResolver resolver);
 
 }

@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.BlockingSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * <pre>{@code
  * BlockingQueue<String> queue = new LinkedBlockingQueue<>();
  *
- * ISupplier<String> supplier = new BlockingSupplierBuilder<>(queue, String.class)
+ * ISupplier<String> supplier = new BlockingSupplierBuilder<>(queue, suppliedType, suppliedClass)
  *     .withTimeout(5000L)
  *     .build();
  * }</pre>
@@ -36,19 +37,22 @@ public class BlockingSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
 
     private final BlockingQueue<Supplied> queue;
-    private final Type suppliedType;
+    private final IClass<Supplied> suppliedClass;
     private Long timeoutMillis;
+    private Type suppliedType;
 
     /**
      * Creates a BlockingSupplierBuilder.
      *
      * @param queue the BlockingQueue to poll from
      * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      */
-    public BlockingSupplierBuilder(BlockingQueue<Supplied> queue, Type suppliedType) {
+    public BlockingSupplierBuilder(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
         log.atTrace().log("Entering BlockingSupplierBuilder constructor");
         this.queue = Objects.requireNonNull(queue, "Queue cannot be null");
-        this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
+        this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
+        this.suppliedType = suppliedClass.getType();
         log.atTrace().log("Exiting BlockingSupplierBuilder constructor");
     }
 
@@ -69,7 +73,7 @@ public class BlockingSupplierBuilder<Supplied>
     public ISupplier<Supplied> build() throws DslException {
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building BlockingSupplier with timeout: {}", timeoutMillis);
-        ISupplier<Supplied> result = new BlockingSupplier<>(queue, suppliedType, timeoutMillis);
+        ISupplier<Supplied> result = new BlockingSupplier<>(queue, suppliedClass, timeoutMillis);
         log.atDebug().log("Build completed for BlockingSupplier");
         log.atTrace().log("Exiting build method");
         return result;
@@ -78,6 +82,11 @@ public class BlockingSupplierBuilder<Supplied>
     @Override
     public Type getSuppliedType() {
         return suppliedType;
+    }
+
+    @Override
+    public IClass<Supplied> getSuppliedClass() {
+        return this.suppliedClass;
     }
 
     @Override
@@ -93,10 +102,10 @@ public class BlockingSupplierBuilder<Supplied>
      * @param suppliedType the type of the supplied object
      * @return a new BlockingSupplierBuilder instance
      */
-    public static <Supplied> BlockingSupplierBuilder<Supplied> of(BlockingQueue<Supplied> queue, Type suppliedType) {
+    public static <Supplied> BlockingSupplierBuilder<Supplied> of(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
         log.atTrace().log("Entering static of method");
         log.atDebug().log("Creating BlockingSupplierBuilder");
-        BlockingSupplierBuilder<Supplied> result = new BlockingSupplierBuilder<>(queue, suppliedType);
+        BlockingSupplierBuilder<Supplied> result = new BlockingSupplierBuilder<>(queue, suppliedClass);
         log.atTrace().log("Exiting static of method");
         return result;
     }

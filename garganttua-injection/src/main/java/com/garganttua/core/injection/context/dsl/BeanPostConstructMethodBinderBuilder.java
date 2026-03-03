@@ -6,6 +6,8 @@ import java.util.Set;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -34,7 +36,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 log.atTrace().log("Entering build() for beanClass: {}", supplierBuilder.getSuppliedClass());
                 log.atDebug().log("Creating method binder");
                 this.setSupplier(supplierBuilder);
-                IMethodBinder<Void> binder = this.createBinder();
+                IMethodBinder<Void> binder = this.doBuild();
                 log.atDebug().log("Method binder successfully built for beanClass: {}",
                                 supplierBuilder.getSuppliedClass());
                 log.atTrace().log("Exiting build()");
@@ -42,10 +44,10 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
         }
 
         @Override
-        public Set<Class<?>> dependencies() {
+        public Set<IClass<?>> dependencies() {
                 log.atTrace().log("Entering getDependencies()");
                 log.atDebug().log("Getting parameter types for post-construct method");
-                Set<Class<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));
+                Set<IClass<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));
                 log.atDebug().log("Dependencies for BeanPostConstructMethodBinderBuilder: {}", dependencies);
                 log.atTrace().log("Exiting getDependencies()");
                 return dependencies;

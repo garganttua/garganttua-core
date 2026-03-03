@@ -6,10 +6,16 @@ import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeMethod;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class MethodResolverTest {
+
+    private static final IReflectionProvider provider = new RuntimeReflectionProvider();
 
     // Test class with methods - avoid complex overloads
     public static class TestService {
@@ -47,85 +53,85 @@ public class MethodResolverTest {
     @Test
     public void testMethodByNameWithNoParameters() throws ReflectionException {
         // Should find the no-args greet method
-        ResolvedMethod resolved = MethodResolver.methodByName(TestService.class, "greet",
-                String.class);
+        ResolvedMethod resolved = MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "greet",
+                RuntimeClass.of(String.class));
 
         assertNotNull(resolved);
-        assertEquals("greet", resolved.name());
-        assertEquals(0, resolved.parameterTypes().length);
+        assertEquals("greet", resolved.getName());
+        assertEquals(0, resolved.getParameterTypes().length);
     }
 
     @Test
     public void testMethodByNameWithStringParameter() throws ReflectionException {
         // Should find the String parameter version
-        ResolvedMethod resolved = MethodResolver.methodByName(TestService.class, "echo",
-                String.class, String.class);
+        ResolvedMethod resolved = MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "echo",
+                RuntimeClass.of(String.class), RuntimeClass.of(String.class));
 
         assertNotNull(resolved);
-        assertEquals("echo", resolved.name());
-        assertEquals(1, resolved.parameterTypes().length);
-        assertEquals(String.class, resolved.parameterTypes()[0]);
+        assertEquals("echo", resolved.getName());
+        assertEquals(1, resolved.getParameterTypes().length);
+        assertEquals(RuntimeClass.of(String.class), resolved.getParameterTypes()[0]);
     }
 
     @Test
     public void testMethodByNameWithTwoIntParameters() throws ReflectionException {
         // Should find the two-int-parameter version
-        ResolvedMethod resolved = MethodResolver.methodByName(TestService.class, "add",
-                int.class, int.class, int.class);
+        ResolvedMethod resolved = MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "add",
+                RuntimeClass.of(int.class), RuntimeClass.of(int.class), RuntimeClass.of(int.class));
 
         assertNotNull(resolved);
-        assertEquals("add", resolved.name());
-        assertEquals(2, resolved.parameterTypes().length);
-        assertEquals(int.class, resolved.parameterTypes()[0]);
-        assertEquals(int.class, resolved.parameterTypes()[1]);
+        assertEquals("add", resolved.getName());
+        assertEquals(2, resolved.getParameterTypes().length);
+        assertEquals(RuntimeClass.of(int.class), resolved.getParameterTypes()[0]);
+        assertEquals(RuntimeClass.of(int.class), resolved.getParameterTypes()[1]);
     }
 
     @Test
     public void testMethodByNameWithTwoDoubleParameters() throws ReflectionException {
         // Should find the double method
-        ResolvedMethod resolved = MethodResolver.methodByName(TestService.class, "multiply",
-                double.class, double.class, double.class);
+        ResolvedMethod resolved = MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "multiply",
+                RuntimeClass.of(double.class), RuntimeClass.of(double.class), RuntimeClass.of(double.class));
 
         assertNotNull(resolved);
-        assertEquals("multiply", resolved.name());
-        assertEquals(double.class, resolved.returnType());
+        assertEquals("multiply", resolved.getName());
+        assertEquals(RuntimeClass.of(double.class), resolved.returnType());
     }
 
     @Test
     public void testMethodByAddressSimple() throws ReflectionException {
         ObjectAddress address = new ObjectAddress("greet", true);
 
-        ResolvedMethod result = MethodResolver.methodByAddress(TestService.class, address,
-                String.class);
+        ResolvedMethod result = MethodResolver.methodByAddress(RuntimeClass.of(TestService.class), provider, address,
+                RuntimeClass.of(String.class));
 
         assertNotNull(result);
-        assertEquals("greet", result.name());
+        assertEquals("greet", result.getName());
     }
 
     @Test
     public void testMethodByNameNoMatchingSignature() {
         // Should throw exception when no matching signature is found
         assertThrows(ReflectionException.class, () -> {
-            MethodResolver.methodByName(TestService.class, "echo",
-                    void.class, double.class); // No such signature exists
+            MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "echo",
+                    RuntimeClass.of(void.class), RuntimeClass.of(double.class)); // No such signature exists
         });
     }
 
     @Test
     public void testMethodByNameVoidReturn() throws ReflectionException {
         // Should find void method
-        ResolvedMethod resolved = MethodResolver.methodByName(TestService.class, "doNothing",
-                void.class);
+        ResolvedMethod resolved = MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "doNothing",
+                RuntimeClass.of(void.class));
 
         assertNotNull(resolved);
-        assertEquals("doNothing", resolved.name());
+        assertEquals("doNothing", resolved.getName());
     }
 
     @Test
     public void testMethodByNameNonExistentMethod() {
         // Should throw exception for non-existent method
         assertThrows(ReflectionException.class, () -> {
-            MethodResolver.methodByName(TestService.class, "nonExistent");
+            MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "nonExistent");
         });
     }
 
@@ -133,8 +139,8 @@ public class MethodResolverTest {
     public void testMethodByNameWithWrongParameterCount() {
         // Should throw exception when parameter count doesn't match
         assertThrows(ReflectionException.class, () -> {
-            MethodResolver.methodByName(TestService.class, "echo",
-                    String.class, String.class, int.class); // Too many parameters
+            MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "echo",
+                    RuntimeClass.of(String.class), RuntimeClass.of(String.class), RuntimeClass.of(int.class)); // Too many parameters
         });
     }
 
@@ -144,33 +150,33 @@ public class MethodResolverTest {
         Method specificMethod = TestService.class.getDeclaredMethod("echo", String.class);
 
         // Should find the exact method
-        ResolvedMethod resolved = MethodResolver.methodByMethod(TestService.class, specificMethod);
+        ResolvedMethod resolved = MethodResolver.methodByMethod(RuntimeClass.of(TestService.class), provider, RuntimeMethod.of(specificMethod));
 
         assertNotNull(resolved);
-        assertEquals("echo", resolved.name());
-        assertEquals(1, resolved.parameterTypes().length);
+        assertEquals("echo", resolved.getName());
+        assertEquals(1, resolved.getParameterTypes().length);
     }
 
     @Test
     public void testMethodByMethodAdd() throws ReflectionException, NoSuchMethodException {
         Method addMethod = TestService.class.getDeclaredMethod("add", int.class, int.class);
 
-        ResolvedMethod resolved = MethodResolver.methodByMethod(TestService.class, addMethod);
+        ResolvedMethod resolved = MethodResolver.methodByMethod(RuntimeClass.of(TestService.class), provider, RuntimeMethod.of(addMethod));
 
         assertNotNull(resolved);
-        assertEquals("add", resolved.name());
-        assertEquals(int.class, resolved.returnType());
+        assertEquals("add", resolved.getName());
+        assertEquals(RuntimeClass.of(int.class), resolved.returnType());
     }
 
     @Test
     public void testMethodByMethodMultiply() throws ReflectionException, NoSuchMethodException {
         Method multiplyMethod = TestService.class.getDeclaredMethod("multiply", double.class, double.class);
 
-        ResolvedMethod resolved = MethodResolver.methodByMethod(TestService.class, multiplyMethod);
+        ResolvedMethod resolved = MethodResolver.methodByMethod(RuntimeClass.of(TestService.class), provider, RuntimeMethod.of(multiplyMethod));
 
         assertNotNull(resolved);
-        assertEquals("multiply", resolved.name());
-        assertEquals(double.class, resolved.returnType());
+        assertEquals("multiply", resolved.getName());
+        assertEquals(RuntimeClass.of(double.class), resolved.returnType());
     }
 
     @Test
@@ -179,7 +185,7 @@ public class MethodResolverTest {
         // The process() method has overloads with same return type
         assertThrows(ReflectionException.class, () -> {
             // This should fail because there are multiple "process" methods
-            MethodResolver.methodByName(TestService.class, "process");
+            MethodResolver.methodByName(RuntimeClass.of(TestService.class), provider, "process");
         });
     }
 

@@ -15,7 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.annotations.IAnnotationIndex;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeMethod;
 
 /**
  * Runtime implementation of {@link IAnnotationIndex} that reads compile-time
@@ -65,42 +69,41 @@ public class AnnotationIndex implements IAnnotationIndex {
     }
 
     @Override
-    public List<Class<?>> getClassesWithAnnotation(Class<? extends Annotation> annotation) {
-        IndexData data = getOrLoadIndex(annotation);
-        return data.loaded ? new ArrayList<>(data.classes) : Collections.emptyList();
+    public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
+        IndexData data = getOrLoadIndex(annotation.getName());
+        return data.loaded ? data.classes.stream().<IClass<?>>map(RuntimeClass::ofUnchecked).toList() : Collections.emptyList();
     }
 
     @Override
-    public List<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotation) {
-        IndexData data = getOrLoadIndex(annotation);
-        return data.loaded ? new ArrayList<>(data.methods) : Collections.emptyList();
+    public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
+        IndexData data = getOrLoadIndex(annotation.getName());
+        return data.loaded ? data.methods.stream().<IMethod>map(RuntimeMethod::of).toList() : Collections.emptyList();
     }
 
     @Override
-    public List<Class<?>> getClassesWithAnnotation(Class<? extends Annotation> annotation, String packagePrefix) {
+    public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation, String packagePrefix) {
         return getClassesWithAnnotation(annotation).stream()
                 .filter(clazz -> clazz.getName().startsWith(packagePrefix))
                 .toList();
     }
 
     @Override
-    public List<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotation, String packagePrefix) {
+    public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation, String packagePrefix) {
         return getMethodsWithAnnotation(annotation).stream()
                 .filter(method -> method.getDeclaringClass().getName().startsWith(packagePrefix))
                 .toList();
     }
 
     @Override
-    public boolean hasIndex(Class<? extends Annotation> annotation) {
-        IndexData data = getOrLoadIndex(annotation);
+    public boolean hasIndex(IClass<? extends Annotation> annotation) {
+        IndexData data = getOrLoadIndex(annotation.getName());
         return data.loaded;
     }
 
     /**
-     * Gets or loads the index for the specified annotation.
+     * Gets or loads the index for the specified annotation FQN.
      */
-    private IndexData getOrLoadIndex(Class<? extends Annotation> annotation) {
-        String annotationFqn = annotation.getName();
+    private IndexData getOrLoadIndex(String annotationFqn) {
         return indexCache.computeIfAbsent(annotationFqn, this::loadIndex);
     }
 

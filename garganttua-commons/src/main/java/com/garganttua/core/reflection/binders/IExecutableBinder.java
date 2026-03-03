@@ -5,7 +5,6 @@ import java.util.Optional;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.SupplyException;
 
 /**
  * Base interface for binders that execute methods or constructors via reflection.

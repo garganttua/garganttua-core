@@ -707,6 +707,9 @@ assertNotNull(object);
 assertEquals(1L, object.getInner().getInner().getInner().getInner().getInner().getL());
 ```
 
+
+See the [garganttua-annotation-processor README](../garganttua-annotation-processor/README.md#direct-binder-generation-zero-reflection-at-runtime) for details on code generation, supported annotations, and how to enable/disable generation via Maven.
+
 ## Performance
 
 ### Caching Strategy

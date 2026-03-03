@@ -1,13 +1,9 @@
 package com.garganttua.core.supply;
 
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.util.Optional;
 
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Supplier interface for providing object instances on demand.
@@ -93,13 +89,9 @@ public interface ISupplier<Supplied> {
      * type variables, and wildcards.
      * </p>
      *
-     * @return the {@link Class} object representing the supplied type
+     * @return the {@link IClass} object representing the supplied type
      */
-    @SuppressWarnings("unchecked")
-    default Class<Supplied> getSuppliedClass() {
-        Type type = this.getSuppliedType();
-        return (Class<Supplied>) ISupplierBuilder.extractClass(type);
-    }
+    IClass<Supplied> getSuppliedClass();
 
     /**
      * Indicates whether this supplier is contextual.

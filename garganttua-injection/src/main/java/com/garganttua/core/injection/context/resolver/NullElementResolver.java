@@ -1,6 +1,5 @@
 package com.garganttua.core.injection.context.resolver;
 
-import java.lang.reflect.AnnotatedElement;
 import java.util.Objects;
 
 import com.garganttua.core.injection.IElementResolver;
@@ -8,6 +7,8 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Null;
 import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
@@ -22,7 +23,7 @@ public class NullElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {
         log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
 
         Objects.requireNonNull(element, "Element cannot be null");

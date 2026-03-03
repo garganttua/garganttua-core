@@ -1,6 +1,7 @@
 package com.garganttua.core.injection;
 
-import java.lang.reflect.AnnotatedElement;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Functional interface for resolving injection elements based on annotations.
@@ -34,7 +35,7 @@ import java.lang.reflect.AnnotatedElement;
  * @since 2.0.0-ALPHA01
  * @see IInjectableElementResolver
  * @see Resolved
- * @see AnnotatedElement
+ * @see IAnnotatedElement
  */
 @FunctionalInterface
 public interface IElementResolver {
@@ -53,6 +54,6 @@ public interface IElementResolver {
      * @return a {@link Resolved} instance containing the resolution result
      * @throws DiException if an error occurs during resolution
      */
-    Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException;
+    Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException;
 
 }

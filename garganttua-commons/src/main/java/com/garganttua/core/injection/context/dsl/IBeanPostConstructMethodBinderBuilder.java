@@ -1,6 +1,9 @@
 package com.garganttua.core.injection.context.dsl;
 
+import java.util.Set;
+
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
@@ -67,6 +70,9 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  */
 public interface IBeanPostConstructMethodBinderBuilder<Bean> extends
         IMethodBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>, Dependent {
+
+    @Override
+    Set<IClass<?>> dependencies();
 
     /**
      * Builds the method binder with a specific bean supplier.

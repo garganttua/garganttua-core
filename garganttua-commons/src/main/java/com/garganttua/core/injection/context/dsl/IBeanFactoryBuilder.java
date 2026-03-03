@@ -8,6 +8,7 @@ import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -91,7 +92,7 @@ public interface IBeanFactoryBuilder<Bean> extends IAutomaticBuilder<IBeanFactor
      * @return an injectable field builder
      * @throws DslException if the field cannot be configured
      */
-    <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(Class<FieldType> fieldType)
+    <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(IClass<FieldType> fieldType)
             throws DslException;
 
     /**
@@ -109,7 +110,7 @@ public interface IBeanFactoryBuilder<Bean> extends IAutomaticBuilder<IBeanFactor
      * @return this builder for method chaining
      * @throws DslException if the qualifier cannot be added
      */
-    IBeanFactoryBuilder<Bean> qualifier(Class<? extends Annotation> qualifier) throws DslException;
+    IBeanFactoryBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) throws DslException;
 
     /**
      * Adds multiple qualifier annotations to this bean.
@@ -118,6 +119,6 @@ public interface IBeanFactoryBuilder<Bean> extends IAutomaticBuilder<IBeanFactor
      * @return this builder for method chaining
      * @throws DslException if the qualifiers cannot be added
      */
-    IBeanFactoryBuilder<Bean> qualifiers(Set<Class<? extends Annotation>> qualifiers) throws DslException;
+    IBeanFactoryBuilder<Bean> qualifiers(Set<IClass<? extends Annotation>> qualifiers) throws DslException;
 
 }

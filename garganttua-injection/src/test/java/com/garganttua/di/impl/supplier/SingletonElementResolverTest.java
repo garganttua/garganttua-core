@@ -11,8 +11,13 @@ import javax.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link SingletonElementResolver}.
@@ -21,11 +26,12 @@ import com.garganttua.core.injection.context.beans.resolver.SingletonElementReso
 public class SingletonElementResolverTest {
 
     private SingletonElementResolver resolver;
-    private Set<Class<? extends java.lang.annotation.Annotation>> qualifiers;
+    private Set<IClass<? extends java.lang.annotation.Annotation>> qualifiers;
 
     @BeforeEach
     void setUp() {
-        qualifiers = new HashSet<>();
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
+        qualifiers = new HashSet<IClass<? extends java.lang.annotation.Annotation>>();
         resolver = new SingletonElementResolver(qualifiers);
     }
 
@@ -34,15 +40,19 @@ public class SingletonElementResolverTest {
         assertNotNull(resolver);
     }
 
+    private static IAnnotatedElement adapt(Field field) {
+        return IInjectableElementResolver.toIAnnotatedElement(field.getAnnotations(), field.getDeclaredAnnotations());
+    }
+
     @Test
     void testResolveFieldWithSingletonAnnotation() throws NoSuchFieldException {
         Field field = TestClassWithSingleton.class.getDeclaredField("singletonField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertNotNull(resolved);
         assertTrue(resolved.resolved());
-        assertEquals(String.class, resolved.elementType());
+        assertEquals(IClass.getClass(String.class), resolved.elementType());
         assertNotNull(resolved.elementSupplier());
     }
 
@@ -50,7 +60,7 @@ public class SingletonElementResolverTest {
     void testResolveFieldWithoutSingletonAnnotation() throws NoSuchFieldException {
         Field field = TestClassWithSingleton.class.getDeclaredField("nonSingletonField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertNotNull(resolved);
         // Without proper bean factory setup, resolution depends on context
@@ -62,20 +72,20 @@ public class SingletonElementResolverTest {
         Field intField = TestClassWithSingleton.class.getDeclaredField("singletonInt");
         Field booleanField = TestClassWithSingleton.class.getDeclaredField("singletonBoolean");
 
-        Resolved intResolved = resolver.resolve(Integer.class, intField);
-        Resolved booleanResolved = resolver.resolve(Boolean.class, booleanField);
+        Resolved intResolved = resolver.resolve(IClass.getClass(Integer.class), adapt(intField));
+        Resolved booleanResolved = resolver.resolve(IClass.getClass(Boolean.class), adapt(booleanField));
 
         assertNotNull(intResolved);
-        assertEquals(Integer.class, intResolved.elementType());
+        assertEquals(IClass.getClass(Integer.class), intResolved.elementType());
 
         assertNotNull(booleanResolved);
-        assertEquals(Boolean.class, booleanResolved.elementType());
+        assertEquals(IClass.getClass(Boolean.class), booleanResolved.elementType());
     }
 
     @Test
     void testResolveThrowsExceptionForNullElement() {
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(String.class, null);
+            resolver.resolve(IClass.getClass(String.class), null);
         });
     }
 
@@ -84,7 +94,7 @@ public class SingletonElementResolverTest {
         Field field = TestClassWithSingleton.class.getDeclaredField("singletonField");
 
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(null, field);
+            resolver.resolve(null, adapt(field));
         });
     }
 
@@ -105,7 +115,7 @@ public class SingletonElementResolverTest {
     void testResolvedElementIsNotNullable() throws NoSuchFieldException {
         Field field = TestClassWithSingleton.class.getDeclaredField("singletonField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertFalse(resolved.nullable());
     }

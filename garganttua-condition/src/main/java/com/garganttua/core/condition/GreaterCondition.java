@@ -3,6 +3,7 @@ package com.garganttua.core.condition;
 import java.util.Objects;
 
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -20,7 +21,7 @@ public class GreaterCondition<T> implements ICondition {
     public ISupplier<Boolean> evaluate() throws ConditionException {
         Object a = this.supplier1.supply().orElseThrow(() -> new ConditionException("Supplier 1 supplied empty value"));
         Object b = this.supplier2.supply().orElseThrow(() -> new ConditionException("Supplier 2 supplied empty value"));
-        return new FixedSupplier<>(greater(a, b));
+        return new FixedSupplier<>(greater(a, b), IClass.getClass(Boolean.class));
     }
 
     @Expression(name = "greater", description = "Checks if first argument is greater than second")

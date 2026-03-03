@@ -1,7 +1,6 @@
 package com.garganttua.core.injection.context.properties.resolver;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.util.Objects;
 
 import com.garganttua.core.injection.IElementResolver;
@@ -12,6 +11,8 @@ import com.garganttua.core.injection.annotations.Provider;
 import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.injection.context.dsl.IPropertySupplierBuilder;
 import com.garganttua.core.injection.context.properties.Properties;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -25,7 +26,7 @@ public class PropertyElementResolver implements IElementResolver {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {
         log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
 
         Objects.requireNonNull(element, "Element cannot be null");
@@ -36,7 +37,7 @@ public class PropertyElementResolver implements IElementResolver {
 
         String provider = null;
 
-        Property property = element.getAnnotation(Property.class);
+        Property property = element.getAnnotation(IClass.getClass(Property.class));
         log.atDebug().log("Retrieved @Property annotation: {}", property);
 
         String key = property.value();

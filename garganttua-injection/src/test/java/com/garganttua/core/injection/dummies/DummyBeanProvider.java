@@ -10,6 +10,7 @@ import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyBeanProvider implements IBeanProvider {
@@ -47,12 +48,12 @@ public class DummyBeanProvider implements IBeanProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<T> get(Class<T> type) {
+    public <T> Optional<T> get(IClass<T> type) throws DiException {
         return (Optional<T>) Optional.of(new DummyBean());
     }
 
     @Override
-    public <T> Optional<T> get(String name, Class<T> type) {
+    public <T> Optional<T> get(String name, IClass<T> type) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
 
@@ -62,7 +63,7 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public <T> List<T> get(Class<T> interfasse, boolean includePrototypes) {
+    public <T> List<T> get(IClass<T> interfasse, boolean includePrototypes) {
         throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
 

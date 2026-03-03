@@ -23,18 +23,21 @@ import com.garganttua.core.bootstrap.banner.FileBanner;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
-import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.dsl.IRebuildableBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.reflection.IAnnotationScanner;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,7 +75,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistry> implements IBoostrap {
+public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBuiltRegistry> implements IBoostrap {
 
     private static final String DEFAULT_VERSION = "2.0.0-ALPHA01";
 
@@ -101,6 +104,7 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
      * Default constructor.
      */
     public Bootstrap() {
+        super(Set.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.AUTO_DETECT)));
         log.atDebug().log("Bootstrap initialized");
     }
 
@@ -251,34 +255,6 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection()");
-
-        this.packages.stream()
-                .flatMap(packageName -> ObjectReflectionHelper.getClassesWithAnnotation(packageName, com.garganttua.core.bootstrap.annotations.Bootstrap.class)
-                        .stream())
-                .forEach(builderClass -> {
-                    try {
-                        if (IBuilder.class.isAssignableFrom(builderClass)) {
-                            IBuilder<?> builderInstance = (IBuilder<?>) ObjectReflectionHelper
-                                    .instanciateNewObject(builderClass);
-                            if (builderInstance instanceof IAutomaticBuilder) {
-                                IAutomaticBuilder<?, ?> automaticBuilder = (IAutomaticBuilder<?, ?>) builderInstance;
-                                automaticBuilder.autoDetect(true);
-                                log.atDebug().log("Auto-detected builder {} with auto-detection enabled",
-                                        builderClass.getSimpleName());
-                            } else {
-                                log.atDebug().log("Auto-detected builder {} (not automatic)",
-                                        builderClass.getSimpleName());
-                            }
-                            this.withBuilder(builderInstance);
-                        } else {
-                            log.atWarn().log("Class {} has @Bootstrap annotation but does not implement IBuilder",
-                                    builderClass.getName());
-                        }
-                    } catch (Exception e) {
-                        throw new DslException("Failed to auto-detect builder: " + builderClass.getName(), e);
-                    }
-                });
-
         log.atDebug().log("Auto-detection completed for {} packages", packages.size());
         log.atTrace().log("Exiting doAutoDetection()");
     }
@@ -440,8 +416,7 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
         for (Object built : builtObjects) {
             if (built instanceof IBootstrapSummaryContributor contributor) {
                 String category = contributor.getSummaryCategory();
-                contributor.getSummaryItems().forEach((name, value) ->
-                        summary.addItem(category, name, value));
+                contributor.getSummaryItems().forEach((name, value) -> summary.addItem(category, name, value));
             }
         }
 
@@ -467,11 +442,11 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
      * lifecycle management across all built objects. The rebuild process:
      * </p>
      * <ol>
-     *   <li>Validates that initial build() has been called</li>
-     *   <li>Stops all lifecycle-managed objects in reverse order</li>
-     *   <li>Re-runs auto-detection to discover new @Bootstrap builders</li>
-     *   <li>Rebuilds each builder in dependency order</li>
-     *   <li>Re-initializes and starts all lifecycle-managed objects</li>
+     * <li>Validates that initial build() has been called</li>
+     * <li>Stops all lifecycle-managed objects in reverse order</li>
+     * <li>Re-runs auto-detection to discover new @Bootstrap builders</li>
+     * <li>Rebuilds each builder in dependency order</li>
+     * <li>Re-initializes and starts all lifecycle-managed objects</li>
      * </ol>
      *
      * @return the updated built registry
@@ -566,8 +541,10 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
     }
 
     /**
-     * Sorts builders by their dependencies using topological sort (Kahn's algorithm).
-     * Builders with no dependencies are built first, then builders that depend on them, etc.
+     * Sorts builders by their dependencies using topological sort (Kahn's
+     * algorithm).
+     * Builders with no dependencies are built first, then builders that depend on
+     * them, etc.
      *
      * @return list of builders sorted by dependency order
      * @throws DslException if there is a circular dependency
@@ -860,11 +837,6 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
         return packages.toArray(new String[0]);
     }
 
-    @Override
-    protected IAnnotationScanner getAnnotationScanner() {
-        return ObjectReflectionHelper.getAnnotationScanner();
-    }
-
     /**
      * Retrieves a built object from the registry by its class type.
      *
@@ -874,7 +846,7 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
      * found, or an empty Optional if no object of the specified type was built.
      * </p>
      *
-     * @param <T> the type of the object to retrieve
+     * @param <T>   the type of the object to retrieve
      * @param clazz the class of the object to retrieve
      * @return an Optional containing the built object, or empty if not found
      * @throws IllegalStateException if called before build() has been executed
@@ -895,7 +867,8 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
      * Gets all built objects from the registry.
      *
      * <p>
-     * Returns an unmodifiable map of all objects that were built during the bootstrap
+     * Returns an unmodifiable map of all objects that were built during the
+     * bootstrap
      * process, keyed by their runtime class.
      * </p>
      *
@@ -921,15 +894,6 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
         }
 
         @Override
-        public <T> Optional<T> request(Class<T> clazz) {
-            Object obj = registry.get(clazz);
-            if (obj != null && clazz.isInstance(obj)) {
-                return Optional.of(clazz.cast(obj));
-            }
-            return Optional.empty();
-        }
-
-        @Override
         public Integer size() {
             return registry.size();
         }
@@ -938,5 +902,68 @@ public class Bootstrap extends AbstractAutomaticBuilder<IBoostrap, IBuiltRegistr
         public List<Object> toList() {
             return new ArrayList<>(registry.values());
         }
+
+        @Override
+        public <T> Optional<T> request(IClass<T> clazz) {
+            Object obj = registry.get(clazz);
+            if (obj != null && clazz.isInstance(obj)) {
+                return Optional.of(clazz.cast(obj));
+            }
+            return Optional.empty();
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+        log.atTrace().log("Entering doAutoDetection() with dependency: {}", dependency.getClass().getSimpleName());
+
+        if (dependency instanceof IReflection reflection) {
+            IClass<com.garganttua.core.bootstrap.annotations.Bootstrap> boostrapAnnotationClass = reflection
+                    .getClass(com.garganttua.core.bootstrap.annotations.Bootstrap.class);
+                    IClass<IBuilder> builderInterfaceClass = reflection.getClass(IBuilder.class);
+
+            this.packages.stream()
+                    .flatMap(packageName -> reflection
+                            .getClassesWithAnnotation(packageName, boostrapAnnotationClass)
+                            .stream())
+                    .forEach(builderClass -> {
+                        try {
+                            if (builderInterfaceClass.isAssignableFrom(builderClass)) {
+                                IBuilder<?> builderInstance = (IBuilder<?>) reflection
+                                        .newInstance(builderClass);
+                                if (builderInstance instanceof IAutomaticBuilder) {
+                                    IAutomaticBuilder<?, ?> automaticBuilder = (IAutomaticBuilder<?, ?>) builderInstance;
+                                    automaticBuilder.autoDetect(true);
+                                    log.atDebug().log("Auto-detected builder {} with auto-detection enabled",
+                                            builderClass.getSimpleName());
+                                } else {
+                                    log.atDebug().log("Auto-detected builder {} (not automatic)",
+                                            builderClass.getSimpleName());
+                                }
+                                this.withBuilder(builderInstance);
+                            } else {
+                                log.atWarn().log("Class {} has @Bootstrap annotation but does not implement IBuilder",
+                                        builderClass.getName());
+                            }
+                        } catch (Exception e) {
+                            throw new DslException("Failed to auto-detect builder: " + builderClass.getName(), e);
+                        }
+                    });
+        }
+        log.atDebug().log("Auto-detection with dependency {} completed for {} packages",
+                dependency.getClass().getSimpleName(), packages.size());
+        log.atTrace().log("Exiting doAutoDetection() with dependency");
+
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+        // Nothing to do
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+        // Nothing to do
     }
 }

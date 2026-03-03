@@ -1,9 +1,14 @@
 package com.garganttua.core.injection;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IParameter;
+import com.garganttua.core.reflection.IReflection;
 
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
@@ -60,7 +65,7 @@ public interface IInjectableElementResolver {
      * @return a {@link Resolved} instance containing the resolution result
      * @throws DiException if an error occurs during resolution
      */
-    Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException;
+    Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException;
 
     /**
      * Resolves all parameters of an executable (constructor or method).
@@ -87,7 +92,7 @@ public interface IInjectableElementResolver {
      * @param annotation the annotation class to associate with the resolver
      * @param resolver the resolver to handle elements with this annotation
      */
-    void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver);
+    void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver);
 
     /**
      * Determines if an annotated element is nullable.
@@ -101,12 +106,79 @@ public interface IInjectableElementResolver {
      * @param annotatedElement the element to check
      * @return {@code true} if the element is nullable, {@code false} otherwise
      */
-    public static boolean isNullable(AnnotatedElement annotatedElement) {
-        if (annotatedElement.getAnnotation(Nullable.class) != null)
+    public static boolean isNullable(IAnnotatedElement annotatedElement) {
+        if (annotatedElement.getAnnotation(IClass.getClass(Nullable.class)) != null)
             return true;
-        if (annotatedElement.getAnnotation(NonNull.class) != null)
+        if (annotatedElement.getAnnotation(IClass.getClass(NonNull.class)) != null)
             return false;
         return false;
+    }
+
+    /**
+     * Determines if an element is nullable based on its annotations array.
+     *
+     * @param annotations the annotations to check
+     * @return {@code true} if the element is nullable, {@code false} otherwise
+     */
+    public static boolean isNullable(Annotation[] annotations) {
+        for (Annotation a : annotations) {
+            if (a.annotationType().equals(Nullable.class))
+                return true;
+            if (a.annotationType().equals(NonNull.class))
+                return false;
+        }
+        return false;
+    }
+
+    /**
+     * Adapts an annotations array to an {@link IAnnotatedElement}.
+     *
+     * @param annotations the annotations
+     * @param declaredAnnotations the declared annotations
+     * @return an IAnnotatedElement adapter
+     */
+    static IAnnotatedElement toIAnnotatedElement(Annotation[] annotations, Annotation[] declaredAnnotations) {
+        return new IAnnotatedElement() {
+            @Override
+            public <T extends Annotation> T getAnnotation(IClass<T> annotationClass) {
+                for (Annotation a : annotations) {
+                    if (annotationClass.getType().equals(a.annotationType()))
+                        return annotationClass.cast(a);
+                }
+                return null;
+            }
+
+            @Override
+            public Annotation[] getAnnotations() {
+                return annotations;
+            }
+
+            @Override
+            public Annotation[] getDeclaredAnnotations() {
+                return declaredAnnotations;
+            }
+
+            @Override
+            public IReflection reflection() {
+                return IClass.getReflection();
+            }
+        };
+    }
+
+    /**
+     * Resolves all parameters of an IConstructor or IMethod.
+     *
+     * @param parameters the parameters to resolve
+     * @return a set of {@link Resolved} instances for each parameter
+     * @throws DiException if an error occurs during resolution
+     */
+    default Set<Resolved> resolve(IParameter[] parameters) throws DiException {
+        Set<Resolved> result = new LinkedHashSet<>();
+        for (IParameter param : parameters) {
+            IAnnotatedElement adapted = toIAnnotatedElement(param.getAnnotations(), param.getDeclaredAnnotations());
+            result.add(resolve(param.getType(), adapted));
+        }
+        return result;
     }
 
 }

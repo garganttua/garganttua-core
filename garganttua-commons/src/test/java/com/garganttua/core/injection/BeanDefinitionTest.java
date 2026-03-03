@@ -2,12 +2,16 @@ package com.garganttua.core.injection;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.JdkClass;
 
 public class BeanDefinitionTest {
 
@@ -21,19 +25,22 @@ public class BeanDefinitionTest {
         static class AnotherBean {
         }
 
-        private BeanReference<MyBean> makeReference(Class<MyBean> type, BeanStrategy strategy, String name,
-                        Set<Class<? extends java.lang.annotation.Annotation>> qualifiers) {
+        private BeanReference<MyBean> makeReference(IClass<MyBean> type, BeanStrategy strategy, String name,
+                        Set<IClass<? extends Annotation>> qualifiers) {
                 return new BeanReference<>(type, Optional.ofNullable(strategy), Optional.ofNullable(name), qualifiers);
         }
 
         @Test
         void testEqualsAndHashCode() {
-                BeanReference<MyBean> ref1 = makeReference(MyBean.class, BeanStrategy.singleton, "myBean",
-                                Set.of(TestQualifier.class));
-                BeanReference<MyBean> ref2 = makeReference(MyBean.class, BeanStrategy.singleton, "myBean",
-                                Set.of(TestQualifier.class));
-                BeanReference<MyBean> ref3 = makeReference(MyBean.class, BeanStrategy.prototype, "myBean",
-                                Set.of(TestQualifier.class));
+                IClass<MyBean> myBeanClass = JdkClass.of(MyBean.class);
+                IClass<? extends Annotation> testQualifier = JdkClass.of(TestQualifier.class);
+
+                BeanReference<MyBean> ref1 = makeReference(myBeanClass, BeanStrategy.singleton, "myBean",
+                                Set.of(testQualifier));
+                BeanReference<MyBean> ref2 = makeReference(myBeanClass, BeanStrategy.singleton, "myBean",
+                                Set.of(testQualifier));
+                BeanReference<MyBean> ref3 = makeReference(myBeanClass, BeanStrategy.prototype, "myBean",
+                                Set.of(testQualifier));
 
                 BeanDefinition<MyBean> def1 = new BeanDefinition<>(ref1, Optional.empty(), Set.of(), Set.of());
                 BeanDefinition<MyBean> def2 = new BeanDefinition<>(ref2, Optional.empty(), Set.of(), Set.of());
@@ -47,7 +54,8 @@ public class BeanDefinitionTest {
 
         @Test
         void testEffectiveName() {
-                BeanReference<MyBean> ref = makeReference(MyBean.class, BeanStrategy.singleton, null, Set.of());
+                IClass<MyBean> myBeanClass = JdkClass.of(MyBean.class);
+                BeanReference<MyBean> ref = makeReference(myBeanClass, BeanStrategy.singleton, null, Set.of());
                 BeanDefinition<MyBean> def = new BeanDefinition<>(ref, Optional.empty(), Set.of(), Set.of());
 
                 assertEquals("MyBean", def.reference().effectiveName());
@@ -55,11 +63,14 @@ public class BeanDefinitionTest {
 
         @Test
         void testMatches() {
-                BeanReference<MyBean> ref1 = makeReference(MyBean.class, BeanStrategy.singleton, "bean1",
-                                Set.of(TestQualifier.class));
-                BeanReference<MyBean> ref2 = makeReference(MyBean.class, BeanStrategy.singleton, "bean1",
-                                Set.of(TestQualifier.class));
-                BeanReference<MyBean> ref3 = makeReference(MyBean.class, BeanStrategy.singleton, "bean2", Set.of());
+                IClass<MyBean> myBeanClass = JdkClass.of(MyBean.class);
+                IClass<? extends Annotation> testQualifier = JdkClass.of(TestQualifier.class);
+
+                BeanReference<MyBean> ref1 = makeReference(myBeanClass, BeanStrategy.singleton, "bean1",
+                                Set.of(testQualifier));
+                BeanReference<MyBean> ref2 = makeReference(myBeanClass, BeanStrategy.singleton, "bean1",
+                                Set.of(testQualifier));
+                BeanReference<MyBean> ref3 = makeReference(myBeanClass, BeanStrategy.singleton, "bean2", Set.of());
 
                 BeanDefinition<MyBean> def1 = new BeanDefinition<>(ref1, Optional.empty(), Set.of(), Set.of());
                 BeanDefinition<MyBean> def2 = new BeanDefinition<>(ref2, Optional.empty(), Set.of(), Set.of());

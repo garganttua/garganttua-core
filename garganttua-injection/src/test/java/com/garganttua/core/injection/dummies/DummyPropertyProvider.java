@@ -3,9 +3,11 @@ package com.garganttua.core.injection.dummies;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyPropertyProvider implements IPropertyProvider {
@@ -17,7 +19,7 @@ public class DummyPropertyProvider implements IPropertyProvider {
     }
 
     @Override
-    public <T> Optional<T> getProperty(String key, Class<T> type) {
+    public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         return null;
     }
 

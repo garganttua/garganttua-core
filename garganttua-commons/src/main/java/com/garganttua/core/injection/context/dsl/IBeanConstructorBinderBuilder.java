@@ -1,5 +1,8 @@
 package com.garganttua.core.injection.context.dsl;
 
+import java.util.Set;
+
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
@@ -63,4 +66,6 @@ import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
 public interface IBeanConstructorBinderBuilder<Bean> extends
         IConstructorBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IConstructorBinder<Bean>>, Dependent {
 
+    @Override
+    Set<IClass<?>> dependencies();
 }

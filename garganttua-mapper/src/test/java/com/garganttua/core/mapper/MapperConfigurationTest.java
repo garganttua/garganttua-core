@@ -2,10 +2,16 @@ package com.garganttua.core.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link Mapper} configuration and edge cases.
@@ -13,11 +19,26 @@ import com.garganttua.core.mapper.annotations.FieldMappingRule;
  */
 public class MapperConfigurationTest {
 
+    private static IReflection reflection;
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build();
+        IClass.setReflection(reflection);
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
+
     private Mapper mapper;
 
     @BeforeEach
     void setUp() {
-        mapper = new Mapper();
+        mapper = new Mapper(reflection);
     }
 
     @Test
@@ -36,7 +57,7 @@ public class MapperConfigurationTest {
         source.name = "test";
 
         assertThrows(MapperException.class, () -> {
-            mapper.map(source, (Class<?>) null);
+            mapper.map(source, (IClass<?>) null);
         });
     }
 
@@ -48,7 +69,7 @@ public class MapperConfigurationTest {
         SourceEntity source = new SourceEntity();
         source.name = "test";
 
-        DestinationEntity result = mapper.map(source, DestinationEntity.class);
+        DestinationEntity result = mapper.map(source, reflection.getClass(DestinationEntity.class));
         assertNotNull(result);
         assertEquals("test", result.name);
     }
@@ -60,7 +81,7 @@ public class MapperConfigurationTest {
         SourceEntity source = new SourceEntity();
         source.name = "test";
 
-        DestinationEntity result = mapper.map(source, DestinationEntity.class);
+        DestinationEntity result = mapper.map(source, reflection.getClass(DestinationEntity.class));
         assertNotNull(result);
         assertEquals("test", result.name);
     }
@@ -68,11 +89,11 @@ public class MapperConfigurationTest {
     @Test
     void testRecordMappingConfiguration() throws MapperException {
         MappingConfiguration config = mapper.recordMappingConfiguration(
-            SourceEntity.class, DestinationEntity.class);
+            reflection.getClass(SourceEntity.class), reflection.getClass(DestinationEntity.class));
 
         assertNotNull(config);
-        assertEquals(SourceEntity.class, config.source());
-        assertEquals(DestinationEntity.class, config.destination());
+        assertEquals(SourceEntity.class, config.source().getType());
+        assertEquals(DestinationEntity.class, config.destination().getType());
         assertNotNull(config.destinationRules());
         assertNotNull(config.sourceRules());
     }
@@ -81,11 +102,11 @@ public class MapperConfigurationTest {
     void testGetMappingConfiguration() throws MapperException {
         // First call should create and cache the configuration
         MappingConfiguration config1 = mapper.getMappingConfiguration(
-            SourceEntity.class, DestinationEntity.class);
+            reflection.getClass(SourceEntity.class), reflection.getClass(DestinationEntity.class));
 
         // Second call should retrieve from cache
         MappingConfiguration config2 = mapper.getMappingConfiguration(
-            SourceEntity.class, DestinationEntity.class);
+            reflection.getClass(SourceEntity.class), reflection.getClass(DestinationEntity.class));
 
         assertNotNull(config1);
         assertNotNull(config2);
@@ -97,7 +118,7 @@ public class MapperConfigurationTest {
         SourceEntity source = new SourceEntity();
         source.name = "test";
 
-        DestinationEntity result = mapper.map(source, DestinationEntity.class, null);
+        DestinationEntity result = mapper.map(source, reflection.getClass(DestinationEntity.class), null);
 
         assertNotNull(result);
         assertEquals("test", result.name);
@@ -112,7 +133,7 @@ public class MapperConfigurationTest {
         destination.name = "old-name";
         destination.otherField = "preserved";
 
-        DestinationEntity result = mapper.map(source, DestinationEntity.class, destination);
+        DestinationEntity result = mapper.map(source, reflection.getClass(DestinationEntity.class), destination);
 
         assertNotNull(result);
         assertEquals("new-name", result.name);
@@ -128,15 +149,15 @@ public class MapperConfigurationTest {
         SourceEntity source2 = new SourceEntity();
         source2.name = "second";
 
-        DestinationEntity result1 = mapper.map(source1, DestinationEntity.class);
-        DestinationEntity result2 = mapper.map(source2, DestinationEntity.class);
+        DestinationEntity result1 = mapper.map(source1, reflection.getClass(DestinationEntity.class));
+        DestinationEntity result2 = mapper.map(source2, reflection.getClass(DestinationEntity.class));
 
         assertEquals("first", result1.name);
         assertEquals("second", result2.name);
 
         // Verify configuration is cached
         MappingConfiguration config = mapper.getMappingConfiguration(
-            SourceEntity.class, DestinationEntity.class);
+            reflection.getClass(SourceEntity.class), reflection.getClass(DestinationEntity.class));
         assertNotNull(config);
     }
 
@@ -145,7 +166,7 @@ public class MapperConfigurationTest {
         SourceWithInt source = new SourceWithInt();
         source.value = 42;
 
-        DestinationWithInt result = mapper.map(source, DestinationWithInt.class);
+        DestinationWithInt result = mapper.map(source, reflection.getClass(DestinationWithInt.class));
 
         assertNotNull(result);
         assertEquals(42, result.value);
@@ -171,7 +192,7 @@ public class MapperConfigurationTest {
         // Verify configuration works
         SourceEntity source = new SourceEntity();
         source.name = "test";
-        DestinationEntity dest = mapper.map(source, DestinationEntity.class);
+        DestinationEntity dest = mapper.map(source, reflection.getClass(DestinationEntity.class));
         assertNotNull(dest);
     }
 
@@ -179,7 +200,7 @@ public class MapperConfigurationTest {
     void testMappingConfigurationWithReverseDirection() throws MapperException {
         // SourceEntityReverse has mapping rules, DestinationEntityReverse does not
         MappingConfiguration config = mapper.getMappingConfiguration(
-            SourceEntityReverse.class, DestinationEntityReverse.class);
+            reflection.getClass(SourceEntityReverse.class), reflection.getClass(DestinationEntityReverse.class));
 
         assertNotNull(config);
         assertEquals(MappingDirection.REVERSE, config.mappingDirection());

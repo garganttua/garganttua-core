@@ -17,6 +17,10 @@ import com.garganttua.core.injection.context.beans.BeanFactory;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.injection.dummies.DummyConstructorBinderBuilder;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.SupplyException;
 
 public class BeanFactoryTest {
@@ -30,16 +34,20 @@ public class BeanFactoryTest {
 
         @BeforeEach
         void setup() throws DslException {
+                IReflectionBuilder rb = ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider());
+                rb.build();
 
                 this.constructorWithNoParamBinder = new DummyConstructorBinderBuilder<DummyBean>(DummyBean.class)
+                                .provide(rb)
                                 .build();
                 this.constructorWithParamBinder = new DummyConstructorBinderBuilder<DummyBean>(DummyBean.class)
+                                .provide(rb)
                                 .withParam("constructedWithParameter")
                                 .build();
 
                 singletonWithoutConstructorFactory = new BeanFactory<DummyBean>(
                                 new BeanDefinition<DummyBean>(
-                                                new BeanReference<>(DummyBean.class,
+                                                new BeanReference<>(IClass.getClass(DummyBean.class),
                                                                 Optional.of(BeanStrategy.singleton),
                                                                 Optional.empty(),
                                                                 null),
@@ -47,7 +55,7 @@ public class BeanFactoryTest {
                                                 Set.of()));
                 singletonWithConstructorWithNoParamFactory = new BeanFactory<DummyBean>(
                                 new BeanDefinition<DummyBean>(
-                                                new BeanReference<>(DummyBean.class,
+                                                new BeanReference<>(IClass.getClass(DummyBean.class),
                                                                 Optional.of(BeanStrategy.singleton),
                                                                 Optional.empty(),
                                                                 null),
@@ -55,14 +63,14 @@ public class BeanFactoryTest {
                                                 Set.of()));
                 singletonWithConstructorWithParamFactory = new BeanFactory<>(
                                 new BeanDefinition<DummyBean>(
-                                                new BeanReference<>(DummyBean.class,
+                                                new BeanReference<>(IClass.getClass(DummyBean.class),
                                                                 Optional.of(BeanStrategy.singleton),
                                                                 Optional.empty(),
                                                                 null),
                                                 Optional.of(this.constructorWithParamBinder), Set.of(),
                                                 Set.of()));
                 newInstanceWithoutConstructorFactory = new BeanFactory<>(new BeanDefinition<DummyBean>(
-                                new BeanReference<>(DummyBean.class,
+                                new BeanReference<>(IClass.getClass(DummyBean.class),
                                                 Optional.of(BeanStrategy.prototype), Optional.empty(), null),
                                 Optional.empty(), Set.of(),
                                 Set.of()));

@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
@@ -26,17 +27,17 @@ public abstract class ContextualExecutableBinder<ReturnedType, Context>
     }
 
     @Override
-    public Class<?>[] getParametersContextTypes() {
+    public IClass<?>[] getParametersContextTypes() {
         if (parameterSuppliers.isEmpty()) {
-            return new Class<?>[0];
+            return new IClass<?>[0];
         }
 
-        return (Class<?>[]) this.parameterSuppliers.stream().map(supplier -> {
+        return this.parameterSuppliers.stream().map(supplier -> {
             if (supplier instanceof IContextualSupplier<?, ?> contextual) {
                 return contextual.getOwnerContextType();
             }
-            return null;
-        }).collect(Collectors.toList()).toArray();
+            return (IClass<?>) null;
+        }).toArray(IClass<?>[]::new);
     }
 
     protected Object[] buildArguments(Object... contexts) throws ReflectionException {
@@ -61,7 +62,7 @@ public abstract class ContextualExecutableBinder<ReturnedType, Context>
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         return new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedClass())
                 .collect(Collectors.toSet()));
     }

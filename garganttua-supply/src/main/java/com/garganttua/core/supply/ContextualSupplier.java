@@ -4,47 +4,54 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ContextualSupplier<Supplied, Context> implements IContextualSupplier<Supplied, Context> {
 
     private IContextualSupply<Supplied, Context> supply;
-    private Class<Supplied> suppliedType;
-    private Class<Context> contextType;
+    private IClass<Supplied> suppliedClass;
+    private IClass<Context> contextClass;
 
     public ContextualSupplier(IContextualSupply<Supplied, Context> supply,
-            Class<Supplied> suppliedType, Class<Context> contextType) {
-        log.atTrace().log("Entering ContextualSupplier constructor with suppliedType: {}, contextType: {}", suppliedType, contextType);
+            IClass<Supplied> suppliedClass, IClass<Context> contextClass) {
+        log.atTrace().log("Entering ContextualSupplier constructor with suppliedClass: {}, contextClass: {}", suppliedClass, contextClass);
         this.supply = Objects.requireNonNull(supply, "Contextual supply cannot be null");
-        this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
-        this.contextType = Objects.requireNonNull(contextType, "Context type cannot be null");
+        this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
+        this.contextClass = Objects.requireNonNull(contextClass, "Context class cannot be null");
         log.atTrace().log("Exiting ContextualSupplier constructor");
     }
 
     @Override
     public Type getSuppliedType() {
-        return this.suppliedType;
+        return this.suppliedClass.getType();
     }
 
     @Override
-    public Class<Context> getOwnerContextType() {
-        return this.contextType;
+    public IClass<Context> getOwnerContextType() {
+        return this.contextClass;
+    }
+
+    @Override
+    public IClass<Supplied> getSuppliedClass() {
+        return this.suppliedClass;
     }
 
     @Override
     public Optional<Supplied> supply(Context ownerContext, Object... otherContexts) throws SupplyException {
         log.atTrace().log("Entering supply method with ownerContext: {}, otherContexts count: {}", ownerContext.getClass().getSimpleName(), otherContexts.length);
-        log.atDebug().log("Supplying object of type {} with context type {}", this.suppliedType.getSimpleName(), this.contextType.getSimpleName());
+        log.atDebug().log("Supplying object of type {} with context type {}", this.suppliedClass.getSimpleName(), this.contextClass.getSimpleName());
 
-        if (!this.contextType.isAssignableFrom(ownerContext.getClass())) {
-            log.atError().log("Context type mismatch: expected {}, but got {}", this.contextType.getSimpleName(), ownerContext.getClass().getSimpleName());
-            throw new SupplyException("Context type mismatch : waiting " + this.contextType.getSimpleName() + " but "
+        if (!this.contextClass.isInstance(ownerContext)) {
+            log.atError().log("Context type mismatch: expected {}, but got {}", this.contextClass.getSimpleName(), ownerContext.getClass().getSimpleName());
+            throw new SupplyException("Context type mismatch : waiting " + this.contextClass.getSimpleName() + " but "
                     + ownerContext.getClass().getSimpleName() + " provided");
         }
 
         Optional<Supplied> result = this.supply.supply(ownerContext, otherContexts);
-        log.atDebug().log("Supply completed for type {}, result present: {}", this.suppliedType.getSimpleName(), result.isPresent());
+        log.atDebug().log("Supply completed for type {}, result present: {}", this.suppliedClass.getSimpleName(), result.isPresent());
         log.atTrace().log("Exiting supply method");
         return result;
     }

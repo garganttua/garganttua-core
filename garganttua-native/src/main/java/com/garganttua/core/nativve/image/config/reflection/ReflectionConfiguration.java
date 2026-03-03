@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.core.nativve.IReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -89,7 +90,7 @@ public class ReflectionConfiguration implements IReflectionConfiguration{
 	}
 
 	@Override
-	public Optional<IReflectionConfigurationEntry> findEntryByType(Class<?> type) {
+	public Optional<IReflectionConfigurationEntry> findEntryByType(IClass<?> type) {
 		log.atTrace().log("Entering findEntryByType for type: {}", type.getName());
 		Optional<IReflectionConfigurationEntry> result = entries.stream().filter(entry -> entry.getName().equals(type.getName())).findFirst();
 		log.atDebug().log("Found entry for type {}: {}", type.getName(), result.isPresent());

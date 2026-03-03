@@ -1,8 +1,10 @@
 package com.garganttua.core.reflection.annotations;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.List;
+
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 
 /**
  * Provides access to compile-time generated annotation indices.
@@ -49,7 +51,7 @@ public interface IAnnotationIndex {
      * @param annotation the annotation type to search for
      * @return a list of annotated classes (never {@code null}, may be empty)
      */
-    List<Class<?>> getClassesWithAnnotation(Class<? extends Annotation> annotation);
+    List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation);
 
     /**
      * Retrieves all methods annotated with the specified annotation.
@@ -63,7 +65,7 @@ public interface IAnnotationIndex {
      * @param annotation the annotation type to search for
      * @return a list of annotated methods (never {@code null}, may be empty)
      */
-    List<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotation);
+    List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation);
 
     /**
      * Retrieves all classes annotated with the specified annotation,
@@ -73,7 +75,7 @@ public interface IAnnotationIndex {
      * @param packagePrefix the package prefix to filter by (e.g., "com.example")
      * @return a list of annotated classes in the specified package (never {@code null})
      */
-    List<Class<?>> getClassesWithAnnotation(Class<? extends Annotation> annotation, String packagePrefix);
+    List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation, String packagePrefix);
 
     /**
      * Retrieves all methods annotated with the specified annotation,
@@ -83,7 +85,7 @@ public interface IAnnotationIndex {
      * @param packagePrefix the package prefix to filter by (e.g., "com.example")
      * @return a list of annotated methods in the specified package (never {@code null})
      */
-    List<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotation, String packagePrefix);
+    List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation, String packagePrefix);
 
     /**
      * Checks if an index exists for the specified annotation.
@@ -91,5 +93,5 @@ public interface IAnnotationIndex {
      * @param annotation the annotation type to check
      * @return {@code true} if an index exists, {@code false} otherwise
      */
-    boolean hasIndex(Class<? extends Annotation> annotation);
+    boolean hasIndex(IClass<? extends Annotation> annotation);
 }

@@ -6,30 +6,32 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DependencyGraph {
 
-    private final Map<Class<?>, Set<Class<?>>> adjacencyList = new LinkedHashMap<>();
+    private final Map<IClass<?>, Set<IClass<?>>> adjacencyList = new LinkedHashMap<>();
 
-    public void addDependency(Class<?> bean, Class<?> dependency) {
+    public void addDependency(IClass<?> bean, IClass<?> dependency) {
         log.atTrace().log("Entering addDependency(bean={}, dependency={})", bean, dependency);
         adjacencyList.computeIfAbsent(bean, k -> new LinkedHashSet<>()).add(dependency);
         log.atDebug().log("Added dependency {} to bean {}", dependency.getSimpleName(), bean.getSimpleName());
         log.atTrace().log("Exiting addDependency");
     }
 
-    public Set<Class<?>> getDependencies(Class<?> bean) {
+    public Set<IClass<?>> getDependencies(IClass<?> bean) {
         log.atTrace().log("Entering getDependencies(bean={})", bean);
-        Set<Class<?>> dependencies = adjacencyList.getOrDefault(bean, Set.of());
+        Set<IClass<?>> dependencies = adjacencyList.getOrDefault(bean, Set.of());
         log.atTrace().log("Exiting getDependencies with {} dependencies", dependencies.size());
         return dependencies;
     }
 
-    public Set<Class<?>> getAllBeans() {
+    public Set<IClass<?>> getAllBeans() {
         log.atTrace().log("Entering getAllBeans()");
-        Set<Class<?>> beans = adjacencyList.keySet();
+        Set<IClass<?>> beans = adjacencyList.keySet();
         log.atTrace().log("Exiting getAllBeans with {} beans", beans.size());
         return beans;
     }
@@ -37,13 +39,13 @@ public class DependencyGraph {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("DependencyGraph:\n");
-        for (Map.Entry<Class<?>, Set<Class<?>>> entry : adjacencyList.entrySet()) {
+        for (Map.Entry<IClass<?>, Set<IClass<?>>> entry : adjacencyList.entrySet()) {
             sb.append("Bean: ").append(entry.getKey().getSimpleName()).append(" -> Dependencies: ");
             if (entry.getValue().isEmpty()) {
                 sb.append("[]");
             } else {
                 sb.append("[");
-                Iterator<Class<?>> it = entry.getValue().iterator();
+                Iterator<IClass<?>> it = entry.getValue().iterator();
                 while (it.hasNext()) {
                     sb.append(it.next().getSimpleName());
                     if (it.hasNext())

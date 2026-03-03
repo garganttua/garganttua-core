@@ -15,9 +15,14 @@ import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
-import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
+import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -38,14 +43,14 @@ import com.garganttua.core.injection.context.resolver.FixedElementResolver;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bootstrap
 @NativeConfigurationBuilder
-public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjectionContextBuilder, IInjectionContext>
+public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
 
     private final Set<String> packages = new HashSet<>();
@@ -53,7 +58,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     private final Map<String, IPropertyProviderBuilder> propertyProviders = new HashMap<>();
     private final List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories = new ArrayList<>();
     private IInjectableElementResolverBuilder resolvers;
-    private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
+    private Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
     private Set<IBuilderObserver<IInjectionContextBuilder, IInjectionContext>> observers = new HashSet<>();
 
     public static IInjectionContextBuilder builder() throws DslException {
@@ -63,7 +68,11 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         return builder;
     }
 
+    private IReflection reflection;
+    private IObservableBuilder<?, ?> reflectionBuilderRef;
+
     public InjectionContextBuilder() throws DslException {
+        super(Set.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BOTH)));
         log.atTrace().log("Entering InjectionContextBuilder constructor");
         this.beanProviders.put(Predefined.BeanProviders.garganttua.toString(),
         new BeanProviderBuilder(this).autoDetect(false));
@@ -110,6 +119,9 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
                             IBeanProviderBuilder provider = entry.getValue();
                             if (provider instanceof BeanProviderBuilder bpb) {
                                 bpb.setQualifierAnnotations(this.qualifiers);
+                                if (this.reflectionBuilderRef != null) {
+                                    bpb.provide(this.reflectionBuilderRef);
+                                }
                                 bpb.provide(this.resolvers);
                                 log.atDebug().log("Configured BeanProviderBuilder for scope: {}", entry.getKey());
                             }
@@ -204,7 +216,7 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
     }
 
     @Override
-    public IInjectionContextBuilder withQualifier(Class<? extends Annotation> qualifier) {
+    public IInjectionContextBuilder withQualifier(IClass<? extends Annotation> qualifier) {
         log.atTrace().log("Entering withQualifier(qualifier={})", qualifier);
         this.qualifiers.add(Objects.requireNonNull(qualifier, "Qualifier cannot be null"));
         log.atDebug().log("Added qualifier: {}", qualifier);
@@ -252,62 +264,25 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
         log.atTrace().log("Exiting notifyObserver");
     }
 
+    @SuppressWarnings("unchecked")
     public static void setBuiltInResolvers(IInjectableElementResolverBuilder resolvers,
-            Set<Class<? extends Annotation>> qualifiers, boolean autoDetect) {
+            Set<IClass<? extends Annotation>> qualifiers, boolean autoDetect) {
 
         log.atTrace().log("Entering setBuiltInResolvers(resolvers={}, qualifiers={})", resolvers, qualifiers);
-        resolvers.withResolver(Singleton.class, new SingletonElementResolver(qualifiers))
-                .withResolver(Inject.class, new SingletonElementResolver(qualifiers))
-                .withResolver(Prototype.class, new PrototypeElementResolver(qualifiers));
+        resolvers.withResolver((IClass<? extends Annotation>) IClass.getClass(Singleton.class), new SingletonElementResolver(qualifiers))
+                .withResolver((IClass<? extends Annotation>) IClass.getClass(Inject.class), new SingletonElementResolver(qualifiers))
+                .withResolver((IClass<? extends Annotation>) IClass.getClass(Prototype.class), new PrototypeElementResolver(qualifiers));
         if (!autoDetect) {
-            resolvers.withResolver(Property.class, new PropertyElementResolver())
-                    .withResolver(Null.class, new NullElementResolver())
-                    .withResolver(Fixed.class, new FixedElementResolver());
+            resolvers.withResolver((IClass<? extends Annotation>) IClass.getClass(Property.class), new PropertyElementResolver())
+                    .withResolver((IClass<? extends Annotation>) IClass.getClass(Null.class), new NullElementResolver())
+                    .withResolver((IClass<? extends Annotation>) IClass.getClass(Fixed.class), new FixedElementResolver());
         }
         log.atTrace().log("Exiting setBuiltInResolvers");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("Entering doAutoDetection()");
-
-        // Auto-detect qualifiers
-        this.packages.stream()
-                .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, Qualifier.class)
-                        .stream()
-                        .filter(clazz -> clazz.getAnnotation(Qualifier.class) != null))
-                .map(clazz -> (Class<? extends Annotation>) clazz)
-                .forEach(this.qualifiers::add);
-        log.atDebug().log("Auto-detected qualifiers: {}", this.qualifiers);
-
-        // Auto-detect @ChildContext annotated classes
-        this.packages.stream()
-                .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, ChildContext.class)
-                        .stream())
-                .forEach(factoryClass -> {
-                    try {
-                        if (IInjectionChildContextFactory.class.isAssignableFrom(factoryClass)) {
-                            IInjectionChildContextFactory<? extends IInjectionContext> factory = (IInjectionChildContextFactory<? extends IInjectionContext>) factoryClass
-                                    .getDeclaredConstructor().newInstance();
-
-                            this.childContextFactory(factory);
-                            log.atDebug().log("Auto-registered child context factory: {}",
-                                    factoryClass.getSimpleName());
-                        } else {
-                            log.atWarn().log(
-                                    "Class {} annotated with @ChildContext but does not implement IInjectionChildContextFactory",
-                                    factoryClass.getName());
-                        }
-                    } catch (Exception e) {
-                        log.atError().log("Failed to instantiate child context factory {}: {}",
-                                factoryClass.getName(), e.getMessage(), e);
-                        throw new DslException("Failed to auto-detect child context factory: " + factoryClass.getName(),
-                                e);
-                    }
-                });
-
-        log.atTrace().log("Exiting doAutoDetection");
+        log.atTrace().log("doAutoDetection() — no-op, scanning deferred to doAutoDetectionWithDependency()");
     }
 
     @Override
@@ -334,5 +309,78 @@ public class InjectionContextBuilder extends AbstractAutomaticBuilder<IInjection
 
         log.atTrace().log("Exiting observer");
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+        if (dependency instanceof IReflection reflection) {
+            log.atDebug().log("Received IReflection dependency, starting auto-detection");
+            this.reflection = reflection;
+
+            IClass<? extends Annotation> qualifierAnnotation = (IClass<? extends Annotation>) reflection.getClass(Qualifier.class);
+            IClass<? extends Annotation> childContextAnnotation = (IClass<? extends Annotation>) reflection.getClass(ChildContext.class);
+            IClass<?> childContextFactoryInterface = reflection.getClass(IInjectionChildContextFactory.class);
+
+            // Auto-detect qualifiers
+            this.packages.stream()
+                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, qualifierAnnotation).stream()
+                            .filter(clazz -> clazz.isAnnotationPresent(qualifierAnnotation)))
+                    .map(clazz -> (IClass<? extends Annotation>) clazz)
+                    .forEach(this.qualifiers::add);
+            log.atDebug().log("Auto-detected qualifiers: {}", this.qualifiers);
+
+            // Auto-detect @ChildContext annotated classes
+            this.packages.stream()
+                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, childContextAnnotation).stream())
+                    .forEach(factoryClass -> {
+                        try {
+                            if (childContextFactoryInterface.isAssignableFrom(factoryClass)) {
+                                IInjectionChildContextFactory<? extends IInjectionContext> factory =
+                                        (IInjectionChildContextFactory<? extends IInjectionContext>) reflection.newInstance(factoryClass);
+                                this.childContextFactory(factory);
+                                log.atDebug().log("Auto-registered child context factory: {}", factoryClass.getName());
+                            } else {
+                                log.atWarn().log(
+                                        "Class {} annotated with @ChildContext but does not implement IInjectionChildContextFactory",
+                                        factoryClass.getName());
+                            }
+                        } catch (Exception e) {
+                            log.atError().log("Failed to instantiate child context factory {}: {}",
+                                    factoryClass.getName(), e.getMessage(), e);
+                            throw new DslException("Failed to auto-detect child context factory: " + factoryClass.getName(), e);
+                        }
+                    });
+
+            // Pass IReflection to sub-builders for their own auto-detection
+            this.beanProviders.values().forEach(bp -> {
+                if (bp instanceof BeanProviderBuilder bpb) {
+                    bpb.setReflection(reflection);
+                }
+            });
+            if (this.resolvers instanceof InjectableElementResolverBuilder ier) {
+                ier.setReflection(reflection);
+            }
+
+            log.atDebug().log("Auto-detection with IReflection completed");
+        }
+    }
+
+    @Override
+    public IInjectionContextBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
+        if (dependency instanceof IReflectionBuilder) {
+            this.reflectionBuilderRef = dependency;
+        }
+        return super.provide(dependency);
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+        // IReflection already handled in doAutoDetectionWithDependency
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+        // No post-build behavior needed
     }
 }

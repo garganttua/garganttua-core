@@ -15,6 +15,7 @@ import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Pair;
 import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.reflection.IClass;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +101,7 @@ public final class InjectionFunctions {
 
         try {
             IInjectionContext ctx = getContext();
-            BeanReference<?> ref = new BeanReference<>(type, Optional.empty(), Optional.empty(), Set.of());
+            BeanReference<?> ref = new BeanReference<>(IClass.getClass(type), Optional.empty(), Optional.empty(), Set.of());
             Optional<?> bean = ctx.queryBean(ref);
             Object result = bean.orElse(null);
             log.atDebug().log("getBean result: {}", result);
@@ -162,7 +163,7 @@ public final class InjectionFunctions {
 
         try {
             IInjectionContext ctx = getContext();
-            BeanReference<?> ref = new BeanReference<>(type, Optional.empty(), Optional.empty(), Set.of());
+            BeanReference<?> ref = new BeanReference<>(IClass.getClass(type), Optional.empty(), Optional.empty(), Set.of());
             List<?> beans = ctx.queryBeans(ref);
             log.atDebug().log("getBeans found {} beans of type {}", beans.size(), type);
             return beans;
@@ -305,7 +306,7 @@ public final class InjectionFunctions {
 
         try {
             IInjectionContext ctx = getContext();
-            Optional<?> value = ctx.getProperty(keyStr, type);
+            Optional<?> value = ctx.getProperty(keyStr, IClass.getClass(type));
             Object result = value.orElse(null);
             log.atDebug().log("getProperty result: {}", result);
             return result;
@@ -379,7 +380,7 @@ public final class InjectionFunctions {
 
         try {
             IInjectionContext ctx = getContext();
-            boolean exists = ctx.getProperty(keyStr, Object.class).isPresent();
+            boolean exists = ctx.getProperty(keyStr, IClass.getClass(Object.class)).isPresent();
             log.atDebug().log("hasProperty({}): {}", keyStr, exists);
             return exists;
         } catch (Exception e) {
@@ -431,7 +432,7 @@ public final class InjectionFunctions {
             sb.append("Bean Providers: ").append(beanProviders.size()).append("\n");
             int totalBeans = 0;
             for (IBeanProvider provider : beanProviders) {
-                BeanReference<Object> ref = new BeanReference<>(Object.class, Optional.empty(), Optional.empty(), Set.of());
+                BeanReference<Object> ref = new BeanReference<>(IClass.getClass(Object.class), Optional.empty(), Optional.empty(), Set.of());
                 int count = provider.queries(ref).size();
                 totalBeans += count;
                 sb.append("  - Provider (").append(count).append(" beans, ")
@@ -483,7 +484,7 @@ public final class InjectionFunctions {
         try {
             IInjectionContext ctx = getContext();
             @SuppressWarnings("unchecked")
-            BeanReference<Object> ref = new BeanReference<>((Class<Object>) type, Optional.empty(), Optional.empty(), Set.of());
+            BeanReference<Object> ref = new BeanReference<>((IClass<Object>) IClass.getClass(type), Optional.empty(), Optional.empty(), Set.of());
             ctx.addBean(provider, ref, bean);
             log.atDebug().log("addBean: bean of type {} added to provider {}", type, provider);
         } catch (DiException e) {
@@ -520,7 +521,7 @@ public final class InjectionFunctions {
         try {
             IInjectionContext ctx = getContext();
             @SuppressWarnings("unchecked")
-            BeanReference<Object> ref = new BeanReference<>((Class<Object>) type, Optional.empty(), Optional.of(name), Set.of());
+            BeanReference<Object> ref = new BeanReference<>((IClass<Object>) IClass.getClass(type), Optional.empty(), Optional.of(name), Set.of());
             ctx.addBean(provider, ref, bean);
             log.atDebug().log("addNamedBean: bean '{}' of type {} added to provider {}", name, type, provider);
         } catch (DiException e) {
@@ -552,7 +553,7 @@ public final class InjectionFunctions {
         try {
             IInjectionContext ctx = getContext();
             @SuppressWarnings("unchecked")
-            BeanReference<Object> ref = new BeanReference<>((Class<Object>) type, Optional.of(BeanStrategy.singleton), Optional.empty(), Set.of());
+            BeanReference<Object> ref = new BeanReference<>((IClass<Object>) IClass.getClass(type), Optional.of(BeanStrategy.singleton), Optional.empty(), Set.of());
             ctx.addBean(provider, ref, bean);
             log.atDebug().log("addSingleton: singleton bean of type {} added to provider {}", type, provider);
         } catch (DiException e) {

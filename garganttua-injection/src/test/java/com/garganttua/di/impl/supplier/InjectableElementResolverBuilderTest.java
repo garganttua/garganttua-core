@@ -14,6 +14,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
+import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.InjectionContext;
@@ -23,7 +24,10 @@ import com.garganttua.core.injection.dummies.AnotherDummyBean;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.injection.dummies.DummyOtherBean;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.SupplyException;
 
@@ -33,10 +37,11 @@ public class InjectableElementResolverBuilderTest {
 
         @BeforeEach
         void setUp() throws DiException, DslException, LifecycleException {
-                ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-                InjectionContext.builder().withPackage("com.garganttua")
+                IReflectionBuilder rb = ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).withScanner(new ReflectionsAnnotationScanner());
+                rb.build();
+                InjectionContext.builder().provide(rb).withPackage("com.garganttua")
                                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
-                                .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor",
+                                .withProperty(IClass.getClass(String.class), "com.garganttua.dummyPropertyInConstructor",
                                                 "propertyValue")
                                 .up()
                                 .autoDetect(true)
@@ -56,13 +61,14 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
+                IAnnotatedElement adapted2 = IInjectableElementResolver.toIAnnotatedElement(params[2].getAnnotations(), params[2].getDeclaredAnnotations());
                 Resolved resolved = this.resolvers.resolve(
-                                params[2].getType(),
-                                params[2]);
+                                IClass.getClass(params[2].getType()),
+                                adapted2);
 
                 assertNotNull(resolved);
                 assertTrue(resolved.resolved());
-                assertEquals(DummyOtherBean.class, resolved.elementSupplier().getSuppliedClass());
+                assertEquals(IClass.getClass(DummyOtherBean.class), resolved.elementSupplier().getSuppliedClass());
                 Optional<DummyOtherBean> bean = (Optional<DummyOtherBean>) resolved.elementSupplier().build().supply();
                 assertNotNull(bean);
                 assertTrue(bean.isPresent());
@@ -76,13 +82,14 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
+                IAnnotatedElement adapted1 = IInjectableElementResolver.toIAnnotatedElement(params[1].getAnnotations(), params[1].getDeclaredAnnotations());
                 Resolved resolved = this.resolvers.resolve(
-                                params[1].getType(),
-                                params[1]);
+                                IClass.getClass(params[1].getType()),
+                                adapted1);
 
                 assertNotNull(resolved);
                 assertTrue(resolved.resolved());
-                assertEquals(AnotherDummyBean.class, resolved.elementSupplier().getSuppliedClass());
+                assertEquals(IClass.getClass(AnotherDummyBean.class), resolved.elementSupplier().getSuppliedClass());
                 Optional<AnotherDummyBean> bean = (Optional<AnotherDummyBean>) resolved.elementSupplier().build().supply();
                 assertNotNull(bean);
                 assertTrue(bean.isPresent());
@@ -96,13 +103,14 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
+                IAnnotatedElement adapted0 = IInjectableElementResolver.toIAnnotatedElement(params[0].getAnnotations(), params[0].getDeclaredAnnotations());
                 Resolved resolved = this.resolvers.resolve(
-                                params[0].getType(),
-                                params[0]);
+                                IClass.getClass(params[0].getType()),
+                                adapted0);
 
                 assertNotNull(resolved);
                 assertTrue(resolved.resolved());
-                assertEquals(String.class, resolved.elementSupplier().getSuppliedClass());
+                assertEquals(IClass.getClass(String.class), resolved.elementSupplier().getSuppliedClass());
                 Optional<String> property = (Optional<String>) resolved.elementSupplier().build().supply();
                 assertNotNull(property);
                 assertTrue(property.isPresent());

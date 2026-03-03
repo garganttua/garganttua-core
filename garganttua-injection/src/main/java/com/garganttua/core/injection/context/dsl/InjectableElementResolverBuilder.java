@@ -15,8 +15,10 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.injection.context.resolver.InjectableElementResolver;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -25,9 +27,11 @@ public class InjectableElementResolverBuilder
         AbstractAutomaticLinkedBuilder<IInjectableElementResolverBuilder, IInjectionContextBuilder, IInjectableElementResolver>
         implements IInjectableElementResolverBuilder {
 
-    private final Map<Class<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
+    private final Map<IClass<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
     private Set<IBuilderObserver<IInjectableElementResolverBuilder, IInjectableElementResolver>> observers = new HashSet<>();
     private final Set<String> packages = new HashSet<>();
+    @Setter
+    private IReflection reflection;
 
     public InjectableElementResolverBuilder(IInjectionContextBuilder link) {
         super(link);
@@ -36,7 +40,7 @@ public class InjectableElementResolverBuilder
     }
 
     @Override
-    public IInjectableElementResolverBuilder withResolver(Class<? extends Annotation> annotation,
+    public IInjectableElementResolverBuilder withResolver(IClass<? extends Annotation> annotation,
             IElementResolver resolver) {
         log.atTrace().log("Entering withResolver(annotation={}, resolver={})", annotation, resolver);
         Objects.requireNonNull(annotation, "Annotation cannot be null");
@@ -90,25 +94,34 @@ public class InjectableElementResolverBuilder
         return b;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void doAutoDetection() throws DslException {
+        if (this.reflection == null) {
+            log.atWarn().log("IReflection not set, skipping auto-detection");
+            return;
+        }
+
+        IClass<Resolver> resolverIClass = reflection.getClass(Resolver.class);
+        IClass<? extends Annotation> resolverAnnotation = (IClass<? extends Annotation>) resolverIClass;
+        IClass<?> elementResolverInterface = reflection.getClass(IElementResolver.class);
+
         this.packages.stream()
-                .flatMap(package_ -> ObjectReflectionHelper.getClassesWithAnnotation(package_, Resolver.class).stream())
+                .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, resolverAnnotation).stream())
                 .forEach(resolverClass -> {
                     try {
-                        Resolver annotation = resolverClass.getAnnotation(Resolver.class);
-                        if (annotation != null && IElementResolver.class.isAssignableFrom(resolverClass)) {
-                            IElementResolver resolverInstance = (IElementResolver) resolverClass
-                                    .getDeclaredConstructor().newInstance();
+                        Resolver annotation = resolverClass.getAnnotation(resolverIClass);
+                        if (annotation != null && elementResolverInterface.isAssignableFrom(resolverClass)) {
+                            IElementResolver resolverInstance = (IElementResolver) reflection.newInstance(resolverClass);
 
                             for (Class<? extends Annotation> annotationType : annotation.annotations()) {
-                                this.withResolver(annotationType, resolverInstance);
+                                this.withResolver((IClass<? extends Annotation>) IClass.getClass(annotationType), resolverInstance);
                                 log.atDebug().log("Auto-registered resolver {} for annotation {}",
-                                        resolverClass.getSimpleName(), annotationType.getSimpleName());
+                                        resolverClass.getName(), annotationType.getSimpleName());
                             }
                         } else {
                             log.atWarn().log(
-                                    "Class {} annotated with @Resolver but does not implement IInjectableElementResolver",
+                                    "Class {} annotated with @Resolver but does not implement IElementResolver",
                                     resolverClass.getName());
                         }
                     } catch (Exception e) {

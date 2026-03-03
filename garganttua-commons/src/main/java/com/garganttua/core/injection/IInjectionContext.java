@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.nativve.INativeReflectionConfiguration;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.Copyable;
 
 /**
@@ -186,7 +187,7 @@ public interface IInjectionContext
          * @throws DiException if an error occurs during property retrieval or type
          *                     conversion
          */
-        <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException;
+        <T> Optional<T> getProperty(Optional<String> provider, String key, IClass<T> type) throws DiException;
 
         /**
          * Retrieves a property value from all providers.
@@ -199,7 +200,7 @@ public interface IInjectionContext
          * @throws DiException if an error occurs during property retrieval or type
          *                     conversion
          */
-        <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
+        <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException;
 
         /**
          * Retrieves a property value from a named provider.
@@ -213,7 +214,7 @@ public interface IInjectionContext
          * @throws DiException if an error occurs during property retrieval or type
          *                     conversion
          */
-        <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException;
+        <T> Optional<T> getProperty(String providerName, String key, IClass<T> type) throws DiException;
 
         /**
          * Sets a property value in the specified provider.
@@ -244,7 +245,7 @@ public interface IInjectionContext
          * @return the created child context
          * @throws DiException if no factory is registered or child creation fails
          */
-        <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass, Object... args)
+        <ChildContext extends IInjectionContext> ChildContext newChildContext(IClass<ChildContext> contextClass, Object... args)
                         throws DiException;
 
         /**

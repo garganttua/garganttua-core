@@ -1,5 +1,7 @@
 package com.garganttua.core.runtime;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Defines exception catching behavior for a runtime step.
  *
@@ -55,7 +57,7 @@ public interface IRuntimeStepCatch {
      *
      * @return the exception class to catch
      */
-    Class<? extends Throwable> exception();
+    IClass<? extends Throwable> exception();
 
     /**
      * Returns the result code to set when this exception is caught.

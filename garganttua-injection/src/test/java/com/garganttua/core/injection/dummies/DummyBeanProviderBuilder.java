@@ -5,6 +5,7 @@ import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanProviderBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.IClass;
 
 public class DummyBeanProviderBuilder implements IBeanProviderBuilder {
 
@@ -36,7 +37,7 @@ public class DummyBeanProviderBuilder implements IBeanProviderBuilder {
     }
 
     @Override
-    public <BeanType> IBeanFactoryBuilder<BeanType> withBean(Class<BeanType> beanType) throws DslException {
+    public <BeanType> IBeanFactoryBuilder<BeanType> withBean(IClass<BeanType> beanType) throws DslException {
         throw new UnsupportedOperationException("DummyBeanProviderBuilder does not support bean registration");
     }
 

@@ -2,6 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.IContextualSupplier;
@@ -85,9 +86,9 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          * context at runtime.
          * </p>
          *
-         * @return the {@link Class} object representing the required context type
+         * @return the {@link IClass} object representing the required context type
          */
-        Class<OwnerContextType> getOwnerContextType();
+        IClass<OwnerContextType> getOwnerContextType();
 
         /**
          * Returns the context types required for each parameter.
@@ -102,7 +103,7 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          *
          * @return an array of parameter context types (never {@code null})
          */
-        Class<?>[] getParametersContextTypes();
+        IClass<?>[] getParametersContextTypes();
 
         /**
          * Executes the bound method or constructor using the provided contexts.
@@ -142,7 +143,7 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
          */
         @Override
         default Optional<IMethodReturn<ExecutionReturn>> execute() throws ReflectionException {
-                if (getOwnerContextType() != Void.class)
+                if (getOwnerContextType() != null)
                         throw new SupplyException("Owner context of type " + getOwnerContextType().getSimpleName()
                                         + " required for this supplier");
 

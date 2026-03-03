@@ -15,6 +15,7 @@ The `garganttua-expression` module provides a powerful, extensible expression la
 - **Contextual Evaluation**: Support for both contextual and non-contextual expression nodes
 - **Rich Type System**: Full support for primitives, classes, generics, arrays, and collections
 - **DSL Builder Pattern**: Fluent API for configuring expression contexts
+- **Zero-Reflection Optimization**: `@Expression` function calls use compile-time generated direct binders when available, eliminating `Method.invoke()` overhead on hot paths (see [garganttua-annotation-processor](../garganttua-annotation-processor/README.md#direct-binder-generation-zero-reflection-at-runtime))
 - **Comprehensive Logging**: Structured Slf4j logging for debugging and monitoring
 
 ## Installation
@@ -35,6 +36,7 @@ The `garganttua-expression` module provides a powerful, extensible expression la
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-injection`
+ - `com.garganttua.core:garganttua-native:provided`
  - `com.garganttua.core:garganttua-reflections:test`
  - `ch.qos.logback:logback-classic:test`
  - `org.antlr:antlr4-runtime:4.13.0`

@@ -3,6 +3,8 @@ package com.garganttua.core;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -333,10 +335,10 @@ public class CoreException extends RuntimeException {
      */
     @SuppressWarnings("unchecked")
     public static <E extends Throwable> Optional<E> findFirstInException(Throwable exception,
-            Class<E> type) {
+            IClass<E> type) {
         Throwable cause = exception.getCause();
         while (cause != null) {
-            if (cause.getClass().isAssignableFrom(type)) {
+            if (type.isInstance(cause)) {
                 return Optional.of((E) cause);
             }
             if (cause instanceof InvocationTargetException inv) {

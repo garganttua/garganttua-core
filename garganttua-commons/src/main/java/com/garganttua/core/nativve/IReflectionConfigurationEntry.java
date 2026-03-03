@@ -3,6 +3,8 @@ package com.garganttua.core.nativve;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Interface representing a single reflection configuration entry for GraalVM native image.
  *
@@ -256,5 +258,5 @@ public interface IReflectionConfigurationEntry {
      * @return the Class object for this entry
      * @throws ClassNotFoundException if the class cannot be found
      */
-    public Class<?> getEntryClass() throws ClassNotFoundException;
+    public IClass<?> getEntryClass() throws ClassNotFoundException;
 }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
+import com.garganttua.core.supply.TestIClass;
 
 public class SupplierBuilderTest {
 
@@ -20,7 +21,7 @@ public class SupplierBuilderTest {
         CompletableFuture<String> future = CompletableFuture.completedFuture("test value");
 
         // Build supplier using withFuture
-        ISupplier<String> supplier = new SupplierBuilder<>(String.class)
+        ISupplier<String> supplier = new SupplierBuilder<>(TestIClass.of(String.class))
                 .withFuture(future)
                 .build();
 
@@ -44,7 +45,7 @@ public class SupplierBuilderTest {
         });
 
         // Build supplier using withFuture with timeout
-        ISupplier<Integer> supplier = new SupplierBuilder<>(Integer.class)
+        ISupplier<Integer> supplier = new SupplierBuilder<>(TestIClass.of(Integer.class))
                 .withFuture(future, 5000L)
                 .build();
 
@@ -61,7 +62,7 @@ public class SupplierBuilderTest {
         CompletableFuture<String> future = new CompletableFuture<>();
 
         // Build supplier with short timeout
-        ISupplier<String> supplier = new SupplierBuilder<>(String.class)
+        ISupplier<String> supplier = new SupplierBuilder<>(TestIClass.of(String.class))
                 .withFuture(future, 100L)
                 .build();
 
@@ -77,7 +78,7 @@ public class SupplierBuilderTest {
         queue.put("queue value");
 
         // Build supplier using withBlockingQueue
-        ISupplier<String> supplier = new SupplierBuilder<>(String.class)
+        ISupplier<String> supplier = new SupplierBuilder<>(TestIClass.of(String.class))
                 .withBlockingQueue(queue)
                 .build();
 
@@ -96,7 +97,7 @@ public class SupplierBuilderTest {
         queue.put(123);
 
         // Build supplier using withBlockingQueue with timeout
-        ISupplier<Integer> supplier = new SupplierBuilder<>(Integer.class)
+        ISupplier<Integer> supplier = new SupplierBuilder<>(TestIClass.of(Integer.class))
                 .withBlockingQueue(queue, 1000L)
                 .build();
 
@@ -113,7 +114,7 @@ public class SupplierBuilderTest {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 
         // Build supplier with short timeout and nullable enabled
-        ISupplier<String> supplier = new SupplierBuilder<>(String.class)
+        ISupplier<String> supplier = new SupplierBuilder<>(TestIClass.of(String.class))
                 .withBlockingQueue(queue, 100L)
                 .nullable(true)
                 .build();
@@ -130,7 +131,7 @@ public class SupplierBuilderTest {
         CompletableFuture<String> future = CompletableFuture.completedFuture(null);
 
         // Build supplier with nullable enabled
-        ISupplier<String> supplier = new SupplierBuilder<>(String.class)
+        ISupplier<String> supplier = new SupplierBuilder<>(TestIClass.of(String.class))
                 .withFuture(future)
                 .nullable(true)
                 .build();
@@ -147,7 +148,7 @@ public class SupplierBuilderTest {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 
         // Build supplier with short timeout and nullable
-        ISupplier<String> supplier = new SupplierBuilder<>(String.class)
+        ISupplier<String> supplier = new SupplierBuilder<>(TestIClass.of(String.class))
                 .withBlockingQueue(queue, 50L)
                 .nullable(true)
                 .build();

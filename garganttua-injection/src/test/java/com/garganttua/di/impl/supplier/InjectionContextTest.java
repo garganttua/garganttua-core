@@ -15,7 +15,10 @@ import com.garganttua.core.injection.context.beans.Beans;
 import com.garganttua.core.injection.context.properties.Properties;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.SupplyException;
 
@@ -25,10 +28,11 @@ public class InjectionContextTest {
 
     @BeforeEach
     void setUp() throws DslException, LifecycleException {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-        InjectionContext.builder().withPackage("com.garganttua")
+        IReflectionBuilder rb = ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).withScanner(new ReflectionsAnnotationScanner());
+        rb.build();
+        InjectionContext.builder().provide(rb).withPackage("com.garganttua")
                 .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
-                .withProperty(String.class, "com.garganttua.dummyPropertyInConstructor", propertyValue)
+                .withProperty(IClass.getClass(String.class), "com.garganttua.dummyPropertyInConstructor", propertyValue)
                 .up()
                 .autoDetect(true)
                 .build().onInit().onStart();
@@ -36,7 +40,7 @@ public class InjectionContextTest {
 
     @Test
     public void testPropertiesAreLoaded() throws DslException, SupplyException {
-        Optional<String> property = Properties.property(String.class).key("com.garganttua.dummyPropertyInConstructor")
+        Optional<String> property = Properties.property(IClass.getClass(String.class)).key("com.garganttua.dummyPropertyInConstructor")
                 .build().supply();
 
         assertNotNull(property);
@@ -47,7 +51,7 @@ public class InjectionContextTest {
 
     @Test
     public void testDummyBeanIsLoaded() throws DslException, SupplyException {
-        Optional<DummyBean> bean = Beans.bean(DummyBean.class).build().supply();
+        Optional<DummyBean> bean = Beans.bean(IClass.getClass(DummyBean.class)).build().supply();
         assertNotNull(bean);
         assertTrue(bean.isPresent());
 

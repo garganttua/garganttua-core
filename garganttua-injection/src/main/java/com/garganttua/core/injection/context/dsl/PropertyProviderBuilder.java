@@ -10,6 +10,7 @@ import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.properties.PropertyProvider;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,7 +27,7 @@ public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPro
     }
 
     @Override
-    public <PropertyType> IPropertyProviderBuilder withProperty(Class<PropertyType> propertyType, String key,
+    public <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType, String key,
                                                                 PropertyType property) throws DslException {
         log.atTrace().log("Entering withProperty(propertyType={}, key={}, property={})", propertyType, key, property);
         this.propertyBuilders.add(new PropertyBuilder<>(key, property));

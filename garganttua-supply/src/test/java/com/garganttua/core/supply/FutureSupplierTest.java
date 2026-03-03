@@ -17,7 +17,7 @@ public class FutureSupplierTest {
         CompletableFuture<String> future = CompletableFuture.completedFuture("test value");
 
         // Create supplier
-        ISupplier<String> supplier = new FutureSupplier<>(future, String.class);
+        ISupplier<String> supplier = new FutureSupplier<>(future, TestIClass.of(String.class));
 
         // Supply should return the future's value
         Optional<String> result = supplier.supply();
@@ -39,7 +39,7 @@ public class FutureSupplierTest {
         });
 
         // Create supplier with timeout
-        ISupplier<Integer> supplier = new FutureSupplier<>(future, Integer.class, 5000L);
+        ISupplier<Integer> supplier = new FutureSupplier<>(future, TestIClass.of(Integer.class), 5000L);
 
         // Supply should wait and return the value
         Optional<Integer> result = supplier.supply();
@@ -54,7 +54,7 @@ public class FutureSupplierTest {
         CompletableFuture<String> future = new CompletableFuture<>();
 
         // Create supplier with short timeout
-        ISupplier<String> supplier = new FutureSupplier<>(future, String.class, 100L);
+        ISupplier<String> supplier = new FutureSupplier<>(future, TestIClass.of(String.class), 100L);
 
         // Supply should throw SupplyException due to timeout
         assertThrows(SupplyException.class, () -> supplier.supply(),
@@ -68,7 +68,7 @@ public class FutureSupplierTest {
         future.completeExceptionally(new RuntimeException("Future failed"));
 
         // Create supplier
-        ISupplier<String> supplier = new FutureSupplier<>(future, String.class);
+        ISupplier<String> supplier = new FutureSupplier<>(future, TestIClass.of(String.class));
 
         // Supply should throw SupplyException
         assertThrows(SupplyException.class, () -> supplier.supply(),
@@ -81,7 +81,7 @@ public class FutureSupplierTest {
         CompletableFuture<String> future = CompletableFuture.completedFuture(null);
 
         // Create supplier
-        ISupplier<String> supplier = new FutureSupplier<>(future, String.class);
+        ISupplier<String> supplier = new FutureSupplier<>(future, TestIClass.of(String.class));
 
         // Supply should return empty Optional
         Optional<String> result = supplier.supply();
@@ -95,7 +95,7 @@ public class FutureSupplierTest {
         CompletableFuture<String> future = CompletableFuture.completedFuture("builder test");
 
         // Use builder
-        ISupplier<String> supplier = FutureSupplierBuilder.of(future, String.class)
+        ISupplier<String> supplier = FutureSupplierBuilder.of(future, TestIClass.of(String.class))
                 .withTimeout(1000L)
                 .build();
 
@@ -112,7 +112,7 @@ public class FutureSupplierTest {
         CompletableFuture<Integer> future = CompletableFuture.completedFuture(123);
 
         // Use builder without timeout
-        ISupplier<Integer> supplier = FutureSupplierBuilder.of(future, Integer.class)
+        ISupplier<Integer> supplier = FutureSupplierBuilder.of(future, TestIClass.of(Integer.class))
                 .build();
 
         // Supply should return the value
@@ -125,7 +125,7 @@ public class FutureSupplierTest {
     @Test
     public void testGetSuppliedType() {
         CompletableFuture<String> future = CompletableFuture.completedFuture("test");
-        ISupplier<String> supplier = new FutureSupplier<>(future, String.class);
+        ISupplier<String> supplier = new FutureSupplier<>(future, TestIClass.of(String.class));
 
         assertEquals(String.class, supplier.getSuppliedType(),
                 "Supplied type should be String.class");

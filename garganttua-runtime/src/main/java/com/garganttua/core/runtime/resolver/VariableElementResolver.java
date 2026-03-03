@@ -3,12 +3,12 @@ package com.garganttua.core.runtime.resolver;
 import static com.garganttua.core.injection.IInjectableElementResolver.*;
 import static com.garganttua.core.runtime.RuntimeContext.*;
 
-import java.lang.reflect.AnnotatedElement;
-
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -21,12 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 public class VariableElementResolver implements IElementResolver {
 
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
 
         log.atTrace()
                 .log("Resolving variable element");
 
-        Variable annotation = element.getAnnotation(Variable.class);
+        Variable annotation = element.getAnnotation(IClass.getClass(Variable.class));
 
         if (annotation == null) {
             log.atError().log("Injectable is not annotated with @Variable, throwing exception");
@@ -38,7 +38,7 @@ public class VariableElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Preparing variable supplier");
 
-        ISupplierBuilder<?, ?> s = variable(name, elementType);
+        ISupplierBuilder<?, ?> s = variable(name, elementType.getType());
 
         boolean nullable = isNullable(element);
 

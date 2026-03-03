@@ -3,12 +3,12 @@ package com.garganttua.core.runtime.resolver;
 import static com.garganttua.core.injection.IInjectableElementResolver.*;
 import static com.garganttua.core.runtime.RuntimeContext.*;
 
-import java.lang.reflect.AnnotatedElement;
-
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.annotations.Code;
 import com.garganttua.core.supply.IContextualSupplier;
@@ -23,12 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 public class CodeElementResolver implements IElementResolver {
 
         @Override
-        public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+        public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
 
                 log.atTrace()
                                 .log("Resolving code element");
 
-                if (!Integer.class.isAssignableFrom(elementType)) {
+                if (!Integer.class.isAssignableFrom(elementType.getType())) {
                         log.atError()
                                         .log("Injectable is not an Integer, throwing exception");
                         throw new DiException("Injectable is not an Integer : " + elementType.getSimpleName());

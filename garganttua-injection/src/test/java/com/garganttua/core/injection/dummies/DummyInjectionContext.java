@@ -1,7 +1,6 @@
 package com.garganttua.core.injection.dummies;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.util.List;
 import java.util.Optional;
@@ -15,9 +14,11 @@ import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyInjectionContext implements IInjectionContext {
@@ -58,12 +59,12 @@ public class DummyInjectionContext implements IInjectionContext {
     }
 
     @Override
-    public <T> Optional<T> getProperty(String key, Class<T> type) {
+    public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'getProperty'");
     }
 
     @Override
-    public <T> Optional<T> getProperty(String scopeName, String key, Class<T> type) {
+    public <T> Optional<T> getProperty(String scopeName, String key, IClass<T> type) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'getPropertyFromProvider'");
     }
 
@@ -73,7 +74,7 @@ public class DummyInjectionContext implements IInjectionContext {
     }
 
     @Override
-    public <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass,
+    public <ChildContext extends IInjectionContext> ChildContext newChildContext(IClass<ChildContext> contextClass,
             Object... args) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'newChildContext'");
     }
@@ -84,7 +85,7 @@ public class DummyInjectionContext implements IInjectionContext {
     }
 
     @Override
-    public <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(Optional<String> provider, String key, IClass<T> type) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'getProperty'");
     }
 
@@ -104,7 +105,7 @@ public class DummyInjectionContext implements IInjectionContext {
     }
 
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'resolve'");
     }
 
@@ -114,7 +115,7 @@ public class DummyInjectionContext implements IInjectionContext {
     }
 
     @Override
-    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+    public void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver) {
         throw new UnsupportedOperationException("Unimplemented method 'addResolver'");
     }
 

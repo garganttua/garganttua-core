@@ -3,6 +3,7 @@ package com.garganttua.core.condition.dsl;
 import java.lang.reflect.Type;
 
 import com.garganttua.core.condition.ICondition;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -134,6 +135,12 @@ public interface IConditionBuilder extends ISupplierBuilder<ISupplier<Boolean>, 
     @Override
     default Type getSuppliedType() {
         return (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    default IClass<ISupplier<Boolean>> getSuppliedClass() {
+        return (IClass<ISupplier<Boolean>>) (IClass<?>) IClass.getClass(ISupplier.class);
     }
 
     @Override

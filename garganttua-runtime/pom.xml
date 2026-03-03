@@ -32,6 +32,10 @@
             </dependency>
             <dependency>
                   <groupId>com.garganttua.core</groupId>
+                  <artifactId>garganttua-runtime-reflection</artifactId>
+            </dependency>
+            <dependency>
+                  <groupId>com.garganttua.core</groupId>
                   <artifactId>garganttua-reflections</artifactId>
                   <scope>provided</scope>
             </dependency>

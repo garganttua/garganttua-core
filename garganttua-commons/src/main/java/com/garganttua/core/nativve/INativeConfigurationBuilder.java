@@ -2,6 +2,8 @@ package com.garganttua.core.nativve;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for constructing GraalVM native image configurations.
@@ -104,7 +106,7 @@ import com.garganttua.core.dsl.IPackageableBuilder;
  * @see IPackageableBuilder
  * @see IAutomaticBuilder
  */
-public interface INativeConfigurationBuilder extends IPackageableBuilder<INativeConfigurationBuilder, INativeConfiguration>, IAutomaticBuilder<INativeConfigurationBuilder, INativeConfiguration> {
+public interface INativeConfigurationBuilder extends IPackageableBuilder<INativeConfigurationBuilder, INativeConfiguration>, IAutomaticBuilder<INativeConfigurationBuilder, INativeConfiguration>, IDependentBuilder<INativeConfigurationBuilder, INativeConfiguration> {
 
     /**
      * Sets the path where resource configuration files will be written.
@@ -195,7 +197,7 @@ public interface INativeConfigurationBuilder extends IPackageableBuilder<INative
      * @throws NullPointerException if clazz is null
      * @see IReflectionConfigurationEntryBuilder
      */
-    IReflectionConfigurationEntryBuilder reflectionEntry(Class<?> clazz);
+    IReflectionConfigurationEntryBuilder reflectionEntry(IClass<?> clazz);
 
     /**
      * Registers an existing reflection configuration entry and returns a builder to modify it.
@@ -340,7 +342,7 @@ public interface INativeConfigurationBuilder extends IPackageableBuilder<INative
      * @return this builder for method chaining
      * @throws NullPointerException if resource is null
      */
-    INativeConfigurationBuilder resource(Class<?> resource);
+    INativeConfigurationBuilder resource(IClass<?> resource);
 
     /**
      * Sets the configuration merge mode.

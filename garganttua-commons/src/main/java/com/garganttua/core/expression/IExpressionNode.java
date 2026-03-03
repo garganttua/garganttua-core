@@ -2,6 +2,7 @@ package com.garganttua.core.expression;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -76,6 +77,6 @@ public interface IExpressionNode<R, S extends ISupplier<R>> extends ISupplier<S>
      *
      * @return the class of the final result value
      */
-    Class<R> getFinalSuppliedClass();
+    IClass<R> getFinalSuppliedClass();
 
 }

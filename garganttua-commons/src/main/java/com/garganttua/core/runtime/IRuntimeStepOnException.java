@@ -1,5 +1,7 @@
 package com.garganttua.core.runtime;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Defines exception handling criteria for triggering fallback methods.
  *
@@ -89,6 +91,6 @@ public interface IRuntimeStepOnException {
      *
      * @return the exception class to match
      */
-    Class<? extends Throwable> exception();
+    IClass<? extends Throwable> exception();
 
 }

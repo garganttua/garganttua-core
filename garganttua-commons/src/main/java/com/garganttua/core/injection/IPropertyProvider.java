@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.Copyable;
 
 /**
@@ -64,7 +65,7 @@ public interface IPropertyProvider extends ILifecycle, Copyable<IPropertyProvide
      * @return an {@link Optional} containing the property value if found, or empty otherwise
      * @throws DiException if an error occurs during property retrieval or type conversion
      */
-    <T> Optional<T> getProperty(String key, Class<T> type) throws DiException;
+    <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException;
 
     /**
      * Sets a property value in this provider.

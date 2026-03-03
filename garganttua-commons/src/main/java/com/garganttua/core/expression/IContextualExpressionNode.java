@@ -3,6 +3,7 @@ package com.garganttua.core.expression;
 import java.util.Optional;
 
 import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -83,8 +84,9 @@ public interface IContextualExpressionNode<R, S extends IContextualSupplier<R, I
     }
 
     @Override
-        default Class<IExpressionContext> getOwnerContextType() {
-        return IExpressionContext.class;
+        default IClass<IExpressionContext> getOwnerContextType() {
+        // TODO: requires IReflectionProvider to wrap IExpressionContext.class into IClass
+        return null;
         }
 
 }

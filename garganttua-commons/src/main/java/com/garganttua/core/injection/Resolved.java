@@ -1,7 +1,7 @@
 package com.garganttua.core.injection;
 
-import java.lang.reflect.AnnotatedElement;
-
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -48,7 +48,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  * @see ResolvedAction
  * @see NotResolvedAction
  */
-public record Resolved(boolean resolved, Class<?> elementType, ISupplierBuilder<?, ? extends ISupplier<?>> elementSupplier, boolean nullable) {
+public record Resolved(boolean resolved, IClass<?> elementType, ISupplierBuilder<?, ? extends ISupplier<?>> elementSupplier, boolean nullable) {
 
     /**
      * Creates a not-resolved result for an element.
@@ -62,7 +62,7 @@ public record Resolved(boolean resolved, Class<?> elementType, ISupplierBuilder<
      * @param annotatedElement the annotated element to check for nullable annotations
      * @return a {@code Resolved} instance indicating resolution failure
      */
-    public static Resolved notResolved(Class<?> elementType, AnnotatedElement annotatedElement){
+    public static Resolved notResolved(IClass<?> elementType, IAnnotatedElement annotatedElement){
         return new Resolved(false, elementType, null, IInjectableElementResolver.isNullable(annotatedElement));
     }
 

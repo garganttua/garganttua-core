@@ -19,7 +19,7 @@ public class BlockingSupplierTest {
         queue.put("test value");
 
         // Create supplier
-        ISupplier<String> supplier = new BlockingSupplier<>(queue, String.class);
+        ISupplier<String> supplier = new BlockingSupplier<>(queue, TestIClass.of(String.class));
 
         // Supply should return the queue element
         Optional<String> result = supplier.supply();
@@ -38,7 +38,7 @@ public class BlockingSupplierTest {
         queue.put(3);
 
         // Create supplier
-        ISupplier<Integer> supplier = new BlockingSupplier<>(queue, Integer.class);
+        ISupplier<Integer> supplier = new BlockingSupplier<>(queue, TestIClass.of(Integer.class));
 
         // Supply multiple times
         assertEquals(1, supplier.supply().get(), "First element should be 1");
@@ -53,7 +53,7 @@ public class BlockingSupplierTest {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 
         // Create supplier with short timeout
-        ISupplier<String> supplier = new BlockingSupplier<>(queue, String.class, 100L);
+        ISupplier<String> supplier = new BlockingSupplier<>(queue, TestIClass.of(String.class), 100L);
 
         // Supply should return empty after timeout
         Optional<String> result = supplier.supply();
@@ -67,7 +67,7 @@ public class BlockingSupplierTest {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 
         // Create supplier with timeout
-        ISupplier<String> supplier = new BlockingSupplier<>(queue, String.class, 1000L);
+        ISupplier<String> supplier = new BlockingSupplier<>(queue, TestIClass.of(String.class), 1000L);
 
         // Add element in another thread after delay
         new Thread(() -> {
@@ -93,7 +93,7 @@ public class BlockingSupplierTest {
         queue.put("builder test");
 
         // Use builder
-        ISupplier<String> supplier = BlockingSupplierBuilder.of(queue, String.class)
+        ISupplier<String> supplier = BlockingSupplierBuilder.of(queue, TestIClass.of(String.class))
                 .withTimeout(1000L)
                 .build();
 
@@ -111,7 +111,7 @@ public class BlockingSupplierTest {
         queue.put(456);
 
         // Use builder without timeout
-        ISupplier<Integer> supplier = BlockingSupplierBuilder.of(queue, Integer.class)
+        ISupplier<Integer> supplier = BlockingSupplierBuilder.of(queue, TestIClass.of(Integer.class))
                 .build();
 
         // Supply should return the value
@@ -124,7 +124,7 @@ public class BlockingSupplierTest {
     @Test
     public void testGetSuppliedType() {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
-        ISupplier<String> supplier = new BlockingSupplier<>(queue, String.class);
+        ISupplier<String> supplier = new BlockingSupplier<>(queue, TestIClass.of(String.class));
 
         assertEquals(String.class, supplier.getSuppliedType(),
                 "Supplied type should be String.class");
@@ -138,7 +138,7 @@ public class BlockingSupplierTest {
         // ArrayBlockingQueue doesn't accept null either, so we just verify behavior with actual values
 
         queue.put("value");
-        ISupplier<String> supplier = new BlockingSupplier<>(queue, String.class);
+        ISupplier<String> supplier = new BlockingSupplier<>(queue, TestIClass.of(String.class));
 
         Optional<String> result = supplier.supply();
         assertTrue(result.isPresent(), "Result should be present");

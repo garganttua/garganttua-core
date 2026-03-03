@@ -7,15 +7,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
-import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.MethodInvoker;
-import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.methods.MultipleMethodReturn;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
-import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -49,23 +47,9 @@ public class MethodBinder<Returned>
         this(objectSupplier, method, parameterSuppliers, false);
     }
 
-    /**
-     * Backward-compatible constructor using ObjectAddress.
-     * Resolves the method from the owner type and address.
-     */
-    public MethodBinder(ISupplier<?> objectSupplier,
-            ObjectAddress methodAddress,
-            List<ISupplier<?>> parameterSuppliers,
-            Class<?> returnType) {
-        this(objectSupplier,
-             MethodResolver.methodByAddress(objectSupplier.getSuppliedClass(), methodAddress, returnType,
-                 parameterSuppliers.stream().map(s -> s.getSuppliedClass()).toArray(Class[]::new)),
-             parameterSuppliers, false);
-    }
-
     public static <T, ReturnedType> Optional<IMethodReturn<ReturnedType>> execute(
             Object owner,
-            Class<T> ownerType,
+            IClass<T> ownerType,
             ResolvedMethod method,
             boolean collectionTarget,
             Object[] args) throws ReflectionException {
@@ -73,7 +57,7 @@ public class MethodBinder<Returned>
         log.atTrace().log("Executing static method execute: owner={}, ownerType={}, method={}, collectionTarget={}",
                 owner, ownerType, method, collectionTarget);
 
-        if (!method.isStatic())
+        if (!Methods.isStatic(method))
             Objects.requireNonNull(owner, "Owner cannot be null");
         Objects.requireNonNull(ownerType, "Owner type cannot be null");
         Objects.requireNonNull(method, "Method cannot be null");
@@ -86,7 +70,8 @@ public class MethodBinder<Returned>
                 results.add((IMethodReturn<ReturnedType>) new MethodInvoker<>(method).invoke(element, args));
             }
             log.atDebug().log("Executed method {} on collection successfully", method);
-            return Optional.of(MultipleMethodReturn.ofMethodReturns(results, method.returnType()));
+            return Optional
+                    .of(MultipleMethodReturn.ofMethodReturns(results, method.getReturnType()));
         }
 
         log.atDebug().log("Invoking method {} on owner of type {}", method, ownerType);
@@ -121,7 +106,7 @@ public class MethodBinder<Returned>
     @Override
     public String getExecutableReference() {
         log.atTrace().log("Getting executable reference for method {}", method);
-        return Methods.prettyColored(this.method.method());
+        return Methods.prettyColored(this.method);
     }
 
     @Override
@@ -136,6 +121,11 @@ public class MethodBinder<Returned>
     @Override
     public Type getSuppliedType() {
         return this.objectSupplier.getSuppliedType();
+    }
+
+    @Override
+    public IClass<IMethodReturn<Returned>> getSuppliedClass() {
+        return (IClass<IMethodReturn<Returned>>) (IClass<?>) IClass.getClass(IMethodReturn.class);
     }
 
 }

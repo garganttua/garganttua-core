@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -44,9 +45,9 @@ public abstract class ExecutableBinder<ReturnedType> implements IExecutableBinde
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         log.atTrace().log("Getting dependencies from parameter suppliers");
-        Set<Class<?>> dependencies = new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedClass())
+        Set<IClass<?>> dependencies = new HashSet<>(this.parameterSuppliers.stream().map(supplier -> supplier.getSuppliedClass())
                 .collect(Collectors.toSet()));
         log.atDebug().log("Found {} dependencies", dependencies.size());
         return dependencies;

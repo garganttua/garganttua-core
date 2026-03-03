@@ -1,10 +1,11 @@
 package com.garganttua.core.annotation.processor;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.List;
 
 import com.garganttua.core.reflection.IAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.annotations.IAnnotationIndex;
 
 /**
@@ -65,7 +66,22 @@ public class IndexedAnnotationScanner implements IAnnotationScanner {
     }
 
     @Override
-    public List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation) {
+    public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
+        // Try index first
+        if (index.hasIndex(annotation)) {
+            return index.getClassesWithAnnotation(annotation);
+        }
+
+        // Fallback to runtime scanning
+        if (fallbackScanner != null) {
+            return fallbackScanner.getClassesWithAnnotation(annotation);
+        }
+
+        return List.of();
+    }
+
+    @Override
+    public List<IClass<?>> getClassesWithAnnotation(String package_, IClass<? extends Annotation> annotation) {
         // Try index first
         if (index.hasIndex(annotation)) {
             return index.getClassesWithAnnotation(annotation, package_);
@@ -80,7 +96,22 @@ public class IndexedAnnotationScanner implements IAnnotationScanner {
     }
 
     @Override
-    public List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation) {
+    public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
+        // Try index first
+        if (index.hasIndex(annotation)) {
+            return index.getMethodsWithAnnotation(annotation);
+        }
+
+        // Fallback to runtime scanning
+        if (fallbackScanner != null) {
+            return fallbackScanner.getMethodsWithAnnotation(annotation);
+        }
+
+        return List.of();
+    }
+
+    @Override
+    public List<IMethod> getMethodsWithAnnotation(String package_, IClass<? extends Annotation> annotation) {
         // Try index first
         if (index.hasIndex(annotation)) {
             return index.getMethodsWithAnnotation(annotation, package_);
@@ -100,7 +131,7 @@ public class IndexedAnnotationScanner implements IAnnotationScanner {
      * @param annotation the annotation type to check
      * @return true if a compile-time index exists
      */
-    public boolean hasIndex(Class<? extends Annotation> annotation) {
+    public boolean hasIndex(IClass<? extends Annotation> annotation) {
         return index.hasIndex(annotation);
     }
 

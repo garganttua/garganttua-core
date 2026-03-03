@@ -9,11 +9,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IBeanProvider;
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.dsl.BeanFactoryBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanFactoryBuilder;
@@ -23,7 +24,6 @@ import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.utils.CopyException;
@@ -71,7 +71,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Optional<T> get(Class<T> type) throws DiException {
+	public <T> Optional<T> get(IClass<T> type) throws DiException {
 		log.atTrace().log("Entering getBean with type: {}", type);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 
@@ -95,7 +95,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	public <T> Optional<T> get(String name, Class<T> type) throws DiException {
+	public <T> Optional<T> get(String name, IClass<T> type) throws DiException {
 		log.atTrace().log("getBean by name '{}' and type {} is not implemented", name, type);
 		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
 		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
@@ -108,11 +108,10 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	public <T> List<T> get(Class<T> interfasse, boolean includePrototypes) {
+	public <T> List<T> get(IClass<T> interfasse, boolean includePrototypes) {
 		log.atTrace().log("Getting beans implementing interface: {}", interfasse);
 		List<T> result = this.beanFactories.stream()
-				.filter(factory -> ObjectReflectionHelper.isImplementingInterface(interfasse,
-						factory.getSuppliedClass()))
+				.filter(factory -> interfasse.isAssignableFrom(factory.getSuppliedClass()))
 				.map(factory -> {
 					try {
 						return factory.supply().orElse(null);
@@ -126,6 +125,11 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 				.collect(Collectors.toList());
 		log.atDebug().log("Beans implementing interface {} found: {}", interfasse, result.size());
 		return result;
+	}
+
+	@Override
+	public IReflection reflection() {
+		return IClass.getReflection();
 	}
 
 	@Override

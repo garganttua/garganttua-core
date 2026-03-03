@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.utils.CopyException;
@@ -31,7 +33,7 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         log.atTrace().log("Entering getProperty with key: '{}' and type: {}", key, type);
 
         Object value = properties.get(key);
@@ -43,15 +45,15 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
         if (!type.isInstance(value)) {
             log.atDebug().log("Property '{}' is not instance of {}, attempting conversion", key, type.getSimpleName());
             try {
-                if (type.equals(String.class)) {
+                if (type.getName().equals(String.class.getName())) {
                     return Optional.of(type.cast(value.toString()));
-                } else if (type.equals(Integer.class)) {
+                } else if (type.getName().equals(Integer.class.getName())) {
                     return Optional.of(type.cast(Integer.parseInt(value.toString())));
-                } else if (type.equals(Long.class)) {
+                } else if (type.getName().equals(Long.class.getName())) {
                     return Optional.of(type.cast(Long.parseLong(value.toString())));
-                } else if (type.equals(Double.class)) {
+                } else if (type.getName().equals(Double.class.getName())) {
                     return Optional.of(type.cast(Double.parseDouble(value.toString())));
-                } else if (type.equals(Boolean.class)) {
+                } else if (type.getName().equals(Boolean.class.getName())) {
                     return Optional.of(type.cast(Boolean.parseBoolean(value.toString())));
                 }
             } catch (Exception e) {
@@ -94,6 +96,11 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
     public Set<String> keys() {
         log.atTrace().log("Retrieving all property keys");
         return Collections.unmodifiableSet(properties.keySet());
+    }
+
+    @Override
+    public IReflection reflection() {
+        return IClass.getReflection();
     }
 
     @Override

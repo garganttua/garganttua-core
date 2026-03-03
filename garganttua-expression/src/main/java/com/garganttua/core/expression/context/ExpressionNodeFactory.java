@@ -2,6 +2,7 @@ package com.garganttua.core.expression.context;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,7 +12,9 @@ import com.garganttua.core.expression.ContextualExpressionNode;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.ContextualMethodBinder;
@@ -19,6 +22,7 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.MethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.reflection.methods.MethodResolver;
+import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
@@ -133,7 +137,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             Optional<String> name, Optional<String> description) throws ExpressionException {
 
         super(methodOwnerSupplier,
-                MethodResolver.methodByMethod(methodOwnerSupplier.getSuppliedClass(), method),
+                resolveReflectMethod(methodOwnerSupplier.getSuppliedClass(), method),
                 List.of());
 
         log.atTrace().log("Creating ExpressionNodeFactory: method={}", method.getName());
@@ -152,32 +156,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         log.atDebug().log("ExpressionNodeFactory created: method={}, parameterCount={}",
                 method.getName(), parameterTypes.length);
-    }
-
-    /**
-     * Private constructor for internal use only.
-     *
-     * @deprecated This constructor is unused and maintained for potential future
-     *             extensions
-     */
-    @Deprecated
-    private ExpressionNodeFactory(
-            ISupplier<?> objectSupplier,
-            ObjectAddress methodAddr,
-            List<ISupplier<?>> parameterSuppliers,
-            Class<IExpressionNode<R, S>> returnedClass) throws ExpressionException {
-
-        super(objectSupplier,
-                MethodResolver.methodByAddress(objectSupplier.getSuppliedClass(), methodAddr, returnedClass,
-                    parameterSuppliers.stream().map(s -> s.getSuppliedClass()).toArray(Class[]::new)),
-                parameterSuppliers);
-
-        // Default initialization for deprecated constructor
-        this.method = null;
-        this.methodAddress = methodAddr;
-        this.parameterTypes = new Class<?>[0];
-        this.nullableParameters = List.of();
-        this.lazyParameters = List.of();
     }
 
     // ========== Public Methods ==========
@@ -319,7 +297,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         ContextualMethodBinder<R, IExpressionContext> binder = new ContextualMethodBinder<>(
                 this.methodOwnerSupplier,
-                MethodResolver.methodByMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
+                resolveReflectMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
                 encapsulatedParams);
 
         // Wrap to extract value from IMethodReturn
@@ -338,13 +316,25 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
-        MethodBinder<R> binder = new MethodBinder<>(
+        IMethodBinder<R> binder = new MethodBinder<>(
                 this.methodOwnerSupplier,
-                MethodResolver.methodByMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
+                resolveReflectMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
                 encapsulatedParams);
 
         // Wrap to extract value from IMethodReturn
         return new MethodReturnUnwrappingSupplier<>(binder, getReturnType());
+    }
+
+    // ========== Private Static Helpers ==========
+
+    @SuppressWarnings("unchecked")
+    private static ResolvedMethod resolveReflectMethod(IClass<?> ownerType, Method method) {
+        IReflection reflection = IClass.getReflection();
+        IClass<?>[] paramTypes = Arrays.stream(method.getParameterTypes())
+                .map(c -> (IClass<?>) IClass.getClass(c))
+                .toArray(IClass[]::new);
+        return MethodResolver.methodByName(ownerType, reflection, method.getName(),
+                IClass.getClass(method.getReturnType()), paramTypes);
     }
 
     // ========== Private Utility Methods ==========

@@ -1,5 +1,7 @@
 package com.garganttua.core.runtime;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Immutable record specifying the relative position for inserting an operation within a runtime step.
  *
@@ -31,7 +33,7 @@ package com.garganttua.core.runtime;
  * @see RuntimeStepPosition
  */
 public record RuntimeStepOperationPosition(Position position,
-        Class<?> element) {
+        IClass<?> element) {
 
     /**
      * Creates a position specifying insertion after the operation of the given class.
@@ -39,7 +41,7 @@ public record RuntimeStepOperationPosition(Position position,
      * @param element the class of the operation to insert after
      * @return a new RuntimeStepOperationPosition for after-insertion
      */
-    public static RuntimeStepOperationPosition after(Class<?>  element) {
+    public static RuntimeStepOperationPosition after(IClass<?>  element) {
         return new RuntimeStepOperationPosition(Position.AFTER, element);
     }
 
@@ -49,7 +51,7 @@ public record RuntimeStepOperationPosition(Position position,
      * @param element the class of the operation to insert before
      * @return a new RuntimeStepOperationPosition for before-insertion
      */
-    public static RuntimeStepOperationPosition before(Class<?>  element) {
+    public static RuntimeStepOperationPosition before(IClass<?>  element) {
         return new RuntimeStepOperationPosition(Position.BEFORE, element);
     }
 

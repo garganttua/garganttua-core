@@ -9,9 +9,14 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link PrototypeElementResolver}.
@@ -20,11 +25,12 @@ import com.garganttua.core.injection.context.beans.resolver.PrototypeElementReso
 public class PrototypeElementResolverTest {
 
     private PrototypeElementResolver resolver;
-    private Set<Class<? extends java.lang.annotation.Annotation>> qualifiers;
+    private Set<IClass<? extends java.lang.annotation.Annotation>> qualifiers;
 
     @BeforeEach
     void setUp() {
-        qualifiers = new HashSet<>();
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
+        qualifiers = new HashSet<IClass<? extends java.lang.annotation.Annotation>>();
         resolver = new PrototypeElementResolver(qualifiers);
     }
 
@@ -33,15 +39,19 @@ public class PrototypeElementResolverTest {
         assertNotNull(resolver);
     }
 
+    private static IAnnotatedElement adapt(Field field) {
+        return IInjectableElementResolver.toIAnnotatedElement(field.getAnnotations(), field.getDeclaredAnnotations());
+    }
+
     @Test
     void testResolveFieldWithPrototypeAnnotation() throws NoSuchFieldException {
         Field field = TestClassWithPrototype.class.getDeclaredField("prototypeField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertNotNull(resolved);
         assertTrue(resolved.resolved());
-        assertEquals(String.class, resolved.elementType());
+        assertEquals(IClass.getClass(String.class), resolved.elementType());
         assertNotNull(resolved.elementSupplier());
     }
 
@@ -49,7 +59,7 @@ public class PrototypeElementResolverTest {
     void testResolveFieldWithoutPrototypeAnnotation() throws NoSuchFieldException {
         Field field = TestClassWithPrototype.class.getDeclaredField("nonPrototypeField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertNotNull(resolved);
         // Without proper bean factory setup, resolution depends on context
@@ -61,20 +71,20 @@ public class PrototypeElementResolverTest {
         Field intField = TestClassWithPrototype.class.getDeclaredField("prototypeInt");
         Field booleanField = TestClassWithPrototype.class.getDeclaredField("prototypeBoolean");
 
-        Resolved intResolved = resolver.resolve(Integer.class, intField);
-        Resolved booleanResolved = resolver.resolve(Boolean.class, booleanField);
+        Resolved intResolved = resolver.resolve(IClass.getClass(Integer.class), adapt(intField));
+        Resolved booleanResolved = resolver.resolve(IClass.getClass(Boolean.class), adapt(booleanField));
 
         assertNotNull(intResolved);
-        assertEquals(Integer.class, intResolved.elementType());
+        assertEquals(IClass.getClass(Integer.class), intResolved.elementType());
 
         assertNotNull(booleanResolved);
-        assertEquals(Boolean.class, booleanResolved.elementType());
+        assertEquals(IClass.getClass(Boolean.class), booleanResolved.elementType());
     }
 
     @Test
     void testResolveThrowsExceptionForNullElement() {
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(String.class, null);
+            resolver.resolve(IClass.getClass(String.class), null);
         });
     }
 
@@ -83,7 +93,7 @@ public class PrototypeElementResolverTest {
         Field field = TestClassWithPrototype.class.getDeclaredField("prototypeField");
 
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(null, field);
+            resolver.resolve(null, adapt(field));
         });
     }
 
@@ -104,7 +114,7 @@ public class PrototypeElementResolverTest {
     void testResolvedElementIsNotNullable() throws NoSuchFieldException {
         Field field = TestClassWithPrototype.class.getDeclaredField("prototypeField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertFalse(resolved.nullable());
     }
@@ -114,8 +124,8 @@ public class PrototypeElementResolverTest {
         Field field1 = TestClassWithPrototype.class.getDeclaredField("prototypeField");
         Field field2 = TestClassWithPrototype.class.getDeclaredField("prototypeInt");
 
-        Resolved resolved1 = resolver.resolve(String.class, field1);
-        Resolved resolved2 = resolver.resolve(Integer.class, field2);
+        Resolved resolved1 = resolver.resolve(IClass.getClass(String.class), adapt(field1));
+        Resolved resolved2 = resolver.resolve(IClass.getClass(Integer.class), adapt(field2));
 
         assertNotSame(resolved1, resolved2);
         assertNotSame(resolved1.elementSupplier(), resolved2.elementSupplier());

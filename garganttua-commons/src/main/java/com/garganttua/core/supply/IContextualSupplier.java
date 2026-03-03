@@ -2,6 +2,8 @@ package com.garganttua.core.supply;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Contextual supplier interface for providing object instances based on runtime
  * context.
@@ -87,7 +89,7 @@ public interface IContextualSupplier<Supplied, Context> extends ISupplier<Suppli
      */
     @Override
     default Optional<Supplied> supply() throws SupplyException {
-        if (getOwnerContextType() != Void.class)
+        if (getOwnerContextType() != null)
             throw new SupplyException(
                     "Owner context of type " + getOwnerContextType().getSimpleName() + " required for this supplier");
 
@@ -103,9 +105,9 @@ public interface IContextualSupplier<Supplied, Context> extends ISupplier<Suppli
      * context at runtime.
      * </p>
      *
-     * @return the {@link Class} object representing the required context type
+     * @return the {@link IClass} object representing the required context type
      */
-    Class<Context> getOwnerContextType();
+    IClass<Context> getOwnerContextType();
 
     /**
      * Supplies an instance using the provided owner context and optional additional

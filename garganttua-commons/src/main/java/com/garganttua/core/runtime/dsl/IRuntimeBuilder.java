@@ -2,6 +2,7 @@ package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -13,8 +14,8 @@ public interface IRuntimeBuilder<InputType, OutputType> extends IAutomaticLinked
 
     IRuntimeBuilder<InputType, OutputType> variable(String name, ISupplierBuilder<?, ? extends ISupplier<?>> value);
 
-    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
+    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, IClass<ExecutionReturn> returnType);
 
-    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, OrderedMapPosition<String> position, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, Class<ExecutionReturn> returnType);
+    <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, OrderedMapPosition<String> position, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, IClass<ExecutionReturn> returnType);
 
 }

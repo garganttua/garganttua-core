@@ -2,17 +2,76 @@ package com.garganttua.core.dsl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.annotations.Scan;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 
 @DisplayName("PackageScanHelper Tests")
 class PackageScanHelperTest {
+
+    /**
+     * Creates a minimal IReflection proxy that supports getClass() and
+     * getClassesWithAnnotation(String, IClass) — the two methods used by PackageScanHelper.
+     */
+    private static IReflection mockReflection(List<IClass<?>> classesToReturn) {
+        InvocationHandler handler = (proxy, method, args) -> switch (method.getName()) {
+            case "getClass" -> {
+                if (args != null && args.length == 1 && args[0] instanceof Class<?> clazz) {
+                    yield mockIClass(clazz);
+                }
+                yield null;
+            }
+            case "getClassesWithAnnotation" -> {
+                if (classesToReturn == null) {
+                    throw new RuntimeException("Simulated scanning failure");
+                }
+                yield classesToReturn;
+            }
+            default -> throw new UnsupportedOperationException(method.getName());
+        };
+        return (IReflection) Proxy.newProxyInstance(
+                IReflection.class.getClassLoader(),
+                new Class[]{IReflection.class},
+                handler);
+    }
+    
+    private static <T> IClass<T> mockIClass(Class<T> clazz) {
+        InvocationHandler handler = (proxy, method, args) -> switch (method.getName()) {
+            case "getName" -> clazz.getName();
+            case "getSimpleName" -> clazz.getSimpleName();
+            case "getAnnotation" -> {
+                if (args != null && args.length == 1) {
+                    if (args[0] instanceof Class<?> annClass) {
+                        yield clazz.getAnnotation((Class<? extends Annotation>) annClass);
+                    }
+                    if (args[0] instanceof IClass<?> iAnnClass) {
+                        try {
+                            Class<?> realClass = Class.forName(iAnnClass.getName());
+                            yield clazz.getAnnotation((Class<? extends Annotation>) realClass);
+                        } catch (ClassNotFoundException e) {
+                            yield null;
+                        }
+                    }
+                }
+                yield null;
+            }
+            default -> throw new UnsupportedOperationException(method.getName());
+        };
+        return (IClass<T>) Proxy.newProxyInstance(
+                IClass.class.getClassLoader(),
+                new Class[]{IClass.class},
+                handler);
+    }
 
     @Test
     @DisplayName("Should scan and add packages from @Scan annotations")
@@ -20,92 +79,67 @@ class PackageScanHelperTest {
         // Given
         MockPackageableBuilder builder = new MockPackageableBuilder();
         String[] basePackages = {"com.garganttua.core.dsl"};
-        ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
+        List<IClass<?>> found = List.of(mockIClass(TestClass1.class), mockIClass(TestClass2.class));
+        PackageScanHelper helper = new PackageScanHelper(mockReflection(found));
 
         // When
-        PackageScanHelper.scanAndAddPackages(scanner, builder, basePackages);
+        helper.scanAndAddPackages(builder, basePackages);
 
         // Then
-        assertTrue(builder.packages.contains("com.garganttua.core.test.package1"),
-                "Should contain package from @Scan annotation on TestClass1");
-        assertTrue(builder.packages.contains("com.garganttua.core.test.package2"),
-                "Should contain package from @Scan annotation on TestClass2");
+        assertTrue(builder.packages.contains("com.garganttua.core.test.package1"));
+        assertTrue(builder.packages.contains("com.garganttua.core.test.package2"));
     }
 
     @Test
     @DisplayName("Should do nothing when builder is null")
     void shouldDoNothingWhenBuilderIsNull() {
-        // When/Then - Should not throw exception
-        try {
-            ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
-            PackageScanHelper.scanAndAddPackages(scanner, null, new String[]{"com.test"});
-            assertTrue(true, "No exception should be thrown");
-        } catch (Exception e) {
-            fail("Should not throw exception when builder is null");
-        }
+        PackageScanHelper helper = new PackageScanHelper(mockReflection(List.of()));
+        assertDoesNotThrow(() -> helper.scanAndAddPackages(null, new String[]{"com.test"}));
     }
 
     @Test
     @DisplayName("Should do nothing when basePackages is null")
     void shouldDoNothingWhenBasePackagesIsNull() throws DslException {
-        // Given
         MockPackageableBuilder builder = new MockPackageableBuilder();
-        ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
+        PackageScanHelper helper = new PackageScanHelper(mockReflection(List.of()));
 
-        // When
-        PackageScanHelper.scanAndAddPackages(scanner, builder, null);
+        helper.scanAndAddPackages(builder, null);
 
-        // Then
         assertTrue(builder.packages.isEmpty());
     }
 
     @Test
     @DisplayName("Should do nothing when basePackages is empty")
     void shouldDoNothingWhenBasePackagesIsEmpty() throws DslException {
-        // Given
         MockPackageableBuilder builder = new MockPackageableBuilder();
-        ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
+        PackageScanHelper helper = new PackageScanHelper(mockReflection(List.of()));
 
-        // When
-        PackageScanHelper.scanAndAddPackages(scanner, builder, new String[0]);
+        helper.scanAndAddPackages(builder, new String[0]);
 
-        // Then
         assertTrue(builder.packages.isEmpty());
     }
 
     @Test
     @DisplayName("Should skip builder that does not implement IPackageableBuilder")
     void shouldSkipNonPackageableBuilder() throws DslException {
-        // Given
         MockNonPackageableBuilder builder = new MockNonPackageableBuilder();
-        String[] basePackages = {"com.garganttua.core.dsl"};
-        ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
+        PackageScanHelper helper = new PackageScanHelper(mockReflection(List.of()));
 
-        // When
-        PackageScanHelper.scanAndAddPackages(scanner, builder, basePackages);
+        helper.scanAndAddPackages(builder, new String[]{"com.garganttua.core.dsl"});
 
-        // Then - Should complete without error, no packages added
         assertEquals(0, builder.buildCallCount);
     }
 
     @Test
     @DisplayName("Should handle package scanning failures gracefully")
     void shouldHandleScanningFailuresGracefully() {
-        // Given
         MockPackageableBuilder builder = new MockPackageableBuilder();
-        String[] basePackages = {"com.nonexistent.package"};
-        ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
+        PackageScanHelper helper = new PackageScanHelper(mockReflection(null)); // will throw
 
-        // When/Then - Should not throw exception
-        try {
-            PackageScanHelper.scanAndAddPackages(scanner, builder, basePackages);
-            assertTrue(true, "Should handle scanning failures without throwing exception");
-        } catch (Exception e) {
-            fail("Should not throw exception for non-existent packages");
-        }
+        assertDoesNotThrow(() -> helper.scanAndAddPackages(builder, new String[]{"com.nonexistent"}));
     }
 
-    // Mock classes for testing
+    // --- Mock builders ---
 
     static class MockPackageableBuilder implements IPackageableBuilder<MockPackageableBuilder, String> {
         Set<String> packages = new HashSet<>();
@@ -118,9 +152,7 @@ class PackageScanHelperTest {
 
         @Override
         public MockPackageableBuilder withPackages(String[] packageNames) {
-            for (String packageName : packageNames) {
-                packages.add(packageName);
-            }
+            for (String p : packageNames) packages.add(p);
             return this;
         }
 
@@ -145,12 +177,11 @@ class PackageScanHelperTest {
         }
     }
 
-    // Test classes with @Scan annotations
+    // --- @Scan annotated test classes ---
+
     @Scan(scan = "com.garganttua.core.test.package1")
-    public static class TestClass1 {
-    }
+    public static class TestClass1 {}
 
     @Scan(scan = "com.garganttua.core.test.package2")
-    public static class TestClass2 {
-    }
+    public static class TestClass2 {}
 }

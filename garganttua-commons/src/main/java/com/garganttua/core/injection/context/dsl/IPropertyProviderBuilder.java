@@ -3,6 +3,7 @@ package com.garganttua.core.injection.context.dsl;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for constructing property providers with configuration properties.
@@ -75,6 +76,6 @@ public interface IPropertyProviderBuilder extends IAutomaticLinkedBuilder<IPrope
      * @return this builder for method chaining
      * @throws DslException if the property cannot be registered
      */
-    <PropertyType> IPropertyProviderBuilder withProperty(Class<PropertyType> propertyType, String key, PropertyType property) throws DslException;
+    <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType, String key, PropertyType property) throws DslException;
 
 }

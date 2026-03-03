@@ -3,12 +3,12 @@ package com.garganttua.core.runtime.resolver;
 import static com.garganttua.core.injection.IInjectableElementResolver.*;
 import static com.garganttua.core.runtime.RuntimeContext.*;
 
-import java.lang.reflect.AnnotatedElement;
-
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.NoArgsConstructor;
@@ -21,12 +21,12 @@ public class ExceptionElementResolver implements IElementResolver {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
 
         log.atTrace()
                 .log("Resolving exception element");
 
-        if (!Throwable.class.isAssignableFrom(elementType)) {
+        if (!Throwable.class.isAssignableFrom(elementType.getType())) {
             log.atError()
                     .log("Injectable is not a Throwable, throwing exception");
             throw new DiException("Injectable is not a Throwable: " + elementType.getSimpleName());
@@ -35,7 +35,7 @@ public class ExceptionElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Element type is valid Throwable, preparing supplier");
 
-        Class<? extends Throwable> exceptionType = (Class<? extends Throwable>) elementType;
+        Class<? extends Throwable> exceptionType = (Class<? extends Throwable>) elementType.getType();
         ISupplierBuilder<? extends Throwable, ?> s = exception(exceptionType);
 
         boolean nullable = isNullable(element);

@@ -137,6 +137,12 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
                 </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/generated-binders</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/generated-constructor-binders</resource>
+                </transformer>
               </transformers>
               <filters>
                 <filter>

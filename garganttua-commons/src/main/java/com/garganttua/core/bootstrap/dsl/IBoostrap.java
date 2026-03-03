@@ -6,6 +6,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.dsl.IRebuildableBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
 
 /**
  * Bootstrap interface for building and rebuilding application components.
@@ -25,7 +26,7 @@ import com.garganttua.core.dsl.IRebuildableBuilder;
  *
  * @since 2.0.0-ALPHA01
  */
-public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry>, IPackageableBuilder<IBoostrap, IBuiltRegistry> {
+public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry>, IPackageableBuilder<IBoostrap, IBuiltRegistry>, IDependentBuilder<IBoostrap, IBuiltRegistry> {
 
     /**
      * Adds a builder to be managed by this bootstrap.

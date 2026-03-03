@@ -8,9 +8,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.injection.context.resolver.FixedElementResolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -24,18 +29,23 @@ public class FixedElementResolverTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
         resolver = new FixedElementResolver();
+    }
+
+    private static IAnnotatedElement adapt(Field field) {
+        return IInjectableElementResolver.toIAnnotatedElement(field.getAnnotations(), field.getDeclaredAnnotations());
     }
 
     @Test
     void testResolveFixedInt() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedInt");
 
-        Resolved resolved = resolver.resolve(int.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(int.class), adapt(field));
 
         assertNotNull(resolved);
         assertTrue(resolved.resolved());
-        assertEquals(int.class, resolved.elementType());
+        assertEquals(IClass.getClass(int.class), resolved.elementType());
         assertNotNull(resolved.elementSupplier());
 
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -47,7 +57,7 @@ public class FixedElementResolverTest {
     void testResolveFixedInteger() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedInteger");
 
-        Resolved resolved = resolver.resolve(Integer.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(Integer.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -59,7 +69,7 @@ public class FixedElementResolverTest {
     void testResolveFixedString() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedString");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -71,7 +81,7 @@ public class FixedElementResolverTest {
     void testResolveFixedDouble() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedDouble");
 
-        Resolved resolved = resolver.resolve(double.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(double.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -83,7 +93,7 @@ public class FixedElementResolverTest {
     void testResolveFixedLong() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedLong");
 
-        Resolved resolved = resolver.resolve(long.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(long.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -95,7 +105,7 @@ public class FixedElementResolverTest {
     void testResolveFixedFloat() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedFloat");
 
-        Resolved resolved = resolver.resolve(float.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(float.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -107,7 +117,7 @@ public class FixedElementResolverTest {
     void testResolveFixedBoolean() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedBoolean");
 
-        Resolved resolved = resolver.resolve(boolean.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(boolean.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -119,7 +129,7 @@ public class FixedElementResolverTest {
     void testResolveFixedByte() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedByte");
 
-        Resolved resolved = resolver.resolve(byte.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(byte.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -131,7 +141,7 @@ public class FixedElementResolverTest {
     void testResolveFixedShort() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedShort");
 
-        Resolved resolved = resolver.resolve(short.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(short.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -143,7 +153,7 @@ public class FixedElementResolverTest {
     void testResolveFixedChar() throws NoSuchFieldException, DiException, SupplyException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedChar");
 
-        Resolved resolved = resolver.resolve(char.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(char.class), adapt(field));
 
         assertTrue(resolved.resolved());
         ISupplier<?> supplier = resolved.elementSupplier().build();
@@ -155,7 +165,7 @@ public class FixedElementResolverTest {
     void testResolveNonPrimitiveReturnsNotResolved() throws NoSuchFieldException, DiException {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedObject");
 
-        Resolved resolved = resolver.resolve(Object.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(Object.class), adapt(field));
 
         assertFalse(resolved.resolved());
         assertNull(resolved.elementSupplier());
@@ -164,7 +174,7 @@ public class FixedElementResolverTest {
     @Test
     void testResolveThrowsExceptionForNullElement() {
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(int.class, null);
+            resolver.resolve(IClass.getClass(int.class), null);
         });
     }
 
@@ -173,7 +183,7 @@ public class FixedElementResolverTest {
         Field field = TestClassWithFixed.class.getDeclaredField("fixedInt");
 
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(null, field);
+            resolver.resolve(null, adapt(field));
         });
     }
 
@@ -182,13 +192,13 @@ public class FixedElementResolverTest {
         Fixed annotation = TestClassWithFixed.class.getDeclaredField("fixedInt")
                 .getAnnotation(Fixed.class);
 
-        assertEquals(42, FixedElementResolver.getFixedValue(annotation, int.class));
-        assertEquals(42, FixedElementResolver.getFixedValue(annotation, Integer.class));
+        assertEquals(42, FixedElementResolver.getFixedValue(annotation, IClass.getClass(int.class)));
+        assertEquals(42, FixedElementResolver.getFixedValue(annotation, IClass.getClass(Integer.class)));
     }
 
     @Test
     void testGetFixedValueWithNullAnnotationReturnsNull() throws DiException {
-        assertNull(FixedElementResolver.getFixedValue(null, int.class));
+        assertNull(FixedElementResolver.getFixedValue(null, IClass.getClass(int.class)));
     }
 
     @Test
@@ -205,7 +215,7 @@ public class FixedElementResolverTest {
                 .getAnnotation(Fixed.class);
 
         assertThrows(DiException.class, () -> {
-            FixedElementResolver.getFixedValue(annotation, Object.class);
+            FixedElementResolver.getFixedValue(annotation, IClass.getClass(Object.class));
         });
     }
 

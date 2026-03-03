@@ -8,9 +8,14 @@ import java.lang.reflect.Parameter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Null;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -26,18 +31,27 @@ public class NullElementResolverTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
         resolver = new NullElementResolver();
+    }
+
+    private static IAnnotatedElement adapt(Field field) {
+        return IInjectableElementResolver.toIAnnotatedElement(field.getAnnotations(), field.getDeclaredAnnotations());
+    }
+
+    private static IAnnotatedElement adapt(Parameter parameter) {
+        return IInjectableElementResolver.toIAnnotatedElement(parameter.getAnnotations(), parameter.getDeclaredAnnotations());
     }
 
     @Test
     void testResolveFieldWithNullAnnotation() throws NoSuchFieldException {
         Field field = TestClassWithNull.class.getDeclaredField("nullableField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertNotNull(resolved);
         assertTrue(resolved.resolved());
-        assertEquals(String.class, resolved.elementType());
+        assertEquals(IClass.getClass(String.class), resolved.elementType());
         assertNotNull(resolved.elementSupplier());
         assertFalse(resolved.nullable());
     }
@@ -46,11 +60,11 @@ public class NullElementResolverTest {
     void testResolveFieldWithNullAndNullable() throws NoSuchFieldException {
         Field field = TestClassWithNull.class.getDeclaredField("nullableWithNullableAnnotation");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
 
         assertNotNull(resolved);
         assertTrue(resolved.resolved());
-        assertEquals(String.class, resolved.elementType());
+        assertEquals(IClass.getClass(String.class), resolved.elementType());
         assertTrue(resolved.nullable());
     }
 
@@ -58,7 +72,7 @@ public class NullElementResolverTest {
     void testResolveSuppliesNull() throws NoSuchFieldException, SupplyException {
         Field field = TestClassWithNull.class.getDeclaredField("nullableField");
 
-        Resolved resolved = resolver.resolve(String.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(field));
         ISupplier<?> supplier = resolved.elementSupplier().build();
         Object value = supplier.supply().orElse(null);
 
@@ -70,11 +84,11 @@ public class NullElementResolverTest {
         Parameter parameter = TestClassWithNull.class.getConstructor(String.class)
                 .getParameters()[0];
 
-        Resolved resolved = resolver.resolve(String.class, parameter);
+        Resolved resolved = resolver.resolve(IClass.getClass(String.class), adapt(parameter));
 
         assertNotNull(resolved);
         assertTrue(resolved.resolved());
-        assertEquals(String.class, resolved.elementType());
+        assertEquals(IClass.getClass(String.class), resolved.elementType());
         assertNotNull(resolved.elementSupplier());
     }
 
@@ -84,24 +98,24 @@ public class NullElementResolverTest {
         Field booleanField = TestClassWithNull.class.getDeclaredField("nullableBoolean");
         Field objectField = TestClassWithNull.class.getDeclaredField("nullableObject");
 
-        Resolved intResolved = resolver.resolve(Integer.class, intField);
-        Resolved booleanResolved = resolver.resolve(Boolean.class, booleanField);
-        Resolved objectResolved = resolver.resolve(Object.class, objectField);
+        Resolved intResolved = resolver.resolve(IClass.getClass(Integer.class), adapt(intField));
+        Resolved booleanResolved = resolver.resolve(IClass.getClass(Boolean.class), adapt(booleanField));
+        Resolved objectResolved = resolver.resolve(IClass.getClass(Object.class), adapt(objectField));
 
         assertTrue(intResolved.resolved());
-        assertEquals(Integer.class, intResolved.elementType());
+        assertEquals(IClass.getClass(Integer.class), intResolved.elementType());
 
         assertTrue(booleanResolved.resolved());
-        assertEquals(Boolean.class, booleanResolved.elementType());
+        assertEquals(IClass.getClass(Boolean.class), booleanResolved.elementType());
 
         assertTrue(objectResolved.resolved());
-        assertEquals(Object.class, objectResolved.elementType());
+        assertEquals(IClass.getClass(Object.class), objectResolved.elementType());
     }
 
     @Test
     void testResolveThrowsExceptionForNullElement() {
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(String.class, null);
+            resolver.resolve(IClass.getClass(String.class), null);
         });
     }
 
@@ -110,7 +124,7 @@ public class NullElementResolverTest {
         Field field = TestClassWithNull.class.getDeclaredField("nullableField");
 
         assertThrows(NullPointerException.class, () -> {
-            resolver.resolve(null, field);
+            resolver.resolve(null, adapt(field));
         });
     }
 
@@ -118,7 +132,7 @@ public class NullElementResolverTest {
     void testResolvedSupplierBuildsCorrectly() throws NoSuchFieldException, SupplyException {
         Field field = TestClassWithNull.class.getDeclaredField("nullableInt");
 
-        Resolved resolved = resolver.resolve(Integer.class, field);
+        Resolved resolved = resolver.resolve(IClass.getClass(Integer.class), adapt(field));
         ISupplier<?> supplier = resolved.elementSupplier().build();
 
         assertNotNull(supplier);
@@ -130,8 +144,8 @@ public class NullElementResolverTest {
         Field field1 = TestClassWithNull.class.getDeclaredField("nullableField");
         Field field2 = TestClassWithNull.class.getDeclaredField("nullableObject");
 
-        Resolved resolved1 = resolver.resolve(String.class, field1);
-        Resolved resolved2 = resolver.resolve(Object.class, field2);
+        Resolved resolved1 = resolver.resolve(IClass.getClass(String.class), adapt(field1));
+        Resolved resolved2 = resolver.resolve(IClass.getClass(Object.class), adapt(field2));
 
         assertNotSame(resolved1, resolved2);
         assertNotSame(resolved1.elementSupplier(), resolved2.elementSupplier());

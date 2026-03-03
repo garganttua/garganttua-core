@@ -6,7 +6,7 @@ import java.util.Set;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
-import com.garganttua.core.reflection.binders.Dependent;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for managing dependencies on other observable builders.
@@ -25,9 +25,8 @@ import com.garganttua.core.reflection.binders.Dependent;
  * </ul>
  *
  * <p>
- * This interface extends {@link Dependent} to expose the collected dependencies
- * as a set of classes, enabling dependency tracking and validation throughout
- * the builder lifecycle.
+ * This interface exposes the collected dependencies as a set of classes,
+ * enabling dependency tracking and validation throughout the builder lifecycle.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -45,10 +44,10 @@ import com.garganttua.core.reflection.binders.Dependent;
  * @since 2.0.0-ALPHA01
  * @see IBuilder
  * @see IBuilderDependency
- * @see Dependent
+ * @see DependencySpec
  */
 public interface IDependentBuilder<Builder extends IBuilder<Built>, Built>
-        extends IBuilder<Built>, Dependent {
+        extends IBuilder<Built> {
 
     /**
      * Provides a dependency to this builder.
@@ -69,10 +68,8 @@ public interface IDependentBuilder<Builder extends IBuilder<Built>, Built>
 
     Set<Class<? extends IObservableBuilder<?, ?>>> require();
 
-    default Set<Class<?>> dependencies() {
-        Set<Class<?>> deps = new HashSet<>();
-        deps.addAll(this.use());
-        deps.addAll(this.require());
+    default Set<IClass<?>> dependencies() {
+        Set<IClass<?>> deps = new HashSet<>();
         return deps;
     }
 

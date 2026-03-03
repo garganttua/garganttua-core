@@ -5,12 +5,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.CopyException;
 
 public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
@@ -43,7 +45,7 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
         return new IPropertyProvider() {
 
             @Override
-            public <T> java.util.Optional<T> getProperty(String key, Class<T> type) {
+            public <T> java.util.Optional<T> getProperty(String key, IClass<T> type) throws DiException {
                 Object value = properties.get(key);
                 if (value != null && type.isInstance(value)) {
                     return java.util.Optional.of(type.cast(value));
@@ -104,7 +106,7 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
     }
 
     @Override
-    public <PropertyType> IPropertyProviderBuilder withProperty(Class<PropertyType> propertyType, String key,
+    public <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType, String key,
             PropertyType property) throws DslException {
         properties.put(key, property);
         return this;

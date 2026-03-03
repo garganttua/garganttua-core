@@ -4,10 +4,12 @@ import java.lang.annotation.Annotation;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.injection.IInjectionChildContextFactory;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.nativve.INativeBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for constructing dependency injection contexts using a fluent DSL.
@@ -46,7 +48,8 @@ import com.garganttua.core.nativve.INativeBuilder;
  * @see IAutomaticBuilder
  */
 public interface IInjectionContextBuilder extends INativeBuilder<IInjectionContextBuilder, IInjectionContext>,
-        IObservableBuilder<IInjectionContextBuilder, IInjectionContext> {
+        IObservableBuilder<IInjectionContextBuilder, IInjectionContext>,
+        IDependentBuilder<IInjectionContextBuilder, IInjectionContext> {
 
     /**
      * Registers a bean provider with an existing builder.
@@ -103,6 +106,6 @@ public interface IInjectionContextBuilder extends INativeBuilder<IInjectionConte
      * @param qualifier the qualifier annotation class
      * @return this builder for method chaining
      */
-    IInjectionContextBuilder withQualifier(Class<? extends Annotation> qualifier);
+    IInjectionContextBuilder withQualifier(IClass<? extends Annotation> qualifier);
 
 }

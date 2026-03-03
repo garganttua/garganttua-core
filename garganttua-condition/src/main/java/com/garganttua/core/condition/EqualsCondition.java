@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,8 @@ public class EqualsCondition<T> implements ICondition {
             }
             @Override
             public Type getSuppliedType() { return Boolean.class; }
+            @Override
+            public IClass<Boolean> getSuppliedClass() { return IClass.getClass(Boolean.class); }
         };
     }
 

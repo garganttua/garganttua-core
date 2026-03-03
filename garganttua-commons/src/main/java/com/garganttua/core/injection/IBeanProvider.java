@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.nativve.INativeReflectionConfiguration;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.Copyable;
 
 /**
@@ -65,7 +66,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @return an {@link Optional} containing the bean if found, or empty if not found
      * @throws DiException if an error occurs during bean retrieval or instantiation
      */
-    <T> Optional<T> get(Class<T> type) throws DiException;
+    <T> Optional<T> get(IClass<T> type) throws DiException;
 
     /**
      * Retrieves a bean instance by its name and type.
@@ -81,7 +82,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @return an {@link Optional} containing the bean if found, or empty if not found
      * @throws DiException if an error occurs during bean retrieval or instantiation
      */
-    <T> Optional<T> get(String name, Class<T> type) throws DiException;
+    <T> Optional<T> get(String name, IClass<T> type) throws DiException;
 
     /**
      * Retrieves all beans that implement or extend the specified interface or class.
@@ -96,7 +97,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, INat
      * @param includePrototypes whether to include prototype-scoped beans in the results
      * @return a list of all matching bean instances (never {@code null}, may be empty)
      */
-    <T> List<T> get(Class<T> interfasse, boolean includePrototypes);
+    <T> List<T> get(IClass<T> interfasse, boolean includePrototypes);
 
     /**
      * Checks if this provider is mutable.

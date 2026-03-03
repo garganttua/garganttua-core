@@ -14,9 +14,10 @@ import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
@@ -85,7 +86,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private void doInjection(Bean onBean) {
 		log.atTrace().log("Performing field injection for bean: {}", onBean);
 		this.definition.injectableFields()
-				.forEach(builder -> builder.ownerSupplierBuilder(new FixedSupplierBuilder<>(onBean)).build().setValue());
+				.forEach(builder -> builder.ownerSupplierBuilder(new FixedSupplierBuilder<>(onBean, this.definition.reference().type())).build().setValue());
 		log.atDebug().log("Field injection completed for bean: {}", onBean);
 	}
 
@@ -98,7 +99,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 						"Constructor binder returned empty for bean of type "
 								+ this.definition.reference().effectiveName()));
 			} else {
-				return ObjectReflectionHelper.instanciateNewObject(this.definition.reference().type());
+				return IClass.getReflection().newInstance(this.definition.reference().type());
 			}
 		} catch (Exception e) {
 			log.atError().log("Failed to instantiate bean of type {}: {}", this.definition.reference().effectiveName(),
@@ -145,7 +146,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 		for (IBeanPostConstructMethodBinderBuilder<Bean> methodBinderBuilder : this.definition
 				.postConstructMethodBinderBuilders()) {
 			try {
-				IMethodBinder<Void> methodBinder = methodBinderBuilder.build(FixedSupplierBuilder.of(bean));
+				IMethodBinder<Void> methodBinder = methodBinderBuilder.build(FixedSupplierBuilder.of(bean, this.definition.reference().type()));
 				methodBinder.execute();
 				log.atDebug().log("Post construct method executed for bean: {}", bean);
 			} catch (DslException | ReflectionException e) {
@@ -212,6 +213,11 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	@Override
 	public Type getSuppliedType() {
 		log.atTrace().log("Returning supplied type: {}", definition.reference().type());
+		return this.definition.reference().type().getType();
+	}
+
+	@Override
+	public IClass<Bean> getSuppliedClass() {
 		return this.definition.reference().type();
 	}
 
@@ -230,7 +236,7 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	}
 
 	@Override
-	public Set<Class<?>> dependencies() {
+	public Set<IClass<?>> dependencies() {
 		log.atTrace().log("Returning dependencies for definition: {}", definition);
 		return this.definition.dependencies();
 	}
@@ -257,12 +263,15 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 		// Fields
 		log.atDebug().log("Adding {} injectable fields to native entry", definition.injectableFields().size());
-		definition.injectableFields().forEach(f -> eb.field(f.field()));
+		definition.injectableFields().forEach(f -> eb.field(f.field().getName()));
 
 		// Methods
 		log.atDebug().log("Adding {} post construct methods to native entry",
 				definition.postConstructMethodBinderBuilders().size());
-		definition.postConstructMethodBinderBuilders().forEach(m -> eb.method(m.method()));
+		definition.postConstructMethodBinderBuilders().forEach(m -> {
+			IMethod iMethod = m.method();
+			eb.method(iMethod.getName(), iMethod.getParameterTypes());
+		});
 
 		log.atDebug().log("Native configuration entry built for type: {}", definition.reference().type());
 		return eb;

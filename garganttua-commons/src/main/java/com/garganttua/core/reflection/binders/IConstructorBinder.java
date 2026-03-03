@@ -1,6 +1,7 @@
 package com.garganttua.core.reflection.binders;
 
-import java.lang.reflect.Constructor;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
 
 /**
  * Binder interface for reflective constructor invocation and object instantiation.
@@ -34,8 +35,8 @@ import java.lang.reflect.Constructor;
  * // Returns Optional containing new Database("jdbc:...", 3306)
  *
  * // Check dependencies before instantiation
- * Class<Database> type = dbConstructor.getConstructedType();
- * Set<Class<?>> deps = dbConstructor.getDependencies();
+ * IClass<Database> type = dbConstructor.getConstructedType();
+ * Set<IClass<?>> deps = dbConstructor.getDependencies();
  * // Returns parameter types { String.class, int.class }
  * }</pre>
  *
@@ -70,15 +71,15 @@ public interface IConstructorBinder<Constructed> extends IExecutableBinder<Const
      * instance to be created.
      * </p>
      *
-     * @return the {@link Class} object representing the constructed type
+     * @return the {@link IClass} object representing the constructed type
      */
-    Class<Constructed> getConstructedType();
+    IClass<Constructed> getConstructedType();
 
     /**
-     * Returns the underlying Java constructor that this binder will invoke.
+     * Returns the underlying constructor descriptor that this binder will invoke.
      *
      * <p>
-     * This method provides direct access to the {@link Constructor} object that
+     * This method provides direct access to the {@link IConstructor} object that
      * will be used for object instantiation. This is useful for:
      * </p>
      * <ul>
@@ -93,9 +94,10 @@ public interface IConstructorBinder<Constructed> extends IExecutableBinder<Const
      * configuration based on the specified parameter types.
      * </p>
      *
-     * @return the {@link Constructor} object that will be invoked during execution
+     * @return the {@link IConstructor} object that will be invoked during execution
      * @since 2.0.0-ALPHA01
      */
-    Constructor<?> constructor();
+    @Deprecated(since = "2.0.0-ALPHA01", forRemoval = true)
+    IConstructor<?> constructor();
 
 }

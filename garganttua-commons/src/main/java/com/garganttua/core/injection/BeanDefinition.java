@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.garganttua.core.injection.context.dsl.IBeanInjectableFieldBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 
@@ -105,8 +106,8 @@ public record BeanDefinition<Bean>(BeanReference<Bean> reference,
      *
      * @return a set of all dependency classes (never {@code null})
      */
-    public Set<Class<?>> dependencies() {
-        Set<Class<?>> dependencies = new HashSet<>();
+    public Set<IClass<?>> dependencies() {
+        Set<IClass<?>> dependencies = new HashSet<>();
         this.injectableFields.stream().forEach(f -> {
             dependencies.addAll(f.dependencies());
         });

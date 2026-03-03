@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  *     return "result";
  * });
  *
- * ISupplier<String> supplier = new FutureSupplier<>(future, 5000); // 5 second timeout
+ * ISupplier<String> supplier = new FutureSupplier<>(future, suppliedClass, 5000L);
  * Optional<String> result = supplier.supply(); // Blocks until future completes or timeout
  * }</pre>
  *
@@ -40,16 +42,18 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
 
     private final CompletableFuture<Supplied> future;
     private final Long timeoutMillis;
-    private final Class<Supplied> suppliedType;
+    private final Type suppliedType;
+    private final IClass<Supplied> suppliedClass;
 
     /**
      * Creates a FutureSupplier with no timeout.
      *
      * @param future the CompletableFuture to wrap
      * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      */
-    public FutureSupplier(CompletableFuture<Supplied> future, Class<Supplied> suppliedType) {
-        this(future, suppliedType, null);
+    public FutureSupplier(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
+        this(future, suppliedClass, null);
     }
 
     /**
@@ -57,12 +61,14 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
      *
      * @param future the CompletableFuture to wrap
      * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      * @param timeoutMillis the timeout in milliseconds, or null for no timeout
      */
-    public FutureSupplier(CompletableFuture<Supplied> future, Class<Supplied> suppliedType, Long timeoutMillis) {
+    public FutureSupplier(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass, Long timeoutMillis) {
         log.atTrace().log("Entering FutureSupplier constructor with timeout: {}", timeoutMillis);
         this.future = Objects.requireNonNull(future, "Future cannot be null");
-        this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
+        this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
+        this.suppliedType = suppliedClass.getType();
         this.timeoutMillis = timeoutMillis;
         log.atTrace().log("Exiting FutureSupplier constructor");
     }
@@ -99,7 +105,12 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
     }
 
     @Override
-    public Class<Supplied> getSuppliedType() {
+    public Type getSuppliedType() {
         return suppliedType;
+    }
+
+    @Override
+    public IClass<Supplied> getSuppliedClass() {
+        return this.suppliedClass;
     }
 }

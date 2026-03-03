@@ -1,65 +1,74 @@
 package com.garganttua.core.mapper;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.mapper.annotations.MappingIgnore;
 import com.garganttua.core.mapper.annotations.ObjectMappingRule;
+import com.garganttua.core.mapper.rules.ImplicitConversionMappingExecutor;
+import com.garganttua.core.mapper.rules.ImplicitConversions;
 import com.garganttua.core.mapper.rules.MapableCollectionMappingExecutor;
+import com.garganttua.core.mapper.rules.MapableMapMappingExecutor;
 import com.garganttua.core.mapper.rules.MethodMappingExecutor;
 import com.garganttua.core.mapper.rules.SimpleCollectionMappingExecutor;
 import com.garganttua.core.mapper.rules.SimpleFieldMappingExecutor;
 import com.garganttua.core.mapper.rules.SimpleMapableFieldMappingExecutor;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
-import com.garganttua.core.reflection.fields.Fields;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class MappingRules {
 
-	public static List<MappingRule> parse(Class<?> destinationClass) throws MapperException {
-		log.atTrace().log("Entering parse(destinationClass={})", destinationClass);
-		log.atDebug().log("Parsing mapping rules for class: {}", destinationClass.getSimpleName());
+	private final IReflection reflection;
 
-		List<MappingRule> mappingRules = new ArrayList<MappingRule>();
-		List<MappingRule> result = MappingRules.recursiveParsing(destinationClass, mappingRules, "");
+	@SuppressWarnings("rawtypes")
+	private final IClass<Collection> collectionClass;
+	@SuppressWarnings("rawtypes")
+	private final IClass<Map> mapClass;
 
-		log.atDebug().log("Parsed {} mapping rules for class {}", result.size(), destinationClass.getSimpleName());
-		log.atTrace().log("Exiting parse() with {} rules", result.size());
+	public MappingRules(IReflection reflection) {
+		this.reflection = reflection;
+		this.collectionClass = reflection.getClass(Collection.class);
+		this.mapClass = reflection.getClass(Map.class);
+	}
+
+	public List<MappingRule> parse(IClass<?> destinationClass) throws MapperException {
+		log.atDebug().log("Parsing mapping rules for {}", destinationClass.getSimpleName());
+		List<MappingRule> mappingRules = new ArrayList<>();
+		List<MappingRule> result = this.recursiveParsing(destinationClass, mappingRules, "");
+		log.atDebug().log("Parsed {} rules for {}", result.size(), destinationClass.getSimpleName());
 		return result;
 	}
 
-	private static List<MappingRule> recursiveParsing(Class<?> destinationClass, List<MappingRule> mappingRules,
+	private List<MappingRule> recursiveParsing(IClass<?> destinationClass, List<MappingRule> mappingRules,
 			String fieldAddress) throws MapperException {
-		log.atTrace().log("Entering recursiveParsing(destinationClass={}, fieldAddress={})", destinationClass, fieldAddress);
-		log.atDebug().log("Looking for mapping rules in class {} at address {}", destinationClass.getSimpleName(), fieldAddress);
-
 		try {
 			boolean objectMapping = false;
-			if (destinationClass.isAnnotationPresent(ObjectMappingRule.class)) {
-				log.atDebug().log("Found ObjectMappingRule annotation on class {}", destinationClass.getSimpleName());
-				ObjectMappingRule annotation = destinationClass.getDeclaredAnnotation(ObjectMappingRule.class);
-				ObjectAddress fromSourceMethod;
-				fromSourceMethod = new ObjectAddress(annotation.fromSourceMethod());
+			IClass<ObjectMappingRule> objectMappingRuleClass = this.reflection.getClass(ObjectMappingRule.class);
+			if (destinationClass.isAnnotationPresent(objectMappingRuleClass)) {
+				ObjectMappingRule annotation = destinationClass.getDeclaredAnnotation(objectMappingRuleClass);
+				ObjectAddress fromSourceMethod = new ObjectAddress(annotation.fromSourceMethod());
 				ObjectAddress toSourceMethod = new ObjectAddress(annotation.toSourceMethod());
 				mappingRules.add(new MappingRule(null, null, destinationClass, fromSourceMethod, toSourceMethod));
-				log.atDebug().log("Added object mapping rule for class {}", destinationClass.getSimpleName());
 				objectMapping = true;
 			}
 
-			for (Field field : destinationClass.getDeclaredFields()) {
-				if (field.isAnnotationPresent(FieldMappingRule.class) && !objectMapping) {
-					log.atDebug().log("Found FieldMappingRule annotation on field {}", field.getName());
-					FieldMappingRule annotation = field.getDeclaredAnnotation(FieldMappingRule.class);
+			IClass<FieldMappingRule> fieldMappingRuleClass = this.reflection.getClass(FieldMappingRule.class);
+			for (IField field : destinationClass.getDeclaredFields()) {
+				if (field.isAnnotationPresent(fieldMappingRuleClass) && !objectMapping) {
+					FieldMappingRule annotation = field.getDeclaredAnnotation(fieldMappingRuleClass);
 
 					ObjectAddress fromSourceMethod = null;
 					if (!annotation.fromSourceMethod().isEmpty()) {
@@ -75,137 +84,110 @@ public class MappingRules {
 
 					mappingRules.add(new MappingRule(sourceFieldAddress, destFieldAddress, destinationClass,
 							fromSourceMethod, toSourceMethod));
-					log.atDebug().log("Added field mapping rule: {} -> {}", sourceFieldAddress, destFieldAddress);
 				} else {
-					if (Fields.isNotPrimitive(field.getType()) &&
-							!Collection.class.isAssignableFrom(field.getType()) &&
-							!Map.class.isAssignableFrom(field.getType()) &&
-							field.getType().isArray()) {
-						log.atDebug().log("Recursively parsing array field type: {}", field.getType().getSimpleName());
-						MappingRules.recursiveParsing(field.getType(), mappingRules,
+					IClass<?> fieldType = field.getType();
+					if (isNotPrimitive(fieldType) &&
+							!collectionClass.isAssignableFrom(fieldType) &&
+							!mapClass.isAssignableFrom(fieldType) &&
+							fieldType.isArray()) {
+						this.recursiveParsing(fieldType, mappingRules,
 								fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
-					} else if (Collection.class.isAssignableFrom(field.getType())) {
-						log.atDebug().log("Recursively parsing collection field: {}", field.getName());
-						MappingRules.recursiveParsing(Fields.getGenericType(field, 0), mappingRules,
-								fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
-					} else if (Map.class.isAssignableFrom(field.getType())) {
-						log.atDebug().log("Recursively parsing map field: {}", field.getName());
-						MappingRules.recursiveParsing(Fields.getGenericType(field, 0), mappingRules,
-								fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
-										+ ObjectAddress.MAP_KEY_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
-						MappingRules.recursiveParsing(Fields.getGenericType(field, 1), mappingRules,
-								fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
-										+ ObjectAddress.MAP_VALUE_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
+					} else if (collectionClass.isAssignableFrom(fieldType)) {
+						IClass<?> genericType = getFieldGenericType(field, 0);
+						if (genericType != null) {
+							this.recursiveParsing(genericType, mappingRules,
+									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
+						}
+					} else if (mapClass.isAssignableFrom(fieldType)) {
+						IClass<?> keyType = getFieldGenericType(field, 0);
+						IClass<?> valueType = getFieldGenericType(field, 1);
+						if (keyType != null) {
+							this.recursiveParsing(keyType, mappingRules,
+									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
+											+ ObjectAddress.MAP_KEY_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
+						}
+						if (valueType != null) {
+							this.recursiveParsing(valueType, mappingRules,
+									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
+											+ ObjectAddress.MAP_VALUE_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
+						}
 					}
 				}
 			}
-			if (destinationClass.getSuperclass() != null) {
-				log.atDebug().log("Recursively parsing superclass: {}", destinationClass.getSuperclass().getSimpleName());
-				MappingRules.recursiveParsing(destinationClass.getSuperclass(), mappingRules, fieldAddress);
+			IClass<?> superclass = destinationClass.getSuperclass();
+			if (superclass != null) {
+				this.recursiveParsing(superclass, mappingRules, fieldAddress);
 			}
 
-			log.atTrace().log("Exiting recursiveParsing() with {} rules", mappingRules.size());
 			return mappingRules;
 		} catch (ReflectionException e) {
-			log.atError().log("Reflection error during recursive parsing: {}", e.getMessage());
 			throw new MapperException(e);
 		}
 	}
 
-	public static void validate(Class<?> sourceClass, List<MappingRule> rules) throws MapperException {
-		log.atTrace().log("Entering validate(sourceClass={}, rules count={})", sourceClass, rules.size());
-		log.atDebug().log("Validating {} mapping rules for class {}", rules.size(), sourceClass.getSimpleName());
-
-		IObjectQuery sourceQuery;
+	public void validate(IClass<?> sourceClass, List<MappingRule> rules) throws MapperException {
+		log.atDebug().log("Validating {} rules for {}", rules.size(), sourceClass.getSimpleName());
 		try {
-			sourceQuery = ObjectQueryFactory.objectQuery(sourceClass);
+			IObjectQuery<?> sourceQuery = this.reflection.query(sourceClass);
 			for (MappingRule rule : rules) {
-				log.atDebug().log("Validating mapping rule: {}", rule);
-				MappingRules.validate(sourceQuery, rule);
+				this.validate(sourceQuery, rule);
 			}
-			log.atDebug().log("All mapping rules validated successfully");
-			log.atTrace().log("Exiting validate()");
 		} catch (ReflectionException e) {
-			log.atError().log("Validation failed for class {}: {}", sourceClass.getSimpleName(), e.getMessage());
 			throw new MapperException(e);
 		}
 	}
 
-	private static void validate(IObjectQuery sourceQuery, MappingRule rule)
+	private void validate(IObjectQuery<?> sourceQuery, MappingRule rule)
 			throws MapperException {
-		log.atTrace().log("Entering validate(sourceQuery={}, rule={})", sourceQuery, rule);
-		log.atDebug().log("Validating mapping rule {} for source query {}", rule.toString(), sourceQuery.toString());
-
 		try {
-			IObjectQuery destQuery = ObjectQueryFactory.objectQuery(rule.destinationClass());
+			IObjectQuery<?> destQuery = this.reflection.query(rule.destinationClass());
 
 			List<Object> sourceField_ = sourceQuery.find(rule.sourceFieldAddress());
 			List<Object> destField_ = destQuery.find(rule.destinationFieldAddress());
 
-			Field sourceField = (Field) sourceField_.get(sourceField_.size() - 1);
-			Field destField = (Field) destField_.get(destField_.size() - 1);
-
-			log.atDebug().log("Validating field mapping: {} -> {}", sourceField.getName(), destField.getName());
+			IField sourceField = (IField) sourceField_.get(sourceField_.size() - 1);
+			IField destField = (IField) destField_.get(destField_.size() - 1);
 
 			if (rule.fromSourceMethodAddress() != null) {
-				log.atDebug().log("Validating fromSourceMethod: {}", rule.fromSourceMethodAddress());
 				List<Object> fromMethod_ = destQuery.find(rule.fromSourceMethodAddress());
-				Method fromMethod = (Method) fromMethod_.get(fromMethod_.size() - 1);
-
+				IMethod fromMethod = (IMethod) fromMethod_.get(fromMethod_.size() - 1);
 				MappingRules.validateMethod(rule, sourceField, destField, fromMethod);
 			}
 			if (rule.toSourceMethodAddress() != null) {
-				log.atDebug().log("Validating toSourceMethod: {}", rule.toSourceMethodAddress());
 				List<Object> toMethod_ = destQuery.find(rule.toSourceMethodAddress());
-				Method toMethod = (Method) toMethod_.get(toMethod_.size() - 1);
-
+				IMethod toMethod = (IMethod) toMethod_.get(toMethod_.size() - 1);
 				MappingRules.validateMethod(rule, destField, sourceField, toMethod);
 			}
-
-			log.atTrace().log("Exiting validate()");
 		} catch (ReflectionException e) {
-			log.atError().log("Validation error for mapping rule: {}", e.getMessage());
 			throw new MapperException(e);
 		}
 	}
 
-	private static void validateMethod(MappingRule rule, Field sourceField, Field destField, Method method)
+	private static void validateMethod(MappingRule rule, IField sourceField, IField destField, IMethod method)
 			throws MapperException {
-		log.atTrace().log("Entering validateMethod(method={}, sourceField={}, destField={})", method.getName(), sourceField.getName(), destField.getName());
-		log.atDebug().log("Validating method {} for rule {}", method.getName(), rule);
-
 		if (method.getParameterTypes().length != 1) {
-			log.atError().log("Method {} has invalid parameter count: {}", method.getName(), method.getParameterTypes().length);
 			throw new MapperException("Invalid method " + method.getName() + " of class "
 					+ rule.destinationClass().getSimpleName() + " : must have exactly one parameter");
 		}
 
-		Class<?> paramType = method.getParameterTypes()[0];
-		Class<?> returnType = method.getReturnType();
+		IClass<?> paramType = method.getParameterTypes()[0];
+		IClass<?> returnType = method.getReturnType();
 
-		log.atDebug().log("Method signature validation - paramType: {}, returnType: {}", paramType.getSimpleName(), returnType.getSimpleName());
-
-		if (!paramType.equals(sourceField.getType())) {
-			log.atError().log("Method {} parameter type mismatch: expected {}, got {}", method.getName(), sourceField.getType().getSimpleName(), paramType.getSimpleName());
+		if (!paramType.getType().equals(sourceField.getType().getType())) {
 			throw new MapperException(
 					"Invalid method " + method.getName() + " of class " + rule.destinationClass().getSimpleName()
-							+ " : parameter must be of type " + sourceField.getType());
+							+ " : parameter must be of type " + sourceField.getType().getType());
 		}
 
-		if (!returnType.equals(destField.getType())) {
-			log.atError().log("Method {} return type mismatch: expected {}, got {}", method.getName(), destField.getType().getSimpleName(), returnType.getSimpleName());
+		if (!returnType.getType().equals(destField.getType().getType())) {
 			throw new MapperException("Invalid method " + method.getName() + " of class "
-					+ rule.destinationClass().getSimpleName() + " : return type must be " + destField.getType());
+					+ rule.destinationClass().getSimpleName() + " : return type must be " + destField.getType().getType());
 		}
-
-		log.atDebug().log("Method {} validated successfully", method.getName());
-		log.atTrace().log("Exiting validateMethod()");
 	}
 
-	public static IMappingRuleExecutor getRuleExecutor(IMapper mapper, MappingDirection mappingDirection,
-			MappingRule rule, Object source, Class<?> destinationClass) throws MapperException {
-		log.atTrace().log("Entering getRuleExecutor(mappingDirection={}, rule={}, source={}, destinationClass={})", mappingDirection, rule, source, destinationClass);
-		log.atDebug().log("Getting rule executor for mapping direction {} from {} to {}", mappingDirection, source.getClass().getSimpleName(), destinationClass.getSimpleName());
+	public IMappingRuleExecutor getRuleExecutor(IMapper mapper, MappingDirection mappingDirection,
+			MappingRule rule, IClass<?> sourceClass, IClass<?> destinationClass) throws MapperException {
+		log.atDebug().log("Resolving executor for {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingDirection);
 
 		List<Object> destinationField = null;
 		List<Object> sourceField = null;
@@ -213,82 +195,167 @@ public class MappingRules {
 
 		try {
 			if (mappingDirection == MappingDirection.REGULAR) {
-				log.atDebug().log("Processing REGULAR mapping direction");
 				if (rule.fromSourceMethodAddress() != null) {
-					log.atDebug().log("Finding fromSourceMethod: {}", rule.fromSourceMethodAddress());
-					mappingMethod = ObjectQueryFactory.objectQuery(destinationClass)
+					mappingMethod = this.reflection.query(destinationClass)
 							.find(rule.fromSourceMethodAddress());
 				}
-				sourceField = ObjectQueryFactory.objectQuery(source.getClass()).find(rule.sourceFieldAddress());
-				destinationField = ObjectQueryFactory.objectQuery(destinationClass)
+				sourceField = this.reflection.query(sourceClass).find(rule.sourceFieldAddress());
+				destinationField = this.reflection.query(destinationClass)
 						.find(rule.destinationFieldAddress());
 			} else {
-				log.atDebug().log("Processing REVERSE mapping direction");
 				if (rule.toSourceMethodAddress() != null) {
-					log.atDebug().log("Finding toSourceMethod: {}", rule.toSourceMethodAddress());
-					mappingMethod = ObjectQueryFactory.objectQuery(source.getClass())
+					mappingMethod = this.reflection.query(sourceClass)
 							.find(rule.toSourceMethodAddress());
 				}
-				sourceField = ObjectQueryFactory.objectQuery(source.getClass()).find(rule.destinationFieldAddress());
-				destinationField = ObjectQueryFactory.objectQuery(destinationClass).find(rule.sourceFieldAddress());
+				sourceField = this.reflection.query(sourceClass).find(rule.destinationFieldAddress());
+				destinationField = this.reflection.query(destinationClass).find(rule.sourceFieldAddress());
 			}
 
-			Field sourceFieldLeaf = (Field) sourceField.get(sourceField.size() - 1);
-			Field destinationFieldLeaf = (Field) destinationField.get(destinationField.size() - 1);
+			IField sourceFieldLeaf = (IField) sourceField.get(sourceField.size() - 1);
+			IField destinationFieldLeaf = (IField) destinationField.get(destinationField.size() - 1);
 
-			log.atDebug().log("Field transformation: {} ({}) -> {} ({})", sourceFieldLeaf.getName(), sourceFieldLeaf.getType().getSimpleName(), destinationFieldLeaf.getName(), destinationFieldLeaf.getType().getSimpleName());
+			IClass<?> sourceFieldType = sourceFieldLeaf.getType();
+			IClass<?> destFieldType = destinationFieldLeaf.getType();
 
 			if (mappingMethod != null) {
-				Method methodLeaf = (Method) mappingMethod.get(mappingMethod.size() - 1);
-				log.atDebug().log("Using MethodMappingExecutor for method: {}", methodLeaf.getName());
-				IMappingRuleExecutor result = new MethodMappingExecutor(methodLeaf, sourceFieldLeaf, destinationFieldLeaf, mappingDirection);
-				log.atTrace().log("Exiting getRuleExecutor() with MethodMappingExecutor");
-				return result;
-			} else if (Collection.class.isAssignableFrom(sourceFieldLeaf.getType())
-					&& Collection.class.isAssignableFrom(destinationFieldLeaf.getType())) {
-				Class<?> sourceGenericeType = Fields.getGenericType(sourceFieldLeaf, 0);
-				Class<?> destGenericeType = Fields.getGenericType(destinationFieldLeaf, 0);
-
-				log.atDebug().log("Processing collection mapping: source generic={}, dest generic={}", sourceGenericeType.getSimpleName(), destGenericeType.getSimpleName());
-
-				if (ObjectReflectionHelper.equals(sourceFieldLeaf.getType(), destinationFieldLeaf.getType())
-						&& sourceGenericeType.equals(destGenericeType)) {
-					log.atDebug().log("Using SimpleFieldMappingExecutor for identical collection types");
-					IMappingRuleExecutor result = new SimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
-					log.atTrace().log("Exiting getRuleExecutor() with SimpleFieldMappingExecutor");
-					return result;
-				} else if (!ObjectReflectionHelper.equals(sourceFieldLeaf.getType(), destinationFieldLeaf.getType())
-						&& sourceGenericeType.equals(destGenericeType)) {
-					log.atDebug().log("Using SimpleCollectionMappingExecutor for different collection types");
-					IMappingRuleExecutor result = new SimpleCollectionMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
-					log.atTrace().log("Exiting getRuleExecutor() with SimpleCollectionMappingExecutor");
-					return result;
+				IMethod methodLeaf = (IMethod) mappingMethod.get(mappingMethod.size() - 1);
+				return new MethodMappingExecutor(methodLeaf, sourceFieldLeaf, destinationFieldLeaf, mappingDirection);
+			} else if (mapClass.isAssignableFrom(sourceFieldType)
+					&& mapClass.isAssignableFrom(destFieldType)) {
+				// Map<K,V> mapping
+				IClass<?> srcKeyType = getFieldGenericType(sourceFieldLeaf, 0);
+				IClass<?> srcValType = getFieldGenericType(sourceFieldLeaf, 1);
+				IClass<?> dstKeyType = getFieldGenericType(destinationFieldLeaf, 0);
+				IClass<?> dstValType = getFieldGenericType(destinationFieldLeaf, 1);
+				boolean keysMatch = srcKeyType != null && dstKeyType != null
+						&& srcKeyType.getType().equals(dstKeyType.getType());
+				boolean valsMatch = srcValType != null && dstValType != null
+						&& srcValType.getType().equals(dstValType.getType());
+				if (keysMatch && valsMatch) {
+					return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
 				} else {
-					log.atDebug().log("Using MapableCollectionMappingExecutor for mappable collection elements");
-					IMappingRuleExecutor result = new MapableCollectionMappingExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
-					log.atTrace().log("Exiting getRuleExecutor() with MapableCollectionMappingExecutor");
-					return result;
+					return new MapableMapMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
 				}
-			} else if (ObjectReflectionHelper.equals(sourceFieldLeaf.getType(), destinationFieldLeaf.getType())) {
-				log.atDebug().log("Using SimpleFieldMappingExecutor for identical field types");
-				IMappingRuleExecutor result = new SimpleFieldMappingExecutor(sourceFieldLeaf, destinationFieldLeaf);
-				log.atTrace().log("Exiting getRuleExecutor() with SimpleFieldMappingExecutor");
-				return result;
-			} else if (!Fields.isArrayOrMapOrCollectionField(sourceFieldLeaf)
-					&& !Fields.isArrayOrMapOrCollectionField(destinationFieldLeaf)) {
-				log.atDebug().log("Using SimpleMapableFieldMappingExecutor for mappable fields");
-				IMappingRuleExecutor result = new SimpleMapableFieldMappingExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
-				log.atTrace().log("Exiting getRuleExecutor() with SimpleMapableFieldMappingExecutor");
-				return result;
+			} else if (collectionClass.isAssignableFrom(sourceFieldType)
+					&& collectionClass.isAssignableFrom(destFieldType)) {
+				IClass<?> sourceGenericType = getFieldGenericType(sourceFieldLeaf, 0);
+				IClass<?> destGenericType = getFieldGenericType(destinationFieldLeaf, 0);
+
+				if (sourceFieldType.getType().equals(destFieldType.getType())
+						&& sourceGenericType != null && sourceGenericType.getType().equals(destGenericType != null ? destGenericType.getType() : null)) {
+					return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+				} else if (!sourceFieldType.getType().equals(destFieldType.getType())
+						&& sourceGenericType != null && sourceGenericType.getType().equals(destGenericType != null ? destGenericType.getType() : null)) {
+					return new SimpleCollectionMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+				} else {
+					return new MapableCollectionMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
+				}
+			} else if (sourceFieldType.getType().equals(destFieldType.getType())) {
+				return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+			} else {
+				// Try implicit conversion before falling back to mapable field
+				java.util.Optional<java.util.function.Function<Object, Object>> conv =
+						ImplicitConversions.findConversion(sourceFieldType, destFieldType);
+				if (conv.isPresent()) {
+					return new ImplicitConversionMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf, conv.get());
+				} else if (!isArrayOrMapOrCollection(sourceFieldLeaf)
+						&& !isArrayOrMapOrCollection(destinationFieldLeaf)) {
+					return new SimpleMapableFieldMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
+				}
 			}
 
 			log.atWarn().log("No suitable executor found for rule: {}", rule);
-			log.atTrace().log("Exiting getRuleExecutor() with null");
 
 		} catch (ReflectionException e) {
-			log.atError().log("Failed to get rule executor: {}", e.getMessage());
 			throw new MapperException(e);
 		}
 		return null;
+	}
+
+	public List<MappingRule> generateConventionRules(IClass<?> source, IClass<?> destination) {
+		log.atDebug().log("Generating convention rules: {} -> {}", source.getSimpleName(), destination.getSimpleName());
+		List<MappingRule> rules = new ArrayList<>();
+		IClass<MappingIgnore> mappingIgnoreClass;
+		try {
+			mappingIgnoreClass = this.reflection.getClass(MappingIgnore.class);
+		} catch (Exception e) {
+			mappingIgnoreClass = null;
+		}
+		generateConventionRulesRecursive(source, destination, rules, mappingIgnoreClass);
+		log.atDebug().log("Generated {} convention rules", rules.size());
+		return rules;
+	}
+
+	private void generateConventionRulesRecursive(IClass<?> source, IClass<?> destination,
+			List<MappingRule> rules, IClass<MappingIgnore> mappingIgnoreClass) {
+		for (IField destField : destination.getDeclaredFields()) {
+			int modifiers = destField.getModifiers();
+			if (java.lang.reflect.Modifier.isStatic(modifiers)
+					|| java.lang.reflect.Modifier.isTransient(modifiers)
+					|| destField.isSynthetic()) {
+				continue;
+			}
+			if (mappingIgnoreClass != null && destField.isAnnotationPresent(mappingIgnoreClass)) {
+				continue;
+			}
+
+			String fieldName = destField.getName();
+			if (hasField(source, fieldName)) {
+				ObjectAddress srcAddr = new ObjectAddress(fieldName);
+				ObjectAddress destAddr = new ObjectAddress(fieldName);
+				rules.add(new MappingRule(srcAddr, destAddr, destination, null, null));
+			}
+		}
+
+		IClass<?> superclass = destination.getSuperclass();
+		if (superclass != null && !superclass.getName().equals("java.lang.Object")) {
+			generateConventionRulesRecursive(source, superclass, rules, mappingIgnoreClass);
+		}
+	}
+
+	private boolean hasField(IClass<?> clazz, String fieldName) {
+		IClass<?> current = clazz;
+		while (current != null && !current.getName().equals("java.lang.Object")) {
+			for (IField field : current.getDeclaredFields()) {
+				if (field.getName().equals(fieldName)) {
+					return true;
+				}
+			}
+			current = current.getSuperclass();
+		}
+		return false;
+	}
+
+	private IClass<?> getFieldGenericType(IField field, int index) {
+		Type genericType = field.getGenericType();
+		if (genericType instanceof ParameterizedType parameterizedType) {
+			Type[] typeArguments = parameterizedType.getActualTypeArguments();
+			if (typeArguments.length > index && typeArguments[index] instanceof Class<?> clazz) {
+				return this.reflection.getClass(clazz);
+			}
+		}
+		return null;
+	}
+
+	private boolean isArrayOrMapOrCollection(IField field) {
+		IClass<?> type = field.getType();
+		return collectionClass.isAssignableFrom(type)
+				|| mapClass.isAssignableFrom(type)
+				|| type.isArray();
+	}
+
+	static boolean isNotPrimitive(IClass<?> clazz) {
+		if (clazz.isPrimitive()) {
+			return false;
+		}
+		String name = clazz.getName();
+		if (name.equals("java.lang.Integer") || name.equals("java.lang.Long")
+				|| name.equals("java.lang.Float") || name.equals("java.lang.Double")
+				|| name.equals("java.lang.Short") || name.equals("java.lang.Byte")
+				|| name.equals("java.lang.Character") || name.equals("java.lang.Boolean")
+				|| name.equals("java.lang.String") || name.equals("java.util.Date")) {
+			return false;
+		}
+		return true;
 	}
 }

@@ -4,6 +4,8 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -40,6 +42,11 @@ public class NullableSupplier<SuppliedType> implements ISupplier<SuppliedType> {
 
     @Override
     public Type getSuppliedType() {
+        return delegate.getSuppliedType();
+    }
+
+    @Override
+    public IClass<SuppliedType> getSuppliedClass() {
         return delegate.getSuppliedClass();
     }
 

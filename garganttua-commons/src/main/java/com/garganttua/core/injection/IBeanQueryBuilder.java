@@ -3,6 +3,7 @@ package com.garganttua.core.injection;
 import java.lang.annotation.Annotation;
 
 import com.garganttua.core.dsl.IBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for constructing bean queries with specific criteria.
@@ -47,7 +48,7 @@ public interface IBeanQueryBuilder<Bean> extends IBuilder<IBeanQuery<Bean>>{
      * @param type the class of the bean to query
      * @return this builder for method chaining
      */
-    IBeanQueryBuilder<Bean> type(Class<Bean> type);
+    IBeanQueryBuilder<Bean> type(IClass<Bean> type);
 
     /**
      * Specifies the name of the bean to query for.
@@ -74,7 +75,7 @@ public interface IBeanQueryBuilder<Bean> extends IBuilder<IBeanQuery<Bean>>{
      * @return this builder for method chaining
      * @throws DiException if the qualifier is invalid or cannot be processed
      */
-    IBeanQueryBuilder<Bean> qualifier(Class<? extends Annotation> qualifier) throws DiException;
+    IBeanQueryBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) throws DiException;
 
     /**
      * Specifies the bean strategy (scope) to query for.

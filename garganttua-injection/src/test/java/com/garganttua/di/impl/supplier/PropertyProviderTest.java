@@ -12,6 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.properties.PropertyProvider;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.utils.CopyException;
 
@@ -26,6 +29,7 @@ public class PropertyProviderTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
         properties = new HashMap<>();
         properties.put("string.property", "test-value");
         properties.put("int.property", 42);
@@ -37,7 +41,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyString() throws DiException {
-        Optional<String> result = propertyProvider.getProperty("string.property", String.class);
+        Optional<String> result = propertyProvider.getProperty("string.property", IClass.getClass(String.class));
 
         assertTrue(result.isPresent());
         assertEquals("test-value", result.get());
@@ -45,7 +49,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyInteger() throws DiException {
-        Optional<Integer> result = propertyProvider.getProperty("int.property", Integer.class);
+        Optional<Integer> result = propertyProvider.getProperty("int.property", IClass.getClass(Integer.class));
 
         assertTrue(result.isPresent());
         assertEquals(42, result.get());
@@ -53,7 +57,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyLong() throws DiException {
-        Optional<Long> result = propertyProvider.getProperty("long.property", Long.class);
+        Optional<Long> result = propertyProvider.getProperty("long.property", IClass.getClass(Long.class));
 
         assertTrue(result.isPresent());
         assertEquals(123456789L, result.get());
@@ -61,7 +65,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyDouble() throws DiException {
-        Optional<Double> result = propertyProvider.getProperty("double.property", Double.class);
+        Optional<Double> result = propertyProvider.getProperty("double.property", IClass.getClass(Double.class));
 
         assertTrue(result.isPresent());
         assertEquals(3.14159, result.get(), 0.00001);
@@ -69,7 +73,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyBoolean() throws DiException {
-        Optional<Boolean> result = propertyProvider.getProperty("boolean.property", Boolean.class);
+        Optional<Boolean> result = propertyProvider.getProperty("boolean.property", IClass.getClass(Boolean.class));
 
         assertTrue(result.isPresent());
         assertTrue(result.get());
@@ -77,7 +81,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyNotFound() throws DiException {
-        Optional<String> result = propertyProvider.getProperty("non.existent.property", String.class);
+        Optional<String> result = propertyProvider.getProperty("non.existent.property", IClass.getClass(String.class));
 
         assertFalse(result.isPresent());
     }
@@ -87,7 +91,7 @@ public class PropertyProviderTest {
         properties.put("string.number", "999");
         propertyProvider = new PropertyProvider(properties);
 
-        Optional<Integer> result = propertyProvider.getProperty("string.number", Integer.class);
+        Optional<Integer> result = propertyProvider.getProperty("string.number", IClass.getClass(Integer.class));
 
         assertTrue(result.isPresent());
         assertEquals(999, result.get());
@@ -98,7 +102,7 @@ public class PropertyProviderTest {
         properties.put("string.long", "888888888");
         propertyProvider = new PropertyProvider(properties);
 
-        Optional<Long> result = propertyProvider.getProperty("string.long", Long.class);
+        Optional<Long> result = propertyProvider.getProperty("string.long", IClass.getClass(Long.class));
 
         assertTrue(result.isPresent());
         assertEquals(888888888L, result.get());
@@ -109,7 +113,7 @@ public class PropertyProviderTest {
         properties.put("string.double", "2.71828");
         propertyProvider = new PropertyProvider(properties);
 
-        Optional<Double> result = propertyProvider.getProperty("string.double", Double.class);
+        Optional<Double> result = propertyProvider.getProperty("string.double", IClass.getClass(Double.class));
 
         assertTrue(result.isPresent());
         assertEquals(2.71828, result.get(), 0.00001);
@@ -120,7 +124,7 @@ public class PropertyProviderTest {
         properties.put("string.boolean", "false");
         propertyProvider = new PropertyProvider(properties);
 
-        Optional<Boolean> result = propertyProvider.getProperty("string.boolean", Boolean.class);
+        Optional<Boolean> result = propertyProvider.getProperty("string.boolean", IClass.getClass(Boolean.class));
 
         assertTrue(result.isPresent());
         assertFalse(result.get());
@@ -128,7 +132,7 @@ public class PropertyProviderTest {
 
     @Test
     void testGetPropertyTypeConversionIntegerToString() throws DiException {
-        Optional<String> result = propertyProvider.getProperty("int.property", String.class);
+        Optional<String> result = propertyProvider.getProperty("int.property", IClass.getClass(String.class));
 
         assertTrue(result.isPresent());
         assertEquals("42", result.get());
@@ -140,7 +144,7 @@ public class PropertyProviderTest {
         propertyProvider = new PropertyProvider(properties);
 
         assertThrows(DiException.class, () -> {
-            propertyProvider.getProperty("invalid.number", Integer.class);
+            propertyProvider.getProperty("invalid.number", IClass.getClass(Integer.class));
         });
     }
 
@@ -148,7 +152,7 @@ public class PropertyProviderTest {
     void testSetProperty() throws DiException {
         propertyProvider.setProperty("new.property", "new-value");
 
-        Optional<String> result = propertyProvider.getProperty("new.property", String.class);
+        Optional<String> result = propertyProvider.getProperty("new.property", IClass.getClass(String.class));
         assertTrue(result.isPresent());
         assertEquals("new-value", result.get());
     }
@@ -214,7 +218,7 @@ public class PropertyProviderTest {
         Set<String> keys = propertyProvider.keys();
         assertEquals(0, keys.size());
 
-        Optional<String> result = propertyProvider.getProperty("string.property", String.class);
+        Optional<String> result = propertyProvider.getProperty("string.property", IClass.getClass(String.class));
         assertFalse(result.isPresent());
     }
 
@@ -232,7 +236,7 @@ public class PropertyProviderTest {
         assertNotNull(copy);
         assertNotSame(propertyProvider, copy);
 
-        Optional<String> result = copy.getProperty("string.property", String.class);
+        Optional<String> result = copy.getProperty("string.property", IClass.getClass(String.class));
         assertTrue(result.isPresent());
         assertEquals("test-value", result.get());
     }
@@ -243,10 +247,10 @@ public class PropertyProviderTest {
 
         copy.setProperty("new.property", "new-value");
 
-        Optional<String> originalResult = propertyProvider.getProperty("new.property", String.class);
+        Optional<String> originalResult = propertyProvider.getProperty("new.property", IClass.getClass(String.class));
         assertFalse(originalResult.isPresent());
 
-        Optional<String> copyResult = copy.getProperty("new.property", String.class);
+        Optional<String> copyResult = copy.getProperty("new.property", IClass.getClass(String.class));
         assertTrue(copyResult.isPresent());
         assertEquals("new-value", copyResult.get());
     }

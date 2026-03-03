@@ -2,6 +2,8 @@ package com.garganttua.core.mutex;
 
 import java.util.Objects;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Record representing a qualified mutex name with type class and identifier.
  *
@@ -56,7 +58,7 @@ import java.util.Objects;
  * @see IMutexManager
  * @see IMutexFactory
  */
-public record MutexName(Class<? extends IMutex> type, String name) {
+public record MutexName(IClass<? extends IMutex> type, String name) {
 
     /**
      * Separator used between type and name.
@@ -145,8 +147,12 @@ public record MutexName(Class<? extends IMutex> type, String name) {
             throw new IllegalArgumentException("Mutex type cannot be empty");
         }
 
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("Mutex name cannot be empty");
+        }
+
         // Try to load the class - first try as-is, then try with common packages
-        Class<? extends IMutex> mutexType = loadMutexClass(typeStr);
+        IClass<? extends IMutex> mutexType = loadMutexClass(typeStr);
         return new MutexName(mutexType, name);
     }
 
@@ -157,30 +163,10 @@ public record MutexName(Class<? extends IMutex> type, String name) {
      * @return the loaded mutex class
      * @throws IllegalArgumentException if the class cannot be found or doesn't implement IMutex
      */
-    @SuppressWarnings("unchecked")
-    private static Class<? extends IMutex> loadMutexClass(String className) {
-
-        ClassNotFoundException lastException = null;
-
-            String fullClassName = className;
-            try {
-                Class<?> clazz = Class.forName(fullClassName);
-                if (!IMutex.class.isAssignableFrom(clazz)) {
-                    throw new IllegalArgumentException(
-                        "Class '" + fullClassName + "' does not implement IMutex"
-                    );
-                }
-                return (Class<? extends IMutex>) clazz;
-            } catch (ClassNotFoundException e) {
-                lastException = e;
-                // Continue trying other prefixes
-            }
-
-        // If we get here, none of the attempts worked
-        throw new IllegalArgumentException(
-            "Mutex type class not found: " + className,
-            lastException
-        );
+    private static IClass<? extends IMutex> loadMutexClass(String className) {
+        // TODO: requires IReflectionProvider to load class by name and wrap into IClass
+        throw new UnsupportedOperationException(
+            "MutexName.loadMutexClass() needs IReflectionProvider to resolve class: " + className);
     }
 
     /**

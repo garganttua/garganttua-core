@@ -3,7 +3,6 @@ package com.garganttua.core.injection.context.resolver;
 import static com.garganttua.core.injection.IInjectableElementResolver.*;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
 import java.util.LinkedHashSet;
@@ -16,33 +15,36 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class InjectableElementResolver implements IInjectableElementResolver {
 
-    private Map<Class<? extends Annotation>, IElementResolver> resolvers = new ConcurrentHashMap<>();
+    private Map<String, IElementResolver> resolvers = new ConcurrentHashMap<>();
 
-    public InjectableElementResolver(Map<Class<? extends Annotation>, IElementResolver> resolvers) {
+    public InjectableElementResolver(Map<IClass<? extends Annotation>, IElementResolver> resolvers) {
         log.atTrace().log("Entering InjectableElementResolver constructor with resolvers map: {}", resolvers);
-        this.resolvers.putAll(Objects.requireNonNull(resolvers, "Resolvers map cannot be null"));
+        Objects.requireNonNull(resolvers, "Resolvers map cannot be null");
+        resolvers.forEach((k, v) -> this.resolvers.put(k.getName(), v));
         log.atDebug().log("Resolvers map initialized with {} entries", resolvers.size());
         log.atTrace().log("Exiting InjectableElementResolver constructor");
     }
 
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
         log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
         Objects.requireNonNull(element, "Element cannot be null");
         Objects.requireNonNull(elementType, "ElementType cannot be null");
 
         for (Annotation annotation : element.getAnnotations()) {
-            Class<? extends Annotation> type = annotation.annotationType();
-            IElementResolver resolver = this.resolvers.get(type);
-            log.atDebug().log("Checking resolver for annotation: {}", type.getSimpleName());
+            String typeName = annotation.annotationType().getName();
+            IElementResolver resolver = this.resolvers.get(typeName);
+            log.atDebug().log("Checking resolver for annotation: {}", annotation.annotationType().getSimpleName());
             if (resolver != null) {
-                log.atDebug().log("Found resolver for annotation: {}, delegating resolve", type.getSimpleName());
+                log.atDebug().log("Found resolver for annotation: {}, delegating resolve", annotation.annotationType().getSimpleName());
                 Resolved resolved = resolver.resolve(elementType, element);
                 log.atTrace().log("Resolved result: {}", resolved);
                 return resolved;
@@ -62,18 +64,20 @@ public class InjectableElementResolver implements IInjectableElementResolver {
         Set<Resolved> paramResolved = new LinkedHashSet<>();
         for (Parameter parameter : executable.getParameters()) {
             log.atDebug().log("Resolving parameter: {} of type {}", parameter.getName(), parameter.getType().getSimpleName());
-            paramResolved.add(resolve(parameter.getType(), parameter));
+            IAnnotatedElement adapted = IInjectableElementResolver.toIAnnotatedElement(
+                parameter.getAnnotations(), parameter.getDeclaredAnnotations());
+            paramResolved.add(resolve(IClass.getClass(parameter.getType()), adapted));
         }
         log.atTrace().log("Exiting resolve for Executable with resolved parameters: {}", paramResolved);
         return paramResolved;
     }
 
     @Override
-    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+    public void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver) {
         log.atTrace().log("Entering addResolver with annotation: {} and resolver: {}", annotation.getSimpleName(), resolver);
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(resolver, "Resolver cannot be null");
-        this.resolvers.put(annotation, resolver);
+        this.resolvers.put(annotation.getName(), resolver);
         log.atDebug().log("Added resolver for annotation: {}", annotation.getSimpleName());
         log.atTrace().log("Exiting addResolver");
     }

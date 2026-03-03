@@ -3,6 +3,7 @@ package com.garganttua.core.reflection.binders.dsl;
 import java.lang.reflect.Field;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IFieldBinder;
 
@@ -11,7 +12,7 @@ import com.garganttua.core.reflection.binders.IFieldBinder;
  *
  * <p>
  * {@code IFieldBinderBuilder} extends {@link IValuableBuilder} to provide field-specific
- * configuration methods. Fields can be identified by name, by {@link Field} reference,
+ * configuration methods. Fields can be identified by name, by {@link IField} reference,
  * or by {@link ObjectAddress}. The builder inherits value configuration capabilities
  * from {@link IValuableBuilder}, enabling both direct value assignment and supplier-based
  * dynamic value resolution.
@@ -112,7 +113,7 @@ public interface IFieldBinderBuilder<FieldType, OwnerType, Builder, Link>
                         throws DslException;
 
         /**
-         * Specifies the field to bind using a {@link Field} reference.
+         * Specifies the field to bind using a {@link IField} reference.
          *
          * <p>
          * This is the most direct method of field specification, using a Field
@@ -124,7 +125,7 @@ public interface IFieldBinderBuilder<FieldType, OwnerType, Builder, Link>
          * @return this builder instance for method chaining
          * @throws DslException if the field is null or incompatible with the owner type
          */
-        IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> field(Field field)
+        IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> field(IField field)
                         throws DslException;
 
         /**

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 public interface IScript {
 
     void load(String script) throws ScriptException;
@@ -16,7 +18,7 @@ public interface IScript {
 
     int execute(Object... args) throws ScriptException;
 
-    <T> Optional<T> getVariable(String name, Class<T> type);
+    <T> Optional<T> getVariable(String name, IClass<T> type);
 
     /**
      * Sets an initial variable value before script execution.

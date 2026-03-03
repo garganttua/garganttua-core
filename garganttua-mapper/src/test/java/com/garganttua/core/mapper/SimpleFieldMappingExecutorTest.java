@@ -2,12 +2,17 @@ package com.garganttua.core.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.reflect.Field;
-
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.mapper.rules.SimpleFieldMappingExecutor;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link SimpleFieldMappingExecutor}.
@@ -15,13 +20,28 @@ import com.garganttua.core.mapper.rules.SimpleFieldMappingExecutor;
  */
 public class SimpleFieldMappingExecutorTest {
 
+    private static IReflection reflection;
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build();
+        IClass.setReflection(reflection);
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
+
     private SimpleFieldMappingExecutor executor;
 
     @BeforeEach
     void setUp() throws NoSuchFieldException {
-        Field sourceField = SourceClass.class.getDeclaredField("name");
-        Field destinationField = DestinationClass.class.getDeclaredField("name");
-        executor = new SimpleFieldMappingExecutor(sourceField, destinationField);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("name");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("name");
+        executor = new SimpleFieldMappingExecutor(reflection, sourceField, destinationField);
     }
 
     @Test
@@ -32,7 +52,7 @@ public class SimpleFieldMappingExecutorTest {
         DestinationClass destination = new DestinationClass();
         destination.name = "old-value";
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertNotNull(result);
         assertEquals("test-value", result.name);
@@ -44,7 +64,7 @@ public class SimpleFieldMappingExecutorTest {
         SourceClass source = new SourceClass();
         source.name = "test-value";
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, null, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), null, source);
 
         assertNotNull(result);
         assertEquals("test-value", result.name);
@@ -58,7 +78,7 @@ public class SimpleFieldMappingExecutorTest {
         DestinationClass destination = new DestinationClass();
         destination.name = "old-value";
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertNotNull(result);
         assertNull(result.name);
@@ -66,14 +86,14 @@ public class SimpleFieldMappingExecutorTest {
 
     @Test
     void testDoMappingWithIntegerField() throws MapperException, NoSuchFieldException {
-        Field sourceField = SourceClass.class.getDeclaredField("age");
-        Field destinationField = DestinationClass.class.getDeclaredField("age");
-        SimpleFieldMappingExecutor intExecutor = new SimpleFieldMappingExecutor(sourceField, destinationField);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("age");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("age");
+        SimpleFieldMappingExecutor intExecutor = new SimpleFieldMappingExecutor(reflection, sourceField, destinationField);
 
         SourceClass source = new SourceClass();
         source.age = 42;
 
-        DestinationClass result = intExecutor.doMapping(DestinationClass.class, null, source);
+        DestinationClass result = intExecutor.doMapping(wrapClass(DestinationClass.class), null, source);
 
         assertNotNull(result);
         assertEquals(42, result.age);
@@ -81,14 +101,14 @@ public class SimpleFieldMappingExecutorTest {
 
     @Test
     void testDoMappingWithBooleanField() throws MapperException, NoSuchFieldException {
-        Field sourceField = SourceClass.class.getDeclaredField("active");
-        Field destinationField = DestinationClass.class.getDeclaredField("active");
-        SimpleFieldMappingExecutor boolExecutor = new SimpleFieldMappingExecutor(sourceField, destinationField);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("active");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("active");
+        SimpleFieldMappingExecutor boolExecutor = new SimpleFieldMappingExecutor(reflection, sourceField, destinationField);
 
         SourceClass source = new SourceClass();
         source.active = true;
 
-        DestinationClass result = boolExecutor.doMapping(DestinationClass.class, null, source);
+        DestinationClass result = boolExecutor.doMapping(wrapClass(DestinationClass.class), null, source);
 
         assertNotNull(result);
         assertTrue(result.active);
@@ -96,14 +116,14 @@ public class SimpleFieldMappingExecutorTest {
 
     @Test
     void testDoMappingWithDoubleField() throws MapperException, NoSuchFieldException {
-        Field sourceField = SourceClass.class.getDeclaredField("score");
-        Field destinationField = DestinationClass.class.getDeclaredField("score");
-        SimpleFieldMappingExecutor doubleExecutor = new SimpleFieldMappingExecutor(sourceField, destinationField);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("score");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("score");
+        SimpleFieldMappingExecutor doubleExecutor = new SimpleFieldMappingExecutor(reflection, sourceField, destinationField);
 
         SourceClass source = new SourceClass();
         source.score = 99.5;
 
-        DestinationClass result = doubleExecutor.doMapping(DestinationClass.class, null, source);
+        DestinationClass result = doubleExecutor.doMapping(wrapClass(DestinationClass.class), null, source);
 
         assertNotNull(result);
         assertEquals(99.5, result.score, 0.001);
@@ -119,7 +139,7 @@ public class SimpleFieldMappingExecutorTest {
         destination.age = 25;
         destination.active = true;
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertEquals("new-name", result.name);
         assertEquals(25, result.age); // preserved
@@ -128,14 +148,14 @@ public class SimpleFieldMappingExecutorTest {
 
     @Test
     void testDoMappingWithZeroValues() throws MapperException, NoSuchFieldException {
-        Field sourceField = SourceClass.class.getDeclaredField("age");
-        Field destinationField = DestinationClass.class.getDeclaredField("age");
-        SimpleFieldMappingExecutor intExecutor = new SimpleFieldMappingExecutor(sourceField, destinationField);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("age");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("age");
+        SimpleFieldMappingExecutor intExecutor = new SimpleFieldMappingExecutor(reflection, sourceField, destinationField);
 
         SourceClass source = new SourceClass();
         source.age = 0;
 
-        DestinationClass result = intExecutor.doMapping(DestinationClass.class, null, source);
+        DestinationClass result = intExecutor.doMapping(wrapClass(DestinationClass.class), null, source);
 
         assertNotNull(result);
         assertEquals(0, result.age);
@@ -146,7 +166,7 @@ public class SimpleFieldMappingExecutorTest {
         SourceClass source = new SourceClass();
         source.name = "";
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, null, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), null, source);
 
         assertNotNull(result);
         assertEquals("", result.name);
@@ -154,12 +174,17 @@ public class SimpleFieldMappingExecutorTest {
 
     @Test
     void testConstructor() throws NoSuchFieldException {
-        Field sourceField = SourceClass.class.getDeclaredField("name");
-        Field destinationField = DestinationClass.class.getDeclaredField("name");
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("name");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("name");
 
-        SimpleFieldMappingExecutor newExecutor = new SimpleFieldMappingExecutor(sourceField, destinationField);
+        SimpleFieldMappingExecutor newExecutor = new SimpleFieldMappingExecutor(reflection, sourceField, destinationField);
 
         assertNotNull(newExecutor);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> IClass<T> wrapClass(Class<?> clazz) {
+        return (IClass<T>) reflection.getClass(clazz);
     }
 
     // Test helper classes

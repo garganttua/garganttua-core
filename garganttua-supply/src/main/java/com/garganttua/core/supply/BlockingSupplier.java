@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.core.reflection.IClass;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * queue.put("item1");
  * queue.put("item2");
  *
- * ISupplier<String> supplier = new BlockingSupplier<>(queue, String.class, 5000L);
+ * ISupplier<String> supplier = new BlockingSupplier<>(queue, suppliedClass, 5000L);
  * Optional<String> result = supplier.supply(); // Blocks until item available or timeout
  * }</pre>
  *
@@ -37,16 +39,17 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
 
     private final BlockingQueue<Supplied> queue;
     private final Long timeoutMillis;
-    private final Type suppliedType;
+    private final IClass<Supplied> suppliedClass;
 
     /**
      * Creates a BlockingSupplier with no timeout.
      *
      * @param queue the BlockingQueue to poll from
      * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      */
-    public BlockingSupplier(BlockingQueue<Supplied> queue, Type suppliedType) {
-        this(queue, suppliedType, null);
+    public BlockingSupplier(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
+        this(queue, suppliedClass, null);
     }
 
     /**
@@ -54,12 +57,13 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
      *
      * @param queue the BlockingQueue to poll from
      * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      * @param timeoutMillis the timeout in milliseconds, or null for indefinite wait
      */
-    public BlockingSupplier(BlockingQueue<Supplied> queue, Type suppliedType, Long timeoutMillis) {
+    public BlockingSupplier(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass, Long timeoutMillis) {
         log.atTrace().log("Entering BlockingSupplier constructor with timeout: {}", timeoutMillis);
         this.queue = Objects.requireNonNull(queue, "Queue cannot be null");
-        this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
+        this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
         this.timeoutMillis = timeoutMillis;
         log.atTrace().log("Exiting BlockingSupplier constructor");
     }
@@ -95,6 +99,11 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
 
     @Override
     public Type getSuppliedType() {
-        return suppliedType;
+        return this.suppliedClass.getType();
+    }
+
+    @Override
+    public IClass<Supplied> getSuppliedClass() {
+        return this.suppliedClass;
     }
 }

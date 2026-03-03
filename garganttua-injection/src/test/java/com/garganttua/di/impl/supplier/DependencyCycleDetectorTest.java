@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.validation.DependencyCycleDetector;
 import com.garganttua.core.injection.context.validation.DependencyGraph;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 class DependencyCycleDetectorTest {
 
@@ -31,6 +34,7 @@ class DependencyCycleDetectorTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).build();
         detector = new DependencyCycleDetector();
         graph = new DependencyGraph();
     }
@@ -38,19 +42,19 @@ class DependencyCycleDetectorTest {
     @Test
     void test_NoCycle_ShouldPass() {
         // A -> B -> C (pas de cycle)
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(B.class, C.class);
-        graph.addDependency(C.class, D.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(B.class), IClass.getClass(C.class));
+        graph.addDependency(IClass.getClass(C.class), IClass.getClass(D.class));
 
         assertDoesNotThrow(() -> detector.detectCycles(graph),
-                "Un graphe sans cycle ne doit pas lever d'exception");
+                "Un graphe sans cycle ne doit pas lever d’exception");
     }
 
     @Test
     void test_SimpleCycle_ShouldThrow() {
         // A -> B -> A
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(B.class, A.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(B.class), IClass.getClass(A.class));
 
         DiException ex = assertThrows(DiException.class, () -> detector.detectCycles(graph));
         assertTrue(ex.getMessage().contains("Circular dependency detected"),
@@ -62,9 +66,9 @@ class DependencyCycleDetectorTest {
     @Test
     void test_ComplexCycle_ShouldThrow() {
         // A -> B -> C -> A
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(B.class, C.class);
-        graph.addDependency(C.class, A.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(B.class), IClass.getClass(C.class));
+        graph.addDependency(IClass.getClass(C.class), IClass.getClass(A.class));
 
         DiException ex = assertThrows(DiException.class, () -> detector.detectCycles(graph));
         assertTrue(ex.getMessage().contains("Circular dependency detected"),
@@ -76,7 +80,7 @@ class DependencyCycleDetectorTest {
     @Test
     void test_SelfDependency_ShouldThrow() {
         // A -> A (auto-cycle)
-        graph.addDependency(A.class, A.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(A.class));
 
         DiException ex = assertThrows(DiException.class, () -> detector.detectCycles(graph));
         assertTrue(ex.getMessage().contains("A"),
@@ -89,10 +93,10 @@ class DependencyCycleDetectorTest {
         // D -> E -> D (cycle)
         class E {
         }
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(B.class, C.class);
-        graph.addDependency(D.class, E.class);
-        graph.addDependency(E.class, D.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(B.class), IClass.getClass(C.class));
+        graph.addDependency(IClass.getClass(D.class), IClass.getClass(E.class));
+        graph.addDependency(IClass.getClass(E.class), IClass.getClass(D.class));
 
         DiException ex = assertThrows(DiException.class, () -> detector.detectCycles(graph));
         assertTrue(ex.getMessage().contains("Circular dependency detected"),
@@ -102,27 +106,27 @@ class DependencyCycleDetectorTest {
     @Test
     void test_EmptyGraph_ShouldPass() {
         assertDoesNotThrow(() -> detector.detectCycles(graph),
-                "Un graphe vide ne doit pas lever d'exception");
+                "Un graphe vide ne doit pas lever d’exception");
     }
 
     @Test
     void test_DisconnectedGraphsWithoutCycle_ShouldPass() {
         // Graphe 1 : A -> B
         // Graphe 2 : C -> D
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(C.class, D.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(C.class), IClass.getClass(D.class));
 
         assertDoesNotThrow(() -> detector.detectCycles(graph),
-                "Deux graphes sans cycle ne doivent pas lever d'exception");
+                "Deux graphes sans cycle ne doivent pas lever d’exception");
     }
 
     @Test
     void test_GraphWithLeafNodes_ShouldPass() {
         // A -> B, C sans dépendance
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(B.class, C.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(B.class), IClass.getClass(C.class));
         // D n’a pas de dépendance mais est présent dans le graphe
-        graph.addDependency(D.class, Set.of().getClass());
+        graph.addDependency(IClass.getClass(D.class), IClass.getClass(Set.of().getClass()));
 
         assertDoesNotThrow(() -> detector.detectCycles(graph),
                 "La présence de feuilles sans dépendances ne doit pas causer d’erreur");
@@ -132,9 +136,9 @@ class DependencyCycleDetectorTest {
     void test_ExactCycleMessage_ShouldMatch() {
         // Arrange
         DependencyGraph graph = new DependencyGraph();
-        graph.addDependency(A.class, B.class);
-        graph.addDependency(B.class, C.class);
-        graph.addDependency(C.class, A.class);
+        graph.addDependency(IClass.getClass(A.class), IClass.getClass(B.class));
+        graph.addDependency(IClass.getClass(B.class), IClass.getClass(C.class));
+        graph.addDependency(IClass.getClass(C.class), IClass.getClass(A.class));
 
         DependencyCycleDetector detector = new DependencyCycleDetector();
 
@@ -144,6 +148,6 @@ class DependencyCycleDetectorTest {
 
         // Assert
         assertTrue(msg.contains("A -> B -> C -> A"),
-                () -> "Expected cycle message to contain 'A -> B -> C -> A' but got: " + msg);
+                () -> "Expected cycle message to contain ‘A -> B -> C -> A’ but got: " + msg);
     }
 }

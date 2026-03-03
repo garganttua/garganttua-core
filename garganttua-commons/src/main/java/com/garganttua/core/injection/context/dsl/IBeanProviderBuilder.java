@@ -3,6 +3,7 @@ package com.garganttua.core.injection.context.dsl;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Builder interface for constructing bean providers with registered beans and package scanning.
@@ -71,7 +72,7 @@ public interface IBeanProviderBuilder extends IAutomaticLinkedBuilder<IBeanProvi
      * @return a bean factory builder for configuring the bean
      * @throws DslException if the bean cannot be registered or configured
      */
-    <BeanType> IBeanFactoryBuilder<BeanType> withBean(Class<BeanType> beanType) throws DslException;
+    <BeanType> IBeanFactoryBuilder<BeanType> withBean(IClass<BeanType> beanType) throws DslException;
 
     /**
      * Adds a package to scan for beans with DI annotations.

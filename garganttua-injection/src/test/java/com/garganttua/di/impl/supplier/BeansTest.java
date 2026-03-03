@@ -16,7 +16,10 @@ import com.garganttua.core.injection.context.beans.Beans;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.injection.dummies.DummyBean;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.SupplyException;
 
@@ -27,15 +30,16 @@ public class BeansTest {
 
     @BeforeEach
     void setUp() throws DiException, DslException {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        IReflectionBuilder rb = ReflectionBuilder.builder().withProvider(new RuntimeReflectionProvider()).withScanner(new ReflectionsAnnotationScanner());
+        rb.build();
         InjectionContext.context = null;
-        builder = InjectionContext.builder().withPackage("com.garganttua");
+        builder = InjectionContext.builder().provide(rb).withPackage("com.garganttua");
     }
 
     @Test
     @Order(1)
     public void contextNotBuiltShouldThrowException() {
-        SupplyException exception = assertThrows(SupplyException.class, () -> Beans.bean(DummyBean.class).build().supply());
+        SupplyException exception = assertThrows(SupplyException.class, () -> Beans.bean(IClass.getClass(DummyBean.class)).build().supply());
 
         assertEquals("Context not built", exception.getMessage());
     }
@@ -46,7 +50,7 @@ public class BeansTest {
 
         assertDoesNotThrow(builder::build);
 
-        SupplyException exception = assertThrows(SupplyException.class, () -> Beans.bean(DummyBean.class).build().supply());
+        SupplyException exception = assertThrows(SupplyException.class, () -> Beans.bean(IClass.getClass(DummyBean.class)).build().supply());
         assertTrue(exception.getMessage().contains("Lifecycle not initialized"));
     }
 
@@ -57,7 +61,7 @@ public class BeansTest {
         IInjectionContext context = assertDoesNotThrow(builder::build);
         context.onInit();
 
-        SupplyException exception = assertThrows(SupplyException.class, () -> Beans.bean(DummyBean.class).build().supply());
+        SupplyException exception = assertThrows(SupplyException.class, () -> Beans.bean(IClass.getClass(DummyBean.class)).build().supply());
         assertTrue(exception.getMessage().contains("Lifecycle not started"));
     }
 }

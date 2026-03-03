@@ -2,7 +2,6 @@ package com.garganttua.core.supply;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.Optional;
 import java.util.Set;
@@ -10,6 +9,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
@@ -34,17 +35,17 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Set<Class<?>> dependencies() {
+        public Set<IClass<?>> dependencies() {
             throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 
         @Override
-        public Class<T> getConstructedType() {
+        public IClass<T> getConstructedType() {
             throw new UnsupportedOperationException("Unimplemented method 'getConstructedType'");
         }
 
         @Override
-        public Constructor<?> constructor() {
+        public IConstructor<?> constructor() {
             throw new UnsupportedOperationException("Unimplemented method 'constructor'");
         }
 
@@ -57,13 +58,18 @@ class SupplierBuilderTest {
         public Type getSuppliedType() {
             throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
         }
+
+        @Override
+        public IClass<IMethodReturn<T>> getSuppliedClass() {
+            throw new UnsupportedOperationException("Unimplemented method 'getSuppliedClass'");
+        }
     }
 
     static class FakeContextualConstructorBinder<T>
             implements IContextualConstructorBinder<T> {
 
         @Override
-        public Class<T> getConstructedType() {
+        public IClass<T> getConstructedType() {
             throw new UnsupportedOperationException("Unimplemented method 'getConstructedType'");
         }
 
@@ -73,12 +79,12 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Set<Class<?>> dependencies() {
+        public Set<IClass<?>> dependencies() {
             throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
         }
 
         @Override
-        public Class<?>[] getParametersContextTypes() {
+        public IClass<?>[] getParametersContextTypes() {
             throw new UnsupportedOperationException("Unimplemented method 'getParametersContextTypes'");
         }
 
@@ -88,7 +94,7 @@ class SupplierBuilderTest {
         }
 
         @Override
-        public Constructor<?> constructor() {
+        public IConstructor<?> constructor() {
             throw new UnsupportedOperationException("Unimplemented method 'constructor'");
         }
 
@@ -100,6 +106,11 @@ class SupplierBuilderTest {
         @Override
         public Optional<IMethodReturn<T>> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
             throw new UnsupportedOperationException("Unimplemented method 'supply'");
+        }
+
+        @Override
+        public IClass<IMethodReturn<T>> getSuppliedClass() {
+            throw new UnsupportedOperationException("Unimplemented method 'getSuppliedClass'");
         }
     }
 
@@ -114,7 +125,7 @@ class SupplierBuilderTest {
 
     // Helpers to build SupplierBuilder
     private <T> ICommonSupplierBuilder<T> builder(Class<T> type) {
-        return new SupplierBuilder<>(type);
+        return new SupplierBuilder<>(TestIClass.of(type));
     }
 
     // ----------------------------------------------------------------------
@@ -144,7 +155,7 @@ class SupplierBuilderTest {
     @Test
     void testContextWithContextualCtor() throws DslException {
         var b = builder(String.class)
-                .withContext(Integer.class, new FakeContextualSupply<>())
+                .withContext(TestIClass.of(Integer.class), new FakeContextualSupply<>())
                 .withConstructor(new FakeContextualConstructorBinder<>());
 
         var s = b.build();
@@ -155,7 +166,7 @@ class SupplierBuilderTest {
     @Test
     void testContextWithContextualCtorNullable() throws DslException {
         var b = builder(String.class)
-                .withContext(Integer.class, new FakeContextualSupply<>())
+                .withContext(TestIClass.of(Integer.class), new FakeContextualSupply<>())
                 .withConstructor(new FakeContextualConstructorBinder<>())
                 .nullable(true);
 
@@ -171,7 +182,7 @@ class SupplierBuilderTest {
     @Test
     void testContextWithoutCtor() throws DslException {
         var b = builder(String.class)
-                .withContext(Integer.class, new FakeContextualSupply<>());
+                .withContext(TestIClass.of(Integer.class), new FakeContextualSupply<>());
 
         var s = b.build();
         assertTrue(s instanceof NullableContextualSupplier);
@@ -181,7 +192,7 @@ class SupplierBuilderTest {
     @Test
     void testContextWithoutCtorNullable() throws DslException {
         var b = builder(String.class)
-                .withContext(Integer.class, new FakeContextualSupply<>())
+                .withContext(TestIClass.of(Integer.class), new FakeContextualSupply<>())
                 .nullable(true);
 
         var s = b.build();
@@ -215,7 +226,7 @@ class SupplierBuilderTest {
     }
 
     // ----------------------------------------------------------------------
-    // 5) NOTHING DEFINED → NullSupplier
+    // 5) NOTHING DEFINED -> NullSupplier
     // ----------------------------------------------------------------------
 
     @Test
@@ -242,7 +253,7 @@ class SupplierBuilderTest {
     @Test
     void testInvalidContextConstructor() {
         var b = builder(String.class)
-                .withContext(Integer.class, new FakeContextualSupply<>());
+                .withContext(TestIClass.of(Integer.class), new FakeContextualSupply<>());
 
         assertThrows(DslException.class, () -> b.withConstructor(new FakeConstructorBinder<>()).build());
     }

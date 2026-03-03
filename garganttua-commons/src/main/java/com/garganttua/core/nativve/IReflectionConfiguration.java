@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Interface for managing GraalVM native image reflection configuration.
  *
@@ -95,6 +97,6 @@ public interface IReflectionConfiguration {
      * @param type the class type to search for
      * @return an {@link Optional} containing the entry if found, or empty if not found
      */
-    Optional<IReflectionConfigurationEntry> findEntryByType(Class<?> type);
+    Optional<IReflectionConfigurationEntry> findEntryByType(IClass<?> type);
 
 }

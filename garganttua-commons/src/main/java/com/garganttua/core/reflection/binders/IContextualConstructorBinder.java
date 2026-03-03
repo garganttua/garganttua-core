@@ -2,6 +2,7 @@ package com.garganttua.core.reflection.binders;
 
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.supply.SupplyException;
 
@@ -91,8 +92,8 @@ public interface IContextualConstructorBinder<Constructed> extends IConstructorB
      * @return {@link Void}.class, indicating no owner context is required
      */
     @Override
-    default Class<Void> getOwnerContextType(){
-        return Void.class;
+    default IClass<Void> getOwnerContextType(){
+        return null; // Void context — no owner required
     }
 
     @Override

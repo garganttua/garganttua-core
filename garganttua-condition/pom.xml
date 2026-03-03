@@ -28,7 +28,16 @@
         </dependency>
         <dependency>
             <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-reflection</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-reflections</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-runtime-reflection</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

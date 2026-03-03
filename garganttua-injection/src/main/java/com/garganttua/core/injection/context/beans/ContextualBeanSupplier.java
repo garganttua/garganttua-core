@@ -10,6 +10,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IContextualBeanSupplier;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,18 +32,23 @@ public class ContextualBeanSupplier<Bean> implements IContextualBeanSupplier<Bea
     @Override
     public Type getSuppliedType() {
         log.atTrace().log("Returning supplied type for query {}: {}", query, query.type());
-        return this.query.type();
+        return this.query.type().getType();
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         log.atTrace().log("Returning empty dependencies set for query: {}", query);
         return Set.of();
     }
 
     @Override
-    public Class<IInjectionContext> getOwnerContextType() {
-        return IInjectionContext.class;
+    public IClass<IInjectionContext> getOwnerContextType() {
+        return IClass.getClass(IInjectionContext.class);
+    }
+
+    @Override
+    public IClass<Bean> getSuppliedClass() {
+        return this.query.type();
     }
 
     @Override

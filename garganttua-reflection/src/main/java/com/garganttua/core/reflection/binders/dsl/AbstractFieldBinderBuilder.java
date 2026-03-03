@@ -1,18 +1,25 @@
 package com.garganttua.core.reflection.binders.dsl;
 
-import java.lang.reflect.Field;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.ContextualFieldBinder;
 import com.garganttua.core.reflection.binders.FieldBinder;
 import com.garganttua.core.reflection.binders.IFieldBinder;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.fields.FieldResolver;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -20,71 +27,84 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, Link>
+public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder extends IFieldBinderBuilder<FieldType, OwnerType, Builder, Link>, Link>
         extends
-        AbstractAutomaticLinkedBuilder<Builder, Link, IFieldBinder<OwnerType, FieldType>>
+        AbstractAutomaticLinkedDependentBuilder<Builder, Link, IFieldBinder<OwnerType, FieldType>>
         implements IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> {
 
-    private Class<OwnerType> ownerType;
+    private IClass<OwnerType> ownerType;
     protected ObjectAddress address;
-    private Class<?> expectedFieldType;
+    private IClass<?> expectedFieldType;
     protected ISupplierBuilder<?, ?> valueSupplierBuilder;
-    protected Class<FieldType> fieldType;
+    protected IClass<FieldType> fieldType;
     protected ISupplierBuilder<OwnerType, ? extends ISupplier<OwnerType>> ownerSupplierBuilder;
     private Boolean allowNull = false;
-    private IObjectQuery<?> query;
+    private IReflection reflection;
+
+    // Pending field config — resolved in doBuild()
+    private String pendingFieldName;
+    private IField pendingField;
+    private ObjectAddress pendingAddress;
+    private Object pendingRawValue;
 
     @Override
     public boolean equals(Object obj) {
-        return this.address.equals(obj);
+        if (this.address != null) return this.address.equals(obj);
+        if (this.pendingAddress != null) return this.pendingAddress.equals(obj);
+        return super.equals(obj);
     }
 
     @Override
     public int hashCode() {
-        return this.address.hashCode();
+        if (this.address != null) return this.address.hashCode();
+        if (this.pendingAddress != null) return this.pendingAddress.hashCode();
+        return super.hashCode();
     }
 
     protected AbstractFieldBinderBuilder(Link link,
             ISupplierBuilder<OwnerType, ? extends ISupplier<OwnerType>> ownerSupplierBuilder,
-            Class<FieldType> fieldType) throws DslException {
-        super(link);
+            IClass<FieldType> fieldType, Set<DependencySpec> dependencies) throws DslException {
+        super(
+                link,
+                Stream.concat(
+                        dependencies.stream(),
+                        Stream.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)))
+                        .collect(Collectors.toUnmodifiableSet()));
         this.ownerSupplierBuilder = Objects.requireNonNull(ownerSupplierBuilder,
                 "Owner supplier builder cannot be null");
         this.ownerType = ownerSupplierBuilder.getSuppliedClass();
         this.fieldType = Objects.requireNonNull(fieldType, "Field Type cannot be null");
-        try {
-            this.query = ObjectQueryFactory.objectQuery(this.ownerType);
-        } catch (ReflectionException e) {
-            log.atError().log("[FieldBinderBuilder] Error creating objectQuery for class {}",
-                    this.ownerSupplierBuilder.getSuppliedClass(), e);
-            throw new DslException(e.getMessage(), e);
-        }
     }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+        if (dependency instanceof IReflection ref) {
+            this.reflection = ref;
+        }
+        this.doPreBuildWithDependency_(dependency);
+    }
+
+    protected abstract void doPreBuildWithDependency_(Object dependency);
 
     @Override
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> field(
             String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "fieldName cannot be null");
-        try {
-            this.address = FieldResolver.fieldByFieldName(fieldName, this.query, this.ownerType,
-                    this.expectedFieldType);
-        } catch (ReflectionException e) {
-            log.error("Reflection error while resolving field by name: {}", fieldName, e);
-            throw new DslException("Error resolving field '" + fieldName + "' for " + ownerType.getName(), e);
-        }
+        this.pendingFieldName = fieldName;
+        this.pendingField = null;
+        this.pendingAddress = null;
+        this.address = null;
         return this;
     }
 
     @Override
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> field(
-            Field field) throws DslException {
+            IField field) throws DslException {
         Objects.requireNonNull(field, "field cannot be null");
-        try {
-            this.address = FieldResolver.fieldByField(field, this.ownerType, this.expectedFieldType);
-        } catch (ReflectionException e) {
-            log.error("Reflection error while resolving field: {}", field, e);
-            throw new DslException("Error resolving field '" + field.getName() + "' for " + ownerType.getName(), e);
-        }
+        this.pendingField = field;
+        this.pendingFieldName = null;
+        this.pendingAddress = null;
+        this.address = null;
         return this;
     }
 
@@ -92,35 +112,81 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> field(
             ObjectAddress address) throws DslException {
         Objects.requireNonNull(address, "address cannot be null");
-        this.address = address;
-        try {
-            FieldResolver.fieldByAddress(address, this.query, this.ownerType, this.expectedFieldType);
-        } catch (ReflectionException e) {
-            log.error("Reflection error while resolving field by address: {}", address, e);
-            throw new DslException("Error resolving field at address '" + address + "' for " + ownerType.getName(), e);
-        }
+        this.pendingAddress = address;
+        this.pendingFieldName = null;
+        this.pendingField = null;
+        this.address = null;
         return this;
+    }
+
+    private void resolveFieldAddress() throws DslException {
+        if (this.address != null) return; // Already resolved
+
+        try {
+            ResolvedField resolved;
+
+            if (this.pendingFieldName != null) {
+                resolved = FieldResolver.fieldByFieldName(this.ownerType, this.reflection,
+                        this.pendingFieldName, this.expectedFieldType);
+                this.address = resolved.address();
+            } else if (this.pendingField != null) {
+                resolved = FieldResolver.fieldByField(this.ownerType, this.reflection,
+                        this.pendingField, this.expectedFieldType);
+                this.address = resolved.address();
+            } else if (this.pendingAddress != null) {
+                resolved = FieldResolver.fieldByAddress(this.ownerType, this.reflection,
+                        this.pendingAddress, this.expectedFieldType);
+                this.address = resolved.address();
+            }
+        } catch (ReflectionException e) {
+            String desc = this.pendingFieldName != null ? this.pendingFieldName
+                    : this.pendingField != null ? this.pendingField.getName()
+                            : String.valueOf(this.pendingAddress);
+            log.error("Reflection error while resolving field: {}", desc, e);
+            throw new DslException("Error resolving field '" + desc + "' for " + ownerType.getName(), e);
+        }
+    }
+
+    private void resolveValueSupplier() {
+        if (this.pendingRawValue != null && this.valueSupplierBuilder == null) {
+            IClass<?> clz = this.reflection.getClass(this.pendingRawValue.getClass());
+            this.valueSupplierBuilder = new FixedSupplierBuilder(this.pendingRawValue, clz);
+        }
     }
 
     @Override
     protected IFieldBinder<OwnerType, FieldType> doBuild() throws DslException {
+        Objects.requireNonNull(this.reflection, "IReflection must be provided before building");
+
+        // Resolve field address using reflection
+        resolveFieldAddress();
+        // Resolve pending raw value to supplier
+        resolveValueSupplier();
+
         Objects.requireNonNull(this.address, "Address is not set");
         Objects.requireNonNull(this.valueSupplierBuilder, "Value supplier builder is not set");
 
         ISupplier<FieldType> valueSupplier = (ISupplier<FieldType>) AbstractConstructorBinderBuilder
                 .createNullableObjectSupplier(this.valueSupplierBuilder, this.allowNull);
 
-        if (this.buildContextual())
-            return new ContextualFieldBinder<>(this.ownerSupplierBuilder.build(), this.address, valueSupplier);
+        try {
+            if (this.buildContextual())
+                return new ContextualFieldBinder<>(this.ownerSupplierBuilder.build(), this.address, valueSupplier,
+                        this.reflection);
 
-        return new FieldBinder<>(this.ownerSupplierBuilder.build(), this.address,
-                valueSupplier);
+            return new FieldBinder<>(this.ownerSupplierBuilder.build(), this.address,
+                    valueSupplier, this.reflection);
+        } catch (ReflectionException e) {
+            throw new DslException("Error resolving field '" + this.address + "' for " + ownerType.getName(), e);
+        }
     }
 
     @Override
     public IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> withValue(Object value) throws DslException {
         Objects.requireNonNull(value, "Value cannot be null");
-        this.valueSupplierBuilder = FixedSupplierBuilder.of(value);
+        // Store raw value — will be resolved in doBuild() using reflection
+        this.pendingRawValue = value;
+        this.valueSupplierBuilder = null;
         return this;
     }
 
@@ -129,13 +195,12 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
             ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
         Objects.requireNonNull(supplier, "Supplier cannot be null");
         this.valueSupplierBuilder = supplier;
+        this.pendingRawValue = null;
         return this;
     }
 
     private boolean buildContextual() {
         if (this.ownerSupplierBuilder.isContextual())
-            return true;
-        if (this.valueSupplierBuilder.isContextual())
             return true;
         return false;
     }
@@ -146,12 +211,13 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder, 
         return this;
     }
 
-    protected Field findField() throws DslException {
+    protected IField findField() throws DslException {
         if (this.address == null) {
             throw new DslException("Field is not set");
         }
         try {
-            return (Field) this.query.find(this.address).getLast();
+            ResolvedField resolved = FieldResolver.fieldByAddress(this.ownerType, this.reflection, this.address);
+            return resolved;
         } catch (ReflectionException e) {
             throw new DslException(e.getMessage(), e);
         }

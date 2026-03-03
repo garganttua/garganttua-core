@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.FutureSupplier;
 import com.garganttua.core.supply.ISupplier;
 
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * <pre>{@code
  * CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> "result");
  *
- * ISupplier<String> supplier = new FutureSupplierBuilder<>(future, String.class)
+ * ISupplier<String> supplier = new FutureSupplierBuilder<>(future, String.class, suppliedClass)
  *     .withTimeout(5000L)
  *     .build();
  * }</pre>
@@ -36,7 +37,7 @@ public class FutureSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
 
     private final CompletableFuture<Supplied> future;
-    private final Class<Supplied> suppliedType;
+    private final IClass<Supplied> suppliedClass;
     private Long timeoutMillis;
 
     /**
@@ -44,11 +45,12 @@ public class FutureSupplierBuilder<Supplied>
      *
      * @param future the CompletableFuture to wrap
      * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      */
-    public FutureSupplierBuilder(CompletableFuture<Supplied> future, Class<Supplied> suppliedType) {
+    public FutureSupplierBuilder(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
         log.atTrace().log("Entering FutureSupplierBuilder constructor");
         this.future = Objects.requireNonNull(future, "Future cannot be null");
-        this.suppliedType = Objects.requireNonNull(suppliedType, "Supplied type cannot be null");
+        this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
         log.atTrace().log("Exiting FutureSupplierBuilder constructor");
     }
 
@@ -69,7 +71,7 @@ public class FutureSupplierBuilder<Supplied>
     public ISupplier<Supplied> build() throws DslException {
         log.atTrace().log("Entering build method");
         log.atDebug().log("Building FutureSupplier with timeout: {}", timeoutMillis);
-        ISupplier<Supplied> result = new FutureSupplier<>(future, suppliedType, timeoutMillis);
+        ISupplier<Supplied> result = new FutureSupplier<>(future, suppliedClass, timeoutMillis);
         log.atDebug().log("Build completed for FutureSupplier");
         log.atTrace().log("Exiting build method");
         return result;
@@ -77,7 +79,12 @@ public class FutureSupplierBuilder<Supplied>
 
     @Override
     public Type getSuppliedType() {
-        return suppliedType;
+        return suppliedClass.getType();
+    }
+
+    @Override
+    public IClass<Supplied> getSuppliedClass() {
+        return this.suppliedClass;
     }
 
     @Override
@@ -93,10 +100,10 @@ public class FutureSupplierBuilder<Supplied>
      * @param suppliedType the type of the supplied object
      * @return a new FutureSupplierBuilder instance
      */
-    public static <Supplied> FutureSupplierBuilder<Supplied> of(CompletableFuture<Supplied> future, Class<Supplied> suppliedType) {
+    public static <Supplied> FutureSupplierBuilder<Supplied> of(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
         log.atTrace().log("Entering static of method");
         log.atDebug().log("Creating FutureSupplierBuilder");
-        FutureSupplierBuilder<Supplied> result = new FutureSupplierBuilder<>(future, suppliedType);
+        FutureSupplierBuilder<Supplied> result = new FutureSupplierBuilder<>(future, suppliedClass);
         log.atTrace().log("Exiting static of method");
         return result;
     }

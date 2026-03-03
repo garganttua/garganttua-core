@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.garganttua.core.reflection.IClass;
+
 public record WorkflowResult(
     UUID uuid,
     Object output,
@@ -38,7 +40,7 @@ public record WorkflowResult(
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getStageOutput(String stage, String name, Class<T> type) {
+    public <T> Optional<T> getStageOutput(String stage, String name, IClass<T> type) {
         String key = stage + "." + name;
         Object value = stageOutputs.get(key);
         if (value != null && type.isInstance(value)) {
@@ -48,7 +50,7 @@ public record WorkflowResult(
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getVariable(String name, Class<T> type) {
+    public <T> Optional<T> getVariable(String name, IClass<T> type) {
         Object value = variables.get(name);
         if (value != null && type.isInstance(value)) {
             return Optional.of((T) value);

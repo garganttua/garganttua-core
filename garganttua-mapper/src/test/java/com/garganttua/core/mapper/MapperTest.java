@@ -8,10 +8,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.mapper.annotations.ObjectMappingRule;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -97,6 +103,21 @@ class GenericDtoWithObjectMapping extends GenericDto {
 
 public class MapperTest {
 
+	private static IReflection reflection;
+
+	@BeforeAll
+	static void setUpReflection() throws Exception {
+		reflection = ReflectionBuilder.builder()
+				.withProvider(new RuntimeReflectionProvider())
+				.build();
+		IClass.setReflection(reflection);
+	}
+
+	@AfterAll
+	static void tearDownReflection() {
+		IClass.setReflection(null);
+	}
+
 	@Test
 	public void testRegularFieldMapping() throws MapperException {
 
@@ -104,8 +125,8 @@ public class MapperTest {
 		entity.setUuid("uuid");
 		entity.setId("id");
 
-		GenericDto dest = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false).map(entity,
-				GenericDto.class);
+		GenericDto dest = new Mapper(reflection).configure(MapperConfigurationItem.FAIL_ON_ERROR, false).map(entity,
+				reflection.getClass(GenericDto.class));
 
 		assertNotNull(dest);
 		assertEquals("uuid", dest.getUuid());
@@ -120,8 +141,8 @@ public class MapperTest {
 		dto.setUuid("uuid");
 		dto.setId("id");
 
-		GenericEntity dest = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false).map(dto,
-				GenericEntity.class);
+		GenericEntity dest = new Mapper(reflection).configure(MapperConfigurationItem.FAIL_ON_ERROR, false).map(dto,
+				reflection.getClass(GenericEntity.class));
 
 		assertNotNull(dest);
 		assertEquals("uuid", dest.getUuid());
@@ -136,21 +157,21 @@ public class MapperTest {
 		entity.setId("id");
 
 		assertThrows(MapperException.class, () -> {
-			new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, true).map(entity, GenericDto.class);
+			new Mapper(reflection).configure(MapperConfigurationItem.FAIL_ON_ERROR, true).map(entity, reflection.getClass(GenericDto.class));
 		});
 	}
 
 	@Test
 	public void testRecordMappingConfiguration() throws MapperException {
-		Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, true);
-		mapper.recordMappingConfiguration(GenericEntity.class, GenericDto.class);
+		Mapper mapper = new Mapper(reflection).configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+		mapper.recordMappingConfiguration(reflection.getClass(GenericEntity.class), reflection.getClass(GenericDto.class));
 
 		assertEquals(1, mapper.mappingConfigurations.size());
 	}
 
 	@Test
 	public void testConcurrentMapping() throws Exception {
-		Mapper mapper = new Mapper().configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
+		Mapper mapper = new Mapper(reflection).configure(MapperConfigurationItem.FAIL_ON_ERROR, false);
 		int threadCount = 100;
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 		GenericEntity entity = new GenericEntity();
@@ -162,7 +183,7 @@ public class MapperTest {
 		for (int i = 0; i < threadCount; i++) {
 			futures.add(executor.submit(() -> {
 				try {
-					mapper.map(entity, GenericDto.class);
+					mapper.map(entity, reflection.getClass(GenericDto.class));
 				} catch (MapperException e) {
 					fail("Mapping failed: " + e.getMessage());
 				}

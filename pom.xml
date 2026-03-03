@@ -44,6 +44,10 @@
     <reflections.version>0.10.2</reflections.version>
     <javax.inject.version>1</javax.inject.version>
     <jackson.databind.version>2.15.2</jackson.databind.version>
+    <jackson.dataformat.yaml.version>2.15.2</jackson.dataformat.yaml.version>
+    <jackson.dataformat.xml.version>2.15.2</jackson.dataformat.xml.version>
+    <jackson.dataformat.properties.version>2.15.2</jackson.dataformat.properties.version>
+    <jackson.dataformat.toml.version>2.15.2</jackson.dataformat.toml.version>
     <spring.framework.version>6.2.1</spring.framework.version>
     <jakarta.annotations.api.version>2.1.1</jakarta.annotations.api.version>
     <logback.classic.version>1.5.16</logback.classic.version>
@@ -71,6 +75,9 @@
     <!-- Compiler Configuration -->
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
+
+    <!-- Direct Binder Generation: set to false to disable compile-time binder generation -->
+    <garganttua.direct.binders>true</garganttua.direct.binders>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -182,6 +189,41 @@
         <artifactId>garganttua-console</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-configuration</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-runtime-reflection</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-reflection</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-annotation-scanner</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-annotation-processor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-maven-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- External Dependencies -->
 
@@ -259,6 +301,26 @@
         <version>${jackson.databind.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
+        <version>${jackson.dataformat.yaml.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-xml</artifactId>
+        <version>${jackson.dataformat.xml.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-properties</artifactId>
+        <version>${jackson.dataformat.properties.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-toml</artifactId>
+        <version>${jackson.dataformat.toml.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.github.siahsang</groupId>
         <artifactId>red-utils</artifactId>
         <version>${red.utils.version}</version>
@@ -305,6 +367,7 @@
         <configuration>
           <compilerArgs>
             <arg>-parameters</arg>
+            <arg>-Agarganttua.direct.binders=${garganttua.direct.binders}</arg>
           </compilerArgs>
           <release>${java.version}</release>
           <annotationProcessorPaths>
@@ -361,7 +424,7 @@
   </build>
   <modules>
     <module>garganttua-commons</module>
-    <module>garganttua-annotation-processor</module>
+    <!-- <module>garganttua-annotation-processor</module> -->
     <module>garganttua-reflection</module>
     <module>garganttua-mapper</module>
     <module>garganttua-execution</module>
@@ -371,7 +434,7 @@
     <module>garganttua-dsl</module>
     <module>garganttua-injection</module>
     <module>garganttua-runtime</module>
-    <module>garganttua-bindings</module>
+    <!-- <module>garganttua-bindings</module> -->
     <module>garganttua-lifecycle</module>
     <module>garganttua-supply</module>
     <module>garganttua-condition</module>
@@ -380,7 +443,11 @@
     <module>garganttua-bootstrap</module>
     <module>garganttua-script</module>
     <module>garganttua-console</module>
+    <module>garganttua-configuration</module>
     <module>garganttua-script-maven-plugin</module>
     <module>garganttua-workflow</module>
+    <module>garganttua-runtime-reflection</module>
+    <module>garganttua-aot-common</module>
+    <module>garganttua-aot</module>
   </modules>
 </project>

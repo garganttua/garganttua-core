@@ -6,18 +6,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.nativve.annotations.Native;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bootstrap
 public class NativeConfigurationBuilder
-        extends AbstractAutomaticBuilder<INativeConfigurationBuilder, INativeConfiguration>
+        extends AbstractAutomaticDependentBuilder<INativeConfigurationBuilder, INativeConfiguration>
         implements INativeConfigurationBuilder {
 
     private Set<IReflectionConfigurationEntryBuilder> reflectionEntries = new HashSet<>();
@@ -26,7 +31,33 @@ public class NativeConfigurationBuilder
     private final Set<String> resources = new HashSet<>();
     private String resourcesPath = null;
     private String reflectionPath = null;
-    private Set<INativeBuilder<?,?>> nativeConfigurationBuilder = new HashSet<>();
+    private Set<INativeBuilder<?, ?>> nativeConfigurationBuilder = new HashSet<>();
+
+    public NativeConfigurationBuilder() {
+        super(Set.of(DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BOTH)));
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+        log.atTrace().log("Starting auto-detection for native configuration with dependency "
+                + dependency.getClass().getSimpleName());
+        if (dependency instanceof IReflection reflection) {
+            this.detectNativeElements(reflection);
+            this.detectNativeConfigurationBuilders(reflection);
+        }
+        log.atTrace().log("Completed auto-detection for native configuration with Dependency "
+                + dependency.getClass().getSimpleName());
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dependency) {
+        // No pre-build behavior needed
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+        // No post-build behavior needed
+    }
 
     @Override
     public INativeConfigurationBuilder withPackages(String[] packageNames) {
@@ -69,38 +100,42 @@ public class NativeConfigurationBuilder
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Starting auto-detection for native configuration");
-        this.detectNativeElements();
-        this.detectNativeConfigurationBuilders();
         log.atTrace().log("Completed auto-detection for native configuration");
     }
 
-    private void detectNativeConfigurationBuilders() {
+    private void detectNativeConfigurationBuilders(IReflection reflection) {
         log.atTrace().log("Detecting native configuration builders in packages");
+        IClass<com.garganttua.core.nativve.annotations.NativeConfigurationBuilder> nativeBuilderAnnotation = reflection
+                .getClass(com.garganttua.core.nativve.annotations.NativeConfigurationBuilder.class);
+        IClass<INativeBuilder> nativeBuilderInterface = reflection.getClass(INativeBuilder.class);
         this.packages.forEach(
                 p -> {
                     log.atDebug().log("Scanning package for @NativeConfigurationBuilder: {}", p);
-                    ObjectReflectionHelper.getClassesWithAnnotation(p,
-                        com.garganttua.core.nativve.annotations.NativeConfigurationBuilder.class).forEach(c -> {
-                            if (INativeBuilder.class.isAssignableFrom(c)) {
-                                log.atDebug().log("Found native configuration builder: {}", c.getName());
-                                INativeBuilder<?, ?> nativeBuilder = (INativeBuilder<?, ?>) ObjectReflectionHelper
-                                        .instanciateNewObject(c);
+                    reflection.getClassesWithAnnotation(p, nativeBuilderAnnotation).forEach(c -> {
+                        if (nativeBuilderInterface.isAssignableFrom(c)) {
+                            log.atDebug().log("Found native configuration builder: {}", c.getName());
+                            try {
+                                INativeBuilder<?, ?> nativeBuilder = (INativeBuilder<?, ?>) reflection.newInstance(c);
                                 nativeBuilder.withPackages(getPackages());
                                 INativeReflectionConfiguration nativeConfiguration = nativeBuilder.build();
                                 reflectionEntries.addAll(nativeConfiguration.nativeConfiguration());
                                 log.atDebug().log("Loaded native configuration from builder: {}", c.getName());
+                            } catch (ReflectionException e) {
+                                log.atError().log("Failed to instantiate native configuration builder: {}",
+                                        c.getName());
                             }
-                        });
+                        }
+                    });
                 });
-
     }
 
-    private void detectNativeElements() {
+    private void detectNativeElements(IReflection reflection) {
         log.atTrace().log("Detecting @Native annotated elements in packages");
+        IClass<Native> nativeAnnotation = reflection.getClass(Native.class);
         this.packages.forEach(
                 p -> {
                     log.atDebug().log("Scanning package for @Native annotations: {}", p);
-                    ObjectReflectionHelper.getClassesWithAnnotation(p, Native.class).forEach(c -> {
+                    reflection.getClassesWithAnnotation(p, nativeAnnotation).forEach(c -> {
                         if (c.isAnnotation()) {
                             log.atDebug().log("Found @Native annotation type: {}", c.getName());
                             reflectionEntries.add(new ReflectConfigEntryBuilder(c).allPublicClasses(true)
@@ -129,7 +164,7 @@ public class NativeConfigurationBuilder
     }
 
     @Override
-    public IReflectionConfigurationEntryBuilder reflectionEntry(Class<?> clazz) {
+    public IReflectionConfigurationEntryBuilder reflectionEntry(IClass<?> clazz) {
         log.atTrace().log("Adding reflection entry for class: {}", clazz.getName());
         IReflectionConfigurationEntryBuilder entry = new ReflectConfigEntryBuilder(clazz);
         this.reflectionEntries.add(entry);
@@ -138,9 +173,10 @@ public class NativeConfigurationBuilder
     }
 
     @Override
-    public INativeConfigurationBuilder resource(Class<?> resource) {
+    public INativeConfigurationBuilder resource(IClass<?> resource) {
         log.atTrace().log("Adding resource for class: {}", resource.getName());
-        this.resource(Objects.requireNonNull(resource, "ressource cannot be null").getName().replace('.', '/') + ".class");
+        this.resource(
+                Objects.requireNonNull(resource, "ressource cannot be null").getName().replace('.', '/') + ".class");
         return this;
     }
 
@@ -153,9 +189,10 @@ public class NativeConfigurationBuilder
     }
 
     @Override
-    public INativeConfigurationBuilder configurationBuilder(INativeBuilder<?,?> nativeConfigurationBuilder) {
+    public INativeConfigurationBuilder configurationBuilder(INativeBuilder<?, ?> nativeConfigurationBuilder) {
         log.atTrace().log("Adding native configuration builder: {}", nativeConfigurationBuilder.getClass().getName());
-        this.nativeConfigurationBuilder.add(Objects.requireNonNull(nativeConfigurationBuilder, "Native configuration builder cannot be null"));
+        this.nativeConfigurationBuilder
+                .add(Objects.requireNonNull(nativeConfigurationBuilder, "Native configuration builder cannot be null"));
         return this;
     }
 
@@ -166,9 +203,9 @@ public class NativeConfigurationBuilder
         return this;
     }
 
-	public static INativeConfigurationBuilder builder() {
-		return new NativeConfigurationBuilder();
-	}
+    public static INativeConfigurationBuilder builder() {
+        return new NativeConfigurationBuilder();
+    }
 
     @Override
     public IReflectionConfigurationEntryBuilder reflectionEntry(IReflectionConfigurationEntry entry) {

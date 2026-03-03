@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,7 +21,7 @@ public class ResourceConfig {
 
 private static final ObjectMapper objectMapper = new ObjectMapper();
     
-    public static void addResource(File resourceConfigFile, Class<?> clazz) throws IOException {
+    public static void addResource(File resourceConfigFile, IClass<?> clazz) throws IOException {
         log.atTrace().log("Entering addResource with file: {} and class: {}", resourceConfigFile, clazz.getName());
         String classPath = clazz.getName().replace('.', '/') + ".class";
         log.atDebug().log("Converted class {} to resource path: {}", clazz.getName(), classPath);
@@ -58,7 +59,7 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
 		log.atTrace().log("Exiting addResource");
 	}
 
-    public static void removeResource(File resourceConfigFile, Class<?> clazz) throws IOException {
+    public static void removeResource(File resourceConfigFile, IClass<?> clazz) throws IOException {
         log.atTrace().log("Entering removeResource with file: {} and class: {}", resourceConfigFile, clazz.getName());
         String classPath = clazz.getName().replace('.', '/') + ".class";
         log.atDebug().log("Converted class {} to resource path: {}", clazz.getName(), classPath);

@@ -1,8 +1,6 @@
 package com.garganttua.core.injection.context.dsl;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +15,8 @@ import javax.inject.Inject;
 import javax.inject.Qualifier;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -27,6 +27,12 @@ import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.beans.BeanFactory;
+import com.garganttua.core.injection.IInjectableElementResolver;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import jakarta.annotation.PostConstruct;
@@ -37,19 +43,34 @@ public class BeanFactoryBuilder<Bean>
         extends AbstractAutomaticDependentBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
 
+    private static IClass<Inject> injectClass() {
+        return IClass.getClass(Inject.class);
+    }
+
+    private static IClass<PostConstruct> postConstructClass() {
+        return IClass.getClass(PostConstruct.class);
+    }
+
+    private static IClass<Qualifier> qualifierClass() {
+        return (IClass<Qualifier>) IClass.getClass(Qualifier.class);
+    }
+
     private Bean bean = null;
-    private Class<Bean> beanClass;
+    private IClass<Bean> beanClass;
     private BeanStrategy strategy = BeanStrategy.singleton;
     private String name;
     private IBeanConstructorBinderBuilder<Bean> constructorBinderBuilder;
     private Set<IBeanPostConstructMethodBinderBuilder<Bean>> postConstructMethodBinderBuilders = new HashSet<>();
     private List<IBeanInjectableFieldBuilder<?, Bean>> injectableFields = new ArrayList<>();
 
-    private Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
+    private Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
     private IInjectableElementResolverBuilder resolverBuilder;
+    private IObservableBuilder<?, ?> reflectionBuilderRef;
 
-    public BeanFactoryBuilder(Class<Bean> beanClass) {
-        super(Set.of(new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build()));
+    public BeanFactoryBuilder(IClass<Bean> beanClass) {
+        super(Set.of(
+                new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build(),
+                DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
         this.beanClass = Objects.requireNonNull(beanClass, "Bean class cannot be null");
         log.atTrace().log("Exiting BeanFactoryBuilder constructor");
     }
@@ -57,6 +78,24 @@ public class BeanFactoryBuilder<Bean>
     @Override
     protected IBeanFactory<Bean> doBuild() throws DslException {
         log.atTrace().log("Entering doBuild for beanClass: {}", this.beanClass);
+
+        // Propagate IReflectionBuilder to child builders before building them
+        if (this.reflectionBuilderRef != null) {
+            if (this.constructorBinderBuilder instanceof BeanConstructorBinderBuilder<Bean> cb) {
+                cb.provide(this.reflectionBuilderRef);
+            }
+            for (IBeanPostConstructMethodBinderBuilder<Bean> pcb : this.postConstructMethodBinderBuilders) {
+                if (pcb instanceof BeanPostConstructMethodBinderBuilder<Bean> mb) {
+                    mb.provide(this.reflectionBuilderRef);
+                }
+            }
+            for (IBeanInjectableFieldBuilder<?, Bean> fb : this.injectableFields) {
+                if (fb instanceof BeanInjectableFieldBuilder<?, Bean> ifb) {
+                    ifb.provide(this.reflectionBuilderRef);
+                }
+            }
+        }
+
         BeanFactoryBuilder.removeDuplicatesByHashCode(this.injectableFields);
         BeanDefinition<Bean> definition = new BeanDefinition<>(
                 new BeanReference<>(this.beanClass,
@@ -89,7 +128,7 @@ public class BeanFactoryBuilder<Bean>
         log.atTrace().log("Completed looking for injectable fields");
     }
 
-    private void registerInjectableField(Field field, IInjectableElementResolver resolver) {
+    private void registerInjectableField(IField field, IInjectableElementResolver resolver) {
         log.atTrace().log("Registering injectable field: {}", field.getName());
         resolver.resolve(field.getType(), field).ifResolved((b, n) -> {
             IBeanInjectableFieldBuilder<?, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
@@ -102,24 +141,24 @@ public class BeanFactoryBuilder<Bean>
     private void lookForPostConstructMethods() {
         log.atTrace().log("Looking for post construct methods in beanClass: {}", this.beanClass);
         Arrays.stream(this.beanClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Inject.class))
+                .filter(method -> method.isAnnotationPresent(injectClass()))
                 .filter(this::isPostConstructMethodNotAlreadyBound)
                 .forEach(this::registerPostConstructMethodBinder);
         Arrays.stream(this.beanClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+                .filter(method -> method.isAnnotationPresent(postConstructClass()))
                 .filter(this::isPostConstructMethodNotAlreadyBound)
                 .forEach(this::registerPostConstructMethodBinder);
         log.atTrace().log("Completed looking for post construct methods");
     }
 
-    private boolean isPostConstructMethodNotAlreadyBound(Method method) {
+    private boolean isPostConstructMethodNotAlreadyBound(IMethod method) {
         return this.postConstructMethodBinderBuilders.stream().noneMatch(builder -> {
-            Method existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).method();
+            IMethod existing = ((BeanPostConstructMethodBinderBuilder<Bean>) builder).method();
             return method.equals(existing);
         });
     }
 
-    private void registerPostConstructMethodBinder(Method method) {
+    private void registerPostConstructMethodBinder(IMethod method) {
         try {
             log.atTrace().log("Registering post construct method: {}", method.getName());
             IBeanPostConstructMethodBinderBuilder<Bean> methodBinderBuilder = new BeanPostConstructMethodBinderBuilder<>(
@@ -128,9 +167,8 @@ public class BeanFactoryBuilder<Bean>
                     .autoDetect(true)
                     .method(method);
 
-            Arrays.stream(method.getParameters()).forEach(parameter -> {
+            Arrays.stream(method.getParameterTypes()).forEach(paramType -> {
                 try {
-                    Class<?> paramType = parameter.getType();
                     methodBinderBuilder.withParam(new NullSupplierBuilder<>(paramType));
                     log.atDebug().log("Added parameter {} to post construct method {}", paramType, method.getName());
                 } catch (DslException e) {
@@ -149,16 +187,15 @@ public class BeanFactoryBuilder<Bean>
     private void lookForConstructor() {
         log.atTrace().log("Looking for @Inject constructor in beanClass: {}", this.beanClass);
         Arrays.stream(this.beanClass.getDeclaredConstructors())
-                .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
+                .filter(constructor -> constructor.isAnnotationPresent(injectClass()))
                 .findFirst()
                 .ifPresent(constructor -> {
                     log.atDebug().log("Found @Inject constructor: {}", constructor);
                     this.constructorBinderBuilder = new BeanConstructorBinderBuilder<>(this, this.beanClass).provide(this.resolverBuilder)
                             .autoDetect(true);
 
-                    Arrays.stream(constructor.getParameters())
-                            .forEach(parameter -> {
-                                Class<?> paramType = parameter.getType();
+                    Arrays.stream(constructor.getParameterTypes())
+                            .forEach(paramType -> {
                                 try {
                                     this.constructorBinderBuilder
                                             .withParam(new NullSupplierBuilder<>(paramType), true);
@@ -196,8 +233,8 @@ public class BeanFactoryBuilder<Bean>
     }
 
     @Override
-    public IBeanFactoryBuilder<Bean> qualifier(Class<? extends Annotation> qualifier) throws DslException {
-        if (qualifier.getAnnotation(Qualifier.class) == null) {
+    public IBeanFactoryBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) throws DslException {
+        if (qualifier.getAnnotation(qualifierClass()) == null) {
             log.atError().log("Provided qualifier {} is not annotated with @Qualifier", qualifier.getName());
             throw new DslException("Provided qualifier " + qualifier.getName() + " is not annotated with @Qualifier");
         }
@@ -217,13 +254,18 @@ public class BeanFactoryBuilder<Bean>
 
     @Override
     public Type getSuppliedType() {
+        return this.beanClass.getType();
+    }
+
+    @Override
+    public IClass<Bean> getSuppliedClass() {
         return this.beanClass;
     }
 
     @Override
-    public IBeanFactoryBuilder<Bean> qualifiers(Set<Class<? extends Annotation>> qualifiers) throws DslException {
-        Set<Class<? extends Annotation>> verifiedQualifiers = qualifiers.stream()
-                .filter(q -> q.getAnnotation(Qualifier.class) != null)
+    public IBeanFactoryBuilder<Bean> qualifiers(Set<IClass<? extends Annotation>> qualifiers) throws DslException {
+        Set<IClass<? extends Annotation>> verifiedQualifiers = qualifiers.stream()
+                .filter(q -> q.getAnnotation(qualifierClass()) != null)
                 .collect(Collectors.toSet());
         this.qualifiers.addAll(verifiedQualifiers);
         log.atDebug().log("Added multiple qualifiers: {}", verifiedQualifiers);
@@ -236,7 +278,7 @@ public class BeanFactoryBuilder<Bean>
     }
 
     @Override
-    public <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(Class<FieldType> fieldType)
+    public <FieldType> IBeanInjectableFieldBuilder<FieldType, Bean> field(IClass<FieldType> fieldType)
             throws DslException {
         Objects.requireNonNull(fieldType, "Field type cannot be null");
         IBeanInjectableFieldBuilder<FieldType, Bean> injectable = new BeanInjectableFieldBuilder<>(this, this,
@@ -247,9 +289,9 @@ public class BeanFactoryBuilder<Bean>
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         log.atTrace().log("Calculating dependencies for beanClass: {}", this.beanClass);
-        Set<Class<?>> dependencies = new HashSet<>();
+        Set<IClass<?>> dependencies = new HashSet<>();
         this.injectableFields.forEach(f -> dependencies.addAll(f.dependencies()));
         Optional.ofNullable(this.constructorBinderBuilder).ifPresent(c -> dependencies.addAll(c.dependencies()));
         this.postConstructMethodBinderBuilders.forEach(m -> dependencies.addAll(m.dependencies()));
@@ -292,6 +334,9 @@ public class BeanFactoryBuilder<Bean>
     public IBeanFactoryBuilder<Bean> provide(IObservableBuilder<?, ?> dependency) {
         if (dependency instanceof IInjectableElementResolverBuilder rb) {
             this.resolverBuilder = rb;
+        }
+        if (dependency instanceof IReflectionBuilder) {
+            this.reflectionBuilderRef = dependency;
         }
         return super.provide(dependency);
     }

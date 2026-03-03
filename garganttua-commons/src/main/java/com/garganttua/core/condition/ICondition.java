@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 /**
@@ -93,22 +94,26 @@ import com.garganttua.core.supply.ISupplier;
  * @see com.garganttua.core.condition.dsl.IConditionBuilder
  * @see com.garganttua.core.runtime.annotations.Condition
  */
-// @FunctionalInterface
+//@FunctionalInterface
 public interface ICondition extends IExpressionNode<Boolean, ISupplier<Boolean>> {
+
+    @Override
+    default Type getSuppliedType() {
+        return ISupplier.class;
+    }
 
     @SuppressWarnings("unchecked")
     @Override
-    default Type getSuppliedType() {
-        return (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class;
+    default IClass<ISupplier<Boolean>> getSuppliedClass() {
+        return (IClass<ISupplier<Boolean>>) (IClass<?>) IClass.getClass(ISupplier.class);
+    }
+
+    @Override
+    default IClass<Boolean> getFinalSuppliedClass() {
+        return IClass.getClass(Boolean.class);
     }
 
     default Boolean fullEvaluate() throws ExpressionException {
         return this.evaluate().supply().get();
     }
-
-    @Override
-    default public Class<Boolean> getFinalSuppliedClass() {
-        return Boolean.class;
-    }
-
 }

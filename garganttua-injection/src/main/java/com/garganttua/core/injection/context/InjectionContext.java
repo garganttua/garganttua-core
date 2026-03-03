@@ -1,7 +1,6 @@
 package com.garganttua.core.injection.context;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -30,11 +29,14 @@ import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
+import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.utils.CopyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -142,7 +144,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(Optional<String> provider, String key, IClass<T> type) throws DiException {
         log.atTrace().log("Getting property with Optional provider: {}, key: {}, type: {}", provider, key, type);
         Optional<T> result;
         if (provider.isPresent()) {
@@ -155,7 +157,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         log.atTrace().log("Getting property with key: {}, type: {}", key, type);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(key, "Key cannot be null");
@@ -169,7 +171,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(String providerName, String key, IClass<T> type) throws DiException {
         log.atTrace().log("Getting property from provider: {}, key: {}, type: {}", providerName, key, type);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Objects.requireNonNull(providerName, "Provider cannnot be null");
@@ -203,7 +205,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass,
+    public <ChildContext extends IInjectionContext> ChildContext newChildContext(IClass<ChildContext> contextClass,
             Object... args) throws DiException {
         log.atTrace().log("Creating new child context of type: {}", contextClass.getName());
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
@@ -211,10 +213,10 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
             ChildContext ctx = childContextFactories.stream()
                     .filter(factory -> {
                         Class<? extends IInjectionContext> childType = getChildContextType(factory);
-                        return childType != null && contextClass.isAssignableFrom(childType);
+                        return childType != null && contextClass.isAssignableFrom(IClass.getClass(childType));
                     })
                     .findFirst()
-                    .map(factory -> contextClass.cast(factory.createChildContext((IInjectionContext) this.copy(), args)))
+                    .map(factory -> contextClass.cast(factory.createChildContext(this.copy(), args)))
                     .orElseThrow(() -> {
                         log.atError().log("No child context factory registered for class {}", contextClass.getName());
                         return new DiException(
@@ -248,6 +250,11 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         return (type instanceof ParameterizedType parameterizedType
                 && parameterizedType.getRawType() instanceof Class<?> raw
                 && interfasse.isAssignableFrom(raw));
+    }
+
+    @Override
+    public IReflection reflection() {
+        return IClass.getReflection();
     }
 
     // --- Lifecycle methods ---
@@ -449,7 +456,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
         log.atTrace().log("Resolving element: {}", element);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         Resolved result = this.resolverDelegate.resolve(elementType, element);
@@ -467,7 +474,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+    public void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver) {
         log.atTrace().log("Adding resolver for annotation: {}", annotation);
         wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
         synchronized (this.mutex) {
@@ -564,7 +571,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         int totalBeans = beanProviders.values().stream()
                 .mapToInt(provider -> {
                     try {
-                        return provider.queries(new BeanReference<>(Object.class, Optional.empty(), Optional.empty(), Set.of())).size();
+                        return provider.queries(new BeanReference<>(IClass.getClass(Object.class), Optional.empty(), Optional.empty(), Set.of())).size();
                     } catch (Exception e) {
                         return 0;
                     }

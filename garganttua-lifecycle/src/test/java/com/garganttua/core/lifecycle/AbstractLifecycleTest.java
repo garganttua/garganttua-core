@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.reflection.IReflection;
+
 public class AbstractLifecycleTest {
 
     private static class TestLifecycle extends AbstractLifecycle {
@@ -15,6 +17,11 @@ public class AbstractLifecycleTest {
         AtomicInteger startCount = new AtomicInteger();
         AtomicInteger flushCount = new AtomicInteger();
         AtomicInteger stopCount = new AtomicInteger();
+
+        @Override
+        public IReflection reflection() {
+            return null; // wrapLifecycle not exercised in these tests
+        }
 
         @Override
         protected ILifecycle doInit() {

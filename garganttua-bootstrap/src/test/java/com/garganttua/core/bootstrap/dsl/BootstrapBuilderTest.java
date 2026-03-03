@@ -2,13 +2,20 @@ package com.garganttua.core.bootstrap.dsl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
@@ -16,8 +23,13 @@ import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.IAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Tests for Bootstrap.
@@ -30,11 +42,25 @@ import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 @DisplayName("Bootstrap Tests")
 class BootstrapTest {
 
+    private static IReflection reflection;
     private Bootstrap bootstrap;
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new TestAnnotationScanner())
+                .build();
+        IClass.setReflection(reflection);
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
 
     @BeforeEach
     void setUp() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
         bootstrap = new Bootstrap();
     }
 
@@ -691,6 +717,12 @@ class BootstrapTest {
             bootstrap.withPackage("com.garganttua.core.bootstrap.dsl.test")
                     .withBuilder(nonPackageableBuilder);
 
+            // Bootstrap requires IReflectionBuilder dependency when auto-detect is enabled
+            IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+                    .withProvider(new RuntimeReflectionProvider())
+                    .withScanner(new TestAnnotationScanner());
+            bootstrap.provide(reflectionBuilder);
+
             // When
             bootstrap.autoDetect(true);
             Object result = bootstrap.build();
@@ -735,8 +767,8 @@ class BootstrapTest {
         }
 
         @Override
-        protected com.garganttua.core.reflection.IAnnotationScanner getAnnotationScanner() {
-            return ObjectReflectionHelper.getAnnotationScanner();
+        protected IReflection getReflection() {
+            return reflection;
         }
 
         public Set<String> getPackagesSet() {
@@ -855,6 +887,41 @@ class BootstrapTest {
             assertThrows(UnsupportedOperationException.class,
                     () -> allObjects.put(Integer.class, 42),
                     "Registry should be immutable");
+        }
+    }
+
+    /**
+     * Test-local IAnnotationScanner that uses the Reflections library
+     * to find annotated classes at runtime.
+     */
+    static class TestAnnotationScanner implements IAnnotationScanner {
+
+        @Override
+        public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
+            return List.of();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public List<IClass<?>> getClassesWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
+            Reflections reflections = new Reflections(packageName, Scanners.TypesAnnotated);
+            Set<Class<?>> classes = reflections.getTypesAnnotatedWith(
+                    (Class<? extends Annotation>) annotation.getType(), true);
+            List<IClass<?>> result = new ArrayList<>();
+            for (Class<?> c : classes) {
+                result.add(IClass.getClass(c));
+            }
+            return result;
+        }
+
+        @Override
+        public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
+            return List.of();
+        }
+
+        @Override
+        public List<IMethod> getMethodsWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
+            return List.of();
         }
     }
 }

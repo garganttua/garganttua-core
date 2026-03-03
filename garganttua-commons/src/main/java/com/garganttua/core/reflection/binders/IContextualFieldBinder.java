@@ -1,5 +1,6 @@
 package com.garganttua.core.reflection.binders;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.IContextualSupplier;
 
@@ -84,9 +85,9 @@ public interface IContextualFieldBinder<OnwerType, FieldType, OwnerContextType, 
      * target instance containing the field to be accessed.
      * </p>
      *
-     * @return the {@link Class} object representing the owner context type
+     * @return the {@link IClass} object representing the owner context type
      */
-    Class<OwnerContextType> getOwnerContextType();
+    IClass<OwnerContextType> getOwnerContextType();
 
     /**
      * Returns the value context type for this field binder.
@@ -97,9 +98,9 @@ public interface IContextualFieldBinder<OnwerType, FieldType, OwnerContextType, 
      * the owner context type.
      * </p>
      *
-     * @return the {@link Class} object representing the value context type
+     * @return the {@link IClass} object representing the value context type
      */
-    Class<FieldContextType> getValueContextType();
+    IClass<FieldContextType> getValueContextType();
 
     /**
      * Sets the field value using the provided contexts.

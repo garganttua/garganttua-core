@@ -3,11 +3,10 @@ package com.garganttua.core.reflection.binders.dsl;
 import java.lang.reflect.Method;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.mutex.IMutex;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
  * Builder interface for constructing method binders with various resolution
@@ -17,7 +16,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  * {@code IMethodBinderBuilder} specializes {@link IExecutableBinderBuilder} for
  * method-specific binder construction. It provides multiple ways to identify
  * and
- * bind to methods: by name, by {@link Method} reference, by
+ * bind to methods: by name, by {@link IMethod} reference, by
  * {@link ObjectAddress},
  * or with full signature specification. The builder supports both static and
  * instance methods.
@@ -103,7 +102,7 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          * @return this builder instance for method chaining
          * @throws DslException if auto-detection fails or finds multiple candidates
          */
-        Method method() throws DslException;
+        IMethod method() throws DslException;
 
         ObjectAddress methodAddress() throws DslException;
 
@@ -116,7 +115,7 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          * @return this builder instance for method chaining
          * @throws DslException if the signature doesn't match or is incompatible
          */
-        Builder method(Method method) throws DslException;
+        Builder method(IMethod method) throws DslException;
 
         /**
          * Specifies the method to bind by address with full signature.
@@ -128,7 +127,7 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          * @throws DslException if the address is invalid or the signature doesn't match
          */
         Builder method(ObjectAddress methodAddress,
-                        Class<ExecutionReturn> returnType, Class<?>... parameterTypes) throws DslException;
+                        IClass<ExecutionReturn> returnType, IClass<?>... parameterTypes) throws DslException;
 
         /**
          * Specifies the method to bind by name with full signature.
@@ -148,10 +147,6 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          *                      are found
          */
         Builder method(String methodName,
-                        Class<ExecutionReturn> returnType, Class<?>... parameterTypes) throws DslException;
-        
-        
-        Builder mutex(ISupplierBuilder<? extends IMutex, ? extends ISupplier<? extends IMutex>> mutex)
-                        throws DslException;
+                        IClass<ExecutionReturn> returnType, IClass<?>... parameterTypes) throws DslException;
 
 }

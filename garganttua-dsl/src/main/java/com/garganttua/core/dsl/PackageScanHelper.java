@@ -1,19 +1,22 @@
 package com.garganttua.core.dsl;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Objects;
 
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.reflection.IAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Helper class for scanning @Scan annotations and adding packages to packageable builders.
+ * Scans for @Scan annotations and adds discovered packages to packageable builders.
  *
  * <p>
- * This utility scans configured packages for classes annotated with @Scan
- * and automatically adds the specified scan packages to the builder if it
- * implements IPackageableBuilder.
+ * Constructed with an {@link IReflection} instance used for annotation scanning.
+ * Call {@link #scanAndAddPackages(IBuilder, String[])} to perform the scan.
  * </p>
  *
  * @since 2.0.0-ALPHA01
@@ -21,26 +24,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PackageScanHelper {
 
-    private PackageScanHelper() {
-        // Utility class
+    private final IReflection reflection;
+    private IClass<? extends Annotation> scanAnnotationClass;
+
+    public PackageScanHelper(IReflection reflection) {
+        this.reflection = Objects.requireNonNull(reflection, "IReflection cannot be null");
+        this.scanAnnotationClass = this.reflection.getClass(Scan.class);
     }
 
     /**
      * Scans packages for @Scan annotations and adds them to the builder if packageable.
      *
-     * <p>
-     * This method should be called at the beginning of doAutoDetection() for builders
-     * that implement both IPackageableBuilder and IAutomaticBuilder.
-     * </p>
-     *
-     * @param scanner the annotation scanner to use for finding @Scan annotations
      * @param builder the builder to add scan packages to
      * @param basePackages the base packages to scan for @Scan annotations
      * @throws DslException if scanning fails
      */
-    public static void scanAndAddPackages(IAnnotationScanner scanner, IBuilder<?> builder, String[] basePackages) throws DslException {
-        if (scanner == null || builder == null || basePackages == null || basePackages.length == 0) {
-            log.atDebug().log("No scanning needed: scanner, builder or basePackages is null/empty");
+    public void scanAndAddPackages(IBuilder<?> builder, String[] basePackages) throws DslException {
+        if (builder == null || basePackages == null || basePackages.length == 0) {
+            log.atDebug().log("No scanning needed: builder or basePackages is null/empty");
             return;
         }
 
@@ -55,14 +56,14 @@ public class PackageScanHelper {
 
         for (String basePackage : basePackages) {
             try {
-                List<Class<?>> annotatedClasses = scanner.getClassesWithAnnotation(
-                        basePackage, Scan.class);
+                List<IClass<?>> annotatedClasses = this.reflection.getClassesWithAnnotation(
+                        basePackage, this.scanAnnotationClass);
 
                 log.atDebug().log("Found {} classes with @Scan annotation in package {}",
                         annotatedClasses.size(), basePackage);
 
-                for (Class<?> clazz : annotatedClasses) {
-                    Scan scanAnnotation = clazz.getAnnotation(Scan.class);
+                for (IClass<?> clazz : annotatedClasses) {
+                    Scan scanAnnotation = clazz.getAnnotation(this.reflection.getClass(Scan.class));
                     if (scanAnnotation != null) {
                         String scanPackage = scanAnnotation.scan();
                         packageableBuilder.withPackage(scanPackage);
@@ -73,7 +74,57 @@ public class PackageScanHelper {
             } catch (Exception e) {
                 log.atWarn().log("Failed to scan package {} for @Scan annotations: {}",
                         basePackage, e.getMessage());
-                // Continue with other packages even if one fails
+            }
+        }
+
+        log.atTrace().log("Completed scanning for @Scan annotations");
+    }
+
+    /**
+     * Scans packages for @Scan annotations using a custom scanner instead of the
+     * {@link IReflection} instance provided at construction.
+     *
+     * @param scanner the annotation scanner to use
+     * @param builder the builder to add scan packages to
+     * @param basePackages the base packages to scan for @Scan annotations
+     * @throws DslException if scanning fails
+     */
+    public void scanAndAddPackages(IAnnotationScanner scanner, IBuilder<?> builder, String[] basePackages) throws DslException {
+        Objects.requireNonNull(scanner, "IAnnotationScanner cannot be null");
+
+        if (builder == null || basePackages == null || basePackages.length == 0) {
+            log.atDebug().log("No scanning needed: builder or basePackages is null/empty");
+            return;
+        }
+
+        if (!(builder instanceof IPackageableBuilder)) {
+            log.atDebug().log("Builder {} does not implement IPackageableBuilder, skipping scan",
+                    builder.getClass().getSimpleName());
+            return;
+        }
+
+        IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
+        log.atTrace().log("Scanning for @Scan annotations in {} packages", basePackages.length);
+
+        for (String basePackage : basePackages) {
+            try {
+                List<IClass<?>> annotatedClasses = scanner.getClassesWithAnnotation(basePackage, this.scanAnnotationClass);
+
+                log.atDebug().log("Found {} classes with @Scan annotation in package {}",
+                        annotatedClasses.size(), basePackage);
+
+                for (IClass<?> clazz : annotatedClasses) {
+                    Scan scanAnnotation = (Scan) clazz.getAnnotation(this.scanAnnotationClass);
+                    if (scanAnnotation != null) {
+                        String scanPackage = scanAnnotation.scan();
+                        packageableBuilder.withPackage(scanPackage);
+                        log.atDebug().log("Added scan package '{}' from @Scan on class {} to builder {}",
+                                scanPackage, clazz.getSimpleName(), builder.getClass().getSimpleName());
+                    }
+                }
+            } catch (Exception e) {
+                log.atWarn().log("Failed to scan package {} for @Scan annotations: {}",
+                        basePackage, e.getMessage());
             }
         }
 

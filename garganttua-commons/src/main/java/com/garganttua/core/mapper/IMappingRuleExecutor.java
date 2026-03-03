@@ -1,5 +1,7 @@
 package com.garganttua.core.mapper;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Executes custom mapping logic for specific field mappings.
  * <p>
@@ -56,7 +58,7 @@ public interface IMappingRuleExecutor {
 	 * @return the transformed destination object
 	 * @throws MapperException if the mapping transformation fails
 	 */
-	<destination> destination doMapping(Class<destination> destinationClass, destination destinationObject,
+	<destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException;
 
 }

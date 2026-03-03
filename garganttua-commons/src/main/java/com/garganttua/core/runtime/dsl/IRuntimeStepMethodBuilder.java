@@ -3,6 +3,7 @@ package com.garganttua.core.runtime.dsl;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
@@ -48,7 +49,6 @@ import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
  * @see com.garganttua.core.runtime.annotations.Operation
  */
 public interface IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
-                IDependentBuilder<IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>,
                 IMethodBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> {
 
         /**
@@ -57,7 +57,7 @@ public interface IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, Inpu
          * @param exception the exception class to check
          * @return true if the method declares this exception, false otherwise
          */
-        boolean isThrown(Class<? extends Throwable> exception);
+        boolean isThrown(IClass<? extends Throwable> exception);
 
         /**
          * Configures the method's return value to be stored as a variable.
@@ -127,7 +127,7 @@ public interface IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, Inpu
          * @see com.garganttua.core.runtime.annotations.Catch
          */
         IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch(
-                        Class<? extends Throwable> exception) throws DslException;
+                        IClass<? extends Throwable> exception) throws DslException;
 
         /**
          * Configures whether to abort runtime execution on uncaught exceptions.

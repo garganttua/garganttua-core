@@ -1,7 +1,9 @@
 package com.garganttua.core.injection.context.dsl;
 
-import java.lang.reflect.Field;
+import java.util.Set;
 
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.reflection.binders.dsl.IFieldBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
@@ -67,6 +69,8 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  */
 public interface IBeanInjectableFieldBuilder<FieldType, BeanType> extends IFieldBinderBuilder<FieldType, BeanType, IBeanInjectableFieldBuilder<FieldType, BeanType>, IBeanFactoryBuilder<BeanType>>, Dependent {
 
+    @Override
+    Set<IClass<?>> dependencies();
 
     public IBeanInjectableFieldBuilder<FieldType, BeanType> ownerSupplierBuilder(ISupplierBuilder<BeanType, ? extends ISupplier<BeanType>> ownerSupplierBuilder);
 
@@ -80,6 +84,6 @@ public interface IBeanInjectableFieldBuilder<FieldType, BeanType> extends IField
      *
      * @return the field to be injected
      */
-    public Field field();
+    public IField field();
 
 }

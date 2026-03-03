@@ -2,6 +2,7 @@ package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
@@ -63,7 +64,6 @@ import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
  * @see com.garganttua.core.runtime.annotations.FallBack
  */
 public interface IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
-                IDependentBuilder<IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>,
                 IMethodBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> {
 
         /**
@@ -110,7 +110,7 @@ public interface IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, In
          * @see com.garganttua.core.runtime.annotations.OnException
          */
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
-                        Class<? extends Throwable> exception) throws DslException;
+                        IClass<? extends Throwable> exception) throws DslException;
 
         /**
          * Configures whether null return values are acceptable.

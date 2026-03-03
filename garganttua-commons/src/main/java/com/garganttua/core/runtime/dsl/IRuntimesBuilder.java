@@ -6,6 +6,7 @@ import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntime;
 
 /**
@@ -85,7 +86,7 @@ public interface IRuntimesBuilder
          * @see IRuntimeBuilder
          */
         <InputType, OutputType> IRuntimeBuilder<InputType, OutputType> runtime(String string,
-                        Class<InputType> inputType,
-                        Class<OutputType> outputType);
+                        IClass<InputType> inputType,
+                        IClass<OutputType> outputType);
 
 }

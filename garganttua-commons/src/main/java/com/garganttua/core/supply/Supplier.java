@@ -90,9 +90,9 @@ public class Supplier {
             IContextualSupplier<Supplied, Object> contextual = (IContextualSupplier<Supplied, Object>) contextualRaw;
 
             Object matchingContext = null;
-            if (contexts != null && !Void.class.isAssignableFrom(contextual.getOwnerContextType())) {
+            if (contexts != null && contextual.getOwnerContextType() != null) {
                 for (Object ctx : contexts) {
-                    if (ctx != null && contextual.getOwnerContextType().isAssignableFrom(ctx.getClass())) {
+                    if (ctx != null && contextual.getOwnerContextType().isInstance(ctx)) {
                         matchingContext = ctx;
                         log.atDebug().log("Found matching context of type {}", ctx.getClass().getName());
                         break;
@@ -100,7 +100,7 @@ public class Supplier {
                 }
             }
 
-            if (matchingContext == null && !Void.class.isAssignableFrom(contextual.getOwnerContextType())) {
+            if (matchingContext == null && contextual.getOwnerContextType() != null) {
                 log.atError().log("No compatible context found for supplier expecting {}", contextual.getOwnerContextType().getName());
                 throw new SupplyException(
                         "No compatible context found for supplier expecting " + contextual.getOwnerContextType().getName());

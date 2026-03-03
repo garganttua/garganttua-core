@@ -1,7 +1,6 @@
 package com.garganttua.core.runtime;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.time.Instant;
 import java.util.Collections;
@@ -23,6 +22,8 @@ import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -386,7 +387,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) throws DiException {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
         log.atTrace().log("[RuntimeContext.resolve] Resolving element {} of type {}", element, elementType);
         return this.delegateContext.resolve(elementType, element);
     }
@@ -398,7 +399,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public void addResolver(Class<? extends Annotation> annotation, IElementResolver resolver) {
+    public void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver) {
         log.atTrace().log("[RuntimeContext.addResolver] Adding resolver for annotation {}: {}", annotation, resolver);
         this.delegateContext.addResolver(annotation, resolver);
     }

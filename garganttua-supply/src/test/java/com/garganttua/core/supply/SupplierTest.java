@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -32,12 +33,22 @@ public class SupplierTest {
                     public Type getSuppliedType() {
                         return String.class;
                     }
+
+                    @Override
+                    public IClass<String> getSuppliedClass() {
+                        return TestIClass.of(String.class);
+                    }
                 };
             }
 
             @Override
             public Type getSuppliedType() {
                 return String.class;
+            }
+
+            @Override
+            public IClass<String> getSuppliedClass() {
+                return TestIClass.of(String.class);
             }
 
             @Override
@@ -54,7 +65,7 @@ public class SupplierTest {
 
     @Test
     public void testFixedObjectSupplier() throws SupplyException, DslException {
-        FixedSupplierBuilder<String> builder = new FixedSupplierBuilder<String>("hello");
+        FixedSupplierBuilder<String> builder = new FixedSupplierBuilder<String>("hello", TestIClass.of(String.class));
 
         ISupplier<String> supplier = builder.build();
 
@@ -74,7 +85,7 @@ public class SupplierTest {
         };
 
         ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
-                supply, String.class, Object.class);
+                supply, TestIClass.of(String.class), TestIClass.of(Object.class));
 
         IContextualSupplier<String, Object> supplier = builder.build();
 
@@ -88,7 +99,7 @@ public class SupplierTest {
         IContextualSupply<String, Object> supply = (context, contexts) -> Optional.of("hello from context");
 
         ISupplierBuilder<String, IContextualSupplier<String, Object>> builder = new ContextualSupplierBuilder<String, Object>(
-                supply, String.class, Object.class);
+                supply, TestIClass.of(String.class), TestIClass.of(Object.class));
 
         IContextualSupplier<String, Object> supplier = builder.build();
 
@@ -102,7 +113,7 @@ public class SupplierTest {
                 .of("hello from context " + context);
 
         ContextualSupplierBuilder<String, String> builder = new ContextualSupplierBuilder<String, String>(
-                supply, String.class, String.class);
+                supply, TestIClass.of(String.class), TestIClass.of(String.class));
 
         IContextualSupplier<String, String> supplier = builder.build();
 

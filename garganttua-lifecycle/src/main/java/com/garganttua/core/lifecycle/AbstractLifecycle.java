@@ -2,12 +2,12 @@ package com.garganttua.core.lifecycle;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IReflectionUser;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractLifecycle implements ILifecycle {
+public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
 
     protected final AtomicBoolean initialized = new AtomicBoolean(false);
     protected final AtomicBoolean started = new AtomicBoolean(false);
@@ -32,7 +32,7 @@ public abstract class AbstractLifecycle implements ILifecycle {
             log.atDebug().log("Lifecycle wrapped execution successful");
         } catch (LifecycleException e) {
             log.atError().log("LifecycleException caught in wrapLifecycle", e);
-            throw ObjectReflectionHelper.instanciateNewObject(exceptionType, e);
+            throw reflection().newInstance(reflection().getClass(exceptionType), e);
         }
         log.atTrace().log("Exiting wrapLifecycle");
     }

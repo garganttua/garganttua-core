@@ -27,6 +27,7 @@ import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,82 +81,82 @@ public class ExpressionNativeConfigurationBuilder
         Set<IReflectionConfigurationEntryBuilder> entries = new HashSet<>();
 
         // Core expression classes
-        entries.add(new ReflectConfigEntryBuilder(Expression.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(Expression.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionNode.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionNode.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
                 .allDeclaredClasses(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ContextualExpressionNode.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ContextualExpressionNode.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
                 .allDeclaredClasses(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ForLoopExpressionNode.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ForLoopExpressionNode.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // Context and factory classes
-        entries.add(new ReflectConfigEntryBuilder(ExpressionContext.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionContext.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
                 .allDeclaredClasses(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionNodeContext.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionNodeContext.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionNodeFactory.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionNodeFactory.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
                 .allDeclaredClasses(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionVariableContext.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionVariableContext.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ConstructorCallExpressionNodeFactory.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ConstructorCallExpressionNodeFactory.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
                 .allDeclaredClasses(true));
 
-        entries.add(new ReflectConfigEntryBuilder(MethodCallExpressionNodeFactory.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(MethodCallExpressionNodeFactory.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
                 .allDeclaredClasses(true));
 
         // DSL builders
-        entries.add(new ReflectConfigEntryBuilder(ExpressionContextBuilder.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionContextBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionNodeFactoryBuilder.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionNodeFactoryBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // Built-in functions class with @Expression annotated methods
-        entries.add(new ReflectConfigEntryBuilder(Expressions.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(Expressions.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // ANTLR4 generated classes - Parser
-        entries.add(new ReflectConfigEntryBuilder(ExpressionParser.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionParser.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true)
@@ -163,26 +164,26 @@ public class ExpressionNativeConfigurationBuilder
                 .allPublicClasses(true));
 
         // ANTLR4 generated classes - Lexer
-        entries.add(new ReflectConfigEntryBuilder(ExpressionLexer.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionLexer.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // ANTLR4 generated classes - Visitor/Listener
-        entries.add(new ReflectConfigEntryBuilder(ExpressionVisitor.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionVisitor.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionBaseVisitor.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionBaseVisitor.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionListener.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionListener.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true));
 
-        entries.add(new ReflectConfigEntryBuilder(ExpressionBaseListener.class)
+        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExpressionBaseListener.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));

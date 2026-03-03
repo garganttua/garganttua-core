@@ -6,19 +6,40 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.function.Function;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 public class ConditionTest {
+
+        private static IReflection reflection;
+
+        @BeforeAll
+        static void setUp() throws Exception {
+                reflection = ReflectionBuilder.builder()
+                                .withProvider(new RuntimeReflectionProvider())
+                                .build();
+                IClass.setReflection(reflection);
+        }
+
+        @AfterAll
+        static void tearDown() {
+                IClass.setReflection(null);
+        }
 
         @Test
         public void testObjectIsNull() throws ConditionException, DslException {
 
                 assertFalse(isNull(of("null")).build().fullEvaluate());
                 assertFalse(isNull("String").build().fullEvaluate());
-                assertTrue(isNull(NullSupplierBuilder.of(String.class)).build().fullEvaluate());
+                assertTrue(isNull(NullSupplierBuilder.of(IClass.getClass(String.class))).build().fullEvaluate());
 
         }
 
@@ -27,7 +48,7 @@ public class ConditionTest {
 
                 assertTrue(isNotNull(of("null")).build().fullEvaluate());
                 assertTrue(isNotNull("String").build().fullEvaluate());
-                assertFalse(isNotNull(NullSupplierBuilder.of(String.class)).build().fullEvaluate());
+                assertFalse(isNotNull(NullSupplierBuilder.of(IClass.getClass(String.class))).build().fullEvaluate());
 
         }
 
@@ -37,10 +58,10 @@ public class ConditionTest {
                 assertFalse(and(isNull(of("null")), isNull(of("null")))
                                 .build().fullEvaluate());
                 assertFalse(
-                                and(isNull(NullSupplierBuilder.of(String.class)), isNull(of("null")))
+                                and(isNull(NullSupplierBuilder.of(IClass.getClass(String.class))), isNull(of("null")))
                                                 .build().fullEvaluate());
-                assertTrue(and(isNull(NullSupplierBuilder.of(String.class)),
-                                isNull(NullSupplierBuilder.of(String.class))).build().fullEvaluate());
+                assertTrue(and(isNull(NullSupplierBuilder.of(IClass.getClass(String.class))),
+                                isNull(NullSupplierBuilder.of(IClass.getClass(String.class)))).build().fullEvaluate());
 
         }
 

@@ -2,13 +2,18 @@ package com.garganttua.core.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.reflect.Field;
-
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.mapper.rules.SimpleMapableFieldMappingExecutor;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link SimpleMapableFieldMappingExecutor}.
@@ -16,26 +21,41 @@ import com.garganttua.core.mapper.rules.SimpleMapableFieldMappingExecutor;
  */
 public class SimpleMapableFieldMappingExecutorTest {
 
+    private static IReflection reflection;
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build();
+        IClass.setReflection(reflection);
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
+
     private IMapper mapper;
 
     @BeforeEach
     void setUp() {
-        mapper = new Mapper();
+        mapper = new Mapper(reflection);
     }
 
     //@Test
     void testDoMappingWithNestedObject() throws Exception {
-        Field sourceField = SourceWithNested.class.getDeclaredField("nested");
-        Field destinationField = DestinationWithNested.class.getDeclaredField("nested");
+        IField sourceField = wrapClass(SourceWithNested.class).getDeclaredField("nested");
+        IField destinationField = wrapClass(DestinationWithNested.class).getDeclaredField("nested");
 
         SimpleMapableFieldMappingExecutor executor = new SimpleMapableFieldMappingExecutor(
-            mapper, sourceField, destinationField);
+            reflection, mapper, sourceField, destinationField);
 
         SourceWithNested source = new SourceWithNested();
         source.nested = new NestedSource();
         source.nested.value = "test-value";
 
-        DestinationWithNested result = executor.doMapping(DestinationWithNested.class, null, source);
+        DestinationWithNested result = executor.doMapping(wrapClass(DestinationWithNested.class), null, source);
 
         assertNotNull(result);
         assertNotNull(result.nested);
@@ -44,11 +64,11 @@ public class SimpleMapableFieldMappingExecutorTest {
 
     //@Test
     void testDoMappingWithExistingDestination() throws Exception {
-        Field sourceField = SourceWithNested.class.getDeclaredField("nested");
-        Field destinationField = DestinationWithNested.class.getDeclaredField("nested");
+        IField sourceField = wrapClass(SourceWithNested.class).getDeclaredField("nested");
+        IField destinationField = wrapClass(DestinationWithNested.class).getDeclaredField("nested");
 
         SimpleMapableFieldMappingExecutor executor = new SimpleMapableFieldMappingExecutor(
-            mapper, sourceField, destinationField);
+            reflection, mapper, sourceField, destinationField);
 
         SourceWithNested source = new SourceWithNested();
         source.nested = new NestedSource();
@@ -57,7 +77,7 @@ public class SimpleMapableFieldMappingExecutorTest {
         DestinationWithNested destination = new DestinationWithNested();
         destination.otherField = "preserved";
 
-        DestinationWithNested result = executor.doMapping(DestinationWithNested.class, destination, source);
+        DestinationWithNested result = executor.doMapping(wrapClass(DestinationWithNested.class), destination, source);
 
         assertNotNull(result);
         assertNotNull(result.nested);
@@ -68,11 +88,11 @@ public class SimpleMapableFieldMappingExecutorTest {
 
     @Test
     void testDoMappingWithNullNestedObject() throws Exception {
-        Field sourceField = SourceWithNested.class.getDeclaredField("nested");
-        Field destinationField = DestinationWithNested.class.getDeclaredField("nested");
+        IField sourceField = wrapClass(SourceWithNested.class).getDeclaredField("nested");
+        IField destinationField = wrapClass(DestinationWithNested.class).getDeclaredField("nested");
 
         SimpleMapableFieldMappingExecutor executor = new SimpleMapableFieldMappingExecutor(
-            mapper, sourceField, destinationField);
+            reflection, mapper, sourceField, destinationField);
 
         SourceWithNested source = new SourceWithNested();
         source.nested = null;
@@ -81,7 +101,7 @@ public class SimpleMapableFieldMappingExecutorTest {
         destination.nested = new NestedDestination();
         destination.nested.value = "old-value";
 
-        DestinationWithNested result = executor.doMapping(DestinationWithNested.class, destination, source);
+        DestinationWithNested result = executor.doMapping(wrapClass(DestinationWithNested.class), destination, source);
 
         assertNotNull(result);
         // Nested should remain unchanged when source is null
@@ -91,18 +111,18 @@ public class SimpleMapableFieldMappingExecutorTest {
 
     //@Test
     void testDoMappingWithComplexNestedObject() throws Exception {
-        Field sourceField = SourceWithComplexNested.class.getDeclaredField("complex");
-        Field destinationField = DestinationWithComplexNested.class.getDeclaredField("complex");
+        IField sourceField = wrapClass(SourceWithComplexNested.class).getDeclaredField("complex");
+        IField destinationField = wrapClass(DestinationWithComplexNested.class).getDeclaredField("complex");
 
         SimpleMapableFieldMappingExecutor executor = new SimpleMapableFieldMappingExecutor(
-            mapper, sourceField, destinationField);
+            reflection, mapper, sourceField, destinationField);
 
         SourceWithComplexNested source = new SourceWithComplexNested();
         source.complex = new ComplexNestedSource();
         source.complex.name = "test-name";
         source.complex.count = 42;
 
-        DestinationWithComplexNested result = executor.doMapping(DestinationWithComplexNested.class,null, source);
+        DestinationWithComplexNested result = executor.doMapping(wrapClass(DestinationWithComplexNested.class),null, source);
 
         assertNotNull(result);
         assertNotNull(result.complex);
@@ -112,32 +132,37 @@ public class SimpleMapableFieldMappingExecutorTest {
 
     @Test
     void testConstructor() throws Exception {
-        Field sourceField = SourceWithNested.class.getDeclaredField("nested");
-        Field destinationField = DestinationWithNested.class.getDeclaredField("nested");
+        IField sourceField = wrapClass(SourceWithNested.class).getDeclaredField("nested");
+        IField destinationField = wrapClass(DestinationWithNested.class).getDeclaredField("nested");
 
         SimpleMapableFieldMappingExecutor executor = new SimpleMapableFieldMappingExecutor(
-            mapper, sourceField, destinationField);
+            reflection, mapper, sourceField, destinationField);
 
         assertNotNull(executor);
     }
 
     //@Test
     void testDoMappingCreatesDestinationWhenNull() throws Exception {
-        Field sourceField = SourceWithNested.class.getDeclaredField("nested");
-        Field destinationField = DestinationWithNested.class.getDeclaredField("nested");
+        IField sourceField = wrapClass(SourceWithNested.class).getDeclaredField("nested");
+        IField destinationField = wrapClass(DestinationWithNested.class).getDeclaredField("nested");
 
         SimpleMapableFieldMappingExecutor executor = new SimpleMapableFieldMappingExecutor(
-            mapper, sourceField, destinationField);
+            reflection, mapper, sourceField, destinationField);
 
         SourceWithNested source = new SourceWithNested();
         source.nested = new NestedSource();
         source.nested.value = "created";
 
-        DestinationWithNested result = executor.doMapping(DestinationWithNested.class, null, source);
+        DestinationWithNested result = executor.doMapping(wrapClass(DestinationWithNested.class), null, source);
 
         assertNotNull(result);
         assertNotNull(result.nested);
         assertEquals("created", result.nested.value);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> IClass<T> wrapClass(Class<?> clazz) {
+        return (IClass<T>) reflection.getClass(clazz);
     }
 
     // Test helper classes

@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Runtime execution context that maintains state and provides access to shared resources during workflow execution.
@@ -107,7 +108,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
      * @return an Optional containing the variable if found and of the correct type, otherwise empty
      * @see #setVariable(String, Object)
      */
-    <VariableType> Optional<VariableType> getVariable(String variableName, Class<VariableType> variableType);
+    <VariableType> Optional<VariableType> getVariable(String variableName, IClass<VariableType> variableType);
 
     /**
      * Returns the original input object provided to the runtime execution.
@@ -130,7 +131,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
      * @return an Optional containing the exception if found, otherwise empty
      * @see #recordException(RuntimeExceptionRecord)
      */
-    <ExceptionType> Optional<ExceptionType> getException(Class<ExceptionType> exceptionType);
+    <ExceptionType> Optional<ExceptionType> getException(IClass<ExceptionType> exceptionType);
 
     /**
      * Returns the current result code set during execution.
@@ -175,7 +176,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
      * @return true if the class is assignable to the output type, false otherwise
      * @see #getOutputType()
      */
-    boolean isOfOutputType(Class<?> class1);
+    boolean isOfOutputType(IClass<?> class1);
 
     /**
      * Returns the output type class for this runtime context.
@@ -183,7 +184,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
      * @return the class representing the output type
      * @see #isOfOutputType(Class)
      */
-    Class<?> getOutputType();
+    IClass<?> getOutputType();
 
     /**
      * Sets a custom result code for the runtime execution.

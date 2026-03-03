@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.garganttua.core.injection.DiException;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,21 +23,21 @@ public class DependencyCycleDetector {
     public void detectCycles(DependencyGraph graph) throws DiException {
         log.atTrace().log("Entering detectCycles with graph: {}", graph);
 
-        Map<Class<?>, VisitState> state = new LinkedHashMap<>();
+        Map<IClass<?>, VisitState> state = new LinkedHashMap<>();
 
-        for (Class<?> bean : graph.getAllBeans()) {
+        for (IClass<?> bean : graph.getAllBeans()) {
             state.put(bean, VisitState.UNVISITED);
             log.atDebug().log("Marking bean {} as UNVISITED", bean.getSimpleName());
         }
 
-        for (Class<?> bean : graph.getAllBeans()) {
-            for (Class<?> dep : graph.getDependencies(bean)) {
+        for (IClass<?> bean : graph.getAllBeans()) {
+            for (IClass<?> dep : graph.getDependencies(bean)) {
                 state.putIfAbsent(dep, VisitState.UNVISITED);
                 log.atDebug().log("Ensuring dependency {} is tracked", dep.getSimpleName());
             }
         }
 
-        for (Class<?> bean : state.keySet()) {
+        for (IClass<?> bean : state.keySet()) {
             if (state.get(bean) == VisitState.UNVISITED) {
                 log.atDebug().log("Starting DFS for bean {}", bean.getSimpleName());
                 dfs(graph, bean, state, new ArrayDeque<>());
@@ -48,15 +49,15 @@ public class DependencyCycleDetector {
         log.atTrace().log("Exiting detectCycles");
     }
 
-    private void dfs(DependencyGraph graph, Class<?> current,
-                     Map<Class<?>, VisitState> state, Deque<Class<?>> stack) throws DiException {
+    private void dfs(DependencyGraph graph, IClass<?> current,
+                     Map<IClass<?>, VisitState> state, Deque<IClass<?>> stack) throws DiException {
 
         log.atTrace().log("Entering dfs with current bean: {}", current.getSimpleName());
         state.put(current, VisitState.VISITING);
         stack.push(current);
         log.atDebug().log("Marking {} as VISITING and pushing to stack", current.getSimpleName());
 
-        for (Class<?> dep : graph.getDependencies(current)) {
+        for (IClass<?> dep : graph.getDependencies(current)) {
             VisitState depState = state.get(dep);
 
             if (depState == null) {
@@ -83,10 +84,10 @@ public class DependencyCycleDetector {
         log.atTrace().log("Exiting dfs for bean: {}", current.getSimpleName());
     }
 
-    private String formatCycle(Deque<Class<?>> stack, Class<?> start) {
+    private String formatCycle(Deque<IClass<?>> stack, IClass<?> start) {
         log.atTrace().log("Entering formatCycle for start bean: {}", start.getSimpleName());
-        List<Class<?>> path = new ArrayList<>();
-        Iterator<Class<?>> descIt = stack.descendingIterator();
+        List<IClass<?>> path = new ArrayList<>();
+        Iterator<IClass<?>> descIt = stack.descendingIterator();
         while (descIt.hasNext()) {
             path.add(descIt.next());
         }
@@ -102,7 +103,7 @@ public class DependencyCycleDetector {
         StringBuilder sb = new StringBuilder();
         if (idx == -1) {
             log.atWarn().log("Start bean {} not found in stack path, using fallback format", start.getSimpleName());
-            for (Class<?> c : path) {
+            for (IClass<?> c : path) {
                 sb.append(c.getSimpleName()).append(" -> ");
             }
             sb.append(start.getSimpleName());

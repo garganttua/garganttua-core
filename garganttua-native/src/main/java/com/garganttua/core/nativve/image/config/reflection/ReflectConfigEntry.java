@@ -6,6 +6,8 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +39,25 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
         this.name = name;
     }
 
+    private static volatile IReflectionProvider cachedDefaultProvider;
+
+    private static IReflectionProvider defaultProvider() {
+        if (cachedDefaultProvider != null) {
+            return cachedDefaultProvider;
+        }
+        try {
+            Class<?> providerClass = Class.forName("com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+            cachedDefaultProvider = (IReflectionProvider) providerClass.getDeclaredConstructor().newInstance();
+            return cachedDefaultProvider;
+        } catch (Exception e) {
+            throw new IllegalStateException("No IReflectionProvider available. Ensure garganttua-runtime-reflection is on the classpath.", e);
+        }
+    }
+
     @JsonIgnore
-    public Class<?> getEntryClass() throws ClassNotFoundException {
+    public IClass<?> getEntryClass() throws ClassNotFoundException {
         log.atTrace().log("Getting entry class for: {}", this.name);
-        return Class.forName(this.name);
+        return defaultProvider().getClass(Class.forName(this.name));
     }
 
     public String getName() {

@@ -17,12 +17,15 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
+import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.INativeConfiguration;
 import com.garganttua.core.nativve.INativeConfigurationBuilder;
 import com.garganttua.core.nativve.NativeConfigurationBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntry;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 @Mojo(name = "native-config", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class NativeConfigMojo extends AbstractMojo {
@@ -56,12 +59,11 @@ public class NativeConfigMojo extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException {
-		ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
 		getLog().info("Generating Native-image configuration in directory: " + this.buildOutputDirectory);
-		/*
-		 * getLog().info("Looking for Native-image files into " + artifacts.size() +
-		 * " artefacts");
-		 */
+
+		IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+				.withProvider(new RuntimeReflectionProvider())
+				.withScanner(new ReflectionsAnnotationScanner());
 
 		File outputDir = new File(buildDirectory, "classes/META-INF/native-image");
 		if (!outputDir.exists() && !outputDir.mkdirs()) {
@@ -69,11 +71,17 @@ public class NativeConfigMojo extends AbstractMojo {
 					outputDir.getAbsolutePath());
 		}
 
-		INativeConfigurationBuilder builder = NativeConfigurationBuilder.builder()
-				.reflectionPath(this.buildOutputDirectory)
-				.resourcesPath(this.buildOutputDirectory)
-				.autoDetect(true)
-				.withPackages(this.packages.toArray(new String[0]));
+		INativeConfigurationBuilder builder;
+		try {
+			builder = NativeConfigurationBuilder.builder()
+					.reflectionPath(this.buildOutputDirectory)
+					.resourcesPath(this.buildOutputDirectory)
+					.autoDetect(true)
+					.withPackages(this.packages.toArray(new String[0]));
+			builder.provide(reflectionBuilder);
+		} catch (DslException e) {
+			throw new MojoExecutionException("Failed to configure native builder", e);
+		}
 
 		this.reflections.forEach(builder::reflectionEntry);
 
@@ -92,9 +100,14 @@ public class NativeConfigMojo extends AbstractMojo {
 			}
 		}
 
-		INativeConfiguration configuration = builder.build();
+		INativeConfiguration configuration;
+		try {
+			configuration = builder.build();
+		} catch (DslException e) {
+			throw new MojoExecutionException("Failed to build native configuration", e);
+		}
 
-		getLog().info("Writting Native-image configuration");
+		getLog().info("Writing Native-image configuration");
 		configuration.writeReflectionConfiguration();
 		configuration.writeResourcesConfiguration();
 	}

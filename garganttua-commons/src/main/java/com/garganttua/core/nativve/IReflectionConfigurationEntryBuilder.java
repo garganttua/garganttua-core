@@ -1,11 +1,12 @@
 package com.garganttua.core.nativve;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 
 /**
  * Builder interface for constructing reflection configuration entries for GraalVM native images.
@@ -111,10 +112,10 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
     /**
      * Adds a field for reflection access.
      *
-     * @param field the field to register
+     * @param field the field to register (IField)
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder field(Field field);
+    IReflectionConfigurationEntryBuilder field(IField field);
 
     /**
      * Adds a method by name and parameter types for reflection access.
@@ -123,7 +124,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param parameterType the parameter types of the method
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder method(String methodName, Class<?> ...parameterType);
+    IReflectionConfigurationEntryBuilder method(String methodName, IClass<?> ...parameterType);
 
     /**
      * Adds a method for reflection access.
@@ -131,7 +132,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param method the method to register
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder method(Method method);
+    IReflectionConfigurationEntryBuilder method(IMethod method);
 
     /**
      * Adds a constructor by name and parameter types for reflection access.
@@ -140,7 +141,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param parameterType the parameter types of the constructor
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder constructor(String constructorName, Class<?> ...parameterType);
+    IReflectionConfigurationEntryBuilder constructor(String constructorName, IClass<?> ...parameterType);
 
     /**
      * Adds a constructor for reflection access.
@@ -148,7 +149,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param ctor the constructor to register
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder constructor(Constructor<?> ctor);
+    IReflectionConfigurationEntryBuilder constructor(IConstructor<?> ctor);
 
     /**
      * Adds all fields annotated with the specified annotation for reflection access.
@@ -156,7 +157,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param annotation the annotation class to search for
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder fieldsAnnotatedWith(Class<? extends Annotation> annotation);
+    IReflectionConfigurationEntryBuilder fieldsAnnotatedWith(IClass<? extends Annotation> annotation);
 
     /**
      * Adds all methods annotated with the specified annotation for reflection access.
@@ -164,7 +165,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param annotation the annotation class to search for
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder methodsAnnotatedWith(Class<? extends Annotation> annotation);
+    IReflectionConfigurationEntryBuilder methodsAnnotatedWith(IClass<? extends Annotation> annotation);
 
     /**
      * Removes a field by name from reflection access.
@@ -180,7 +181,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param field the field to remove
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeField(Field field);
+    IReflectionConfigurationEntryBuilder removeField(IField field);
 
     /**
      * Removes a method by name and parameter types from reflection access.
@@ -189,7 +190,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param parameterType the parameter types of the method
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeMethod(String methodName, Class<?> ...parameterType);
+    IReflectionConfigurationEntryBuilder removeMethod(String methodName, IClass<?> ...parameterType);
 
     /**
      * Removes a method from reflection access.
@@ -197,7 +198,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param method the method to remove
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeMethod(Method method);
+    IReflectionConfigurationEntryBuilder removeMethod(IMethod method);
 
     /**
      * Removes a constructor by name and parameter types from reflection access.
@@ -206,7 +207,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param parameterType the parameter types of the constructor
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeConstructor(String constructorName, Class<?> ...parameterType);
+    IReflectionConfigurationEntryBuilder removeConstructor(String constructorName, IClass<?> ...parameterType);
 
     /**
      * Removes a constructor from reflection access.
@@ -214,7 +215,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param ctor the constructor to remove
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeConstructor(Constructor<?> ctor);
+    IReflectionConfigurationEntryBuilder removeConstructor(IConstructor<?> ctor);
 
     /**
      * Removes all fields annotated with the specified annotation from reflection access.
@@ -222,7 +223,7 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param annotation the annotation class to search for
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeFieldsAnnotatedWith(Class<? extends Annotation> annotation);
+    IReflectionConfigurationEntryBuilder removeFieldsAnnotatedWith(IClass<? extends Annotation> annotation);
 
     /**
      * Removes all methods annotated with the specified annotation from reflection access.
@@ -230,6 +231,6 @@ public interface IReflectionConfigurationEntryBuilder extends IAutomaticBuilder<
      * @param annotation the annotation class to search for
      * @return this builder for method chaining
      */
-    IReflectionConfigurationEntryBuilder removeMethodAnnotatedWith(Class<? extends Annotation> annotation);
+    IReflectionConfigurationEntryBuilder removeMethodAnnotatedWith(IClass<? extends Annotation> annotation);
 
 }

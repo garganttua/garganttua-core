@@ -2,12 +2,17 @@ package com.garganttua.core.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.mapper.rules.MethodMappingExecutor;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Test class for {@link MethodMappingExecutor}.
@@ -15,11 +20,26 @@ import com.garganttua.core.mapper.rules.MethodMappingExecutor;
  */
 public class MethodMappingExecutorTest {
 
+    private static IReflection reflection;
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        reflection = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build();
+        IClass.setReflection(reflection);
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
+
     @Test
     void testDoMappingWithRegularDirection() throws Exception {
-        Field sourceField = SourceClass.class.getDeclaredField("value");
-        Field destinationField = DestinationClass.class.getDeclaredField("transformedValue");
-        Method method = DestinationClass.class.getDeclaredMethod("transformValue", String.class);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("value");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("transformedValue");
+        IMethod method = wrapClass(DestinationClass.class).getDeclaredMethod("transformValue", wrapClass(String.class));
 
         MethodMappingExecutor executor = new MethodMappingExecutor(
             method, sourceField, destinationField, MappingDirection.REGULAR);
@@ -29,7 +49,7 @@ public class MethodMappingExecutorTest {
 
         DestinationClass destination = new DestinationClass();
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertNotNull(result);
         assertEquals("TRANSFORMED:test", result.transformedValue);
@@ -37,9 +57,9 @@ public class MethodMappingExecutorTest {
 
     @Test
     void testDoMappingWithReverseDirection() throws Exception {
-        Field sourceField = SourceClass.class.getDeclaredField("value");
-        Field destinationField = DestinationClass.class.getDeclaredField("transformedValue");
-        Method method = SourceClass.class.getDeclaredMethod("reverseTransform", String.class);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("value");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("transformedValue");
+        IMethod method = wrapClass(SourceClass.class).getDeclaredMethod("reverseTransform", wrapClass(String.class));
 
         MethodMappingExecutor executor = new MethodMappingExecutor(
             method, sourceField, destinationField, MappingDirection.REVERSE);
@@ -49,7 +69,7 @@ public class MethodMappingExecutorTest {
 
         DestinationClass destination = new DestinationClass();
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertNotNull(result);
         assertEquals("REVERSE:test", result.transformedValue);
@@ -57,9 +77,9 @@ public class MethodMappingExecutorTest {
 
     @Test
     void testDoMappingWithNullSourceValue() throws Exception {
-        Field sourceField = SourceClass.class.getDeclaredField("value");
-        Field destinationField = DestinationClass.class.getDeclaredField("transformedValue");
-        Method method = DestinationClass.class.getDeclaredMethod("transformValue", String.class);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("value");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("transformedValue");
+        IMethod method = wrapClass(DestinationClass.class).getDeclaredMethod("transformValue", wrapClass(String.class));
 
         MethodMappingExecutor executor = new MethodMappingExecutor(
             method, sourceField, destinationField, MappingDirection.REGULAR);
@@ -70,7 +90,7 @@ public class MethodMappingExecutorTest {
         DestinationClass destination = new DestinationClass();
         destination.transformedValue = "old-value";
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertNotNull(result);
         assertEquals("old-value", result.transformedValue); // Should remain unchanged
@@ -78,9 +98,9 @@ public class MethodMappingExecutorTest {
 
     @Test
     void testDoMappingWithIntegerTransformation() throws Exception {
-        Field sourceField = SourceClassWithInt.class.getDeclaredField("number");
-        Field destinationField = DestinationClassWithInt.class.getDeclaredField("doubledNumber");
-        Method method = DestinationClassWithInt.class.getDeclaredMethod("doubleValue", Integer.class);
+        IField sourceField = wrapClass(SourceClassWithInt.class).getDeclaredField("number");
+        IField destinationField = wrapClass(DestinationClassWithInt.class).getDeclaredField("doubledNumber");
+        IMethod method = wrapClass(DestinationClassWithInt.class).getDeclaredMethod("doubleValue", wrapClass(Integer.class));
 
         MethodMappingExecutor executor = new MethodMappingExecutor(
             method, sourceField, destinationField, MappingDirection.REGULAR);
@@ -90,7 +110,7 @@ public class MethodMappingExecutorTest {
 
         DestinationClassWithInt destination = new DestinationClassWithInt();
 
-        DestinationClassWithInt result = executor.doMapping(DestinationClassWithInt.class, destination, source);
+        DestinationClassWithInt result = executor.doMapping(wrapClass(DestinationClassWithInt.class), destination, source);
 
         assertNotNull(result);
         assertEquals(84, result.doubledNumber);
@@ -98,9 +118,9 @@ public class MethodMappingExecutorTest {
 
     @Test
     void testDoMappingRegularPreservesExistingFields() throws Exception {
-        Field sourceField = SourceClass.class.getDeclaredField("value");
-        Field destinationField = DestinationClass.class.getDeclaredField("transformedValue");
-        Method method = DestinationClass.class.getDeclaredMethod("transformValue", String.class);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("value");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("transformedValue");
+        IMethod method = wrapClass(DestinationClass.class).getDeclaredMethod("transformValue", wrapClass(String.class));
 
         MethodMappingExecutor executor = new MethodMappingExecutor(
             method, sourceField, destinationField, MappingDirection.REGULAR);
@@ -111,7 +131,7 @@ public class MethodMappingExecutorTest {
         DestinationClass destination = new DestinationClass();
         destination.otherField = "preserved";
 
-        DestinationClass result = executor.doMapping(DestinationClass.class, destination, source);
+        DestinationClass result = executor.doMapping(wrapClass(DestinationClass.class), destination, source);
 
         assertEquals("TRANSFORMED:test", result.transformedValue);
         assertEquals("preserved", result.otherField);
@@ -119,14 +139,19 @@ public class MethodMappingExecutorTest {
 
     @Test
     void testConstructor() throws Exception {
-        Field sourceField = SourceClass.class.getDeclaredField("value");
-        Field destinationField = DestinationClass.class.getDeclaredField("transformedValue");
-        Method method = DestinationClass.class.getDeclaredMethod("transformValue", String.class);
+        IField sourceField = wrapClass(SourceClass.class).getDeclaredField("value");
+        IField destinationField = wrapClass(DestinationClass.class).getDeclaredField("transformedValue");
+        IMethod method = wrapClass(DestinationClass.class).getDeclaredMethod("transformValue", wrapClass(String.class));
 
         MethodMappingExecutor executor = new MethodMappingExecutor(
             method, sourceField, destinationField, MappingDirection.REGULAR);
 
         assertNotNull(executor);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> IClass<T> wrapClass(Class<?> clazz) {
+        return (IClass<T>) reflection.getClass(clazz);
     }
 
     // Test helper classes

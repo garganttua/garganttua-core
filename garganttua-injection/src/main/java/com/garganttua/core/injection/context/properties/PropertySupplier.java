@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertySupplier;
 import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +17,9 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
 
     private String key;
     private Optional<String> provider;
-    private Class<Property> type;
+    private IClass<Property> type;
 
-    public PropertySupplier(Optional<String> provider, String key, Class<Property> type) {
+    public PropertySupplier(Optional<String> provider, String key, IClass<Property> type) {
         log.atTrace().log("Entering PropertySupplier constructor with provider: {}, key: {}, type: {}", provider, key, type);
         this.key = Objects.requireNonNull(key, "Key cannot be null");
         this.provider = Objects.requireNonNull(provider, "Provider cannot be null");
@@ -54,6 +55,11 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
     @Override
     public Type getSuppliedType() {
         log.atTrace().log("Returning supplied type: {}", type);
+        return this.type.getType();
+    }
+
+    @Override
+    public IClass<Property> getSuppliedClass() {
         return this.type;
     }
 }

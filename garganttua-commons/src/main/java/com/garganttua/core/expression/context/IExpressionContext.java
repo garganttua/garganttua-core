@@ -3,6 +3,7 @@ package com.garganttua.core.expression.context;
 import java.util.Set;
 
 import com.garganttua.core.expression.IExpression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 /**
@@ -122,7 +123,7 @@ public interface IExpressionContext {
      * @param name the variable name (without @ prefix)
      * @param type the declared type of the variable
      */
-    void registerVariableType(String name, Class<?> type);
+    void registerVariableType(String name, IClass<?> type);
 
     /**
      * Returns the keys of all registered expression node factories.

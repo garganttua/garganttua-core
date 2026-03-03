@@ -1,9 +1,6 @@
 package com.garganttua.core.nativve.image.config.reflection;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +12,11 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.IReflectionProvider;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,9 +24,31 @@ import lombok.extern.slf4j.Slf4j;
 public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflectionConfigurationEntryBuilder, IReflectionConfigurationEntry> implements IReflectionConfigurationEntryBuilder {
 
 	private final IReflectionConfigurationEntry entry;
-	private Class<?> type;
+	private IClass<?> type;
 
-	public ReflectConfigEntryBuilder(Class<?> type) {
+	private static volatile IReflectionProvider cachedDefaultProvider;
+
+	@SuppressWarnings("unchecked")
+	private static <T> IClass<T> wrapClass(Class<T> clazz) {
+		return defaultProvider().getClass(clazz);
+	}
+
+	private static IReflectionProvider defaultProvider() {
+		if (cachedDefaultProvider != null) {
+			return cachedDefaultProvider;
+		}
+		try {
+			Class<?> providerClass = Class.forName("com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+			cachedDefaultProvider = (IReflectionProvider) providerClass.getDeclaredConstructor().newInstance();
+			return cachedDefaultProvider;
+		} catch (Exception e) {
+			throw new IllegalStateException("No IReflectionProvider available. Ensure garganttua-runtime-reflection is on the classpath.", e);
+		}
+	}
+
+	private static final IClass<Native> NATIVE_CLASS = wrapClass(Native.class);
+
+	public ReflectConfigEntryBuilder(IClass<?> type) {
 		log.atTrace().log("Creating ReflectConfigEntryBuilder for type: {}", type.getName());
 		this.type = Objects.requireNonNull(type, "Type cannot be null");
 		this.entry = new ReflectConfigEntry(type.getName());
@@ -45,7 +69,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 		}
 	}
 
-	public static IReflectionConfigurationEntryBuilder builder(Class<?> clazz) {
+	public static IReflectionConfigurationEntryBuilder builder(IClass<?> clazz) {
 		return new ReflectConfigEntryBuilder(clazz);
 	}
 
@@ -102,14 +126,14 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder field(Field field) {
+	public IReflectionConfigurationEntryBuilder field(IField field) {
 		return field(field.getName());
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder method(String methodName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder method(String methodName, IClass<?>... parameterTypes) {
 		log.atTrace().log("Adding method: {} with {} parameters", methodName, parameterTypes.length);
-		List<String> paramNames = List.of(parameterTypes).stream().map(Class::getName).collect(Collectors.toList());
+		List<String> paramNames = Arrays.stream(parameterTypes).map(IClass::getName).collect(Collectors.toList());
 
 		if (entry.getMethods().stream()
 				.noneMatch(m -> m.getName().equals(methodName) && m.getParameterTypes().equals(paramNames))) {
@@ -123,26 +147,26 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder method(Method method) {
+	public IReflectionConfigurationEntryBuilder method(IMethod method) {
 		return method(method.getName(), method.getParameterTypes());
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder constructor(String constructorName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder constructor(String constructorName, IClass<?>... parameterTypes) {
 		log.atTrace().log("Adding constructor with {} parameters", parameterTypes.length);
 		return method("<init>", parameterTypes);
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder constructor(Constructor<?> ctor) {
+	public IReflectionConfigurationEntryBuilder constructor(IConstructor<?> ctor) {
 		return constructor("<init>", ctor.getParameterTypes());
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder fieldsAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder fieldsAnnotatedWith(IClass<? extends Annotation> annotation) {
 		log.atTrace().log("Adding fields annotated with: {}", annotation.getName());
 		try {
-			for (Field field : this.entry.getEntryClass().getDeclaredFields()) {
+			for (IField field : this.entry.getEntryClass().getDeclaredFields()) {
 				if (field.isAnnotationPresent(annotation)) {
 					field(field.getName());
 				}
@@ -155,10 +179,10 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder methodsAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder methodsAnnotatedWith(IClass<? extends Annotation> annotation) {
 		log.atTrace().log("Adding methods annotated with: {}", annotation.getName());
 		try {
-			for (Method method : this.entry.getEntryClass().getDeclaredMethods()) {
+			for (IMethod method : this.entry.getEntryClass().getDeclaredMethods()) {
 				if (method.isAnnotationPresent(annotation)) {
 					method(method);
 				}
@@ -178,38 +202,39 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeField(Field field) {
+	public IReflectionConfigurationEntryBuilder removeField(IField field) {
 		return removeField(field.getName());
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeMethod(String methodName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder removeMethod(String methodName, IClass<?>... parameterTypes) {
+		List<String> paramNames = Arrays.stream(parameterTypes).map(IClass::getName).collect(Collectors.toList());
 		entry.setMethods(entry.getMethods().stream().filter(method -> !method.getName().equals(methodName)
-				|| !method.getParameterTypes().equals(List.of(parameterTypes).stream().map(Class::getName).toList()))
+				|| !method.getParameterTypes().equals(paramNames))
 				.collect(Collectors.toList()));
 		return this;
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeMethod(Method method) {
+	public IReflectionConfigurationEntryBuilder removeMethod(IMethod method) {
 		return removeMethod(method.getName(), method.getParameterTypes());
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeConstructor(String constructorName, Class<?>... parameterTypes) {
+	public IReflectionConfigurationEntryBuilder removeConstructor(String constructorName, IClass<?>... parameterTypes) {
 		return removeMethod("<init>", parameterTypes);
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeConstructor(Constructor<?> ctor) {
+	public IReflectionConfigurationEntryBuilder removeConstructor(IConstructor<?> ctor) {
 		return removeConstructor("<init>", ctor.getParameterTypes());
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeFieldsAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder removeFieldsAnnotatedWith(IClass<? extends Annotation> annotation) {
 		entry.setFields(entry.getFields().stream().filter(field -> {
 			try {
-				Field f = this.entry.getEntryClass().getDeclaredField(field.getName());
+				IField f = this.entry.getEntryClass().getDeclaredField(field.getName());
 				return !f.isAnnotationPresent(annotation);
 			} catch (NoSuchFieldException | SecurityException | ClassNotFoundException e) {
 				return true;
@@ -219,10 +244,10 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	}
 
 	@Override
-	public IReflectionConfigurationEntryBuilder removeMethodAnnotatedWith(Class<? extends Annotation> annotation) {
+	public IReflectionConfigurationEntryBuilder removeMethodAnnotatedWith(IClass<? extends Annotation> annotation) {
 		entry.setMethods(entry.getMethods().stream().filter(method -> {
 			try {
-				Method m = this.entry.getEntryClass().getDeclaredMethod(method.getName());
+				IMethod m = this.entry.getEntryClass().getDeclaredMethod(method.getName());
 				return !m.isAnnotationPresent(annotation);
 			} catch (NoSuchMethodException | SecurityException | ClassNotFoundException e) {
 				return true;
@@ -247,7 +272,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	@Override
 	protected void doAutoDetection() throws DslException {
 		log.atTrace().log("Starting auto-detection for type: {}", this.type.getName());
-		Native n = this.type.getAnnotation(Native.class);
+		Native n = this.type.getAnnotation(NATIVE_CLASS);
 		if (n != null && n.allDeclaredClasses()) {
 			log.atDebug().log("Enabling allDeclaredClasses for: {}", this.type.getName());
 			this.entry.setAllDeclaredClasses(true);
@@ -278,9 +303,9 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 		}
 
 		log.atDebug().log("Detecting @Native annotated fields, constructors, and methods for: {}", this.type.getName());
-		Arrays.stream(this.type.getDeclaredFields()).filter(f -> f.getAnnotation(Native.class)!=null).forEach(this::field);
-		Arrays.stream(this.type.getDeclaredConstructors()).filter(c -> c.getAnnotation(Native.class)!=null).forEach(this::constructor);
-		Arrays.stream(this.type.getDeclaredMethods()).filter(m -> m.getAnnotation(Native.class)!=null).forEach(this::method);
+		Arrays.stream(this.type.getDeclaredFields()).filter(f -> f.getAnnotation(NATIVE_CLASS)!=null).forEach(this::field);
+		Arrays.stream(this.type.getDeclaredConstructors()).filter(c -> c.getAnnotation(NATIVE_CLASS)!=null).forEach(this::constructor);
+		Arrays.stream(this.type.getDeclaredMethods()).filter(m -> m.getAnnotation(NATIVE_CLASS)!=null).forEach(this::method);
 		log.atTrace().log("Completed auto-detection for type: {}", this.type.getName());
 	}
 

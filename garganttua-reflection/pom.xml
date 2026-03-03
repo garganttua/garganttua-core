@@ -19,12 +19,23 @@
 
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-dsl</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-supply</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.javatuples</groupId>
 			<artifactId>javatuples</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-runtime-reflection</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

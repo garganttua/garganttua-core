@@ -7,17 +7,18 @@ import java.util.Optional;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertySupplier;
 import com.garganttua.core.injection.context.properties.PropertySupplier;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PropertySupplierBuilder<Property> implements IPropertySupplierBuilder<Property> {
 
-    private Class<Property> type;
+    private IClass<Property> type;
     private String key;
     private String provider;
 
-    public PropertySupplierBuilder(Class<Property> type) {
+    public PropertySupplierBuilder(IClass<Property> type) {
         log.atTrace().log("Entering PropertySupplierBuilder constructor with type={}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
         log.atDebug().log("PropertySupplierBuilder created for type={}", this.type.getSimpleName());
@@ -27,6 +28,11 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
     @Override
     public Type getSuppliedType() {
         log.atTrace().log("getSuppliedType() called, returning type={}", this.type);
+        return this.type.getType();
+    }
+
+    @Override
+    public IClass<Property> getSuppliedClass() {
         return this.type;
     }
 

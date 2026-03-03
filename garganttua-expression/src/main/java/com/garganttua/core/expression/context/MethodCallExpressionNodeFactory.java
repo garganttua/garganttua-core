@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,7 +12,9 @@ import java.util.Set;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpressionNode;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
@@ -48,7 +51,11 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
             ownerSupplier = ownerNode.evaluate();
         }
 
-        this.resolved = MethodResolver.methodByName(ownerClass, methodName, null, parameterTypes);
+        IReflection reflection = IClass.getReflection();
+        IClass<?>[] iParamTypes = Arrays.stream(parameterTypes)
+                .map(c -> (IClass<?>) IClass.getClass(c))
+                .toArray(IClass[]::new);
+        this.resolved = MethodResolver.methodByName(IClass.getClass(ownerClass), reflection, methodName, null, iParamTypes);
         this.nullables = nullableMask(this.resolved.method());
 
         this.factory = new ExpressionNodeFactory(ownerSupplier, this.resolved.method().getReturnType(),

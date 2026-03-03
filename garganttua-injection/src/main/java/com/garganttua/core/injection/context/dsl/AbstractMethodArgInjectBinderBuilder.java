@@ -4,9 +4,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.garganttua.core.dsl.dependency.DependencySpec;
-import com.garganttua.core.dsl.dependency.DependentBuilderSupport;
+import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -21,10 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
-        extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>
-        implements IDependentBuilder<Builder, Built> {
+        extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
 
-    private DependentBuilderSupport support;
+    private static final Set<DependencySpec> INJECT_DEPS = Set.of(
+            new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build());
 
     protected AbstractMethodArgInjectBinderBuilder(Link up,
             ISupplierBuilder<?, ?> supplier) throws DslException {
@@ -33,29 +32,39 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
 
     protected AbstractMethodArgInjectBinderBuilder(Link up,
             ISupplierBuilder<?, ?> supplier, boolean collection) throws DslException {
-        super(up, supplier, collection);
+        super(up, supplier, collection, INJECT_DEPS);
         log.atTrace().log("Entering constructor with link: {}, supplier: {}, collection: {}",
                 up, supplier, collection);
-        this.support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(IInjectableElementResolverBuilder.class)));
         log.atTrace().log("Exiting constructor");
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
         log.atTrace().log("Entering doAutoDetection");
-        this.support.processAutoDetectionWithDependencies(this::doAutoDetectionWithDependency);
+        // Auto-detection is handled via doAutoDetectionWithDependency
         log.atTrace().log("Exiting doAutoDetection");
     }
 
-    private void doAutoDetectionWithDependency(Object dependency) {
-        if (dependency instanceof IInjectableElementResolver resolver)
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+        if (dependency instanceof IInjectableElementResolver resolver) {
             this.doAutoDetectionWithResolver(resolver);
+        }
+    }
+
+    @Override
+    protected void doPreBuildWithDependency_(Object dependency) {
+        // No additional pre-build handling needed
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+        // No post-build handling needed
     }
 
     private void doAutoDetectionWithResolver(IInjectableElementResolver resolver) {
         AtomicInteger counter = new AtomicInteger();
-        Set<Resolved> resolved = resolver.resolve(this.method());
+        Set<Resolved> resolved = resolver.resolve(this.method().getParameters());
         log.atDebug().log("Resolved elements found: {}", resolved);
 
         resolved.stream().forEach(r -> {
@@ -72,21 +81,10 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
                     });
         });
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public Builder provide(IObservableBuilder<?, ?> dependency) {
-        this.support.provide(dependency);
-        return (Builder) this;
-    }
-
-    @Override
-    public Set<Class<? extends IObservableBuilder<?, ?>>> use() {
-        return this.support.use();
-    }
-
-    @Override
-    public Set<Class<? extends IObservableBuilder<?, ?>>> require() {
-        return this.support.require();
+        return super.provide(dependency);
     }
 }

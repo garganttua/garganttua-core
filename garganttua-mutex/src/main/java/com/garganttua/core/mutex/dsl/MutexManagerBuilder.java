@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.MultiSourceCollector;
@@ -82,9 +83,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     private final MultiSourceCollector<Class<? extends IMutex>, IMutexFactory> collector;
 
     private MutexManagerBuilder() {
-        super(
-                Set.of(IInjectionContextBuilder.class),
-                Set.of());
+        super(Set.of(DependencySpec.use(IInjectionContextBuilder.class)));
                 
         this.collector = new MultiSourceCollector<>();
         collector.source(new FixedSupplier<>(manualFactories), 0, SOURCE_MANUAL);

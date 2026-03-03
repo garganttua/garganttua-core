@@ -7,6 +7,9 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.JdkClass;
+
 /**
  * Test class for the {@link Supplier} utility class.
  * Tests both contextual and recursive supply methods without using mocks.
@@ -34,6 +37,11 @@ public class SupplierUtilityTest {
         public Type getSuppliedType() {
             return String.class;
         }
+
+        @Override
+        public IClass<String> getSuppliedClass() {
+            return JdkClass.of(String.class);
+        }
     }
 
     /**
@@ -55,6 +63,11 @@ public class SupplierUtilityTest {
         public Type getSuppliedType() {
             return Integer.class;
         }
+
+        @Override
+        public IClass<Integer> getSuppliedClass() {
+            return JdkClass.of(Integer.class);
+        }
     }
 
     /**
@@ -73,13 +86,18 @@ public class SupplierUtilityTest {
         }
 
         @Override
-        public Class<String> getOwnerContextType() {
-            return String.class;
+        public IClass<String> getOwnerContextType() {
+            return JdkClass.of(String.class);
         }
 
         @Override
         public Type getSuppliedType() {
             return String.class;
+        }
+
+        @Override
+        public IClass<String> getSuppliedClass() {
+            return JdkClass.of(String.class);
         }
     }
 
@@ -99,13 +117,18 @@ public class SupplierUtilityTest {
         }
 
         @Override
-        public Class<Integer> getOwnerContextType() {
-            return Integer.class;
+        public IClass<Integer> getOwnerContextType() {
+            return JdkClass.of(Integer.class);
         }
 
         @Override
         public Type getSuppliedType() {
             return Integer.class;
+        }
+
+        @Override
+        public IClass<Integer> getSuppliedClass() {
+            return JdkClass.of(Integer.class);
         }
     }
 
@@ -128,6 +151,11 @@ public class SupplierUtilityTest {
         public Type getSuppliedType() {
             return ISupplier.class;
         }
+
+        @Override
+        public IClass<ISupplier<String>> getSuppliedClass() {
+            return JdkClass.ofUnchecked(ISupplier.class);
+        }
     }
 
     /**
@@ -148,6 +176,11 @@ public class SupplierUtilityTest {
         @Override
         public Type getSuppliedType() {
             return ISupplier.class;
+        }
+
+        @Override
+        public IClass<ISupplier<ISupplier<String>>> getSuppliedClass() {
+            return JdkClass.ofUnchecked(ISupplier.class);
         }
     }
 
@@ -177,18 +210,23 @@ public class SupplierUtilityTest {
         }
 
         @Override
-        public Class<CustomContext> getOwnerContextType() {
-            return CustomContext.class;
+        public IClass<CustomContext> getOwnerContextType() {
+            return JdkClass.of(CustomContext.class);
         }
 
         @Override
         public Type getSuppliedType() {
             return String.class;
         }
+
+        @Override
+        public IClass<String> getSuppliedClass() {
+            return JdkClass.of(String.class);
+        }
     }
 
     /**
-     * Contextual supplier that accepts Void context (no context needed).
+     * Contextual supplier that accepts null context (no context needed).
      */
     private static class VoidContextSupplier implements IContextualSupplier<String, Void> {
 
@@ -198,13 +236,18 @@ public class SupplierUtilityTest {
         }
 
         @Override
-        public Class<Void> getOwnerContextType() {
-            return Void.class;
+        public IClass<Void> getOwnerContextType() {
+            return null;
         }
 
         @Override
         public Type getSuppliedType() {
             return String.class;
+        }
+
+        @Override
+        public IClass<String> getSuppliedClass() {
+            return JdkClass.of(String.class);
         }
     }
 
@@ -380,6 +423,11 @@ public class SupplierUtilityTest {
             public Type getSuppliedType() {
                 return ISupplier.class;
             }
+
+            @Override
+            public IClass<ISupplier<Integer>> getSuppliedClass() {
+                return JdkClass.ofUnchecked(ISupplier.class);
+            }
         };
 
         // contextualRecursiveSupply resolves both levels
@@ -439,6 +487,11 @@ public class SupplierUtilityTest {
             public Type getSuppliedType() {
                 return ISupplier.class;
             }
+
+            @Override
+            public IClass<ISupplier<?>> getSuppliedClass() {
+                return JdkClass.ofUnchecked(ISupplier.class);
+            }
         };
         ISupplier<?> level2 = new ISupplier<ISupplier<?>>() {
             @Override
@@ -450,6 +503,11 @@ public class SupplierUtilityTest {
             public Type getSuppliedType() {
                 return ISupplier.class;
             }
+
+            @Override
+            public IClass<ISupplier<?>> getSuppliedClass() {
+                return JdkClass.ofUnchecked(ISupplier.class);
+            }
         };
         ISupplier<?> level1 = new ISupplier<ISupplier<?>>() {
             @Override
@@ -460,6 +518,11 @@ public class SupplierUtilityTest {
             @Override
             public Type getSuppliedType() {
                 return ISupplier.class;
+            }
+
+            @Override
+            public IClass<ISupplier<?>> getSuppliedClass() {
+                return JdkClass.ofUnchecked(ISupplier.class);
             }
         };
 
@@ -487,17 +550,22 @@ public class SupplierUtilityTest {
             }
 
             @Override
-            public Class<ParentContext> getOwnerContextType() {
-                return ParentContext.class;
+            public IClass<ParentContext> getOwnerContextType() {
+                return JdkClass.of(ParentContext.class);
             }
 
             @Override
             public Type getSuppliedType() {
                 return String.class;
             }
+
+            @Override
+            public IClass<String> getSuppliedClass() {
+                return JdkClass.of(String.class);
+            }
         };
 
-        // Pass a child context - should match due to isAssignableFrom
+        // Pass a child context - should match due to isInstance
         ChildContext childContext = new ChildContext();
         String result = Supplier.contextualSupply(supplier, childContext);
 

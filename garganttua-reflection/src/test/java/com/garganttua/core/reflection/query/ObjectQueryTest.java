@@ -2,16 +2,21 @@ package com.garganttua.core.reflection.query;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class ObjectQueryTest {
+
+    private static final RuntimeReflectionProvider PROVIDER = new RuntimeReflectionProvider();
 
     // Test class with overloaded methods
     public static class TestClass {
@@ -49,19 +54,19 @@ public class ObjectQueryTest {
 
     @Test
     public void testFindSingleMethod() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // find() should return only the first method found
         List<Object> results = query.find("testMethod");
 
         assertEquals(1, results.size(), "find() should return only one method");
-        assertTrue(results.get(0) instanceof Method, "Result should be a Method");
-        assertEquals("testMethod", ((Method) results.get(0)).getName());
+        assertTrue(results.get(0) instanceof IMethod, "Result should be a Method");
+        assertEquals("testMethod", ((IMethod) results.get(0)).getName());
     }
 
     @Test
     public void testFindAllOverloadedMethods() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // findAll() should return all overloaded methods
         List<List<Object>> results = query.findAll("testMethod");
@@ -70,8 +75,8 @@ public class ObjectQueryTest {
 
         // Verify all results are Methods with the correct name
         for (List<Object> obj : results) {
-            assertTrue(obj.get(0) instanceof Method, "Each result should be a Method");
-            assertEquals("testMethod", ((Method) obj.get(0)).getName());
+            assertTrue(obj.get(0) instanceof IMethod, "Each result should be a Method");
+            assertEquals("testMethod", ((IMethod) obj.get(0)).getName());
         }
 
         // Verify different parameter counts
@@ -81,15 +86,15 @@ public class ObjectQueryTest {
         boolean oneIntArg = false;
 
         for (List<Object> obj : results) {
-            Method m = (Method) obj.get(0);
-            int paramCount = m.getParameterCount();
-            Class<?>[] paramTypes = m.getParameterTypes();
+            IMethod m = (IMethod) obj.get(0);
+            IClass<?>[] paramTypes = m.getParameterTypes();
+            int paramCount = paramTypes.length;
 
             if (paramCount == 0) {
                 noArgs = true;
-            } else if (paramCount == 1 && paramTypes[0] == String.class) {
+            } else if (paramCount == 1 && RuntimeClass.of(String.class).equals(paramTypes[0])) {
                 oneStringArg = true;
-            } else if (paramCount == 1 && paramTypes[0] == int.class) {
+            } else if (paramCount == 1 && RuntimeClass.of(int.class).equals(paramTypes[0])) {
                 oneIntArg = true;
             } else if (paramCount == 2) {
                 twoArgs = true;
@@ -104,7 +109,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testFindAllWithStringAddress() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Test findAll with String parameter
         List<List<Object>> results = query.findAll("testMethod");
@@ -114,7 +119,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testFindAllWithObjectAddress() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Test findAll with ObjectAddress parameter
         ObjectAddress address = new ObjectAddress("testMethod", true);
@@ -125,19 +130,19 @@ public class ObjectQueryTest {
 
     @Test
     public void testFindAllWithNonOverloadedMethod() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Test with a method that has no overloads
         List<List<Object>> results = query.findAll("getName");
 
         assertEquals(1, results.size(), "findAll() should return 1 method when there's no overload");
-        assertTrue(results.get(0).get(0) instanceof Method);
-        assertEquals("getName", ((Method) results.get(0).get(0)).getName());
+        assertTrue(results.get(0).get(0) instanceof IMethod);
+        assertEquals("getName", ((IMethod) results.get(0).get(0)).getName());
     }
 
     @Test
     public void testFindField() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Find a field (behavior should be the same for find() and findAll())
         List<Object> findResults = query.find("name");
@@ -150,7 +155,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testAddressSingleMethod() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // address() should return the first method found
         ObjectAddress address = query.address("testMethod");
@@ -161,7 +166,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testAddressesOverloadedMethods() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // addresses() should return all ObjectAddress instances for overloaded methods
         List<ObjectAddress> addresses = query.addresses("testMethod");
@@ -176,7 +181,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testAddressesNonOverloadedMethod() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Test with a method that has no overloads
         List<ObjectAddress> addresses = query.addresses("getName");
@@ -187,7 +192,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testAddressesField() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Test with a field (should return single address)
         ObjectAddress singleAddress = query.address("name");
@@ -200,7 +205,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testAddressesEmptyResult() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // Test with a non-existent element
         List<ObjectAddress> addresses = query.addresses("nonExistent");
@@ -211,7 +216,7 @@ public class ObjectQueryTest {
 
     @Test
     public void testAddressVsAddressesConsistency() throws ReflectionException {
-        IObjectQuery query = new ObjectQuery(TestClass.class);
+        IObjectQuery query = new ObjectQuery<>(RuntimeClass.of(TestClass.class), PROVIDER);
 
         // For overloaded methods, address() returns first, addresses() returns all
         ObjectAddress singleAddress = query.address("testMethod");

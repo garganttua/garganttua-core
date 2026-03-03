@@ -1,5 +1,6 @@
 package com.garganttua.core.reflection.binders.dsl;
 
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.reflection.binders.IExecutableBinder;
 
 /**

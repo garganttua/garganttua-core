@@ -6,8 +6,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.inject.Qualifier;
-
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
@@ -15,6 +13,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanQuery;
 import com.garganttua.core.injection.IBeanQueryBuilder;
 import com.garganttua.core.injection.context.beans.BeanQuery;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,18 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
 
-    private Class<Bean> type;
+    private IClass<Bean> type;
     private String provider;
     private BeanStrategy strategy;
-    private Class<? extends Annotation> qualifier;
+    private IClass<? extends Annotation> qualifier;
     private String name;
 
     @Override
     public IBeanQuery<Bean> build() throws DslException {
         log.atTrace().log("Entering build() method");
 
-        //Objects.requireNonNull(this.type, "Type must be set before building BeanQuery");
-        Set<Class<? extends Annotation>> qualifiers = new HashSet<>();
+        Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
         if (this.qualifier != null) {
             qualifiers.add(this.qualifier);
             log.atDebug().log("Qualifier added: {}", this.qualifier.getSimpleName());
@@ -68,7 +66,7 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
     }
 
     @Override
-    public IBeanQueryBuilder<Bean> type(Class<Bean> type) {
+    public IBeanQueryBuilder<Bean> type(IClass<Bean> type) {
         log.atTrace().log("Entering type() method with parameter: {}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
         log.atDebug().log("Type set to: {}", getTypeSimpleName());
@@ -86,13 +84,9 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
     }
 
     @Override
-    public IBeanQueryBuilder<Bean> qualifier(Class<? extends Annotation> qualifier) throws DiException {
+    public IBeanQueryBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) throws DiException {
         log.atTrace().log("Entering qualifier() method with parameter: {}", qualifier);
         this.qualifier = Objects.requireNonNull(qualifier, "Qualifier cannot be null");
-        if (qualifier.getAnnotation(Qualifier.class) == null) {
-            log.atError().log("Provided qualifier {} does not have @Qualifier annotation", qualifier.getSimpleName());
-            throw new DiException("Qualifier must have @Qualifier annotation");
-        }
         log.atDebug().log("Qualifier set to: {}", this.qualifier.getSimpleName());
         log.atTrace().log("Exiting qualifier() method");
         return this;

@@ -14,6 +14,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -23,7 +25,9 @@ import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.beans.BeanProvider;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -38,30 +42,36 @@ public class BeanProviderBuilder
 	private static final String SOURCE_MANUAL = "manual";
 	private static final String SOURCE_AUTO_DETECTED = "auto-detected";
 
-	private Map<Class<?>, IBeanFactoryBuilder<?>> manualBeanFactoryBuilders = new HashMap<>();
-	private Map<Class<?>, IBeanFactoryBuilder<?>> autoDetectedBeanFactoryBuilders = new HashMap<>();
+	private Map<String, IBeanFactoryBuilder<?>> manualBeanFactoryBuilders = new HashMap<>();
+	private Map<String, IBeanFactoryBuilder<?>> autoDetectedBeanFactoryBuilders = new HashMap<>();
 	private Set<String> packages = new HashSet<>();
 
 	@Setter
-	private Set<Class<? extends Annotation>> qualifierAnnotations;
+	private Set<IClass<? extends Annotation>> qualifierAnnotations;
+	@Setter
+	private IReflection reflection;
 	private IInjectableElementResolverBuilder resolverBuilder;
+	private IObservableBuilder<?, ?> reflectionBuilderRef;
 
 	public BeanProviderBuilder(IInjectionContextBuilder link) {
-		super(link, Set.of(new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build()));
+		super(link, Set.of(
+				new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build(),
+				DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
 		log.atTrace().log("Entering BeanProviderBuilder constructor with link: {}", link);
 		log.atTrace().log("BeanProviderBuilder initialized with link: {}", link);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <BeanType> IBeanFactoryBuilder<BeanType> withBean(Class<BeanType> beanType) throws DslException {
+	public <BeanType> IBeanFactoryBuilder<BeanType> withBean(IClass<BeanType> beanType) throws DslException {
 		log.atTrace().log("Entering withBean() method with beanType: {}", beanType.getSimpleName());
 		log.atDebug().log("Registering bean type: {}", beanType.getSimpleName());
+		String key = beanType.getName();
 		IBeanFactoryBuilder<BeanType> builder = (IBeanFactoryBuilder<BeanType>) this.manualBeanFactoryBuilders
-				.computeIfAbsent(beanType,
-						key -> {
-							log.atTrace().log("Creating new BeanFactoryBuilder for type: {}", key.getSimpleName());
-							return new BeanFactoryBuilder<>(key);
+				.computeIfAbsent(key,
+						k -> {
+							log.atTrace().log("Creating new BeanFactoryBuilder for type: {}", beanType.getSimpleName());
+							return new BeanFactoryBuilder<>(beanType);
 						});
 		log.atTrace().log("Exiting withBean() method for beanType: {}", beanType.getSimpleName());
 		return builder;
@@ -71,8 +81,13 @@ public class BeanProviderBuilder
 	protected IBeanProvider doBuild() throws DslException {
 		log.atTrace().log("Entering doBuild() method");
 
-		Map<Class<?>, IBeanFactoryBuilder<?>> allBuilders = this.computeBeanFactoryBuilders();
+		Map<String, IBeanFactoryBuilder<?>> allBuilders = this.computeBeanFactoryBuilders();
 		log.atDebug().log("Building IBeanProvider with {} factories", allBuilders.size());
+
+		// Propagate IReflectionBuilder to all bean factory builders before building
+		if (this.reflectionBuilderRef != null) {
+			allBuilders.values().forEach(b -> b.provide(this.reflectionBuilderRef));
+		}
 
 		IBeanProvider provider;
 		try {
@@ -89,19 +104,28 @@ public class BeanProviderBuilder
 		return provider;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doAutoDetection() throws DslException {
 		log.atTrace().log("Entering doAutoDetection() method");
+		if (this.reflection == null) {
+			log.atWarn().log("IReflection not set, skipping auto-detection");
+			return;
+		}
+
+		IClass<? extends Annotation> singletonAnnotation = (IClass<? extends Annotation>) reflection.getClass(Singleton.class);
+		IClass<? extends Annotation> prototypeAnnotation = (IClass<? extends Annotation>) reflection.getClass(Prototype.class);
+
 		this.packages.parallelStream().forEach(pkg -> {
 			log.atDebug().log("Auto-detecting beans in package: {}", pkg);
 
 			// 1. Singleton
-			ObjectReflectionHelper.getClassesWithAnnotation(pkg, Singleton.class)
+			reflection.getClassesWithAnnotation(pkg, singletonAnnotation)
 					.forEach(singletonClass -> {
 						try {
 							log.atTrace().log("Detected @Singleton class: {}", singletonClass.getSimpleName());
 							synchronized (this.autoDetectedBeanFactoryBuilders) {
-								this.autoDetectedBeanFactoryBuilders.put(singletonClass,
+								this.autoDetectedBeanFactoryBuilders.put(singletonClass.getName(),
 										this.createBeanFactory(qualifierAnnotations, singletonClass)
 												.strategy(BeanStrategy.singleton));
 							}
@@ -112,12 +136,12 @@ public class BeanProviderBuilder
 					});
 
 			// 2. Prototype
-			ObjectReflectionHelper.getClassesWithAnnotation(pkg, Prototype.class)
+			reflection.getClassesWithAnnotation(pkg, prototypeAnnotation)
 					.forEach(prototypeClass -> {
 						try {
 							log.atTrace().log("Detected @Prototype class: {}", prototypeClass.getSimpleName());
 							synchronized (this.autoDetectedBeanFactoryBuilders) {
-								this.autoDetectedBeanFactoryBuilders.put(prototypeClass,
+								this.autoDetectedBeanFactoryBuilders.put(prototypeClass.getName(),
 										this.createBeanFactory(qualifierAnnotations, prototypeClass)
 												.strategy(BeanStrategy.prototype));
 							}
@@ -129,13 +153,13 @@ public class BeanProviderBuilder
 
 			// 3. Qualifiers
 			qualifierAnnotations.forEach(qualifierAnnotation -> {
-				ObjectReflectionHelper.getClassesWithAnnotation(pkg, qualifierAnnotation)
+				reflection.getClassesWithAnnotation(pkg, qualifierAnnotation)
 						.forEach(qualifiedClass -> {
 							try {
 								log.atTrace().log("Detected @Qualifier class: {} with qualifier {}",
 										qualifiedClass.getSimpleName(), qualifierAnnotation.getSimpleName());
 								synchronized (this.autoDetectedBeanFactoryBuilders) {
-									this.autoDetectedBeanFactoryBuilders.put(qualifiedClass,
+									this.autoDetectedBeanFactoryBuilders.put(qualifiedClass.getName(),
 											this.createBeanFactory(qualifierAnnotations, qualifiedClass)
 													.strategy(BeanStrategy.singleton));
 								}
@@ -149,20 +173,24 @@ public class BeanProviderBuilder
 		log.atTrace().log("Exiting doAutoDetection() method");
 	}
 
-	private IBeanFactoryBuilder<?> createBeanFactory(Set<Class<? extends Annotation>> qualifierAnnotations,
-			Class<?> beanClass) throws DslException {
+	private IBeanFactoryBuilder<?> createBeanFactory(Set<IClass<? extends Annotation>> qualifierAnnotations,
+			IClass<?> beanClass) throws DslException {
 		log.atTrace().log("Entering createBeanFactory() for class: {}", beanClass.getSimpleName());
 
-		Set<Class<? extends Annotation>> classQualifiers = qualifierAnnotations.stream()
+		Set<IClass<? extends Annotation>> classQualifiers = qualifierAnnotations.stream()
 				.filter(qualifier -> beanClass.isAnnotationPresent(qualifier))
 				.collect(Collectors.toSet());
 
-		IBeanFactoryBuilder<?> builder = new BeanFactoryBuilder<>(beanClass)
-				.provide(this.resolverBuilder)
+		IBeanFactoryBuilder<?> builder = new BeanFactoryBuilder<>(beanClass);
+		if (this.reflectionBuilderRef != null) {
+			builder.provide(this.reflectionBuilderRef);
+		}
+		builder.provide(this.resolverBuilder)
 				.autoDetect(true)
 				.qualifiers(classQualifiers);
 
-		Named namedAnnotation = beanClass.getAnnotation(Named.class);
+		IClass<Named> namedClass = IClass.getClass(Named.class);
+		Named namedAnnotation = beanClass.getAnnotation(namedClass);
 		if (namedAnnotation != null && !namedAnnotation.value().isBlank()) {
 			builder.name(namedAnnotation.value());
 			log.atDebug().log("Bean class {} has @Named annotation with value: {}", beanClass.getSimpleName(),
@@ -193,11 +221,11 @@ public class BeanProviderBuilder
 		return this;
 	}
 
-	private ISupplier<Map<Class<?>, IBeanFactoryBuilder<?>>> beanFactorySupplier(
-			Map<Class<?>, IBeanFactoryBuilder<?>> builders) {
-		return new ISupplier<Map<Class<?>, IBeanFactoryBuilder<?>>>() {
+	private ISupplier<Map<String, IBeanFactoryBuilder<?>>> beanFactorySupplier(
+			Map<String, IBeanFactoryBuilder<?>> builders) {
+		return new ISupplier<Map<String, IBeanFactoryBuilder<?>>>() {
 			@Override
-			public Optional<Map<Class<?>, IBeanFactoryBuilder<?>>> supply() throws SupplyException {
+			public Optional<Map<String, IBeanFactoryBuilder<?>>> supply() throws SupplyException {
 				return Optional.of(builders);
 			}
 
@@ -205,11 +233,16 @@ public class BeanProviderBuilder
 			public Type getSuppliedType() {
 				throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
 			}
+
+			@Override
+			public IClass<Map<String, IBeanFactoryBuilder<?>>> getSuppliedClass() {
+				throw new UnsupportedOperationException("Unimplemented method 'getSuppliedClass'");
+			}
 		};
 	}
 
-	private Map<Class<?>, IBeanFactoryBuilder<?>> computeBeanFactoryBuilders() {
-		MultiSourceCollector<Class<?>, IBeanFactoryBuilder<?>> collector = new MultiSourceCollector<>();
+	private Map<String, IBeanFactoryBuilder<?>> computeBeanFactoryBuilders() {
+		MultiSourceCollector<String, IBeanFactoryBuilder<?>> collector = new MultiSourceCollector<>();
 
 		collector.source(beanFactorySupplier(manualBeanFactoryBuilders), 0, SOURCE_MANUAL);
 		collector.source(beanFactorySupplier(autoDetectedBeanFactoryBuilders), 1, SOURCE_AUTO_DETECTED);
@@ -233,6 +266,9 @@ public class BeanProviderBuilder
     public IBeanProviderBuilder provide(IObservableBuilder<?, ?> dependency) {
         if (dependency instanceof IInjectableElementResolverBuilder rb) {
             this.resolverBuilder = rb;
+        }
+        if (dependency instanceof IReflectionBuilder) {
+            this.reflectionBuilderRef = dependency;
         }
         return super.provide(dependency);
     }

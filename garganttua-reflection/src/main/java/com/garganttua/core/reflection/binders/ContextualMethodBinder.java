@@ -5,10 +5,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
-import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
-import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.Methods;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.supply.IContextualSupplier;
@@ -34,7 +33,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         super(parameterSuppliers);
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         log.atTrace().log("Creating ContextualMethodBinder: method={}, returnedClass={}, collection={}", method,
-                method.returnType(), collection);
+                method.getReturnType(), collection);
         this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
         this.collection = collection;
         log.atDebug().log("ContextualMethodBinder created for method {} with {} parameters", method,
@@ -47,26 +46,12 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         this(objectSupplier, method, parameterSuppliers, false);
     }
 
-    /**
-     * Backward-compatible constructor using ObjectAddress.
-     * Resolves the method from the owner type and address.
-     */
-    public ContextualMethodBinder(ISupplier<?> objectSupplier,
-            ObjectAddress methodAddress,
-            List<ISupplier<?>> parameterSuppliers,
-            Class<?> returnType) {
-        this(objectSupplier,
-             MethodResolver.methodByAddress(objectSupplier.getSuppliedClass(), methodAddress, returnType,
-                 parameterSuppliers.stream().map(s -> s.getSuppliedClass()).toArray(Class[]::new)),
-             parameterSuppliers, false);
-    }
-
     @Override
-    public Class<OwnerContextType> getOwnerContextType() {
+    public IClass<OwnerContextType> getOwnerContextType() {
         if (this.objectSupplier instanceof IContextualSupplier<?, ?> contextual) {
-            return (Class<OwnerContextType>) contextual.getOwnerContextType();
+            return (IClass<OwnerContextType>) contextual.getOwnerContextType();
         }
-        return (Class<OwnerContextType>) Void.class;
+        return (IClass<OwnerContextType>) IClass.getClass(Void.class);
     }
 
     @Override
@@ -101,18 +86,23 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
 
     @Override
     public String getExecutableReference() {
-        return Methods.prettyColored(this.method.method());
+        return Methods.prettyColored(this.method);
     }
 
     @Override
     public Type getSuppliedType() {
-        return this.method.returnType();
+        return this.method.getReturnType().getType();
     }
 
     @Override
     public Optional<IMethodReturn<ReturnedType>> supply(OwnerContextType ownerContext, Object... otherContexts)
             throws SupplyException {
         return this.execute(ownerContext, otherContexts);
+    }
+
+    @Override
+    public IClass<IMethodReturn<ReturnedType>> getSuppliedClass() {
+        return (IClass<IMethodReturn<ReturnedType>>) (IClass<?>) IClass.getClass(IMethodReturn.class);
     }
 
 }

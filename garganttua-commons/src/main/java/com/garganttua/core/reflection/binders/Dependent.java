@@ -2,6 +2,8 @@ package com.garganttua.core.reflection.binders;
 
 import java.util.Set;
 
+import com.garganttua.core.reflection.IClass;
+
 /**
  * Interface for objects that have dependencies on other types.
  *
@@ -23,10 +25,10 @@ import java.util.Set;
  *     .build();
  *
  * // Check dependencies before execution
- * Set<Class<?>> deps = binder.getDependencies();
+ * Set<IClass<?>> deps = binder.getDependencies();
  * // Returns { UserRepository.class, EmailService.class }
  *
- * for (Class<?> dep : deps) {
+ * for (IClass<?> dep : deps) {
  *     if (!context.hasBean(dep)) {
  *         throw new Exception("Missing dependency: " + dep.getName());
  *     }
@@ -55,7 +57,7 @@ public interface Dependent {
      * Returns the set of types this object depends on.
      *
      * <p>
-     * The returned set contains all {@link Class} objects representing types that
+     * The returned set contains all {@link IClass} objects representing types that
      * must be available for this dependent to operate successfully. For executable
      * binders, this includes parameter types. For field binders, this includes the
      * field type. An empty set indicates no dependencies.
@@ -63,5 +65,5 @@ public interface Dependent {
      *
      * @return an immutable set of dependency types (never {@code null}, may be empty)
      */
-    Set<Class<?>> dependencies();
+    Set<IClass<?>> dependencies();
 }

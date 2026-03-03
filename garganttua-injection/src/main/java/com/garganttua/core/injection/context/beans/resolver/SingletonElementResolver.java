@@ -1,7 +1,6 @@
 package com.garganttua.core.injection.context.beans.resolver;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,6 +8,8 @@ import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
+import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -18,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 //@Resolver(annotations={Singleton.class, Inject.class})
 public class SingletonElementResolver extends BeanElementResolver implements IElementResolver {
 
-    public SingletonElementResolver(Set<Class<? extends Annotation>> qualifiers) {
+    public SingletonElementResolver(Set<IClass<? extends Annotation>> qualifiers) {
         super(qualifiers);
         log.atTrace().log("Entering SingletonElementResolver constructor with qualifiers: {}", qualifiers);
         log.atDebug().log("SingletonElementResolver initialized with qualifiers: {}", qualifiers);
@@ -26,7 +27,7 @@ public class SingletonElementResolver extends BeanElementResolver implements IEl
     }
 
     @Override
-    public Resolved resolve(Class<?> elementType, AnnotatedElement element) {
+    public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {
         log.atTrace().log("Entering resolve for elementType: {} and element: {}", elementType, element);
 
         Optional<ISupplierBuilder<?, ISupplier<?>>> builder = this.resolve(elementType, element,

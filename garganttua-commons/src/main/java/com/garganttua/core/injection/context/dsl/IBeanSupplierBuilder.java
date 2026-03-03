@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -81,7 +82,7 @@ public interface IBeanSupplierBuilder<Bean> extends ISupplierBuilder<Bean, IBean
      * @param qualifier the qualifier annotation class
      * @return this builder for method chaining
      */
-    IBeanSupplierBuilder<Bean> qualifier(Class<? extends Annotation> qualifier);
+    IBeanSupplierBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier);
 
     /**
      * Use the static DI context for bean resolution.

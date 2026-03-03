@@ -1,0 +1,16 @@
+{
+  "name": "myApp",
+  "port": 8080,
+  "debug": true,
+  "timeout": "PT30S",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "testdb"
+  },
+  "tags": ["web", "api", "rest"],
+  "features": {
+    "caching": true,
+    "logging": false
+  }
+}

@@ -1,17 +1,17 @@
 package com.garganttua.core.reflection.binders;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.constructors.ConstructorInvoker;
 import com.garganttua.core.reflection.constructors.Constructors;
-import com.garganttua.core.reflection.methods.SingleMethodReturn;
-import com.garganttua.core.reflection.utils.ConstructorAccessManager;
+import com.garganttua.core.reflection.constructors.ResolvedConstructor;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -22,11 +22,11 @@ public class ConstructorBinder<Constructed>
         extends ExecutableBinder<Constructed>
         implements IConstructorBinder<Constructed> {
 
-    private Class<Constructed> objectClass;
-    private Constructor<Constructed> constructor;
+    private IClass<Constructed> objectClass;
+    private IConstructor<Constructed> constructor;
 
-    public ConstructorBinder(Class<Constructed> objectClass,
-            Constructor<Constructed> constructor, List<ISupplier<?>> parameterSuppliers) {
+    public ConstructorBinder(IClass<Constructed> objectClass,
+            IConstructor<Constructed> constructor, List<ISupplier<?>> parameterSuppliers) {
         super(parameterSuppliers);
         log.atTrace().log("Creating ConstructorBinder for class={}, constructor params={}", objectClass.getName(), constructor.getParameterCount());
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
@@ -38,20 +38,16 @@ public class ConstructorBinder<Constructed>
     @Override
     public Optional<IMethodReturn<Constructed>> execute() throws ReflectionException {
         log.atTrace().log("Executing constructor for class {}", objectClass.getName());
-        try(ConstructorAccessManager accessor = new ConstructorAccessManager(this.constructor) ) {
-            Object[] args = this.buildArguments();
-            log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(), args.length);
-            Constructed instance = this.constructor.newInstance(args);
-            log.atDebug().log("Successfully created instance of class {}", objectClass.getName());
-            return Optional.ofNullable(SingleMethodReturn.of(instance));
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            log.atError().log("Error creating new instance of class {}", objectClass.getName(), e);
-            throw new ReflectionException("Error creating new instance of type " + objectClass.getSimpleName(), e);
-        }
+        Object[] args = this.buildArguments();
+        log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(), args.length);
+        ConstructorInvoker<Constructed> invoker = new ConstructorInvoker<>(new ResolvedConstructor<>(constructor));
+        IMethodReturn<Constructed> result = invoker.newInstance(args);
+        log.atDebug().log("Successfully created instance of class {}", objectClass.getName());
+        return Optional.of(result);
     }
 
     @Override
-    public Class<Constructed> getConstructedType() {
+    public IClass<Constructed> getConstructedType() {
         return this.objectClass;
     }
 
@@ -61,13 +57,13 @@ public class ConstructorBinder<Constructed>
     }
 
     @Override
-    public Constructor<?> constructor() {
+    public IConstructor<?> constructor() {
         return this.constructor;
     }
 
     @Override
     public Type getSuppliedType() {
-        return this.objectClass;
+        return this.objectClass.getType();
     }
 
     @Override
@@ -77,6 +73,11 @@ public class ConstructorBinder<Constructed>
         } catch (ReflectionException e) {
             throw new SupplyException(e);
         }
+    }
+
+    @Override
+    public IClass<IMethodReturn<Constructed>> getSuppliedClass() {
+        return (IClass<IMethodReturn<Constructed>>) (IClass<?>) this.objectClass;
     }
 
 }
