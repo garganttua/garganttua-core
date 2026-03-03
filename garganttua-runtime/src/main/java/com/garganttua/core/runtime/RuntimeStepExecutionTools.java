@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.garganttua.core.CoreException;
 import com.garganttua.core.execution.ExecutorException;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +41,7 @@ public class RuntimeStepExecutionTools {
         }
     }
 
+    @SuppressWarnings("unchecked")
     static public void handleException(String runtimeName, String stepName,
             IRuntimeContext<?, ?> context,
             Throwable exception,
@@ -72,7 +74,7 @@ public class RuntimeStepExecutionTools {
             context.recordException(new RuntimeExceptionRecord(
                     runtimeName,
                     stepName,
-                    reportException.getClass(),
+                    (IClass<? extends Throwable>) IClass.getClass(reportException.getClass()),
                     reportException,
                     reportCode,
                     aborted, executableReference));
@@ -124,7 +126,7 @@ public class RuntimeStepExecutionTools {
             return;
         }
 
-        if (returned != null && !context.isOfOutputType(returned.getClass())) {
+        if (returned != null && !context.isOfOutputType(IClass.getClass(returned.getClass()))) {
             log.atWarn().log("{}Returned value type '{}' is not compatible with output type '{}'", logLineHeader,
                     returned.getClass().getSimpleName(), context.getOutputType().getSimpleName());
             handleException(

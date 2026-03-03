@@ -10,7 +10,7 @@ import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.MethodBinderExpression;
 import com.garganttua.core.runtime.Runtime;
 import com.garganttua.core.runtime.RuntimeContext;
@@ -84,140 +84,140 @@ public class RuntimeNativeConfigurationBuilder
         Set<IReflectionConfigurationEntryBuilder> entries = new HashSet<>();
 
         // Core runtime classes
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(Runtime.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(Runtime.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeContext.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeContext.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeContextFactory.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeContextFactory.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeResult.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeResult.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeExpressionContext.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeExpressionContext.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeProcess.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeProcess.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimesRegistry.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimesRegistry.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // Step-related classes
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStep.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStep.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepMethodBinder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepMethodBinder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepFallbackBinder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepFallbackBinder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepExecutionTools.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepExecutionTools.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepCatch.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepCatch.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepOnException.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepOnException.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(MethodBinderExpression.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(MethodBinderExpression.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // Element resolvers (registered via @Resolver annotation)
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(InputElementResolver.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(InputElementResolver.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(VariableElementResolver.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(VariableElementResolver.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ContextElementResolver.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(ContextElementResolver.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(CodeElementResolver.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(CodeElementResolver.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExceptionElementResolver.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(ExceptionElementResolver.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(ExceptionMessageElementResolver.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(ExceptionMessageElementResolver.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
         // DSL builders
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimesBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimesBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepMethodBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepMethodBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepFallbackBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepFallbackBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepCatchBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepCatchBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        entries.add(new ReflectConfigEntryBuilder(RuntimeClass.ofUnchecked(RuntimeStepOnExceptionBuilder.class))
+        entries.add(new ReflectConfigEntryBuilder(IClass.getClass(RuntimeStepOnExceptionBuilder.class))
                 .queryAllDeclaredConstructors(true)
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));

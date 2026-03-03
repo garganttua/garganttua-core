@@ -1,6 +1,5 @@
 package com.garganttua.core.runtime.dsl;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,9 +11,10 @@ import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
@@ -86,7 +86,8 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             Class<? extends Throwable> exception, Catch catchAnnotation) throws DslException {
         log.atTrace().log("Entering private katch method with exception={}", exception);
         Objects.requireNonNull(exception, "Exception cannot be null");
-        if (!this.isThrown(exception)) {
+        IClass<? extends Throwable> iException = IClass.getClass(exception);
+        if (!this.isThrown(iException)) {
             log.atError().log("Exception {} is not thrown by method", exception.getSimpleName());
             throw new DslException("Exception " + exception.getSimpleName() + " is not thrown by method");
         }
@@ -99,16 +100,17 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
 
     @Override
     public IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch(
-            Class<? extends Throwable> exception) throws DslException {
+            IClass<? extends Throwable> exception) throws DslException {
         log.atTrace().log("Entering public katch method with exception={}", exception);
         Objects.requireNonNull(exception, "Exception cannot be null");
         if (!this.isThrown(exception)) {
             log.atError().log("Exception {} is not thrown by method", exception.getSimpleName());
             throw new DslException("Exception " + exception.getSimpleName() + " is not thrown by method");
         }
+        Class<? extends Throwable> rawException = (Class<? extends Throwable>) exception.getType();
         RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch = new RuntimeStepCatchBuilder<>(
-                exception, this);
-        this.katches.put(exception, katch);
+                rawException, this);
+        this.katches.put(rawException, katch);
         log.atDebug().log("Katch added for exception {}", exception.getSimpleName());
         return katch;
     }
@@ -122,7 +124,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     }
 
     @Override
-    public boolean isThrown(Class<? extends Throwable> exception) {
+    public boolean isThrown(IClass<? extends Throwable> exception) {
         log.atTrace().log("Checking if exception {} is thrown", exception);
         Objects.requireNonNull(exception, "Exception cannot be null");
         boolean thrown = Arrays.stream(this.method().getExceptionTypes())
@@ -163,7 +165,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         log.atTrace().log("Entering doAutoDetection method");
         super.doAutoDetection();
 
-        Method method = this.method();
+        IMethod method = this.method();
         detectAbortOnUncatchedException(method);
         detectCatches(method);
         detectCondition();
@@ -174,25 +176,25 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         log.atDebug().log("Auto-detection completed for method {}", method.getName());
     }
 
-    private void detectNullable(Method operationMethod) {
+    private void detectNullable(IMethod operationMethod) {
         log.atTrace().log("Detecting nullable annotation on method {}", operationMethod.getName());
-        Nullable nullable = operationMethod.getAnnotation(Nullable.class);
+        Nullable nullable = operationMethod.getAnnotation(IClass.getClass(Nullable.class));
         if (nullable != null) {
             this.nullable = true;
             log.atDebug().log("Method {} marked as nullable", operationMethod.getName());
         }
     }
 
-    private void detectAbortOnUncatchedException(Method method) {
+    private void detectAbortOnUncatchedException(IMethod method) {
         log.atTrace().log("Detecting abortOnUncatchedException on method {}", method.getName());
-        Operation operation = method.getAnnotation(Operation.class);
+        Operation operation = method.getAnnotation(IClass.getClass(Operation.class));
         this.abortOnUncatchedException = operation.abortOnUncatchedException();
         log.atDebug().log("abortOnUncatchedException set to {}", this.abortOnUncatchedException);
     }
 
-    private void detectCatches(Method method) {
+    private void detectCatches(IMethod method) {
         log.atTrace().log("Detecting catches on method {}", method.getName());
-        Catch[] catchAnnotations = method.getAnnotationsByType(Catch.class);
+        Catch[] catchAnnotations = method.getAnnotationsByType(IClass.getClass(Catch.class));
         for (Catch catchAnnotation : catchAnnotations) {
             katch(catchAnnotation.exception(), catchAnnotation).autoDetect(true);
             log.atDebug().log("Detected catch annotation for exception {}",
@@ -200,6 +202,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void detectCondition() {
         log.atTrace().log("Detecting condition");
         Optional<StepObjectType> owner = supplier.build().supply();
@@ -207,38 +210,51 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
             log.atError().log("Owner supplier supplied empty value");
             throw new DslException("Owner supplier supplied empty value");
         }
-        String conditionField = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
-                supplier.getSuppliedClass(), Condition.class, IConditionBuilder.class);
+        IClass<?> suppliedClass = supplier.getSuppliedClass();
+        IClass<Condition> iConditionAnnotation = (IClass<Condition>) (IClass<?>) IClass.getClass(Condition.class);
+        IField conditionField = null;
+        for (IField field : suppliedClass.getDeclaredFields()) {
+            if (field.getAnnotation(iConditionAnnotation) != null) {
+                if (IClass.getClass(IConditionBuilder.class).isAssignableFrom(field.getType())) {
+                    conditionField = field;
+                    break;
+                }
+            }
+        }
 
         if (conditionField != null) {
-            IConditionBuilder condition = (IConditionBuilder) ObjectQueryFactory.objectQuery(owner.get())
-                    .getValue(conditionField);
-            this.condition(condition);
-            log.atDebug().log("Condition detected and applied");
+            try {
+                conditionField.setAccessible(true);
+                IConditionBuilder condition = (IConditionBuilder) conditionField.get(owner.get());
+                this.condition(condition);
+                log.atDebug().log("Condition detected and applied");
+            } catch (IllegalAccessException e) {
+                throw new DslException("Failed to access condition field", e);
+            }
         }
     }
 
-    private void detectCode(Method operationMethod) {
+    private void detectCode(IMethod operationMethod) {
         log.atTrace().log("Detecting code annotation on method {}", operationMethod.getName());
-        Code code = operationMethod.getAnnotation(Code.class);
+        Code code = operationMethod.getAnnotation(IClass.getClass(Code.class));
         if (code != null) {
             this.code(code.value());
             log.atDebug().log("Code annotation detected with value {}", code.value());
         }
     }
 
-    private void detectVariable(Method operationMethod) {
+    private void detectVariable(IMethod operationMethod) {
         log.atTrace().log("Detecting variable annotation on method {}", operationMethod.getName());
-        Variable variable = operationMethod.getAnnotation(Variable.class);
+        Variable variable = operationMethod.getAnnotation(IClass.getClass(Variable.class));
         if (variable != null) {
             this.variable(variable.name());
             log.atDebug().log("Variable annotation detected with name {}", variable.name());
         }
     }
 
-    private void detectOutput(Method operationMethod) {
+    private void detectOutput(IMethod operationMethod) {
         log.atTrace().log("Detecting output annotation on method {}", operationMethod.getName());
-        if (operationMethod.getAnnotation(Output.class) != null) {
+        if (operationMethod.getAnnotation(IClass.getClass(Output.class)) != null) {
             this.output(true);
             log.atDebug().log("Output annotation detected and set to true");
         }

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.supply.ISupplier;
@@ -50,13 +51,12 @@ public class MethodBinderExpression<R, C> implements IExpression<R, ISupplier<R>
 
             @Override
             public Type getSuppliedType() {
-                return binder.getSuppliedClass();
+                return binder.getSuppliedType();
             }
 
-            @SuppressWarnings("unchecked")
             @Override
-            public Class<R> getSuppliedClass() {
-                return (Class<R>) binder.getSuppliedClass();
+            public IClass<R> getSuppliedClass() {
+                return (IClass<R>) (IClass<?>) binder.getSuppliedClass();
             }
         };
     }
@@ -67,13 +67,13 @@ public class MethodBinderExpression<R, C> implements IExpression<R, ISupplier<R>
 
     @SuppressWarnings("unchecked")
     @Override
-    public Class<R> getSuppliedClass() {
-        return (Class<R>) binder.getSuppliedClass();
+    public IClass<R> getSuppliedClass() {
+        return (IClass<R>) (IClass<?>) binder.getSuppliedClass();
     }
 
     @Override
     public Type getSuppliedType() {
-        return binder.getSuppliedClass();
+        return binder.getSuppliedType();
     }
 
     @Override

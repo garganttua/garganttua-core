@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,10 @@ import org.junit.jupiter.api.TestInfo;
 
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
@@ -26,13 +30,24 @@ public class TwoStepsRuntimeTest {
         log.atInfo().log("Executing test method: {}", testInfo.getTestMethod().get().getName());
     }
 
+    private static IReflectionBuilder reflectionBuilder;
+
     @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setup() throws Exception {
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder.build();
+    }
+
+    @AfterAll
+    static void tearDown() {
+        IClass.setReflection(null);
     }
 
     private IInjectionContextBuilder contextBuilder() {
         return InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
     }
@@ -40,7 +55,7 @@ public class TwoStepsRuntimeTest {
     private IRuntimesBuilder builder() {
         IInjectionContextBuilder ctx = contextBuilder();
         ctx.build().onInit().onStart();
-        return RuntimesBuilder.builder().provide(ctx).autoDetect(true);
+        return RuntimesBuilder.builder().provide(reflectionBuilder).provide(ctx).autoDetect(true);
     }
 
     private IRuntime<String, String> get(IRuntimesBuilder b) {
@@ -57,7 +72,7 @@ public class TwoStepsRuntimeTest {
     @Test
     public void testNominal() {
 
-        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", String.class, String.class)
+        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", IClass.getClass(String.class), IClass.getClass(String.class))
                 .variable("step-one-variable", "step-one-variable")
                 .variable("output-step-variable", "output-step-variable").up());
 
@@ -71,7 +86,7 @@ public class TwoStepsRuntimeTest {
     @Test
     public void testCatchedExceptionInOutputStep() {
 
-        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", String.class, String.class)
+        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", IClass.getClass(String.class), IClass.getClass(String.class))
                 .variable("step-one-variable", "step-one-variable").variable("output-step-variable", "di-exception")
                 .up());
 
@@ -84,7 +99,7 @@ public class TwoStepsRuntimeTest {
     @Test
     public void testCatchedExceptionInStepOneStep() {
 
-        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", String.class, String.class)
+        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", IClass.getClass(String.class), IClass.getClass(String.class))
                 .variable("step-one-variable", "di-excpetion").variable("output-step-variable", "di-exception").up());
 
         IRuntimeResult<String, String> result = runtime.execute("test").orElseThrow();
@@ -96,7 +111,7 @@ public class TwoStepsRuntimeTest {
     @Test
     public void testUncatchedExceptionInStepOneStep_abortOnUncatchedException_false() {
 
-        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", String.class, String.class)
+        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", IClass.getClass(String.class), IClass.getClass(String.class))
                 .variable("step-one-variable", "custom-excpetion")
                 .variable("output-step-variable", "output-step-variable").up());
 
@@ -110,7 +125,7 @@ public class TwoStepsRuntimeTest {
     @Test
     public void testUncatchedExceptionInOutputStep_abortOnUncatchedException_true() {
 
-        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", String.class, String.class)
+        IRuntime<String, String> runtime = get(builder().runtime("two-steps-runtime", IClass.getClass(String.class), IClass.getClass(String.class))
                 .variable("step-one-variable", "step-one-variable").variable("output-step-variable", "custom-exception")
                 .up());
 

@@ -39,7 +39,10 @@ import org.slf4j.LoggerFactory;
 
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeResult;
@@ -65,8 +68,12 @@ import ch.qos.logback.classic.Logger;
 public class PerformancesTest {
 
         @BeforeAll
-        public static void setup() {
-                ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+        public static void setup() throws Exception {
+                IReflection reflection = ReflectionBuilder.builder()
+                        .withProvider(new RuntimeReflectionProvider())
+                        .withScanner(new ReflectionsAnnotationScanner())
+                        .build();
+                IClass.setReflection(reflection);
         }
 
         @Test

@@ -24,6 +24,7 @@ import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -43,7 +44,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     private final InputType input;
     @Getter
-    private final Class<OutputType> outputType;
+    private final IClass<?> outputType;
     private OutputType output;
     private final Map<String, ISupplier<?>> presetVariables = Collections.synchronizedMap(new HashMap<>());
     private final Map<String, Object> variables = Collections.synchronizedMap(new HashMap<>());
@@ -66,7 +67,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
                 parent, input, outputType, presetVariables);
         this.delegateContext = Objects.requireNonNull(parent, "Parent context cannot be null");
         this.input = Objects.requireNonNull(input, "Input type cannot be null");
-        this.outputType = Objects.requireNonNull(outputType, "Output type cannot be null");
+        this.outputType = IClass.getClass(Objects.requireNonNull(outputType, "Output type cannot be null"));
         this.presetVariables
                 .putAll(Map.copyOf(Objects.requireNonNull(presetVariables, "Preset variables map cannot be null")));
         log.atDebug().log("[RuntimeContext.<init>] RuntimeContext created with uuid={}", this.uuid);
@@ -90,30 +91,30 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     @SuppressWarnings("unchecked")
     public static <VariableType, InputType, OutputType> ISupplierBuilder<VariableType, IContextualSupplier<VariableType, IRuntimeContext<InputType, OutputType>>> variable(
-            String variableName, Class<VariableType> variableType) {
+            String variableName, IClass<VariableType> variableType) {
         log.atTrace().log("[RuntimeContext.variable] Creating variable supplier for {} of type {}", variableName,
                 variableType);
         return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getVariable(variableName, variableType);
-        }, variableType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
+        }, variableType, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> ISupplierBuilder<InputType, IContextualSupplier<InputType, IRuntimeContext<InputType, OutputType>>> input(
-            Class<InputType> inputType) {
+            IClass<InputType> inputType) {
         log.atTrace().log("[RuntimeContext.input] Creating input supplier for type {}", inputType);
         return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getInput();
-        }, inputType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
+        }, inputType, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
     @SuppressWarnings("unchecked")
     public static <ExceptionType extends Throwable, InputType, OutputType> ISupplierBuilder<ExceptionType, IContextualSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
-            Class<ExceptionType> exceptionType) {
+            IClass<ExceptionType> exceptionType) {
         log.atTrace().log("[RuntimeContext.exception] Creating exception supplier for type {}", exceptionType);
         return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getException(exceptionType);
-        }, exceptionType, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
+        }, exceptionType, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -121,7 +122,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         log.atTrace().log("[RuntimeContext.code] Creating code supplier");
         return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getCode();
-        }, Integer.class, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
+        }, IClass.getClass(Integer.class), (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -129,7 +130,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         log.atTrace().log("[RuntimeContext.exceptionMessage] Creating exceptionMessage supplier");
         return new ContextualSupplierBuilder<>((context, others) -> {
             return context.getExceptionMessage();
-        }, String.class, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
+        }, IClass.getClass(String.class), (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -137,12 +138,12 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         log.atTrace().log("[RuntimeContext.context] Creating context supplier");
         return new ContextualSupplierBuilder<>((context, others) -> {
             return Optional.of(context);
-        }, (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class,
-                (Class<IRuntimeContext<InputType, OutputType>>) (Class<?>) IRuntimeContext.class);
+        }, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class),
+                (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
     @Override
-    public <VariableType> Optional<VariableType> getVariable(String variableName, Class<VariableType> variableType) {
+    public <VariableType> Optional<VariableType> getVariable(String variableName, IClass<VariableType> variableType) {
         log.atTrace().log("[RuntimeContext.getVariable] Fetching variable '{}' of type {}", variableName, variableType);
         wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
         Optional<VariableType> value = this.delegateContext
@@ -153,7 +154,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
 
     @SuppressWarnings("unchecked")
     @Override
-    public <ExceptionType> Optional<ExceptionType> getException(Class<ExceptionType> exceptionType) {
+    public <ExceptionType> Optional<ExceptionType> getException(IClass<ExceptionType> exceptionType) {
         log.atTrace().log("[RuntimeContext.getException] Fetching exception of type {}", exceptionType);
         wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
         Optional<RuntimeExceptionRecord> report = this.findAbortingExceptionReport();
@@ -213,7 +214,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public boolean isOfOutputType(Class<?> type) {
+    public boolean isOfOutputType(IClass<?> type) {
         log.atTrace().log("[RuntimeContext.isOfOutputType] Checking type {}", type);
         wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
         return this.outputType.isAssignableFrom(type);
@@ -337,20 +338,20 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public <T> Optional<T> getProperty(Optional<String> provider, String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(Optional<String> provider, String key, IClass<T> type) throws DiException {
         log.atTrace().log("[RuntimeContext.getProperty] Fetching property with provider={} key={} type={}", provider,
                 key, type);
         return this.delegateContext.getProperty(provider, key, type);
     }
 
     @Override
-    public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         log.atTrace().log("[RuntimeContext.getProperty] Fetching property with key={} type={}", key, type);
         return this.delegateContext.getProperty(key, type);
     }
 
     @Override
-    public <T> Optional<T> getProperty(String providerName, String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(String providerName, String key, IClass<T> type) throws DiException {
         log.atTrace().log("[RuntimeContext.getProperty] Fetching property with provider={} key={} type={}",
                 providerName, key, type);
         return this.delegateContext.getProperty(providerName, key, type);
@@ -364,8 +365,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    @Deprecated
-    public <ChildContext extends IInjectionContext> ChildContext newChildContext(Class<ChildContext> contextClass,
+    public <ChildContext extends IInjectionContext> ChildContext newChildContext(IClass<ChildContext> contextClass,
             Object... args) throws DiException {
         log.atTrace().log("[RuntimeContext.newChildContext] Creating new child context of class={} with args={}",
                 contextClass, args);
@@ -373,7 +373,6 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    @Deprecated
     public void registerChildContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("[RuntimeContext.registerChildContextFactory] Registering child context factory {}", factory);
         this.delegateContext.registerChildContextFactory(factory);
@@ -474,5 +473,10 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException {
         this.delegateContext.addBean(provider, reference, autoDetect);
+    }
+
+    @Override
+    public IReflection reflection() {
+        return IClass.getReflection();
     }
 }

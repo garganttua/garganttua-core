@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,11 @@ import org.junit.jupiter.api.TestInfo;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.dsl.IRuntimeStepBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
@@ -32,13 +37,24 @@ class OneStepRuntimeTest {
         log.atInfo().log("Executing test method: {}", testInfo.getTestMethod().get().getName());
     }
 
+    private static IReflectionBuilder reflectionBuilder;
+
     @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setup() throws Exception {
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder.build();
+    }
+
+    @AfterAll
+    static void tearDown() {
+        IClass.setReflection(null);
     }
 
     private IInjectionContextBuilder contextBuilder() {
         return InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime.resolver")
                 .withPackage("com.garganttua.core.runtime");
@@ -47,7 +63,7 @@ class OneStepRuntimeTest {
     private IRuntimesBuilder builder() {
         IInjectionContextBuilder ctx = contextBuilder();
         ctx.build().onInit().onStart();
-        return RuntimesBuilder.builder().provide(ctx);
+        return RuntimesBuilder.builder().provide(reflectionBuilder).provide(ctx);
     }
 
     private IRuntime<String, String> get(IRuntimesBuilder b) {
@@ -63,32 +79,32 @@ class OneStepRuntimeTest {
 
     private IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> baseRuntime(IRuntimesBuilder b,
             DummyRuntimeProcessOutputStep step) {
-        return b.runtime("runtime-1", String.class, String.class)
-                .step("step-1", of(step), String.class)
+        return b.runtime("runtime-1", IClass.getClass(String.class), IClass.getClass(String.class))
+                .step("step-1", of(step), IClass.getClass(String.class))
                 .method()
                 .condition(custom(of(10), i -> true))
                 .output(true)
                 .variable("method-returned")
-                .method("method", String.class, String.class, String.class,
-                        String.class, IRuntimeContext.class)
+                .method("method", IClass.getClass(String.class), IClass.getClass(String.class), IClass.getClass(String.class),
+                        IClass.getClass(String.class), IClass.getClass(IRuntimeContext.class))
                 .code(201)
-                .katch(DiException.class).code(401).up()
-                .withParam(input(String.class))
+                .katch(IClass.getClass(DiException.class)).code(401).up()
+                .withParam(input(IClass.getClass(String.class)))
                 .withParam(of("fixed-value-in-method"))
-                .withParam(variable("variable", String.class))
+                .withParam(variable("variable", IClass.getClass(String.class)))
                 .withParam(context()).up();
     }
 
     private IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> baseFallback(
             IRuntimeStepBuilder<String, DummyRuntimeProcessOutputStep, String, String> b) {
         return b.fallBack()
-                .onException(DiException.class).up()
+                .onException(IClass.getClass(DiException.class)).up()
                 .output(true)
                 .variable("fallback-returned")
-                .method("fallbackMethod", String.class, String.class, String.class, DiException.class, Integer.class, String.class, IRuntimeContext.class)
-                .withParam(input(String.class))
+                .method("fallbackMethod", IClass.getClass(String.class), IClass.getClass(String.class), IClass.getClass(String.class), IClass.getClass(DiException.class), IClass.getClass(Integer.class), IClass.getClass(String.class), IClass.getClass(IRuntimeContext.class))
+                .withParam(input(IClass.getClass(String.class)))
                 .withParam(of("fixed-value-in-method"))
-                .withParam(exception(DiException.class))
+                .withParam(exception(IClass.getClass(DiException.class)))
                 .withParam(code())
                 .withParam(exceptionMessage())
                 .withParam(context())

@@ -1,6 +1,6 @@
 package com.garganttua.core.runtime.dsl;
 
-import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -11,7 +11,9 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
@@ -39,6 +41,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     private RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallbackBuilder;
     private IInjectableElementResolverBuilder resolverBuilder;
     private IInjectionContextBuilder injectionContextBuilder;
+    private IObservableBuilder<?, ?> reflectionBuilderRef;
 
     public RuntimeStepBuilder(RuntimeBuilder<InputType, OutputType> runtimeBuilder, String runtimeName,
             String stepName,
@@ -93,19 +96,21 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
 
     private void detectFallback() {
         log.atTrace().log("{} Detecting fallback method", logLineHeader());
-        Method fallbackMethod = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedClass(),
-                FallBack.class);
+        IMethod fallbackMethod = findMethodAnnotatedWith(supplier.getSuppliedClass(), FallBack.class);
         if (fallbackMethod != null) {
             try {
-                fallBack().provide(this.resolverBuilder).autoDetect(true).method(fallbackMethod);
+                fallBack();
+                this.fallbackBuilder.provide(this.resolverBuilder);
+                this.fallbackBuilder.autoDetect(true);
+                this.fallbackBuilder.method(fallbackMethod);
 
-                if (fallbackMethod.getAnnotation(Output.class) != null) {
-                    fallBack().output(true);
+                if (fallbackMethod.getAnnotation(IClass.getClass(Output.class)) != null) {
+                    this.fallbackBuilder.output(true);
                 }
 
-                Variable variable = fallbackMethod.getAnnotation(Variable.class);
+                Variable variable = fallbackMethod.getAnnotation(IClass.getClass(Variable.class));
                 if (variable != null) {
-                    fallBack().variable(variable.name());
+                    this.fallbackBuilder.variable(variable.name());
                 }
 
                 log.atDebug().log("{} Detected fallback method [{}]", logLineHeader(), fallbackMethod.getName());
@@ -119,17 +124,20 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     }
 
     @SuppressWarnings("unchecked")
-    private Method detectOperationMethod() throws DslException {
+    private IMethod detectOperationMethod() throws DslException {
         log.atTrace().log("{} Detecting operation method", logLineHeader());
-        Method method = ObjectReflectionHelper.getMethodAnnotatedWith(supplier.getSuppliedClass(), Operation.class);
+        IMethod method = findMethodAnnotatedWith(supplier.getSuppliedClass(), Operation.class);
         if (method == null) {
             log.atError().log("{} No @Operation method found in class {}", logLineHeader(),
                     supplier.getSuppliedClass().getSimpleName());
             throw new DslException("Class " + supplier.getSuppliedClass().getSimpleName() +
                     " does not declare any @Operation method");
         }
-        this.executionReturn = (Class<ExecutionReturn>) method.getReturnType();
-        this.method().provide(this.resolverBuilder).autoDetect(true).method(method);
+        this.executionReturn = (Class<ExecutionReturn>) method.getReturnType().getType();
+        method();
+        this.methodBuilder.provide(this.resolverBuilder);
+        this.methodBuilder.autoDetect(true);
+        this.methodBuilder.method(method);
 
         log.atDebug().log("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
                 executionReturn.getSimpleName());
@@ -140,6 +148,16 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     @Override
     protected IRuntimeStep<ExecutionReturn, InputType, OutputType> doBuild() throws DslException {
         log.atTrace().log("{} Entering doBuild() method", logLineHeader());
+
+        // Propagate IReflectionBuilder to method and fallback builders before building
+        if (this.reflectionBuilderRef != null) {
+            if (this.methodBuilder != null) {
+                this.methodBuilder.provide(this.reflectionBuilderRef);
+            }
+            if (this.fallbackBuilder != null) {
+                this.fallbackBuilder.provide(this.reflectionBuilderRef);
+            }
+        }
 
         IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> fallback = null;
         if (this.fallbackBuilder != null) {
@@ -182,5 +200,19 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
 
     @Override
     protected void doPostBuildWithDependency(Object dependency) {
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <A extends java.lang.annotation.Annotation> IMethod findMethodAnnotatedWith(
+            IClass<?> ownerClass, Class<A> annotationClass) {
+        IClass<A> iAnnotation = (IClass<A>) IClass.getClass(annotationClass);
+        return Arrays.stream(ownerClass.getDeclaredMethods())
+                .filter(m -> m.getAnnotation(iAnnotation) != null)
+                .findFirst()
+                .orElse(null);
+    }
+
+    void provideReflectionBuilder(IObservableBuilder<?, ?> reflectionBuilder) {
+        this.reflectionBuilderRef = reflectionBuilder;
     }
 }

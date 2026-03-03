@@ -9,6 +9,7 @@ import java.util.Set;
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.expression.IExpression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.methods.SingleMethodReturn;
@@ -53,18 +54,18 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         return Set.of();
     }
 
     @Override
-    public Class<IRuntimeContext<InputType, OutputType>> getOwnerContextType() {
+    public IClass<IRuntimeContext<InputType, OutputType>> getOwnerContextType() {
         return null;
     }
 
     @Override
-    public Class<?>[] getParametersContextTypes() {
-        return new Class<?>[0];
+    public IClass<?>[] getParametersContextTypes() {
+        return new IClass<?>[0];
     }
 
     @Override
@@ -75,7 +76,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         try {
             ISupplier<ExecutionReturned> supplier = expression.evaluate();
             Optional<ExecutionReturned> result = supplier.supply();
-            return result.map(r -> SingleMethodReturn.of(r));
+            return result.map(r -> SingleMethodReturn.of(r, expression.getSuppliedClass()));
         } catch (Exception e) {
             return Optional.of(SingleMethodReturn.ofException(e, null));
         } finally {
@@ -180,7 +181,13 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
 
     @Override
     public Type getSuppliedType() {
-        return this.expression.getSuppliedClass();
+        return this.expression.getSuppliedType();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public IClass<IMethodReturn<ExecutionReturned>> getSuppliedClass() {
+        return (IClass<IMethodReturn<ExecutionReturned>>) (IClass<?>) IClass.getClass(IMethodReturn.class);
     }
 
     @Override

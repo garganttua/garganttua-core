@@ -29,7 +29,7 @@ public class InputElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Preparing input supplier");
 
-        ISupplierBuilder<?, ?> s = input(elementType.getType());
+        ISupplierBuilder<?, ?> s = input(elementType);
 
         boolean nullable = isNullable(element);
 

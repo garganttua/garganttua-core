@@ -28,7 +28,7 @@ public class CodeElementResolver implements IElementResolver {
                 log.atTrace()
                                 .log("Resolving code element");
 
-                if (!Integer.class.isAssignableFrom(elementType.getType())) {
+                if (!IClass.getClass(Integer.class).isAssignableFrom(elementType)) {
                         log.atError()
                                         .log("Injectable is not an Integer, throwing exception");
                         throw new DiException("Injectable is not an Integer : " + elementType.getSimpleName());

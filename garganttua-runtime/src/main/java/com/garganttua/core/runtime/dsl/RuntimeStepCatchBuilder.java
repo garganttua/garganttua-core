@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.RuntimeStepCatch;
 import com.garganttua.core.runtime.annotations.Catch;
@@ -15,14 +16,14 @@ public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType,
                 AbstractAutomaticLinkedBuilder<IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepCatch>
                 implements IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
-        private Class<? extends Throwable> exception;
+        private IClass<? extends Throwable> exception;
         private Integer code;
         private Catch catchAnnotationForAutoDetection;
 
         public RuntimeStepCatchBuilder(Class<? extends Throwable> exception,
                         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> link) {
                 super(link);
-                this.exception = Objects.requireNonNull(exception, "Exception cannot be null");
+                this.exception = IClass.getClass(Objects.requireNonNull(exception, "Exception cannot be null"));
                 log.atTrace()
                                 .log("Initialized RuntimeStepCatchBuilder");
         }

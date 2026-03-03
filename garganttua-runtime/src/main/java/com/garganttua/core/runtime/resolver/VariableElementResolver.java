@@ -38,7 +38,7 @@ public class VariableElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Preparing variable supplier");
 
-        ISupplierBuilder<?, ?> s = variable(name, elementType.getType());
+        ISupplierBuilder<?, ?> s = variable(name, elementType);
 
         boolean nullable = isNullable(element);
 

@@ -11,6 +11,7 @@ import org.slf4j.MDC;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
 
@@ -75,7 +76,7 @@ public class Runtime<InputType, OutputType> implements IRuntime<InputType, Outpu
                         log.atDebug().log("Creating runtime context");
 
                         runtimeContext = this.injectionContext
-                                        .newChildContext(IRuntimeContext.class, input, this.outputType,
+                                        .newChildContext(IClass.getClass(IRuntimeContext.class), input, this.outputType,
                                                         this.presetVariables, uuid);
 
                         runtimeContext.onInit().onStart();

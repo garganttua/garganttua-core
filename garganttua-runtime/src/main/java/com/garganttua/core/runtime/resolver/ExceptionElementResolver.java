@@ -26,7 +26,7 @@ public class ExceptionElementResolver implements IElementResolver {
         log.atTrace()
                 .log("Resolving exception element");
 
-        if (!Throwable.class.isAssignableFrom(elementType.getType())) {
+        if (!IClass.getClass(Throwable.class).isAssignableFrom(elementType)) {
             log.atError()
                     .log("Injectable is not a Throwable, throwing exception");
             throw new DiException("Injectable is not a Throwable: " + elementType.getSimpleName());
@@ -35,7 +35,8 @@ public class ExceptionElementResolver implements IElementResolver {
         log.atDebug()
                 .log("Element type is valid Throwable, preparing supplier");
 
-        Class<? extends Throwable> exceptionType = (Class<? extends Throwable>) elementType.getType();
+        @SuppressWarnings("unchecked")
+        IClass<? extends Throwable> exceptionType = (IClass<? extends Throwable>) (IClass<?>) elementType;
         ISupplierBuilder<? extends Throwable, ?> s = exception(exceptionType);
 
         boolean nullable = isNullable(element);

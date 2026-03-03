@@ -1,6 +1,5 @@
 package com.garganttua.core.runtime.dsl;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -9,6 +8,8 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
@@ -80,9 +81,11 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
 
     @Override
     public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
-            Class<? extends Throwable> exception) throws DslException {
+            IClass<? extends Throwable> exception) throws DslException {
+        Objects.requireNonNull(exception, "Exception cannot be null");
+        Class<? extends Throwable> rawException = (Class<? extends Throwable>) exception.getType();
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
-                this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"));
+                this, this.runtimeName, rawException);
         this.onExceptions.add(onException);
         log.atDebug()
                 .log("{} Added onException handler", logLineHeader());
@@ -105,7 +108,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         log.atTrace().log("{} Starting auto-detection for fallback builder", logLineHeader());
         super.doAutoDetection();
 
-        Method method = this.method();
+        IMethod method = this.method();
         detectOutput(method);
         detectVariable(method);
         detectOnExceptions(method);
@@ -113,16 +116,16 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         log.atTrace().log("{} Finished auto-detection for fallback builder", logLineHeader());
     }
 
-    private void detectNullable(Method method) {
-        Nullable nullable = method.getAnnotation(Nullable.class);
+    private void detectNullable(IMethod method) {
+        Nullable nullable = method.getAnnotation(IClass.getClass(Nullable.class));
         if (nullable != null) {
             this.nullable = true;
             log.atDebug().log("{} Nullable detected for fallback", logLineHeader());
         }
     }
 
-    private void detectOnExceptions(Method method) {
-        OnException[] onExceptionAnnotations = method.getAnnotationsByType(OnException.class);
+    private void detectOnExceptions(IMethod method) {
+        OnException[] onExceptionAnnotations = method.getAnnotationsByType(IClass.getClass(OnException.class));
         for (OnException onExceptionAnnotation : onExceptionAnnotations) {
             onException(onExceptionAnnotation.exception(), onExceptionAnnotation).autoDetect(true);
             log.atDebug()
@@ -130,8 +133,8 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         }
     }
 
-    private void detectVariable(Method operationMethod) {
-        Variable variable = operationMethod.getAnnotation(Variable.class);
+    private void detectVariable(IMethod operationMethod) {
+        Variable variable = operationMethod.getAnnotation(IClass.getClass(Variable.class));
         if (variable != null) {
             this.variable(variable.name());
             log.atDebug()
@@ -139,8 +142,8 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         }
     }
 
-    private void detectOutput(Method operationMethod) {
-        if (operationMethod.getAnnotation(Output.class) != null) {
+    private void detectOutput(IMethod operationMethod) {
+        if (operationMethod.getAnnotation(IClass.getClass(Output.class)) != null) {
             this.output(true);
             log.atDebug().log("{} Auto-detected output for fallback", logLineHeader());
         }

@@ -28,7 +28,7 @@ public class ExceptionMessageElementResolver implements IElementResolver {
         log.atTrace()
                 .log("Resolving exception message element");
 
-        if (!String.class.isAssignableFrom(elementType.getType())) {
+        if (!IClass.getClass(String.class).isAssignableFrom(elementType)) {
             log.atError()
                     .log("Injectable is not a String, throwing exception");
             throw new DiException("Injectable is not a String: " + elementType.getSimpleName());

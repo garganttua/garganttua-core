@@ -28,7 +28,7 @@ public class ContextElementResolver implements IElementResolver {
         log.atTrace()
                 .log("Resolving context element");
 
-        if (!IRuntimeContext.class.isAssignableFrom(elementType.getType())) {
+        if (!IClass.getClass(IRuntimeContext.class).isAssignableFrom(elementType)) {
             log.atError()
                     .log("Injectable is not an IRuntimeContext, throwing exception");
             throw new DiException("Injectable is not a IRuntimeContext : " + elementType.getSimpleName());

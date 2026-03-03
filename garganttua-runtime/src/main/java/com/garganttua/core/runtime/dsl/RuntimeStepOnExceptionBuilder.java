@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeStepOnException;
 import com.garganttua.core.runtime.RuntimeStepOnException;
 import com.garganttua.core.runtime.annotations.OnException;
@@ -15,7 +16,7 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
         AbstractAutomaticLinkedBuilder<IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepOnException>
         implements IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
 
-    private Class<? extends Throwable> exception;
+    private IClass<? extends Throwable> exception;
     private String stepName = null;
     private OnException onExceptionForAutoDetection;
     private String runtimeName;
@@ -27,7 +28,7 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
         super(link);
         log.atTrace().log("Entering RuntimeStepOnExceptionBuilder constructor with runtimeName={}, exception={}",
                 runtimeName, exception);
-        this.exception = Objects.requireNonNull(exception, "Exception cannot be null");
+        this.exception = IClass.getClass(Objects.requireNonNull(exception, "Exception cannot be null"));
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
         log.atDebug().log("RuntimeStepOnExceptionBuilder constructed successfully for exception {}",
                 exception.getSimpleName());
@@ -35,7 +36,7 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
 
     /**
      * Secondary ctor used only for auto detection
-     * 
+     *
      * @param link
      * @param exception
      * @param onException

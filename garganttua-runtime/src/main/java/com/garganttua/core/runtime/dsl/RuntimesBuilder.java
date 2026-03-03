@@ -19,11 +19,13 @@ import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.RuntimeContextFactory;
 import com.garganttua.core.runtime.RuntimesRegistry;
@@ -62,15 +64,19 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
     private final MultiSourceCollector<String, IRuntimeBuilder<?, ?>> collector;
 
     private IInjectionContextBuilder injectionContextBuilder;
+    private IObservableBuilder<?, ?> reflectionBuilderRef;
 
     private RuntimesBuilder() {
         super(Set.of(
-                DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.AUTO_DETECT)));
+                DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.AUTO_DETECT),
+                DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)));
 
         this.collector = new MultiSourceCollector<>();
-        collector.source(new FixedSupplier<>(manualRuntimeBuilders), 0, SOURCE_MANUAL);
-        collector.source(new FixedSupplier<>(contextRuntimeBuilders), 1, SOURCE_CONTEXT);
-        collector.source(new FixedSupplier<>(reflexionRuntimeBuilders), 2, SOURCE_REFLECTION);
+        @SuppressWarnings("unchecked")
+        IClass<Map<String, IRuntimeBuilder<?, ?>>> mapType = (IClass<Map<String, IRuntimeBuilder<?, ?>>>) (IClass<?>) IClass.getClass(Map.class);
+        collector.source(new FixedSupplier<>(manualRuntimeBuilders, mapType), 0, SOURCE_MANUAL);
+        collector.source(new FixedSupplier<>(contextRuntimeBuilders, mapType), 1, SOURCE_CONTEXT);
+        collector.source(new FixedSupplier<>(reflexionRuntimeBuilders, mapType), 2, SOURCE_REFLECTION);
 
         log.atDebug().log("RuntimesBuilder initialized with phase-aware dependencies");
     }
@@ -95,8 +101,8 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
     @SuppressWarnings("unchecked")
     @Override
     public <InputType, OutputType> IRuntimeBuilder<InputType, OutputType> runtime(String name,
-            Class<InputType> inputType,
-            Class<OutputType> outputType) {
+            IClass<InputType> inputType,
+            IClass<OutputType> outputType) {
 
         log.atTrace()
                 .log("Entering runtime({}, {}, {}) method", name, inputType.getSimpleName(),
@@ -108,7 +114,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
 
         IRuntimeBuilder<InputType, OutputType> runtimeBuilder;
         if (!this.manualRuntimeBuilders.containsKey(name)) {
-            runtimeBuilder = new RuntimeBuilder<>(this, name, inputType, outputType);
+            runtimeBuilder = new RuntimeBuilder<>(this, name, (Class<InputType>) inputType.getType(), (Class<OutputType>) outputType.getType());
             this.manualRuntimeBuilders.put(name, runtimeBuilder);
             log.atDebug().log("Created new runtime builder {}", name);
         } else {
@@ -130,7 +136,11 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
                 Entry::getKey,
                 e -> {
                     log.atDebug().log("Building individual runtime");
-                    return e.getValue().provide(this.injectionContextBuilder).build();
+                    IRuntimeBuilder<?, ?> rb = e.getValue();
+                    if (this.reflectionBuilderRef != null) {
+                        rb.provide(this.reflectionBuilderRef);
+                    }
+                    return rb.provide(this.injectionContextBuilder).build();
                 }));
 
         // Wrap in RuntimesRegistry to provide summary information
@@ -153,7 +163,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
 
         if (dependency instanceof IInjectionContext context) {
             List<?> definitions = context.queryBeans(
-                    new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(RuntimeDefinition.class)));
+                    new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(IClass.getClass(RuntimeDefinition.class))));
             log.atDebug().log("Auto-detecting runtimes from InjectionContext");
             definitions.forEach(this::createAutoDetectedFromInjectionContextRuntime);
         }
@@ -186,7 +196,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         // Use addBean directly to avoid lifecycle check - the context may not be started yet
         // during Bootstrap's build phase
         BeanReference<Map<String, IRuntime<?, ?>>> mapBeanRef = new BeanReference<>(
-                (Class<Map<String, IRuntime<?, ?>>>) (Class<?>) Map.class,
+                (IClass<Map<String, IRuntime<?, ?>>>) (IClass<?>) IClass.getClass(Map.class),
                 Optional.of(BeanStrategy.singleton),
                 Optional.of("Runtimes"),
                 Set.of());
@@ -197,10 +207,10 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
 
         result.entrySet().forEach(e -> {
             BeanReference<IRuntime<?, ?>> beanRef = new BeanReference<>(
-                    (Class<IRuntime<?, ?>>) (Class<?>) IRuntime.class,
+                    (IClass<IRuntime<?, ?>>) (IClass<?>) IClass.getClass(IRuntime.class),
                     Optional.of(BeanStrategy.singleton),
                     Optional.of(e.getKey()),
-                    Set.of(RuntimeDefinition.class));
+                    Set.of(IClass.getClass(RuntimeDefinition.class)));
             context.addBean(providerName, beanRef, e.getValue());
             log.atDebug().log(
                     "IRuntime<?, ?> successfully registered as bean with '" + e.getKey() + "' name");
@@ -224,11 +234,18 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         IRuntimeBuilder<?, ?> existingBuilder = this.manualRuntimeBuilders.remove(runtimeName);
         final IRuntimeBuilder<?, ?> runtimeBuilder;
         if (existingBuilder == null) {
-            existingBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
-                    runtimeDefinitionObject).autoDetect(true).provide(injectionContextBuilder);
+            RuntimeBuilder<?, ?> newBuilder = new RuntimeBuilder<>(this, runtimeName, input, output,
+                    runtimeDefinitionObject);
+            if (this.reflectionBuilderRef != null) {
+                newBuilder.provide(this.reflectionBuilderRef);
+            }
+            existingBuilder = newBuilder.autoDetect(true).provide(injectionContextBuilder);
         } else {
-            ((RuntimeBuilder<?, ?>) existingBuilder)
-                    .setObjectForAutoDetection(runtimeDefinitionObject).autoDetect(true)
+            RuntimeBuilder<?, ?> rb = (RuntimeBuilder<?, ?>) existingBuilder;
+            if (this.reflectionBuilderRef != null) {
+                rb.provide(this.reflectionBuilderRef);
+            }
+            rb.setObjectForAutoDetection(runtimeDefinitionObject).autoDetect(true)
                     .provide(injectionContextBuilder);
         }
         this.contextRuntimeBuilders.put(runtimeName, existingBuilder);
@@ -248,6 +265,9 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
             this.injectionContextBuilder = injectionContextBuilder;
             this.setupInjectionContext(injectionContextBuilder);
         }
+        if (dependency instanceof IReflectionBuilder) {
+            this.reflectionBuilderRef = dependency;
+        }
         return super.provide(dependency);
     }
 
@@ -258,12 +278,12 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
 
         if (!context.isAutoDetected()) {
             context.childContextFactory(new RuntimeContextFactory());
-            context.resolvers().withResolver(Input.class, new InputElementResolver());
-            context.resolvers().withResolver(Variable.class, new VariableElementResolver());
-            context.resolvers().withResolver(Context.class, new ContextElementResolver());
-            context.resolvers().withResolver(Exception.class, new ExceptionElementResolver());
-            context.resolvers().withResolver(Code.class, new CodeElementResolver());
-            context.resolvers().withResolver(ExceptionMessage.class, new ExceptionMessageElementResolver());
+            context.resolvers().withResolver(IClass.getClass(Input.class), new InputElementResolver());
+            context.resolvers().withResolver(IClass.getClass(Variable.class), new VariableElementResolver());
+            context.resolvers().withResolver(IClass.getClass(Context.class), new ContextElementResolver());
+            context.resolvers().withResolver(IClass.getClass(Exception.class), new ExceptionElementResolver());
+            context.resolvers().withResolver(IClass.getClass(Code.class), new CodeElementResolver());
+            context.resolvers().withResolver(IClass.getClass(ExceptionMessage.class), new ExceptionMessageElementResolver());
 
             log.atDebug().log("Context builder configured with resolvers");
         } else {

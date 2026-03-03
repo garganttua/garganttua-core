@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import javax.inject.Named;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -24,8 +26,9 @@ import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
 import com.garganttua.core.reflection.utils.WildcardTypeImpl;
 import com.garganttua.core.runtime.IRuntime;
@@ -52,6 +55,7 @@ public class RuntimeBuilder<InputType, OutputType>
         private Class<OutputType> outputType;
         private Object objectForAutoDetection;
         private Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> presetVariables = new HashMap<>();
+        private IObservableBuilder<?, ?> reflectionBuilderRef;
 
         /*
          * This object is set only during prebuild
@@ -63,7 +67,8 @@ public class RuntimeBuilder<InputType, OutputType>
                 super(Objects.requireNonNull(runtimesBuilder, "RuntimesBuilder cannot be null"),
                                 Set.of(
                                                 new DependencySpecBuilder(IInjectionContextBuilder.class)
-                                                                .requireForBuild().build()));
+                                                                .requireForBuild().build(),
+                                                DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)));
                 this.name = Objects.requireNonNull(name, "Name cannot be null");
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
@@ -89,14 +94,14 @@ public class RuntimeBuilder<InputType, OutputType>
         public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
                         String stepName,
                         ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier,
-                        Class<ExecutionReturn> returnType) {
+                        IClass<ExecutionReturn> returnType) {
 
                 Objects.requireNonNull(stepName, "Step name cannot be null");
                 Objects.requireNonNull(returnType, "Return type cannot be null");
                 Objects.requireNonNull(objectSupplier, "Object supplier builder cannot be null");
 
                 IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(
-                                this, name, stepName, returnType, objectSupplier);
+                                this, name, stepName, (Class<ExecutionReturn>) returnType.getType(), objectSupplier);
 
                 this.steps.put(stepName, stepBuilder);
                 log.atDebug().log("{} Added step [{}]", logLineHeader(), stepName);
@@ -108,7 +113,7 @@ public class RuntimeBuilder<InputType, OutputType>
                         String stepName,
                         OrderedMapPosition<String> position,
                         ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier,
-                        Class<ExecutionReturn> returnType) {
+                        IClass<ExecutionReturn> returnType) {
 
                 Objects.requireNonNull(stepName, "Step name cannot be null");
                 Objects.requireNonNull(returnType, "Return type cannot be null");
@@ -116,7 +121,7 @@ public class RuntimeBuilder<InputType, OutputType>
                 Objects.requireNonNull(position, "Position cannot be null");
 
                 IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(
-                                this, name, stepName, returnType, objectSupplier);
+                                this, name, stepName, (Class<ExecutionReturn>) returnType.getType(), objectSupplier);
 
                 this.steps.putAt(stepName, stepBuilder, position);
                 log.atDebug().log("{} Added step [{}] at position {}", logLineHeader(), stepName, position);
@@ -128,6 +133,15 @@ public class RuntimeBuilder<InputType, OutputType>
 
                 log.atTrace().log("{} Entering doBuild method", logLineHeader());
                 log.atDebug().log("{} Building Runtime with {} step(s)", logLineHeader(), steps.size());
+
+                // Propagate IReflectionBuilder to step builders before building
+                if (this.reflectionBuilderRef != null) {
+                        this.steps.values().forEach(stepBuilder -> {
+                                if (stepBuilder instanceof RuntimeStepBuilder<?, ?, ?, ?> rsb) {
+                                        rsb.provideReflectionBuilder(this.reflectionBuilderRef);
+                                }
+                        });
+                }
 
                 Map<String, IRuntimeStep<?, InputType, OutputType>> builtSteps = this.steps.build();
                 Map<String, ISupplier<?>> variables = this.presetVariables.entrySet().stream()
@@ -158,16 +172,23 @@ public class RuntimeBuilder<InputType, OutputType>
         private void collectPresetVariables() {
                 log.atTrace().log("{} Entering collectPresetVariables method", logLineHeader());
                 ParameterizedType mapType = getVariablesMapType();
-                String address = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
-                                this.objectForAutoDetection.getClass(), Variables.class, mapType.getRawType());
+                String address = findFieldAddressAnnotatedWithAndCheckType(
+                                IClass.getClass(this.objectForAutoDetection.getClass()), Variables.class, (Class<?>) mapType.getRawType());
 
                 if (address == null) {
                         log.atWarn().log("{} No preset variables found", logLineHeader());
                         return;
                 }
 
-                Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> variables = (Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>>) ObjectQueryFactory
-                                .objectQuery(this.objectForAutoDetection).getValue(address);
+                IClass<?> ownerClass = IClass.getClass(this.objectForAutoDetection.getClass());
+                IField variablesField = findFieldByName(ownerClass, address);
+                Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> variables;
+                try {
+                        variablesField.setAccessible(true);
+                        variables = (Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>>) variablesField.get(this.objectForAutoDetection);
+                } catch (IllegalAccessException e) {
+                        throw new DslException("Failed to access variables field", e);
+                }
 
                 variables.entrySet().forEach(e -> this.variable(e.getKey(), e.getValue()));
 
@@ -180,16 +201,23 @@ public class RuntimeBuilder<InputType, OutputType>
                 log.atTrace().log("{} Entering collectSteps method", logLineHeader());
                 ParameterizedType listType = getStepsListType();
 
-                String address = ObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(
-                                this.objectForAutoDetection.getClass(), Steps.class, listType.getRawType());
+                String address = findFieldAddressAnnotatedWithAndCheckType(
+                                IClass.getClass(this.objectForAutoDetection.getClass()), Steps.class, (Class<?>) listType.getRawType());
 
                 if (address == null) {
                         log.atError().log("{} No field annotated with @Steps found", logLineHeader());
                         throw new DslException(logLineHeader() + "No field annotated with @Steps found");
                 }
 
-                List<Class<Object>> stepsList = (List<Class<Object>>) ObjectQueryFactory
-                                .objectQuery(this.objectForAutoDetection).getValue(address);
+                IClass<?> stepsOwnerClass = IClass.getClass(this.objectForAutoDetection.getClass());
+                IField stepsField = findFieldByName(stepsOwnerClass, address);
+                List<Class<Object>> stepsList;
+                try {
+                        stepsField.setAccessible(true);
+                        stepsList = (List<Class<Object>>) stepsField.get(this.objectForAutoDetection);
+                } catch (IllegalAccessException e) {
+                        throw new DslException("Failed to access steps field", e);
+                }
 
                 stepsList.forEach(c -> {
                         String stepName = UUID.randomUUID().toString();
@@ -200,10 +228,13 @@ public class RuntimeBuilder<InputType, OutputType>
 
                         log.atDebug().log("{} Creating auto-detected step [{}]", logLineHeader(), stepName);
 
-                        ISupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(c);
-                        IRuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this, name,
-                                        stepName, Void.class, supplierBuilder)
-                                        .autoDetect(true);
+                        ISupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(IClass.getClass(c));
+                        RuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this, name,
+                                        stepName, Void.class, supplierBuilder);
+                        if (this.reflectionBuilderRef != null) {
+                                stepBuilder.provideReflectionBuilder(this.reflectionBuilderRef);
+                        }
+                        stepBuilder.autoDetect(true);
 
                         if (this.injectionContextBuilder != null) {
                                 stepBuilder.provide(this.injectionContextBuilder);
@@ -237,6 +268,9 @@ public class RuntimeBuilder<InputType, OutputType>
         public IRuntimeBuilder<InputType, OutputType> provide(IObservableBuilder<?, ?> dependency) throws DslException {
                 if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
                         this.injectionContextBuilder = injCtxBuilder;
+                }
+                if (dependency instanceof IReflectionBuilder) {
+                        this.reflectionBuilderRef = dependency;
                 }
                 return super.provide(dependency);
         }
@@ -279,5 +313,30 @@ public class RuntimeBuilder<InputType, OutputType>
 
         @Override
         protected void doPostBuildWithDependency(Object dependency) {
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <A extends java.lang.annotation.Annotation> String findFieldAddressAnnotatedWithAndCheckType(
+                        IClass<?> ownerClass, Class<A> annotationClass, Class<?> expectedType) {
+                IClass<A> iAnnotation = (IClass<A>) IClass.getClass(annotationClass);
+                for (IField field : ownerClass.getDeclaredFields()) {
+                        if (field.getAnnotation(iAnnotation) != null) {
+                                IClass<?> fieldType = field.getType();
+                                if (fieldType.isAssignableFrom(IClass.getClass(expectedType))
+                                                || IClass.getClass(expectedType).isAssignableFrom(fieldType)) {
+                                        return field.getName();
+                                }
+                        }
+                }
+                return null;
+        }
+
+        private static IField findFieldByName(IClass<?> ownerClass, String fieldName) {
+                for (IField field : ownerClass.getDeclaredFields()) {
+                        if (field.getName().equals(fieldName)) {
+                                return field;
+                        }
+                }
+                return null;
         }
 }
