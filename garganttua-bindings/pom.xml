@@ -19,6 +19,7 @@
             <module>garganttua-spring</module>
             <module>garganttua-reflections</module>
             <module>garganttua-mutex-redis</module>
+            <module>garganttua-native</module>
       </modules>
 
 </project>

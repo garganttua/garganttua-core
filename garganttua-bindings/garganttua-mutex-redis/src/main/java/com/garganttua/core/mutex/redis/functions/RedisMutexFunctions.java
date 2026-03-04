@@ -8,6 +8,7 @@ import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexName;
 import com.garganttua.core.mutex.context.MutexContext;
 import com.garganttua.core.mutex.redis.RedisMutex;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
@@ -96,7 +97,7 @@ public final class RedisMutexFunctions {
 
         try {
             // Create mutex name with Redis mutex type
-            MutexName name = new MutexName(RedisMutex.class, mutexName);
+            MutexName name = new MutexName(IClass.getClass(RedisMutex.class), mutexName);
             IMutex mutex = manager.mutex(name);
 
             log.atDebug().log("Acquiring Redis mutex: {}", name);

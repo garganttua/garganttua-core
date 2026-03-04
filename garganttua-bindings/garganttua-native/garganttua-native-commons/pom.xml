@@ -3,12 +3,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.garganttua</groupId>
-		<artifactId>garganttua-core</artifactId>
+		<groupId>com.garganttua.core</groupId>
+		<artifactId>garganttua-native</artifactId>
 		<version>2.0.0-ALPHA01</version>
 	</parent>
-	<groupId>com.garganttua.core</groupId>
-	<artifactId>garganttua-native</artifactId>
+	<artifactId>garganttua-native-commons</artifactId>
 	<description>Low-level native integrations and system abstractions.</description>
 
 	<dependencies>

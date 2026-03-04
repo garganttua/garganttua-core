@@ -101,7 +101,7 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
-        <artifactId>garganttua-native</artifactId>
+        <artifactId>garganttua-native-commons</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -201,7 +201,7 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
-        <artifactId>garganttua-aot-common</artifactId>
+        <artifactId>garganttua-aot-commons</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -428,12 +428,10 @@
     <module>garganttua-mapper</module>
     <module>garganttua-execution</module>
     <module>garganttua-crypto</module>
-    <module>garganttua-native</module>
-    <module>garganttua-native-image-maven-plugin</module>
     <module>garganttua-dsl</module>
+    <module>garganttua-bindings</module>
     <module>garganttua-injection</module>
     <module>garganttua-runtime</module>
-    <!-- <module>garganttua-bindings</module> -->
     <module>garganttua-lifecycle</module>
     <module>garganttua-supply</module>
     <module>garganttua-condition</module>
@@ -446,7 +444,6 @@
     <module>garganttua-script-maven-plugin</module>
     <module>garganttua-workflow</module>
     <module>garganttua-runtime-reflection</module>
-    <module>garganttua-aot-common</module>
     <module>garganttua-aot</module>
   </modules>
 </project>

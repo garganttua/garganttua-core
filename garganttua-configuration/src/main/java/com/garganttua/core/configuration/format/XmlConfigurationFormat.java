@@ -3,6 +3,7 @@ package com.garganttua.core.configuration.format;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.core.reflection.IClass;
 
 public class XmlConfigurationFormat extends AbstractConfigurationFormat {
 
@@ -26,7 +27,7 @@ public class XmlConfigurationFormat extends AbstractConfigurationFormat {
     @Override
     protected ObjectMapper createMapper() {
         try {
-            var mapperClass = Class.forName(XML_MAPPER_CLASS);
+            IClass<?> mapperClass = IClass.forName(XML_MAPPER_CLASS);
             return (ObjectMapper) mapperClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new IllegalStateException("XML support not available", e);

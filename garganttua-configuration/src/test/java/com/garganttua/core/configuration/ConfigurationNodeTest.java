@@ -2,6 +2,7 @@ package com.garganttua.core.configuration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,8 +12,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.garganttua.core.configuration.IConfigurationNode.NodeType;
 import com.garganttua.core.configuration.node.ConfigurationNode;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.JdkReflectionProvider;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 
 class ConfigurationNodeTest {
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        ReflectionBuilder.builder()
+            .withProvider(new JdkReflectionProvider())
+            .build();
+    }
 
     private ObjectMapper mapper;
 

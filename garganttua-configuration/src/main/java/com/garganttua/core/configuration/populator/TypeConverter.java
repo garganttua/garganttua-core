@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.core.configuration.ConfigurationException;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -107,7 +108,7 @@ public class TypeConverter {
 
             // Class
             if (targetType == Class.class) {
-                return (T) Class.forName(value);
+                return (T) IClass.forName(value);
             }
 
             // Enum

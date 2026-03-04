@@ -11,79 +11,92 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
 import com.garganttua.core.reflection.IAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeMethod;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SpringAnnotationScanner implements IAnnotationScanner {
 
-    @SuppressWarnings("null")
     @Override
-    public List<Class<?>> getClassesWithAnnotation(String package_, Class<? extends Annotation> annotation) {
-        log.atTrace().log("Entering getClassesWithAnnotation() with package={} and annotation={}", package_,
-                annotation.getSimpleName());
-
-        List<Class<?>> annotatedClasses = new ArrayList<>();
-        log.atDebug().log("Initialized empty list for annotated classes");
-
-        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-        log.atDebug().log("Created ClassPathScanningCandidateComponentProvider");
-
-        scanner.addIncludeFilter(new AnnotationTypeFilter(annotation));
-        log.atDebug().log("Added include filter for annotation: {}", annotation.getSimpleName());
-
-        scanner.findCandidateComponents(package_).forEach(beanDefinition -> {
-            try {
-                Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
-                annotatedClasses.add(clazz);
-                log.atDebug().log("Found class with annotation {}: {}", annotation.getSimpleName(), clazz.getName());
-            } catch (ClassNotFoundException e) {
-                log.atWarn().log("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
-            }
-        });
-
-        log.atTrace().log("Exiting getClassesWithAnnotation(), found {} classes", annotatedClasses.size());
-        return annotatedClasses;
+    public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
+        return getClassesWithAnnotation("", annotation);
     }
 
     @SuppressWarnings("null")
     @Override
-    public List<Method> getMethodsWithAnnotation(String package_, Class<? extends Annotation> annotation) {
-        log.atTrace().log("Entering getMethodsWithAnnotation() with package={} and annotation={}",
-                package_, annotation.getSimpleName());
+    public List<IClass<?>> getClassesWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
+        log.atTrace().log("Entering getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
-        List<Method> annotatedMethods = new ArrayList<>();
-        log.atDebug().log("Initialized empty list for annotated methods");
+        Class<? extends Annotation> rawAnnotation = unwrapAnnotation(annotation);
 
-        // Scanner Spring (sans filtres automatiques)
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-        log.atDebug().log("Created ClassPathScanningCandidateComponentProvider");
+        scanner.addIncludeFilter(new AnnotationTypeFilter(rawAnnotation));
 
-        // Filtre : toutes les classes du package
-        scanner.addIncludeFilter(new RegexPatternTypeFilter(Pattern.compile(".*")));
-        log.atDebug().log("Added include filter to capture all classes");
+        List<IClass<?>> result = new ArrayList<>();
 
-        // Parcours des classes trouvées
-        scanner.findCandidateComponents(package_).forEach(beanDefinition -> {
+        scanner.findCandidateComponents(packageName).forEach(beanDefinition -> {
             try {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
-                log.atTrace().log("Inspecting class {}", clazz.getName());
-
-                // Toutes les méthodes déclarées (pas seulement public)
-                for (Method method : clazz.getDeclaredMethods()) {
-                    if (method.isAnnotationPresent(annotation)) {
-                        annotatedMethods.add(method);
-                        log.atDebug().log("Found method with annotation {}: {}.{}",
-                                annotation.getSimpleName(), clazz.getName(), method.getName());
-                    }
-                }
-
+                result.add(RuntimeClass.ofUnchecked(clazz));
+                log.atDebug().log("Found class with annotation {}: {}", annotation.getName(), clazz.getName());
             } catch (ClassNotFoundException e) {
                 log.atWarn().log("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
             }
         });
 
-        log.atTrace().log("Exiting getMethodsWithAnnotation(), found {} methods", annotatedMethods.size());
-        return annotatedMethods;
+        log.atTrace().log("Exiting getClassesWithAnnotation(), found {} classes", result.size());
+        return result;
+    }
+
+    @Override
+    public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
+        return getMethodsWithAnnotation("", annotation);
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public List<IMethod> getMethodsWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
+        log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
+
+        Class<? extends Annotation> rawAnnotation = unwrapAnnotation(annotation);
+
+        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new RegexPatternTypeFilter(Pattern.compile(".*")));
+
+        List<IMethod> result = new ArrayList<>();
+
+        scanner.findCandidateComponents(packageName).forEach(beanDefinition -> {
+            try {
+                Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
+                for (Method method : clazz.getDeclaredMethods()) {
+                    if (method.isAnnotationPresent(rawAnnotation)) {
+                        result.add(RuntimeMethod.of(method));
+                        log.atDebug().log("Found method with annotation {}: {}.{}",
+                                annotation.getName(), clazz.getName(), method.getName());
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                log.atWarn().log("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
+            }
+        });
+
+        log.atTrace().log("Exiting getMethodsWithAnnotation(), found {} methods", result.size());
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends Annotation> unwrapAnnotation(IClass<? extends Annotation> annotation) {
+        if (annotation instanceof RuntimeClass<?> rc) {
+            return (Class<? extends Annotation>) rc.unwrap();
+        }
+        try {
+            return (Class<? extends Annotation>) Class.forName(annotation.getName());
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("Cannot resolve annotation class: " + annotation.getName(), e);
+        }
     }
 }

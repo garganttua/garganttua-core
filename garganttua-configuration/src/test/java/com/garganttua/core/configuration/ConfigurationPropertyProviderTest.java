@@ -5,14 +5,24 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.configuration.format.JsonConfigurationFormat;
 import com.garganttua.core.configuration.integration.ConfigurationPropertyProvider;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.JdkReflectionProvider;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 
 class ConfigurationPropertyProviderTest {
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        ReflectionBuilder.builder()
+            .withProvider(new JdkReflectionProvider())
+            .build();
+    }
 
     @Test
     void testFlattenSimple() throws Exception {

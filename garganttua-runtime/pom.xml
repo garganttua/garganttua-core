@@ -42,7 +42,7 @@
             </dependency>
             <dependency>
                   <groupId>com.garganttua.core</groupId>
-                  <artifactId>garganttua-native</artifactId>
+                  <artifactId>garganttua-native-commons</artifactId>
                   <scope>provided</scope>
             </dependency>
             <dependency>

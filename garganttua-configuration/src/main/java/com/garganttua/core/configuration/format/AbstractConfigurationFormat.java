@@ -10,6 +10,7 @@ import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationNode;
 import com.garganttua.core.configuration.node.ConfigurationNode;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,7 +39,7 @@ public abstract class AbstractConfigurationFormat implements IConfigurationForma
 
     protected static boolean isClassAvailable(String className) {
         try {
-            Class.forName(className);
+            IClass.forName(className);
             return true;
         } catch (ClassNotFoundException e) {
             return false;

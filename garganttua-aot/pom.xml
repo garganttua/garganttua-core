@@ -14,6 +14,7 @@
     <description>Garganttua AOT (Ahead-of-Time) compilation support - parent module.</description>
 
     <modules>
+        <module>garganttua-aot-commons</module>
         <module>garganttua-aot-reflection</module>
         <module>garganttua-aot-annotation-scanner</module>
         <module>garganttua-aot-annotation-processor</module>
