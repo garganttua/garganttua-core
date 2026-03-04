@@ -10,8 +10,10 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
-import com.garganttua.core.nativve.annotations.Native;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
+import com.garganttua.core.reflection.IReflectionUsageReporter;
+import com.garganttua.core.reflection.annotations.Reflected;
+import com.garganttua.core.reflection.annotations.ReflectedBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
@@ -104,24 +106,24 @@ public class NativeConfigurationBuilder
     }
 
     private void detectNativeConfigurationBuilders(IReflection reflection) {
-        log.atTrace().log("Detecting native configuration builders in packages");
-        IClass<com.garganttua.core.nativve.annotations.NativeConfigurationBuilder> nativeBuilderAnnotation = reflection
-                .getClass(com.garganttua.core.nativve.annotations.NativeConfigurationBuilder.class);
+        log.atTrace().log("Detecting reflection usage reporters in packages");
+        IClass<ReflectedBuilder> reflectedBuilderAnnotation = reflection
+                .getClass(ReflectedBuilder.class);
         IClass<INativeBuilder> nativeBuilderInterface = reflection.getClass(INativeBuilder.class);
         this.packages.forEach(
                 p -> {
-                    log.atDebug().log("Scanning package for @NativeConfigurationBuilder: {}", p);
-                    reflection.getClassesWithAnnotation(p, nativeBuilderAnnotation).forEach(c -> {
+                    log.atDebug().log("Scanning package for @ReflectedBuilder: {}", p);
+                    reflection.getClassesWithAnnotation(p, reflectedBuilderAnnotation).forEach(c -> {
                         if (nativeBuilderInterface.isAssignableFrom(c)) {
-                            log.atDebug().log("Found native configuration builder: {}", c.getName());
+                            log.atDebug().log("Found reflection usage reporter: {}", c.getName());
                             try {
                                 INativeBuilder<?, ?> nativeBuilder = (INativeBuilder<?, ?>) reflection.newInstance(c);
                                 nativeBuilder.withPackages(getPackages());
-                                INativeReflectionConfiguration nativeConfiguration = nativeBuilder.build();
-                                reflectionEntries.addAll(nativeConfiguration.nativeConfiguration());
-                                log.atDebug().log("Loaded native configuration from builder: {}", c.getName());
+                                IReflectionUsageReporter reporter = nativeBuilder.build();
+                                reflectionEntries.addAll(reporter.reflectionUsage());
+                                log.atDebug().log("Loaded reflection usage from reporter: {}", c.getName());
                             } catch (ReflectionException e) {
-                                log.atError().log("Failed to instantiate native configuration builder: {}",
+                                log.atError().log("Failed to instantiate reflection usage reporter: {}",
                                         c.getName());
                             }
                         }
@@ -130,19 +132,19 @@ public class NativeConfigurationBuilder
     }
 
     private void detectNativeElements(IReflection reflection) {
-        log.atTrace().log("Detecting @Native annotated elements in packages");
-        IClass<Native> nativeAnnotation = reflection.getClass(Native.class);
+        log.atTrace().log("Detecting @Reflected annotated elements in packages");
+        IClass<Reflected> reflectedAnnotation = reflection.getClass(Reflected.class);
         this.packages.forEach(
                 p -> {
-                    log.atDebug().log("Scanning package for @Native annotations: {}", p);
-                    reflection.getClassesWithAnnotation(p, nativeAnnotation).forEach(c -> {
+                    log.atDebug().log("Scanning package for @Reflected annotations: {}", p);
+                    reflection.getClassesWithAnnotation(p, reflectedAnnotation).forEach(c -> {
                         if (c.isAnnotation()) {
-                            log.atDebug().log("Found @Native annotation type: {}", c.getName());
+                            log.atDebug().log("Found @Reflected annotation type: {}", c.getName());
                             reflectionEntries.add(new ReflectConfigEntryBuilder(c).allPublicClasses(true)
                                     .allDeclaredClasses(true).allDeclaredFields(true).queryAllDeclaredMethods(true)
                                     .queryAllDeclaredConstructors(true));
                         } else {
-                            log.atDebug().log("Found @Native class: {}", c.getName());
+                            log.atDebug().log("Found @Reflected class: {}", c.getName());
                             reflectionEntries.add(new ReflectConfigEntryBuilder(c).autoDetect(true));
                         }
                     });

@@ -1,19 +1,18 @@
-package com.garganttua.core.nativve.annotations;
+package com.garganttua.core.reflection.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.core.reflection.annotations.Indexed;
-
 /**
- * Annotation to mark types, fields, constructors, or methods for GraalVM native image reflection.
+ * Annotation to mark types, fields, constructors, or methods that use reflection.
  *
  * <p>
- * {@code @Native} is used to declaratively specify that the annotated element should be
- * registered for reflection access in GraalVM native images. This annotation is processed
- * during the build to automatically generate the reflect-config.json file.
+ * {@code @Reflected} declares that the annotated element requires reflective access
+ * at runtime. This annotation serves as the source of truth for reflection usage,
+ * enabling both AOT compilation (e.g., GraalVM native images) and runtime analysis
+ * to discover which elements need reflection support.
  * </p>
  *
  * <p>
@@ -21,27 +20,27 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * </p>
  * <pre>{@code
  * // Register all constructors and methods of a class
- * @Native(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
+ * @Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
  * public class MyService {
  *     // All constructors and methods will be accessible via reflection
  * }
  *
  * // Register a specific field
  * public class MyRepository {
- *     @Native
+ *     @Reflected
  *     private String databaseUrl;
  * }
  *
  * // Register a specific method
  * public class MyController {
- *     @Native
+ *     @Reflected
  *     public void handleRequest(String requestData) {
  *         // This method will be accessible via reflection
  *     }
  * }
  *
  * // Register all fields of a class
- * @Native(allDeclaredFields = true)
+ * @Reflected(allDeclaredFields = true)
  * public class ConfigurationProperties {
  *     private String host;
  *     private int port;
@@ -51,12 +50,12 @@ import com.garganttua.core.reflection.annotations.Indexed;
  *
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.nativve.IReflectionConfigurationEntry
- * @see NativeConfigurationBuilder
+ * @see ReflectedBuilder
  */
 @Indexed
 @Target({ ElementType.TYPE, ElementType.FIELD, ElementType.CONSTRUCTOR, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Native {
+public @interface Reflected {
 
     /**
      * Enables querying all declared constructors via reflection.

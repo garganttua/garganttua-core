@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
@@ -61,7 +61,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @see com.garganttua.core.runtime.IRuntimeContext#getInput()
  */
 @Indexed
-@Native
+@Reflected
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Input {

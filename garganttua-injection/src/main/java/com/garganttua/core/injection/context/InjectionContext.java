@@ -510,9 +510,9 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
+    public Set<IReflectionConfigurationEntryBuilder> reflectionUsage() {
                 return this.getBeanProvider(Predefined.BeanProviders.garganttua.toString())
-            .map(IBeanProvider::nativeConfiguration)
+            .map(IBeanProvider::reflectionUsage)
             .orElse(Collections.emptySet());
     }
 

@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
@@ -31,7 +31,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @since 2.0.0-ALPHA01
  */
 @Indexed
-@Native
+@Reflected
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface MappingIgnore {

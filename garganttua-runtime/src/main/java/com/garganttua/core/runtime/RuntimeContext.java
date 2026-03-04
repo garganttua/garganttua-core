@@ -439,8 +439,8 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
-        return this.delegateContext.nativeConfiguration();
+    public Set<IReflectionConfigurationEntryBuilder> reflectionUsage() {
+        return this.delegateContext.reflectionUsage();
     }
 
     @Override

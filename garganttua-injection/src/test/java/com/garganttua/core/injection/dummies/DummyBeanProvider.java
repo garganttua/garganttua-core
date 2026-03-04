@@ -78,8 +78,8 @@ public class DummyBeanProvider implements IBeanProvider {
     }
 
     @Override
-    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
-        throw new UnsupportedOperationException("Unimplemented method 'nativeConfiguration'");
+    public Set<IReflectionConfigurationEntryBuilder> reflectionUsage() {
+        throw new UnsupportedOperationException("Unimplemented method 'reflectionUsage'");
     }
 
     @Override

@@ -42,14 +42,14 @@ import com.garganttua.core.injection.context.properties.resolver.PropertyElement
 import com.garganttua.core.injection.context.resolver.FixedElementResolver;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
+import com.garganttua.core.reflection.annotations.ReflectedBuilder;
 import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bootstrap
-@NativeConfigurationBuilder
+@ReflectedBuilder
 public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
 

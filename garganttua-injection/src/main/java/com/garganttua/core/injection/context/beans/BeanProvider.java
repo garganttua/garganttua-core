@@ -232,11 +232,11 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	@Override
-	public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
-		log.atTrace().log("Building native configuration from {} bean factories", this.beanFactories.size());
+	public Set<IReflectionConfigurationEntryBuilder> reflectionUsage() {
+		log.atTrace().log("Building reflection usage from {} bean factories", this.beanFactories.size());
 		Set<IReflectionConfigurationEntryBuilder> result = this.beanFactories.stream().map(f -> f.nativeEntry())
 				.collect(Collectors.toSet());
-		log.atDebug().log("Native configuration built with {} entries", result.size());
+		log.atDebug().log("Reflection usage built with {} entries", result.size());
 		return result;
 	}
 

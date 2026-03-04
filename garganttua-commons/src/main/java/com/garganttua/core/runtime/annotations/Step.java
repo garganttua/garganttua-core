@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 import javax.inject.Qualifier;
 
-import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
@@ -82,7 +82,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @see com.garganttua.core.runtime.IRuntimeStep
  */
 @Indexed
-@Native
+@Reflected
 @Qualifier
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

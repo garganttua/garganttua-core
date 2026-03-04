@@ -6,9 +6,9 @@ import java.util.Set;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.INativeBuilder;
-import com.garganttua.core.nativve.INativeReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
-import com.garganttua.core.nativve.annotations.NativeConfigurationBuilder;
+import com.garganttua.core.reflection.IReflectionUsageReporter;
+import com.garganttua.core.reflection.annotations.ReflectedBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.MethodBinderExpression;
@@ -51,10 +51,10 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-@NativeConfigurationBuilder
+@ReflectedBuilder
 public class RuntimeNativeConfigurationBuilder
-        extends AbstractAutomaticBuilder<RuntimeNativeConfigurationBuilder, INativeReflectionConfiguration>
-        implements INativeBuilder<RuntimeNativeConfigurationBuilder, INativeReflectionConfiguration> {
+        extends AbstractAutomaticBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter>
+        implements INativeBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter> {
 
     private final Set<String> packages = new HashSet<>();
 
@@ -78,7 +78,7 @@ public class RuntimeNativeConfigurationBuilder
     }
 
     @Override
-    protected INativeReflectionConfiguration doBuild() throws DslException {
+    protected IReflectionUsageReporter doBuild() throws DslException {
         log.atTrace().log("Building runtime native configuration");
 
         Set<IReflectionConfigurationEntryBuilder> entries = new HashSet<>();

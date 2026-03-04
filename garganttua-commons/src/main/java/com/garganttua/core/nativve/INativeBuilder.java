@@ -2,6 +2,7 @@ package com.garganttua.core.nativve;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
+import com.garganttua.core.reflection.IReflectionUsageReporter;
 
 /**
  * Builder interface for constructing native image configuration objects.
@@ -32,6 +33,6 @@ import com.garganttua.core.dsl.IPackageableBuilder;
  * @see IPackageableBuilder
  * @see IAutomaticBuilder
  */
-public interface INativeBuilder<B, C extends INativeReflectionConfiguration> extends IPackageableBuilder<B, C>, IAutomaticBuilder<B, C>{
+public interface INativeBuilder<B, C extends IReflectionUsageReporter> extends IPackageableBuilder<B, C>, IAutomaticBuilder<B, C>{
 
 }

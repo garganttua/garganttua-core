@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.lifecycle.ILifecycle;
-import com.garganttua.core.nativve.INativeReflectionConfiguration;
+import com.garganttua.core.reflection.IReflectionUsageReporter;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.utils.Copyable;
 
@@ -59,7 +59,7 @@ import com.garganttua.core.utils.Copyable;
  * @see ILifecycle
  */
 public interface IInjectionContext
-                extends ILifecycle, IInjectableElementResolver, Copyable<IInjectionContext>, INativeReflectionConfiguration {
+                extends ILifecycle, IInjectableElementResolver, Copyable<IInjectionContext>, IReflectionUsageReporter {
 
         // --- Bean Scopes ---
 

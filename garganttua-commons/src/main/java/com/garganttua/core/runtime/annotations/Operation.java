@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
@@ -93,7 +93,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @see com.garganttua.core.runtime.IRuntimeStep
  */
 @Indexed
-@Native
+@Reflected
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Operation {

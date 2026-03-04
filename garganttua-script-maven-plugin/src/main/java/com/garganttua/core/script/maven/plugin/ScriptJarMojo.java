@@ -107,9 +107,9 @@ public class ScriptJarMojo extends AbstractMojo {
             "com.garganttua.core.mutex.annotations.MutexFactory",
             "com.garganttua.core.mutex.annotations.Mutex",
 
-            // Native annotations
-            "com.garganttua.core.nativve.annotations.NativeConfigurationBuilder",
-            "com.garganttua.core.nativve.annotations.Native",
+            // Reflection annotations
+            "com.garganttua.core.reflection.annotations.ReflectedBuilder",
+            "com.garganttua.core.reflection.annotations.Reflected",
 
             // DSL annotations
             "com.garganttua.core.dsl.annotations.Scan",

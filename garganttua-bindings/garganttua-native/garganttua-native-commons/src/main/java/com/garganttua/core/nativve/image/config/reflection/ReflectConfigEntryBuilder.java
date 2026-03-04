@@ -11,7 +11,7 @@ import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
-import com.garganttua.core.nativve.annotations.Native;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IField;
@@ -46,7 +46,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 		}
 	}
 
-	private static final IClass<Native> NATIVE_CLASS = wrapClass(Native.class);
+	private static final IClass<Reflected> REFLECTED_CLASS = wrapClass(Reflected.class);
 
 	public ReflectConfigEntryBuilder(IClass<?> type) {
 		log.atTrace().log("Creating ReflectConfigEntryBuilder for type: {}", type.getName());
@@ -272,40 +272,40 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	@Override
 	protected void doAutoDetection() throws DslException {
 		log.atTrace().log("Starting auto-detection for type: {}", this.type.getName());
-		Native n = this.type.getAnnotation(NATIVE_CLASS);
-		if (n != null && n.allDeclaredClasses()) {
+		Reflected r = this.type.getAnnotation(REFLECTED_CLASS);
+		if (r != null && r.allDeclaredClasses()) {
 			log.atDebug().log("Enabling allDeclaredClasses for: {}", this.type.getName());
 			this.entry.setAllDeclaredClasses(true);
 		}
-		if (n != null && n.allDeclaredFields()) {
+		if (r != null && r.allDeclaredFields()) {
 			log.atDebug().log("Enabling allDeclaredFields for: {}", this.type.getName());
 			this.entry.setAllDeclaredFields(true);
 		}
-		if (n != null && n.allPublicClasses()) {
+		if (r != null && r.allPublicClasses()) {
 			log.atDebug().log("Enabling allPublicClasses for: {}", this.type.getName());
 			this.entry.setAllPublicClasses(true);
 		}
-		if (n != null && n.queryAllDeclaredConstructors()) {
+		if (r != null && r.queryAllDeclaredConstructors()) {
 			log.atDebug().log("Enabling queryAllDeclaredConstructors for: {}", this.type.getName());
 			this.entry.setQueryAllDeclaredConstructors(true);
 		}
-		if (n != null && n.queryAllDeclaredMethods()) {
+		if (r != null && r.queryAllDeclaredMethods()) {
 			log.atDebug().log("Enabling queryAllDeclaredMethods for: {}", this.type.getName());
 			this.entry.setQueryAllDeclaredMethods(true);
 		}
-		if (n != null && n.queryAllPublicConstructors()) {
+		if (r != null && r.queryAllPublicConstructors()) {
 			log.atDebug().log("Enabling queryAllPublicConstructors for: {}", this.type.getName());
 			this.entry.setQueryAllPublicConstructors(true);
 		}
-		if (n != null && n.queryAllPublicMethods()) {
+		if (r != null && r.queryAllPublicMethods()) {
 			log.atDebug().log("Enabling queryAllPublicMethods for: {}", this.type.getName());
 			this.entry.setQueryAllPublicMethods(false);
 		}
 
-		log.atDebug().log("Detecting @Native annotated fields, constructors, and methods for: {}", this.type.getName());
-		Arrays.stream(this.type.getDeclaredFields()).filter(f -> f.getAnnotation(NATIVE_CLASS)!=null).forEach(this::field);
-		Arrays.stream(this.type.getDeclaredConstructors()).filter(c -> c.getAnnotation(NATIVE_CLASS)!=null).forEach(this::constructor);
-		Arrays.stream(this.type.getDeclaredMethods()).filter(m -> m.getAnnotation(NATIVE_CLASS)!=null).forEach(this::method);
+		log.atDebug().log("Detecting @Reflected annotated fields, constructors, and methods for: {}", this.type.getName());
+		Arrays.stream(this.type.getDeclaredFields()).filter(f -> f.getAnnotation(REFLECTED_CLASS)!=null).forEach(this::field);
+		Arrays.stream(this.type.getDeclaredConstructors()).filter(c -> c.getAnnotation(REFLECTED_CLASS)!=null).forEach(this::constructor);
+		Arrays.stream(this.type.getDeclaredMethods()).filter(m -> m.getAnnotation(REFLECTED_CLASS)!=null).forEach(this::method);
 		log.atTrace().log("Completed auto-detection for type: {}", this.type.getName());
 	}
 
