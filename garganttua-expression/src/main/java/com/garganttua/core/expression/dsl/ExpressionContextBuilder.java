@@ -104,7 +104,7 @@ public class ExpressionContextBuilder
         return this;
     }
 
-     private void notifyObservers(IExpressionContext built) {
+    private void notifyObservers(IExpressionContext built) {
         log.atTrace().log("Entering notifyObserver(built={})", built);
         this.observers.parallelStream().forEach(observer -> {
             observer.handle(built);

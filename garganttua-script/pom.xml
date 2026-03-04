@@ -29,11 +29,9 @@
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-injection</artifactId>
     </dependency>
-    <!-- Reflections only needed for tests (runtime annotation scanning) -->
     <dependency>
       <groupId>com.garganttua.core</groupId>
-      <artifactId>garganttua-reflections</artifactId>
-      <scope>test</scope>
+      <artifactId>garganttua-runtime-reflection</artifactId>
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>

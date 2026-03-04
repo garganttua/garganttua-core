@@ -29,7 +29,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 /**
@@ -305,7 +307,7 @@ public class ScriptJarMojo extends AbstractMojo {
 
         URL[] urls = { outputDirectory.toURI().toURL() };
         try (URLClassLoader classLoader = new URLClassLoader(urls, getClass().getClassLoader())) {
-            ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+            IAnnotationScanner scanner = new ReflectionsAnnotationScanner();
 
             List<String> packagesToScan = new ArrayList<>();
             if (scanPackages != null && !scanPackages.isEmpty()) {
@@ -317,7 +319,7 @@ public class ScriptJarMojo extends AbstractMojo {
             getLog().debug("Scanning " + packagesToScan.size() + " packages for Garganttua annotations");
 
             for (String packageName : packagesToScan) {
-                if (hasGarganttuaAnnotations(packageName, classLoader)) {
+                if (hasGarganttuaAnnotations(packageName, classLoader, scanner)) {
                     detectedPackages.add(packageName);
                     getLog().debug("Found Garganttua annotations in package: " + packageName);
                 }
@@ -352,21 +354,20 @@ public class ScriptJarMojo extends AbstractMojo {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean hasGarganttuaAnnotations(String packageName, ClassLoader classLoader) {
+    private boolean hasGarganttuaAnnotations(String packageName, ClassLoader classLoader, IAnnotationScanner scanner) {
         for (String annotationClassName : GARGANTTUA_ANNOTATIONS) {
             try {
                 Class<? extends Annotation> annotationClass =
                         (Class<? extends Annotation>) classLoader.loadClass(annotationClassName);
 
-                List<Class<?>> annotatedClasses =
-                        ObjectReflectionHelper.getClassesWithAnnotation(packageName, annotationClass);
-                if (!annotatedClasses.isEmpty()) {
+                IClass<? extends Annotation> iAnnotation =
+                        (IClass<? extends Annotation>) RuntimeClass.ofUnchecked(annotationClass);
+
+                if (!scanner.getClassesWithAnnotation(packageName, iAnnotation).isEmpty()) {
                     return true;
                 }
 
-                List<Method> annotatedMethods =
-                        ObjectReflectionHelper.getMethodsWithAnnotation(packageName, annotationClass);
-                if (!annotatedMethods.isEmpty()) {
+                if (!scanner.getMethodsWithAnnotation(packageName, iAnnotation).isEmpty()) {
                     return true;
                 }
             } catch (ClassNotFoundException e) {

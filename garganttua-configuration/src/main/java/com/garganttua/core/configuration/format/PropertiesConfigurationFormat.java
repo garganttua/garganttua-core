@@ -3,7 +3,6 @@ package com.garganttua.core.configuration.format;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 public class PropertiesConfigurationFormat extends AbstractConfigurationFormat {
 
@@ -28,7 +27,7 @@ public class PropertiesConfigurationFormat extends AbstractConfigurationFormat {
     protected ObjectMapper createMapper() {
         try {
             var factoryClass = Class.forName(PROPS_FACTORY_CLASS);
-            var factory = ObjectReflectionHelper.instanciateNewObject(factoryClass);
+            var factory = factoryClass.getDeclaredConstructor().newInstance();
             return new ObjectMapper((com.fasterxml.jackson.core.JsonFactory) factory);
         } catch (Exception e) {
             throw new IllegalStateException("Properties support not available", e);

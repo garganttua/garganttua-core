@@ -424,7 +424,6 @@
   </build>
   <modules>
     <module>garganttua-commons</module>
-    <!-- <module>garganttua-annotation-processor</module> -->
     <module>garganttua-reflection</module>
     <module>garganttua-mapper</module>
     <module>garganttua-execution</module>

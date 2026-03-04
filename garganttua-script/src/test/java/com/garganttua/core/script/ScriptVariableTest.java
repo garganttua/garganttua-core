@@ -12,19 +12,32 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 
 class ScriptVariableTest {
 
+    private static IReflectionBuilder reflectionBuilder;
+
     @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setup() throws Exception {
+        @SuppressWarnings("unchecked")
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     private IScript createScript(String source) {
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -48,7 +61,7 @@ class ScriptVariableTest {
     void testResultAssignmentStoresValue() {
         IScript s = createScript("result <- string(\"hello\")");
         s.execute();
-        Optional<String> val = s.getVariable("result", String.class);
+        Optional<String> val = s.getVariable("result", IClass.getClass(String.class));
         assertTrue(val.isPresent());
         assertEquals("hello", val.get());
     }
@@ -57,7 +70,7 @@ class ScriptVariableTest {
     void testResultAssignmentStoresStringLiteral() {
         IScript s = createScript("result <- \"world\"");
         s.execute();
-        Optional<String> val = s.getVariable("result", String.class);
+        Optional<String> val = s.getVariable("result", IClass.getClass(String.class));
         assertTrue(val.isPresent());
         assertEquals("world", val.get());
     }
@@ -69,7 +82,7 @@ class ScriptVariableTest {
         IScript s = createScript("result = string(\"hello\")");
         s.execute();
         // With '=', the IExpression object is stored, not the evaluated result
-        Optional<Object> val = s.getVariable("result", Object.class);
+        Optional<Object> val = s.getVariable("result", IClass.getClass(Object.class));
         assertTrue(val.isPresent());
         // The stored value should be an IExpression, not a String
         assertFalse(val.get() instanceof String);
@@ -82,7 +95,7 @@ class ScriptVariableTest {
         IScript s = createScript("x <- string(\"world\") -> 200");
         int code = s.execute();
         assertEquals(200, code);
-        Optional<String> val = s.getVariable("x", String.class);
+        Optional<String> val = s.getVariable("x", IClass.getClass(String.class));
         assertTrue(val.isPresent());
         assertEquals("world", val.get());
     }
@@ -96,8 +109,8 @@ class ScriptVariableTest {
                 b <- string("second")
                 """);
         s.execute();
-        assertEquals("first", s.getVariable("a", String.class).orElse(null));
-        assertEquals("second", s.getVariable("b", String.class).orElse(null));
+        assertEquals("first", s.getVariable("a", IClass.getClass(String.class)).orElse(null));
+        assertEquals("second", s.getVariable("b", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Variable overwritten ----
@@ -109,7 +122,7 @@ class ScriptVariableTest {
                 x <- string("new")
                 """);
         s.execute();
-        assertEquals("new", s.getVariable("x", String.class).orElse(null));
+        assertEquals("new", s.getVariable("x", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Variable not available before execute ----
@@ -117,7 +130,7 @@ class ScriptVariableTest {
     @Test
     void testNoVariableBeforeExecute() {
         IScript s = createScript("x <- string(\"hello\")");
-        Optional<String> val = s.getVariable("x", String.class);
+        Optional<String> val = s.getVariable("x", IClass.getClass(String.class));
         assertTrue(val.isEmpty());
     }
 
@@ -131,7 +144,7 @@ class ScriptVariableTest {
                 """);
         int code = s.execute();
         assertEquals(400, code);
-        assertEquals("caught-error", s.getVariable("err", String.class).orElse(null));
+        assertEquals("caught-error", s.getVariable("err", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Variable not set when expression throws ----
@@ -142,7 +155,7 @@ class ScriptVariableTest {
                 x <- class("nonexistent.Foo")
                 """);
         s.execute();
-        assertTrue(s.getVariable("x", Object.class).isEmpty());
+        assertTrue(s.getVariable("x", IClass.getClass(Object.class)).isEmpty());
     }
 
     // ---- Type mismatch returns empty ----
@@ -151,8 +164,8 @@ class ScriptVariableTest {
     void testVariableTypeMismatch() {
         IScript s = createScript("x <- string(\"hello\")");
         s.execute();
-        assertTrue(s.getVariable("x", Integer.class).isEmpty());
-        assertTrue(s.getVariable("x", String.class).isPresent());
+        assertTrue(s.getVariable("x", IClass.getClass(Integer.class)).isEmpty());
+        assertTrue(s.getVariable("x", IClass.getClass(String.class)).isPresent());
     }
 
     // ---- Non-existent variable returns empty ----
@@ -161,7 +174,7 @@ class ScriptVariableTest {
     void testNonExistentVariable() {
         IScript s = createScript("x <- string(\"hello\")");
         s.execute();
-        assertTrue(s.getVariable("y", String.class).isEmpty());
+        assertTrue(s.getVariable("y", IClass.getClass(String.class)).isEmpty());
     }
 
     // ---- Variable set in pipe handler ----
@@ -174,7 +187,7 @@ class ScriptVariableTest {
                 """);
         int code = s.execute();
         assertEquals(300, code);
-        assertEquals("pipe-value", s.getVariable("piped", String.class).orElse(null));
+        assertEquals("pipe-value", s.getVariable("piped", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Variable set in downstream catch handler ----
@@ -188,6 +201,6 @@ class ScriptVariableTest {
                 """);
         int code = s.execute();
         assertEquals(600, code);
-        assertEquals("downstream-value", s.getVariable("caught", String.class).orElse(null));
+        assertEquals("downstream-value", s.getVariable("caught", IClass.getClass(String.class)).orElse(null));
     }
 }

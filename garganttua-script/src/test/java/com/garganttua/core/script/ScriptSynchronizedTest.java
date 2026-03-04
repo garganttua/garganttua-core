@@ -8,7 +8,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.ExpressionException;
@@ -17,22 +16,15 @@ import com.garganttua.core.mutex.InterruptibleLeaseMutex;
 import com.garganttua.core.mutex.MutexStrategy;
 import com.garganttua.core.script.functions.ScriptFunctions;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 class ScriptSynchronizedTest {
-
-    @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-    }
 
     // ---- Basic synchronized execution ----
 
     @Test
     void testSynchronizedWithDirectValue() {
         IMutex mutex = new InterruptibleLeaseMutex("test-mutex");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 1000, new FixedSupplierBuilder<>("hello").build());
+        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 1000, FixedSupplierBuilder.of("hello").build());
         assertEquals("hello", result);
     }
 
@@ -48,7 +40,7 @@ class ScriptSynchronizedTest {
     @Test
     void testSyncWithDirectValue() {
         IMutex mutex = new InterruptibleLeaseMutex("test-sync");
-        Object result = ScriptFunctions.sync("test", mutex, new FixedSupplierBuilder<>("sync-value").build());
+        Object result = ScriptFunctions.sync("test", mutex, FixedSupplierBuilder.of("sync-value").build());
         assertEquals("sync-value", result);
     }
 
@@ -64,14 +56,14 @@ class ScriptSynchronizedTest {
     @Test
     void testSynchronizedAcquireMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test-acquire");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 100, new FixedSupplierBuilder<>("acquired").build());
+        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 100, FixedSupplierBuilder.of("acquired").build());
         assertEquals("acquired", result);
     }
 
     @Test
     void testSynchronizedTryAcquireMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test-tryacquire");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "tryAcquire", 0, new FixedSupplierBuilder<>("tryacquired").build());
+        Object result = ScriptFunctions.synchronizedExec("test", mutex, "tryAcquire", 0, FixedSupplierBuilder.of("tryacquired").build());
         assertEquals("tryacquired", result);
     }
 
@@ -79,7 +71,7 @@ class ScriptSynchronizedTest {
     void testSynchronizedInvalidMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test-invalid");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("test", mutex, "invalid", 100, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.synchronizedExec("test", mutex, "invalid", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- Parameter validation ----
@@ -88,40 +80,40 @@ class ScriptSynchronizedTest {
     void testSynchronizedNullMutexName() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec(null, mutex, "acquire", 100, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.synchronizedExec(null, mutex, "acquire", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSynchronizedBlankMutexName() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("", mutex, "acquire", 100, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.synchronizedExec("", mutex, "acquire", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSynchronizedNullMutex() {
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("test", null, "acquire", 100, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.synchronizedExec("test", null, "acquire", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSynchronizedNullMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("test", mutex, null, 100, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.synchronizedExec("test", mutex, null, 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSyncNullMutexName() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.sync(null, mutex, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.sync(null, mutex, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSyncNullMutex() {
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.sync("test", null, new FixedSupplierBuilder<>("value").build()));
+                ScriptFunctions.sync("test", null, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- Concurrency test using IMutex directly ----
@@ -193,6 +185,11 @@ class ScriptSynchronizedTest {
             @Override
             public java.lang.reflect.Type getSuppliedType() {
                 return String.class;
+            }
+
+            @Override
+            public com.garganttua.core.reflection.IClass<String> getSuppliedClass() {
+                return com.garganttua.core.reflection.IClass.getClass(String.class);
             }
         };
 

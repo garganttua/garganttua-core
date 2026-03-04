@@ -3,7 +3,6 @@ package com.garganttua.core.injection.functions;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;

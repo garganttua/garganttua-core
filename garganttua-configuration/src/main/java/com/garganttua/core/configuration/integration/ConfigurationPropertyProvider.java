@@ -8,6 +8,7 @@ import java.util.Set;
 import com.garganttua.core.configuration.IConfigurationNode;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
@@ -48,24 +49,25 @@ public class ConfigurationPropertyProvider implements IPropertyProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<T> getProperty(String key, Class<T> type) throws DiException {
+    public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         var value = this.properties.get(key);
         if (value == null) {
             return Optional.empty();
         }
-        if (type == String.class) {
+        var rawType = type.getType();
+        if (rawType == String.class) {
             return Optional.of((T) value);
         }
-        if (type == Integer.class || type == int.class) {
+        if (rawType == Integer.class || rawType == int.class) {
             return Optional.of((T) Integer.valueOf(value));
         }
-        if (type == Long.class || type == long.class) {
+        if (rawType == Long.class || rawType == long.class) {
             return Optional.of((T) Long.valueOf(value));
         }
-        if (type == Double.class || type == double.class) {
+        if (rawType == Double.class || rawType == double.class) {
             return Optional.of((T) Double.valueOf(value));
         }
-        if (type == Boolean.class || type == boolean.class) {
+        if (rawType == Boolean.class || rawType == boolean.class) {
             return Optional.of((T) Boolean.valueOf(value));
         }
         throw new DiException("Unsupported property type: " + type.getName());

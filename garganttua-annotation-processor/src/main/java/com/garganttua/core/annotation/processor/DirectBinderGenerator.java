@@ -303,7 +303,6 @@ public class DirectBinderGenerator extends AbstractProcessor {
             writer.write("import com.garganttua.core.reflection.binders.IMethodBinder;\n");
             writer.write("import com.garganttua.core.reflection.methods.SingleMethodReturn;\n");
             writer.write("import com.garganttua.core.reflection.IClass;\n");
-            writer.write("import com.garganttua.core.reflection.runtime.RuntimeClass;\n");
             writer.write("import com.garganttua.core.supply.ISupplier;\n");
             writer.write("import com.garganttua.core.supply.SupplyException;\n");
             writer.write("import " + ownerFqn + ";\n\n");
@@ -335,16 +334,16 @@ public class DirectBinderGenerator extends AbstractProcessor {
                 writer.write("            " + ownerSimple + "." + methodName + "(");
                 writeArgCasts(writer, params);
                 writer.write(");\n");
-                writer.write("            return Optional.of(SingleMethodReturn.of(null));\n");
+                writer.write("            return Optional.of(SingleMethodReturn.of(null, IClass.getClass(Void.class)));\n");
             } else {
                 writer.write("            " + returnTypeFqn + " result = " + ownerSimple + "." + methodName + "(");
                 writeArgCasts(writer, params);
                 writer.write(");\n");
-                writer.write("            return Optional.of(SingleMethodReturn.of(result));\n");
+                writer.write("            return Optional.of(SingleMethodReturn.of(result, IClass.getClass(" + returnTypeFqn + ".class)));\n");
             }
 
             writer.write("        } catch (Exception e) {\n");
-            writer.write("            return Optional.of(SingleMethodReturn.ofException(e, " + returnTypeFqn + ".class));\n");
+            writer.write("            return Optional.of(SingleMethodReturn.ofException(e, IClass.getClass(" + returnTypeFqn + ".class)));\n");
             writer.write("        }\n");
             writer.write("    }\n\n");
 
@@ -369,7 +368,7 @@ public class DirectBinderGenerator extends AbstractProcessor {
 
             writer.write("    @Override\n");
             writer.write("    public IClass<IMethodReturn<" + returnTypeFqn + ">> getSuppliedClass() {\n");
-            writer.write("        return (IClass<IMethodReturn<" + returnTypeFqn + ">>) (IClass<?>) RuntimeClass.ofUnchecked(IMethodReturn.class);\n");
+            writer.write("        return (IClass<IMethodReturn<" + returnTypeFqn + ">>) (IClass<?>) IClass.getClass(IMethodReturn.class);\n");
             writer.write("    }\n");
 
             writer.write("}\n");
@@ -421,17 +420,16 @@ public class DirectBinderGenerator extends AbstractProcessor {
         try (Writer writer = sourceFile.openWriter()) {
             writer.write("package " + GENERATED_PACKAGE + ";\n\n");
 
-            writer.write("import java.lang.reflect.Constructor;\n");
             writer.write("import java.lang.reflect.Type;\n");
             writer.write("import java.util.List;\n");
             writer.write("import java.util.Optional;\n\n");
+            writer.write("import com.garganttua.core.reflection.IConstructor;\n");
             writer.write("import com.garganttua.core.reflection.IMethodReturn;\n");
             writer.write("import com.garganttua.core.reflection.ReflectionException;\n");
             writer.write("import com.garganttua.core.reflection.binders.ExecutableBinder;\n");
             writer.write("import com.garganttua.core.reflection.binders.IConstructorBinder;\n");
             writer.write("import com.garganttua.core.reflection.methods.SingleMethodReturn;\n");
             writer.write("import com.garganttua.core.reflection.IClass;\n");
-            writer.write("import com.garganttua.core.reflection.runtime.RuntimeClass;\n");
             writer.write("import com.garganttua.core.supply.ISupplier;\n");
             writer.write("import com.garganttua.core.supply.SupplyException;\n");
             writer.write("import " + classFqn + ";\n");
@@ -450,21 +448,6 @@ public class DirectBinderGenerator extends AbstractProcessor {
             writer.write("        extends ExecutableBinder<" + classFqn + ">\n");
             writer.write("        implements IConstructorBinder<" + classFqn + "> {\n\n");
 
-            // Static constructor reference for metadata (native image, etc.)
-            writer.write("    private static final Constructor<?> CONSTRUCTOR;\n");
-            writer.write("    static {\n");
-            writer.write("        try {\n");
-            writer.write("            CONSTRUCTOR = " + classFqn + ".class.getDeclaredConstructor(");
-            for (int i = 0; i < params.size(); i++) {
-                if (i > 0) writer.write(", ");
-                writer.write(getRawTypeFqn(params.get(i).asType()) + ".class");
-            }
-            writer.write(");\n");
-            writer.write("        } catch (NoSuchMethodException e) {\n");
-            writer.write("            throw new ExceptionInInitializerError(e);\n");
-            writer.write("        }\n");
-            writer.write("    }\n\n");
-
             // Constructor
             writer.write("    public " + className + "(List<ISupplier<?>> params) {\n");
             writer.write("        super(params);\n");
@@ -478,22 +461,22 @@ public class DirectBinderGenerator extends AbstractProcessor {
             writer.write("            " + classFqn + " instance = new " + classFqn + "(");
             writeArgCasts(writer, params);
             writer.write(");\n");
-            writer.write("            return Optional.of(SingleMethodReturn.of(instance));\n");
+            writer.write("            return Optional.of(SingleMethodReturn.of(instance, IClass.getClass(" + classFqn + ".class)));\n");
             writer.write("        } catch (Exception e) {\n");
-            writer.write("            return Optional.of(SingleMethodReturn.ofException(e, " + classFqn + ".class));\n");
+            writer.write("            return Optional.of(SingleMethodReturn.ofException(e, IClass.getClass(" + classFqn + ".class)));\n");
             writer.write("        }\n");
             writer.write("    }\n\n");
 
             // getConstructedType()
             writer.write("    @Override\n");
-            writer.write("    public Class<" + classFqn + "> getConstructedType() {\n");
-            writer.write("        return " + classFqn + ".class;\n");
+            writer.write("    public IClass<" + classFqn + "> getConstructedType() {\n");
+            writer.write("        return IClass.getClass(" + classFqn + ".class);\n");
             writer.write("    }\n\n");
 
-            // constructor()
+            // constructor() - deprecated, not needed for direct call binders
             writer.write("    @Override\n");
-            writer.write("    public Constructor<?> constructor() {\n");
-            writer.write("        return CONSTRUCTOR;\n");
+            writer.write("    public IConstructor<?> constructor() {\n");
+            writer.write("        throw new UnsupportedOperationException(\"Direct binder does not expose constructor\");\n");
             writer.write("    }\n\n");
 
             // getExecutableReference()
@@ -522,7 +505,7 @@ public class DirectBinderGenerator extends AbstractProcessor {
             writer.write("    @SuppressWarnings(\"unchecked\")\n");
             writer.write("    @Override\n");
             writer.write("    public IClass<IMethodReturn<" + classFqn + ">> getSuppliedClass() {\n");
-            writer.write("        return (IClass<IMethodReturn<" + classFqn + ">>) (IClass<?>) RuntimeClass.of(" + classFqn + ".class);\n");
+            writer.write("        return (IClass<IMethodReturn<" + classFqn + ">>) (IClass<?>) IClass.getClass(IMethodReturn.class);\n");
             writer.write("    }\n");
 
             writer.write("}\n");

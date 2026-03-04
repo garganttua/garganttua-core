@@ -210,7 +210,6 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
         log.atTrace().log("Exiting doPostBuildWithDependency() method");
     }
 
-    @SuppressWarnings("unchecked")
     private void collectFactoriesFromReflexion(String packageName) throws DslException {
         log.atDebug().log("Scanning package: {}", packageName);
         IReflection reflection = IClass.getReflection();

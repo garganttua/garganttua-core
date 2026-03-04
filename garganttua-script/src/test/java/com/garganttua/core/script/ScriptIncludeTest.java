@@ -16,8 +16,11 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 
 class ScriptIncludeTest {
@@ -25,13 +28,23 @@ class ScriptIncludeTest {
     @TempDir
     Path tempDir;
 
+    private static IReflectionBuilder reflectionBuilder;
+
     @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setup() throws Exception {
+        @SuppressWarnings("unchecked")
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     private IScript createScript(String source) {
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -76,7 +89,7 @@ class ScriptIncludeTest {
         int code = s.execute();
         assertEquals(200, code);
         // The call returns the sub-script's exit code (42), stored in 'code' variable
-        assertEquals(42, s.getVariable("code", Integer.class).orElse(null));
+        assertEquals(42, s.getVariable("code", IClass.getClass(Integer.class)).orElse(null));
     }
 
     @Test
@@ -131,7 +144,7 @@ class ScriptIncludeTest {
         int code = s.execute();
         assertEquals(100, code);
         // include() for .gs files should return the script name (without extension)
-        assertEquals("my-script", s.getVariable("ref", String.class).orElse(null));
+        assertEquals("my-script", s.getVariable("ref", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -150,7 +163,7 @@ class ScriptIncludeTest {
         IScript s = createScript(mainSource);
         int code = s.execute();
         assertEquals(200, code);
-        assertEquals(0, s.getVariable("code", Integer.class).orElse(null));
+        assertEquals(0, s.getVariable("code", IClass.getClass(Integer.class)).orElse(null));
     }
 
     @Test
@@ -169,7 +182,7 @@ class ScriptIncludeTest {
         IScript s = createScript(mainSource);
         int code = s.execute();
         assertEquals(300, code);
-        assertEquals("produced-value", s.getVariable("extracted", String.class).orElse(null));
+        assertEquals("produced-value", s.getVariable("extracted", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -206,7 +219,7 @@ class ScriptIncludeTest {
         IScript s = createScript(mainSource);
         int code = s.execute();
         assertEquals(200, code);
-        assertEquals(10, s.getVariable("a", Integer.class).orElse(null));
-        assertEquals(20, s.getVariable("b", Integer.class).orElse(null));
+        assertEquals(10, s.getVariable("a", IClass.getClass(Integer.class)).orElse(null));
+        assertEquals(20, s.getVariable("b", IClass.getClass(Integer.class)).orElse(null));
     }
 }

@@ -13,7 +13,6 @@ import com.garganttua.core.configuration.IConfigurationPopulator;
 import com.garganttua.core.configuration.IConfigurationSource;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -121,7 +120,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
         // Check if return type is a child builder (IBuilder or ILinkedBuilder)
         if (isChildBuilder(returnType, builder.getClass())) {
             // Call the method to get the child builder, then populate recursively
-            var childBuilder = ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType());
+            var childBuilder = method.invoke(builder);
             if (childBuilder != null) {
                 populateBuilder(childBuilder, node, context);
                 // If it's a linked builder, call up() to return to parent
@@ -132,14 +131,14 @@ public class BuilderPopulator implements IConfigurationPopulator {
         } else if (method.getParameterCount() == 1 && Map.class.isAssignableFrom(method.getParameterTypes()[0])) {
             // Pass as Map
             var map = nodeToMap(node);
-            ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType(), map);
+            method.invoke(builder, map);
         } else {
             // Try to pass the text representation
             var text = node.asText();
             if (text.isPresent() && method.getParameterCount() == 1) {
                 var paramType = method.getParameterTypes()[0];
                 var converted = this.typeConverter.convert(text.get(), paramType);
-                ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType(), converted);
+                method.invoke(builder, converted);
             }
         }
     }
@@ -161,7 +160,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
                         list.add(element);
                     }
                 }
-                ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType(), list);
+                method.invoke(builder, list);
                 return;
             }
 
@@ -176,7 +175,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
                         java.lang.reflect.Array.set(array, i, this.typeConverter.convert(text, componentType));
                     }
                 }
-                ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType(), array);
+                method.invoke(builder, array);
                 return;
             }
         }
@@ -188,12 +187,12 @@ public class BuilderPopulator implements IConfigurationPopulator {
                     var paramType = method.getParameterTypes()[0];
                     var text = element.asText().orElse(null);
                     var converted = this.typeConverter.convert(text, paramType);
-                    ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType(), converted);
+                    method.invoke(builder, converted);
                 }
             } else if (element.isObject()) {
                 var returnType = method.getReturnType();
                 if (isChildBuilder(returnType, builder.getClass())) {
-                    var childBuilder = ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType());
+                    var childBuilder = method.invoke(builder);
                     if (childBuilder != null) {
                         populateBuilder(childBuilder, element, context);
                         if (childBuilder instanceof ILinkedBuilder<?, ?> linked) {
@@ -215,7 +214,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
         if (method.getParameterCount() == 0) {
             // No-arg method (flag-style), call if value is true
             if ("true".equalsIgnoreCase(text)) {
-                ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType());
+                method.invoke(builder);
             }
             return;
         }
@@ -223,7 +222,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
         if (method.getParameterCount() == 1) {
             var paramType = method.getParameterTypes()[0];
             var converted = this.typeConverter.convert(text, paramType);
-            ObjectReflectionHelper.invokeMethod(builder, method.getName(), method, method.getReturnType(), converted);
+            method.invoke(builder, converted);
             return;
         }
 

@@ -35,7 +35,10 @@ import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.context.MutexContext;
 import com.garganttua.core.mutex.dsl.IMutexManagerBuilder;
 import com.garganttua.core.mutex.dsl.MutexManagerBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
@@ -346,14 +349,27 @@ public class ScriptConsole {
 
         Instant startTime = Instant.now();
 
-        // Use indexed scanner for fast compile-time annotation lookup
-        ObjectReflectionHelper.setAnnotationScanner(new IndexedAnnotationScanner());
-
         out.print(color("  Initializing contexts", DIM) + color("...", DIM, BRIGHT_BLACK));
         out.flush();
 
+        // Build reflection provider dynamically (avoids compile-time dependency on runtime-reflection)
+        IReflectionBuilder reflectionBuilder;
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends IReflectionProvider> providerClass =
+                    (Class<? extends IReflectionProvider>) Class.forName(
+                            "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+            reflectionBuilder = ReflectionBuilder.builder()
+                    .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                    .withScanner(new IndexedAnnotationScanner());
+            reflectionBuilder.build();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize reflection provider", e);
+        }
+
         // Create injection context builder
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -631,7 +647,7 @@ public class ScriptConsole {
         }
 
         // Get the last result from the "_" special variable
-        Optional<?> result = script.getVariable("_", Object.class);
+        Optional<?> result = script.getVariable("_", IClass.getClass(Object.class));
         if (result.isPresent()) {
             Object value = result.get();
             // Skip if the result is a trivial value or already printed by the expression
@@ -675,7 +691,7 @@ public class ScriptConsole {
             if (arrowIndex > 0) {
                 String varName = line.substring(0, arrowIndex).trim();
                 if (isValidVariableName(varName)) {
-                    Optional<?> value = script.getVariable(varName, Object.class);
+                    Optional<?> value = script.getVariable(varName, IClass.getClass(Object.class));
                     if (value.isPresent()) {
                         sessionVariables.put(varName, value.get());
                         out.println(color(varName, BRIGHT_CYAN) + color(" = ", BRIGHT_BLACK)
@@ -692,7 +708,7 @@ public class ScriptConsole {
                         (eqIndex + 1 >= line.length() || line.charAt(eqIndex + 1) != '=')) {
                     String varName = line.substring(0, eqIndex).trim();
                     if (isValidVariableName(varName)) {
-                        Optional<?> value = script.getVariable(varName, Object.class);
+                        Optional<?> value = script.getVariable(varName, IClass.getClass(Object.class));
                         if (value.isPresent()) {
                             sessionVariables.put(varName, value.get());
                             out.println(color(varName, BRIGHT_CYAN) + color(" = ", BRIGHT_BLACK)

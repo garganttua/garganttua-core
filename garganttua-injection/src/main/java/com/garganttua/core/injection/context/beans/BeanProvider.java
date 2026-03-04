@@ -73,7 +73,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public <T> Optional<T> get(IClass<T> type) throws DiException {
 		log.atTrace().log("Entering getBean with type: {}", type);
-		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
 				.filter(factory -> type.isAssignableFrom(factory.getSuppliedClass()))
@@ -97,7 +97,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public <T> Optional<T> get(String name, IClass<T> type) throws DiException {
 		log.atTrace().log("getBean by name '{}' and type {} is not implemented", name, type);
-		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
 	}
 
@@ -177,7 +177,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public <T> Optional<T> query(BeanReference<T> query) throws DiException {
 		log.atTrace().log("Querying single bean with query: {}", query);
-		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
 				.filter(factory -> factory.matches(query))
@@ -202,7 +202,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	@Override
 	public <T> List<T> queries(BeanReference<T> query) throws DiException {
 		log.atTrace().log("Querying multiple beans with query: {}", query);
-		wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 
 		List<T> result = (List<T>) this.beanFactories.stream()
 				.filter(factory -> factory.matches(query))

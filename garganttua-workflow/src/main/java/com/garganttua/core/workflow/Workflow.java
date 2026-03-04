@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.context.ScriptContext;
@@ -298,25 +299,25 @@ public class Workflow implements IWorkflow {
                 String codeVarName = "_" + stage.name() + "_" + scriptName + "_code";
                 String refVarName = "_" + stage.name() + "_" + scriptName + "_ref";
 
-                script.getVariable(resultVarName, Object.class)
+                script.getVariable(resultVarName, IClass.getClass(Object.class))
                         .ifPresent(v -> variables.put(resultVarName, v));
-                script.getVariable(codeVarName, Integer.class)
+                script.getVariable(codeVarName, IClass.getClass(Integer.class))
                         .ifPresent(v -> variables.put(codeVarName, v));
-                script.getVariable(refVarName, Object.class)
+                script.getVariable(refVarName, IClass.getClass(Object.class))
                         .ifPresent(v -> variables.put(refVarName, v));
 
                 // Collect output mappings
                 for (String outputVar : ws.getOutputs().keySet()) {
-                    script.getVariable(outputVar, Object.class)
+                    script.getVariable(outputVar, IClass.getClass(Object.class))
                             .ifPresent(v -> variables.put(outputVar, v));
                 }
             }
         }
 
         // Collect special variables
-        script.getVariable("output", Object.class)
+        script.getVariable("output", IClass.getClass(Object.class))
                 .ifPresent(v -> variables.put("output", v));
-        script.getVariable("code", Integer.class)
+        script.getVariable("code", IClass.getClass(Integer.class))
                 .ifPresent(v -> variables.put("code", v));
 
         return variables;
@@ -335,7 +336,7 @@ public class Workflow implements IWorkflow {
             for (WorkflowScript ws : stage.scripts()) {
                 for (var output : ws.getOutputs().entrySet()) {
                     String key = stage.name() + "." + output.getKey();
-                    Optional<Object> value = script.getVariable(output.getKey(), Object.class);
+                    Optional<Object> value = script.getVariable(output.getKey(), IClass.getClass(Object.class));
                     value.ifPresent(v -> stageOutputs.put(key, v));
                 }
             }

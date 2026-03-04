@@ -8,10 +8,13 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 
 /**
@@ -19,17 +22,26 @@ import com.garganttua.core.script.context.ScriptContext;
  */
 class ScriptGroupTest {
 
+    private static IReflectionBuilder reflectionBuilder;
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
 
     @BeforeAll
-    static void setupClass() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setupClass() throws Exception {
+        @SuppressWarnings("unchecked")
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     @BeforeEach
     void setup() {
         injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -54,7 +66,7 @@ class ScriptGroupTest {
         int code = script.execute();
 
         assertEquals(0, code);
-        assertEquals(20, script.getVariable("result", Integer.class).orElse(null));
+        assertEquals(20, script.getVariable("result", IClass.getClass(Integer.class)).orElse(null));
     }
 
     @Test
@@ -69,7 +81,7 @@ class ScriptGroupTest {
         int code = script.execute();
 
         assertEquals(99, code);
-        assertEquals(42, script.getVariable("value", Integer.class).orElse(null));
+        assertEquals(42, script.getVariable("value", IClass.getClass(Integer.class)).orElse(null));
     }
 
     @Test
@@ -106,7 +118,7 @@ class ScriptGroupTest {
 
         // With nested groups, the outer result captures the inner result
         // Code might not be 0 due to inner group execution
-        assertEquals(10, script.getVariable("outer", Integer.class).orElse(null));
+        assertEquals(10, script.getVariable("outer", IClass.getClass(Integer.class)).orElse(null));
     }
 
     @Test
@@ -124,9 +136,9 @@ class ScriptGroupTest {
         int code = script.execute();
 
         assertEquals(0, code);
-        assertEquals(100, script.getVariable("x", Integer.class).orElse(null));
-        assertEquals(150, script.getVariable("y", Integer.class).orElse(null));
-        assertEquals(175, script.getVariable("z", Integer.class).orElse(null));
-        assertEquals(175, script.getVariable("final", Integer.class).orElse(null));
+        assertEquals(100, script.getVariable("x", IClass.getClass(Integer.class)).orElse(null));
+        assertEquals(150, script.getVariable("y", IClass.getClass(Integer.class)).orElse(null));
+        assertEquals(175, script.getVariable("z", IClass.getClass(Integer.class)).orElse(null));
+        assertEquals(175, script.getVariable("final", IClass.getClass(Integer.class)).orElse(null));
     }
 }

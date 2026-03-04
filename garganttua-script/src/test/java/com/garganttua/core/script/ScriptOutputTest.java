@@ -13,21 +13,34 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.script.functions.LogFunctions;
 import com.garganttua.core.script.functions.ScriptFunctions;
 
 class ScriptOutputTest {
 
+    private static IReflectionBuilder reflectionBuilder;
+
     @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setup() throws Exception {
+        @SuppressWarnings("unchecked")
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     private IScript createScript(String source) {
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -177,7 +190,7 @@ class ScriptOutputTest {
             IScript s = createScript("result <- print(\"hello from script\")");
             s.execute();
 
-            assertEquals("hello from script", s.getVariable("result", String.class).orElse(null));
+            assertEquals("hello from script", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
             assertTrue(capture.toString().contains("hello from script"));
         } finally {
             System.setOut(originalOut);
@@ -194,7 +207,7 @@ class ScriptOutputTest {
             IScript s = createScript("result <- eprint(\"stderr message\")");
             s.execute();
 
-            assertEquals("stderr message", s.getVariable("result", String.class).orElse(null));
+            assertEquals("stderr message", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
             assertTrue(capture.toString().contains("stderr message"));
         } finally {
             System.setErr(originalErr);
@@ -208,7 +221,7 @@ class ScriptOutputTest {
                 result <- format("Hello %s", @name)
                 """);
         s.execute();
-        assertEquals("Hello world", s.getVariable("result", String.class).orElse(null));
+        assertEquals("Hello world", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -219,35 +232,35 @@ class ScriptOutputTest {
                 result <- format("%s and %s", @a, @b)
                 """);
         s.execute();
-        assertEquals("x and y", s.getVariable("result", String.class).orElse(null));
+        assertEquals("x and y", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
     void testLogInfoInScript() {
         IScript s = createScript("result <- log_info(\"info message\")");
         s.execute();
-        assertEquals("info message", s.getVariable("result", String.class).orElse(null));
+        assertEquals("info message", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
     void testLogDebugInScript() {
         IScript s = createScript("result <- log_debug(\"debug message\")");
         s.execute();
-        assertEquals("debug message", s.getVariable("result", String.class).orElse(null));
+        assertEquals("debug message", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
     void testLogWarnInScript() {
         IScript s = createScript("result <- log_warn(\"warning message\")");
         s.execute();
-        assertEquals("warning message", s.getVariable("result", String.class).orElse(null));
+        assertEquals("warning message", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
     void testLogErrorInScript() {
         IScript s = createScript("result <- log_error(\"error message\")");
         s.execute();
-        assertEquals("error message", s.getVariable("result", String.class).orElse(null));
+        assertEquals("error message", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -257,7 +270,7 @@ class ScriptOutputTest {
                 result <- log_info(@msg)
                 """);
         s.execute();
-        assertEquals("Processed 42 items", s.getVariable("result", String.class).orElse(null));
+        assertEquals("Processed 42 items", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -268,7 +281,7 @@ class ScriptOutputTest {
                 result <- log_info(@msg)
                 """);
         s.execute();
-        assertEquals("Items: 42", s.getVariable("result", String.class).orElse(null));
+        assertEquals("Items: 42", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -286,7 +299,7 @@ class ScriptOutputTest {
                     """);
             s.execute();
 
-            assertEquals("Garganttua v2.0 started", s.getVariable("result", String.class).orElse(null));
+            assertEquals("Garganttua v2.0 started", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
             assertTrue(capture.toString().contains("Garganttua v2.0 started"));
         } finally {
             System.setOut(originalOut);

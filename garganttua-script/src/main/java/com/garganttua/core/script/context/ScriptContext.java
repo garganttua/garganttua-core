@@ -23,6 +23,7 @@ import com.garganttua.core.runtime.IRuntimeResult;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.Runtime;
 import com.garganttua.core.script.IScript;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.antlr4.ScriptLexer;
 import com.garganttua.core.script.antlr4.ScriptParser;
@@ -110,7 +111,7 @@ public class ScriptContext implements IScript {
         // Register variable types before parsing so expressions can resolve method calls
         for (Map.Entry<String, Object> entry : this.initialVariables.entrySet()) {
             if (entry.getValue() != null) {
-                this.expressionContext.registerVariableType(entry.getKey(), entry.getValue().getClass());
+                this.expressionContext.registerVariableType(entry.getKey(), IClass.getClass(entry.getValue().getClass()));
             }
         }
 
@@ -147,6 +148,11 @@ public class ScriptContext implements IScript {
                 @Override
                 public java.lang.reflect.Type getSuppliedType() {
                     return value != null ? value.getClass() : Object.class;
+                }
+
+                @Override
+                public IClass<Object> getSuppliedClass() {
+                    return IClass.getClass(Object.class);
                 }
             });
         }
@@ -210,7 +216,7 @@ public class ScriptContext implements IScript {
     }
 
     @Override
-    public <T> Optional<T> getVariable(String name, Class<T> type) {
+    public <T> Optional<T> getVariable(String name, IClass<T> type) {
         Object val = this.lastVariables.get(name);
         if (val != null && type.isInstance(val)) {
             return Optional.of(type.cast(val));

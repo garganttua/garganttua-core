@@ -16,8 +16,10 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowInput;
 import com.garganttua.core.workflow.WorkflowResult;
@@ -47,20 +49,30 @@ class ScriptGeneratorModesTest {
 
     private static final Path GENERATED_DIR = Path.of("src/test/resources/scripts/generated");
 
+    private static IReflectionBuilder reflectionBuilder;
+
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
 
     @TempDir
     Path tempDir;
 
+    @SuppressWarnings("unchecked")
     @BeforeAll
-    static void setupClass() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setupClass() throws Exception {
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     @BeforeEach
     void setup() {
         injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 

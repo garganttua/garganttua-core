@@ -5,13 +5,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 
 public class Main {
@@ -88,11 +90,24 @@ public class Main {
         }
     }
 
+    private static IReflectionProvider loadReflectionProvider() {
+        try {
+            Class<?> providerClass = Class.forName("com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+            return (IReflectionProvider) providerClass.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load RuntimeReflectionProvider. "
+                    + "Ensure garganttua-runtime-reflection is on the classpath.", e);
+        }
+    }
+
     private static int executeScript(File scriptFile, String[] args) throws ScriptException, IOException {
-        ObjectReflectionHelper.setAnnotationScanner(new IndexedAnnotationScanner());
+        IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(loadReflectionProvider())
+                .withScanner(new IndexedAnnotationScanner());
 
         // Build injection context
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -183,9 +198,12 @@ public class Main {
     }
 
     private static IExpressionContext buildExpressionContext() {
-        ObjectReflectionHelper.setAnnotationScanner(new IndexedAnnotationScanner());
+        IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(loadReflectionProvider())
+                .withScanner(new IndexedAnnotationScanner());
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 

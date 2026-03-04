@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.configuration.format.JsonConfigurationFormat;
+import com.garganttua.core.reflection.IClass;
 
 class JsonConfigurationFormatTest {
 
@@ -54,7 +55,7 @@ class JsonConfigurationFormatTest {
 
         assertTrue(node.isObject());
         assertEquals("test", node.get("name").get().asText().orElse(null));
-        assertEquals(42, node.get("value").get().as(Integer.class).orElse(null));
+        assertEquals(42, node.get("value").get().as(IClass.getClass(Integer.class)).orElse(null));
     }
 
     @Test
@@ -100,6 +101,6 @@ class JsonConfigurationFormatTest {
         var node = format.parse(is);
         assertTrue(node.isObject());
         assertEquals("myApp", node.get("name").get().asText().orElse(null));
-        assertEquals(8080, node.get("port").get().as(Integer.class).orElse(null));
+        assertEquals(8080, node.get("port").get().as(IClass.getClass(Integer.class)).orElse(null));
     }
 }

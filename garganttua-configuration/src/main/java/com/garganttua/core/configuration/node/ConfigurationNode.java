@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.garganttua.core.configuration.IConfigurationNode;
+import com.garganttua.core.reflection.IClass;
 
 public class ConfigurationNode implements IConfigurationNode {
 
@@ -86,26 +87,27 @@ public class ConfigurationNode implements IConfigurationNode {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<T> as(Class<T> type) {
+    public <T> Optional<T> as(IClass<T> type) {
         if (this.jsonNode == null || this.jsonNode.isNull()) {
             return Optional.empty();
         }
-        if (type == String.class) {
+        var rawType = type.getType();
+        if (rawType == String.class) {
             return Optional.of((T) this.jsonNode.asText());
         }
-        if (type == Integer.class || type == int.class) {
+        if (rawType == Integer.class || rawType == int.class) {
             return Optional.of((T) Integer.valueOf(this.jsonNode.asInt()));
         }
-        if (type == Long.class || type == long.class) {
+        if (rawType == Long.class || rawType == long.class) {
             return Optional.of((T) Long.valueOf(this.jsonNode.asLong()));
         }
-        if (type == Double.class || type == double.class) {
+        if (rawType == Double.class || rawType == double.class) {
             return Optional.of((T) Double.valueOf(this.jsonNode.asDouble()));
         }
-        if (type == Boolean.class || type == boolean.class) {
+        if (rawType == Boolean.class || rawType == boolean.class) {
             return Optional.of((T) Boolean.valueOf(this.jsonNode.asBoolean()));
         }
-        if (type == Float.class || type == float.class) {
+        if (rawType == Float.class || rawType == float.class) {
             return Optional.of((T) Float.valueOf((float) this.jsonNode.asDouble()));
         }
         return Optional.empty();

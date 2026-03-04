@@ -10,21 +10,34 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.script.functions.ScriptFunctions;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 class ScriptRetryTest {
 
+    private static IReflectionBuilder reflectionBuilder;
+
     @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setup() throws Exception {
+        @SuppressWarnings("unchecked")
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     private IScript createScript(String source) {
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 
@@ -74,28 +87,28 @@ class ScriptRetryTest {
     void testSecondsInScript() {
         IScript s = createScript("result <- seconds(5)");
         s.execute();
-        assertEquals(5000L, s.getVariable("result", Long.class).orElse(null));
+        assertEquals(5000L, s.getVariable("result", IClass.getClass(Long.class)).orElse(null));
     }
 
     @Test
     void testMinutesInScript() {
         IScript s = createScript("result <- minutes(2)");
         s.execute();
-        assertEquals(120000L, s.getVariable("result", Long.class).orElse(null));
+        assertEquals(120000L, s.getVariable("result", IClass.getClass(Long.class)).orElse(null));
     }
 
     @Test
     void testMillisecondsInScript() {
         IScript s = createScript("result <- milliseconds(100)");
         s.execute();
-        assertEquals(100L, s.getVariable("result", Long.class).orElse(null));
+        assertEquals(100L, s.getVariable("result", IClass.getClass(Long.class)).orElse(null));
     }
 
     @Test
     void testHoursInScript() {
         IScript s = createScript("result <- hours(1)");
         s.execute();
-        assertEquals(3600000L, s.getVariable("result", Long.class).orElse(null));
+        assertEquals(3600000L, s.getVariable("result", IClass.getClass(Long.class)).orElse(null));
     }
 
     // ---- Retry with already evaluated value (returns immediately) ----
@@ -106,7 +119,7 @@ class ScriptRetryTest {
                 result <- retry(3, milliseconds(10), "direct-value")
                 """);
         s.execute();
-        assertEquals("direct-value", s.getVariable("result", String.class).orElse(null));
+        assertEquals("direct-value", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     @Test
@@ -116,7 +129,7 @@ class ScriptRetryTest {
                 result <- retry(3, milliseconds(0), "42")
                 """);
         s.execute();
-        assertEquals("42", s.getVariable("result", String.class).orElse(null));
+        assertEquals("42", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Retry With Backoff (already evaluated value) ----
@@ -127,7 +140,7 @@ class ScriptRetryTest {
                 result <- retryWithBackoff(3, milliseconds(10), milliseconds(100), "backoff-value")
                 """);
         s.execute();
-        assertEquals("backoff-value", s.getVariable("result", String.class).orElse(null));
+        assertEquals("backoff-value", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Retry with Constructor Call (evaluated once) ----
@@ -138,7 +151,7 @@ class ScriptRetryTest {
                 result <- retry(2, milliseconds(0), :(String.class, "constructed"))
                 """);
         s.execute();
-        assertEquals("constructed", s.getVariable("result", String.class).orElse(null));
+        assertEquals("constructed", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
 
     // ---- Retry with Integer Constructor ----
@@ -149,7 +162,7 @@ class ScriptRetryTest {
                 result <- retry(2, milliseconds(0), :(Integer.class, "123"))
                 """);
         s.execute();
-        assertEquals(123, s.getVariable("result", Integer.class).orElse(null));
+        assertEquals(123, s.getVariable("result", IClass.getClass(Integer.class)).orElse(null));
     }
 
     // ---- Retry with null returns null ----
@@ -172,30 +185,30 @@ class ScriptRetryTest {
 
     @Test
     void testRetryInvalidMaxAttempts() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retry(0, 10, new FixedSupplierBuilder<>("value").build()));
+        assertThrows(Exception.class, () -> ScriptFunctions.retry(0, 10, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- Retry validates delay ----
 
     @Test
     void testRetryInvalidDelay() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retry(3, -1, new FixedSupplierBuilder<>("value").build()));
+        assertThrows(Exception.class, () -> ScriptFunctions.retry(3, -1, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- RetryWithBackoff validates parameters ----
 
     @Test
     void testRetryWithBackoffInvalidMaxAttempts() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(0, 10, 100, new FixedSupplierBuilder<>("value").build()));
+        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(0, 10, 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testRetryWithBackoffInvalidDelay() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, -1, 100, new FixedSupplierBuilder<>("value").build()));
+        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, -1, 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testRetryWithBackoffMaxDelayLessThanInitial() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, 100, 10, new FixedSupplierBuilder<>("value").build()));
+        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, 100, 10, FixedSupplierBuilder.of("value").build()));
     }
 }

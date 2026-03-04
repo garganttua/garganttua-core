@@ -76,8 +76,8 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public IRuntimeResult<InputType, OutputType> getResult() {
         log.atTrace().log("[RuntimeContext.getResult] Entering getResult()");
-        wrapLifecycle(this::ensureStopped, RuntimeException.class);
-        wrapLifecycle(this::ensureNotFlushed, RuntimeException.class);
+        wrapLifecycle(this::ensureStopped, IClass.getClass(RuntimeException.class));
+        wrapLifecycle(this::ensureNotFlushed, IClass.getClass(RuntimeException.class));
 
         Set<RuntimeExceptionRecord> exceptionsCopy;
         synchronized (this.recordedException) {
@@ -145,7 +145,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public <VariableType> Optional<VariableType> getVariable(String variableName, IClass<VariableType> variableType) {
         log.atTrace().log("[RuntimeContext.getVariable] Fetching variable '{}' of type {}", variableName, variableType);
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         Optional<VariableType> value = this.delegateContext
                 .getProperty(Predefined.PropertyProviders.garganttua.toString(), variableName, variableType);
         log.atDebug().log("[RuntimeContext.getVariable] Fetched value={}", value);
@@ -156,7 +156,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public <ExceptionType> Optional<ExceptionType> getException(IClass<ExceptionType> exceptionType) {
         log.atTrace().log("[RuntimeContext.getException] Fetching exception of type {}", exceptionType);
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         Optional<RuntimeExceptionRecord> report = this.findAbortingExceptionReport();
         if (report.isPresent()) {
             if (exceptionType.isAssignableFrom(report.get().exceptionType())) {
@@ -171,21 +171,21 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public Optional<InputType> getInput() {
         log.atTrace().log("[RuntimeContext.getInput] Retrieving input");
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         return Optional.of(this.input);
     }
 
     @Override
     public Optional<Integer> getCode() {
         log.atTrace().log("[RuntimeContext.getCode] Retrieving code");
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         return Optional.of(this.code);
     }
 
     @Override
     public Optional<String> getExceptionMessage() {
         log.atTrace().log("[RuntimeContext.getExceptionMessage] Retrieving exception message");
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
 
         String message = null;
         Optional<RuntimeExceptionRecord> report = this.findAbortingExceptionReport();
@@ -200,7 +200,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public <VariableType> void setVariable(String variableName, VariableType variable) {
         log.atTrace().log("[RuntimeContext.setVariable] Setting variable '{}' to value={}", variableName, variable);
-        wrapLifecycle(this::ensureInitialized, RuntimeException.class);
+        wrapLifecycle(this::ensureInitialized, IClass.getClass(RuntimeException.class));
         this.delegateContext.setProperty(Predefined.PropertyProviders.garganttua.toString(), variableName,
                 variable);
         this.variables.put(variableName, variable);
@@ -209,14 +209,14 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public void setOutput(OutputType output) {
         log.atTrace().log("[RuntimeContext.setOutput] Setting output={}", output);
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         this.output = Objects.requireNonNull(output, "output cannot be null");
     }
 
     @Override
     public boolean isOfOutputType(IClass<?> type) {
         log.atTrace().log("[RuntimeContext.isOfOutputType] Checking type {}", type);
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         return this.outputType.isAssignableFrom(type);
     }
 
@@ -268,7 +268,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Override
     public void setCode(int code) {
         log.atTrace().log("[RuntimeContext.setCode] Setting code={}", code);
-        wrapLifecycle(this::ensureInitializedAndStarted, RuntimeException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         this.code = Objects.requireNonNull(code, "Code cannot be null");
     }
 
@@ -407,7 +407,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     @Deprecated
     public IInjectionContext copy() throws CopyException {
         log.atTrace().log("[RuntimeContext.copy] Copying context");
-        wrapLifecycle(this::ensureInitializedAndStarted, CopyException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(CopyException.class));
         return this;
     }
 

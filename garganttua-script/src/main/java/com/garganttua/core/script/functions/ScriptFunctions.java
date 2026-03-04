@@ -14,6 +14,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.context.ScriptContext;
@@ -822,6 +823,6 @@ public class ScriptFunctions {
                     + ". Did you call include() and execute_script() first?");
         }
 
-        return script.getVariable(varName, Object.class).orElse(null);
+        return script.getVariable(varName, IClass.getClass(Object.class)).orElse(null);
     }
 }

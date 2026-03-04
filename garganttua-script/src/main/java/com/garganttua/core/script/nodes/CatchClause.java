@@ -2,6 +2,8 @@ package com.garganttua.core.script.nodes;
 
 import java.util.List;
 
+import com.garganttua.core.reflection.IClass;
+
 public class CatchClause {
 
     private final List<String> exceptionTypes;
@@ -30,7 +32,7 @@ public class CatchClause {
         }
         for (String type : this.exceptionTypes) {
             try {
-                Class<?> clazz = Class.forName(type);
+                IClass<?> clazz = IClass.forName(type);
                 if (clazz.isInstance(t)) {
                     return true;
                 }

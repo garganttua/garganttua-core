@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.garganttua.core.configuration.IConfigurationNode.NodeType;
 import com.garganttua.core.configuration.node.ConfigurationNode;
+import com.garganttua.core.reflection.IClass;
 
 class ConfigurationNodeTest {
 
@@ -99,10 +100,10 @@ class ConfigurationNodeTest {
 
         var node = new ConfigurationNode(obj);
 
-        assertEquals("hello", node.get("str").get().as(String.class).orElse(null));
-        assertEquals(123, node.get("num").get().as(Integer.class).orElse(null));
-        assertEquals(true, node.get("bool").get().as(Boolean.class).orElse(null));
-        assertEquals(3.14, node.get("dec").get().as(Double.class).orElse(null), 0.001);
+        assertEquals("hello", node.get("str").get().as(IClass.getClass(String.class)).orElse(null));
+        assertEquals(123, node.get("num").get().as(IClass.getClass(Integer.class)).orElse(null));
+        assertEquals(true, node.get("bool").get().as(IClass.getClass(Boolean.class)).orElse(null));
+        assertEquals(3.14, node.get("dec").get().as(IClass.getClass(Double.class)).orElse(null), 0.001);
     }
 
     @Test
@@ -112,7 +113,7 @@ class ConfigurationNodeTest {
         assertEquals(NodeType.NULL, node.type());
         assertTrue(node.isNull());
         assertTrue(node.asText().isEmpty());
-        assertTrue(node.as(String.class).isEmpty());
+        assertTrue(node.as(IClass.getClass(String.class)).isEmpty());
     }
 
     @Test

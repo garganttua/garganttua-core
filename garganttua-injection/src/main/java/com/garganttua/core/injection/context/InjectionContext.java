@@ -118,7 +118,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Set<IBeanProvider> getBeanProviders() throws DiException {
         log.atTrace().log("Getting bean providers");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Set<IBeanProvider> result = Collections.unmodifiableSet(new HashSet<>(beanProviders.values()));
         log.atDebug().log("Returning {} bean providers", result.size());
         return result;
@@ -127,7 +127,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Set<IPropertyProvider> getPropertyProviders() throws DiException {
         log.atTrace().log("Getting property providers");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Set<IPropertyProvider> result = Collections.unmodifiableSet(new HashSet<>(propertyProviders.values()));
         log.atDebug().log("Returning {} property providers", result.size());
         return result;
@@ -136,7 +136,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Set<IInjectionChildContextFactory<? extends IInjectionContext>> getChildContextFactories() throws DiException {
         log.atTrace().log("Getting child context factories");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Set<IInjectionChildContextFactory<? extends IInjectionContext>> result = Collections.unmodifiableSet(
                 new HashSet<>(childContextFactories));
         log.atDebug().log("Returning {} child context factories", result.size());
@@ -159,7 +159,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
         log.atTrace().log("Getting property with key: {}, type: {}", key, type);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Objects.requireNonNull(key, "Key cannot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
         Optional<T> result = propertyProviders.values().stream()
@@ -173,7 +173,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <T> Optional<T> getProperty(String providerName, String key, IClass<T> type) throws DiException {
         log.atTrace().log("Getting property from provider: {}, key: {}, type: {}", providerName, key, type);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(type, "Type cannnot be null");
@@ -191,7 +191,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         Objects.requireNonNull(providerName, "Provider cannnot be null");
         Objects.requireNonNull(key, "Key cannnot be null");
         Objects.requireNonNull(value, "Value cannnot be null");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         propertyProviders.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(providerName))
                 .findFirst()
@@ -208,7 +208,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     public <ChildContext extends IInjectionContext> ChildContext newChildContext(IClass<ChildContext> contextClass,
             Object... args) throws DiException {
         log.atTrace().log("Creating new child context of type: {}", contextClass.getName());
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         synchronized (this.mutex) {
             ChildContext ctx = childContextFactories.stream()
                     .filter(factory -> {
@@ -322,7 +322,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     public <Bean> Optional<Bean> queryBean(Optional<String> provider, BeanReference<Bean> query)
             throws DiException {
         log.atTrace().log("Querying bean with Optional provider: {}, query: {}", provider, query);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Objects.requireNonNull(provider, "Provider cannot be null");
         Objects.requireNonNull(query, "Bean query cannot be null");
         Optional<Bean> result = provider.isPresent()
@@ -335,7 +335,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <Bean> Optional<Bean> queryBean(String provider, BeanReference<Bean> query) throws DiException {
         log.atTrace().log("Querying bean from provider: {}, query: {}", provider, query);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         IBeanProvider beanProvider = this.beanProviders.get(provider);
         if (beanProvider == null) {
             log.atError().log("Invalid bean provider: {}", provider);
@@ -349,7 +349,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <Bean> Optional<Bean> queryBean(BeanReference<Bean> query) throws DiException {
         log.atTrace().log("Querying bean from all providers, query: {}", query);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Objects.requireNonNull(query, "Bean query cannot be null");
         for (IBeanProvider provider : this.beanProviders.values()) {
             Optional<Bean> bean = provider.query(query);
@@ -365,7 +365,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <Bean> List<Bean> queryBeans(Optional<String> provider, BeanReference<Bean> query) throws DiException {
         log.atTrace().log("Querying beans with Optional provider: {}, query: {}", provider, query);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Objects.requireNonNull(provider, "Provider cannot be null");
         Objects.requireNonNull(query, "Bean query cannot be null");
         List<Bean> result = provider.isPresent()
@@ -378,7 +378,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <Bean> List<Bean> queryBeans(BeanReference<Bean> query) throws DiException {
         log.atTrace().log("Querying beans from all providers, query: {}", query);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Objects.requireNonNull(query, "Bean query cannot be null");
         List<Bean> beans = new ArrayList<>();
         for (IBeanProvider provider : this.beanProviders.values()) {
@@ -393,7 +393,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException {
         log.atTrace().log("Querying beans from provider: {}, query: {}", provider, query);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         IBeanProvider beanProvider = this.beanProviders.get(provider);
         if (beanProvider == null) {
             log.atError().log("Invalid bean provider: {}", provider);
@@ -407,7 +407,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Optional<IBeanProvider> getBeanProvider(String name) {
         log.atTrace().log("Getting bean provider: {}", name);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Optional<IBeanProvider> result = Optional.ofNullable(this.beanProviders.get(name));
         log.atDebug().log("Bean provider found: {}", result);
         return result;
@@ -416,7 +416,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Optional<IPropertyProvider> getPropertyProvider(String name) {
         log.atTrace().log("Getting property provider: {}", name);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Optional<IPropertyProvider> result = Optional.ofNullable(this.propertyProviders.get(name));
         log.atDebug().log("Property provider found: {}", result);
         return result;
@@ -424,26 +424,26 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
 
     public Map<String, IBeanProvider> beanProviders() {
         log.atTrace().log("Accessing beanProviders map");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         return this.beanProviders;
     }
 
     public Map<String, IPropertyProvider> propertyProviders() {
         log.atTrace().log("Accessing propertyProviders map");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         return this.propertyProviders;
     }
 
     public List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories() {
         log.atTrace().log("Accessing childContextFactories list");
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         return this.childContextFactories;
     }
 
     @Override
     public void registerChildContextFactory(IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Registering child context factory: {}", factory);
-        wrapLifecycle(this::ensureInitialized, DiException.class);
+        wrapLifecycle(this::ensureInitialized, IClass.getClass(DiException.class));
         synchronized (this.mutex) {
             Objects.requireNonNull(factory, "Factory cannot be null");
             if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
@@ -458,7 +458,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
         log.atTrace().log("Resolving element: {}", element);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Resolved result = this.resolverDelegate.resolve(elementType, element);
         log.atDebug().log("Resolved element: {}", result);
         return result;
@@ -467,7 +467,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public Set<Resolved> resolve(Executable method) throws DiException {
         log.atTrace().log("Resolving method: {}", method);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Set<Resolved> result = this.resolverDelegate.resolve(method);
         log.atDebug().log("Resolved method: {} items", result.size());
         return result;
@@ -476,7 +476,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver) {
         log.atTrace().log("Adding resolver for annotation: {}", annotation);
-        wrapLifecycle(this::ensureInitializedAndStarted, DiException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         synchronized (this.mutex) {
             this.resolverDelegate.addResolver(annotation, resolver);
             log.atDebug().log("Resolver added for annotation: {}", annotation);
@@ -486,7 +486,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public IInjectionContext copy() throws CopyException {
         log.atTrace().log("Copying InjectionContext");
-        wrapLifecycle(this::ensureInitializedAndStarted, CopyException.class);
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(CopyException.class));
         synchronized (this.copyMutex) {
             Map<String, IBeanProvider> beanProvidersCopy = this.beanProviders.entrySet().stream()
                     .filter(e -> e.getValue() != null)

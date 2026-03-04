@@ -71,6 +71,7 @@ class ConstructorDelegate {
         Optional<IConstructor<?>> optCtor = findConstructor(clazz);
         if (optCtor.isPresent()) {
             IConstructor<?> ctor = optCtor.get();
+            //TODO : reset accessibility to original value after instantiation
             ctor.setAccessible(true);
             try {
                 T result = (T) ctor.newInstance();
@@ -101,6 +102,7 @@ class ConstructorDelegate {
         Optional<IConstructor<?>> optCtor = findConstructor(clazz, paramTypes);
         if (optCtor.isPresent()) {
             IConstructor<?> ctor = optCtor.get();
+            //TODO : reset accessibility to original value after instantiation
             ctor.setAccessible(true);
             try {
                 T result = (T) ctor.newInstance(args);

@@ -6,7 +6,7 @@ import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.execution.IFallBackExecutor;
 import com.garganttua.core.expression.ForLoopExpressionNode;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
-import com.garganttua.core.expression.context.IExpressionVariableResolver;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeExceptionRecord;
@@ -44,8 +44,10 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 boolean caught = false;
                 RuntimeExpressionContext.set(context);
                 ExpressionVariableContext.set(new ForLoopExpressionNode.VariableSettableResolver() {
+                    private static final IClass<Object> OBJECT_CLASS = IClass.getClass(Object.class);
+                    private static final IClass<Integer> INTEGER_CLASS = IClass.getClass(Integer.class);
                     @Override
-                    public <T> java.util.Optional<T> resolve(String name, Class<T> type) {
+                    public <T> java.util.Optional<T> resolve(String name, IClass<T> type) {
                         // Handle argument references: $0, $1, $2, etc.
                         if (name.startsWith("$")) {
                             try {
@@ -60,8 +62,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                                         return java.util.Optional.of(type.cast(value));
                                     }
                                     // Try to return as Object if type doesn't match
-                                    if (type == Object.class) {
-                                        @SuppressWarnings("unchecked")
+                                    if (type.equals(OBJECT_CLASS)) {
                                         T result = (T) value;
                                         return java.util.Optional.of(result);
                                     }
@@ -74,8 +75,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         // Handle special reserved variables
                         if ("code".equals(name)) {
                             java.util.Optional<Integer> code = context.getCode();
-                            if (code.isPresent() && type.isAssignableFrom(Integer.class)) {
-                                @SuppressWarnings("unchecked")
+                            if (code.isPresent() && type.isAssignableFrom(INTEGER_CLASS)) {
                                 T result = (T) code.get();
                                 return java.util.Optional.of(result);
                             }
@@ -86,8 +86,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                             if (output != null && type.isInstance(output)) {
                                 return java.util.Optional.of(type.cast(output));
                             }
-                            if (output != null && type == Object.class) {
-                                @SuppressWarnings("unchecked")
+                            if (output != null && type.equals(OBJECT_CLASS)) {
                                 T result = (T) output;
                                 return java.util.Optional.of(result);
                             }
@@ -99,7 +98,6 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     public void setVariable(String name, Object value) {
                         // Handle special variable @output
                         if ("output".equals(name)) {
-                            @SuppressWarnings("unchecked")
                             Object output = value;
                             context.setOutput(output);
                             return;
@@ -163,8 +161,10 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
             IFallBackExecutor<IRuntimeContext<Object[], Object>> fallback = (context, nextFallback) -> {
                 RuntimeExpressionContext.set(context);
                 ExpressionVariableContext.set(new ForLoopExpressionNode.VariableSettableResolver() {
+                    private static final IClass<Object> OBJECT_CLASS = IClass.getClass(Object.class);
+                    private static final IClass<Integer> INTEGER_CLASS = IClass.getClass(Integer.class);
                     @Override
-                    public <T> java.util.Optional<T> resolve(String name, Class<T> type) {
+                    public <T> java.util.Optional<T> resolve(String name, IClass<T> type) {
                         // Handle argument references: $0, $1, $2, etc.
                         if (name.startsWith("$")) {
                             try {
@@ -178,8 +178,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                                     if (type.isInstance(value)) {
                                         return java.util.Optional.of(type.cast(value));
                                     }
-                                    if (type == Object.class) {
-                                        @SuppressWarnings("unchecked")
+                                    if (type.equals(OBJECT_CLASS)) {
                                         T result = (T) value;
                                         return java.util.Optional.of(result);
                                     }
@@ -192,8 +191,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         // Handle special reserved variables
                         if ("code".equals(name)) {
                             java.util.Optional<Integer> code = context.getCode();
-                            if (code.isPresent() && type.isAssignableFrom(Integer.class)) {
-                                @SuppressWarnings("unchecked")
+                            if (code.isPresent() && type.isAssignableFrom(INTEGER_CLASS)) {
                                 T result = (T) code.get();
                                 return java.util.Optional.of(result);
                             }
@@ -204,8 +202,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                             if (output != null && type.isInstance(output)) {
                                 return java.util.Optional.of(type.cast(output));
                             }
-                            if (output != null && type == Object.class) {
-                                @SuppressWarnings("unchecked")
+                            if (output != null && type.equals(OBJECT_CLASS)) {
                                 T result = (T) output;
                                 return java.util.Optional.of(result);
                             }
@@ -216,7 +213,6 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     @Override
                     public void setVariable(String name, Object value) {
                         if ("output".equals(name)) {
-                            @SuppressWarnings("unchecked")
                             Object output = value;
                             context.setOutput(output);
                             return;

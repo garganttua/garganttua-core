@@ -16,8 +16,10 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 import com.garganttua.core.workflow.header.ScriptHeader;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
@@ -27,6 +29,8 @@ import com.garganttua.core.workflow.header.ScriptHeaderParser;
  */
 class WorkflowScriptsTest {
 
+    private static IReflectionBuilder reflectionBuilder;
+
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
     private ScriptHeaderParser headerParser;
@@ -34,14 +38,22 @@ class WorkflowScriptsTest {
     @TempDir
     Path tempDir;
 
+    @SuppressWarnings("unchecked")
     @BeforeAll
-    static void setupClass() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
+    static void setupClass() throws Exception {
+        Class<? extends IReflectionProvider> providerClass =
+                (Class<? extends IReflectionProvider>) Class.forName(
+                        "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new IndexedAnnotationScanner());
+        reflectionBuilder.build();
     }
 
     @BeforeEach
     void setup() {
         injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
                 .autoDetect(true)
                 .withPackage("com.garganttua.core.runtime");
 

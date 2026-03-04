@@ -7,18 +7,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
-
 class ScriptConsoleTest {
-
-    @BeforeAll
-    static void setup() {
-        ObjectReflectionHelper.setAnnotationScanner(new ReflectionsAnnotationScanner());
-    }
 
     private ScriptConsole createConsole(String input, ByteArrayOutputStream out, ByteArrayOutputStream err) {
         BufferedReader reader = new BufferedReader(new StringReader(input));

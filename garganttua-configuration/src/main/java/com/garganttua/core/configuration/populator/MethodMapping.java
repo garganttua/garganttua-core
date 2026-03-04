@@ -4,10 +4,10 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.garganttua.core.configuration.annotations.ConfigIgnore;
 import com.garganttua.core.configuration.annotations.ConfigProperty;
-import com.garganttua.core.reflection.utils.ObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,13 +28,13 @@ public class MethodMapping {
         }
 
         // 2. Direct name match
-        var direct = findValidMethod(ObjectReflectionHelper.getMethods(builderClass, configKey));
+        var direct = findValidMethod(getMethodsByName(builderClass, configKey));
         if (direct.isPresent()) {
             return direct;
         }
 
         // 3. With "with" prefix
-        var withPrefix = findValidMethod(ObjectReflectionHelper.getMethods(builderClass, "with" + capitalize(configKey)));
+        var withPrefix = findValidMethod(getMethodsByName(builderClass, "with" + capitalize(configKey)));
         if (withPrefix.isPresent()) {
             return withPrefix;
         }
@@ -44,13 +44,13 @@ public class MethodMapping {
         }
 
         // 4. camelCase conversion
-        var camelCase = findValidMethod(ObjectReflectionHelper.getMethods(builderClass, toCamelCase(configKey)));
+        var camelCase = findValidMethod(getMethodsByName(builderClass, toCamelCase(configKey)));
         if (camelCase.isPresent()) {
             return camelCase;
         }
 
         // 5. camelCase with "with" prefix
-        var withCamelCase = findValidMethod(ObjectReflectionHelper.getMethods(builderClass, "with" + capitalize(toCamelCase(configKey))));
+        var withCamelCase = findValidMethod(getMethodsByName(builderClass, "with" + capitalize(toCamelCase(configKey))));
         if (withCamelCase.isPresent()) {
             return withCamelCase;
         }
@@ -58,11 +58,11 @@ public class MethodMapping {
         // 6. kebab-case to camelCase
         if (configKey.contains("-")) {
             var fromKebab = kebabToCamelCase(configKey);
-            var kebab = findValidMethod(ObjectReflectionHelper.getMethods(builderClass, fromKebab));
+            var kebab = findValidMethod(getMethodsByName(builderClass, fromKebab));
             if (kebab.isPresent()) {
                 return kebab;
             }
-            var withKebab = findValidMethod(ObjectReflectionHelper.getMethods(builderClass, "with" + capitalize(fromKebab)));
+            var withKebab = findValidMethod(getMethodsByName(builderClass, "with" + capitalize(fromKebab)));
             if (withKebab.isPresent()) {
                 return withKebab;
             }
@@ -70,6 +70,12 @@ public class MethodMapping {
 
         log.atDebug().log("No method found for config key '{}' on {}", configKey, builderClass.getSimpleName());
         return Optional.empty();
+    }
+
+    private static List<Method> getMethodsByName(Class<?> clazz, String name) {
+        return Arrays.stream(clazz.getMethods())
+                .filter(m -> m.getName().equals(name))
+                .collect(Collectors.toList());
     }
 
     private Optional<Method> findByAnnotation(Class<?> builderClass, String configKey) {
