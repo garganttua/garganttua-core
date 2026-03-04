@@ -1,4 +1,4 @@
-package com.garganttua.core.annotation.processor;
+package com.garganttua.core.aot.annotation.processor;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

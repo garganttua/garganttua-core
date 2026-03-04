@@ -35,7 +35,7 @@
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
-      <artifactId>garganttua-annotation-processor</artifactId>
+      <artifactId>garganttua-aot-annotation-scanner</artifactId>
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>

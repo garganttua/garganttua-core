@@ -1,4 +1,4 @@
-package com.garganttua.core.annotation.processor;
+package com.garganttua.core.aot.annotation.scanner;
 
 import java.lang.annotation.Annotation;
 import java.util.List;

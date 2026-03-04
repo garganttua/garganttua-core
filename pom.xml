@@ -176,7 +176,12 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
-        <artifactId>garganttua-annotation-processor</artifactId>
+        <artifactId>garganttua-aot-annotation-scanner</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-annotation-processor</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -378,7 +383,7 @@
             </path>
             <path>
               <groupId>com.garganttua.core</groupId>
-              <artifactId>garganttua-annotation-processor</artifactId>
+              <artifactId>garganttua-aot-annotation-processor</artifactId>
               <version>${project.version}</version>
             </path>
           </annotationProcessorPaths>

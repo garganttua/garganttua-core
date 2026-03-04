@@ -70,28 +70,4 @@
             </dependency>
       </dependencies>
 
-
-      <build>
-            <plugins>
-                  <plugin>
-                        <groupId>com.garganttua.core</groupId>
-                        <artifactId>garganttua-native-image-maven-plugin</artifactId>
-                        <version>${project.version}</version>
-                        <executions>
-                              <execution>
-                                    <goals>
-                                          <goal>native-config</goal>
-                                    </goals>
-                              </execution>
-                        </executions>
-                        <configuration>
-                              <resources>
-                              </resources>
-                              <packages>
-                                    <package>com.garganttua.core.runtime</package>
-                              </packages>
-                        </configuration>
-                  </plugin>
-            </plugins>
-      </build>
 </project>

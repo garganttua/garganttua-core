@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.aot.annotation.scanner.IndexedAnnotationScanner;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;

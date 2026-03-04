@@ -21,7 +21,7 @@ import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
-import com.garganttua.core.annotation.processor.IndexedAnnotationScanner;
+import com.garganttua.core.aot.annotation.scanner.IndexedAnnotationScanner;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;

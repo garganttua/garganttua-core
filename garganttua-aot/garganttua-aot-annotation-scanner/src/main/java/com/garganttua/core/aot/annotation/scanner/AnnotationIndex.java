@@ -1,4 +1,4 @@
-package com.garganttua.core.annotation.processor;
+package com.garganttua.core.aot.annotation.scanner;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,8 +28,7 @@ import com.garganttua.core.reflection.runtime.RuntimeMethod;
  * <p>
  * This implementation provides fast annotation lookups by reading pre-computed
  * index files from {@code META-INF/garganttua/index/}. Index files are
- * generated
- * at compile-time by {@link IndexedAnnotationProcessor}.
+ * generated at compile-time by the annotation processor.
  * </p>
  *
  * <h2>Performance Characteristics</h2>

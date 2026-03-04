@@ -1,0 +1,2 @@
+com.garganttua.core.aot.annotation.processor.IndexedAnnotationProcessor
+com.garganttua.core.aot.annotation.processor.DirectBinderGenerator

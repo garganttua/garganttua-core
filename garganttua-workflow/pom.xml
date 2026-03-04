@@ -36,6 +36,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-annotation-scanner</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflections</artifactId>
 			<scope>test</scope>
 		</dependency>

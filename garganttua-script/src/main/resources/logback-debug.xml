@@ -49,7 +49,7 @@
     <logger name="com.garganttua.core.injection.context" level="DEBUG"/>
 
     <!-- Annotation scanning -->
-    <logger name="com.garganttua.core.annotation.processor" level="DEBUG"/>
+    <logger name="com.garganttua.core.aot.annotation.scanner" level="DEBUG"/>
 
     <!-- Reflection operations -->
     <logger name="com.garganttua.core.reflection" level="DEBUG"/>

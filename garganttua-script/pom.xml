@@ -35,11 +35,11 @@
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
-      <artifactId>garganttua-annotation-processor</artifactId>
+      <artifactId>garganttua-bootstrap</artifactId>
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
-      <artifactId>garganttua-bootstrap</artifactId>
+      <artifactId>garganttua-aot-annotation-scanner</artifactId>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
