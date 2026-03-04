@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-import com.garganttua.core.aot.annotation.scanner.IndexedAnnotationScanner;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
@@ -103,7 +103,7 @@ public class Main {
     private static int executeScript(File scriptFile, String[] args) throws ScriptException, IOException {
         IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(loadReflectionProvider())
-                .withScanner(new IndexedAnnotationScanner());
+                .withScanner(new ReflectionsAnnotationScanner());
 
         // Build injection context
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
@@ -200,7 +200,7 @@ public class Main {
     private static IExpressionContext buildExpressionContext() {
         IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(loadReflectionProvider())
-                .withScanner(new IndexedAnnotationScanner());
+                .withScanner(new ReflectionsAnnotationScanner());
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
                 .provide(reflectionBuilder)

@@ -21,7 +21,7 @@ import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
-import com.garganttua.core.aot.annotation.scanner.IndexedAnnotationScanner;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
@@ -361,7 +361,7 @@ public class ScriptConsole {
                             "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
             reflectionBuilder = ReflectionBuilder.builder()
                     .withProvider(providerClass.getDeclaredConstructor().newInstance())
-                    .withScanner(new IndexedAnnotationScanner());
+                    .withScanner(new ReflectionsAnnotationScanner());
             reflectionBuilder.build();
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize reflection provider", e);

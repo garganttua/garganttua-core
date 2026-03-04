@@ -16,7 +16,7 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.aot.annotation.scanner.IndexedAnnotationScanner;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
@@ -46,7 +46,7 @@ class WorkflowScriptsTest {
                         "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
         reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(providerClass.getDeclaredConstructor().newInstance())
-                .withScanner(new IndexedAnnotationScanner());
+                .withScanner(new ReflectionsAnnotationScanner());
         reflectionBuilder.build();
     }
 
