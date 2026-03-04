@@ -8,13 +8,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.injection.context.resolver.FixedElementResolver;
 import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeField;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -34,7 +34,7 @@ public class FixedElementResolverTest {
     }
 
     private static IAnnotatedElement adapt(Field field) {
-        return IInjectableElementResolver.toIAnnotatedElement(field.getAnnotations(), field.getDeclaredAnnotations());
+        return RuntimeField.of(field);
     }
 
     @Test

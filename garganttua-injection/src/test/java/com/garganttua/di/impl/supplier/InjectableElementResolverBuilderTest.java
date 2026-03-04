@@ -15,6 +15,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.InjectionContext;
@@ -27,6 +28,7 @@ import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeParameter;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.SupplyException;
@@ -53,6 +55,28 @@ public class InjectableElementResolverBuilderTest {
 
         }
 
+        private static IAnnotatedElement adaptParameter(Parameter param) {
+                RuntimeParameter rp = RuntimeParameter.of(param);
+                return new IAnnotatedElement() {
+                        @Override
+                        public <T extends java.lang.annotation.Annotation> T getAnnotation(IClass<T> annotationClass) {
+                                return rp.getAnnotation(annotationClass);
+                        }
+                        @Override
+                        public java.lang.annotation.Annotation[] getAnnotations() {
+                                return rp.getAnnotations();
+                        }
+                        @Override
+                        public java.lang.annotation.Annotation[] getDeclaredAnnotations() {
+                                return rp.getDeclaredAnnotations();
+                        }
+                        @Override
+                        public IReflection reflection() {
+                                return IClass.getReflection();
+                        }
+                };
+        }
+
         @SuppressWarnings("unchecked")
         @Test
         public void testSingleton()
@@ -61,7 +85,7 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
-                IAnnotatedElement adapted2 = IInjectableElementResolver.toIAnnotatedElement(params[2].getAnnotations(), params[2].getDeclaredAnnotations());
+                IAnnotatedElement adapted2 = adaptParameter(params[2]);
                 Resolved resolved = this.resolvers.resolve(
                                 IClass.getClass(params[2].getType()),
                                 adapted2);
@@ -82,7 +106,7 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
-                IAnnotatedElement adapted1 = IInjectableElementResolver.toIAnnotatedElement(params[1].getAnnotations(), params[1].getDeclaredAnnotations());
+                IAnnotatedElement adapted1 = adaptParameter(params[1]);
                 Resolved resolved = this.resolvers.resolve(
                                 IClass.getClass(params[1].getType()),
                                 adapted1);
@@ -103,7 +127,7 @@ public class InjectableElementResolverBuilderTest {
                                 DummyOtherBean.class);
                 Parameter[] params = ctor.getParameters();
 
-                IAnnotatedElement adapted0 = IInjectableElementResolver.toIAnnotatedElement(params[0].getAnnotations(), params[0].getDeclaredAnnotations());
+                IAnnotatedElement adapted0 = adaptParameter(params[0]);
                 Resolved resolved = this.resolvers.resolve(
                                 IClass.getClass(params[0].getType()),
                                 adapted0);

@@ -1,7 +1,6 @@
 package com.garganttua.core.injection.context;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IExecutable;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -465,7 +465,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     }
 
     @Override
-    public Set<Resolved> resolve(Executable method) throws DiException {
+    public Set<Resolved> resolve(IExecutable method) throws DiException {
         log.atTrace().log("Resolving method: {}", method);
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         Set<Resolved> result = this.resolverDelegate.resolve(method);

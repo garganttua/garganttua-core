@@ -1,7 +1,7 @@
 package com.garganttua.core.injection.dummies;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Executable;
+import com.garganttua.core.reflection.IExecutable;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -110,7 +110,7 @@ public class DummyInjectionContext implements IInjectionContext {
     }
 
     @Override
-    public Set<Resolved> resolve(Executable method) throws DiException {
+    public Set<Resolved> resolve(IExecutable method) throws DiException {
         throw new UnsupportedOperationException("Unimplemented method 'resolve'");
     }
 

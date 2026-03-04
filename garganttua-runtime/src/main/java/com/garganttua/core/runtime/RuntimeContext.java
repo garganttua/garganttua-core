@@ -1,7 +1,7 @@
 package com.garganttua.core.runtime;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Executable;
+import com.garganttua.core.reflection.IExecutable;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -392,7 +392,7 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
-    public Set<Resolved> resolve(Executable method) throws DiException {
+    public Set<Resolved> resolve(IExecutable method) throws DiException {
         log.atTrace().log("[RuntimeContext.resolve] Resolving method {}", method);
         return this.delegateContext.resolve(method);
     }

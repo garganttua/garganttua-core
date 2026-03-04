@@ -4,16 +4,17 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IParameter;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.ITypeVariable;
 
 public record ResolvedConstructor<T>(IConstructor<T> constructor) implements IConstructor<T> {
 
     public IClass<T> constructedType() {
-        return constructor.getDeclaringClass();
+        return (IClass<T>) constructor.getDeclaringClass();
     }
 
     public boolean isVarArgs() {
@@ -60,7 +61,7 @@ public record ResolvedConstructor<T>(IConstructor<T> constructor) implements ICo
 
     @Override
     public IClass<T> getDeclaringClass() {
-        return constructor.getDeclaringClass();
+        return (IClass<T>) constructor.getDeclaringClass();
     }
 
     @Override
@@ -98,7 +99,7 @@ public record ResolvedConstructor<T>(IConstructor<T> constructor) implements ICo
     // --- GenericDeclaration ---
 
     @Override
-    public TypeVariable<?>[] getTypeParameters() {
+    public ITypeVariable<?>[] getTypeParameters() {
         return constructor.getTypeParameters();
     }
 
@@ -122,6 +123,11 @@ public record ResolvedConstructor<T>(IConstructor<T> constructor) implements ICo
     @Override
     public IParameter[] getParameters() {
         return constructor.getParameters();
+    }
+
+    @Override
+    public Annotation[][] getParameterAnnotations() {
+        return constructor.getParameterAnnotations();
     }
 
     // --- Exceptions ---
@@ -200,13 +206,6 @@ public record ResolvedConstructor<T>(IConstructor<T> constructor) implements ICo
         return constructor.getDeclaredAnnotationsByType(annotationClass);
     }
 
-    // --- AnnotatedElement (Class overloads from java.lang.reflect.AnnotatedElement) ---
-
-    @Override
-    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        return constructor.getAnnotation(annotationClass);
-    }
-
     @Override
     public Annotation[] getAnnotations() {
         return constructor.getAnnotations();
@@ -215,6 +214,13 @@ public record ResolvedConstructor<T>(IConstructor<T> constructor) implements ICo
     @Override
     public Annotation[] getDeclaredAnnotations() {
         return constructor.getDeclaredAnnotations();
+    }
+
+    // --- IAnnotatedElement ---
+
+    @Override
+    public IReflection reflection() {
+        return IClass.getReflection();
     }
 
     @Override

@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.DiException;
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.IAnnotatedElement;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
 import com.garganttua.core.injection.context.beans.resolver.SingletonElementResolver;
@@ -27,6 +27,7 @@ import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeParameter;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.supply.SupplyException;
@@ -45,6 +46,28 @@ public class InjectableElementResolverTest {
                 .build().onInit().onStart();
     }
 
+    private static IAnnotatedElement adaptParameter(Parameter param) {
+        RuntimeParameter rp = RuntimeParameter.of(param);
+        return new IAnnotatedElement() {
+            @Override
+            public <T extends java.lang.annotation.Annotation> T getAnnotation(IClass<T> annotationClass) {
+                return rp.getAnnotation(annotationClass);
+            }
+            @Override
+            public java.lang.annotation.Annotation[] getAnnotations() {
+                return rp.getAnnotations();
+            }
+            @Override
+            public java.lang.annotation.Annotation[] getDeclaredAnnotations() {
+                return rp.getDeclaredAnnotations();
+            }
+            @Override
+            public IReflection reflection() {
+                return IClass.getReflection();
+            }
+        };
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testSingleton() throws NoSuchMethodException, SecurityException, DiException, DslException, SupplyException {
@@ -54,7 +77,7 @@ public class InjectableElementResolverTest {
         SingletonElementResolver singletonConstructor = new SingletonElementResolver(
                 Set.of());
 
-        IAnnotatedElement adapted2 = IInjectableElementResolver.toIAnnotatedElement(params[2].getAnnotations(), params[2].getDeclaredAnnotations());
+        IAnnotatedElement adapted2 = adaptParameter(params[2]);
         Resolved resolved = singletonConstructor.resolve(IClass.getClass(params[2].getType()), adapted2);
 
         assertNotNull(resolved);
@@ -74,7 +97,7 @@ public class InjectableElementResolverTest {
         PrototypeElementResolver prototypeConstructor = new PrototypeElementResolver(
                 Set.of());
 
-        IAnnotatedElement adapted1 = IInjectableElementResolver.toIAnnotatedElement(params[1].getAnnotations(), params[1].getDeclaredAnnotations());
+        IAnnotatedElement adapted1 = adaptParameter(params[1]);
         Resolved resolved = prototypeConstructor.resolve(IClass.getClass(params[1].getType()), adapted1);
 
         assertNotNull(resolved);
@@ -93,7 +116,7 @@ public class InjectableElementResolverTest {
 
         PropertyElementResolver propertyConstructor = new PropertyElementResolver();
 
-        IAnnotatedElement adapted0 = IInjectableElementResolver.toIAnnotatedElement(params[0].getAnnotations(), params[0].getDeclaredAnnotations());
+        IAnnotatedElement adapted0 = adaptParameter(params[0]);
         Resolved resolved = propertyConstructor.resolve(IClass.getClass(params[0].getType()), adapted0);
 
         assertNotNull(resolved);

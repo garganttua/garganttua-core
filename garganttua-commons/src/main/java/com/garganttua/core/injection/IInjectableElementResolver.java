@@ -1,12 +1,12 @@
 package com.garganttua.core.injection;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Executable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IExecutable;
 import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.IReflection;
 
@@ -79,7 +79,7 @@ public interface IInjectableElementResolver {
      * @return a set of {@link Resolved} instances for each parameter
      * @throws DiException if an error occurs during resolution
      */
-    Set<Resolved> resolve(Executable method) throws DiException;
+    Set<Resolved> resolve(IExecutable method) throws DiException;
 
     /**
      * Registers a custom resolver for a specific annotation type.
@@ -131,41 +131,6 @@ public interface IInjectableElementResolver {
     }
 
     /**
-     * Adapts an annotations array to an {@link IAnnotatedElement}.
-     *
-     * @param annotations the annotations
-     * @param declaredAnnotations the declared annotations
-     * @return an IAnnotatedElement adapter
-     */
-    static IAnnotatedElement toIAnnotatedElement(Annotation[] annotations, Annotation[] declaredAnnotations) {
-        return new IAnnotatedElement() {
-            @Override
-            public <T extends Annotation> T getAnnotation(IClass<T> annotationClass) {
-                for (Annotation a : annotations) {
-                    if (annotationClass.getType().equals(a.annotationType()))
-                        return annotationClass.cast(a);
-                }
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return annotations;
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return declaredAnnotations;
-            }
-
-            @Override
-            public IReflection reflection() {
-                return IClass.getReflection();
-            }
-        };
-    }
-
-    /**
      * Resolves all parameters of an IConstructor or IMethod.
      *
      * @param parameters the parameters to resolve
@@ -175,8 +140,7 @@ public interface IInjectableElementResolver {
     default Set<Resolved> resolve(IParameter[] parameters) throws DiException {
         Set<Resolved> result = new LinkedHashSet<>();
         for (IParameter param : parameters) {
-            IAnnotatedElement adapted = toIAnnotatedElement(param.getAnnotations(), param.getDeclaredAnnotations());
-            result.add(resolve(param.getType(), adapted));
+            result.add(resolve(param.getType(), param));
         }
         return result;
     }

@@ -164,6 +164,11 @@ public record ResolvedMethod(ObjectAddress address, List<Object> methodPath) imp
         return method().getParameters();
     }
 
+    @Override
+    public Annotation[][] getParameterAnnotations() {
+        return method().getParameterAnnotations();
+    }
+
     // --- Exceptions ---
 
     @Override

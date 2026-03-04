@@ -128,6 +128,11 @@ public class RuntimeMethod implements IMethod {
 				.toArray(IParameter[]::new);
 	}
 
+	@Override
+	public Annotation[][] getParameterAnnotations() {
+		return method.getParameterAnnotations();
+	}
+
 	// --- Exceptions ---
 
 	@Override

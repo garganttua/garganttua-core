@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IParameter;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.ITypeVariable;
 
 public class RuntimeConstructor<T> implements IConstructor<T> {
 
@@ -86,8 +88,14 @@ public class RuntimeConstructor<T> implements IConstructor<T> {
 	// --- GenericDeclaration ---
 
 	@Override
-	public TypeVariable<?>[] getTypeParameters() {
-		return constructor.getTypeParameters();
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public ITypeVariable<?>[] getTypeParameters() {
+		TypeVariable<Constructor<T>>[] jdkVars = constructor.getTypeParameters();
+		ITypeVariable<?>[] result = new ITypeVariable[jdkVars.length];
+		for (int i = 0; i < jdkVars.length; i++) {
+			result[i] = new RuntimeTypeVariable<>(jdkVars[i], this);
+		}
+		return result;
 	}
 
 	// --- Parameters ---
@@ -114,6 +122,11 @@ public class RuntimeConstructor<T> implements IConstructor<T> {
 		return Arrays.stream(constructor.getParameters())
 				.map(RuntimeParameter::of)
 				.toArray(IParameter[]::new);
+	}
+
+	@Override
+	public Annotation[][] getParameterAnnotations() {
+		return constructor.getParameterAnnotations();
 	}
 
 	// --- Exceptions ---
@@ -199,13 +212,6 @@ public class RuntimeConstructor<T> implements IConstructor<T> {
 		return constructor.getDeclaredAnnotationsByType(RuntimeClass.unwrapAnnotationClass(annotationClass));
 	}
 
-	// --- AnnotatedElement (Class overloads from java.lang.reflect.AnnotatedElement) ---
-
-	@Override
-	public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-		return constructor.getAnnotation(annotationClass);
-	}
-
 	@Override
 	public Annotation[] getAnnotations() {
 		return constructor.getAnnotations();
@@ -214,6 +220,13 @@ public class RuntimeConstructor<T> implements IConstructor<T> {
 	@Override
 	public Annotation[] getDeclaredAnnotations() {
 		return constructor.getDeclaredAnnotations();
+	}
+
+	// --- IAnnotatedElement ---
+
+	@Override
+	public IReflection reflection() {
+		return IClass.getReflection();
 	}
 
 	// --- Object overrides ---

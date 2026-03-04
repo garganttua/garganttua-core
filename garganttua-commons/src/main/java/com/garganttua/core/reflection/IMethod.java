@@ -1,6 +1,5 @@
 package com.garganttua.core.reflection;
 
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 
@@ -15,19 +14,7 @@ import java.lang.reflect.Type;
  *
  * @since 2.0.0-ALPHA01
  */
-public interface IMethod extends IMember, IGenericDeclaration {
-
-	// --- AccessibleObject ---
-
-	void setAccessible(boolean flag);
-
-	boolean trySetAccessible();
-
-	boolean canAccess(Object obj);
-
-	// --- GenericDeclaration ---
-
-	ITypeVariable<?>[] getTypeParameters();
+public interface IMethod extends IExecutable {
 
 	// --- Return type ---
 
@@ -35,25 +22,7 @@ public interface IMethod extends IMember, IGenericDeclaration {
 
 	Type getGenericReturnType();
 
-	// --- Parameters ---
-
-	IClass<?>[] getParameterTypes();
-
-	Type[] getGenericParameterTypes();
-
-	int getParameterCount();
-
-	IParameter[] getParameters();
-
-	// --- Exceptions ---
-
-	IClass<?>[] getExceptionTypes();
-
-	Type[] getGenericExceptionTypes();
-
-	// --- Method properties ---
-
-	boolean isVarArgs();
+	// --- Method-specific properties ---
 
 	boolean isBridge();
 
@@ -61,21 +30,9 @@ public interface IMethod extends IMember, IGenericDeclaration {
 
 	Object getDefaultValue();
 
-	String toGenericString();
-
 	// --- Invocation ---
 
 	Object invoke(Object obj, Object... args)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
-
-	// --- Annotated types ---
-
-	AnnotatedType getAnnotatedReturnType();
-
-	AnnotatedType[] getAnnotatedParameterTypes();
-
-	AnnotatedType[] getAnnotatedExceptionTypes();
-
-	AnnotatedType getAnnotatedReceiverType();
 
 }

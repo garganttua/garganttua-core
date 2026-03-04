@@ -1,12 +1,13 @@
 package com.garganttua.core.reflection.runtime;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 
+import com.garganttua.core.reflection.IAnnotatedType;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IParameter;
+import com.garganttua.core.reflection.IReflection;
 
 public class RuntimeParameter implements IParameter {
 
@@ -65,8 +66,8 @@ public class RuntimeParameter implements IParameter {
 	}
 
 	@Override
-	public AnnotatedType getAnnotatedType() {
-		return parameter.getAnnotatedType();
+	public IAnnotatedType getAnnotatedType() {
+		return new RuntimeAnnotatedType(parameter.getAnnotatedType());
 	}
 
 	// --- AnnotatedElement ---
@@ -104,6 +105,11 @@ public class RuntimeParameter implements IParameter {
 	@Override
 	public <T extends Annotation> T[] getDeclaredAnnotationsByType(IClass<T> annotationClass) {
 		return parameter.getDeclaredAnnotationsByType(RuntimeClass.unwrapAnnotationClass(annotationClass));
+	}
+
+	@Override
+	public IReflection reflection() {
+		return IClass.getReflection();
 	}
 
 	@Override

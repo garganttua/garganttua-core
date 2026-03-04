@@ -3,6 +3,7 @@ package com.garganttua.core.reflections;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,8 +15,6 @@ import org.reflections.scanners.Scanners;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
-import com.garganttua.core.reflection.runtime.RuntimeMethod;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,11 +29,12 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		return getClassesWithAnnotation("", annotation);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
 		log.atTrace().log("Entering getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
-		Class<? extends Annotation> rawAnnotation = unwrapAnnotation(annotation);
+		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
 		Reflections reflections = typeAnnotationCache.computeIfAbsent(packageName, pkg -> {
 			log.atDebug().log("Initializing Reflections scanner for package '{}' (TypesAnnotated)", pkg);
@@ -46,7 +46,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
 		List<IClass<?>> result = new ArrayList<>(annotatedClasses.size());
 		for (Class<?> clazz : annotatedClasses) {
-			result.add(RuntimeClass.ofUnchecked(clazz));
+			result.add(IClass.getClass(clazz));
 		}
 
 		log.atDebug().log("Found {} classes annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
@@ -59,11 +59,12 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		return getMethodsWithAnnotation("", annotation);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<IMethod> getMethodsWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
 		log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
-		Class<? extends Annotation> rawAnnotation = unwrapAnnotation(annotation);
+		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
 		Reflections reflections = methodAnnotationCache.computeIfAbsent(packageName, pkg -> {
 			log.atDebug().log("Initializing Reflections scanner for package '{}' (MethodsAnnotated)", pkg);
@@ -75,23 +76,16 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
 		List<IMethod> result = new ArrayList<>(annotatedMethods.size());
 		for (Method method : annotatedMethods) {
-			result.add(RuntimeMethod.of(method));
+			try {
+				IMethod found = IClass.getClass(method.getDeclaringClass()).getMethod(method.getName(), Arrays.stream(method.getParameterTypes()).map(IClass::getClass).toArray(IClass[]::new));
+				result.add(found);
+			} catch (NoSuchMethodException | SecurityException e) {
+				log.warn("Error", e);
+			}
 		}
 
 		log.atDebug().log("Found {} methods annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
 		log.atTrace().log("Exiting getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 		return result;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Class<? extends Annotation> unwrapAnnotation(IClass<? extends Annotation> annotation) {
-		if (annotation instanceof RuntimeClass<?> rc) {
-			return (Class<? extends Annotation>) rc.unwrap();
-		}
-		try {
-			return (Class<? extends Annotation>) Class.forName(annotation.getName());
-		} catch (ClassNotFoundException e) {
-			throw new IllegalArgumentException("Cannot resolve annotation class: " + annotation.getName(), e);
-		}
 	}
 }

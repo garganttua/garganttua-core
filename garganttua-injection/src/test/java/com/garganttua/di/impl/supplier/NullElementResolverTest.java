@@ -8,13 +8,14 @@ import java.lang.reflect.Parameter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.annotations.Null;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
 import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeField;
+import com.garganttua.core.reflection.runtime.RuntimeParameter;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -36,11 +37,33 @@ public class NullElementResolverTest {
     }
 
     private static IAnnotatedElement adapt(Field field) {
-        return IInjectableElementResolver.toIAnnotatedElement(field.getAnnotations(), field.getDeclaredAnnotations());
+        return RuntimeField.of(field);
     }
 
     private static IAnnotatedElement adapt(Parameter parameter) {
-        return IInjectableElementResolver.toIAnnotatedElement(parameter.getAnnotations(), parameter.getDeclaredAnnotations());
+        return adaptParameter(parameter);
+    }
+
+    private static IAnnotatedElement adaptParameter(Parameter parameter) {
+        RuntimeParameter rp = RuntimeParameter.of(parameter);
+        return new IAnnotatedElement() {
+            @Override
+            public <T extends java.lang.annotation.Annotation> T getAnnotation(IClass<T> annotationClass) {
+                return rp.getAnnotation(annotationClass);
+            }
+            @Override
+            public java.lang.annotation.Annotation[] getAnnotations() {
+                return rp.getAnnotations();
+            }
+            @Override
+            public java.lang.annotation.Annotation[] getDeclaredAnnotations() {
+                return rp.getDeclaredAnnotations();
+            }
+            @Override
+            public com.garganttua.core.reflection.IReflection reflection() {
+                return IClass.getReflection();
+            }
+        };
     }
 
     @Test

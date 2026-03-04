@@ -1,7 +1,6 @@
 package com.garganttua.core.reflection;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Type;
 
 /**
@@ -12,7 +11,7 @@ import java.lang.reflect.Type;
  *
  * @since 2.0.0-ALPHA01
  */
-public interface IParameter {
+public interface IParameter extends IAnnotatedElement {
 
 	boolean isNamePresent();
 
@@ -30,21 +29,16 @@ public interface IParameter {
 
 	boolean isVarArgs();
 
-	AnnotatedType getAnnotatedType();
+	IAnnotatedType getAnnotatedType();
 
-	// --- AnnotatedElement ---
+	// --- AnnotatedElement (abstract in IAnnotatedElement) ---
 
-	boolean isAnnotationPresent(IClass<? extends Annotation> annotationClass);
-
+	@Override
 	<T extends Annotation> T getAnnotation(IClass<T> annotationClass);
 
+	@Override
 	Annotation[] getAnnotations();
 
+	@Override
 	Annotation[] getDeclaredAnnotations();
-
-	<T extends Annotation> T[] getAnnotationsByType(IClass<T> annotationClass);
-
-	<T extends Annotation> T getDeclaredAnnotation(IClass<T> annotationClass);
-
-	<T extends Annotation> T[] getDeclaredAnnotationsByType(IClass<T> annotationClass);
 }

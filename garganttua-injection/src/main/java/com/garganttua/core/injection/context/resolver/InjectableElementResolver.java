@@ -3,8 +3,6 @@ package com.garganttua.core.injection.context.resolver;
 import static com.garganttua.core.injection.IInjectableElementResolver.*;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Parameter;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +15,10 @@ import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
+import com.garganttua.core.reflection.IExecutable;
+import com.garganttua.core.reflection.IMethod;
+import com.garganttua.core.reflection.IParameter;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,16 +61,22 @@ public class InjectableElementResolver implements IInjectableElementResolver {
     }
 
     @Override
-    public Set<Resolved> resolve(Executable executable) throws DiException {
-        log.atTrace().log("Entering resolve for Executable: {}", executable);
-        Set<Resolved> paramResolved = new LinkedHashSet<>();
-        for (Parameter parameter : executable.getParameters()) {
-            log.atDebug().log("Resolving parameter: {} of type {}", parameter.getName(), parameter.getType().getSimpleName());
-            IAnnotatedElement adapted = IInjectableElementResolver.toIAnnotatedElement(
-                parameter.getAnnotations(), parameter.getDeclaredAnnotations());
-            paramResolved.add(resolve(IClass.getClass(parameter.getType()), adapted));
+    public Set<Resolved> resolve(IExecutable executable) throws DiException {
+        log.atTrace().log("Entering resolve for IExecutable: {}", executable);
+        IParameter[] parameters;
+        if (executable instanceof IConstructor<?> c) {
+            parameters = c.getParameters();
+        } else if (executable instanceof IMethod m) {
+            parameters = m.getParameters();
+        } else {
+            return new LinkedHashSet<>();
         }
-        log.atTrace().log("Exiting resolve for Executable with resolved parameters: {}", paramResolved);
+        Set<Resolved> paramResolved = new LinkedHashSet<>();
+        for (IParameter parameter : parameters) {
+            log.atDebug().log("Resolving parameter: {} of type {}", parameter.getName(), parameter.getType().getSimpleName());
+            paramResolved.add(resolve(parameter.getType(), parameter));
+        }
+        log.atTrace().log("Exiting resolve for IExecutable with resolved parameters: {}", paramResolved);
         return paramResolved;
     }
 
