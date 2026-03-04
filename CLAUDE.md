@@ -61,7 +61,6 @@ python3 scripts/run_all.py
 - When modifying `garganttua-script` and testing from `garganttua-workflow`, you must `mvn install -pl garganttua-script -DskipTests` first so the workflow module picks up the updated JAR.
 - The shade plugin in `garganttua-script` and `garganttua-console` uses `AppendingTransformer` to merge annotation index files from multiple JARs. This must be updated when adding new `@Indexed` annotations.
 - The `garganttua-annotation-processor` module disables annotation processing (`-proc:none`) to avoid self-processing. It is **commented out** of the root reactor `<modules>` — it must be pre-installed separately (`mvn install -pl garganttua-annotation-processor`).
-- `garganttua-bindings` is also commented out of the root reactor (Spring/Reflections library bindings).
 
 ## Architecture Overview
 
@@ -77,11 +76,11 @@ Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA01`) is a modular Ja
 
 4. **Application**: `garganttua-script` (scripting engine), `garganttua-console` (interactive REPL, extracted from script), `garganttua-workflow` (high-level workflow DSL with script generation)
 
-5. **Integration**: `garganttua-bindings/` (Spring, Reflections library bindings — commented out of reactor)
+5. **Integration**: `garganttua-bindings/` (Spring, Reflections library bindings)
 
 6. **Build Tools**: `garganttua-native`, `garganttua-native-image-maven-plugin` (GraalVM support), `garganttua-annotation-processor` (compile-time annotation indexing — commented out of reactor), `garganttua-script-maven-plugin` (script plugin JAR packaging)
 
-7. **AOT (Work in Progress)**: `garganttua-aot-common` (shared AOT interfaces), `garganttua-aot/` (parent with submodules: `garganttua-aot-reflection`, `garganttua-aot-annotation-scanner`, `garganttua-aot-annotation-processor`, `garganttua-aot-maven-plugin`)
+7. **AOT (Work in Progress)**: `garganttua-aot-commons` (shared AOT interfaces), `garganttua-aot/` (parent with submodules: `garganttua-aot-reflection`, `garganttua-aot-annotation-scanner`, `garganttua-aot-annotation-processor`, `garganttua-aot-maven-plugin`)
 
 ### Key Design Patterns
 
@@ -200,6 +199,9 @@ The reflection subsystem uses a pluggable provider architecture:
 - All modules must be thread-safe. Use `Collections.synchronizedMap/List` or concurrent collections for shared state.
 - See `.claude/rules/java-conventions.md` for full naming and style conventions.
 - Key points: Lombok for boilerplate, `I` prefix for interfaces, Java records for value objects, `Optional<T>` for nullable values, SLF4J logging via `@Slf4j`.
+- **`Class<?>` usage is prohibited** — always use `IClass<?>` from `garganttua-commons` instead. Use `IClass.getClass(clazz)` to wrap a raw `Class<?>`.
+- Use `FieldAccessor` and `MethodInvoker` from `garganttua-reflection` for field access/method invocation instead of raw `IField.get()/set()` and `IMethod.invoke()`.
+- `InjectionContextBuilder` requires `IReflectionBuilder` as a build dependency. Tests must create an `IReflectionBuilder`, build it, then provide it via `.provide(reflectionBuilder)`.
 
 ## Cross-Module Concerns
 
