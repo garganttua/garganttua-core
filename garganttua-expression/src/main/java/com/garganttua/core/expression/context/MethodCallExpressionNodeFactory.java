@@ -41,12 +41,18 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
         IClass<?> ownerIClass = ownerNode.getFinalSuppliedClass();
         ISupplier<?> ownerSupplier;
 
-        if (ownerIClass.getType() == Class.class) {
+        if (ownerIClass.getType() == Class.class || IClass.getClass(IClass.class).isAssignableFrom(ownerIClass)) {
             // Static method call - evaluate the owner node to get the actual target class
-            Class<?> actualClass = (Class<?>) ownerNode.evaluate().supply()
+            Object classResult = ownerNode.evaluate().supply()
                     .orElseThrow(() -> new ExpressionException("Cannot resolve class for static method call: " + methodName));
-            ownerIClass = IClass.getClass(actualClass);
-            ownerSupplier = new NullSupplier<>(IClass.getClass(actualClass));
+            if (classResult instanceof IClass<?> ic) {
+                ownerIClass = ic;
+            } else if (classResult instanceof Class<?> c) {
+                ownerIClass = IClass.getClass(c);
+            } else {
+                throw new ExpressionException("Cannot resolve class for static method call: " + methodName);
+            }
+            ownerSupplier = new NullSupplier<>(ownerIClass);
         } else {
             // Instance method call
             ownerSupplier = ownerNode.evaluate();

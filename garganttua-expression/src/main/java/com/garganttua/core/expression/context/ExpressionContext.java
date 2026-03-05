@@ -779,6 +779,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                 case "Short", "short" -> Short.class;
                 case "Character", "char" -> Character.class;
                 case "Class" -> Class.class;
+                case "IClass" -> IClass.class;
                 case "Set" -> java.util.Set.class;
                 case "List" -> java.util.List.class;
                 case "Map" -> java.util.Map.class;

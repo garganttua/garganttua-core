@@ -308,18 +308,18 @@ public class ExpressionContextTest {
         // Test primitive type int
         IExpression<?, ? extends ISupplier<?>> intTypeExpr = expressionContext.expression("int");
         ISupplier<?> intTypeResult = intTypeExpr.evaluate();
-        Optional<Class<?>> intTypeValue = (Optional<Class<?>>) intTypeResult.supply();
+        Optional<IClass<?>> intTypeValue = (Optional<IClass<?>>) intTypeResult.supply();
 
         assertTrue(intTypeValue.isPresent(), "int type should be present");
-        assertEquals(int.class, intTypeValue.get(), "Should return int.class");
+        assertEquals(IClass.getClass(int.class), intTypeValue.get(), "Should return int.class");
 
         // Test primitive type boolean
         IExpression<?, ? extends ISupplier<?>> boolTypeExpr = expressionContext.expression("boolean");
         ISupplier<?> boolTypeResult = boolTypeExpr.evaluate();
-        Optional<Class<?>> boolTypeValue = (Optional<Class<?>>) boolTypeResult.supply();
+        Optional<IClass<?>> boolTypeValue = (Optional<IClass<?>>) boolTypeResult.supply();
 
         assertTrue(boolTypeValue.isPresent(), "boolean type should be present");
-        assertEquals(boolean.class, boolTypeValue.get(), "Should return boolean.class");
+        assertEquals(IClass.getClass(boolean.class), boolTypeValue.get(), "Should return boolean.class");
     }
 
     @SuppressWarnings("unchecked")
@@ -329,18 +329,18 @@ public class ExpressionContextTest {
         // Test fully qualified class name
         IExpression<?, ? extends ISupplier<?>> stringTypeExpr = expressionContext.expression("java.lang.String");
         ISupplier<?> stringTypeResult = stringTypeExpr.evaluate();
-        Optional<Class<?>> stringTypeValue = (Optional<Class<?>>) stringTypeResult.supply();
+        Optional<IClass<?>> stringTypeValue = (Optional<IClass<?>>) stringTypeResult.supply();
 
         assertTrue(stringTypeValue.isPresent(), "String type should be present");
-        assertEquals(String.class, stringTypeValue.get(), "Should return String.class");
+        assertEquals(IClass.getClass(String.class), stringTypeValue.get(), "Should return String.class");
 
         // Test Class<?> expression
         IExpression<?, ? extends ISupplier<?>> classOfExpr = expressionContext.expression("Class<?>");
         ISupplier<?> classOfResult = classOfExpr.evaluate();
-        Optional<Class<?>> classOfValue = (Optional<Class<?>>) classOfResult.supply();
+        Optional<IClass<?>> classOfValue = (Optional<IClass<?>>) classOfResult.supply();
 
         assertTrue(classOfValue.isPresent(), "Class<?> type should be present");
-        assertEquals(Class.class, classOfValue.get(), "Should return Class.class");
+        assertEquals(IClass.getClass(Class.class), classOfValue.get(), "Should return Class.class");
     }
 
     @Test

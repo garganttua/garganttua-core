@@ -36,16 +36,22 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
         Objects.requireNonNull(parameterTypes, "Parameter types array cannot be null");
 
         // Evaluate the class node to get the actual target class
-        Class<?> actualClass = (Class<?>) classNode.evaluate().supply()
+        Object classResult = classNode.evaluate().supply()
                 .orElseThrow(() -> new ExpressionException("Cannot resolve class for constructor call"));
 
-        this.targetIClass = (IClass<R>) IClass.getClass(actualClass);
+        if (classResult instanceof IClass<?> ic) {
+            this.targetIClass = (IClass<R>) ic;
+        } else if (classResult instanceof Class<?> c) {
+            this.targetIClass = (IClass<R>) IClass.getClass(c);
+        } else {
+            throw new ExpressionException("Cannot resolve class for constructor call: unexpected type " + classResult.getClass().getName());
+        }
 
         try {
             this.constructor = (IConstructor<R>) findConstructor(this.targetIClass, parameterTypes);
         } catch (NoSuchMethodException e) {
             throw new ExpressionException(
-                    "No constructor found for class " + actualClass.getName()
+                    "No constructor found for class " + this.targetIClass.getName()
                             + " with parameter types " + java.util.Arrays.toString(parameterTypes));
         }
 

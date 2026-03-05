@@ -72,7 +72,7 @@ public class ScriptFunctions {
     // ========== Cast Function ==========
 
     @Expression(name = "cast", description = "Casts a value to the specified type")
-    public static Object cast(@Nullable IClass<?> type, @Nullable Object value) {
+    public static <T> T cast(@Nullable IClass<T> type, @Nullable Object value) {
         log.atDebug().log("cast({}, {})", type, value);
         if (type == null) {
             throw new ExpressionException("cast: type cannot be null");
