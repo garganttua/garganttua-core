@@ -134,8 +134,13 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                             // Set current code value (default 0 if not set)
                             Integer currentCode = context.getCode().orElse(0);
                             context.setVariable("code", currentCode);
-                            Object handlerResult = catchClause.handler().execute();
-                            handleResult(context, catchClause.handler(), handlerResult);
+                            if (catchClause.handler() != null) {
+                                Object handlerResult = catchClause.handler().execute();
+                                handleResult(context, catchClause.handler(), handlerResult);
+                            }
+                            if (catchClause.code() != null) {
+                                context.setCode(catchClause.code());
+                            }
                             caught = true;
                             break;
                         }
@@ -232,8 +237,13 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                                 // Set current code value (default 0 if not set)
                                 Integer currentCode = context.getCode().orElse(0);
                                 context.setVariable("code", currentCode);
-                                Object handlerResult = cc.handler().execute();
-                                handleResult(context, cc.handler(), handlerResult);
+                                if (cc.handler() != null) {
+                                    Object handlerResult = cc.handler().execute();
+                                    handleResult(context, cc.handler(), handlerResult);
+                                }
+                                if (cc.code() != null) {
+                                    context.setCode(cc.code());
+                                }
                                 return;
                             }
                         }
@@ -283,16 +293,26 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 // Evaluate inner pipe clauses
                 for (PipeClause pipe : innerNode.pipeClauses()) {
                     if (pipe.isDefault()) {
-                        lastResult = pipe.handler().execute();
-                        handleResult(context, pipe.handler(), lastResult);
+                        if (pipe.handler() != null) {
+                            lastResult = pipe.handler().execute();
+                            handleResult(context, pipe.handler(), lastResult);
+                        }
+                        if (pipe.code() != null) {
+                            context.setCode(pipe.code());
+                        }
                         break;
                     }
                     try {
                         ISupplier<?> conditionSupplier = pipe.condition().evaluate();
                         Object conditionResult = conditionSupplier.supply().orElse(null);
                         if (conditionResult instanceof Boolean b && b) {
-                            lastResult = pipe.handler().execute();
-                            handleResult(context, pipe.handler(), lastResult);
+                            if (pipe.handler() != null) {
+                                lastResult = pipe.handler().execute();
+                                handleResult(context, pipe.handler(), lastResult);
+                            }
+                            if (pipe.code() != null) {
+                                context.setCode(pipe.code());
+                            }
                             break;
                         }
                     } catch (Exception e) {
@@ -307,16 +327,26 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
     private void evaluatePipeClauses(IRuntimeContext<Object[], Object> runtimeContext, Object result) {
         for (PipeClause pipe : this.node.pipeClauses()) {
             if (pipe.isDefault()) {
-                Object handlerResult = pipe.handler().execute();
-                handleResult(runtimeContext, pipe.handler(), handlerResult);
+                if (pipe.handler() != null) {
+                    Object handlerResult = pipe.handler().execute();
+                    handleResult(runtimeContext, pipe.handler(), handlerResult);
+                }
+                if (pipe.code() != null) {
+                    runtimeContext.setCode(pipe.code());
+                }
                 return;
             }
             try {
                 ISupplier<?> conditionSupplier = pipe.condition().evaluate();
                 Object conditionResult = conditionSupplier.supply().orElse(null);
                 if (conditionResult instanceof Boolean b && b) {
-                    Object handlerResult = pipe.handler().execute();
-                    handleResult(runtimeContext, pipe.handler(), handlerResult);
+                    if (pipe.handler() != null) {
+                        Object handlerResult = pipe.handler().execute();
+                        handleResult(runtimeContext, pipe.handler(), handlerResult);
+                    }
+                    if (pipe.code() != null) {
+                        runtimeContext.setCode(pipe.code());
+                    }
                     return;
                 }
             } catch (Exception e) {

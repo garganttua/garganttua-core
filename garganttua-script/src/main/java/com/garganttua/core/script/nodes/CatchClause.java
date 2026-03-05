@@ -8,10 +8,16 @@ public class CatchClause {
 
     private final List<String> exceptionTypes;
     private final IScriptNode handler;
+    private final Integer code;
 
     public CatchClause(List<String> exceptionTypes, IScriptNode handler) {
+        this(exceptionTypes, handler, null);
+    }
+
+    public CatchClause(List<String> exceptionTypes, IScriptNode handler, Integer code) {
         this.exceptionTypes = exceptionTypes;
         this.handler = handler;
+        this.code = code;
     }
 
     public List<String> exceptionTypes() {
@@ -20,6 +26,10 @@ public class CatchClause {
 
     public IScriptNode handler() {
         return this.handler;
+    }
+
+    public Integer code() {
+        return this.code;
     }
 
     public boolean isCatchAll() {

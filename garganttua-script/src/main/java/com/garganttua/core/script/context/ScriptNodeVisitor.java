@@ -94,12 +94,15 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         for (org.antlr.v4.runtime.ParserRuleContext clause : clauses) {
             ScriptParser.ExceptionListContext exList;
             ScriptParser.CatchHandlerContext handler;
+            org.antlr.v4.runtime.tree.TerminalNode intLiteral;
             if (clause instanceof ScriptParser.CatchClauseContext cc) {
                 exList = cc.exceptionList();
                 handler = cc.catchHandler();
+                intLiteral = cc.INT_LITERAL();
             } else if (clause instanceof ScriptParser.DownstreamCatchClauseContext dc) {
                 exList = dc.exceptionList();
                 handler = dc.catchHandler();
+                intLiteral = dc.INT_LITERAL();
             } else {
                 continue;
             }
@@ -109,8 +112,13 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
                     exceptionTypes.add(et.getText().replace(".Class", ""));
                 }
             }
-            IScriptNode handlerNode = buildHandlerNode(handler);
-            result.add(new CatchClause(exceptionTypes, handlerNode));
+            if (handler != null) {
+                IScriptNode handlerNode = buildHandlerNode(handler);
+                result.add(new CatchClause(exceptionTypes, handlerNode));
+            } else {
+                Integer code = intLiteral != null ? Integer.parseInt(intLiteral.getText()) : null;
+                result.add(new CatchClause(exceptionTypes, null, code));
+            }
         }
         return result;
     }
@@ -125,8 +133,13 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
             if (clause.expression() != null) {
                 condition = this.expressionContext.expression(clause.expression().getText());
             }
-            IScriptNode handlerNode = buildPipeHandlerNode(clause.pipeHandler());
-            result.add(new PipeClause(condition, handlerNode));
+            if (clause.pipeHandler() != null) {
+                IScriptNode handlerNode = buildPipeHandlerNode(clause.pipeHandler());
+                result.add(new PipeClause(condition, handlerNode));
+            } else {
+                Integer code = clause.INT_LITERAL() != null ? Integer.parseInt(clause.INT_LITERAL().getText()) : null;
+                result.add(new PipeClause(condition, null, code));
+            }
         }
         return result;
     }

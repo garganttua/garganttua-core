@@ -42,15 +42,15 @@ statementGroup
 // CATCH CLAUSE (! ... => handler)
 // ===============================
 catchClause
-    : '!' exceptionList? '=>' catchHandler
+    : '!' exceptionList? ('=>' catchHandler | RARROW INT_LITERAL)?
     ;
 
 downstreamCatchClause
-    : '*' exceptionList? '=>' catchHandler
+    : '*' exceptionList? ('=>' catchHandler | RARROW INT_LITERAL)?
     ;
 
 pipeClause
-    : '|' expression? FAT_ARROW pipeHandler
+    : '|' expression? (FAT_ARROW pipeHandler | RARROW INT_LITERAL)?
     ;
 
 pipeHandler
