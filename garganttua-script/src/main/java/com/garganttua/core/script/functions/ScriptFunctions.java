@@ -69,6 +69,23 @@ public class ScriptFunctions {
         return print(value);
     }
 
+    // ========== Cast Function ==========
+
+    @Expression(name = "cast", description = "Casts a value to the specified type")
+    public static Object cast(@Nullable IClass<?> type, @Nullable Object value) {
+        log.atDebug().log("cast({}, {})", type, value);
+        if (type == null) {
+            throw new ExpressionException("cast: type cannot be null");
+        }
+        if (value == null) {
+            return null;
+        }
+        if (type.isInstance(value)) {
+            return type.cast(value);
+        }
+        throw new ExpressionException("cast: cannot cast " + value.getClass().getName() + " to " + type.getName());
+    }
+
     // ========== No-Operation Function ==========
 
     @Expression(name = "noop", description = "No-operation, returns null")
