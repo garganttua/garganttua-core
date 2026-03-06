@@ -125,6 +125,18 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 */
 	<T> T newInstance(IClass<T> clazz, Object... args) throws ReflectionException;
 
+	/**
+	 * Instantiates a new object using the no-arg constructor, forcing access
+	 * even if the constructor is private or protected.
+	 */
+	<T> T newInstance(IClass<T> clazz, boolean force) throws ReflectionException;
+
+	/**
+	 * Instantiates a new object using a constructor matching the given arguments,
+	 * forcing access even if the constructor is private or protected.
+	 */
+	<T> T newInstance(IClass<T> clazz, boolean force, Object... args) throws ReflectionException;
+
 	// ========================================================================
 	// Field Lookup (facade for ObjectReflectionHelper field methods)
 	// ========================================================================
@@ -203,6 +215,28 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 * @throws ReflectionException if the field cannot be set
 	 */
 	void setFieldValue(Object object, IField field, Object value) throws ReflectionException;
+
+	/**
+	 * Gets a field value by name, forcing access even if the field is private or protected.
+	 */
+	Object getFieldValue(Object object, String fieldName, boolean force) throws ReflectionException;
+
+	/**
+	 * Gets a field value using an {@link IField} descriptor, forcing access
+	 * even if the field is private or protected.
+	 */
+	Object getFieldValue(Object object, IField field, boolean force) throws ReflectionException;
+
+	/**
+	 * Sets a field value by name, forcing access even if the field is private or protected.
+	 */
+	void setFieldValue(Object object, String fieldName, Object value, boolean force) throws ReflectionException;
+
+	/**
+	 * Sets a field value using an {@link IField} descriptor, forcing access
+	 * even if the field is private or protected.
+	 */
+	void setFieldValue(Object object, IField field, Object value, boolean force) throws ReflectionException;
 
 	// ========================================================================
 	// Field Resolution (facade for FieldResolver)
@@ -361,6 +395,27 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 */
 	<R> IMethodReturn<R> invokeDeep(Object object, ObjectAddress address, IClass<R> returnType, Object... args)
 			throws ReflectionException;
+
+	/**
+	 * Invokes a method on an object, forcing access even if the method is
+	 * private or protected.
+	 */
+	<R> R invokeMethod(Object object, IMethod method, IClass<R> returnType, boolean force, Object... args)
+			throws ReflectionException;
+
+	/**
+	 * Finds and invokes a method by name, forcing access even if the method is
+	 * private or protected.
+	 */
+	<R> R invokeMethod(Object object, String methodName, IClass<R> returnType, boolean force, Object... args)
+			throws ReflectionException;
+
+	/**
+	 * Invokes a method through a deep object path, forcing access even if
+	 * members are private or protected.
+	 */
+	<R> IMethodReturn<R> invokeDeep(Object object, ObjectAddress address, IClass<R> returnType, boolean force,
+			Object... args) throws ReflectionException;
 
 	// ========================================================================
 	// Type Utilities (facade for ObjectReflectionHelper type methods + Fields)

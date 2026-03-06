@@ -118,34 +118,64 @@ class MethodDelegate {
     }
 
     <R> R invokeMethod(Object object, IMethod method, IClass<R> returnType, Object... args) throws ReflectionException {
-        method.setAccessible(true);
-        try {
-            return (R) method.invoke(object, args);
-        } catch (Exception e) {
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
+        return invokeMethod(object, method, returnType, false, args);
+    }
+
+    @SuppressWarnings("unchecked")
+    <R> R invokeMethod(Object object, IMethod method, IClass<R> returnType, boolean force, Object... args)
+            throws ReflectionException {
+        IClass<?> ownerType = provider.getClass(object.getClass());
+        ResolvedMethod resolved = MethodResolver.methodByName(ownerType, provider, method.getName(), returnType,
+                method.getParameterTypes());
+        var invoker = new MethodInvoker<>(resolved, force);
+        IMethodReturn<R> result = (IMethodReturn<R>) invoker.invoke(object, args);
+        if (result.hasException()) {
             throw new ReflectionException(
                     "Cannot invoke method " + method.getName() + " of object " + object.getClass().getName(),
-                    cause);
+                    result.getException());
         }
+        return result.single();
     }
 
     <R> R invokeMethod(Object object, String methodName, IClass<R> returnType, Object... args)
             throws ReflectionException {
-        IClass<?> objectClass = provider.getClass(object.getClass());
-        Optional<IMethod> optMethod = findMethod(objectClass, methodName);
-        if (optMethod.isEmpty()) {
-            throw new ReflectionException(
-                    "Method " + methodName + " not found in class " + object.getClass().getName());
+        return invokeMethod(object, methodName, returnType, false, args);
+    }
+
+    @SuppressWarnings("unchecked")
+    <R> R invokeMethod(Object object, String methodName, IClass<R> returnType, boolean force, Object... args)
+            throws ReflectionException {
+        IClass<?> ownerType = provider.getClass(object.getClass());
+        IClass<?>[] paramTypes = new IClass<?>[args != null ? args.length : 0];
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                paramTypes[i] = args[i] != null ? provider.getClass(args[i].getClass()) : IClass.getClass(Object.class);
+            }
         }
-        return invokeMethod(object, optMethod.get(), returnType, args);
+        ResolvedMethod resolved = MethodResolver.methodByName(ownerType, provider, methodName, returnType, paramTypes);
+        var invoker = new MethodInvoker<>(resolved, force);
+        IMethodReturn<R> result = (IMethodReturn<R>) invoker.invoke(object, args);
+        if (result.hasException()) {
+            throw new ReflectionException(
+                    "Cannot invoke method " + methodName + " of object " + object.getClass().getName(),
+                    result.getException());
+        }
+        return result.single();
     }
 
     <R> IMethodReturn<R> invokeDeep(Object object, ObjectAddress address, IClass<R> returnType,
             IClass<?>[] paramTypes, Object... args)
             throws ReflectionException {
+        return invokeDeep(object, address, returnType, false, paramTypes, args);
+    }
+
+    @SuppressWarnings("unchecked")
+    <R> IMethodReturn<R> invokeDeep(Object object, ObjectAddress address, IClass<R> returnType, boolean force,
+            IClass<?>[] paramTypes, Object... args)
+            throws ReflectionException {
         IClass<?> ownerType = provider.getClass(object.getClass());
         ResolvedMethod resolvedMethod = MethodResolver.methodByAddress(ownerType, provider, address, returnType, paramTypes);
-        return (IMethodReturn<R>) new MethodInvoker<>(resolvedMethod).invoke(object, args);
+        return (IMethodReturn<R>) new MethodInvoker<>(resolvedMethod, force).invoke(object, args);
     }
 
     private static String buildMethodSignature(IMethod method) {

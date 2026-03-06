@@ -159,6 +159,16 @@ class CompositeReflection implements IReflection {
         return constructorDelegate.newInstance(clazz, args);
     }
 
+    @Override
+    public <T> T newInstance(IClass<T> clazz, boolean force) throws ReflectionException {
+        return constructorDelegate.newInstance(clazz, force);
+    }
+
+    @Override
+    public <T> T newInstance(IClass<T> clazz, boolean force, Object... args) throws ReflectionException {
+        return constructorDelegate.newInstance(clazz, force, args);
+    }
+
     // ========================================================================
     // Field Lookup & Access — via FieldDelegate
     // ========================================================================
@@ -197,6 +207,26 @@ class CompositeReflection implements IReflection {
     @Override
     public void setFieldValue(Object object, IField field, Object value) throws ReflectionException {
         fieldDelegate.setFieldValue(object, field, value);
+    }
+
+    @Override
+    public Object getFieldValue(Object object, String fieldName, boolean force) throws ReflectionException {
+        return fieldDelegate.getFieldValue(object, fieldName, force);
+    }
+
+    @Override
+    public Object getFieldValue(Object object, IField field, boolean force) throws ReflectionException {
+        return fieldDelegate.getFieldValue(object, field, force);
+    }
+
+    @Override
+    public void setFieldValue(Object object, String fieldName, Object value, boolean force) throws ReflectionException {
+        fieldDelegate.setFieldValue(object, fieldName, value, force);
+    }
+
+    @Override
+    public void setFieldValue(Object object, IField field, Object value, boolean force) throws ReflectionException {
+        fieldDelegate.setFieldValue(object, field, value, force);
     }
 
     // ========================================================================
@@ -312,6 +342,25 @@ class CompositeReflection implements IReflection {
             throws ReflectionException {
         IClass<?>[] paramTypes = typeDelegate.parameterTypes(args);
         return methodDelegate.invokeDeep(object, address, returnType, paramTypes, args);
+    }
+
+    @Override
+    public <R> R invokeMethod(Object object, IMethod method, IClass<R> returnType, boolean force, Object... args)
+            throws ReflectionException {
+        return methodDelegate.invokeMethod(object, method, returnType, force, args);
+    }
+
+    @Override
+    public <R> R invokeMethod(Object object, String methodName, IClass<R> returnType, boolean force, Object... args)
+            throws ReflectionException {
+        return methodDelegate.invokeMethod(object, methodName, returnType, force, args);
+    }
+
+    @Override
+    public <R> IMethodReturn<R> invokeDeep(Object object, ObjectAddress address, IClass<R> returnType, boolean force,
+            Object... args) throws ReflectionException {
+        IClass<?>[] paramTypes = typeDelegate.parameterTypes(args);
+        return methodDelegate.invokeDeep(object, address, returnType, force, paramTypes, args);
     }
 
     // ========================================================================

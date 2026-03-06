@@ -7,12 +7,15 @@ import java.util.Optional;
 
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IFieldValue;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.fields.ResolvedField;
+import com.garganttua.core.reflection.fields.SingleFieldValue;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -95,46 +98,65 @@ class FieldDelegate {
     }
 
     Object getFieldValue(Object object, String fieldName) throws ReflectionException {
+        return getFieldValue(object, fieldName, false);
+    }
+
+    Object getFieldValue(Object object, String fieldName, boolean force) throws ReflectionException {
         IClass<?> objectClass = provider.getClass(object.getClass());
-        Optional<IField> optField = findField(objectClass, fieldName);
-        if (optField.isEmpty()) {
-            throw new ReflectionException("Cannot get field " + fieldName + " of object " + object.getClass().getName());
+        ResolvedField resolved = FieldResolver.fieldByFieldName(objectClass, provider, fieldName);
+        var accessor = new FieldAccessor<>(resolved, force);
+        IFieldValue<?> result = accessor.getValue(object);
+        if (result.hasException()) {
+            throw new ReflectionException(
+                    "Cannot get field " + fieldName + " of object " + object.getClass().getName(), result.getException());
         }
-        return getFieldValue(object, optField.get());
+        return result.first();
     }
 
     Object getFieldValue(Object object, IField field) throws ReflectionException {
-        field.setAccessible(true);
-        try {
-            return field.get(object);
-        } catch (IllegalArgumentException | IllegalAccessException e) {
+        return getFieldValue(object, field, false);
+    }
+
+    Object getFieldValue(Object object, IField field, boolean force) throws ReflectionException {
+        IClass<?> objectClass = provider.getClass(object.getClass());
+        ResolvedField resolved = FieldResolver.fieldByField(objectClass, provider, field);
+        var accessor = new FieldAccessor<>(resolved, force);
+        IFieldValue<?> result = accessor.getValue(object);
+        if (result.hasException()) {
             throw new ReflectionException(
-                    "Cannot get field " + field.getName() + " of object " + object.getClass().getName(), e);
+                    "Cannot get field " + field.getName() + " of object " + object.getClass().getName(), result.getException());
         }
+        return result.first();
     }
 
     void setFieldValue(Object object, String fieldName, Object value) throws ReflectionException {
+        setFieldValue(object, fieldName, value, false);
+    }
+
+    void setFieldValue(Object object, String fieldName, Object value, boolean force) throws ReflectionException {
         IClass<?> objectClass = provider.getClass(object.getClass());
-        Optional<IField> optField = findField(objectClass, fieldName);
-        if (optField.isEmpty()) {
-            throw new ReflectionException(
-                    "Cannot set field " + fieldName + " of object " + object.getClass().getName());
-        }
-        setFieldValue(object, optField.get(), value);
+        ResolvedField resolved = FieldResolver.fieldByFieldName(objectClass, provider, fieldName);
+        var accessor = new FieldAccessor<>(resolved, force);
+        accessor.setValue(object, singleValue(value, resolved));
     }
 
     void setFieldValue(Object object, IField field, Object value) throws ReflectionException {
+        setFieldValue(object, field, value, false);
+    }
+
+    void setFieldValue(Object object, IField field, Object value, boolean force) throws ReflectionException {
         if (field == null) {
             throw new ReflectionException("Cannot set null field of object " + object.getClass().getName());
         }
-        field.setAccessible(true);
-        try {
-            field.set(object, value);
-        } catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new ReflectionException(
-                    "Cannot set field " + field.getName() + " of object " + object.getClass().getName()
-                            + " with value " + value, e);
-        }
+        IClass<?> objectClass = provider.getClass(object.getClass());
+        ResolvedField resolved = FieldResolver.fieldByField(objectClass, provider, field);
+        var accessor = new FieldAccessor<>(resolved, force);
+        accessor.setValue(object, singleValue(value, resolved));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> SingleFieldValue<T> singleValue(Object value, ResolvedField resolved) {
+        return SingleFieldValue.of((T) value, (IClass<T>) resolved.fieldType());
     }
 
     Optional<ObjectAddress> resolveFieldAddress(String fieldName, IClass<?> entityClass) throws ReflectionException {
