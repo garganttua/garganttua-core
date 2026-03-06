@@ -16,6 +16,7 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IFieldValue;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.constructors.ConstructorAccessManager;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -28,10 +29,15 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 	private final List<Object> fieldPath;
 	private final ObjectAddress address;
 	private final IClass<T> fieldType;
+	private final boolean force;
 
 	public FieldAccessor(ResolvedField resolvedField) throws ReflectionException {
+		this(resolvedField, false);
+	}
+
+	public FieldAccessor(ResolvedField resolvedField, boolean force) throws ReflectionException {
 		Objects.requireNonNull(resolvedField, "Resolved field cannot be null");
-		log.atTrace().log("Creating FieldAccessor for resolved field={}", resolvedField);
+		log.atTrace().log("Creating FieldAccessor for resolved field={}, force={}", resolvedField, force);
 
 		this.ownerType = Objects.requireNonNull(
 				((IField) resolvedField.fieldPath().getFirst()).getDeclaringClass(),
@@ -39,7 +45,8 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 		this.fieldPath = Objects.requireNonNull(resolvedField.fieldPath(), "Field path cannot be null");
 		this.address = Objects.requireNonNull(resolvedField.address(), "Address cannot be null");
 		this.fieldType = (IClass<T>) ((IField) fieldPath.getLast()).getType();
-		log.atDebug().log("FieldAccessor initialized for ownerType={}, address={}", ownerType.getName(), address);
+		this.force = force;
+		log.atDebug().log("FieldAccessor initialized for ownerType={}, address={}, force={}", ownerType.getName(), address, force);
 	}
 
 	// ──────────────────────────────────────────────────────────────
@@ -394,9 +401,8 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 		}
 	}
 
-	private static Object getFieldValue(Object object, IField field) throws ReflectionException {
-		try {
-			field.setAccessible(true);
+	private Object getFieldValue(Object object, IField field) throws ReflectionException {
+		try (var mgr = new FieldAccessManager(field, this.force)) {
 			return field.get(object);
 		} catch (IllegalAccessException | IllegalArgumentException e) {
 			throw new ReflectionException(
@@ -404,9 +410,8 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 		}
 	}
 
-	private static void setFieldValue(Object object, IField field, Object value) throws ReflectionException {
-		try {
-			field.setAccessible(true);
+	private void setFieldValue(Object object, IField field, Object value) throws ReflectionException {
+		try (var mgr = new FieldAccessManager(field, this.force)) {
 			field.set(object, value);
 		} catch (IllegalAccessException | IllegalArgumentException e) {
 			throw new ReflectionException(
@@ -415,11 +420,12 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 		}
 	}
 
-	private static <X> X instantiateNewObject(IClass<X> clazz) throws ReflectionException {
+	private <X> X instantiateNewObject(IClass<X> clazz) throws ReflectionException {
 		try {
 			var ctor = clazz.getDeclaredConstructor();
-			ctor.setAccessible(true);
-			return ctor.newInstance();
+			try (var mgr = new ConstructorAccessManager(ctor, this.force)) {
+				return ctor.newInstance();
+			}
 		} catch (Exception e) {
 			throw new ReflectionException(
 					"Class " + clazz.getSimpleName() + " does not have constructor with no params", e);

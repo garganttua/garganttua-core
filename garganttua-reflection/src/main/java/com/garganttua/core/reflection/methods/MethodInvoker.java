@@ -16,8 +16,8 @@ import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.fields.FieldAccessManager;
 import com.garganttua.core.reflection.fields.Fields;
-import com.garganttua.core.reflection.utils.ParameterizedTypeImpl;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -31,18 +31,23 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 	private ObjectAddress address;
 	private IClass<R> returnType;
 	private boolean statix;
-
+	private boolean force;
 
 	public MethodInvoker(ResolvedMethod method) throws ReflectionException {
+		this(method, false);
+	}
+
+	public MethodInvoker(ResolvedMethod method, boolean force) throws ReflectionException {
 		Objects.requireNonNull(method, "Resolved method cannot be null");
-		log.atTrace().log("Creating ObjectMethodInvoker for resolved method ={}", method);
+		log.atTrace().log("Creating ObjectMethodInvoker for resolved method={}, force={}", method, force);
 
 		this.returnType = (IClass<R>) Objects.requireNonNull(method.getReturnType(), "Return type cannot be null");
 		this.ownerType = (IClass<T>) Objects.requireNonNull(method.getDeclaringClass(), "Class cannot be null");
 		this.methodPath = Objects.requireNonNull(method.methodPath(), "Method path cannot be null");
 		this.address = Objects.requireNonNull(method.address(), "Address cannot be null");
 		this.statix = Methods.isStatic(method);
-		log.atDebug().log("ObjectMethodInvoker initialized for ownerType={}, address={}", ownerType.getName(), address);
+		this.force = force;
+		log.atDebug().log("ObjectMethodInvoker initialized for ownerType={}, address={}, force={}", ownerType.getName(), address, force);
 	}
 
 	public IMethodReturn<R> invoke(Object object, Object... args) throws ReflectionException {
@@ -204,8 +209,7 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 
 		checkMethodAndParams(method, returnType, args);
 
-		try {
-			method.setAccessible(true);
+		try (var mgr = new MethodAccessManager(method, this.force)) {
 			R result = (R) method.invoke(object, args);
 			log.atDebug().log("Successfully invoked method {} on object of type {}", methodName,
 					object != null ? object.getClass().getName() : "null");
@@ -250,9 +254,8 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 		}
 	}
 
-	private static Object getFieldValue(Object object, IField field) throws ReflectionException {
-		try {
-			field.setAccessible(true);
+	private Object getFieldValue(Object object, IField field) throws ReflectionException {
+		try (var mgr = new FieldAccessManager(field, this.force)) {
 			return field.get(object);
 		} catch (IllegalAccessException | IllegalArgumentException e) {
 			throw new ReflectionException("Cannot get field " + field.getName() + " of object " + object.getClass().getName(), e);

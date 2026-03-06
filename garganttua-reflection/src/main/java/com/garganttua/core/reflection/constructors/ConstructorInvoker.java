@@ -19,21 +19,26 @@ public class ConstructorInvoker<T> implements ISupplier<IMethodReturn<T>> {
 
     private final ResolvedConstructor<T> constructor;
     private final IClass<T> constructedType;
+    private final boolean force;
 
     public ConstructorInvoker(ResolvedConstructor<T> constructor) {
+        this(constructor, false);
+    }
+
+    public ConstructorInvoker(ResolvedConstructor<T> constructor, boolean force) {
         Objects.requireNonNull(constructor, "Resolved constructor cannot be null");
-        log.atTrace().log("Creating ConstructorInvoker for {}", constructor.constructedType().getName());
+        log.atTrace().log("Creating ConstructorInvoker for {}, force={}", constructor.constructedType().getName(), force);
         this.constructor = constructor;
         this.constructedType = constructor.constructedType();
-        log.atDebug().log("ConstructorInvoker initialized for {}", constructedType.getName());
+        this.force = force;
+        log.atDebug().log("ConstructorInvoker initialized for {}, force={}", constructedType.getName(), force);
     }
 
     public IMethodReturn<T> newInstance(Object... args) throws ReflectionException {
         log.atTrace().log("newInstance entry: constructedType={}, args count={}",
                 constructedType.getName(), args != null ? args.length : 0);
 
-        try {
-            constructor.setAccessible(true);
+        try (var mgr = new ConstructorAccessManager(constructor, this.force)) {
             T instance = constructor.newInstance(args);
             log.atDebug().log("Successfully created instance of {}", constructedType.getName());
             return SingleMethodReturn.of(instance, constructedType);
