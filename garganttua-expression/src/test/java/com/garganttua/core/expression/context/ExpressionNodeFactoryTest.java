@@ -48,7 +48,6 @@ public class ExpressionNodeFactoryTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testExpressionNodeFactoryCreation() throws Exception {
 
@@ -79,7 +78,6 @@ public class ExpressionNodeFactoryTest {
         assertEquals("Hello, greet", expression.evaluate().supply().get());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testExpressionNodeCanHandleEitherOtherExpressionNodeAndObject() throws Exception {
 
@@ -98,7 +96,6 @@ public class ExpressionNodeFactoryTest {
         assertEquals("Hello, greet", expression.evaluate().supply().get());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testManualPageGeneration() throws Exception {
         // Create a factory with detailed documentation
@@ -135,7 +132,6 @@ public class ExpressionNodeFactoryTest {
         assertTrue(manual.contains("(required)"), "Manual should indicate required parameters");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testManualPageWithNullableParameter() throws Exception {
         // Create a test method with nullable parameter
@@ -158,7 +154,6 @@ public class ExpressionNodeFactoryTest {
         System.out.println(manual);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testKeyGeneration() throws Exception {
         ExpressionNodeFactory<String, ISupplier<String>> factory = new ExpressionNodeFactory<String, ISupplier<String>>(
@@ -175,7 +170,6 @@ public class ExpressionNodeFactoryTest {
         assertEquals("greet(String)", key, "Key should follow format: functionName(ParameterTypes)");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testDescriptionRetrieval() throws Exception {
         ExpressionNodeFactory<String, ISupplier<String>> factory = new ExpressionNodeFactory<String, ISupplier<String>>(
@@ -192,7 +186,6 @@ public class ExpressionNodeFactoryTest {
         assertEquals("A function that greets people", description, "Description should match provided value");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testLazyParameterKeyGeneration() throws Exception {
         // Create a factory for a method with ISupplier parameter (lazy)
@@ -216,7 +209,6 @@ public class ExpressionNodeFactoryTest {
         System.out.println("Lazy parameters: " + factory.getLazyParameters());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testLazyParameterFactoryLookupAndExecution() throws Exception {
         // Create a factory for a method with ISupplier parameter (lazy)
@@ -249,7 +241,6 @@ public class ExpressionNodeFactoryTest {
         System.out.println("Factory man page:\n" + man);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testLazyParameterExpressionParsing() throws Exception {
         // Create a factory for a method with ISupplier parameter (lazy)

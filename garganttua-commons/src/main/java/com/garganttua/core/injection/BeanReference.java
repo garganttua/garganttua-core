@@ -169,7 +169,6 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
      * @return
      * @throws DiException
      */
-    @SuppressWarnings("unchecked")
     public static Pair<Optional<String>, BeanReference<?>> parse(String ref) throws DiException {
 
         if (ref == null || ref.isBlank()) {

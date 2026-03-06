@@ -28,7 +28,6 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	private static volatile IReflectionProvider cachedDefaultProvider;
 
-	@SuppressWarnings("unchecked")
 	private static <T> IClass<T> wrapClass(Class<T> clazz) {
 		return defaultProvider().getClass(clazz);
 	}

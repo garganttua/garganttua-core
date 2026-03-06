@@ -7,22 +7,28 @@ import java.lang.reflect.Type;
 public interface ITypeVariable<D extends IGenericDeclaration> extends Type, IAnnotatedElement {
     /**
      * Returns an array of {@code Type} objects representing the
-     * upper bound(s) of this type variable.  If no upper bound is
+     * upper bound(s) of this type variable. If no upper bound is
      * explicitly declared, the upper bound is {@code Object}.
      *
-     * <p>For each upper bound B: <ul> <li>if B is a parameterized
+     * <p>
+     * For each upper bound B:
+     * <ul>
+     * <li>if B is a parameterized
      * type or a type variable, it is created, (see {@link
      * java.lang.reflect.ParameterizedType ParameterizedType} for the
      * details of the creation process for parameterized types).
-     * <li>Otherwise, B is resolved.  </ul>
+     * <li>Otherwise, B is resolved.
+     * </ul>
      *
-     * @throws TypeNotPresentException  if any of the
-     *     bounds refers to a non-existent type declaration
+     * @throws TypeNotPresentException             if any of the
+     *                                             bounds refers to a non-existent
+     *                                             type declaration
      * @throws MalformedParameterizedTypeException if any of the
-     *     bounds refer to a parameterized type that cannot be instantiated
-     *     for any reason
+     *                                             bounds refer to a parameterized
+     *                                             type that cannot be instantiated
+     *                                             for any reason
      * @return an array of {@code Type}s representing the upper
-     *     bound(s) of this type variable
+     *         bound(s) of this type variable
      */
     Type[] getBounds();
 
@@ -51,8 +57,9 @@ public interface ITypeVariable<D extends IGenericDeclaration> extends Type, IAnn
      * if no upper bound is explicitly declared, the upper bound is unannotated
      * {@code Object}.
      *
-     * @return an array of objects representing the upper bound(s) of the type variable
+     * @return an array of objects representing the upper bound(s) of the type
+     *         variable
      * @since 1.8
      */
-     AnnotatedType[] getAnnotatedBounds();
+    AnnotatedType[] getAnnotatedBounds();
 }

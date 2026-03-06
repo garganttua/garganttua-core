@@ -39,7 +39,7 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         log.atDebug().log("FieldBinder created for field {}", fieldAddress);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"rawtypes"})
     @Override
     public void setValue() throws ReflectionException {
         log.atTrace().log("Setting value for field {}", address);

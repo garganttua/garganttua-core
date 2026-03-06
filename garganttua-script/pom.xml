@@ -57,12 +57,10 @@
       <artifactId>logback-classic</artifactId>
       <scope>compile</scope>
     </dependency>
-    <!-- Condition module for comparison functions -->
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-condition</artifactId>
     </dependency>
-    <!-- Mutex module for synchronized functions (test scope) -->
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-mutex</artifactId>
@@ -127,8 +125,7 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>com.garganttua.core.script.Main</mainClass>
                 </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                <!-- Merge annotation index files from all JARs -->
+                <!-- <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
                 </transformer>
@@ -140,7 +137,7 @@
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/garganttua/generated-constructor-binders</resource>
-                </transformer>
+                </transformer> -->
               </transformers>
               <filters>
                 <filter>

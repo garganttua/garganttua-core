@@ -37,7 +37,6 @@ public class ExpressionContextTest {
 
     private IExpressionContext expressionContext;
 
-    @SuppressWarnings("unchecked")
     @BeforeEach
     public void setUp() throws Exception {
         // Set up IReflection with runtime provider and reflections scanner
@@ -151,7 +150,6 @@ public class ExpressionContextTest {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testConstructorCall() throws Exception {
         // :(String.class, "hello") should call new String("hello")
@@ -301,7 +299,6 @@ public class ExpressionContextTest {
         assertEquals("Unknown function: add(String,int)", exception.getMessage());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testPrimitiveTypeExpression() throws Exception {
 
@@ -322,7 +319,6 @@ public class ExpressionContextTest {
         assertEquals(IClass.getClass(boolean.class), boolTypeValue.get(), "Should return boolean.class");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testClassTypeExpression() throws Exception {
 

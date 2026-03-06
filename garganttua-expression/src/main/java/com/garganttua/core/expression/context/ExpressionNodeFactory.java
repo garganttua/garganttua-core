@@ -46,6 +46,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     private final List<Boolean> lazyParameters;
     @SuppressWarnings("java:S1068")
     private final ObjectAddress methodAddress;
+    private final boolean hasGenericReturnType;
 
     private String name;
     private String description;
@@ -76,11 +77,13 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         this.nullableParameters = Objects.requireNonNull(nullableParameters,
                 "Nullable parameters list cannot be null");
         this.lazyParameters = detectLazyParameters();
+        this.hasGenericReturnType = method.getTypeParameters().length > 0
+                && method.getReturnType().getType() == Object.class;
 
         validateParameterConfiguration();
 
-        log.atDebug().log("ExpressionNodeFactory created: method={}, parameterCount={}",
-                method.getName(), parameterTypes.length);
+        log.atDebug().log("ExpressionNodeFactory created: method={}, parameterCount={}, genericReturn={}",
+                method.getName(), parameterTypes.length, hasGenericReturnType);
     }
 
     // ========== Public Methods ==========
@@ -132,14 +135,12 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         log.atDebug().log("Expression node created: type={}",
                 expressionNode != null ? expressionNode.getClass().getSimpleName() : "null");
 
-        @SuppressWarnings("unchecked")
         IClass<IExpressionNode<R, S>> nodeClass = (IClass<IExpressionNode<R, S>>) (IClass<?>) IClass.getClass(IExpressionNode.class);
         return Optional.ofNullable(expressionNode).map(n -> SingleMethodReturn.of(n, nodeClass));
     }
 
     // ========== Private Node Creation Methods ==========
 
-    @SuppressWarnings("unchecked")
     private IExpressionNode<R, S> createNonContextualNode(IExpressionNodeContext context) {
         return (IExpressionNode<R, S>) new ExpressionNode<>(
                 getExecutableReference(),
@@ -149,7 +150,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 this.lazyParameters);
     }
 
-    @SuppressWarnings("unchecked")
     private IExpressionNode<R, S> createContextualNode(IExpressionNodeContext context) {
         return (IExpressionNode<R, S>) new ContextualExpressionNode<>(
                 getExecutableReference(),
@@ -171,7 +171,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 resolveReflectMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
                 encapsulatedParams);
 
-        return new MethodReturnUnwrappingContextualSupplier<>(binder, getReturnType());
+        return new MethodReturnUnwrappingContextualSupplier<>(binder, getReturnType(), hasGenericReturnType);
     }
 
     private ISupplier<R> bindNode(Object... parameters) throws DslException {
@@ -184,7 +184,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 resolveReflectMethod(this.methodOwnerSupplier.getSuppliedClass(), this.method),
                 encapsulatedParams);
 
-        return new MethodReturnUnwrappingSupplier<>(binder, getReturnType());
+        return new MethodReturnUnwrappingSupplier<>(binder, getReturnType(), hasGenericReturnType);
     }
 
     // ========== Private Static Helpers ==========
@@ -198,7 +198,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
     // ========== Private Utility Methods ==========
 
-    @SuppressWarnings("unchecked")
     private List<ISupplier<?>> encapsulateParameters(Object[] parameters) {
         List<ISupplier<?>> encapsulated = new ArrayList<>(parameters.length);
 
@@ -247,7 +246,6 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         };
     }
 
-    @SuppressWarnings("unchecked")
     private IClass<R> getReturnType() {
         return (IClass<R>) this.method.getReturnType();
     }
@@ -284,13 +282,20 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
     // ========== Inner Classes ==========
 
+    /**
+     * Supplier wrapper that unwraps IMethodReturn and dynamically resolves
+     * the actual return type from the result value for generic methods.
+     */
     private static class MethodReturnUnwrappingSupplier<T> implements ISupplier<T> {
         private final ISupplier<IMethodReturn<T>> delegate;
-        private final IClass<T> returnType;
+        private final IClass<T> declaredReturnType;
+        private final boolean resolveTypeFromResult;
+        private volatile IClass<T> resolvedReturnType;
 
-        MethodReturnUnwrappingSupplier(ISupplier<IMethodReturn<T>> delegate, IClass<T> returnType) {
+        MethodReturnUnwrappingSupplier(ISupplier<IMethodReturn<T>> delegate, IClass<T> declaredReturnType, boolean resolveTypeFromResult) {
             this.delegate = delegate;
-            this.returnType = returnType;
+            this.declaredReturnType = declaredReturnType;
+            this.resolveTypeFromResult = resolveTypeFromResult;
         }
 
         @Override
@@ -301,28 +306,37 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                             throw new SupplyException(
                                     "Method invocation failed", methodReturn.getException());
                         }
-                        return methodReturn.firstOptional();
+                        Optional<T> result = methodReturn.firstOptional();
+                        if (resolveTypeFromResult && resolvedReturnType == null) {
+                            result.ifPresent(value -> {
+                                resolvedReturnType = (IClass<T>) IClass.getClass(value.getClass());
+                            });
+                        }
+                        return result;
                     });
         }
 
         @Override
         public java.lang.reflect.Type getSuppliedType() {
-            return returnType.getType();
+            return getSuppliedClass().getType();
         }
 
         @Override
         public IClass<T> getSuppliedClass() {
-            return returnType;
+            return resolvedReturnType != null ? resolvedReturnType : declaredReturnType;
         }
     }
 
     private static class MethodReturnUnwrappingContextualSupplier<T, C> implements IContextualSupplier<T, C> {
         private final IContextualSupplier<IMethodReturn<T>, C> delegate;
-        private final IClass<T> returnType;
+        private final IClass<T> declaredReturnType;
+        private final boolean resolveTypeFromResult;
+        private volatile IClass<T> resolvedReturnType;
 
-        MethodReturnUnwrappingContextualSupplier(IContextualSupplier<IMethodReturn<T>, C> delegate, IClass<T> returnType) {
+        MethodReturnUnwrappingContextualSupplier(IContextualSupplier<IMethodReturn<T>, C> delegate, IClass<T> declaredReturnType, boolean resolveTypeFromResult) {
             this.delegate = delegate;
-            this.returnType = returnType;
+            this.declaredReturnType = declaredReturnType;
+            this.resolveTypeFromResult = resolveTypeFromResult;
         }
 
         @Override
@@ -330,10 +344,16 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             return delegate.supply(context, otherContexts)
                     .flatMap(methodReturn -> {
                         if (methodReturn.hasException()) {
-                            throw new RuntimeException(new SupplyException(
-                                    "Method invocation failed", methodReturn.getException()));
+                            throw new SupplyException(
+                                    "Method invocation failed", methodReturn.getException());
                         }
-                        return methodReturn.firstOptional();
+                        Optional<T> result = methodReturn.firstOptional();
+                        if (resolveTypeFromResult && resolvedReturnType == null) {
+                            result.ifPresent(value -> {
+                                resolvedReturnType = (IClass<T>) IClass.getClass(value.getClass());
+                            });
+                        }
+                        return result;
                     });
         }
 
@@ -344,12 +364,12 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         @Override
         public java.lang.reflect.Type getSuppliedType() {
-            return returnType.getType();
+            return getSuppliedClass().getType();
         }
 
         @Override
         public IClass<T> getSuppliedClass() {
-            return returnType;
+            return resolvedReturnType != null ? resolvedReturnType : declaredReturnType;
         }
     }
 

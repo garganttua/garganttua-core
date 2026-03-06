@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import com.garganttua.core.script.context.ScriptContext;
+
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.History;
 import org.jline.reader.LineReader;
@@ -21,11 +23,11 @@ import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.bootstrap.dsl.IBoostrap;
+import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
@@ -39,10 +41,9 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
-import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
-import com.garganttua.core.script.context.ScriptContext;
 
 /**
  * Interactive console (REPL) for Garganttua Script.

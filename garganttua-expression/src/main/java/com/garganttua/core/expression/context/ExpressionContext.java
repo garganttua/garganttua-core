@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -17,13 +16,13 @@ import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
-import com.garganttua.core.expression.IEvaluateNode;
 import com.garganttua.core.expression.ForLoopExpressionNode;
+import com.garganttua.core.expression.IEvaluateNode;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.IExpressionNode;
-import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.expression.antlr4.ExpressionLexer;
 import com.garganttua.core.expression.antlr4.ExpressionParser;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.NoArgsConstructor;
@@ -281,7 +280,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                 log.atDebug().log("Using registered type {} for variable {}", resolvedIClass.getName(), nodeName);
             }
 
-            @SuppressWarnings({ "unchecked", "rawtypes" })
+            @SuppressWarnings({ "rawtypes" })
             ExpressionNode node = new ExpressionNode(nodeName, (IEvaluateNode) (params) -> {
                 return new ISupplier<Object>() {
                     @Override

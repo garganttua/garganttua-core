@@ -202,7 +202,6 @@ public class ExpressionContextBuilder
      * @throws DslException if the builder is not authorized to build (missing
      *                      injection context)
      */
-    @SuppressWarnings("unchecked")
     @Override
     protected void doAutoDetection() throws DslException {
         // Synchronize packages from InjectionContextBuilder before scanning
@@ -330,7 +329,6 @@ public class ExpressionContextBuilder
         return super.provide(dependency);
     }
 
-    @SuppressWarnings("unchecked")
     private void addResolverToInjectionContext(IInjectionContextBuilder context) {
         IClass<Expression> expressionClass = IClass.getClass(Expression.class);
         IClass<Nullable> nullableClass = IClass.getClass(Nullable.class);

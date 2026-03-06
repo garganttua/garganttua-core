@@ -62,7 +62,6 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		// Use iterative approach with trampoline pattern to avoid stack overflow
 		// on chains with thousands of executors
 		// Use array to hold the current request (allows modification from inner class)
-		@SuppressWarnings("unchecked")
 		final Object[] currentRequest = new Object[] { request };
 
 		while (true) {
@@ -109,7 +108,6 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 
 			try {
 				log.atDebug().log("Executing executor: {}", executor.getKey());
-				@SuppressWarnings("unchecked")
 				T reqToExecute = (T) currentRequest[0];
 				executor.getKey().execute(reqToExecute, nextProxy);
 				log.atDebug().log("Executor executed successfully: {}", executor.getKey());
@@ -123,7 +121,6 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 				log.atWarn().log("Error during executor chain execution for executor: {}", executor.getKey(), e);
 				if (!this.fallBackExecutors.isEmpty()) {
 					log.atDebug().log("Executing fallback executors");
-					@SuppressWarnings("unchecked")
 					T reqForFallback = (T) currentRequest[0];
 					this.executeFallBack(reqForFallback);
 				}

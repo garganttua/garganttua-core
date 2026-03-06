@@ -15,7 +15,7 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     private IEvaluateNode<R> evaluate;
 
-    private IClass<R> returnedType;
+    private volatile IClass<R> returnedType;
 
     private String name;
 
@@ -90,7 +90,38 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
         }
 
         Object[] params = childs.toArray(new Object[0]);
-        return this.evaluate.evaluate(params);
+        ISupplier<R> supplier = this.evaluate.evaluate(params);
+
+        // For generic methods (returnedType is Object), wrap the supplier
+        // to dynamically resolve the actual return type from the result value
+        if (this.returnedType.getType() == Object.class) {
+            final ExpressionNode<R> self = this;
+            ISupplier<R> original = supplier;
+            return new ISupplier<R>() {
+                @Override
+                public java.util.Optional<R> supply() throws com.garganttua.core.supply.SupplyException {
+                    java.util.Optional<R> result = original.supply();
+                    result.ifPresent(value -> {
+                        if (value != null && self.returnedType.getType() == Object.class) {
+                            self.returnedType = (IClass<R>) IClass.getClass(value.getClass());
+                        }
+                    });
+                    return result;
+                }
+
+                @Override
+                public Type getSuppliedType() {
+                    return original.getSuppliedType();
+                }
+
+                @Override
+                public IClass<R> getSuppliedClass() {
+                    return original.getSuppliedClass();
+                }
+            };
+        }
+
+        return supplier;
     }
 
     /**
@@ -114,7 +145,6 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
                 return node.getFinalSuppliedClass().getType();
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public IClass<Object> getSuppliedClass() {
                 return (IClass<Object>) (IClass<?>) node.getFinalSuppliedClass();

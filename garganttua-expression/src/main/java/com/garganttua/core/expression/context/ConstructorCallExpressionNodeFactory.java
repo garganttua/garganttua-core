@@ -134,7 +134,6 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
         return targetIClass.getType();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public IClass<IMethodReturn<IExpressionNode<R, S>>> getSuppliedClass() {
         return (IClass<IMethodReturn<IExpressionNode<R, S>>>) (IClass<?>) IClass.getClass(IMethodReturn.class);
@@ -156,7 +155,6 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
         return this.supply(ownerContext, contexts);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Optional<IMethodReturn<IExpressionNode<R, S>>> supply(IExpressionNodeContext context,
             Object... otherContexts) throws SupplyException {
@@ -182,7 +180,6 @@ public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> imp
                 targetIClass,
                 context.parameters());
 
-        @SuppressWarnings("unchecked")
         IClass<IExpressionNode<R, S>> nodeClass = (IClass<IExpressionNode<R, S>>) (IClass<?>) IClass.getClass(IExpressionNode.class);
         return Optional.of(SingleMethodReturn.of(node, nodeClass));
     }

@@ -18,7 +18,7 @@ public class ContextualExpressionNode<R>
 
     private IContextualEvaluate<R> evaluate;
 
-    private IClass<R> returnedType;
+    private volatile IClass<R> returnedType;
 
     private String name;
 
@@ -64,7 +64,6 @@ public class ContextualExpressionNode<R>
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Type getSuppliedType() {
         return (Class<IContextualSupplier<R, IExpressionContext>>) (Class<?>) IContextualSupplier.class;
@@ -94,8 +93,44 @@ public class ContextualExpressionNode<R>
         }
 
         Object[] params = childs.toArray(new Object[0]);
-        return this.evaluate.evaluate(ownerContext, params);
+        IContextualSupplier<R, IExpressionContext> supplier = this.evaluate.evaluate(ownerContext, params);
 
+        // For generic methods (returnedType is Object), wrap the supplier
+        // to dynamically resolve the actual return type from the result value
+        if (this.returnedType.getType() == Object.class) {
+            final ContextualExpressionNode<R> self = this;
+            IContextualSupplier<R, IExpressionContext> original = supplier;
+            return new IContextualSupplier<R, IExpressionContext>() {
+                @Override
+                public java.util.Optional<R> supply(IExpressionContext context, Object... otherCtxs)
+                        throws com.garganttua.core.supply.SupplyException {
+                    java.util.Optional<R> result = original.supply(context, otherCtxs);
+                    result.ifPresent(value -> {
+                        if (value != null && self.returnedType.getType() == Object.class) {
+                            self.returnedType = (IClass<R>) IClass.getClass(value.getClass());
+                        }
+                    });
+                    return result;
+                }
+
+                @Override
+                public IClass<IExpressionContext> getOwnerContextType() {
+                    return original.getOwnerContextType();
+                }
+
+                @Override
+                public java.lang.reflect.Type getSuppliedType() {
+                    return original.getSuppliedType();
+                }
+
+                @Override
+                public IClass<R> getSuppliedClass() {
+                    return original.getSuppliedClass();
+                }
+            };
+        }
+
+        return supplier;
     }
 
     /**
@@ -120,7 +155,6 @@ public class ContextualExpressionNode<R>
                 return node.getFinalSuppliedClass().getType();
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public IClass<Object> getSuppliedClass() {
                 return (IClass<Object>) (IClass<?>) node.getFinalSuppliedClass();

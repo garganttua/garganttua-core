@@ -150,7 +150,6 @@ public class Fields {
 		return object;
 	}
 
-	@SuppressWarnings("unchecked")
 	private static <T> T instanciateNewObject(IClass<T> clazz) throws ReflectionException {
 		try {
 			var ctor = clazz.getDeclaredConstructor();
@@ -161,7 +160,6 @@ public class Fields {
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
 	private static Object instanciatePrimitiveOrInterfaceObjectOr(IField field) throws ReflectionException {
 		log.atDebug().log("Attempting to instantiate primitive or interface for field type: {}",
 				field.getType().getSimpleName());

@@ -18,6 +18,7 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
+import com.garganttua.core.script.functions.ScriptFunctions;
 
 class CastTest {
 
@@ -25,7 +26,6 @@ class CastTest {
 
     @BeforeAll
     static void setup() throws Exception {
-        @SuppressWarnings("unchecked")
         Class<? extends IReflectionProvider> providerClass =
                 (Class<? extends IReflectionProvider>) Class.forName(
                         "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
@@ -57,7 +57,7 @@ class CastTest {
 
     @Test
     void testCastStringValue() {
-        IScript s = createScript("result <- cast(String.Class, \"hello\")");
+        IScript s = createScript("result <- cast(String.Class, \"hello\")\n:length(@result)");
         s.execute();
         Optional<String> val = s.getVariable("result", IClass.getClass(String.class));
         assertTrue(val.isPresent());
