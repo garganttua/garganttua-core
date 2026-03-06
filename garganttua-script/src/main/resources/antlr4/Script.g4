@@ -38,6 +38,9 @@ statementGroup
     : '(' NL* statement (NL+ statement)* NL* ')'
     ;
 
+// Block expressions (statement groups as expression arguments) are handled
+// by BlockExpressionPreprocessor before ANTLR4 parsing.
+
 // ===============================
 // CATCH CLAUSE (! ... => handler)
 // ===============================

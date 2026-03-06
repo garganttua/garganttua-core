@@ -16,7 +16,10 @@ public class StatementNode implements IScriptNode {
     private final List<CatchClause> downstreamCatchClauses;
     private final List<PipeClause> pipeClauses;
 
-    public StatementNode(IExpression<?, ? extends ISupplier<?>> expression, String variableName, boolean assignExpression, Integer code, List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses, List<PipeClause> pipeClauses) {
+    public StatementNode(IExpression<?, ? extends ISupplier<?>> expression, String variableName,
+            boolean assignExpression, Integer code,
+            List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
+            List<PipeClause> pipeClauses) {
         this.expression = expression;
         this.variableName = variableName;
         this.assignExpression = assignExpression;

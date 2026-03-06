@@ -40,9 +40,9 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         List<CatchClause> catchClauses = buildCatchClauses(ctx.catchClause());
         List<CatchClause> downstreamCatchClauses = buildCatchClauses(ctx.downstreamCatchClause());
         List<PipeClause> pipeClauses = buildPipeClauses(ctx.pipeClause());
+        String exprText = ctx.expression().getText();
         return buildStatement(ctx.IDENTIFIER() != null ? ctx.IDENTIFIER().getText() : null,
-                false,
-                ctx.expression().getText(),
+                false, exprText,
                 ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null,
                 catchClauses, downstreamCatchClauses, pipeClauses);
     }
@@ -52,16 +52,15 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         List<CatchClause> catchClauses = buildCatchClauses(ctx.catchClause());
         List<CatchClause> downstreamCatchClauses = buildCatchClauses(ctx.downstreamCatchClause());
         List<PipeClause> pipeClauses = buildPipeClauses(ctx.pipeClause());
+        String exprText = ctx.expression().getText();
         return buildStatement(ctx.IDENTIFIER() != null ? ctx.IDENTIFIER().getText() : null,
-                true,
-                ctx.expression().getText(),
+                true, exprText,
                 ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null,
                 catchClauses, downstreamCatchClauses, pipeClauses);
     }
 
     @Override
     public Object visitGroupStatement(ScriptParser.GroupStatementContext ctx) {
-        // Parse statements inside the group
         List<IScriptNode> groupStatements = new ArrayList<>();
         ScriptNodeVisitor groupVisitor = new ScriptNodeVisitor(this.expressionContext);
         for (ScriptParser.StatementContext stmt : ctx.statementGroup().statement()) {
@@ -69,22 +68,21 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         }
         groupStatements.addAll(groupVisitor.getStatements());
 
-        // Build catch and pipe clauses for the group
         List<CatchClause> catchClauses = buildCatchClauses(ctx.catchClause());
         List<CatchClause> downstreamCatchClauses = buildCatchClauses(ctx.downstreamCatchClause());
         List<PipeClause> pipeClauses = buildPipeClauses(ctx.pipeClause());
 
-        // Get variable name and code
         String variableName = ctx.IDENTIFIER() != null ? ctx.IDENTIFIER().getText() : null;
         Integer code = ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null;
 
-        // Create and add the group node
         StatementGroupNode groupNode = new StatementGroupNode(
                 groupStatements, variableName, code,
                 catchClauses, downstreamCatchClauses, pipeClauses);
         this.statements.add(groupNode);
         return null;
     }
+
+    // ========== Catch / Pipe / Handler builders ==========
 
     private List<CatchClause> buildCatchClauses(List<? extends org.antlr.v4.runtime.ParserRuleContext> clauses) {
         if (clauses == null || clauses.isEmpty()) {
@@ -178,10 +176,12 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         throw new IllegalStateException("Unknown pipe handler type: " + handler.getClass());
     }
 
-    private Object buildStatement(String variableName, boolean assignExpression, String expressionText, Integer code,
-                                  List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses, List<PipeClause> pipeClauses) {
-        IExpression<?, ? extends ISupplier<?>> expression = this.expressionContext.expression(expressionText);
-        this.statements.add(new StatementNode(expression, variableName, assignExpression, code, catchClauses, downstreamCatchClauses, pipeClauses));
+    private Object buildStatement(String variableName, boolean assignExpression, String exprText,
+                                  Integer code, List<CatchClause> catchClauses,
+                                  List<CatchClause> downstreamCatchClauses, List<PipeClause> pipeClauses) {
+        IExpression<?, ? extends ISupplier<?>> expression = this.expressionContext.expression(exprText);
+        this.statements.add(new StatementNode(expression, variableName, assignExpression, code,
+                catchClauses, downstreamCatchClauses, pipeClauses));
         return null;
     }
 }

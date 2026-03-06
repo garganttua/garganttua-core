@@ -28,6 +28,7 @@ import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.antlr4.ScriptLexer;
 import com.garganttua.core.script.antlr4.ScriptParser;
 import com.garganttua.core.script.nodes.IScriptNode;
+import com.garganttua.core.script.nodes.StatementBlock;
 import com.garganttua.core.supply.ISupplier;
 
 public class ScriptContext implements IScript {
@@ -115,17 +116,19 @@ public class ScriptContext implements IScript {
             }
         }
 
-        ScriptLexer lexer = new ScriptLexer(CharStreams.fromString(this.scriptSource));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        ScriptParser parser = new ScriptParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(new ScriptErrorListener());
+        // Pre-process block expressions before ANTLR4 parsing
+        BlockExpressionPreprocessor preprocessor = new BlockExpressionPreprocessor();
+        String processedSource = preprocessor.preprocess(this.scriptSource);
+        Map<String, String> blockSources = preprocessor.getBlockSources();
 
-        ScriptParser.ScriptContext tree = parser.script();
-        ScriptNodeVisitor visitor = new ScriptNodeVisitor(this.expressionContext);
-        visitor.visit(tree);
+        // Compile each block into a StatementBlock
+        Map<String, StatementBlock> compiledBlocks = new LinkedHashMap<>();
+        for (Map.Entry<String, String> blockEntry : blockSources.entrySet()) {
+            List<IScriptNode> blockStatements = parseStatements(blockEntry.getValue());
+            compiledBlocks.put(blockEntry.getKey(), new StatementBlock(blockStatements));
+        }
 
-        List<IScriptNode> statements = visitor.getStatements();
+        List<IScriptNode> statements = parseStatements(processedSource);
         if (statements.isEmpty()) {
             throw new ScriptException("Failed to compile script: no statements found");
         }
@@ -135,8 +138,27 @@ public class ScriptContext implements IScript {
             steps.put("step-" + i, new ScriptRuntimeStep("step-" + i, statements.get(i)));
         }
 
-        // Convert initial variables to suppliers
+        // Convert initial variables and compiled blocks to suppliers
         Map<String, ISupplier<?>> variableSuppliers = new HashMap<>();
+        for (Map.Entry<String, StatementBlock> blockEntry : compiledBlocks.entrySet()) {
+            StatementBlock block = blockEntry.getValue();
+            variableSuppliers.put(blockEntry.getKey(), new ISupplier<StatementBlock>() {
+                @Override
+                public Optional<StatementBlock> supply() {
+                    return Optional.of(block);
+                }
+
+                @Override
+                public java.lang.reflect.Type getSuppliedType() {
+                    return StatementBlock.class;
+                }
+
+                @Override
+                public IClass<StatementBlock> getSuppliedClass() {
+                    return IClass.getClass(StatementBlock.class);
+                }
+            });
+        }
         for (Map.Entry<String, Object> entry : this.initialVariables.entrySet()) {
             Object value = entry.getValue();
             variableSuppliers.put(entry.getKey(), new ISupplier<Object>() {
@@ -165,6 +187,18 @@ public class ScriptContext implements IScript {
                 Object.class,
                 variableSuppliers
         );
+    }
+
+    private List<IScriptNode> parseStatements(String source) {
+        ScriptLexer lexer = new ScriptLexer(CharStreams.fromString(source));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        ScriptParser parser = new ScriptParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ScriptErrorListener());
+        ScriptParser.ScriptContext tree = parser.script();
+        ScriptNodeVisitor visitor = new ScriptNodeVisitor(this.expressionContext);
+        visitor.visit(tree);
+        return visitor.getStatements();
     }
 
     @Override

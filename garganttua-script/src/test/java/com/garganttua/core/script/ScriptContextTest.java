@@ -429,4 +429,128 @@ class ScriptContextTest {
         assertFalse(s.hasAborted());
         assertTrue(s.getLastException().isEmpty());
     }
+
+    // ---- Block expressions (statementGroup as expression argument) ----
+
+    @Test
+    void testIfBlockTrueCondition() {
+        IScript s = createScript("""
+                result <- "initial"
+                if(equals(@result, "initial"), (
+                    result <- "matched"
+                ))
+                output <- @result -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("matched", s.getOutput().get());
+    }
+
+    @Test
+    void testIfBlockFalseCondition() {
+        IScript s = createScript("""
+                result <- "initial"
+                if(equals(@result, "other"), (
+                    result <- "matched"
+                ))
+                output <- @result -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("initial", s.getOutput().get());
+    }
+
+    @Test
+    void testIfElseBlock() {
+        IScript s = createScript("""
+                result <- "initial"
+                if(equals(@result, "other"), (
+                    result <- "if-branch"
+                ), (
+                    result <- "else-branch"
+                ))
+                output <- @result -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("else-branch", s.getOutput().get());
+    }
+
+    @Test
+    void testIfBlockWithMultipleStatements() {
+        IScript s = createScript("""
+                a <- "hello"
+                if(true, (
+                    b <- concatenate(@a, " world")
+                    output <- @b
+                ))
+                "done" -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("hello world", s.getOutput().get());
+    }
+
+    @Test
+    void testIfBlockReturnValue() {
+        // if() returns the last result of the executed block
+        IScript s = createScript("""
+                output <- if(true, (
+                    "from-block"
+                ))
+                "done" -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("from-block", s.getOutput().get());
+    }
+
+    @Test
+    void testIfBlockInsideStatementGroup() {
+        IScript s = createScript("""
+                (
+                    mode <- "full"
+                    if(equals(@mode, "full"), (
+                        output <- "full-mode"
+                    ), (
+                        output <- "other-mode"
+                    ))
+                )
+                "done" -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("full-mode", s.getOutput().get());
+    }
+
+    @Test
+    void testIfBlockWithSimpleValues() {
+        // if() also works with non-block arguments (eager evaluation)
+        IScript s = createScript("""
+                output <- if(true, "yes", "no")
+                "done" -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("yes", s.getOutput().get());
+    }
+
+    @Test
+    void testIfBlockFalseWithElseValue() {
+        IScript s = createScript("""
+                output <- if(false, "yes", "no")
+                "done" -> 0
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("no", s.getOutput().get());
+    }
 }
