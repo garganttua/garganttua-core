@@ -18,10 +18,9 @@ public class FieldAccessManager implements AutoCloseable {
 	public FieldAccessManager(IField field, boolean force) {
 		log.atTrace().log("Creating FieldAccessManager for field={}, force={}", field, force);
 		this.field = field;
-		this.originalAccessibility = Modifier.isPublic(field.getModifiers());
-		if (force || !originalAccessibility) {
-			this.field.setAccessible(true);
-		}
+		this.originalAccessibility = Modifier.isPublic(field.getModifiers())
+				&& Modifier.isPublic(field.getDeclaringClass().getModifiers());
+		this.field.setAccessible(true);
 		log.atDebug().log("Set field {} accessible, original accessibility={}, force={}", field.getName(), originalAccessibility, force);
 	}
 

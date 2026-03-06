@@ -18,10 +18,9 @@ public class MethodAccessManager implements AutoCloseable {
 	public MethodAccessManager(IMethod method, boolean force) {
 		log.atTrace().log("Creating MethodAccessManager for method={}, force={}", method, force);
 		this.method = method;
-		this.originalAccessibility = Modifier.isPublic(method.getModifiers());
-		if (force || !originalAccessibility) {
-			this.method.setAccessible(true);
-		}
+		this.originalAccessibility = Modifier.isPublic(method.getModifiers())
+				&& Modifier.isPublic(method.getDeclaringClass().getModifiers());
+		this.method.setAccessible(true);
 		log.atDebug().log("Set method {} accessible, original accessibility={}, force={}", method.getName(), originalAccessibility, force);
 	}
 

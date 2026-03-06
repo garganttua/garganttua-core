@@ -18,10 +18,9 @@ public class ConstructorAccessManager implements AutoCloseable {
 	public ConstructorAccessManager(IConstructor<?> constructor, boolean force) {
 		log.atTrace().log("Creating ConstructorAccessManager for constructor={}, force={}", constructor, force);
 		this.constructor = constructor;
-		this.originalAccessibility = Modifier.isPublic(constructor.getModifiers());
-		if (force || !originalAccessibility) {
-			this.constructor.setAccessible(true);
-		}
+		this.originalAccessibility = Modifier.isPublic(constructor.getModifiers())
+				&& Modifier.isPublic(constructor.getDeclaringClass().getModifiers());
+		this.constructor.setAccessible(true);
 		log.atDebug().log("Set constructor {} accessible, original accessibility={}, force={}", constructor.getName(), originalAccessibility, force);
 	}
 
