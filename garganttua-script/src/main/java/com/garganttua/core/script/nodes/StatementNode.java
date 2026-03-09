@@ -53,6 +53,14 @@ public class StatementNode implements IScriptNode {
             if (this.sourceText != null) {
                 msg += ": " + this.sourceText;
             }
+            // Include root cause message
+            Throwable root = e;
+            while (root.getCause() != null) {
+                root = root.getCause();
+            }
+            if (root.getMessage() != null) {
+                msg += " - " + root.getMessage();
+            }
             throw new ScriptException(msg, e);
         }
     }

@@ -146,13 +146,13 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         }
                     }
                     if (!caught) {
-                        context.setVariable("_scriptErrorDetail", buildLineErrorMessage(cause.getMessage()));
+                        context.setVariable("_scriptErrorDetail", buildLineErrorMessage(cause));
                         RuntimeStepExecutionTools.handleException(
                                 "script", stepName, context, cause, true,
                                 "script:" + stepName, null, logHeader());
                     }
                 } catch (Exception e) {
-                    throw new ScriptException(buildLineErrorMessage(e.getMessage()), e);
+                    throw new ScriptException(buildLineErrorMessage(e), e);
                 } finally {
                     ExpressionVariableContext.clear();
                     RuntimeExpressionContext.clear();
@@ -386,7 +386,8 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
         }
     }
 
-    private String buildLineErrorMessage(String originalMessage) {
+    private String buildLineErrorMessage(Throwable cause) {
+        String rootMessage = findRootCauseMessage(cause);
         StringBuilder sb = new StringBuilder();
         if (node.line() > 0) {
             sb.append("Script error at line ").append(node.line());
@@ -397,16 +398,24 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 }
                 sb.append(": ").append(src);
             }
-            if (originalMessage != null) {
-                sb.append(" - ").append(originalMessage);
+            if (rootMessage != null) {
+                sb.append(" - ").append(rootMessage);
             }
         } else {
             sb.append("Script error");
-            if (originalMessage != null) {
-                sb.append(": ").append(originalMessage);
+            if (rootMessage != null) {
+                sb.append(": ").append(rootMessage);
             }
         }
         return sb.toString();
+    }
+
+    private static String findRootCauseMessage(Throwable t) {
+        Throwable root = t;
+        while (root.getCause() != null) {
+            root = root.getCause();
+        }
+        return root.getMessage();
     }
 
     private String logHeader() {
