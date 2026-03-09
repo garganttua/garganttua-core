@@ -188,9 +188,9 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     @Override
     public void setProperty(String providerName, String key, Object value) throws DiException {
         log.atTrace().log("Setting property for provider: {}, key: {}, value: {}", providerName, key, value);
-        Objects.requireNonNull(providerName, "Provider cannnot be null");
-        Objects.requireNonNull(key, "Key cannnot be null");
-        Objects.requireNonNull(value, "Value cannnot be null");
+        Objects.requireNonNull(providerName, "Provider cannot be null");
+        Objects.requireNonNull(key, "Key cannot be null");
+        Objects.requireNonNull(value, "Value cannot be null for property '" + key + "' (provider: " + providerName + ")");
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         propertyProviders.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(providerName))
