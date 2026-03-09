@@ -275,8 +275,15 @@ public class ScriptContext implements IScript {
 
     @Override
     public Optional<String> getLastExceptionMessage() {
-        return Optional.ofNullable(this.lastException)
-                .map(Throwable::getMessage);
+        if (this.lastException == null) {
+            return Optional.empty();
+        }
+        // Check for detailed error message stored by ScriptRuntimeStep
+        Optional<String> detail = this.getVariable("_scriptErrorDetail", IClass.getClass(String.class));
+        if (detail.isPresent()) {
+            return detail;
+        }
+        return Optional.ofNullable(this.lastException.getMessage());
     }
 
     @Override

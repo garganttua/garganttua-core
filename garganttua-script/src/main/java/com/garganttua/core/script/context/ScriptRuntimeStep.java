@@ -146,6 +146,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         }
                     }
                     if (!caught) {
+                        context.setVariable("_scriptErrorDetail", buildLineErrorMessage(cause.getMessage()));
                         RuntimeStepExecutionTools.handleException(
                                 "script", stepName, context, cause, true,
                                 "script:" + stepName, null, logHeader());
@@ -409,6 +410,11 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
     }
 
     private String logHeader() {
-        return "[Runtime script][Step " + stepName + "] ";
+        StringBuilder sb = new StringBuilder("[Runtime script][Step ").append(stepName);
+        if (node.line() > 0) {
+            sb.append(", line ").append(node.line());
+        }
+        sb.append("] ");
+        return sb.toString();
     }
 }
