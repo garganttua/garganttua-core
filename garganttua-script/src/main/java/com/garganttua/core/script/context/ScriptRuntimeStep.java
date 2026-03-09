@@ -146,13 +146,14 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         }
                     }
                     if (!caught) {
-                        context.setVariable("_scriptErrorDetail", buildLineErrorMessage(cause));
+                        storeErrorContext(context, cause);
                         RuntimeStepExecutionTools.handleException(
                                 "script", stepName, context, cause, true,
                                 "script:" + stepName, null, logHeader());
                     }
                 } catch (Exception e) {
-                    throw new ScriptException(buildLineErrorMessage(e), e);
+                    storeErrorContext(context, e);
+                    throw new ScriptException(findRootCause(e).getMessage(), e);
                 } finally {
                     ExpressionVariableContext.clear();
                     RuntimeExpressionContext.clear();
@@ -386,36 +387,29 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
         }
     }
 
-    private String buildLineErrorMessage(Throwable cause) {
-        String rootMessage = findRootCauseMessage(cause);
-        StringBuilder sb = new StringBuilder();
+    private void storeErrorContext(IRuntimeContext<Object[], Object> context, Throwable cause) {
         if (node.line() > 0) {
-            sb.append("Script error at line ").append(node.line());
-            if (node.sourceText() != null) {
-                String src = node.sourceText().trim();
-                if (src.length() > 120) {
-                    src = src.substring(0, 120) + "...";
-                }
-                sb.append(": ").append(src);
-            }
-            if (rootMessage != null) {
-                sb.append(" - ").append(rootMessage);
-            }
-        } else {
-            sb.append("Script error");
-            if (rootMessage != null) {
-                sb.append(": ").append(rootMessage);
-            }
+            context.setVariable("_scriptErrorLine", node.line());
         }
-        return sb.toString();
+        if (node.sourceText() != null) {
+            String src = node.sourceText().trim();
+            if (src.length() > 120) {
+                src = src.substring(0, 120) + "...";
+            }
+            context.setVariable("_scriptErrorSource", src);
+        }
+        context.setVariable("_scriptErrorStep", stepName);
+        Throwable root = findRootCause(cause);
+        context.setVariable("_scriptErrorMessage", root.getMessage());
+        context.setVariable("_scriptErrorType", root.getClass().getName());
     }
 
-    private static String findRootCauseMessage(Throwable t) {
+    private static Throwable findRootCause(Throwable t) {
         Throwable root = t;
         while (root.getCause() != null) {
             root = root.getCause();
         }
-        return root.getMessage();
+        return root;
     }
 
     private String logHeader() {

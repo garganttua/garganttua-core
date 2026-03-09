@@ -278,12 +278,12 @@ public class ScriptContext implements IScript {
         if (this.lastException == null) {
             return Optional.empty();
         }
-        // Check for detailed error message stored by ScriptRuntimeStep
-        Optional<String> detail = this.getVariable("_scriptErrorDetail", IClass.getClass(String.class));
-        if (detail.isPresent()) {
-            return detail;
+        // Return root cause message
+        Throwable root = this.lastException;
+        while (root.getCause() != null) {
+            root = root.getCause();
         }
-        return Optional.ofNullable(this.lastException.getMessage());
+        return Optional.ofNullable(root.getMessage());
     }
 
     @Override

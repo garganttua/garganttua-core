@@ -46,22 +46,12 @@ public class StatementNode implements IScriptNode {
             ISupplier<?> supplier = this.expression.evaluate();
             return supplier.supply().orElse(null);
         } catch (Exception e) {
-            String msg = "Expression execution failed";
-            if (this.line > 0) {
-                msg += " at line " + this.line;
-            }
-            if (this.sourceText != null) {
-                msg += ": " + this.sourceText;
-            }
-            // Include root cause message
+            // Use root cause message for cleaner error reporting
             Throwable root = e;
             while (root.getCause() != null) {
                 root = root.getCause();
             }
-            if (root.getMessage() != null) {
-                msg += " - " + root.getMessage();
-            }
-            throw new ScriptException(msg, e);
+            throw new ScriptException(root.getMessage() != null ? root.getMessage() : "Expression execution failed", e);
         }
     }
 
