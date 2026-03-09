@@ -23,4 +23,8 @@ public interface IScriptNode {
     List<CatchClause> downstreamCatchClauses();
 
     List<PipeClause> pipeClauses();
+
+    int line();
+
+    String sourceText();
 }

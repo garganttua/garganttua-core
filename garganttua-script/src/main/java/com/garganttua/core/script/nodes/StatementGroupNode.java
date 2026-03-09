@@ -28,16 +28,26 @@ public class StatementGroupNode implements IScriptNode {
     private final List<CatchClause> catchClauses;
     private final List<CatchClause> downstreamCatchClauses;
     private final List<PipeClause> pipeClauses;
+    private final int line;
+    private final String sourceText;
 
     public StatementGroupNode(List<IScriptNode> statements, String variableName, Integer code,
             List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
             List<PipeClause> pipeClauses) {
+        this(statements, variableName, code, catchClauses, downstreamCatchClauses, pipeClauses, 0, null);
+    }
+
+    public StatementGroupNode(List<IScriptNode> statements, String variableName, Integer code,
+            List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
+            List<PipeClause> pipeClauses, int line, String sourceText) {
         this.statements = statements != null ? List.copyOf(statements) : List.of();
         this.variableName = variableName;
         this.code = code;
         this.catchClauses = catchClauses != null ? catchClauses : List.of();
         this.downstreamCatchClauses = downstreamCatchClauses != null ? downstreamCatchClauses : List.of();
         this.pipeClauses = pipeClauses != null ? pipeClauses : List.of();
+        this.line = line;
+        this.sourceText = sourceText;
     }
 
     /**
@@ -94,5 +104,15 @@ public class StatementGroupNode implements IScriptNode {
      */
     public boolean isGroup() {
         return true;
+    }
+
+    @Override
+    public int line() {
+        return this.line;
+    }
+
+    @Override
+    public String sourceText() {
+        return this.sourceText;
     }
 }

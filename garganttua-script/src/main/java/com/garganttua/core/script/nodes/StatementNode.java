@@ -15,11 +15,20 @@ public class StatementNode implements IScriptNode {
     private final List<CatchClause> catchClauses;
     private final List<CatchClause> downstreamCatchClauses;
     private final List<PipeClause> pipeClauses;
+    private final int line;
+    private final String sourceText;
 
     public StatementNode(IExpression<?, ? extends ISupplier<?>> expression, String variableName,
             boolean assignExpression, Integer code,
             List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
             List<PipeClause> pipeClauses) {
+        this(expression, variableName, assignExpression, code, catchClauses, downstreamCatchClauses, pipeClauses, 0, null);
+    }
+
+    public StatementNode(IExpression<?, ? extends ISupplier<?>> expression, String variableName,
+            boolean assignExpression, Integer code,
+            List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
+            List<PipeClause> pipeClauses, int line, String sourceText) {
         this.expression = expression;
         this.variableName = variableName;
         this.assignExpression = assignExpression;
@@ -27,6 +36,8 @@ public class StatementNode implements IScriptNode {
         this.catchClauses = catchClauses != null ? catchClauses : List.of();
         this.downstreamCatchClauses = downstreamCatchClauses != null ? downstreamCatchClauses : List.of();
         this.pipeClauses = pipeClauses != null ? pipeClauses : List.of();
+        this.line = line;
+        this.sourceText = sourceText;
     }
 
     @Override
@@ -35,7 +46,14 @@ public class StatementNode implements IScriptNode {
             ISupplier<?> supplier = this.expression.evaluate();
             return supplier.supply().orElse(null);
         } catch (Exception e) {
-            throw new ScriptException("Expression execution failed", e);
+            String msg = "Expression execution failed";
+            if (this.line > 0) {
+                msg += " at line " + this.line;
+            }
+            if (this.sourceText != null) {
+                msg += ": " + this.sourceText;
+            }
+            throw new ScriptException(msg, e);
         }
     }
 
@@ -72,5 +90,15 @@ public class StatementNode implements IScriptNode {
     @Override
     public List<PipeClause> pipeClauses() {
         return this.pipeClauses;
+    }
+
+    @Override
+    public int line() {
+        return this.line;
+    }
+
+    @Override
+    public String sourceText() {
+        return this.sourceText;
     }
 }

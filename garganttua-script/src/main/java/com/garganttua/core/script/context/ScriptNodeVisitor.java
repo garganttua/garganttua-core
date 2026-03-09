@@ -3,6 +3,9 @@ package com.garganttua.core.script.context;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
+
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.script.antlr4.ScriptBaseVisitor;
@@ -44,7 +47,7 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         return buildStatement(ctx.IDENTIFIER() != null ? ctx.IDENTIFIER().getText() : null,
                 false, exprText,
                 ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null,
-                catchClauses, downstreamCatchClauses, pipeClauses);
+                catchClauses, downstreamCatchClauses, pipeClauses, ctx);
     }
 
     @Override
@@ -56,7 +59,7 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
         return buildStatement(ctx.IDENTIFIER() != null ? ctx.IDENTIFIER().getText() : null,
                 true, exprText,
                 ctx.INT_LITERAL() != null ? Integer.parseInt(ctx.INT_LITERAL().getText()) : null,
-                catchClauses, downstreamCatchClauses, pipeClauses);
+                catchClauses, downstreamCatchClauses, pipeClauses, ctx);
     }
 
     @Override
@@ -77,7 +80,8 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
 
         StatementGroupNode groupNode = new StatementGroupNode(
                 groupStatements, variableName, code,
-                catchClauses, downstreamCatchClauses, pipeClauses);
+                catchClauses, downstreamCatchClauses, pipeClauses,
+                ctx.start.getLine(), extractSourceText(ctx));
         this.statements.add(groupNode);
         return null;
     }
@@ -178,10 +182,20 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
 
     private Object buildStatement(String variableName, boolean assignExpression, String exprText,
                                   Integer code, List<CatchClause> catchClauses,
-                                  List<CatchClause> downstreamCatchClauses, List<PipeClause> pipeClauses) {
+                                  List<CatchClause> downstreamCatchClauses, List<PipeClause> pipeClauses,
+                                  ParserRuleContext ctx) {
         IExpression<?, ? extends ISupplier<?>> expression = this.expressionContext.expression(exprText);
         this.statements.add(new StatementNode(expression, variableName, assignExpression, code,
-                catchClauses, downstreamCatchClauses, pipeClauses));
+                catchClauses, downstreamCatchClauses, pipeClauses,
+                ctx.start.getLine(), extractSourceText(ctx)));
         return null;
+    }
+
+    private String extractSourceText(ParserRuleContext ctx) {
+        if (ctx.start != null && ctx.stop != null && ctx.start.getInputStream() != null) {
+            return ctx.start.getInputStream().getText(
+                    new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+        }
+        return ctx.getText();
     }
 }
