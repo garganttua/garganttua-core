@@ -96,7 +96,7 @@ class WorkflowTest {
                 .provide(expressionContextBuilder)
                 .name("input-workflow")
                 .stage("process")
-                    .script("result <- @input")
+                    .script("result <- @0")
                         .name("passthrough")
                         .output("output", "result")
                         .up()
@@ -250,7 +250,7 @@ class WorkflowTest {
         // Script 1: Validation - validates input data and sets validation status
         String validationScript = """
             validationStatus <- "pending"
-            inputData <- @input
+            inputData <- @0
             isValid <- true
             validationStatus <- "completed"
             validatedData <- @inputData
@@ -363,7 +363,7 @@ class WorkflowTest {
                 .stage("validation")
                     .script(validationScript)
                         .name("data-validator")
-                        .input("inputData", "@input")
+                        .input("inputData", "@0")
                         .output("validatedData", "validatedData")
                         .output("validationStatus", "validationStatus")
                         .up()

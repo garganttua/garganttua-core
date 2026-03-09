@@ -136,23 +136,25 @@ public class Workflow implements IWorkflow {
         IScript script = new ScriptContext(expressionContext, injectionContext, null);
         script.load(scriptSource);
 
-        // 2. Inject initial variables
-        if (input.payload() != null) {
-            script.setVariable("input", input.payload());
-            script.setVariable("$0", input.payload());
-        }
-        for (var param : input.parameters().entrySet()) {
-            script.setVariable(param.getKey(), param.getValue());
-        }
+        // 2. Inject preset variables (named)
         for (var preset : presetVariables.entrySet()) {
             script.setVariable(preset.getKey(), preset.getValue());
         }
 
-        // 3. Compile and execute
+        // 3. Build positional arguments: payload + parameters
+        List<Object> args = new ArrayList<>();
+        if (input.payload() != null) {
+            args.add(input.payload());
+        }
+        for (var param : input.parameters().values()) {
+            args.add(param);
+        }
+
+        // 4. Compile and execute
         script.compile();
-        int code = input.payload() != null
-                ? script.execute(input.payload())
-                : script.execute();
+        int code = args.isEmpty()
+                ? script.execute()
+                : script.execute(args.toArray());
 
         // 4. Check for execution errors
         if (script.hasAborted()) {

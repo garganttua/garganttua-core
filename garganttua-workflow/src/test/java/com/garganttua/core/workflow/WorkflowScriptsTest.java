@@ -190,7 +190,7 @@ class WorkflowScriptsTest {
                     .script("validatedData <- @data\nvalidationStatus <- \"completed\"")
                         .name("data-validator")
                         .description("Validates incoming data")
-                        .input("data", "@input")
+                        .input("data", "@0")
                         .output("validated", "validatedData")
                         .up()
                     .up()
