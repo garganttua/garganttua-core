@@ -210,6 +210,11 @@ class CompositeReflection implements IReflection {
     }
 
     @Override
+    public Object getFieldValue(Object object, ObjectAddress address) throws ReflectionException {
+        return fieldDelegate.getFieldValue(object, address);
+    }
+
+    @Override
     public Object getFieldValue(Object object, String fieldName, boolean force) throws ReflectionException {
         return fieldDelegate.getFieldValue(object, fieldName, force);
     }
@@ -220,6 +225,16 @@ class CompositeReflection implements IReflection {
     }
 
     @Override
+    public Object getFieldValue(Object object, ObjectAddress address, boolean force) throws ReflectionException {
+        return fieldDelegate.getFieldValue(object, address, force);
+    }
+
+    @Override
+    public void setFieldValue(Object object, ObjectAddress address, Object value) throws ReflectionException {
+        fieldDelegate.setFieldValue(object, address, value);
+    }
+
+    @Override
     public void setFieldValue(Object object, String fieldName, Object value, boolean force) throws ReflectionException {
         fieldDelegate.setFieldValue(object, fieldName, value, force);
     }
@@ -227,6 +242,11 @@ class CompositeReflection implements IReflection {
     @Override
     public void setFieldValue(Object object, IField field, Object value, boolean force) throws ReflectionException {
         fieldDelegate.setFieldValue(object, field, value, force);
+    }
+
+    @Override
+    public void setFieldValue(Object object, ObjectAddress address, Object value, boolean force) throws ReflectionException {
+        fieldDelegate.setFieldValue(object, address, value, force);
     }
 
     // ========================================================================

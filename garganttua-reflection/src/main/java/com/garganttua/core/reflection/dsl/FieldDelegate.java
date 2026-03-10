@@ -129,6 +129,33 @@ class FieldDelegate {
         return result.first();
     }
 
+    Object getFieldValue(Object object, ObjectAddress address) throws ReflectionException {
+        return getFieldValue(object, address, false);
+    }
+
+    Object getFieldValue(Object object, ObjectAddress address, boolean force) throws ReflectionException {
+        IClass<?> objectClass = provider.getClass(object.getClass());
+        ResolvedField resolved = FieldResolver.fieldByAddress(objectClass, provider, address);
+        var accessor = new FieldAccessor<>(resolved, force);
+        IFieldValue<?> result = accessor.getValue(object);
+        if (result.hasException()) {
+            throw new ReflectionException(
+                    "Cannot get field at address " + address + " of object " + object.getClass().getName(), result.getException());
+        }
+        return result.first();
+    }
+
+    void setFieldValue(Object object, ObjectAddress address, Object value) throws ReflectionException {
+        setFieldValue(object, address, value, false);
+    }
+
+    void setFieldValue(Object object, ObjectAddress address, Object value, boolean force) throws ReflectionException {
+        IClass<?> objectClass = provider.getClass(object.getClass());
+        ResolvedField resolved = FieldResolver.fieldByAddress(objectClass, provider, address);
+        var accessor = new FieldAccessor<>(resolved, force);
+        accessor.setValue(object, singleValue(value, resolved));
+    }
+
     void setFieldValue(Object object, String fieldName, Object value) throws ReflectionException {
         setFieldValue(object, fieldName, value, false);
     }

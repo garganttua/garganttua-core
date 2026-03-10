@@ -217,6 +217,16 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	void setFieldValue(Object object, IField field, Object value) throws ReflectionException;
 
 	/**
+	 * Gets a field value through a deep object path using an {@link ObjectAddress}.
+	 *
+	 * @param object  the root object to read from
+	 * @param address the address path to the field
+	 * @return the field value
+	 * @throws ReflectionException if the field cannot be found or accessed
+	 */
+	Object getFieldValue(Object object, ObjectAddress address) throws ReflectionException;
+
+	/**
 	 * Gets a field value by name, forcing access even if the field is private or protected.
 	 */
 	Object getFieldValue(Object object, String fieldName, boolean force) throws ReflectionException;
@@ -228,6 +238,22 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	Object getFieldValue(Object object, IField field, boolean force) throws ReflectionException;
 
 	/**
+	 * Gets a field value through a deep object path, forcing access even if
+	 * fields are private or protected.
+	 */
+	Object getFieldValue(Object object, ObjectAddress address, boolean force) throws ReflectionException;
+
+	/**
+	 * Sets a field value through a deep object path using an {@link ObjectAddress}.
+	 *
+	 * @param object  the root object to modify
+	 * @param address the address path to the field
+	 * @param value   the value to set
+	 * @throws ReflectionException if the field cannot be found or set
+	 */
+	void setFieldValue(Object object, ObjectAddress address, Object value) throws ReflectionException;
+
+	/**
 	 * Sets a field value by name, forcing access even if the field is private or protected.
 	 */
 	void setFieldValue(Object object, String fieldName, Object value, boolean force) throws ReflectionException;
@@ -237,6 +263,12 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 * even if the field is private or protected.
 	 */
 	void setFieldValue(Object object, IField field, Object value, boolean force) throws ReflectionException;
+
+	/**
+	 * Sets a field value through a deep object path, forcing access even if
+	 * fields are private or protected.
+	 */
+	void setFieldValue(Object object, ObjectAddress address, Object value, boolean force) throws ReflectionException;
 
 	// ========================================================================
 	// Field Resolution (facade for FieldResolver)
