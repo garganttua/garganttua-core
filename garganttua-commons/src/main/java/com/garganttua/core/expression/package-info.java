@@ -13,9 +13,9 @@
  *   <li>{@link com.garganttua.core.expression.IExpression} - Base expression interface that extends supplier builder</li>
  *   <li>{@link com.garganttua.core.expression.IExpressionNode} - Expression node that can be evaluated to produce a supplier</li>
  *   <li>{@link com.garganttua.core.expression.IEvaluateNode} - Node evaluation interface for complex expressions</li>
- *   <li>{@link com.garganttua.core.expression.IEvaluateLeaf} - Leaf evaluation interface for terminal values</li>
+ *   <li><b>IEvaluateLeaf</b> - Leaf evaluation interface for terminal values</li>
  *   <li>{@link com.garganttua.core.expression.IContextualExpressionNode} - Contextual expression node with context awareness</li>
- *   <li>{@link com.garganttua.core.expression.IContextualEvaluate} - Contextual evaluation with external context</li>
+ *   <li>{@link com.garganttua.core.expression.IContextualEvaluate} - Contextual evaluation interface with external context</li>
  * </ul>
  *
  * <h2>Exception Handling</h2>

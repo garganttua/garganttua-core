@@ -143,7 +143,6 @@ public class Supplier {
      * String result = Supplier.contextualRecursiveSupply(nestedSupplier, contexts);
      * }</pre>
      *
-     * @param <Supplied> the type of object to be supplied
      * @param supplier the supplier to invoke (must not be {@code null})
      * @param contexts zero or more context objects that may be required by suppliers
      * @return the supplied object after recursive resolution, or {@code null} if any supplier returns null

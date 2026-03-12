@@ -20,7 +20,7 @@ Beyond JSR-330, this module offers:
 - **Cyclic Dependency Detection** - Build-time validation to prevent circular references
 - **Thread-Safe** - Concurrent bean initialization and retrieval
 - **GraalVM Native** - Native image compilation ready
-- **Zero-Reflection Instantiation** - Bean constructors use compile-time generated direct binders when available, replacing `Constructor.newInstance()` with direct `new` calls (see [garganttua-annotation-processor](../garganttua-annotation-processor/README.md#direct-binder-generation-zero-reflection-at-runtime))
+- **Zero-Reflection Instantiation** - Bean constructors use compile-time generated direct binders when available, replacing `Constructor.newInstance()` with direct `new` calls (see [garganttua-annotation-processor](../garganttua-bindings/garganttua-native/garganttua-native-annotation-processor/README.md#direct-binder-generation-zero-reflection-at-runtime))
 
 ## Installation
 

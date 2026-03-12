@@ -52,7 +52,7 @@ public class DependencySpecBuilder {
     /**
      * Creates a new builder for the specified dependency class.
      *
-     * @param dependencyClass the class of the dependency builder
+     * @param dependencyBuilderClass the class of the dependency builder
      * @throws NullPointerException if dependencyClass is null
      */
     public DependencySpecBuilder(Class<? extends IObservableBuilder<?, ?>> dependencyBuilderClass) {

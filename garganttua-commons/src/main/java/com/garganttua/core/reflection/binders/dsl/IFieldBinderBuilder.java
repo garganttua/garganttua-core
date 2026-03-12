@@ -64,7 +64,7 @@ import com.garganttua.core.reflection.binders.IFieldBinder;
  * <h2>Field Resolution Strategies</h2>
  * <ul>
  *   <li><b>By name</b>: {@link #field(String)} - Simple field name lookup</li>
- *   <li><b>By reference</b>: {@link #field(Field)} - Direct Field object</li>
+ *   <li><b>By reference</b>: {@link #field(IField)} - Direct IField object</li>
  *   <li><b>By address</b>: {@link #field(ObjectAddress)} - Symbolic field address</li>
  * </ul>
  *

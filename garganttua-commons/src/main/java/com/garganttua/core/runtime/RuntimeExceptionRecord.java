@@ -63,7 +63,6 @@ import com.garganttua.core.reflection.IClass;
  * }</pre>
  *
  * @param runtimeName the name of the runtime where the exception occurred
- * @param stageName the name of the stage where the exception occurred
  * @param stepName the name of the step where the exception occurred
  * @param exceptionType the class of the exception
  * @param exception the actual exception instance

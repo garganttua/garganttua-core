@@ -23,9 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>Linked builder navigation via {@code up()}</li>
  *   <li>Dependency declaration and tracking via {@code provide()}, {@code use()}, and {@code require()}</li>
  * </ul>
- * </p>
  *
- * <h2>Dependency Lifecycle</h2>
+ * <p><b>Dependency Lifecycle</b></p>
  * <p>
  * Dependencies are managed through three main phases:
  * </p>

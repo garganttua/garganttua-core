@@ -87,7 +87,7 @@ public interface IBeanSupplierBuilder<Bean> extends ISupplierBuilder<Bean, IBean
     /**
      * Use the static DI context for bean resolution.
      *
-     * @param qualifier the qualifier annotation class
+     * @param bool whether to use the static context
      * @return this builder for method chaining
      */
     IBeanSupplierBuilder<Bean> useStaticContext(boolean bool);

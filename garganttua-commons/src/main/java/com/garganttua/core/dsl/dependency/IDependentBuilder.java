@@ -38,7 +38,6 @@ import com.garganttua.core.reflection.IClass;
  *         .build();
  * }</pre>
  *
- * @param <D>       the type of observable builder this builder depends on
  * @param <Builder> the concrete builder type for method chaining
  * @param <Built>   the type of object this builder constructs
  * @since 2.0.0-ALPHA01

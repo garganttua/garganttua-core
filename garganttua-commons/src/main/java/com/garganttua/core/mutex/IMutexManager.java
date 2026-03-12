@@ -48,7 +48,7 @@ public interface IMutexManager extends IContextualSupplier<IMutex, MutexName> {
      * <p>
      * This method implements {@link IContextualSupplier#supply} to provide
      * integration with the Garganttua dependency injection system. It delegates
-     * to {@link #mutex(String)} and wraps the result in an {@link Optional}.
+     * to {@link #mutex(MutexName)} and wraps the result in an {@link Optional}.
      * </p>
      *
      * @param mutexName the name of the mutex to supply

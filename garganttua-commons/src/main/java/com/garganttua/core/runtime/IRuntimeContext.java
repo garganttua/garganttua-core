@@ -89,7 +89,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
      * @param <VariableType> the type of the variable being stored
      * @param variableName the name of the variable
      * @param variable the variable value to store
-     * @see #getVariable(String, Class)
+     * @see #getVariable(String, IClass)
      * @see com.garganttua.core.runtime.annotations.Variable
      */
     <VariableType> void setVariable(String variableName, VariableType variable);
@@ -182,7 +182,7 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
      * Returns the output type class for this runtime context.
      *
      * @return the class representing the output type
-     * @see #isOfOutputType(Class)
+     * @see #isOfOutputType(IClass)
      */
     IClass<?> getOutputType();
 

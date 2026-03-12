@@ -62,21 +62,18 @@ import com.garganttua.core.supply.ISupplier;
  * <h2>Usage Example - Runtime Integration</h2>
  * 
  * <pre>
- * {
- *     &#64;code
- *     &#64;RuntimeDefinition
- *     public class ConditionalRuntime {
+ * &#64;RuntimeDefinition
+ * public class ConditionalRuntime {
  *
- *         @Operation
- *         &#64;Condition("isVipUser")
- *         public void processVipDiscount(@Input Order order) {
- *             // Only executes if user is VIP
- *             order.applyDiscount(0.20);
- *         }
+ *     &#64;Operation
+ *     &#64;Condition("isVipUser")
+ *     public void processVipDiscount(&#64;Input Order order) {
+ *         // Only executes if user is VIP
+ *         order.applyDiscount(0.20);
+ *     }
  *
- *         public ICondition isVipUser(@Input Order order) {
- *             return () -> order.getUser().isVip();
- *         }
+ *     public ICondition isVipUser(&#64;Input Order order) {
+ *         return () -&gt; order.getUser().isVip();
  *     }
  * }
  * </pre>

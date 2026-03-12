@@ -44,7 +44,6 @@ public class FutureSupplierBuilder<Supplied>
      * Creates a FutureSupplierBuilder.
      *
      * @param future the CompletableFuture to wrap
-     * @param suppliedType the type of the supplied object
      * @param suppliedClass the IClass of the supplied object
      */
     public FutureSupplierBuilder(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
@@ -97,7 +96,7 @@ public class FutureSupplierBuilder<Supplied>
      *
      * @param <Supplied> the type of object supplied
      * @param future the CompletableFuture to wrap
-     * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      * @return a new FutureSupplierBuilder instance
      */
     public static <Supplied> FutureSupplierBuilder<Supplied> of(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {

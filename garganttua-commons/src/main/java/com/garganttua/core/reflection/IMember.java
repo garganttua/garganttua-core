@@ -41,7 +41,7 @@ public interface IMember {
      * the integer.
      *
      * @return the Java language modifiers for the underlying member
-     * @see Modifier
+     * @see java.lang.reflect.Modifier
      * @see #accessFlags()
      */
     public int getModifiers();
@@ -51,9 +51,9 @@ public interface IMember {
      * {@return an unmodifiable set of the {@linkplain AccessFlag
      * access flags} for this member, possibly empty}
      *
-     * @implSpec
+     * <p><b>Implementation Note:</b>
      * The default implementation throws {@link
-     * UnsupportedOperationException}.
+     * UnsupportedOperationException}.</p>
      * @see #getModifiers()
      * @since 20
      */
@@ -67,7 +67,7 @@ public interface IMember {
      *
      * @return true if and only if this member was introduced by
      * the compiler.
-     * @jls 13.1 The Form of a Binary
+     * @see <a href="https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.1">JLS 13.1 The Form of a Binary</a>
      * @since 1.5
      */
     public boolean isSynthetic();

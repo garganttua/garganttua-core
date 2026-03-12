@@ -89,7 +89,7 @@ public interface IMutexFactory {
      * with a different strategy.
      * </p>
      *
-     * <h2>Use Cases</h2>
+     * <p><b>Use Cases</b></p>
      * <ul>
      *   <li><b>Short-lived operations</b>: Create mutex with short lease time to prevent deadlocks</li>
      *   <li><b>High-contention resources</b>: Configure aggressive retry strategy</li>
@@ -97,7 +97,7 @@ public interface IMutexFactory {
      *   <li><b>Distributed locks</b>: Set appropriate timeouts for network latency</li>
      * </ul>
      *
-     * <h2>Example Usage</h2>
+     * <p><b>Example Usage</b></p>
      * <pre>{@code
      * // Create a factory
      * IMutexFactory factory = new SynchronizedMutexFactory();

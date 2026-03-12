@@ -19,9 +19,9 @@ public interface IAnnotatedType extends IAnnotatedElement {
      *     {@code AnnotatedArrayType}, {@code AnnotatedTypeVariable}, or
      *     {@code AnnotatedWildcardType}.
      *
-     * @implSpec
+     * <p><b>Implementation Note:</b>
      * This default implementation returns {@code null} and performs no other
-     * action.
+     * action.</p>
      *
      * @return an {@code AnnotatedType} object representing the potentially
      *     annotated type that this type is a member of, or {@code null}

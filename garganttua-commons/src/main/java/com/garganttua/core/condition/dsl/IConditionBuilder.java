@@ -104,22 +104,19 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  * </p>
  * 
  * <pre>
- * {
- *     &#64;code
- *     &#64;RuntimeDefinition
- *     public class ConditionalRuntime {
+ * &#64;RuntimeDefinition
+ * public class ConditionalRuntime {
  *
- *         @Operation
- *         &#64;Condition("shouldProcess")
- *         public void processOrder(@Input Order order) {
- *             // Only executes if shouldProcess evaluates to true
- *         }
+ *     &#64;Operation
+ *     &#64;Condition("shouldProcess")
+ *     public void processOrder(&#64;Input Order order) {
+ *         // Only executes if shouldProcess evaluates to true
+ *     }
  *
- *         public ICondition shouldProcess(@Input Order order) {
- *             return and(
- *                     isNotNull(() -> order),
- *                     custom(() -> order, Order::getStatus, status -> "PENDING".equals(status))).build();
- *         }
+ *     public ICondition shouldProcess(&#64;Input Order order) {
+ *         return and(
+ *                 isNotNull(() -&gt; order),
+ *                 custom(() -&gt; order, Order::getStatus, status -&gt; "PENDING".equals(status))).build();
  *     }
  * }
  * </pre>

@@ -23,15 +23,15 @@ import lombok.extern.slf4j.Slf4j;
  * coordination across multiple JVMs/processes/servers.
  * </p>
  *
- * <h2>Usage Example (in .gs script)</h2>
- * <pre>
+ * <p><b>Usage Example (in .gs script)</b></p>
+ * <pre>{@code
  * # Synchronize across distributed systems
  * result <- syncRedis("distributed-lock", someExpression)
  *
  * # With variable interpolation
  * lockName <- "user-lock"
  * value <- syncRedis(@lockName, computeValue())
- * </pre>
+ * }</pre>
  *
  * <h2>Requirements</h2>
  * <ul>

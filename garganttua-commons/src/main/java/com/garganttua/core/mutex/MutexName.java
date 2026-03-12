@@ -89,14 +89,14 @@ public record MutexName(IClass<? extends IMutex> type, String name) {
      * a valid class name that implements IMutex, and the name part is trimmed and validated.
      * </p>
      *
-     * <h2>Valid Examples</h2>
+     * <p><b>Valid Examples</b></p>
      * <pre>
      * "InterruptibleLeaseMutex::user-table"     → type: InterruptibleLeaseMutex.class, name: "user-table"
      * "TestMutex::session-store"                → type: TestMutex.class, name: "session-store"
      * " TestMutex :: lock "                     → type: TestMutex.class, name: "lock" (whitespace trimmed)
      * </pre>
      *
-     * <h2>Invalid Examples</h2>
+     * <p><b>Invalid Examples</b></p>
      * <pre>
      * "invalid"                  → Missing separator
      * "::name"                   → Empty type

@@ -104,7 +104,7 @@ The module implements several design patterns consistently across packages:
 **injection** - Comprehensive dependency injection framework (35 files)
 
 Core Interfaces:
-- `IDiContext` - Central DI context managing beans, properties, and lifecycle
+- `IInjectionContext` - Central DI context managing beans, properties, and lifecycle
 - `IBeanFactory` - Factory for creating bean instances
 - `IBeanQuery` / `IBeanQueryBuilder` - Query interface for finding beans with filters
 - `IPropertyProvider` / `IPropertySupplier` - Property injection support
@@ -124,7 +124,7 @@ Annotations:
 - `@Null` - Injects null values
 
 DSL Builders (in `injection.context.dsl`):
-- `IDiContextBuilder` - Builds DI contexts
+- `IInjectionContextBuilder` - Builds DI contexts
 - `IBeanProviderBuilder` / `IBeanSupplierBuilder` - Builds bean providers
 - `IPropertyBuilder` / `IPropertyProviderBuilder` - Builds properties
 - `IBeanConstructorBinderBuilder` - Binds bean constructors

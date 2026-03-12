@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>State Management</h2>
  * <p>
- * The dependency state follows a similar pattern to {@link com.garganttua.core.injection.context.dsl.ContextReadinessBuilder}:
+ * The dependency state follows a similar pattern to {@code ContextReadinessBuilder}:
  * </p>
  * <ul>
  *   <li><b>isEmpty()</b>: Returns true when both builder and builtObject are null (no dependency provided yet)</li>

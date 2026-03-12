@@ -57,8 +57,7 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
     /**
      * Constructs a new AbstractAutomaticDependentBuilder with specified dependency sets.
      *
-     * @param useDependencies    the set of optional dependency classes
-     * @param requireDependencies the set of required dependency classes
+     * @param dependencies the set of dependency specifications
      * @throws NullPointerException if either parameter is null
      */
     protected AbstractAutomaticDependentBuilder(

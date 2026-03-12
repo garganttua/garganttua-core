@@ -159,8 +159,6 @@ public class DependentBuilderSupport {
      * Provides a dependency to the builder.
      *
      * @param dependency         the dependency to provide
-     * @param dependencyProvider functional interface to get all expected
-     *                           dependencies
      * @throws NullPointerException if dependency is null
      * @throws DslException         if the dependency is not in the expected
      *                              dependencies list

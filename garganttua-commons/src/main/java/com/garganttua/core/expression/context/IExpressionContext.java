@@ -106,7 +106,7 @@ public interface IExpressionContext {
      * Returns the manual page documentation for a registered expression node by index.
      *
      * <p>The index corresponds to the position in the sorted list of factories,
-     * as shown by {@link #listFactories()}. Index starts at 1.</p>
+     * as shown by {@link #getFactoryKeys()}. Index starts at 1.</p>
      *
      * @param index the 1-based index of the expression node factory
      * @return the manual page documentation, or null if the index is out of bounds

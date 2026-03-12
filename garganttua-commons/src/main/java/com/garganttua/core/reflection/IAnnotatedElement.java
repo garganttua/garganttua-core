@@ -20,8 +20,8 @@ public interface IAnnotatedElement extends IReflectionUser {
      * The truth value returned by this method is equivalent to:
      * {@code getAnnotation(annotationClass) != null}
      *
-     * @implSpec The default implementation returns {@code
-     * getAnnotation(annotationClass) != null}.
+     * <p><b>Implementation Note:</b> The default implementation returns {@code
+     * getAnnotation(annotationClass) != null}.</p>
      *
      * @param annotationClass the IClass object corresponding to the
      *                        annotation type
@@ -71,14 +71,14 @@ public interface IAnnotatedElement extends IReflectionUser {
      *
      * The difference between this method and {@link #getAnnotation(IClass)}
      * is that this method detects if its argument is a <em>repeatable
-     * annotation type</em> (JLS {@jls 9.6}), and if so, attempts to find one or
+     * annotation type</em> (JLS 9.6), and if so, attempts to find one or
      * more annotations of that type by "looking through" a container
      * annotation.
      *
      * The caller of this method is free to modify the returned array; it will
      * have no effect on the arrays returned to other callers.
      *
-     * @implSpec The default implementation first calls {@link
+     * <p><b>Implementation Note:</b> The default implementation first calls {@link
      *           #getDeclaredAnnotationsByType(IClass)} passing {@code
      * annotationClass} as the argument. If the returned array has
      *           length greater than zero, the array is returned. If the returned
@@ -88,7 +88,7 @@ public interface IAnnotatedElement extends IReflectionUser {
      *           then the returned result is the result of calling {@link
      *           #getAnnotationsByType(IClass)} on the superclass with {@code
      * annotationClass} as the argument. Otherwise, a zero-length
-     *           array is returned.
+     *           array is returned.</p>
      *
      * @param <T>             the type of the annotation to query for and return if
      *                        present
@@ -133,10 +133,10 @@ public interface IAnnotatedElement extends IReflectionUser {
      * This method ignores inherited annotations. (Returns null if no
      * annotations are directly present on this element.)
      *
-     * @implSpec The default implementation first performs a null check
+     * <p><b>Implementation Note:</b> The default implementation first performs a null check
      *           and then loops over the results of {@link
      *           #getDeclaredAnnotations} returning the first annotation whose
-     *           annotation type matches the argument type.
+     *           annotation type matches the argument type.</p>
      *
      * @param <T>             the type of the annotation to query for and return if
      *                        directly present
@@ -172,7 +172,7 @@ public interface IAnnotatedElement extends IReflectionUser {
      *
      * The difference between this method and {@link
      * #getDeclaredAnnotation(IClass)} is that this method detects if its
-     * argument is a <em>repeatable annotation type</em> (JLS {@jls 9.6}), and if
+     * argument is a <em>repeatable annotation type</em> (JLS 9.6), and if
      * so,
      * attempts to find one or more annotations of that type by "looking
      * through" a container annotation if one is present.
@@ -180,14 +180,14 @@ public interface IAnnotatedElement extends IReflectionUser {
      * The caller of this method is free to modify the returned array; it will
      * have no effect on the arrays returned to other callers.
      *
-     * @implSpec The default implementation may call {@link
+     * <p><b>Implementation Note:</b> The default implementation may call {@link
      *           #getDeclaredAnnotation(IClass)} one or more times to find a
      *           directly present annotation and, if the annotation type is
      *           repeatable, to find a container annotation. If annotations of
      *           the annotation type {@code annotationClass} are found to be both
      *           directly and indirectly present, then {@link
      *           #getDeclaredAnnotations()} will get called to determine the
-     *           order of the elements in the returned array.
+     *           order of the elements in the returned array.</p>
      *
      *           <p>
      *           Alternatively, the default implementation may call {@link
@@ -195,7 +195,7 @@ public interface IAnnotatedElement extends IReflectionUser {
      *           examined for both directly and indirectly present
      *           annotations. The results of calling {@link
      *           #getDeclaredAnnotations()} are assumed to be consistent with the
-     *           results of calling {@link #getDeclaredAnnotation(IClass)}.
+     *           results of calling {@link #getDeclaredAnnotation(IClass)}.</p>
      *
      * @param <T>             the type of the annotation to query for and return
      *                        if directly or indirectly present

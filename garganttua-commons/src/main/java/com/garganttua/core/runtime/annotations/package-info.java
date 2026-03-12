@@ -11,7 +11,7 @@
  * <h2>Core Annotations</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.runtime.annotations.RuntimeDefinition} - Defines a runtime with input/output types</li>
- *   <li>{@link com.garganttua.core.runtime.annotations.Stages} - Declares multiple execution stages</li>
+ *   <li><b>Stages</b> - Declares multiple execution stages</li>
  *   <li>{@link com.garganttua.core.runtime.annotations.Step} - Defines a single execution step</li>
  *   <li>{@link com.garganttua.core.runtime.annotations.Operation} - Marks methods as runtime operations</li>
  *   <li>{@link com.garganttua.core.runtime.annotations.Code} - Associates error codes with operations</li>

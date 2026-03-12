@@ -14,10 +14,10 @@ import java.util.List;
  * </p>
  *
  * <p>
- * For field access (get/set), use {@link com.garganttua.core.reflection.fields.FieldAccessor}
- * with {@link com.garganttua.core.reflection.fields.FieldResolver}.
- * For method invocation, use {@link com.garganttua.core.reflection.methods.MethodInvoker}
- * with {@link com.garganttua.core.reflection.methods.MethodResolver}.
+ * For field access (get/set), use {@code FieldAccessor}
+ * with {@code FieldResolver} from the garganttua-reflection module.
+ * For method invocation, use {@code MethodInvoker}
+ * with {@code MethodResolver} from the garganttua-reflection module.
  * </p>
  *
  * <h2>Usage Example</h2>

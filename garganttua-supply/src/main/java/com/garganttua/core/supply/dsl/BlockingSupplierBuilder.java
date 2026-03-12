@@ -45,7 +45,6 @@ public class BlockingSupplierBuilder<Supplied>
      * Creates a BlockingSupplierBuilder.
      *
      * @param queue the BlockingQueue to poll from
-     * @param suppliedType the type of the supplied object
      * @param suppliedClass the IClass of the supplied object
      */
     public BlockingSupplierBuilder(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
@@ -99,7 +98,7 @@ public class BlockingSupplierBuilder<Supplied>
      *
      * @param <Supplied> the type of object supplied
      * @param queue the BlockingQueue to poll from
-     * @param suppliedType the type of the supplied object
+     * @param suppliedClass the IClass of the supplied object
      * @return a new BlockingSupplierBuilder instance
      */
     public static <Supplied> BlockingSupplierBuilder<Supplied> of(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {

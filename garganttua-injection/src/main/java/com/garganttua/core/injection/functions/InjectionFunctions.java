@@ -27,8 +27,8 @@ import lombok.extern.slf4j.Slf4j;
  * properties, and managing the injection context from Garganttua scripts.
  * </p>
  *
- * <h2>Usage Examples (in .gs script)</h2>
- * <pre>
+ * <p><b>Usage Examples (in .gs script)</b></p>
+ * <pre>{@code
  * # Get a bean by type
  * service <- getBean(com.example.MyService.class)
  *
@@ -46,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * # Count total beans
  * count <- beanCount()
- * </pre>
+ * }</pre>
  *
  * <h2>Bean Reference Format</h2>
  * <pre>

@@ -45,7 +45,6 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
      * Creates a BlockingSupplier with no timeout.
      *
      * @param queue the BlockingQueue to poll from
-     * @param suppliedType the type of the supplied object
      * @param suppliedClass the IClass of the supplied object
      */
     public BlockingSupplier(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
@@ -56,7 +55,6 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
      * Creates a BlockingSupplier with a timeout.
      *
      * @param queue the BlockingQueue to poll from
-     * @param suppliedType the type of the supplied object
      * @param suppliedClass the IClass of the supplied object
      * @param timeoutMillis the timeout in milliseconds, or null for indefinite wait
      */

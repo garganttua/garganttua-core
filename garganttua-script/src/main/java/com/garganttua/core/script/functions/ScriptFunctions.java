@@ -125,10 +125,10 @@ public class ScriptFunctions {
      * Formats a string using {@link String#format} with one argument.
      *
      * <p>Usage in script:</p>
-     * <pre>
+     * <pre>{@code
      * msg <- format("Hello %s", @name)
      * msg <- format("Count: %d", @count)
-     * </pre>
+     * }</pre>
      *
      * @param pattern the format pattern (see {@link java.util.Formatter})
      * @param arg1 the first argument
@@ -232,7 +232,7 @@ public class ScriptFunctions {
      * supplier is invoked.</p>
      *
      * <p>Usage examples in script:</p>
-     * <pre>
+     * <pre>{@code
      * // Measure time of any expression (expression is passed lazily)
      * elapsed <- time(print("hello"))
      * elapsed <- time(someExpensiveOperation())
@@ -241,7 +241,7 @@ public class ScriptFunctions {
      * expr = someExpensiveOperation()
      * elapsed <- time(@expr)
      * print(concatenate("Operation took ", string(elapsed), "ms"))
-     * </pre>
+     * }</pre>
      *
      * @param expression the expression to measure (passed lazily as ISupplier)
      * @return the elapsed time in milliseconds
@@ -279,7 +279,7 @@ public class ScriptFunctions {
      * before being passed to this function.</p>
      *
      * <p>Usage examples in script:</p>
-     * <pre>
+     * <pre>{@code
      * // Measure and get result
      * result <- timeWithResult(someOperation())
      * // result[0] = elapsed time, result[1] = operation result
@@ -287,7 +287,7 @@ public class ScriptFunctions {
      * // Or with stored expression
      * expr = someOperation()
      * result <- timeWithResult(@expr)
-     * </pre>
+     * }</pre>
      *
      * @param expression the expression to measure (passed lazily as ISupplier)
      * @return array of [elapsedMs, result]

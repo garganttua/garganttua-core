@@ -6,7 +6,7 @@ import com.garganttua.core.supply.IContextualSupply;
  * Functional interface for supplying objects within a dependency injection context.
  *
  * <p>
- * {@code IInjectionContextSupply} is a specialized version of {@link IContextualObjectSupply}
+ * {@code IInjectionContextSupply} is a specialized version of {@link IContextualSupply}
  * that specifically works with {@link IInjectionContext}. It enables context-aware object creation
  * where the supplied object can access the injection context during instantiation, allowing for
  * dynamic dependency resolution and context-specific initialization.
@@ -36,7 +36,7 @@ import com.garganttua.core.supply.IContextualSupply;
  *
  * @param <Supplied> the type of object this supply operation provides
  * @since 2.0.0-ALPHA01
- * @see IContextualObjectSupply
+ * @see IContextualSupply
  * @see IInjectionContext
  */
 @FunctionalInterface

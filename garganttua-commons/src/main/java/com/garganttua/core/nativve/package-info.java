@@ -11,7 +11,7 @@
  * <h2>Core Interfaces</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.nativve.INativeConfiguration} - Native image configuration</li>
- *   <li>{@link com.garganttua.core.nativve.INativeReflectionConfiguration} - Reflection metadata</li>
+ *   <li><b>INativeReflectionConfiguration</b> - Reflection metadata</li>
  *   <li><b>IResourceConfig</b> - Resource bundle configuration (provided by implementations)</li>
  * </ul>
  *

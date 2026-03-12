@@ -438,6 +438,7 @@ class ScriptContextTest {
                 result <- "initial"
                 if(equals(@result, "initial"), (
                     result <- "matched"
+                    result <- "matched"
                 ))
                 output <- @result -> 0
                 """);

@@ -80,7 +80,7 @@ public interface IContextualExpressionNode<R, S extends IContextualSupplier<R, I
 
     @Override
     default Optional<S> supply() throws ExpressionException {
-        return this.supply();
+        return Optional.of(this.evaluate());
     }
 
     @Override

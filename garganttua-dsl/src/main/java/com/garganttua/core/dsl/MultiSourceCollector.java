@@ -29,9 +29,8 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>Priority 1 - High priority (e.g., manually registered items)</li>
  *   <li>Priority 2+ - Lower priorities (e.g., reflection-based discovery)</li>
  * </ul>
- * </p>
  *
- * <h2>Usage Example</h2>
+ * <p><b>Usage Example</b></p>
  * <pre>{@code
  * MultiSourceCollector<Class<?>, Factory> collector = new MultiSourceCollector<>();
  *
@@ -102,7 +101,7 @@ public class MultiSourceCollector<K, V> {
      * The supplier is called lazily when building the final map.
      * </p>
      *
-     * <h2>Usage Example</h2>
+     * <p><b>Usage Example</b></p>
      * <pre>{@code
      * // Context source (highest priority)
      * collector.source(() -> contextItems, 0, "context");
@@ -162,7 +161,7 @@ public class MultiSourceCollector<K, V> {
      * are completely ignored. Among included sources, priority order is still respected.
      * </p>
      *
-     * <h2>Usage Example</h2>
+     * <p><b>Usage Example</b></p>
      * <pre>{@code
      * // Include only context and manual sources, exclude reflection
      * Map<Class<?>, Factory> filtered = collector.buildWithSources(
@@ -195,7 +194,7 @@ public class MultiSourceCollector<K, V> {
      * present in that source.
      * </p>
      *
-     * <h2>Usage Example</h2>
+     * <p><b>Usage Example</b></p>
      * <pre>{@code
      * // Get items to add to context, excluding items already in context
      * Map<Class<?>, Factory> toAddToContext = collector.buildExcludingSourceItems(

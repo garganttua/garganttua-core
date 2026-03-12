@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * This class provides static converter methods that transform various input types
  * into {@link ISupplier} instances for use in expression evaluation contexts.
- * All methods are annotated with {@link ExpressionLeaf} to be discoverable by
+ * All methods are annotated with {@link Expression} to be discoverable by
  * the expression framework.
  * </p>
  *
@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Primitive types: String, Integer, Long, Double, Float, Boolean, Byte, Short, Character</li>
  * <li>Collection types: List, Set, Collection, Map</li>
  * <li>Array types: Object[], primitive arrays</li>
- * <li>Class types: Class<?></li>
+ * <li>Class types: {@code Class<?>}</li>
  * </ul>
  *
  * <h2>Usage Example</h2>

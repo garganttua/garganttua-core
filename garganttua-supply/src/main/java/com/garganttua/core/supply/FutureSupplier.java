@@ -49,7 +49,6 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
      * Creates a FutureSupplier with no timeout.
      *
      * @param future the CompletableFuture to wrap
-     * @param suppliedType the type of the supplied object
      * @param suppliedClass the IClass of the supplied object
      */
     public FutureSupplier(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
@@ -60,7 +59,6 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
      * Creates a FutureSupplier with a timeout.
      *
      * @param future the CompletableFuture to wrap
-     * @param suppliedType the type of the supplied object
      * @param suppliedClass the IClass of the supplied object
      * @param timeoutMillis the timeout in milliseconds, or null for no timeout
      */

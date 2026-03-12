@@ -47,7 +47,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.mutex.IMutex
  * @see com.garganttua.core.mutex.IMutexManager
- * @see Native
+ * @see com.garganttua.core.reflection.annotations.Reflected
  */
 @Indexed
 @Reflected

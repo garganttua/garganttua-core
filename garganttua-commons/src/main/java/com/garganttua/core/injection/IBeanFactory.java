@@ -55,7 +55,7 @@ public interface IBeanFactory<Bean> extends IBeanSupplier<Bean>, INativeElement 
      * and qualifiers. This is used for bean query and resolution operations.
      * </p>
      *
-     * @param example the bean reference to match against
+     * @param query the bean reference to match against
      * @return {@code true} if this factory matches the example, {@code false} otherwise
      * @see BeanReference#matches(BeanReference)
      */

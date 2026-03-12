@@ -5,7 +5,6 @@
 The **garganttua-script** module provides a scripting language engine for composing and executing runtime steps using a concise, expression-based syntax. It bridges the gap between the `garganttua-expression` language and the `garganttua-runtime` orchestration framework, enabling dynamic workflow definition through script files or inline strings.
 
 **Key Features:**
-- **Interactive REPL Console** - JLine-based interactive console with history, colors, and pagination
 - **Variable Assignment** - Store expression results or expressions themselves in named variables
 - **Exit Codes** - Associate exit codes with statement execution
 - **Exception Handling** - Immediate catch clauses (`!`) and downstream/fallback catch clauses (`*`)
@@ -212,41 +211,11 @@ delay <- seconds(10)     // 10000
 timeout <- minutes(5)    // 300000
 ```
 
-## Interactive Console (REPL)
-
-Start the REPL console for interactive script execution:
-
-```bash
-java -jar garganttua-script-*-executable.jar --console
-```
-
-The console provides:
-- **Session variables** that persist across statements
-- **Command history** with JLine terminal support
-- **ANSI color** output with auto-detection
-- **Multi-line input** with bracket/parenthesis balancing and continuation markers (`..` or `\`)
-
-### Console Functions
-
-| Function | Description |
-|:--|:--|
-| `help()` | Shows console help with all available commands |
-| `vars()` | Lists all session variables with their types |
-| `clear()` | Clears all session variables |
-| `load("file.gs")` | Loads and executes a script file |
-| `man()` | Lists all expression functions (paginated) |
-| `man("functionName")` | Shows documentation for a specific function |
-| `syntax()` | Shows the complete script syntax reference |
-| `exit()` / `quit()` | Exit the console |
-
 ## Command Line Usage
 
 ```bash
 # Execute a script file
 java -jar garganttua-script-*-executable.jar script.gs [args...]
-
-# Start the REPL console
-java -jar garganttua-script-*-executable.jar --console
 
 # Show syntax reference
 java -jar garganttua-script-*-executable.jar --syntax
@@ -276,7 +245,6 @@ result <- print("Hello from script")
 garganttua-script/
 ├── src/main/
 │   ├── java/com/garganttua/core/script/
-│   │   ├── console/           # REPL console (ScriptConsole, ConsoleFunctions)
 │   │   ├── context/           # ScriptContext, ScriptExecutionContext, ScriptRuntimeStep
 │   │   ├── functions/         # Built-in functions (include, retry, sync, time, ...)
 │   │   ├── nodes/             # IScriptNode, StatementNode, StatementGroupNode
@@ -285,6 +253,8 @@ garganttua-script/
 │       └── Script.g4          # ANTLR4 grammar definition
 └── src/test/                  # Test suite
 ```
+
+> **Note:** The interactive REPL console has been extracted to the separate [`garganttua-console`](../garganttua-console/README.md) module.
 
 ## Integration with Other Modules
 

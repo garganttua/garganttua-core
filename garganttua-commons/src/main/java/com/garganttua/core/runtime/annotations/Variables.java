@@ -70,7 +70,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @see RuntimeDefinition
  * @see Variable
  * @see com.garganttua.core.runtime.IRuntimeContext#setVariable(String, Object)
- * @see com.garganttua.core.runtime.IRuntimeContext#getVariable(String, Class)
+ * @see com.garganttua.core.runtime.IRuntimeContext#getVariable(String, IClass)
  */
 @Indexed
 @Reflected

@@ -8,7 +8,7 @@ import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
  * <p>
  * A workflow encapsulates a pre-generated script that can be executed with
  * input parameters. The script is generated during the build phase by the
- * {@link com.garganttua.core.workflow.dsl.WorkflowBuilder}.
+ * {@link com.garganttua.core.workflow.dsl.IWorkflowBuilder}.
  * </p>
  *
  * @since 2.0.0-ALPHA01

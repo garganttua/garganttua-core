@@ -63,12 +63,12 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
  *
  * <h2>Method Resolution Strategies</h2>
  * <ul>
- * <li><b>By name</b>: {@link #method(String)} - Resolves by name and
+ * <li><b>By name</b>: {@link #method(String, IClass, IClass[])} - Resolves by name and
  * parameters</li>
- * <li><b>By signature</b>: {@link #method(String, Class, Class[])} - Explicit
+ * <li><b>By signature</b>: {@link #method(String, IClass, IClass[])} - Explicit
  * signature</li>
- * <li><b>By reference</b>: {@link #method(Method)} - Direct Method object</li>
- * <li><b>By address</b>: {@link #method(ObjectAddress)} - Symbolic address</li>
+ * <li><b>By reference</b>: {@link #method(IMethod)} - Direct IMethod object</li>
+ * <li><b>By address</b>: {@link #method(ObjectAddress, IClass, IClass[])} - Symbolic address</li>
  * <li><b>Auto-detect</b>: {@link #method()} - For single-method scenarios</li>
  * </ul>
  *
@@ -107,13 +107,11 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
         ObjectAddress methodAddress() throws DslException;
 
         /**
-         * Specifies the method to bind with full signature.
+         * Specifies the method to bind using an {@link IMethod} reference.
          *
-         * @param method         the Method object to bind
-         * @param returnType     the expected return type
-         * @param parameterTypes the parameter types (in order)
+         * @param method         the IMethod object to bind
          * @return this builder instance for method chaining
-         * @throws DslException if the signature doesn't match or is incompatible
+         * @throws DslException if the method is incompatible
          */
         Builder method(IMethod method) throws DslException;
 

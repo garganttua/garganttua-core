@@ -189,7 +189,7 @@
  * <h2>Related Packages</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.runtime.dsl} - Fluent builder implementations</li>
- *   <li>{@link com.garganttua.core.runtime.supply} - Runtime value suppliers</li>
+ *   <li>{@code com.garganttua.core.runtime.supply} - Runtime value suppliers</li>
  *   <li>{@link com.garganttua.core.runtime.resolver} - Parameter resolution</li>
  * </ul>
  *

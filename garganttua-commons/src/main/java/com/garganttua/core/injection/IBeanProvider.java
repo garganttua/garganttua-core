@@ -137,7 +137,7 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, IRef
      * </p>
      *
      * @param <T> the bean type
-     * @param query the bean reference to match
+     * @param reference the bean reference to match
      * @return a list of all matching bean instances (never {@code null}, may be empty)
      * @throws DiException if an error occurs during bean query or instantiation
      * @see BeanReference

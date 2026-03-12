@@ -38,10 +38,12 @@
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflections</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-runtime-reflection</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>javax.inject</groupId>

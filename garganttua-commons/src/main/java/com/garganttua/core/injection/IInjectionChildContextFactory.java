@@ -41,7 +41,7 @@ package com.garganttua.core.injection;
  *
  * @param <ChildContext> the type of child context this factory creates
  * @since 2.0.0-ALPHA01
- * @see IInjectionContext#newChildContext(Class, Object...)
+ * @see IInjectionContext#newChildContext(IClass, Object...)
  * @see IInjectionContext#registerChildContextFactory(IInjectionChildContextFactory)
  */
 public interface IInjectionChildContextFactory<ChildContext extends IInjectionContext> {

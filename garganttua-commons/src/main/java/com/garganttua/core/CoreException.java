@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  * </p>
  * <ul>
  *   <li>{@link #findFirstInException(Throwable)} - Locates the first CoreException in a cause chain</li>
- *   <li>{@link #findFirstInException(Throwable, Class)} - Locates the first exception of a specific type</li>
+ *   <li>{@link #findFirstInException(Throwable, IClass)} - Locates the first exception of a specific type</li>
  *   <li>{@link #processException(Throwable)} - Processes and rethrows exceptions as CoreException</li>
  * </ul>
  *

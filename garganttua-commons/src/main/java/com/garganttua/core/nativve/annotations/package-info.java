@@ -10,8 +10,8 @@
  *
  * <h2>Annotations</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.nativve.annotations.Native} - Marks a class for native image reflection</li>
- *   <li>{@link com.garganttua.core.nativve.annotations.NativeConfigurationBuilder} - Marks a class as a native configuration builder</li>
+ *   <li><b>Native</b> - Marks a class for native image reflection</li>
+ *   <li><b>NativeConfigurationBuilder</b> - Marks a class as a native configuration builder</li>
  * </ul>
  *
  * <h2>Usage Pattern</h2>

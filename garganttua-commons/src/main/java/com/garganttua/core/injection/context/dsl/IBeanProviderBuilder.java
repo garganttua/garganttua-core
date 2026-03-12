@@ -10,9 +10,9 @@ import com.garganttua.core.reflection.IClass;
  *
  * <p>
  * {@code IBeanProviderBuilder} provides a fluent API for building {@link IBeanProvider} instances
- * with beans registered either explicitly through {@link #withBean(Class)} or discovered automatically
+ * with beans registered either explicitly through {@link #withBean(IClass)} or discovered automatically
  * through package scanning with {@link #withPackage(String)}. This builder is linked to
- * {@link IInjectionContextBuilder}, allowing seamless integration into the context building chain.
+ * {@code IInjectionContextBuilder}, allowing seamless integration into the context building chain.
  * Bean providers act as scopes or namespaces for organizing beans within the DI context.
  * </p>
  *

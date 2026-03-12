@@ -10,8 +10,8 @@
  * <h2>Annotations</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.expression.annotations.Expression} - Marks a class as an expression</li>
- *   <li>{@link com.garganttua.core.expression.annotations.ExpressionNode} - Marks a static method as an expression node factory</li>
- *   <li>{@link com.garganttua.core.expression.annotations.ExpressionLeaf} - Marks a static method as an expression leaf factory</li>
+ *   <li><b>ExpressionNode</b> - Marks a static method as an expression node factory</li>
+ *   <li><b>ExpressionLeaf</b> - Marks a static method as an expression leaf factory</li>
  * </ul>
  *
  * <h2>Usage Pattern</h2>

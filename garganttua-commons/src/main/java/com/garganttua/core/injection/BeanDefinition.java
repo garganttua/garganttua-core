@@ -55,12 +55,8 @@ import com.garganttua.core.reflection.binders.IConstructorBinder;
  *
  * @param <Bean>                            the type of bean this definition
  *                                          describes
- * @param type                              the class of the bean
- * @param strategy                          the bean strategy (scope), or empty
- *                                          for default
- * @param name                              the bean name, or empty for
- *                                          type-based naming
- * @param qualifiers                        the set of qualifier annotations
+ * @param reference                         the bean reference containing type,
+ *                                          strategy, name, and qualifiers
  * @param constructorBinder                 the constructor binder for bean
  *                                          instantiation
  * @param postConstructMethodBinderBuilders the set of post-construct method
