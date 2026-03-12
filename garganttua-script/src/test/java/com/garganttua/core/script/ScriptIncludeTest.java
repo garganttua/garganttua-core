@@ -199,6 +199,38 @@ class ScriptIncludeTest {
         assertEquals(50, code);
     }
 
+    // ---- Classpath include ----
+
+    @Test
+    void testIncludeClasspathScript() {
+        IScript s = createScript("""
+                include("classpath:scripts/classpath-hello.gs")
+                code <- call("classpath-hello") -> 100
+                """);
+        int code = s.execute();
+        assertEquals(100, code);
+        assertEquals(0, s.getVariable("code", IClass.getClass(Integer.class)).orElse(null));
+    }
+
+    @Test
+    void testIncludeClasspathScriptVariable() {
+        IScript s = createScript("""
+                ref <- include("classpath:scripts/classpath-hello.gs")
+                execute_script(@ref)
+                val <- script_variable(@ref, "greeting") -> 200
+                """);
+        int code = s.execute();
+        assertEquals(200, code);
+        assertEquals("hello-from-classpath", s.getVariable("val", IClass.getClass(String.class)).orElse(null));
+    }
+
+    @Test
+    void testIncludeClasspathNotFoundThrows() {
+        IScript s = createScript("include(\"classpath:nonexistent/path.gs\")");
+        int code = s.execute();
+        assertEquals(50, code);
+    }
+
     @Test
     void testMultipleIncludesAndCalls() throws IOException {
         File script1 = tempDir.resolve("alpha.gs").toFile();

@@ -1,6 +1,7 @@
 package com.garganttua.core.script.functions;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
@@ -178,7 +179,9 @@ public class ScriptFunctions {
 
     // ========== Include/Call Functions ==========
 
-    @Expression(name = "include", description = "Includes a JAR or a script file (.gs)")
+    private static final String CLASSPATH_PREFIX = "classpath:";
+
+    @Expression(name = "include", description = "Includes a JAR or a script file (.gs). Supports classpath: prefix for classpath resources.")
     public static String include(@Nullable String path) {
         log.atDebug().log("include({})", path);
         if (path == null || path.isBlank()) {
@@ -190,11 +193,20 @@ public class ScriptFunctions {
             throw new ExpressionException("include: no script execution context available");
         }
 
-        if (path.endsWith(".jar")) {
-            includeJar(ctx, path);
-            return path;
-        } else if (path.endsWith(".gs")) {
-            return includeScript(ctx, path);
+        boolean isClasspath = path.startsWith(CLASSPATH_PREFIX);
+        String resolvedPath = isClasspath ? path.substring(CLASSPATH_PREFIX.length()) : path;
+
+        if (resolvedPath.endsWith(".jar")) {
+            if (isClasspath) {
+                throw new ExpressionException("include: classpath: prefix is not supported for JAR files: " + path);
+            }
+            includeJar(ctx, resolvedPath);
+            return resolvedPath;
+        } else if (resolvedPath.endsWith(".gs")) {
+            if (isClasspath) {
+                return includeClasspathScript(ctx, resolvedPath);
+            }
+            return includeScript(ctx, resolvedPath);
         } else {
             throw new ExpressionException("include: unsupported file type: " + path
                     + ". Expected .jar or .gs");
@@ -724,6 +736,42 @@ public class ScriptFunctions {
         } catch (ScriptException e) {
             throw new ExpressionException("include: failed to load script: " + path + " - " + e.getMessage());
         }
+    }
+
+    private static String includeClasspathScript(ScriptContext ctx, String resource) {
+        try {
+            InputStream is = resolveClasspathResource(resource);
+
+            try (is) {
+                ScriptContext subScript = ctx.createChildScript();
+                subScript.load(is);
+                subScript.compile();
+
+                String name = resource.contains("/")
+                        ? resource.substring(resource.lastIndexOf('/') + 1)
+                        : resource;
+                name = name.replaceFirst("\\.gs$", "");
+                ctx.registerIncludedScript(name, subScript);
+
+                log.atDebug().log("Script included as '{}' from classpath:{}", name, resource);
+                return name;
+            }
+        } catch (ExpressionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ExpressionException("include: failed to load classpath script: " + resource + " - " + e.getMessage());
+        }
+    }
+
+    private static InputStream resolveClasspathResource(String resource) {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+        if (is == null) {
+            is = ScriptFunctions.class.getClassLoader().getResourceAsStream(resource);
+        }
+        if (is == null) {
+            throw new ExpressionException("include: classpath resource not found: " + resource);
+        }
+        return is;
     }
 
     // ========== Execute Script Functions ==========
