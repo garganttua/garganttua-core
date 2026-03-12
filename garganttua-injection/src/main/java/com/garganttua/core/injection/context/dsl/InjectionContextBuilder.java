@@ -1,6 +1,7 @@
 package com.garganttua.core.injection.context.dsl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,11 +20,14 @@ import javax.inject.Singleton;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -53,13 +58,54 @@ import lombok.extern.slf4j.Slf4j;
 public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
 
+    private static final String SOURCE_MANUAL = "manual";
+    private static final String SOURCE_BUILT_IN = "built-in";
+    private static final String SOURCE_AUTO_DETECTED = "auto-detected";
+
     private final Set<String> packages = new HashSet<>();
-    private final Map<String, IBeanProviderBuilder> beanProviders = new HashMap<>();
-    private final Map<String, IPropertyProviderBuilder> propertyProviders = new HashMap<>();
-    private final List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories = new ArrayList<>();
+
+    // Bean providers: built-in (P1) + manual (P0)
+    private final Map<String, IBeanProviderBuilder> manualBeanProviders = new HashMap<>();
+    private final Map<String, IBeanProviderBuilder> builtInBeanProviders = new HashMap<>();
+    private final MultiSourceCollector<String, IBeanProviderBuilder> beanProviderCollector;
+
+    // Property providers: built-in (P1) + manual (P0)
+    private final Map<String, IPropertyProviderBuilder> manualPropertyProviders = new HashMap<>();
+    private final Map<String, IPropertyProviderBuilder> builtInPropertyProviders = new HashMap<>();
+    private final MultiSourceCollector<String, IPropertyProviderBuilder> propertyProviderCollector;
+
+    // Child context factories: manual (P0) + auto-detected (P1)
+    private final Map<String, IInjectionChildContextFactory<? extends IInjectionContext>> manualChildContextFactories = new HashMap<>();
+    private final Map<String, IInjectionChildContextFactory<? extends IInjectionContext>> autoDetectedChildContextFactories = new HashMap<>();
+    private final MultiSourceCollector<String, IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactoryCollector;
+
+    // Qualifiers: manual (P0) + auto-detected (P1)
+    private final Map<String, IClass<? extends Annotation>> manualQualifiers = new HashMap<>();
+    private final Map<String, IClass<? extends Annotation>> autoDetectedQualifiers = new HashMap<>();
+    private final MultiSourceCollector<String, IClass<? extends Annotation>> qualifierCollector;
+
     private IInjectableElementResolverBuilder resolvers;
-    private Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
     private Set<IBuilderObserver<IInjectionContextBuilder, IInjectionContext>> observers = new HashSet<>();
+
+    @SuppressWarnings("unchecked")
+    private static <K, V> ISupplier<Map<K, V>> mapSupplier(Map<K, V> map) {
+        return new ISupplier<>() {
+            @Override
+            public Optional<Map<K, V>> supply() throws SupplyException {
+                return Optional.of(map);
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return Map.class;
+            }
+
+            @Override
+            public IClass<Map<K, V>> getSuppliedClass() {
+                return (IClass<Map<K, V>>) (IClass<?>) IClass.getClass(Map.class);
+            }
+        };
+    }
 
     public static IInjectionContextBuilder builder() throws DslException {
         log.atTrace().log("Entering InjectionContextBuilder.builder()");
@@ -74,20 +120,47 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     public InjectionContextBuilder() throws DslException {
         super(Set.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BOTH)));
         log.atTrace().log("Entering InjectionContextBuilder constructor");
-        this.beanProviders.put(Predefined.BeanProviders.garganttua.toString(),
-        new BeanProviderBuilder(this).autoDetect(false));
-        this.propertyProviders.put(Predefined.PropertyProviders.garganttua.toString(),
-        new PropertyProviderBuilder(this).autoDetect(false));
+
+        // Initialize collectors
+        this.beanProviderCollector = new MultiSourceCollector<>();
+        beanProviderCollector.source(mapSupplier(manualBeanProviders), 0, SOURCE_MANUAL);
+        beanProviderCollector.source(mapSupplier(builtInBeanProviders), 1, SOURCE_BUILT_IN);
+
+        this.propertyProviderCollector = new MultiSourceCollector<>();
+        propertyProviderCollector.source(mapSupplier(manualPropertyProviders), 0, SOURCE_MANUAL);
+        propertyProviderCollector.source(mapSupplier(builtInPropertyProviders), 1, SOURCE_BUILT_IN);
+
+        this.childContextFactoryCollector = new MultiSourceCollector<>();
+        childContextFactoryCollector.source(mapSupplier(manualChildContextFactories), 0, SOURCE_MANUAL);
+        childContextFactoryCollector.source(mapSupplier(autoDetectedChildContextFactories), 1, SOURCE_AUTO_DETECTED);
+
+        this.qualifierCollector = new MultiSourceCollector<>();
+        qualifierCollector.source(mapSupplier(manualQualifiers), 0, SOURCE_MANUAL);
+        qualifierCollector.source(mapSupplier(autoDetectedQualifiers), 1, SOURCE_AUTO_DETECTED);
+
+        // Built-in providers
+        this.builtInBeanProviders.put(Predefined.BeanProviders.garganttua.toString(),
+                new BeanProviderBuilder(this).autoDetect(false));
+        this.builtInPropertyProviders.put(Predefined.PropertyProviders.garganttua.toString(),
+                new PropertyProviderBuilder(this).autoDetect(false));
         this.resolvers = new InjectableElementResolverBuilder(this);
         this.withPackage("com.garganttua.core.injection");
         log.atDebug().log("Initialized default bean and property providers and resolver");
         log.atTrace().log("Exiting InjectionContextBuilder constructor");
     }
 
+    private Map<String, IBeanProviderBuilder> getAllBeanProviders() {
+        return this.beanProviderCollector.build();
+    }
+
+    private Map<String, IPropertyProviderBuilder> getAllPropertyProviders() {
+        return this.propertyProviderCollector.build();
+    }
+
     @Override
     public IInjectionContextBuilder autoDetect(boolean b) throws DslException {
-        this.beanProviders.values().stream().forEach(bp -> bp.autoDetect(b));
-        this.propertyProviders.values().stream().forEach(pp -> pp.autoDetect(b));
+        getAllBeanProviders().values().forEach(bp -> bp.autoDetect(b));
+        getAllPropertyProviders().values().forEach(pp -> pp.autoDetect(b));
         this.resolvers.autoDetect(b);
         return super.autoDetect(b);
     }
@@ -97,10 +170,8 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
             IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Entering childContextFactory(factory={})", factory);
         Objects.requireNonNull(factory, "ChildContextFactory cannot be null");
-        if (childContextFactories.stream().noneMatch(f -> f.getClass().equals(factory.getClass()))) {
-            childContextFactories.add(factory);
-            log.atDebug().log("Added new child context factory: {}", factory);
-        }
+        this.manualChildContextFactories.put(factory.getClass().getName(), factory);
+        log.atDebug().log("Added new child context factory: {}", factory);
         if (this.built != null) {
             this.built.registerChildContextFactory(factory);
             log.atDebug().log("Registered child context factory to built context: {}", factory);
@@ -111,14 +182,16 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
 
     private Map<String, IBeanProvider> buildBeanProviders(IInjectableElementResolver resolvers) {
         log.atTrace().log("Entering buildBeanProviders(resolvers={})", resolvers);
-        Map<String, IBeanProvider> result = this.beanProviders.entrySet().stream()
+        Set<IClass<? extends Annotation>> allQualifiers = new HashSet<>(this.qualifierCollector.build().values());
+        Map<String, IBeanProviderBuilder> allBeanProviders = getAllBeanProviders();
+        Map<String, IBeanProvider> result = allBeanProviders.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> {
 
                             IBeanProviderBuilder provider = entry.getValue();
                             if (provider instanceof BeanProviderBuilder bpb) {
-                                bpb.setQualifierAnnotations(this.qualifiers);
+                                bpb.setQualifierAnnotations(allQualifiers);
                                 if (this.reflectionBuilderRef != null) {
                                     bpb.provide(this.reflectionBuilderRef);
                                 }
@@ -134,7 +207,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
 
     private Map<String, IPropertyProvider> buildPropertyProviders() {
         log.atTrace().log("Entering buildPropertyProviders()");
-        Map<String, IPropertyProvider> result = this.propertyProviders.entrySet().stream()
+        Map<String, IPropertyProvider> result = getAllPropertyProviders().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> entry.getValue().build()));
@@ -149,7 +222,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         Objects.requireNonNull(provider, "BeanProvider cannot be null");
         provider.setUp(this);
         provider.autoDetect(isAutoDetected());
-        beanProviders.put(scope, provider);
+        manualBeanProviders.put(scope, provider);
         provider.withPackages(this.packages.stream().toArray(String[]::new));
         log.atDebug().log("Added bean provider for scope: {}", scope);
         log.atTrace().log("Exiting beanProvider");
@@ -160,7 +233,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     public IBeanProviderBuilder beanProvider(String scope) {
         log.atTrace().log("Entering beanProvider(scope={})", scope);
         Objects.requireNonNull(scope, "Scope cannot be null");
-        IBeanProviderBuilder provider = beanProviders.get(scope);
+        IBeanProviderBuilder provider = getAllBeanProviders().get(scope);
         log.atTrace().log("Exiting beanProvider with provider={}", provider);
         return provider;
     }
@@ -171,7 +244,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         Objects.requireNonNull(scope, "Scope cannot be null");
         Objects.requireNonNull(provider, "PropertyProvider cannot be null");
         provider.setUp(this);
-        propertyProviders.put(scope, provider);
+        manualPropertyProviders.put(scope, provider);
         log.atDebug().log("Added property provider for scope: {}", scope);
         log.atTrace().log("Exiting propertyProvider");
         return provider;
@@ -181,7 +254,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     public IPropertyProviderBuilder propertyProvider(String scope) {
         log.atTrace().log("Entering propertyProvider(scope={})", scope);
         Objects.requireNonNull(scope, "Scope cannot be null");
-        IPropertyProviderBuilder provider = propertyProviders.get(scope);
+        IPropertyProviderBuilder provider = getAllPropertyProviders().get(scope);
         log.atTrace().log("Exiting propertyProvider with provider={}", provider);
         return provider;
     }
@@ -190,7 +263,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     public IInjectionContextBuilder withPackages(String[] packageNames) {
         log.atTrace().log("Entering withPackages(packageNames={})", (Object) packageNames);
         this.packages.addAll(Set.of(packageNames));
-        this.beanProviders.values().stream().forEach(p -> p.withPackages(packageNames));
+        getAllBeanProviders().values().forEach(p -> p.withPackages(packageNames));
         this.resolvers.withPackages(packageNames);
         log.atDebug().log("Added packages: {}", Arrays.toString(packageNames));
         log.atTrace().log("Exiting withPackages");
@@ -201,7 +274,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     public IInjectionContextBuilder withPackage(String packageName) {
         log.atTrace().log("Entering withPackage(packageName={})", packageName);
         this.packages.add(packageName);
-        this.beanProviders.values().stream().forEach(p -> p.withPackage(packageName));
+        getAllBeanProviders().values().forEach(p -> p.withPackage(packageName));
         this.resolvers.withPackage(packageName);
         log.atDebug().log("Added package: {}", packageName);
         log.atTrace().log("Exiting withPackage");
@@ -218,7 +291,8 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     @Override
     public IInjectionContextBuilder withQualifier(IClass<? extends Annotation> qualifier) {
         log.atTrace().log("Entering withQualifier(qualifier={})", qualifier);
-        this.qualifiers.add(Objects.requireNonNull(qualifier, "Qualifier cannot be null"));
+        Objects.requireNonNull(qualifier, "Qualifier cannot be null");
+        this.manualQualifiers.put(qualifier.getName(), qualifier);
         log.atDebug().log("Added qualifier: {}", qualifier);
         log.atTrace().log("Exiting withQualifier");
         return this;
@@ -227,15 +301,20 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     @Override
     protected IInjectionContext doBuild() throws DslException {
         log.atTrace().log("Entering doBuild()");
-        if (beanProviders.isEmpty() && propertyProviders.isEmpty()) {
+        Map<String, IBeanProviderBuilder> allBeanProviders = getAllBeanProviders();
+        Map<String, IPropertyProviderBuilder> allPropertyProviders = getAllPropertyProviders();
+
+        if (allBeanProviders.isEmpty() && allPropertyProviders.isEmpty()) {
             log.atError().log("No BeanProvider or PropertyProvider defined. Throwing DslException.");
             throw new DslException("At least one BeanProvider and PropertyProvider must be provided");
         }
 
-        InjectionContextBuilder.setBuiltInResolvers(this.resolvers, this.qualifiers, this.autoDetect.booleanValue());
+        Set<IClass<? extends Annotation>> allQualifiers = new HashSet<>(this.qualifierCollector.build().values());
+
+        InjectionContextBuilder.setBuiltInResolvers(this.resolvers, allQualifiers, this.autoDetect.booleanValue());
         log.atDebug().log("Set built-in resolvers");
 
-        this.qualifiers.forEach(qualifier -> {
+        allQualifiers.forEach(qualifier -> {
             this.resolvers.withResolver(qualifier, new SingletonElementResolver(Set.of()));
             log.atDebug().log("Added resolver for qualifier: {}", qualifier);
         });
@@ -243,11 +322,14 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         IInjectableElementResolver builtResolvers = this.resolvers.build();
         log.atDebug().log("Built IInjectableElementResolver");
 
+        List<IInjectionChildContextFactory<? extends IInjectionContext>> allChildContextFactories =
+                new ArrayList<>(this.childContextFactoryCollector.build().values());
+
         IInjectionContext built = InjectionContext.master(
                 builtResolvers,
                 this.buildBeanProviders(builtResolvers),
                 this.buildPropertyProviders(),
-                new ArrayList<>(childContextFactories));
+                allChildContextFactories);
 
         log.atDebug().log("Constructed IInjectionContext master instance");
         this.notifyObserver(built);
@@ -327,8 +409,8 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                     .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, qualifierAnnotation).stream()
                             .filter(clazz -> clazz.isAnnotationPresent(qualifierAnnotation)))
                     .map(clazz -> (IClass<? extends Annotation>) clazz)
-                    .forEach(this.qualifiers::add);
-            log.atDebug().log("Auto-detected qualifiers: {}", this.qualifiers);
+                    .forEach(q -> this.autoDetectedQualifiers.put(q.getName(), q));
+            log.atDebug().log("Auto-detected qualifiers: {}", this.autoDetectedQualifiers);
 
             // Auto-detect @ChildContext annotated classes
             this.packages.stream()
@@ -338,7 +420,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                             if (childContextFactoryInterface.isAssignableFrom(factoryClass)) {
                                 IInjectionChildContextFactory<? extends IInjectionContext> factory =
                                         (IInjectionChildContextFactory<? extends IInjectionContext>) reflection.newInstance(factoryClass);
-                                this.childContextFactory(factory);
+                                this.autoDetectedChildContextFactories.put(factoryClass.getName(), factory);
                                 log.atDebug().log("Auto-registered child context factory: {}", factoryClass.getName());
                             } else {
                                 log.atWarn().log(
@@ -353,7 +435,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                     });
 
             // Pass IReflection to sub-builders for their own auto-detection
-            this.beanProviders.values().forEach(bp -> {
+            getAllBeanProviders().values().forEach(bp -> {
                 if (bp instanceof BeanProviderBuilder bpb) {
                     bpb.setReflection(reflection);
                 }

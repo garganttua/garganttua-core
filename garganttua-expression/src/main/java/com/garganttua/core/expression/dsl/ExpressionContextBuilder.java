@@ -1,6 +1,8 @@
 package com.garganttua.core.expression.dsl;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,13 +11,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
@@ -30,6 +32,7 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -66,14 +69,55 @@ public class ExpressionContextBuilder
         extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
 
+    private static final String SOURCE_EXPLICIT = "explicit";
+    private static final String SOURCE_AUTO_DETECTED = "auto-detected";
+
     private final Set<String> packages = new HashSet<>();
-    private final Set<IExpressionMethodBinderBuilder<?>> nodes = new HashSet<>();
+    private final Set<IExpressionMethodBinderBuilder<?>> explicitNodes = new HashSet<>();
+    private final Set<IExpressionMethodBinderBuilder<?>> autoDetectedNodes = new HashSet<>();
+    private final MultiSourceCollector<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeCollector;
     private Set<IBuilderObserver<IExpressionContextBuilder, IExpressionContext>> observers = new HashSet<>();
+
+    private static Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> buildNodeMap(
+            Set<IExpressionMethodBinderBuilder<?>> builders) {
+        Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> result = new HashMap<>();
+        for (IExpressionMethodBinderBuilder<?> builder : builders) {
+            IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = builder.build();
+            result.put(factory.key(), factory);
+        }
+        return result;
+    }
 
     protected ExpressionContextBuilder() {
         super(Set.of(DependencySpec.use(IInjectionContextBuilder.class)));
         log.atTrace().log("Entering ExpressionBuilder constructor");
+
+        this.nodeCollector = new MultiSourceCollector<>();
+        nodeCollector.source(nodeSetSupplier(explicitNodes), 0, SOURCE_EXPLICIT);
+        nodeCollector.source(nodeSetSupplier(autoDetectedNodes), 1, SOURCE_AUTO_DETECTED);
+
         log.atTrace().log("Exiting ExpressionBuilder constructor");
+    }
+
+    @SuppressWarnings("unchecked")
+    private ISupplier<Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>> nodeSetSupplier(
+            Set<IExpressionMethodBinderBuilder<?>> nodeSet) {
+        return new ISupplier<>() {
+            @Override
+            public Optional<Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>> supply() throws SupplyException {
+                return Optional.of(buildNodeMap(nodeSet));
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return Map.class;
+            }
+
+            @Override
+            public IClass<Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>> getSuppliedClass() {
+                return (IClass<Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>>>) (IClass<?>) IClass.getClass(Map.class);
+            }
+        };
     }
 
     /**
@@ -122,7 +166,7 @@ public class ExpressionContextBuilder
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
         IExpressionMethodBinderBuilder<T> expressionNodeMethodBinderBuilder = new ExpressionNodeFactoryBuilder<>(this,
                 methodOwnerSupplier, supplied);
-        this.nodes.add(expressionNodeMethodBinderBuilder);
+        this.explicitNodes.add(expressionNodeMethodBinderBuilder);
         return expressionNodeMethodBinderBuilder;
     }
 
@@ -163,8 +207,9 @@ public class ExpressionContextBuilder
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
-        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = this.nodes.stream()
-                .map(IExpressionMethodBinderBuilder::build).collect(Collectors.toSet());
+
+        Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> mergedNodes = this.nodeCollector.build();
+        Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> builtNodes = new HashSet<>(mergedNodes.values());
 
         ExpressionContext context = new ExpressionContext(builtNodes);
         futur.complete(context);
@@ -228,12 +273,15 @@ public class ExpressionContextBuilder
                 "Found {} total methods with @Expression, {} unique after deduplication ({} duplicates removed)",
                 expressions.size(), uniqueMethods.size(), duplicateCount);
 
-        // Create factories for unique methods only
+        // Create factories for unique methods only — add to auto-detected source
         uniqueMethods.values()
-                .forEach(m -> this.expression(
-                        new BeanSupplierBuilder<>(m.getDeclaringClass()),
-                        (IClass) m.getReturnType())
-                        .method(m).autoDetect(true));
+                .forEach(m -> {
+                    ExpressionNodeFactoryBuilder<?> builder = new ExpressionNodeFactoryBuilder<>(this,
+                            new BeanSupplierBuilder<>(m.getDeclaringClass()),
+                            (IClass) m.getReturnType());
+                    builder.method(m).autoDetect(true);
+                    this.autoDetectedNodes.add(builder);
+                });
     }
 
     @Override

@@ -1,15 +1,18 @@
 package com.garganttua.core.injection.context.dsl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
+import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -17,6 +20,8 @@ import com.garganttua.core.injection.annotations.Resolver;
 import com.garganttua.core.injection.context.resolver.InjectableElementResolver;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +32,46 @@ public class InjectableElementResolverBuilder
         AbstractAutomaticLinkedBuilder<IInjectableElementResolverBuilder, IInjectionContextBuilder, IInjectableElementResolver>
         implements IInjectableElementResolverBuilder {
 
-    private final Map<IClass<? extends Annotation>, IElementResolver> resolvers = new HashMap<>();
+    private static final String SOURCE_MANUAL = "manual";
+    private static final String SOURCE_AUTO_DETECTED = "auto-detected";
+
+    private final Map<IClass<? extends Annotation>, IElementResolver> manualResolvers = new HashMap<>();
+    private final Map<IClass<? extends Annotation>, IElementResolver> autoDetectedResolvers = new HashMap<>();
+    private final MultiSourceCollector<IClass<? extends Annotation>, IElementResolver> collector;
+
     private Set<IBuilderObserver<IInjectableElementResolverBuilder, IInjectableElementResolver>> observers = new HashSet<>();
     private final Set<String> packages = new HashSet<>();
     @Setter
     private IReflection reflection;
 
+    @SuppressWarnings("unchecked")
+    private static <K, V> ISupplier<Map<K, V>> mapSupplier(Map<K, V> map) {
+        return new ISupplier<>() {
+            @Override
+            public Optional<Map<K, V>> supply() throws SupplyException {
+                return Optional.of(map);
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return Map.class;
+            }
+
+            @Override
+            public IClass<Map<K, V>> getSuppliedClass() {
+                return (IClass<Map<K, V>>) (IClass<?>) IClass.getClass(Map.class);
+            }
+        };
+    }
+
     public InjectableElementResolverBuilder(IInjectionContextBuilder link) {
         super(link);
         log.atTrace().log("Entering InjectableElementResolverBuilder constructor with link={}", link);
+
+        this.collector = new MultiSourceCollector<>();
+        collector.source(mapSupplier(manualResolvers), 0, SOURCE_MANUAL);
+        collector.source(mapSupplier(autoDetectedResolvers), 1, SOURCE_AUTO_DETECTED);
+
         log.atTrace().log("Exiting InjectableElementResolverBuilder constructor");
     }
 
@@ -46,7 +82,7 @@ public class InjectableElementResolverBuilder
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(resolver, "Resolver cannot be null");
 
-        resolvers.put(annotation, resolver);
+        manualResolvers.put(annotation, resolver);
         log.atDebug().log("Added resolver for annotation: {}", annotation);
 
         if (this.built != null) {
@@ -89,7 +125,8 @@ public class InjectableElementResolverBuilder
 
     @Override
     protected IInjectableElementResolver doBuild() throws DslException {
-        InjectableElementResolver b = new InjectableElementResolver(this.resolvers);
+        Map<IClass<? extends Annotation>, IElementResolver> mergedResolvers = this.collector.build();
+        InjectableElementResolver b = new InjectableElementResolver(mergedResolvers);
         this.notifyObserver(b);
         return b;
     }
@@ -115,7 +152,7 @@ public class InjectableElementResolverBuilder
                             IElementResolver resolverInstance = (IElementResolver) reflection.newInstance(resolverClass);
 
                             for (Class<? extends Annotation> annotationType : annotation.annotations()) {
-                                this.withResolver((IClass<? extends Annotation>) IClass.getClass(annotationType), resolverInstance);
+                                this.autoDetectedResolvers.put((IClass<? extends Annotation>) IClass.getClass(annotationType), resolverInstance);
                                 log.atDebug().log("Auto-registered resolver {} for annotation {}",
                                         resolverClass.getName(), annotationType.getSimpleName());
                             }
