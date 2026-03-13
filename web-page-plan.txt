@@ -136,7 +136,7 @@ avec une legende des couleurs par couche en dessous.
 [LEGENDE sous le graphe]
 
     Foundation          Interfaces, builders, suppliers, lifecycle
-    Infrastructure      Reflexion, conditions, execution, crypto, configuration
+    Infrastructure      Reflexion (IClass, force access), conditions, execution, crypto, configuration multi-format
     Framework           Injection, runtime, mapping, expressions, bootstrap
     Application         Scripts, workflows, console
     Build Tools         Annotation processing, plugins Maven
@@ -189,16 +189,18 @@ Chaque carte contient :
     Langage d'expressions base sur ANTLR4 avec evaluation type-safe.
     Appels de fonctions, invocations de methodes, constructeurs,
     references de variables, et types generiques. L'evaluation produit
-    des ISupplier<T> pour le calcul differe.
+    des ISupplier<T> pour le calcul differe. Fonction cast() pour le
+    transtypage avec resolution dynamique du type de retour. Support
+    des fonctions utilisateur via DynamicFunctionNode.
 
     // Appel de fonction avec arguments
     context.expression("add(8, add(42, 30))")
 
+    // Transtypage avec resolution dynamique du type retour
+    context.expression("cast(String.class, @myVar)")
+
     // Reference de variable + constructeur
     context.expression(":(String.class, @myVar)")
-
-    // Types generiques
-    context.expression("List<String>")
 
 --- Carte 3 : Script ---
 
@@ -275,15 +277,20 @@ Chaque carte contient :
     Facade de reflexion pluggable avec IReflection, IClass<T>, et
     providers priorises. Binders type-safe (IMethodBinder, IFieldBinder,
     IConstructorBinder) avec evaluation lazy via ISupplier. Navigation
-    par adresse objet (dot-notation) et resolution de methodes.
+    par adresse objet (dot-notation) et resolution de methodes. Acces
+    force aux membres prives via parametre force. Abstraction IExecutable
+    commune pour methodes et constructeurs.
 
-    // Construire la facade de reflexion
+    // Construire la facade composite avec priorites
     var reflection = ReflectionBuilder.builder()
         .withProvider(new RuntimeReflectionProvider(), 10)
         .withScanner(new MyAnnotationScanner(), 10)
         .build();
 
-    // Acces aux champs via FieldAccessor (dot-notation)
+    // Acces force a un champ prive via ObjectAddress
+    reflection.forceGetFieldValue(obj, new ObjectAddress("inner.secret"));
+
+    // FieldAccessor avec dot-notation
     var accessor = new FieldAccessor<>(ownerType, "address.city");
     var value = accessor.supply();
 
@@ -409,7 +416,8 @@ Animation : la fleche pulse et les blocs apparaissent sequentiellement.
       new ClassName(...), pas par Constructor.newInstance()
 
     - La configuration GraalVM Native Image est simplifiee :
-      moins de metadata de reflexion a declarer
+      @Reflected remplace @Native pour declarer les usages,
+      et moins de metadata de reflexion a declarer
 
     - Le demarrage est plus rapide : pas de scanning au classpath,
       les index META-INF/garganttua/index/ sont pre-generes
