@@ -1,8 +1,7 @@
-package com.garganttua.keys;
+package com.garganttua.core.crypto;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -34,28 +33,25 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @NoArgsConstructor
 @Slf4j
-public class GGKey implements IGGKey {
+public class Key implements IKey {
 
-	private GGKeyType type;
+	private KeyType type;
 
-	private GGKeyAlgorithm algorithm;
+	private KeyAlgorithm algorithm;
 
-	/**
-	 * Base64 Encoded
-	 */
 	private byte[] rawKey;
 
 	private byte[] initializationVector;
 
-	private GGEncryptionMode encryptionMode;
+	private EncryptionMode encryptionMode;
 
-	private GGEncryptionPaddingMode encryptionPaddingMode;
+	private EncryptionPaddingMode encryptionPaddingMode;
 
-	private GGSignatureAlgorithm signatureAlgorithm;
-	
-	public GGKey(GGKeyType type, GGKeyAlgorithm algorithm, byte[] rawKey, byte[] initializationVector, GGEncryptionMode encryptionMode, GGEncryptionPaddingMode paddingMode, GGSignatureAlgorithm signatureAlgorithm) {
+	private SignatureAlgorithm signatureAlgorithm;
+
+	public Key(KeyType type, KeyAlgorithm algorithm, byte[] rawKey, byte[] initializationVector, EncryptionMode encryptionMode, EncryptionPaddingMode paddingMode, SignatureAlgorithm signatureAlgorithm) {
 		super();
-		log.atTrace().log("Entering GGKey constructor with type={}, algorithm={}, encryptionMode={}, paddingMode={}, signatureAlgorithm={}", type, algorithm, encryptionMode, paddingMode, signatureAlgorithm);
+		log.atTrace().log("Entering Key constructor with type={}, algorithm={}, encryptionMode={}, paddingMode={}, signatureAlgorithm={}", type, algorithm, encryptionMode, paddingMode, signatureAlgorithm);
 		this.type = type;
 		this.algorithm = algorithm;
 		this.encryptionMode = encryptionMode;
@@ -64,56 +60,55 @@ public class GGKey implements IGGKey {
 		Encoder b64Encoder = Base64.getEncoder();
 		this.rawKey = b64Encoder.encode(rawKey);
 		this.initializationVector = initializationVector;
-		log.atDebug().log("GGKey created with type={}, algorithm={}", this.type, this.algorithm);
-		log.atTrace().log("Exiting GGKey constructor");
+		log.atDebug().log("Key created with type={}, algorithm={}", this.type, this.algorithm);
+		log.atTrace().log("Exiting Key constructor");
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return Arrays.equals(rawKey, ((GGKey) obj).rawKey);
+		return Arrays.equals(rawKey, ((Key) obj).rawKey);
 	}
 
 	@Override
-	public Key getKey() throws GGKeyException {
+	public java.security.Key getKey() throws CryptoException {
 		log.atTrace().log("Entering getKey with type={}", this.type);
-		Key key_ = null;
+		java.security.Key key_ = null;
 		Decoder b64Decoder = Base64.getDecoder();
 		byte[] decodedRawKey = b64Decoder.decode(this.rawKey);
 		try {
-			if (this.type == GGKeyType.SECRET) {
+			if (this.type == KeyType.SECRET) {
 				log.atDebug().log("Creating SecretKey for algorithm {}", this.algorithm);
-				key_ = new SecretKeySpec(decodedRawKey, 0, decodedRawKey.length, this.algorithm.getAlgorithm());
+				key_ = new SecretKeySpec(decodedRawKey, 0, decodedRawKey.length, this.algorithm.getName());
 			}
-			if (this.type == GGKeyType.PRIVATE) {
+			if (this.type == KeyType.PRIVATE) {
 				log.atDebug().log("Creating PrivateKey for algorithm {}", this.algorithm);
-				key_ = KeyFactory.getInstance(this.algorithm.getAlgorithm())
+				key_ = KeyFactory.getInstance(this.algorithm.getName())
 						.generatePrivate(new PKCS8EncodedKeySpec(decodedRawKey));
 			}
-			if (this.type == GGKeyType.PUBLIC) {
+			if (this.type == KeyType.PUBLIC) {
 				log.atDebug().log("Creating PublicKey for algorithm {}", this.algorithm);
-				key_ = KeyFactory.getInstance(this.algorithm.getAlgorithm())
+				key_ = KeyFactory.getInstance(this.algorithm.getName())
 						.generatePublic(new X509EncodedKeySpec(decodedRawKey));
 			}
 			log.atDebug().log("Key retrieved successfully for type={}, algorithm={}", this.type, this.algorithm);
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
 			log.atWarn().log("Error in getting keys from bytes", e);
-			throw new GGKeyException(e);
+			throw new CryptoException(e);
 		}
 		log.atTrace().log("Exiting getKey");
 		return key_;
 	}
 
 	@Override
-	public byte[] encrypt(byte[] clear)
-			throws GGKeyException {
+	public byte[] encrypt(byte[] clear) throws CryptoException {
 		log.atTrace().log("Entering encrypt with data length={}", clear != null ? clear.length : 0);
 		Cipher cipher;
 		try {
-			String cipherName = this.algorithm.geCipherName(this.encryptionMode, this.encryptionPaddingMode);
+			String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
 			log.atDebug().log("Initializing cipher {} for encryption", cipherName);
 			cipher = Cipher.getInstance(cipherName);
-			if( this.initializationVector != null )
-				if( this.encryptionMode == GGEncryptionMode.GCM )
+			if (this.initializationVector != null)
+				if (this.encryptionMode == EncryptionMode.GCM)
 					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(), new GCMParameterSpec(128, this.initializationVector));
 				else
 					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(), new IvParameterSpec(this.initializationVector));
@@ -126,21 +121,20 @@ public class GGKey implements IGGKey {
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException
 				| InvalidKeyException | InvalidAlgorithmParameterException e) {
 			log.atWarn().log("Encryption error", e);
-			throw new GGKeyException(e);
+			throw new CryptoException(e);
 		}
 	}
 
 	@Override
-	public byte[] decrypt(byte[] encoded)
-			throws GGKeyException {
+	public byte[] decrypt(byte[] encoded) throws CryptoException {
 		log.atTrace().log("Entering decrypt with data length={}", encoded != null ? encoded.length : 0);
 		Cipher cipher;
 		try {
-			String cipherName = this.algorithm.geCipherName(this.encryptionMode, this.encryptionPaddingMode);
+			String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
 			log.atDebug().log("Initializing cipher {} for decryption", cipherName);
 			cipher = Cipher.getInstance(cipherName);
-			if( this.initializationVector != null )
-				if( this.encryptionMode == GGEncryptionMode.GCM )
+			if (this.initializationVector != null)
+				if (this.encryptionMode == EncryptionMode.GCM)
 					cipher.init(Cipher.DECRYPT_MODE, this.getKey(), new GCMParameterSpec(128, this.initializationVector));
 				else
 					cipher.init(Cipher.DECRYPT_MODE, this.getKey(), new IvParameterSpec(this.initializationVector));
@@ -153,22 +147,21 @@ public class GGKey implements IGGKey {
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException
 				| InvalidKeyException | InvalidAlgorithmParameterException e) {
 			log.atWarn().log("Decryption error", e);
-			throw new GGKeyException(e);
+			throw new CryptoException(e);
 		}
 	}
 
 	@Override
-	public byte[] sign(byte[] data) throws GGKeyException {
+	public byte[] sign(byte[] data) throws CryptoException {
 		log.atTrace().log("Entering sign with data length={}", data != null ? data.length : 0);
-		if (this.type != GGKeyType.PRIVATE) {
+		if (this.type != KeyType.PRIVATE) {
 			log.atError().log("Attempt to sign with non-private key: type={}", this.type);
-			throw new GGKeyException(
-					"Cannot sign with other than Private key");
+			throw new CryptoException("Cannot sign with other than Private key");
 		}
 		try {
-			String geSignatureName = this.algorithm.geSignatureName(this.signatureAlgorithm);
-			log.atDebug().log("Creating signature with algorithm {}", geSignatureName);
-			Signature signature = Signature.getInstance(geSignatureName);
+			String signatureName = this.algorithm.getSignatureName(this.signatureAlgorithm);
+			log.atDebug().log("Creating signature with algorithm {}", signatureName);
+			Signature signature = Signature.getInstance(signatureName);
 			signature.initSign((PrivateKey) this.getKey());
 			signature.update(data);
 			byte[] signatureBytes = signature.sign();
@@ -177,21 +170,19 @@ public class GGKey implements IGGKey {
 			return signatureBytes;
 		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 			log.atWarn().log("Signature error", e);
-			throw new GGKeyException("Signature error", e);
+			throw new CryptoException("Signature error", e);
 		}
 	}
 
 	@Override
-	public boolean verifySignature(byte[] signature, byte[] originalData)
-			throws GGKeyException {
+	public boolean verifySignature(byte[] signature, byte[] originalData) throws CryptoException {
 		log.atTrace().log("Entering verifySignature with signature length={}, data length={}", signature != null ? signature.length : 0, originalData != null ? originalData.length : 0);
-		if (this.type != GGKeyType.PUBLIC) {
+		if (this.type != KeyType.PUBLIC) {
 			log.atError().log("Attempt to verify signature with non-public key: type={}", this.type);
-			throw new GGKeyException(
-					"Cannot verify signature with other than Public key");
+			throw new CryptoException("Cannot verify signature with other than Public key");
 		}
 		try {
-			String signatureName = this.algorithm.geSignatureName(this.signatureAlgorithm);
+			String signatureName = this.algorithm.getSignatureName(this.signatureAlgorithm);
 			log.atDebug().log("Verifying signature with algorithm {}", signatureName);
 			Signature signatureVerify = Signature.getInstance(signatureName);
 			signatureVerify.initVerify((PublicKey) this.getKey());
@@ -202,9 +193,13 @@ public class GGKey implements IGGKey {
 			return isValid;
 		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 			log.atWarn().log("Signature verification error", e);
-			throw new GGKeyException("Signature verification error",
-					e);
+			throw new CryptoException("Signature verification error", e);
 		}
+	}
+
+	@Override
+	public IKeyAlgorithm getAlgorithm() {
+		return this.algorithm;
 	}
 
 }

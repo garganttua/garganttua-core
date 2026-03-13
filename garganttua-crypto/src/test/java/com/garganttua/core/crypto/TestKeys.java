@@ -1,4 +1,4 @@
-package com.garganttua.api.core.security.key;
+package com.garganttua.core.crypto;
 
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class TestKeys {
 
 	@Test
-	public void testAsymetricKeys() throws NoSuchAlgorithmException {
+	public void testAsymmetricKeys() throws NoSuchAlgorithmException {
 		KeyPairGenerator.getInstance("DSA").initialize(512);
 		KeyPairGenerator.getInstance("DSA").initialize(1024);
 		KeyPairGenerator.getInstance("DSA").initialize(2048);
@@ -29,7 +29,7 @@ public class TestKeys {
 		KeyPairGenerator.getInstance("EC").initialize(256);
 		KeyPairGenerator.getInstance("EC").initialize(384);
 		KeyPairGenerator.getInstance("EC").initialize(512);
-		
+
 		KeyPairGenerator.getInstance("DH").initialize(512);
 		KeyPairGenerator.getInstance("DH").initialize(576);
 		KeyPairGenerator.getInstance("DH").initialize(640);
@@ -43,16 +43,14 @@ public class TestKeys {
 		KeyPairGenerator.getInstance("DH").initialize(2048);
 		KeyPairGenerator.getInstance("DH").initialize(4096);
 		KeyPairGenerator.getInstance("DH").initialize(8192);
-
-		
 	}
-	
+
 	@Test
-	public void testSymetricKeys() throws NoSuchAlgorithmException {
+	public void testSymmetricKeys() throws NoSuchAlgorithmException {
 		KeyGenerator.getInstance("AES").init(128);
 		KeyGenerator.getInstance("AES").init(192);
 		KeyGenerator.getInstance("AES").init(256);
-		
+
 		KeyGenerator.getInstance("HmacSHA1").init(128);
 		KeyGenerator.getInstance("HmacSHA1").init(256);
 		KeyGenerator.getInstance("HmacSHA1").init(384);
@@ -60,7 +58,7 @@ public class TestKeys {
 		KeyGenerator.getInstance("HmacSHA1").init(1024);
 		KeyGenerator.getInstance("HmacSHA1").init(2048);
 		KeyGenerator.getInstance("HmacSHA1").init(4096);
-		
+
 		KeyGenerator.getInstance("HmacSHA224").init(128);
 		KeyGenerator.getInstance("HmacSHA224").init(256);
 		KeyGenerator.getInstance("HmacSHA224").init(384);
@@ -76,7 +74,7 @@ public class TestKeys {
 		KeyGenerator.getInstance("HmacSHA256").init(1024);
 		KeyGenerator.getInstance("HmacSHA256").init(2048);
 		KeyGenerator.getInstance("HmacSHA256").init(4096);
-		
+
 		KeyGenerator.getInstance("HmacSHA384").init(128);
 		KeyGenerator.getInstance("HmacSHA384").init(256);
 		KeyGenerator.getInstance("HmacSHA384").init(384);
@@ -84,7 +82,7 @@ public class TestKeys {
 		KeyGenerator.getInstance("HmacSHA384").init(1024);
 		KeyGenerator.getInstance("HmacSHA384").init(2048);
 		KeyGenerator.getInstance("HmacSHA384").init(4096);
-		
+
 		KeyGenerator.getInstance("HmacSHA512").init(128);
 		KeyGenerator.getInstance("HmacSHA512").init(256);
 		KeyGenerator.getInstance("HmacSHA512").init(384);
@@ -98,7 +96,7 @@ public class TestKeys {
 		KeyGenerator.getInstance("ARCFOUR").init(384);
 		KeyGenerator.getInstance("ARCFOUR").init(512);
 		KeyGenerator.getInstance("ARCFOUR").init(1024);
-		
+
 		KeyGenerator.getInstance("Blowfish").init(32);
 		KeyGenerator.getInstance("Blowfish").init(40);
 		KeyGenerator.getInstance("Blowfish").init(48);
@@ -152,12 +150,12 @@ public class TestKeys {
 		KeyGenerator.getInstance("Blowfish").init(432);
 		KeyGenerator.getInstance("Blowfish").init(440);
 		KeyGenerator.getInstance("Blowfish").init(448);
-		
+
 		KeyGenerator.getInstance("DES");
-		
+
 		KeyGenerator.getInstance("DESede").init(112);
 		KeyGenerator.getInstance("DESede").init(168);
-		
+
 		KeyGenerator.getInstance("HmacMD5");
 
 		KeyGenerator.getInstance("RC2").init(128);
@@ -166,7 +164,5 @@ public class TestKeys {
 		KeyGenerator.getInstance("RC2").init(512);
 		KeyGenerator.getInstance("RC2").init(1024);
 	}
-	
-	
-	
+
 }

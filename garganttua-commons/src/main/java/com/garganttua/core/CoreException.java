@@ -205,6 +205,15 @@ public class CoreException extends RuntimeException {
      */
     public static final int WORKFLOW_ERROR = 14;
 
+    /**
+     * Error code for cryptographic operation errors.
+     * <p>
+     * Used when errors occur during encryption, decryption, signing, verification,
+     * or key management operations.
+     * </p>
+     */
+    public static final int CRYPTO_ERROR = 15;
+
     private static final long serialVersionUID = 7855765591949705798L;
 
     /**

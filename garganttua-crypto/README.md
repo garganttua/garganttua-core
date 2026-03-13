@@ -2,7 +2,7 @@
 
 ## ⚠️ DISCLAIMER
 
-This module is not yet finished and is not at a high priority at this time. So it will obviously be fully updated. 
+This module is not yet finished and is not at a high priority at this time. So it will obviously be fully updated.
 
 **⚠️Please do not use this module !!!⚠️**
 
@@ -31,15 +31,15 @@ The Garganttua Crypto module provides a comprehensive cryptographic framework fo
 
 ## Core Concepts
 
-### GGKeyRealm
-A `GGKeyRealm` is the central abstraction for cryptographic operations. It encapsulates key generation, management, and provides access to keys for specific operations (encryption, decryption, signing, verification).
+### KeyRealmBuilder
+A `KeyRealmBuilder` creates `IKeyRealm` instances using a fluent builder pattern. It encapsulates key generation, management, and provides access to keys for specific operations (encryption, decryption, signing, verification).
 
 Key realms automatically generate and manage:
 - **Symmetric keys** (AES, DES, Blowfish, etc.) - Same key for encryption and decryption
 - **Asymmetric key pairs** (RSA, EC, DSA, DH) - Public/private key pairs
 
-### IGGKey
-The `IGGKey` interface provides methods for cryptographic operations:
+### IKey
+The `IKey` interface provides methods for cryptographic operations:
 - `encrypt(byte[] clear)` - Encrypt data
 - `decrypt(byte[] encoded)` - Decrypt data
 - `sign(byte[] data)` - Create a digital signature
@@ -87,17 +87,18 @@ Digital signatures provide authentication and non-repudiation. The following exa
 
 #### RSA Signature with SHA224
 ```java
-import com.garganttua.keys.GGKeyRealm;
-import com.garganttua.keys.GGKeyAlgorithm;
-import com.garganttua.keys.GGSignatureAlgorithm;
-import com.garganttua.keys.IGGKey;
+import com.garganttua.core.crypto.*;
 
 // Create a key realm for RSA signatures
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.RSA_4096, null, GGSignatureAlgorithm.SHA224);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.RSA_4096)
+    .signatureAlgorithm(SignatureAlgorithm.SHA224)
+    .build();
 
 // Get keys for signing and verification
-IGGKey signingKey = realm.getKeyForSigning();
-IGGKey verifyingKey = realm.getKeyForSignatureVerification();
+IKey signingKey = realm.getKeyForSigning();
+IKey verifyingKey = realm.getKeyForSignatureVerification();
 
 // Sign data
 byte[] signature = signingKey.sign("Salut".getBytes());
@@ -109,11 +110,14 @@ boolean signatureOk = verifyingKey.verifySignature(signature, "Salut".getBytes()
 
 #### ECDSA Signature with SHA256
 ```java
-// Create a key realm for EC signatures
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.EC_256, null, GGSignatureAlgorithm.SHA256);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.EC_256)
+    .signatureAlgorithm(SignatureAlgorithm.SHA256)
+    .build();
 
-IGGKey signingKey = realm.getKeyForSigning();
-IGGKey verifyingKey = realm.getKeyForSignatureVerification();
+IKey signingKey = realm.getKeyForSigning();
+IKey verifyingKey = realm.getKeyForSignatureVerification();
 
 byte[] signature = signingKey.sign("Salut".getBytes());
 boolean signatureOk = verifyingKey.verifySignature(signature, "Salut".getBytes());
@@ -121,11 +125,14 @@ boolean signatureOk = verifyingKey.verifySignature(signature, "Salut".getBytes()
 
 #### DSA Signature with SHA256
 ```java
-// Create a key realm for DSA signatures
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.DSA_2048, null, GGSignatureAlgorithm.SHA256);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.DSA_2048)
+    .signatureAlgorithm(SignatureAlgorithm.SHA256)
+    .build();
 
-IGGKey signingKey = realm.getKeyForSigning();
-IGGKey verifyingKey = realm.getKeyForSignatureVerification();
+IKey signingKey = realm.getKeyForSigning();
+IKey verifyingKey = realm.getKeyForSignatureVerification();
 
 byte[] signature = signingKey.sign("Salut".getBytes());
 boolean signatureOk = verifyingKey.verifySignature(signature, "Salut".getBytes());
@@ -136,14 +143,15 @@ boolean signatureOk = verifyingKey.verifySignature(signature, "Salut".getBytes()
 RSA encryption allows secure data transmission using public/private key pairs.
 
 ```java
-import com.garganttua.keys.GGKeyRealm;
-import com.garganttua.keys.GGKeyAlgorithm;
-import com.garganttua.keys.GGEncryptionMode;
-import com.garganttua.keys.GGEncryptionPaddingMode;
+import com.garganttua.core.crypto.*;
 
 // Create a key realm for RSA encryption
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.RSA_4096, null,
-    GGEncryptionMode.ECB, GGEncryptionPaddingMode.PKCS1_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.RSA_4096)
+    .encryptionMode(EncryptionMode.ECB)
+    .paddingMode(EncryptionPaddingMode.PKCS1_PADDING)
+    .build();
 
 // Encrypt with private key
 byte[] encryptWithPrivate = realm.getKeyForEncryption().encrypt("salut".getBytes());
@@ -168,9 +176,12 @@ Symmetric encryption uses the same key for encryption and decryption, providing 
 
 #### AES-256 with ECB Mode
 ```java
-// Create a key realm for AES encryption
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.AES_256, null,
-    GGEncryptionMode.ECB, GGEncryptionPaddingMode.PKCS5_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.AES_256)
+    .encryptionMode(EncryptionMode.ECB)
+    .paddingMode(EncryptionPaddingMode.PKCS5_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
@@ -180,10 +191,13 @@ String result = new String(decrypted);  // "salut"
 
 #### AES-256 with CBC Mode (Initialization Vector)
 ```java
-// CBC mode requires an initialization vector (IV)
-// Specify IV size as the fourth parameter
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.AES_256, null, 16,
-    GGEncryptionMode.CBC, GGEncryptionPaddingMode.PKCS5_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.AES_256)
+    .initializationVectorSize(16)
+    .encryptionMode(EncryptionMode.CBC)
+    .paddingMode(EncryptionPaddingMode.PKCS5_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForEncryption().decrypt(encrypted);
@@ -193,10 +207,13 @@ String result = new String(decrypted);  // "salut"
 
 #### AES-256 with GCM Mode
 ```java
-// GCM mode provides authenticated encryption
-// GCM typically uses a 12-byte IV
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.AES_256, null, 12,
-    GGEncryptionMode.GCM, GGEncryptionPaddingMode.NO_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.AES_256)
+    .initializationVectorSize(12)
+    .encryptionMode(EncryptionMode.GCM)
+    .paddingMode(EncryptionPaddingMode.NO_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
@@ -206,21 +223,13 @@ String result = new String(decrypted);  // "salut"
 
 #### AES-256 with CTR Mode
 ```java
-// CTR (Counter) mode
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.AES_256, null, 16,
-    GGEncryptionMode.CTR, GGEncryptionPaddingMode.NO_PADDING);
-
-byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
-byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
-
-String result = new String(decrypted);  // "salut"
-```
-
-#### AES-256 with CFB Mode
-```java
-// CFB (Cipher Feedback) mode
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.AES_256, null, 16,
-    GGEncryptionMode.CFB, GGEncryptionPaddingMode.NO_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.AES_256)
+    .initializationVectorSize(16)
+    .encryptionMode(EncryptionMode.CTR)
+    .paddingMode(EncryptionPaddingMode.NO_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
@@ -232,9 +241,13 @@ String result = new String(decrypted);  // "salut"
 
 #### Triple DES (DESede)
 ```java
-// Triple DES with 168-bit key
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.DESEDE_168, 8,
-    GGEncryptionMode.CBC, GGEncryptionPaddingMode.PKCS5_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.DESEDE_168)
+    .initializationVectorSize(8)
+    .encryptionMode(EncryptionMode.CBC)
+    .paddingMode(EncryptionPaddingMode.PKCS5_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
@@ -244,9 +257,13 @@ String result = new String(decrypted);  // "salut"
 
 #### DES
 ```java
-// Standard DES with 56-bit key
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.DES_56, 8,
-    GGEncryptionMode.CBC, GGEncryptionPaddingMode.PKCS5_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.DES_56)
+    .initializationVectorSize(8)
+    .encryptionMode(EncryptionMode.CBC)
+    .paddingMode(EncryptionPaddingMode.PKCS5_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
@@ -256,9 +273,13 @@ String result = new String(decrypted);  // "salut"
 
 #### Blowfish
 ```java
-// Blowfish with 120-bit key
-GGKeyRealm realm = new GGKeyRealm("toto", GGKeyAlgorithm.BLOWFISH_120, 8,
-    GGEncryptionMode.CBC, GGEncryptionPaddingMode.PKCS5_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("toto")
+    .algorithm(KeyAlgorithm.BLOWFISH_120)
+    .initializationVectorSize(8)
+    .encryptionMode(EncryptionMode.CBC)
+    .paddingMode(EncryptionPaddingMode.PKCS5_PADDING)
+    .build();
 
 byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
 byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
@@ -277,39 +298,35 @@ Calendar cal = Calendar.getInstance();
 cal.add(Calendar.HOUR, 24);  // Key expires in 24 hours
 Date expiration = cal.getTime();
 
-GGKeyRealm realm = new GGKeyRealm("myRealm", GGKeyAlgorithm.AES_256, expiration,
-    GGEncryptionMode.GCM, GGEncryptionPaddingMode.NO_PADDING);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("myRealm")
+    .algorithm(KeyAlgorithm.AES_256)
+    .expiration(expiration)
+    .encryptionMode(EncryptionMode.GCM)
+    .paddingMode(EncryptionPaddingMode.NO_PADDING)
+    .build();
 
 // Use the realm...
-// After expiration, getKeyForEncryption() will throw GGKeyException
+// After expiration, getKeyForEncryption() will throw CryptoException
 ```
 
 #### Revoking a Key Realm
 ```java
-GGKeyRealm realm = new GGKeyRealm("myRealm", GGKeyAlgorithm.RSA_2048, null,
-    GGSignatureAlgorithm.SHA256);
+IKeyRealm realm = KeyRealmBuilder.builder()
+    .name("myRealm")
+    .algorithm(KeyAlgorithm.RSA_2048)
+    .signatureAlgorithm(SignatureAlgorithm.SHA256)
+    .build();
 
 // Revoke the key realm
 realm.revoke();
 
-// After revocation, any attempt to use the keys will throw GGKeyException
+// After revocation, any attempt to use the keys will throw CryptoException
 try {
-    IGGKey key = realm.getKeyForSigning();
-} catch (GGKeyException e) {
+    IKey key = realm.getKeyForSigning();
+} catch (CryptoException e) {
     // "The key for realm myRealm is revoked"
 }
-```
-
-#### Accessing Key Realm Properties
-```java
-GGKeyRealm realm = new GGKeyRealm("myRealm", GGKeyAlgorithm.RSA_2048, null,
-    GGSignatureAlgorithm.SHA256);
-
-String name = realm.getName();                    // "myRealm"
-GGKeyAlgorithm algorithm = realm.getKeyAlgorithm(); // RSA_2048
-GGKeyRealmType type = realm.getType();            // ASYMETRIC
-Date expiration = realm.getExpiration();          // null (no expiration)
-boolean isRevoked = realm.isRevoked();            // false
 ```
 
 ## Tips and Best Practices
@@ -339,7 +356,7 @@ boolean isRevoked = realm.isRevoked();            // false
 1. **Initialization Vectors (IV)**:
    - The framework automatically generates secure random IVs
    - IV sizes: 16 bytes for CBC/CTR/CFB, 12 bytes for GCM, 8 bytes for DES/Blowfish
-2. **Exception Handling**: Always catch and handle `GGKeyException` properly
+2. **Exception Handling**: Always catch and handle `CryptoException` properly
 3. **Key Storage**: Store key realms securely - consider using a secure key store
 4. **Data Size Limits**: RSA encryption is limited by key size (e.g., RSA-2048 can encrypt ~245 bytes)
 
@@ -350,7 +367,7 @@ boolean isRevoked = realm.isRevoked();            // false
 
 ## Exception Handling
 
-All cryptographic operations can throw `GGKeyException`. Common scenarios include:
+All cryptographic operations can throw `CryptoException`. Common scenarios include:
 - Using an expired key realm
 - Using a revoked key realm
 - Invalid encryption/decryption operations
@@ -358,13 +375,17 @@ All cryptographic operations can throw `GGKeyException`. Common scenarios includ
 
 ```java
 try {
-    GGKeyRealm realm = new GGKeyRealm("myRealm", GGKeyAlgorithm.AES_256,
-        GGEncryptionMode.GCM, GGEncryptionPaddingMode.NO_PADDING);
+    IKeyRealm realm = KeyRealmBuilder.builder()
+        .name("myRealm")
+        .algorithm(KeyAlgorithm.AES_256)
+        .encryptionMode(EncryptionMode.GCM)
+        .paddingMode(EncryptionPaddingMode.NO_PADDING)
+        .build();
 
-    IGGKey key = realm.getKeyForEncryption();
+    IKey key = realm.getKeyForEncryption();
     byte[] encrypted = key.encrypt("sensitive data".getBytes());
 
-} catch (GGKeyException e) {
+} catch (CryptoException e) {
     // Handle cryptographic errors
     System.err.println("Cryptographic error: " + e.getMessage());
 }

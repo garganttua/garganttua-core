@@ -1,4 +1,4 @@
-package com.garganttua.keys;
+package com.garganttua.core.crypto;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -13,7 +13,7 @@ import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
+public enum KeyAlgorithm implements IKeyAlgorithm {
     // DSA
     DSA_512("DSA", 512),
     DSA_1024("DSA", 1024),
@@ -185,15 +185,17 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
     private final String algorithm;
     private final int keySize;
 
-    GGKeyAlgorithm(String algorithm, int keySize) {
+    KeyAlgorithm(String algorithm, int keySize) {
         this.algorithm = algorithm;
         this.keySize = keySize;
     }
 
-    public String getAlgorithm() {
+    @Override
+    public String getName() {
         return algorithm;
     }
 
+    @Override
     public int getKeySize() {
         return keySize;
     }
@@ -202,13 +204,13 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
     public String toString() {
         return algorithm + "_" + keySize;
     }
-    
-    public static GGKeyAlgorithm validateKeyAlgorithm(String input) throws IllegalArgumentException {
+
+    public static KeyAlgorithm validateKeyAlgorithm(String input) throws IllegalArgumentException {
         log.atTrace().log("Entering validateKeyAlgorithm with input: {}", input);
 
         if (input == null || !input.matches("^[A-Za-z0-9]+-[0-9]+$")) {
             log.atError().log("Invalid key algorithm format: {}", input);
-        	throw new IllegalArgumentException("Invalid format of "+input+", must be algo-size");
+            throw new IllegalArgumentException("Invalid format of " + input + ", must be algo-size");
         }
 
         String[] parts = input.split("-");
@@ -220,42 +222,41 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
             log.atDebug().log("Parsed key algorithm: {}, size: {}", algorithm, keySize);
         } catch (NumberFormatException e) {
             log.atError().log("Invalid key size: {}", parts[1]);
-            throw new IllegalArgumentException("Invalid size "+parts[1]);
+            throw new IllegalArgumentException("Invalid size " + parts[1]);
         }
 
-        GGKeyAlgorithm result = Arrays.stream(GGKeyAlgorithm.values())
-                .filter(ca -> ca.getAlgorithm().equalsIgnoreCase(algorithm) && ca.getKeySize() == keySize)
+        KeyAlgorithm result = Arrays.stream(KeyAlgorithm.values())
+                .filter(ca -> ca.getName().equalsIgnoreCase(algorithm) && ca.getKeySize() == keySize)
                 .findFirst()
                 .orElseThrow(() -> {
                     log.atError().log("Unsupported key algorithm or size: {}", input);
-                    return new IllegalArgumentException("Unsupported size or algorithm "+input);
+                    return new IllegalArgumentException("Unsupported size or algorithm " + input);
                 });
 
         log.atDebug().log("Validated key algorithm: {}", result);
         log.atTrace().log("Exiting validateKeyAlgorithm");
         return result;
     }
-    
+
     @Override
-    public GGKeyRealmType getType() throws IllegalArgumentException {
+    public KeyAlgorithmType getType() throws IllegalArgumentException {
         log.atTrace().log("Entering getType for algorithm: {}", this.algorithm);
 
-        if (this.isSymetricAlgorithm()) {
+        if (this.isSymmetricAlgorithm()) {
             log.atDebug().log("Algorithm {} is symmetric", this.algorithm);
-            log.atTrace().log("Exiting getType with SYMETRIC");
-            return GGKeyRealmType.SYMETRIC;
-        } else if (this.isAsymetricAlgorithm()) {
+            log.atTrace().log("Exiting getType with SYMMETRIC");
+            return KeyAlgorithmType.SYMMETRIC;
+        } else if (this.isAsymmetricAlgorithm()) {
             log.atDebug().log("Algorithm {} is asymmetric", this.algorithm);
-            log.atTrace().log("Exiting getType with ASYMETRIC");
-            return GGKeyRealmType.ASYMETRIC;
+            log.atTrace().log("Exiting getType with ASYMMETRIC");
+            return KeyAlgorithmType.ASYMMETRIC;
         } else {
-        	//Should never happen
             log.atError().log("Unsupported algorithm type: {}", this.algorithm);
-        	throw new IllegalArgumentException("Unsupported algorithm "+this.algorithm);
+            throw new IllegalArgumentException("Unsupported algorithm " + this.algorithm);
         }
     }
 
-    private boolean isSymetricAlgorithm() {
+    private boolean isSymmetricAlgorithm() {
         switch (this.algorithm) {
             case "AES":
             case "HmacSHA1":
@@ -274,7 +275,7 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
         }
     }
 
-    private boolean isAsymetricAlgorithm() {
+    private boolean isAsymmetricAlgorithm() {
         switch (this.algorithm) {
             case "DSA":
             case "RSA":
@@ -287,88 +288,86 @@ public enum GGKeyAlgorithm implements IGGKeyAlgorithm {
         }
     }
 
-    @Override
-    public SecretKey generateSymetricKey() throws IllegalArgumentException {
-        log.atTrace().log("Entering generateSymetricKey for algorithm: {}, keySize: {}", this.algorithm, this.keySize);
+    public SecretKey generateSymmetricKey() throws IllegalArgumentException {
+        log.atTrace().log("Entering generateSymmetricKey for algorithm: {}, keySize: {}", this.algorithm, this.keySize);
 
         KeyGenerator keyGen;
-		try {
-			keyGen = KeyGenerator.getInstance(this.getAlgorithm());
-			keyGen.init(this.keySize, GGKeyRandoms.secureRandom());
-			log.atDebug().log("Generating symmetric key for algorithm: {}, size: {}", this.algorithm, this.keySize);
-			SecretKey key = keyGen.generateKey();
-			log.atDebug().log("Successfully generated symmetric key for {}", this.algorithm);
-			log.atTrace().log("Exiting generateSymetricKey");
-			return key;
-		} catch (NoSuchAlgorithmException e) {
-			log.atError().log("Failed to generate symmetric key for algorithm: {}", this.algorithm, e);
-			throw new IllegalArgumentException(e);
-		}
+        try {
+            keyGen = KeyGenerator.getInstance(this.getName());
+            keyGen.init(this.keySize, KeyRandoms.secureRandom());
+            log.atDebug().log("Generating symmetric key for algorithm: {}, size: {}", this.algorithm, this.keySize);
+            SecretKey key = keyGen.generateKey();
+            log.atDebug().log("Successfully generated symmetric key for {}", this.algorithm);
+            log.atTrace().log("Exiting generateSymmetricKey");
+            return key;
+        } catch (NoSuchAlgorithmException e) {
+            log.atError().log("Failed to generate symmetric key for algorithm: {}", this.algorithm, e);
+            throw new IllegalArgumentException(e);
+        }
     }
 
-    @Override
-    public KeyPair generateAsymetricKey() throws IllegalArgumentException {
-        log.atTrace().log("Entering generateAsymetricKey for algorithm: {}, keySize: {}", this.algorithm, this.keySize);
+    public KeyPair generateAsymmetricKey() throws IllegalArgumentException {
+        log.atTrace().log("Entering generateAsymmetricKey for algorithm: {}, keySize: {}", this.algorithm, this.keySize);
 
         KeyPairGenerator keyGen;
-		try {
-			keyGen = KeyPairGenerator.getInstance(this.getAlgorithm());
-			if (this.algorithm.equals("EC")) {
-				if( this.keySize == 512 ) {
-					log.atDebug().log("Initializing EC key generator with secp521r1 curve");
-					keyGen.initialize(new ECGenParameterSpec("secp521r1"), GGKeyRandoms.secureRandom());
-				} else {
-					log.atDebug().log("Initializing EC key generator with secp{}r1 curve", this.keySize);
-					keyGen.initialize(new ECGenParameterSpec("secp"+this.keySize+"r1"), GGKeyRandoms.secureRandom());
-				}
-			} else {
-				log.atDebug().log("Initializing key generator for algorithm: {}, size: {}", this.algorithm, this.keySize);
-				keyGen.initialize(this.keySize, GGKeyRandoms.secureRandom());
-			}
-			log.atDebug().log("Generating asymmetric key pair for algorithm: {}", this.algorithm);
-			KeyPair keyPair = keyGen.generateKeyPair();
-			log.atDebug().log("Successfully generated asymmetric key pair for {}", this.algorithm);
-			log.atTrace().log("Exiting generateAsymetricKey");
-			return keyPair;
-		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException  e) {
-			log.atError().log("Failed to generate asymmetric key for algorithm: {}", this.algorithm, e);
-			throw new IllegalArgumentException(e);
-		}
+        try {
+            keyGen = KeyPairGenerator.getInstance(this.getName());
+            if (this.algorithm.equals("EC")) {
+                if (this.keySize == 512) {
+                    log.atDebug().log("Initializing EC key generator with secp521r1 curve");
+                    keyGen.initialize(new ECGenParameterSpec("secp521r1"), KeyRandoms.secureRandom());
+                } else {
+                    log.atDebug().log("Initializing EC key generator with secp{}r1 curve", this.keySize);
+                    keyGen.initialize(new ECGenParameterSpec("secp" + this.keySize + "r1"), KeyRandoms.secureRandom());
+                }
+            } else {
+                log.atDebug().log("Initializing key generator for algorithm: {}, size: {}", this.algorithm, this.keySize);
+                keyGen.initialize(this.keySize, KeyRandoms.secureRandom());
+            }
+            log.atDebug().log("Generating asymmetric key pair for algorithm: {}", this.algorithm);
+            KeyPair keyPair = keyGen.generateKeyPair();
+            log.atDebug().log("Successfully generated asymmetric key pair for {}", this.algorithm);
+            log.atTrace().log("Exiting generateAsymmetricKey");
+            return keyPair;
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+            log.atError().log("Failed to generate asymmetric key for algorithm: {}", this.algorithm, e);
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @Override
-    public String geCipherName(GGEncryptionMode mode, GGEncryptionPaddingMode padding) throws IllegalArgumentException {
-        log.atTrace().log("Entering geCipherName for algorithm: {}, mode: {}, padding: {}", this.algorithm, mode, padding);
+    public String getCipherName(EncryptionMode mode, EncryptionPaddingMode padding) throws IllegalArgumentException {
+        log.atTrace().log("Entering getCipherName for algorithm: {}, mode: {}, padding: {}", this.algorithm, mode, padding);
 
         if (mode == null || padding == null) {
             log.atError().log("Mode or padding is null for algorithm: {}", this.algorithm);
             throw new IllegalArgumentException("Mode and Padding cannot be null");
         }
 
-        String cipherName = this.getAlgorithm() + "/" + mode + "/" + padding.getPadding();
+        String cipherName = this.getName() + "/" + mode + "/" + padding.getPadding();
         log.atDebug().log("Generated cipher name: {}", cipherName);
-        log.atTrace().log("Exiting geCipherName");
+        log.atTrace().log("Exiting getCipherName");
         return cipherName;
     }
 
     @Override
-	public String geSignatureName(GGSignatureAlgorithm signatureAlgorithm) {
-		log.atTrace().log("Entering geSignatureName for algorithm: {}, signatureAlgorithm: {}", this.algorithm, signatureAlgorithm);
+    public String getSignatureName(SignatureAlgorithm signatureAlgorithm) {
+        log.atTrace().log("Entering getSignatureName for algorithm: {}, signatureAlgorithm: {}", this.algorithm, signatureAlgorithm);
 
-		if (signatureAlgorithm == null) {
-			log.atError().log("Signature algorithm is null for key algorithm: {}", this.algorithm);
-            throw new IllegalArgumentException("Signture algorithm cannot be null");
+        if (signatureAlgorithm == null) {
+            log.atError().log("Signature algorithm is null for key algorithm: {}", this.algorithm);
+            throw new IllegalArgumentException("Signature algorithm cannot be null");
         }
 
         String algorithmName = this.algorithm;
-        if( this.algorithm.equals("EC") ) {
-			log.atDebug().log("Converting EC to ECDSA for signature");
-        	algorithmName = "ECDSA";
-		}
+        if (this.algorithm.equals("EC")) {
+            log.atDebug().log("Converting EC to ECDSA for signature");
+            algorithmName = "ECDSA";
+        }
 
-		String signatureName = signatureAlgorithm.getName()+"with"+algorithmName;
-		log.atDebug().log("Generated signature name: {}", signatureName);
-		log.atTrace().log("Exiting geSignatureName");
-		return signatureName;
-	}
+        String signatureName = signatureAlgorithm.getName() + "with" + algorithmName;
+        log.atDebug().log("Generated signature name: {}", signatureName);
+        log.atTrace().log("Exiting getSignatureName");
+        return signatureName;
+    }
 }

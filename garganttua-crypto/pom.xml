@@ -11,5 +11,9 @@
 	<artifactId>garganttua-crypto</artifactId>
 	<description>Encryption, hashing, and secure key management utilities.</description>
 	<dependencies>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-commons</artifactId>
+		</dependency>
 	</dependencies>
 </project>
