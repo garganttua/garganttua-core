@@ -7,6 +7,22 @@ import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * An ordered list of script statements that can be executed as a unit.
+ *
+ * <p>Statement blocks are used in two contexts:
+ * <ul>
+ *   <li>As function bodies in user-defined functions ({@link ScriptFunction})</li>
+ *   <li>As lazy arguments to control flow functions like {@code if(condition, block)}
+ *       — the block is passed as an object and only executed when the condition matches
+ *       (see {@link com.garganttua.core.script.functions.ControlFlowFunctions})</li>
+ * </ul>
+ *
+ * <p>Blocks are extracted from the script source by
+ * {@link com.garganttua.core.script.context.BlockExpressionPreprocessor} before
+ * ANTLR parsing, compiled into {@code StatementBlock} instances, and stored as
+ * variables in the runtime context.
+ */
 public class StatementBlock {
 
     private final List<IScriptNode> statements;

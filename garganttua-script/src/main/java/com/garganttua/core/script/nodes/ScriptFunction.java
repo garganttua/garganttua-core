@@ -8,6 +8,21 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.core.script.ScriptException;
 
+/**
+ * Runtime representation of a user-defined function.
+ *
+ * <p>Created from a {@link FunctionDefNode} during group execution, this object
+ * is stored as a variable in the runtime context and invoked when the
+ * expression engine resolves a dynamic function call matching this name.
+ *
+ * <p>Parameter scope isolation: before invocation, current values of parameter
+ * variables are saved. Parameters are bound to the argument values, the body
+ * block is executed, and the saved values are restored afterwards. This ensures
+ * that function parameters do not overwrite caller variables with the same name.
+ *
+ * @see FunctionDefNode
+ * @see com.garganttua.core.expression.context.IScriptFunction
+ */
 public class ScriptFunction implements IScriptFunction {
 
     private final String name;

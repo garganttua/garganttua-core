@@ -6,6 +6,20 @@ import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Represents a user-defined function definition in the script AST.
+ *
+ * <p>Syntax: {@code myFunc = (param1, param2) => (body)}
+ *
+ * <p>This node is not directly executable — it is handled by
+ * {@link com.garganttua.core.script.context.ScriptRuntimeStep#executeGroup}
+ * which creates a {@link ScriptFunction} and stores it as a variable in
+ * the runtime context. The function can then be invoked via
+ * {@link com.garganttua.core.expression.DynamicFunctionNode} dynamic resolution.
+ *
+ * <p>The {@code bodyBlockName} references a pre-compiled {@link StatementBlock}
+ * extracted by {@link com.garganttua.core.script.context.BlockExpressionPreprocessor}.
+ */
 public class FunctionDefNode implements IScriptNode {
 
     private final String functionName;

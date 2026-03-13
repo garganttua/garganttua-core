@@ -9,7 +9,9 @@ The **garganttua-script** module provides a scripting language engine for compos
 - **Exit Codes** - Associate exit codes with statement execution
 - **Exception Handling** - Immediate catch clauses (`!`) and downstream/fallback catch clauses (`*`)
 - **Conditional Pipes** - Route execution flow based on conditions (`|`)
-- **Statement Groups** - Group statements in parentheses with unified error handling
+- **Statement Groups** - Group statements in parentheses with unified error handling and function scope isolation
+- **User-Defined Functions** - Define reusable functions with parameters and scoped variables
+- **Conditional Execution** - `if(condition, thenBlock, elseBlock)` with lazy block evaluation
 - **Expression Integration** - Full support for the `garganttua-expression` language syntax
 - **Script Inclusion** - Load, execute, and extract variables from external scripts or JAR files
 - **Retry & Backoff** - Retry expressions with fixed delay or exponential backoff
@@ -103,7 +105,50 @@ Route execution based on conditions evaluated after the main statement.
   | condition => handler
 ```
 
-Groups apply catch clauses and pipe clauses to all enclosed statements.
+Groups apply catch clauses and pipe clauses to all enclosed statements. Functions defined inside a group are scoped to that group and do not leak to the outer scope.
+
+### User-Defined Functions
+
+```
+myFunc = (param1, param2) => (
+    joined <- concatenate(@param1, @param2)
+    result <- concatenate("[", @joined, "]")
+)
+output <- myFunc("hello", " world")
+```
+
+Functions are defined with the `=` operator, a parameter list in parentheses, the `=>` arrow, and a body block. Parameters are bound as local variables during invocation and restored after the call returns. The function returns the last evaluated value in its body.
+
+Functions can call other functions:
+
+```
+bracket = (x) => (
+    result <- concatenate("[", @x, "]")
+)
+doubleBracket = (x) => (
+    inner <- bracket(@x)
+    result <- bracket(@inner)
+)
+output <- doubleBracket("ok")   // produces "[[ok]]"
+```
+
+### Conditional Execution
+
+```
+if(condition, thenBlock)
+if(condition, thenBlock, elseBlock)
+```
+
+The `if()` function evaluates its condition and lazily executes the matching block. When a statement block `(...)` is passed as an argument, it is only executed if the condition matches.
+
+```
+result <- if(equals(@status, "ok"), (
+    data <- processData(@input)
+    result <- validate(@data)
+), (
+    result <- handleError(@status)
+))
+```
 
 ### Complete Example
 
@@ -194,6 +239,23 @@ result <- synchronized("my-lock", $mutex, "acquire", seconds(30), processOrder()
 result <- sync("order-lock", $mutex, myExpression())
 ```
 
+### Control Flow
+
+| Function | Description |
+|:--|:--|
+| `if(condition, thenBlock)` | Executes `thenBlock` if condition is true. Returns null otherwise. |
+| `if(condition, thenBlock, elseBlock)` | Executes `thenBlock` if condition is true, `elseBlock` otherwise. |
+
+Statement blocks `(...)` passed as arguments are lazily evaluated — only the matching branch executes.
+
+```
+result <- if(equals(@mode, "prod"), (
+    data <- fetchFromProd()
+), (
+    data <- fetchFromDev()
+))
+```
+
 ### Time Functions
 
 | Function | Description |
@@ -246,8 +308,8 @@ garganttua-script/
 ├── src/main/
 │   ├── java/com/garganttua/core/script/
 │   │   ├── context/           # ScriptContext, ScriptExecutionContext, ScriptRuntimeStep
-│   │   ├── functions/         # Built-in functions (include, retry, sync, time, ...)
-│   │   ├── nodes/             # IScriptNode, StatementNode, StatementGroupNode
+│   │   ├── functions/         # Built-in functions (include, retry, sync, time, control flow, ...)
+│   │   ├── nodes/             # IScriptNode, StatementNode, StatementGroupNode, ScriptFunction, FunctionDefNode
 │   │   └── Main.java          # CLI entry point
 │   └── resources/antlr4/
 │       └── Script.g4          # ANTLR4 grammar definition

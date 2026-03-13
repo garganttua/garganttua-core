@@ -952,9 +952,10 @@ assertThrows(DslException.class, () -> {
 ## Limitations and Known Issues
 
 1. **No Operator Support**: Currently only supports function call syntax, no infix operators (`+`, `-`, `*`, `/`)
-2. **No Control Flow**: No support for `if`, `while`, or other control structures
-3. **Limited Array Support**: Array literal syntax defined but not fully implemented
-4. **No Type Coercion**: Strict type matching required for function calls
+2. **Limited Array Support**: Array literal syntax defined but not fully implemented
+3. **No Type Coercion**: Strict type matching required for function calls
+
+> **Note:** Control flow (`if()`) and user-defined functions are available in the `garganttua-script` module, which extends the expression language with scripting capabilities.
 
 ## Integration with Other Modules
 

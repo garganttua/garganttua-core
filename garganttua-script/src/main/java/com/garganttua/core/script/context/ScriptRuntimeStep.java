@@ -25,6 +25,21 @@ import com.garganttua.core.script.nodes.StatementBlock;
 import com.garganttua.core.script.nodes.StatementGroupNode;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Bridges a script AST node ({@link IScriptNode}) to the runtime execution chain.
+ *
+ * <p>Each script statement becomes one {@code ScriptRuntimeStep}. The step handles:
+ * <ul>
+ *   <li>Eager and lazy variable assignment</li>
+ *   <li>Statement group execution with function scope isolation</li>
+ *   <li>User-defined function registration ({@link FunctionDefNode} &rarr; {@link ScriptFunction})</li>
+ *   <li>Exception catch/fallback clauses and conditional pipe clauses</li>
+ * </ul>
+ *
+ * <p><b>Function scope isolation in groups:</b> when executing a {@link StatementGroupNode},
+ * function definitions inside the group are saved before execution and restored afterwards,
+ * so that functions defined in one group do not leak into subsequent groups or stages.
+ */
 public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object> {
 
     private final String stepName;

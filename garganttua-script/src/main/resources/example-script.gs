@@ -118,6 +118,45 @@ counter    <- 0
 # prev-value <- decrement(@counter)
 
 # ------------------------------------------------------------------------------
+# EXAMPLE: USER-DEFINED FUNCTIONS
+# ------------------------------------------------------------------------------
+# Define a function with parameters
+# wrap = (prefix, value) => (
+#     result <- concatenate(@prefix, "[", @value, "]")
+# )
+# wrapped <- wrap("> ", "hello")     // produces "> [hello]"
+
+# Functions can call other functions
+# bold = (text) => (
+#     result <- concatenate("**", @text, "**")
+# )
+# boldWrap = (text) => (
+#     inner <- bold(@text)
+#     result <- wrap("> ", @inner)
+# )
+
+# Functions defined inside a group are scoped to that group
+# (
+#     localHelper = (x) => (
+#         result <- concatenate("[", @x, "]")
+#     )
+#     temp <- localHelper("ok")
+# )
+# // localHelper is no longer visible here
+
+# ------------------------------------------------------------------------------
+# EXAMPLE: CONDITIONAL EXECUTION
+# ------------------------------------------------------------------------------
+# if(condition, thenBlock)
+# if(condition, thenBlock, elseBlock)
+#
+# result <- if(equals(@mode, "prod"), (
+#     data <- fetchProd()
+# ), (
+#     data <- fetchDev()
+# ))
+
+# ------------------------------------------------------------------------------
 # EXAMPLE: STRING CONCATENATION
 # ------------------------------------------------------------------------------
 # Concatenate strings

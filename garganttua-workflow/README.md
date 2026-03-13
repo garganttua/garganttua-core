@@ -137,14 +137,27 @@ _fetch_api_fetcher_code <- execute_script(@_fetch_api_fetcher_ref, @url, @timeou
 rawData <- script_variable(@_fetch_api_fetcher_ref, "apiResponse")
 ```
 
-**Inline mode** embeds script content directly, replacing positional variables (`@0`, `@1`) with named variables:
+**Inline mode** embeds script content directly, replacing positional variables (`@0`, `@1`) with named variables. Each inline script is wrapped in a `(...)` statement group for function scope isolation, preventing name collisions between stages:
 
 ```
-url <- @apiUrl
-timeout <- @requestTimeout
-apiResponse <- "fetched data from " + @url
-httpStatus <- 200
-rawData <- @apiResponse
+(
+    url <- @apiUrl
+    timeout <- @requestTimeout
+    apiResponse <- "fetched data from " + @url
+    httpStatus <- 200
+    rawData <- @apiResponse
+)
+```
+
+Conditional scripts use `if()` blocks for lazy evaluation:
+
+```
+_fetch_cond <- equals(@env, "prod")
+if(@_fetch_cond, (
+    url <- @apiUrl
+    apiResponse <- "fetched data"
+    rawData <- @apiResponse
+), 0)
 ```
 
 Force all scripts to inline with `.inlineAll()` on the workflow builder.
@@ -224,7 +237,7 @@ garganttua-workflow/
 | `WorkflowBuilder` | Top-level fluent builder for workflow definition |
 | `WorkflowStageBuilder` | Builder for workflow stages |
 | `WorkflowScriptBuilder` | Builder for scripts within stages |
-| `ScriptGenerator` | Converts builder definitions into script source code |
+| `ScriptGenerator` | Converts builder definitions into script source code. Uses `if()` blocks for conditional execution and `(...)` groups for inline script isolation |
 | `ScriptHeaderParser` | Parses `#@workflow ... #@end` metadata blocks |
 | `Workflow` | Executes pre-generated scripts using ScriptContext |
 

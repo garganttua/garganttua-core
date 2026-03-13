@@ -1,0 +1,640 @@
+================================================================================
+GARGANTTUA CORE - PLAN DE PAGE WEB PRODUIT
+================================================================================
+
+URL cible : garganttua.com/core (ou garganttua.com/open-source)
+Format : one-page scrollable avec navigation sticky
+Ton : technique mais accessible, professionnel, open-source friendly
+Palette : dark theme (fond #0D1117 ou #1A1B26), accents vert/cyan (#00E5A0, #00D4FF)
+Typographie : titres en font grotesk/geometric (ex: Inter, Plus Jakarta Sans),
+              code en JetBrains Mono
+
+
+================================================================================
+SECTION 1 - HERO
+================================================================================
+
+[LAYOUT]
+Full-width, hauteur 100vh.
+Fond sombre avec un motif subtil de grille isometrique ou de noeuds interconnectes
+(rappel de la modularite). Leger gradient radial du centre vers les bords.
+
+[VISUEL]
+Animation subtile en arriere-plan : un graphe de dependances anime ou les modules
+apparaissent progressivement sous forme de noeuds lumineux relies par des aretes.
+Style "constellation" avec des noeuds de tailles differentes selon la couche
+(Foundation = petits, Application = grands). Les connexions pulsent legerement.
+
+Alternative statique : illustration vectorielle du graphe de dependances Mermaid
+du projet, stylise en mode "circuit board" avec des couleurs differentes par couche.
+
+[TEXTE]
+
+    Garganttua Core
+
+    Le framework Java modulaire pour les applications
+    qui ne peuvent pas se permettre d'etre lourdes.
+
+    34 modules independants. Zero dependance circulaire.
+    Java 21. GraalVM native-ready.
+
+[BOUTONS]
+- Bouton principal (vert/cyan) : "Voir sur GitHub" -> https://github.com/garganttua/garganttua-core
+- Bouton secondaire (outline) : "Decouvrir les modules" -> scroll vers Section 3
+
+[BADGE]
+En haut a droite du titre :
+    v2.0.0-ALPHA01  |  MIT License  |  746 fichiers source  |  108 suites de tests
+
+
+================================================================================
+SECTION 2 - PROPOSITION DE VALEUR (3 piliers)
+================================================================================
+
+[LAYOUT]
+3 colonnes egales sur desktop, empilees sur mobile. Fond legerement plus clair
+que le hero (#111827). Chaque colonne a une icone au-dessus.
+
+[VISUEL]
+3 icones minimalistes en style "line icon" avec accent colore :
+- Colonne 1 : icone "cubes empiles" ou "puzzle pieces" (modularite)
+- Colonne 2 : icone "eclair" ou "chronometre" (performance)
+- Colonne 3 : icone "code brackets" ou "clavier" (DX)
+
+[TEXTE]
+
+--- Colonne 1 ---
+
+    Modulaire par conception
+
+    Utilisez uniquement ce dont vous avez besoin. Chaque
+    module est independant, avec des dependances minimales
+    et une architecture en couches strictement acyclique.
+
+    Pas de monolithe cache. Pas de dependances transitives
+    surprises. Vous choisissez votre surface d'API.
+
+--- Colonne 2 ---
+
+    Performant par defaut
+
+    Indexation des annotations a la compilation plutot
+    que classpath scanning au demarrage. Generation de
+    binders directs eliminant Method.invoke() sur les
+    chemins critiques. Compatible GraalVM Native Image
+    pour un demarrage en millisecondes.
+
+--- Colonne 3 ---
+
+    Pense pour les developpeurs
+
+    APIs fluides et type-safe avec le pattern Hierarchical
+    Builder. REPL interactif pour prototyper vos scripts.
+    Documentation module par module. Convention over
+    configuration, avec override explicite quand il faut.
+
+
+================================================================================
+SECTION 3 - ARCHITECTURE MODULAIRE (graphe interactif)
+================================================================================
+
+[LAYOUT]
+Section full-width avec un titre centre, puis un graphe interactif occupant
+toute la largeur sous le titre. Fond #0D1117.
+
+[VISUEL]
+Graphe de dependances interactif (librairie : D3.js, vis.js, ou Cytoscape.js).
+Les modules sont des noeuds colores par couche :
+- Vert clair   : Foundation (commons, dsl, supply, lifecycle, mutex)
+- Bleu         : Infrastructure (reflection, runtime-reflection, condition, execution, crypto, configuration)
+- Violet       : Framework (injection, runtime, mapper, expression, bootstrap)
+- Orange       : Application (script, console, workflow)
+- Gris         : Build Tools (annotation-processor, script-maven-plugin)
+- Jaune        : Integration (bindings: spring, reflections, mutex-redis, native)
+- Rouge        : AOT (aot-commons, aot-reflection, aot-annotation-scanner, aot-annotation-processor, aot-maven-plugin)
+
+Interactions :
+- Hover sur un noeud : le noeud s'agrandit, ses dependances directes
+  s'illuminent, les autres se grissent. Un tooltip affiche le nom complet
+  et la description one-liner.
+- Click sur un noeud : ouvre un panneau lateral ou une modale avec la
+  description complete du module et un lien vers son README.
+- Filtre par couche : boutons radio au-dessus du graphe pour isoler
+  une couche ("Foundation", "Infrastructure", etc.)
+
+Alternative statique (fallback/mobile) : image SVG du graphe Mermaid stylisee,
+avec une legende des couleurs par couche en dessous.
+
+[TEXTE]
+
+    Une architecture en 7 couches
+
+    Chaque module respecte une hierarchie stricte : les couches basses
+    ne dependent jamais des couches hautes. Le resultat : un graphe
+    de dependances previsible, sans surprises et sans cycles.
+
+[LEGENDE sous le graphe]
+
+    Foundation          Interfaces, builders, suppliers, lifecycle
+    Infrastructure      Reflexion, conditions, execution, crypto, configuration
+    Framework           Injection, runtime, mapping, expressions, bootstrap
+    Application         Scripts, workflows, console
+    Build Tools         Annotation processing, plugins Maven
+    Integration         Spring, Reflections, Redis, GraalVM native
+    AOT                 Compilation anticipee, generation de code, plugin Maven
+
+
+================================================================================
+SECTION 4 - LES MODULES CLES (showcase 6 modules)
+================================================================================
+
+[LAYOUT]
+Grille 2x3 sur desktop (2 colonnes, 3 rangees), empilee sur mobile.
+Chaque carte a un fond legerement sureleve (#1C1F26), bord arrondi,
+ombre subtile. Au hover, la carte se souleve legerement et la bordure
+prend la couleur d'accent de sa couche.
+
+[VISUEL]
+Chaque carte contient :
+- Icone ou pictogramme de la couche (petit badge colore en haut a gauche)
+- Nom du module en gras
+- Description
+- Un snippet de code (bloc <pre> avec coloration syntaxique sombre)
+- Lien "Voir le README" en bas
+
+[TEXTE + CODE]
+
+--- Carte 1 : Injection ---
+
+    garganttua-injection                                [badge: Framework]
+
+    Conteneur d'injection de dependances leger et compatible JSR-330.
+    Scopes singleton et prototype, injection de proprietes, contextes
+    enfants, detection de cycles, et instanciation zero-reflexion
+    optionnelle via binders compiles.
+
+    IDiContextBuilder builder = DiContextBuilder.create()
+        .withBean(UserService.class)
+        .withBean(UserRepository.class)
+        .withProperty("app.name", "MyApp")
+        .build();
+
+    context.onStart();
+    UserService service = context.getBean(UserService.class);
+
+--- Carte 2 : Expression ---
+
+    garganttua-expression                               [badge: Framework]
+
+    Langage d'expressions base sur ANTLR4 avec evaluation type-safe.
+    Appels de fonctions, invocations de methodes, constructeurs,
+    references de variables, et types generiques. L'evaluation produit
+    des ISupplier<T> pour le calcul differe.
+
+    // Appel de fonction avec arguments
+    context.expression("add(8, add(42, 30))")
+
+    // Reference de variable + constructeur
+    context.expression(":(String.class, @myVar)")
+
+    // Types generiques
+    context.expression("List<String>")
+
+--- Carte 3 : Script ---
+
+    garganttua-script                                [badge: Application]
+
+    Moteur de scripting complet avec sa propre grammaire ANTLR4,
+    fonctions utilisateur, execution conditionnelle via if(),
+    gestion des erreurs, et synchronisation via mutex. Extension
+    .gs, arguments positionnels, et fat JAR executable.
+    Console REPL dans un module dedie.
+
+    // Fonctions utilisateur avec scope isole
+    validate = (data) => (
+        result <- checkFormat(@data)
+    )
+    output <- validate(@input)
+
+    // Execution conditionnelle
+    result <- if(equals(@mode, "prod"), (
+        data <- fetchProd()
+    ), (
+        data <- fetchDev()
+    ))
+
+    // Gestion d'erreur immediate
+    result <- parse_json(@0) ! Exception.class => log("parse failed")
+
+--- Carte 4 : Workflow ---
+
+    garganttua-workflow                              [badge: Application]
+
+    DSL fluide pour orchestrer des pipelines multi-etapes.
+    Genere automatiquement du code Garganttua Script a partir
+    de l'API builder. Les scripts inline sont isoles dans des
+    groupes (...) pour eviter les collisions de fonctions entre
+    stages. Execution conditionnelle via if(), filtrage de
+    stages au runtime, et support inline/include.
+
+    Workflow workflow = WorkflowBuilder.create()
+        .name("deploy-pipeline")
+        .stage("build")
+            .script("scripts/compile.gs")
+            .script("scripts/test.gs")
+            .up()
+        .stage("deploy")
+            .when("equals(@env, \"prod\")")
+            .script("scripts/deploy.gs")
+            .up()
+        .build();
+
+    workflow.execute(input);
+
+--- Carte 5 : Configuration ---
+
+    garganttua-configuration                      [badge: Infrastructure]
+
+    Chargement de configuration multi-format (JSON, YAML, XML,
+    TOML, Properties) avec population automatique de builders.
+    Mapping intelligent des cles (camelCase, kebab-case, snake_case),
+    conversion de types, et integration DI.
+
+    var populator = ConfigurationBuilder.builder()
+        .withMappingStrategy("SMART")
+        .strict(true)
+        .build();
+
+    populator.populate(serverBuilder,
+        new FileConfigurationSource("config.yaml"));
+
+--- Carte 6 : Reflection ---
+
+    garganttua-reflection                        [badge: Infrastructure]
+
+    Facade de reflexion pluggable avec IReflection, IClass<T>, et
+    providers priorises. Binders type-safe (IMethodBinder, IFieldBinder,
+    IConstructorBinder) avec evaluation lazy via ISupplier. Navigation
+    par adresse objet (dot-notation) et resolution de methodes.
+
+    // Construire la facade de reflexion
+    var reflection = ReflectionBuilder.builder()
+        .withProvider(new RuntimeReflectionProvider(), 10)
+        .withScanner(new MyAnnotationScanner(), 10)
+        .build();
+
+    // Acces aux champs via FieldAccessor (dot-notation)
+    var accessor = new FieldAccessor<>(ownerType, "address.city");
+    var value = accessor.supply();
+
+
+================================================================================
+SECTION 5 - COMMENT CA MARCHE (workflow visuel en 4 etapes)
+================================================================================
+
+[LAYOUT]
+Fond legerement different (#111827). 4 etapes en ligne horizontale sur desktop,
+reliees par des fleches/lignes. Empilees verticalement sur mobile.
+
+[VISUEL]
+Timeline horizontale avec 4 noeuds circulaires numerotes (1-4).
+Chaque noeud a une icone au centre et un bloc de texte en dessous.
+Les lignes entre les noeuds sont animees (pointilles qui avancent)
+quand la section entre dans le viewport (scroll-triggered).
+
+Optionnel : en fond, un extrait de code qui scrolle lentement de bas
+en haut (type "matrix" mais avec du vrai code Java du projet).
+
+[TEXTE]
+
+    Du builder au runtime en 4 etapes
+
+--- Etape 1 ---
+    [icone: fichier avec engrenage]
+
+    1. Definissez
+
+    Creez vos builders avec le DSL fluide.
+    Annotations @Configurable, @Step, @Expression
+    pour declarer vos intentions.
+
+--- Etape 2 ---
+    [icone: marteau/compilation]
+
+    2. Compilez
+
+    L'annotation processor genere les index
+    et les binders directs. Zero configuration :
+    le build Maven fait tout.
+
+--- Etape 3 ---
+    [icone: puzzle qui s'assemble]
+
+    3. Assemblez
+
+    Le conteneur d'injection decouvre vos beans,
+    resout les dependances, injecte les proprietes.
+    Demarrage en millisecondes.
+
+--- Etape 4 ---
+    [icone: fusee ou play button]
+
+    4. Executez
+
+    Lancez vos workflows, scripts, ou runtimes.
+    Gestion d'erreurs, fallbacks, et routage
+    conditionnel inclus.
+
+
+================================================================================
+SECTION 6 - CHIFFRES CLES
+================================================================================
+
+[LAYOUT]
+Bandeau horizontal, fond avec un leger gradient. 5 metriques en ligne,
+centrees, avec animation de compteur (count-up) au scroll.
+
+[VISUEL]
+Chaque metrique est un grand nombre anime (ex: part de 0 a 569 en 1.5s)
+avec un label en dessous en texte plus petit et plus clair.
+
+[TEXTE]
+
+    34                  746                108              95 327            0
+    modules             fichiers source    suites           lignes           dependances
+    independants        Java               de tests         de code          circulaires
+
+
+================================================================================
+SECTION 7 - ZERO REFLEXION AU RUNTIME (differenciateur technique)
+================================================================================
+
+[LAYOUT]
+Section split : texte a gauche (60%), visuel a droite (40%).
+Fond #0D1117.
+
+[VISUEL - cote droit]
+Schema anime ou illustration montrant la transformation :
+
+    Phase de compilation                    Phase d'execution
+    +----------------------------+          +----------------------------+
+    |  @Expression("add")        |          |  addBinder.invoke(a, b)    |
+    |  static int add(int, int)  |   --->   |  = direct method call      |
+    |                            |          |  NO Method.invoke()        |
+    +----------------------------+          +----------------------------+
+    |  Annotation Processor      |          |  DirectBinderRegistry      |
+    |  genere AddMethodBinder    |          |  charge le binder          |
+    +----------------------------+          +----------------------------+
+
+Style : deux blocs cote a cote relies par une grosse fleche.
+Le bloc gauche est en couleur "compilation" (bleu), le droit en "runtime" (vert).
+Animation : la fleche pulse et les blocs apparaissent sequentiellement.
+
+[TEXTE - cote gauche]
+
+    Elimination de la reflexion sur les chemins critiques
+
+    La plupart des frameworks Java utilisent Method.invoke() et
+    Constructor.newInstance() au runtime, avec un cout significatif
+    en performance et en compatibilite native.
+
+    Garganttua Core prend une approche differente : un annotation
+    processor genere des classes de binders directs a la compilation.
+    Le resultat :
+
+    - Les fonctions @Expression appellent directement la methode
+      Java cible, sans passer par Method.invoke()
+
+    - Les beans @Singleton et @Prototype sont instancies par
+      new ClassName(...), pas par Constructor.newInstance()
+
+    - La configuration GraalVM Native Image est simplifiee :
+      moins de metadata de reflexion a declarer
+
+    - Le demarrage est plus rapide : pas de scanning au classpath,
+      les index META-INF/garganttua/index/ sont pre-generes
+
+    Activable par defaut. Desactivable via :
+    -Dgarganttua.direct.binders=false
+
+
+================================================================================
+SECTION 8 - STACK TECHNIQUE
+================================================================================
+
+[LAYOUT]
+Fond #111827. Grille de logos/badges avec labels.
+2 rangees : "Requis" et "Optionnel".
+
+[VISUEL]
+Badges rectangulaires arrondis avec le logo de chaque technologie a gauche
+et le nom + version a droite. Style shields.io mais customise.
+Chaque badge est legerement sureleve et a un hover effect.
+
+[TEXTE]
+
+    Stack technique
+
+--- Rangee "Socle" ---
+    [logo Java]  Java 21
+    [logo Maven] Maven 3.8+
+    [logo ANTLR] ANTLR4 4.13.0
+    [logo Jackson] Jackson 2.15
+    [logo Lombok] Lombok 1.18
+    [logo SLF4J] SLF4J 2.0
+    [logo JLine] JLine3 3.25
+    [logo JUnit] JUnit 5.9
+
+--- Rangee "Compatible" ---
+    [logo GraalVM] GraalVM Native Image
+    [logo Spring] Spring 6.2 (binding optionnel)
+    [logo Redis] Redis (mutex distribue)
+
+
+================================================================================
+SECTION 9 - QUICK START / GETTING STARTED
+================================================================================
+
+[LAYOUT]
+Fond #0D1117. Bloc central avec des onglets (tabs) pour differents cas
+d'usage. Chaque onglet montre un snippet de code avec coloration syntaxique.
+Bouton "Copier" en haut a droite de chaque bloc de code.
+
+[VISUEL]
+Terminal-style code block (fond #161B22, bordure arrondie, barre de titre
+avec 3 points rouge/jaune/vert comme un terminal macOS). Coloration syntaxique
+Java avec la palette du site.
+
+[TEXTE]
+
+    Demarrage rapide
+
+--- Onglet 1 : "Maven" ---
+
+    <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-injection</artifactId>
+        <version>2.0.0-ALPHA01</version>
+    </dependency>
+
+--- Onglet 2 : "Injection de dependances" ---
+
+    // Creer un contexte d'injection
+    var context = DiContextBuilder.create()
+        .withBean(UserService.class)
+        .withBean(UserRepository.class)
+        .withProperty("app.name", "MyApp")
+        .build();
+
+    context.onStart();
+
+    // Recuperer et utiliser un bean
+    var service = context.getBean(UserService.class);
+    service.process();
+
+    context.onStop();
+
+--- Onglet 3 : "Workflow multi-etapes" ---
+
+    var workflow = WorkflowBuilder.create()
+        .name("data-pipeline")
+        .variable("source", dataSource)
+        .stage("extract")
+            .script("scripts/extract.gs")
+            .up()
+        .stage("transform")
+            .script("scripts/transform.gs")
+            .up()
+        .stage("load")
+            .script("scripts/load.gs")
+            .up()
+        .build();
+
+    workflow.execute(input);
+
+--- Onglet 4 : "Script (.gs)" ---
+
+    #!/usr/bin/env garganttua-script
+
+    // Fonction utilisateur reutilisable
+    fetchData = (url) => (
+        response <- http_get(@url) ! Exception.class => log("request failed")
+        result <- parse_json(@response)
+    )
+
+    // Execution conditionnelle
+    data <- if(equals(@0, "prod"), (
+        result <- fetchData("https://api.prod.com/data")
+    ), (
+        result <- fetchData("https://api.dev.com/data")
+    ))
+
+    log(concatenate("Received: ", @data))
+
+--- Onglet 5 : "Console REPL" ---
+
+    $ java -jar garganttua-console-2.0.0-ALPHA01-executable.jar
+
+    garganttua> help()
+    Available functions: help(), vars(), clear(), load(), man(), syntax(), exit()
+
+    garganttua> result <- concatenate("Hello", " World")
+    garganttua> vars()
+    result = "Hello World"
+
+    garganttua> man("concatenate")
+    concatenate(String, String) -> String
+      Concatenates two strings.
+
+
+================================================================================
+SECTION 10 - CAS D'USAGE
+================================================================================
+
+[LAYOUT]
+3 cartes horizontales full-width empilees. Chaque carte a une icone a gauche,
+du texte au centre, et une illustration/schema a droite.
+Fond alterne entre #0D1117 et #111827 pour chaque carte.
+
+[VISUEL]
+Illustrations schematiques minimalistes pour chaque cas d'usage :
+- CLI Tools : dessin d'un terminal avec des lignes de commande
+- Microservices : 3 hexagones connectes (services)
+- Pipelines : fleches horizontales traversant des boites (etapes)
+
+[TEXTE]
+
+--- Carte 1 ---
+    [icone: terminal >_]
+
+    Outils ligne de commande
+
+    Combinez garganttua-script et GraalVM Native Image pour creer
+    des CLI tools Java qui demarrent en millisecondes. Le REPL
+    interactif accelere le prototypage. Le fat JAR executable
+    se deploie sans dependances externes.
+
+    Modules concernes : script, console, expression, bootstrap
+
+--- Carte 2 ---
+    [icone: hexagones connectes]
+
+    Microservices legers
+
+    Utilisez garganttua-injection comme alternative a Spring
+    quand vous avez besoin d'un conteneur DI sans la surface
+    d'API d'un framework full-stack. Injection JSR-330,
+    lifecycle management, et configuration multi-format
+    dans une empreinte memoire reduite.
+
+    Modules concernes : injection, configuration, lifecycle, bootstrap
+
+--- Carte 3 ---
+    [icone: fleches traversant des boites]
+
+    Pipelines de traitement
+
+    Orchestrez des workflows multi-etapes avec gestion d'erreurs,
+    fallbacks, et execution conditionnelle via if(). Le module
+    workflow genere du code script optimise a partir de votre API
+    builder, avec isolation automatique des fonctions entre stages.
+    Filtrage de stages au runtime, variables partagees entre etapes,
+    et execution reproductible.
+
+    Modules concernes : workflow, script, runtime, execution, condition
+
+
+================================================================================
+SECTION 11 - OPEN SOURCE & COMMUNAUTE
+================================================================================
+
+[LAYOUT]
+Section centree, fond #111827. Texte centre avec des liens/boutons en dessous.
+
+[VISUEL]
+Logo GitHub agrandi en watermark tres leger en arriere-plan.
+Au centre, un bloc de texte avec des icones inline pour chaque action.
+
+[TEXTE]
+
+    Open-source sous licence MIT
+
+    Garganttua Core est entierement open-source. Le code, la
+    documentation, et les tests sont publics et ouverts aux
+    contributions.
+
+    [icone etoile]  Star le projet sur GitHub
+                    github.com/garganttua/garganttua-core
+
+    [icone fork]    Contribuer
+                    Les pull requests sont bienvenues.
+                    Consultez les issues "good first issue" pour commencer.
+
+    [icone bug]     Reporter un bug
+                    Ouvrez une issue sur le tracker GitHub.
+
+    [icone email]   Contact
+                    jeremy.colombet@garganttua.com
+
+
+

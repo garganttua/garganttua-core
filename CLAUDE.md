@@ -138,7 +138,9 @@ Script syntax:
 - Immediate exception handling: `statement ! ExceptionType => handler`
 - Downstream fallback: `statement * ExceptionType => handler`
 - Conditional pipe: `statement | condition => handler`
-- Statement groups: `(statement1; statement2)`
+- Statement groups: `(statement1; statement2)` — groups provide function scope isolation (functions defined inside do not leak to outer scope)
+- User-defined functions: `myFunc = (param1, param2) => (body)` — parameters are scoped and restored after invocation
+- Conditional execution: `if(condition, thenBlock)` or `if(condition, thenBlock, elseBlock)` — supports statement blocks for lazy evaluation
 - Comments: `//`, `#`, `/* */`
 
 Script files use the `.gs` extension and support shebang lines (`#!/usr/bin/env garganttua-script`). Positional script arguments are accessed via `@0`, `@1`, etc.
@@ -158,6 +160,8 @@ Built-in REPL functions: `help()`, `vars()`, `clear()`, `load("file")`, `man()`,
 `garganttua-workflow` is a high-level orchestration DSL that generates Garganttua Script code from a fluent builder API. It organizes execution into stages containing scripts, with automatic variable collection and result tracking.
 
 Key classes: `WorkflowBuilder` → `WorkflowStageBuilder` → `WorkflowScriptBuilder`. `ScriptGenerator` converts the builder definitions into script source code. `Workflow` executes the pre-generated scripts.
+
+The generator uses `if()` blocks for conditional execution and wraps inline scripts in `(...)` statement groups for function scope isolation, preventing name collisions between stages.
 
 ### Script Maven Plugin
 

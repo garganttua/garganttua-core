@@ -9,6 +9,22 @@ import com.garganttua.core.workflow.WorkflowScript;
 import com.garganttua.core.workflow.WorkflowStage;
 import com.garganttua.core.workflow.chaining.CodeAction;
 
+/**
+ * Converts workflow stage definitions into Garganttua Script source code.
+ *
+ * <p>Supports two script modes:
+ * <ul>
+ *   <li><b>Include mode</b> (file-based): generates {@code include()} + {@code execute_script()}
+ *       + {@code script_variable()} calls. Each script runs in an isolated child context.</li>
+ *   <li><b>Inline mode</b>: embeds script content directly. Each inline script is wrapped
+ *       in a {@code (...)} statement group for function scope isolation, preventing
+ *       name collisions between stages.</li>
+ * </ul>
+ *
+ * <p>Conditional execution uses {@code if(condition, block, 0)} for lazy evaluation
+ * of statement blocks. Stage-level and script-level conditions are combined with
+ * {@code and()} when both are present.
+ */
 public class ScriptGenerator {
 
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables)
