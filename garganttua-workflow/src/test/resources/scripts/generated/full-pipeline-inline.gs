@@ -1,5 +1,5 @@
 # Workflow: full-pipeline
-# Generated: 2026-03-12T12:14:49.297489218Z
+# Generated: 2026-03-13T08:38:03.589777513Z
 
 # Preset variables
 apiUrl <- "https://api.example.com/data"
@@ -9,49 +9,59 @@ targetFormat <- "json"
 # Stage: fetch
 url <- @apiUrl
 timeout <- @requestTimeout
-apiResponse <- "fetched data from " + @url
-httpStatus <- 200
-fetchComplete <- true
-httpCode <- @httpStatus
-rawData <- @apiResponse
+(
+    apiResponse <- "fetched data from " + @url
+    httpStatus <- 200
+    fetchComplete <- true
+    httpCode <- @httpStatus
+    rawData <- @apiResponse
+)
 
 
 # Stage: validation
 data <- @rawData
 strict <- true
-validationStatus <- "pending"
-isValid <- true
-validatedData <- @data
-validationStatus <- "completed"
-validated <- @validatedData
+(
+    validationStatus <- "pending"
+    isValid <- true
+    validatedData <- @data
+    validationStatus <- "completed"
+    validated <- @validatedData
+)
 
 
 # Stage: transform
 inputData <- @validated
 format <- @targetFormat
-processingStep <- "transform"
-transformedData <- @inputData
-outputFormat <- @format
-result <- @transformedData
-transformed <- @transformedData
+(
+    processingStep <- "transform"
+    transformedData <- @inputData
+    outputFormat <- @format
+    result <- @transformedData
+    transformed <- @transformedData
+)
 
 
 # Stage: statistics
 values <- @transformed
-total <- 0
-itemCount <- 0
-result <- @values
-count <- @itemCount
-sum <- @total
+(
+    total <- 0
+    itemCount <- 0
+    result <- @values
+    count <- @itemCount
+    sum <- @total
+)
 
 
 # Stage: finalize
 data <- @transformed
 metadata <- "pipeline-v1"
-finalOutput <- @data
-finalStatus <- "success"
-output <- @finalOutput
-result <- @finalOutput
+(
+    finalOutput <- @data
+    finalStatus <- "success"
+    output <- @finalOutput
+    result <- @finalOutput
+)
 
 
 # Output

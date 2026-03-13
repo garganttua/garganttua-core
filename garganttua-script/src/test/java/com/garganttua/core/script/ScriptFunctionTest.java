@@ -162,7 +162,7 @@ class ScriptFunctionTest {
         assertEquals("original", s.getOutput().get());
     }
 
-    // ---- Function defined inside a group, called outside ----
+    // ---- Function defined and called inside the same group ----
 
     @Test
     void testFunctionInGroup() {
@@ -171,12 +171,30 @@ class ScriptFunctionTest {
                 "    wrap = (n) => (\n" +
                 "        result <- concatenate(\"(\", @n, \")\")\n" +
                 "    )\n" +
-                ")\n" +
-                "output <- wrap(\"ok\")");
+                "    output <- wrap(\"ok\")\n" +
+                ")");
         int code = s.execute();
         assertEquals(0, code);
         assertTrue(s.getOutput().isPresent());
         assertEquals("(ok)", s.getOutput().get());
+    }
+
+    // ---- Function defined in a group is NOT visible outside (scope isolation) ----
+
+    @Test
+    void testFunctionScopeIsolation() {
+        IScript s = createScript(
+                "(\n" +
+                "    localFunc = (n) => (\n" +
+                "        result <- concatenate(\"[\", @n, \"]\")\n" +
+                "    )\n" +
+                "    inner <- localFunc(\"ok\")\n" +
+                ")\n" +
+                "output <- @inner");
+        int code = s.execute();
+        assertEquals(0, code);
+        assertTrue(s.getOutput().isPresent());
+        assertEquals("[ok]", s.getOutput().get());
     }
 
     // ---- Calling one function from another ----

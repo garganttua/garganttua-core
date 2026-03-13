@@ -251,27 +251,28 @@ public class ScriptGenerator {
                 }
                 script.append("), 0)\n");
             } else {
-                // Unconditional inline
-                // Add each line of the script content, stripping comments and shebang
+                // Unconditional inline — wrap in a group for function scope isolation
+                script.append("(\n");
                 for (String line : content.split("\n")) {
                     String trimmed = line.trim();
                     if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//")) {
                         continue;
                     }
-                    script.append(line).append("\n");
+                    script.append("    ").append(line).append("\n");
                 }
 
-                // For inline scripts, output mappings copy script variables to workflow variables
+                // Output mappings inside the group (before closing paren)
                 for (var output : ws.getOutputs().entrySet()) {
                     String workflowVar = output.getKey();
                     String scriptVar = output.getValue();
-                    // Only generate mapping if workflow var differs from script var
                     if (!workflowVar.equals(scriptVar)) {
-                        script.append(workflowVar).append(" <- @").append(scriptVar).append("\n");
+                        script.append("    ").append(workflowVar)
+                              .append(" <- @").append(scriptVar).append("\n");
                     }
                 }
+                script.append(")\n");
 
-                // Code actions for inline scripts (only when not conditional)
+                // Code actions for inline scripts (outside the group)
                 for (var codeAction : ws.getCodeActions().entrySet()) {
                     if (codeAction.getValue() != CodeAction.CONTINUE) {
                         script.append("@code == ").append(codeAction.getKey())

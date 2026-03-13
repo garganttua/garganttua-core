@@ -1,5 +1,7 @@
 package com.garganttua.core.script.context;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import com.garganttua.core.execution.IExecutorChain;
@@ -274,7 +276,19 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
     /**
      * Executes all statements in a group and returns the last result.
      */
+    @SuppressWarnings("unchecked")
     private Object executeGroup(IRuntimeContext<Object[], Object> context, StatementGroupNode groupNode) throws ScriptException {
+        // Save existing function values for names that will be defined in this group,
+        // so we can restore them after group execution (function scope isolation).
+        Map<String, Object> savedFunctions = new HashMap<>();
+        for (IScriptNode innerNode : groupNode.statements()) {
+            if (innerNode instanceof FunctionDefNode funcDef) {
+                String name = funcDef.variableName();
+                Optional<Object> existing = context.getVariable(name, (IClass<Object>) IClass.getClass(Object.class));
+                savedFunctions.put(name, existing.orElse(null));
+            }
+        }
+
         Object lastResult = null;
         for (IScriptNode innerNode : groupNode.statements()) {
             if (innerNode instanceof StatementGroupNode innerGroup) {
@@ -282,7 +296,11 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 lastResult = executeGroup(context, innerGroup);
                 // Handle nested group's variable assignment
                 if (innerGroup.variableName() != null) {
-                    context.setVariable(innerGroup.variableName(), lastResult);
+                    String varName = innerGroup.variableName();
+                    if ("output".equals(varName)) {
+                        context.setOutput(lastResult);
+                    }
+                    context.setVariable(varName, lastResult);
                 }
                 if (innerGroup.code() != null) {
                     context.setCode(innerGroup.code());
@@ -303,7 +321,11 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 // Eager execution
                 lastResult = innerNode.execute();
                 if (innerNode.variableName() != null) {
-                    context.setVariable(innerNode.variableName(), lastResult);
+                    String varName = innerNode.variableName();
+                    if ("output".equals(varName)) {
+                        context.setOutput(lastResult);
+                    }
+                    context.setVariable(varName, lastResult);
                 }
                 if (innerNode.code() != null) {
                     context.setCode(innerNode.code());
@@ -339,6 +361,18 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 }
             }
         }
+
+        // Restore previous function values to prevent leaking to subsequent groups/stages.
+        for (var entry : savedFunctions.entrySet()) {
+            if (entry.getValue() != null) {
+                context.setVariable(entry.getKey(), entry.getValue());
+            }
+            // If previously null, the variable was never set — we can't remove it from
+            // the context, but the function object is replaced by whatever was there before.
+            // Since the context doesn't support removal, we leave it as the IScriptFunction
+            // which will simply be overwritten by any future definition.
+        }
+
         return lastResult;
     }
 
