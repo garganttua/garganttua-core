@@ -14,7 +14,10 @@ Traditional Java reflection is verbose, error-prone, and difficult to work with 
 - **Type Safety** - Generic-friendly API with compile-time type checking where possible
 - **Field Resolution** - Automatically locate fields across class hierarchies and nested structures
 - **Binder Pattern** - Reactive field and method binding with supplier-based value management
-- **Reflection Helpers** - Utility classes for field instantiation, generic type resolution, and access management
+- **Composite Reflection Builder** - Compose multiple `IReflectionProvider` instances with priority-based resolution via `ReflectionBuilder`
+- **Force Access** - Access private/protected fields, methods, and constructors via `force` parameter on access managers
+- **IExecutable Abstraction** - Common superinterface for `IMethod` and `IConstructor` enabling unified invocation patterns
+- **Invoker/Accessor Classes** - High-level `FieldAccessor`, `MethodInvoker`, and `ConstructorInvoker` replacing raw reflection calls
 - **Performance Optimized** - Caching and efficient field/method lookup strategies
 
 ## Installation
@@ -105,6 +108,9 @@ ObjectQuery query = ObjectQueryFactory.objectQuery(User.class, userInstance);
 `FieldAccessor` and `MethodInvoker` are the primary utilities for field access and method invocation:
 - `FieldAccessor` - Type-safe field get/set with support for nested field traversal via `ObjectAddress`
 - `MethodInvoker` - Method execution with nested field traversal for deep object paths
+- `ConstructorInvoker` - Constructor invocation with parameter resolution
+
+All three use `AccessManager` classes internally with try-with-resources for automatic accessibility management.
 
 ### Field Utilities
 
@@ -119,6 +125,18 @@ ObjectQuery query = ObjectQueryFactory.objectQuery(User.class, userInstance);
 - `prettyColored()` - ANSI-colored method signature representation
 
 **MethodResolver** - Method resolution and validation utilities
+
+### Composite Reflection Builder
+
+`ReflectionBuilder` composes multiple `IReflectionProvider` and `IAnnotationScanner` instances into a single `CompositeReflection`:
+
+```java
+IReflection reflection = ReflectionBuilder.builder()
+    .withProvider(runtimeProvider, 100)  // higher priority
+    .withProvider(aotProvider, 50)
+    .withScanner(scanner, 100)
+    .build();
+```
 
 ### Binders
 
@@ -136,10 +154,13 @@ ObjectQuery query = ObjectQueryFactory.objectQuery(User.class, userInstance);
 
 ### Access Managers
 
-Internal utilities for managing field, method, and constructor accessibility:
-- `FieldAccessManager` - Makes fields accessible for reflection
-- `MethodAccessManager` - Manages method accessibility
-- `ConstructorAccessManager` - Handles constructor access
+Utilities for managing field, method, and constructor accessibility. Support a `force` parameter to access private/protected members:
+
+- `FieldAccessManager(field, force)` - Makes fields accessible for reflection; with `force=true`, accesses private/protected fields
+- `MethodAccessManager(method, force)` - Manages method accessibility; with `force=true`, accesses private/protected methods
+- `ConstructorAccessManager(constructor, force)` - Handles constructor access; with `force=true`, accesses private/protected constructors
+
+Access managers implement `AutoCloseable` and restore original accessibility state when closed.
 
 ## Usage
 

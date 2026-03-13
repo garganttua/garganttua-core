@@ -14,6 +14,8 @@ The `garganttua-expression` module provides a powerful, extensible expression la
 - **Auto-Detection Support**: Automatic discovery of expression nodes via annotations
 - **Contextual Evaluation**: Support for both contextual and non-contextual expression nodes
 - **Rich Type System**: Full support for primitives, classes, generics, arrays, and collections
+- **Dynamic Return Type Resolution**: Generic methods (e.g., `cast()`) resolve their actual return type at runtime
+- **Dynamic Function Resolution**: Opt-in support for resolving user-defined functions from script runtime variables
 - **DSL Builder Pattern**: Fluent API for configuring expression contexts
 - **Zero-Reflection Optimization**: `@Expression` function calls use compile-time generated direct binders when available, eliminating `Method.invoke()` overhead on hot paths (see [garganttua-annotation-processor](../garganttua-bindings/garganttua-native/garganttua-native-annotation-processor/README.md#direct-binder-generation-zero-reflection-at-runtime))
 - **Comprehensive Logging**: Structured Slf4j logging for debugging and monitoring
@@ -530,6 +532,16 @@ public static Class<?> Class(@Nullable String className) {
 }
 ```
 
+### Type Casting
+
+```java
+@Expression(name = "cast", description = "Casts a value to the specified type")
+public static Object cast(Class<?> targetType, Object value) {
+    // Returns value cast to targetType
+    // Dynamic return type resolution: actual type resolved at runtime
+}
+```
+
 Usage examples from tests:
 - `"int"` returns `int.class`
 - `"boolean"` returns `boolean.class`
@@ -566,7 +578,8 @@ IExpression<R, S>
 IExpressionNode<R, S>
   ├── ExpressionLeaf<R> implements IExpressionNode<R, ISupplier<R>>
   ├── ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>>
-  └── ContextualExpressionNode<R> implements IContextualExpressionNode<R, ISupplier<R>>
+  ├── ContextualExpressionNode<R> implements IContextualExpressionNode<R, ISupplier<R>>
+  └── DynamicFunctionNode<R> implements IExpressionNode<R, ISupplier<R>>  (runtime user-defined function resolution)
 
 IExpressionContext
   └── ExpressionContext implements IExpressionContext
@@ -948,6 +961,38 @@ assertThrows(DslException.class, () -> {
 - `IExpression` instances are immutable and thread-safe
 - `ISupplier` evaluation is thread-safe but depends on implementation
 - Expression node factories are immutable and thread-safe
+
+## cast() Function
+
+The `cast()` expression function enables explicit type casting within expressions:
+
+```java
+// Cast a value to a specific type
+cast(String.class, "hello")
+cast(Object.class, @x)
+```
+
+`cast()` leverages the dynamic return type resolution feature — its declared return type is `Object`, but the actual return type is resolved at runtime from the result value, enabling type-aware method chaining after a cast.
+
+## Dynamic Return Type Resolution
+
+When an expression method returns `Object` (e.g., generic methods like `cast()`), the expression engine dynamically resolves the actual return type at runtime:
+
+1. If the method's compile-time owner type is `Object.class`, method resolution is deferred
+2. At runtime, once the concrete type is known, the method is resolved against the actual type
+3. The return type is updated dynamically from the result value
+
+This enables generic functions to participate correctly in type-checked expression chains.
+
+## Dynamic Function Resolution
+
+The expression context supports an opt-in dynamic function resolution mode for integration with the script module's user-defined functions:
+
+```java
+expressionContext.enableDynamicFunctions();
+```
+
+When enabled, if a function call cannot be resolved statically, a `DynamicFunctionNode` is created as a fallback. This node resolves the function name from runtime variables (looking for `IScriptFunction` instances) and invokes it dynamically. This is **disabled by default** to preserve strict error handling in standalone expressions.
 
 ## Limitations and Known Issues
 

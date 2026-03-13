@@ -140,13 +140,27 @@ DSL Builders (in `injection.context.dsl`):
 - `@FieldMappingRule` - Field-level mapping annotation
 - `MapperException` - Exception for mapping errors
 
-**reflection** - Reflection utilities and binding framework (19 files)
+**reflection** - Reflection abstraction and binding framework
 
-Core Classes:
+Core Abstraction (`IReflection` Facade):
+- `IReflection` - Unified facade combining `IReflectionProvider` (class resolution) and `IAnnotationScanner` (annotation discovery). Provides field access, method invocation, and constructor instantiation with optional `force` parameter for private members. Supports deep field traversal via `ObjectAddress`.
+- `IReflectionProvider` - Pluggable provider interface with priority support. Multiple providers can be composed via `ReflectionBuilder`.
+- `IClass<T>` - Abstract mirror of `java.lang.Class<T>` with static factory (`IClass.getClass(clazz)`) and thread-local/global reflection context support. **`Class<?>` usage is prohibited** — always use `IClass<?>` instead.
+- `IField`, `IMethod`, `IConstructor`, `IParameter`, `IRecordComponent` - Abstract mirrors of `java.lang.reflect` types
+- `IExecutable` - Common superinterface for `IMethod` and `IConstructor`, factoring out shared members (parameters, exceptions, accessibility)
+- `IAnnotatedElement`, `IAnnotatedType` - Annotation access abstractions
+- `IGenericDeclaration`, `ITypeVariable` - Generic type introspection
+- `IMember` - Common member interface for fields, methods, constructors
 - `ObjectAddress` - Parses and navigates dot-notation paths (e.g., `"object.field.nested"`) with loop detection
 - `IAnnotationScanner` - Finds classes with specific annotations in packages
 - `IObjectQuery` - Queries objects using reflection
+- `TypeUtils` - Generic type extraction and classification utilities
 - `ReflectionException` - Exception for reflection errors
+
+Annotations:
+- `@Reflected` - Marks types/fields/constructors/methods that use reflection (replaces deprecated `@Native`)
+- `@ReflectedBuilder` - Marks classes that report reflection usage (replaces deprecated `@NativeConfigurationBuilder`)
+- `IReflectionUsageReporter` - Programmatic reflection usage declaration
 
 Binders:
 - `IFieldBinder` / `IContextualFieldBinder` - Binds and retrieves field values
@@ -156,6 +170,7 @@ Binders:
 - `Dependent` - Interface marking dependent elements
 
 DSL Builders (in `reflection.binders.dsl`):
+- `IReflectionBuilder` - Builds composite reflection providers
 - `IFieldBinderBuilder` - Builds field binders
 - `IMethodBinderBuilder` - Builds method binders
 - `IConstructorBinderBuilder` - Builds constructor binders
@@ -218,6 +233,7 @@ Exception Classes:
 
 **script** - Script engine interfaces
 - `IScript` - Script loading, compilation, and execution interface
+- `IScriptFunction` - Represents user-defined script functions with `parameters()` and `invoke(Object...)` methods
 - `ScriptException` - Exception hierarchy for script errors
 
 ### Placeholder Packages
