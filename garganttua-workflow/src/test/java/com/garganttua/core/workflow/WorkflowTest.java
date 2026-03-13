@@ -721,7 +721,7 @@ class WorkflowTest {
 
         // Verify generated code has condition guard
         assertTrue(script.contains("_conditional_guarded_cond"), "Should have condition variable");
-        assertTrue(script.contains("noop()"), "Should use noop() for conditional guards");
+        assertTrue(script.contains("if(@_conditional_guarded_cond, ("), "Should use if() for conditional guards");
 
         WorkflowResult result = workflow.execute();
 

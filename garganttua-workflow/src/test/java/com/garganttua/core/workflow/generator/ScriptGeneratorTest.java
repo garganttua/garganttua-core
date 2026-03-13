@@ -272,17 +272,21 @@ class ScriptGeneratorTest {
         assertTrue(generated.contains("_run_deploy_code <- if(@_run_deploy_cond, execute_script(@_run_deploy_ref, @env), 0)"),
                 "Should have if() conditional execution: " + generated);
 
-        // Code actions should use combined condition
-        assertTrue(generated.contains("| and(@_run_deploy_cond, equals(@_run_deploy_code, 1)) => abort()"),
-                "Code actions should use combined condition: " + generated);
+        // Code actions should use if() with combined condition
+        assertTrue(generated.contains("if(and(@_run_deploy_cond, equals(@_run_deploy_code, 1)), (abort()), 0)"),
+                "Code actions should use if() with combined condition: " + generated);
 
-        // Output mappings should be conditional via noop + pipe
-        assertTrue(generated.contains("noop()\n    | @_run_deploy_cond => deployResult <- script_variable(@_run_deploy_ref, \"result\")"),
-                "Output mappings should be conditional: " + generated);
+        // Output mappings should be conditional via if() block
+        assertTrue(generated.contains("if(@_run_deploy_cond, (\n    deployResult <- script_variable(@_run_deploy_ref, \"result\")\n), 0)"),
+                "Output mappings should use if() block: " + generated);
 
         // Should NOT have catch clauses (omitted when conditional)
         assertFalse(generated.contains("! =>"),
                 "Catch clauses should be omitted when conditional: " + generated);
+
+        // Should NOT have noop()
+        assertFalse(generated.contains("noop()"),
+                "Should not use noop() pattern: " + generated);
     }
 
     @Test
@@ -309,15 +313,21 @@ class ScriptGeneratorTest {
         assertTrue(generated.contains("_test_processor_cond <- equals(@mode, \"active\")"),
                 "Should emit condition variable: " + generated);
 
-        // Each line should be guarded with noop + pipe
-        assertTrue(generated.contains("noop()\n    | @_test_processor_cond => result <- process(@data)"),
-                "First line should be guarded: " + generated);
-        assertTrue(generated.contains("noop()\n    | @_test_processor_cond => output <- transform(@result)"),
-                "Second line should be guarded: " + generated);
+        // Content and output mappings should be in a single if() block
+        assertTrue(generated.contains("if(@_test_processor_cond, ("),
+                "Should use if() block for conditional inline: " + generated);
+        assertTrue(generated.contains("    result <- process(@data)"),
+                "First line should be inside if() block: " + generated);
+        assertTrue(generated.contains("    output <- transform(@result)"),
+                "Second line should be inside if() block: " + generated);
+        assertTrue(generated.contains("    workflowResult <- @output"),
+                "Output mapping should be inside if() block: " + generated);
+        assertTrue(generated.contains("), 0)"),
+                "if() block should close with null else: " + generated);
 
-        // Output mappings should be conditional
-        assertTrue(generated.contains("noop()\n    | @_test_processor_cond => workflowResult <- @output"),
-                "Output mappings should be conditional: " + generated);
+        // Should NOT have noop()
+        assertFalse(generated.contains("noop()"),
+                "Should not use noop() pattern: " + generated);
     }
 
     @Test

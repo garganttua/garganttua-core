@@ -87,13 +87,6 @@ public class ScriptFunctions {
         throw new ExpressionException("cast: cannot cast " + value.getClass().getName() + " to " + type.getName());
     }
 
-    // ========== No-Operation Function ==========
-
-    @Expression(name = "noop", description = "No-operation, returns null")
-    public static Object noop() {
-        return null;
-    }
-
     // ========== Standard Error Output Functions ==========
 
     /**

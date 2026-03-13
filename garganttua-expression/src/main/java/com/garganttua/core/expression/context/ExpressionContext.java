@@ -381,9 +381,10 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             }
 
             if (factory == null) {
-                if (dynamicFunctionsEnabled) {
+                if (dynamicFunctionsEnabled && !hasRegisteredFunction(functionName)) {
                     // Fallback: create a DynamicFunctionNode that resolves the function
-                    // from runtime variables (supports user-defined script functions)
+                    // from runtime variables (supports user-defined script functions).
+                    // Only if no registered factory exists with this name (avoids masking type mismatches).
                     log.atDebug().log("No registered factory for '{}', creating dynamic function node", functionName);
                     List<IExpressionNode<?, ? extends ISupplier<?>>> argNodes = new ArrayList<>();
                     for (Object arg : arguments) {
@@ -665,6 +666,14 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
         }
 
         /**
+         * Checks if any registered factory starts with the given function name.
+         */
+        private boolean hasRegisteredFunction(String functionName) {
+            String prefix = functionName + "(";
+            return nodeFactories.keySet().stream().anyMatch(k -> k.startsWith(prefix));
+        }
+
+        /**
          * Builds a function key for direct parameters in the format
          * "functionName(Type1,Type2,...)".
          */
@@ -753,9 +762,9 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                     Class<?> factoryParamType = resolveSimpleTypeName(paramTypeName);
                     if (factoryParamType == null) {
                         compatible = false;
-                    } else if (argTypes[i] == Object.class) {
-                        // Object type from variable reference - compatible with any parameter type
-                        // Score 0 for Object (lowest priority)
+                    } else if (argTypes[i] == Object.class || factoryParamType == Object.class) {
+                        // Object type from variable reference or Object parameter - compatible with any type
+                        // Score 0 (lowest priority)
                         score += 0;
                     } else if (factoryParamType.isAssignableFrom(argTypes[i])) {
                         // Exact match or argType is subtype of factoryParamType
