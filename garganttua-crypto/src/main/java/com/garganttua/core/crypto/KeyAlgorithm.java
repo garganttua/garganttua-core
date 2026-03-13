@@ -97,15 +97,15 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
     HMAC_SHA512_4096("HmacSHA512", 4096),
 
     // ARCFOUR - RC4
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ARCFOUR_128("RC4", 128),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ARCFOUR_256("RC4", 256),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ARCFOUR_384("RC4", 384),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ARCFOUR_512("RC4", 512),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ARCFOUR_1024("RC4", 1024),
 
     // Blowfish
@@ -164,6 +164,7 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
     BLOWFISH_448("Blowfish", 448),
 
     // DES
+    @Deprecated(forRemoval = true)
     DES_56("DES", 56),
 
     // DESede
@@ -171,15 +172,15 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
     DESEDE_168("DESede", 168),
 
     // RC2
-    @Deprecated
+    @Deprecated(forRemoval = true)
     RC2_128("RC2", 128),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     RC2_256("RC2", 256),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     RC2_384("RC2", 384),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     RC2_512("RC2", 512),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     RC2_1024("RC2", 1024);
 
     private final String algorithm;

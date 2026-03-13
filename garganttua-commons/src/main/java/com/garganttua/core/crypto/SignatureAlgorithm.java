@@ -13,7 +13,9 @@ public enum SignatureAlgorithm {
 	SHA3_384("SHA3-384"),
 	SHA3_512("SHA3-512"),
 
+	@Deprecated(forRemoval = true)
 	MD2("MD2"),
+	@Deprecated(forRemoval = true)
 	MD5("MD5"),
 
 	RIPEMD128("RIPEMD128"),

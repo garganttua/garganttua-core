@@ -3,12 +3,11 @@ package com.garganttua.core.crypto;
 import java.util.Date;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.IBuilder;
 
-public class KeyRealmBuilder implements IBuilder<IKeyRealm> {
+public class KeyRealmBuilder implements IKeyRealmBuilder {
 
 	private String name;
-	private KeyAlgorithm keyAlgorithm;
+	private IKeyAlgorithm keyAlgorithm;
 	private Date expiration;
 	private int initializationVectorSize = -1;
 	private EncryptionMode encryptionMode;
@@ -22,36 +21,51 @@ public class KeyRealmBuilder implements IBuilder<IKeyRealm> {
 		return new KeyRealmBuilder();
 	}
 
+	public static KeyRealmBuilder forEncryption(IKeyAlgorithm algorithm, EncryptionMode mode, EncryptionPaddingMode padding) {
+		return builder().algorithm(algorithm).encryptionMode(mode).paddingMode(padding);
+	}
+
+	public static KeyRealmBuilder forSignature(IKeyAlgorithm algorithm, SignatureAlgorithm signatureAlgorithm) {
+		return builder().algorithm(algorithm).signatureAlgorithm(signatureAlgorithm);
+	}
+
+	@Override
 	public KeyRealmBuilder name(String name) {
 		this.name = name;
 		return this;
 	}
 
-	public KeyRealmBuilder algorithm(KeyAlgorithm keyAlgorithm) {
+	@Override
+	public KeyRealmBuilder algorithm(IKeyAlgorithm keyAlgorithm) {
 		this.keyAlgorithm = keyAlgorithm;
 		return this;
 	}
 
+	@Override
 	public KeyRealmBuilder expiration(Date expiration) {
 		this.expiration = expiration;
 		return this;
 	}
 
+	@Override
 	public KeyRealmBuilder initializationVectorSize(int size) {
 		this.initializationVectorSize = size;
 		return this;
 	}
 
+	@Override
 	public KeyRealmBuilder encryptionMode(EncryptionMode mode) {
 		this.encryptionMode = mode;
 		return this;
 	}
 
+	@Override
 	public KeyRealmBuilder paddingMode(EncryptionPaddingMode paddingMode) {
 		this.paddingMode = paddingMode;
 		return this;
 	}
 
+	@Override
 	public KeyRealmBuilder signatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
 		this.signatureAlgorithm = signatureAlgorithm;
 		return this;

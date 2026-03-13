@@ -20,8 +20,6 @@ public interface IKey {
 
 	IKeyAlgorithm getAlgorithm();
 
-	byte[] getInitializationVector();
-
 	EncryptionMode getEncryptionMode();
 
 	EncryptionPaddingMode getEncryptionPaddingMode();

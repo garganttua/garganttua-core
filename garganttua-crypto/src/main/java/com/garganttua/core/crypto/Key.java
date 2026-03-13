@@ -1,205 +1,121 @@
 package com.garganttua.core.crypto;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-@Setter
-@Getter
-@NoArgsConstructor
 @Slf4j
 public class Key implements IKey {
 
-	private KeyType type;
+	@Getter
+	private final KeyType type;
 
-	private KeyAlgorithm algorithm;
+	private final IKeyAlgorithm algorithm;
 
-	private byte[] rawKey;
+	private final byte[] rawKey;
 
-	private byte[] initializationVector;
+	private final int ivSize;
 
-	private EncryptionMode encryptionMode;
+	@Getter
+	private final EncryptionMode encryptionMode;
 
-	private EncryptionPaddingMode encryptionPaddingMode;
+	@Getter
+	private final EncryptionPaddingMode encryptionPaddingMode;
 
-	private SignatureAlgorithm signatureAlgorithm;
+	@Getter
+	private final SignatureAlgorithm signatureAlgorithm;
 
-	public Key(KeyType type, KeyAlgorithm algorithm, byte[] rawKey, byte[] initializationVector, EncryptionMode encryptionMode, EncryptionPaddingMode paddingMode, SignatureAlgorithm signatureAlgorithm) {
-		super();
-		log.atTrace().log("Entering Key constructor with type={}, algorithm={}, encryptionMode={}, paddingMode={}, signatureAlgorithm={}", type, algorithm, encryptionMode, paddingMode, signatureAlgorithm);
+	Key(KeyType type, IKeyAlgorithm algorithm, byte[] rawKey, int ivSize,
+			EncryptionMode encryptionMode, EncryptionPaddingMode paddingMode,
+			SignatureAlgorithm signatureAlgorithm) {
 		this.type = type;
 		this.algorithm = algorithm;
 		this.encryptionMode = encryptionMode;
 		this.encryptionPaddingMode = paddingMode;
 		this.signatureAlgorithm = signatureAlgorithm;
-		Encoder b64Encoder = Base64.getEncoder();
-		this.rawKey = b64Encoder.encode(rawKey);
-		this.initializationVector = initializationVector;
+		this.rawKey = Base64.getEncoder().encode(rawKey);
+		this.ivSize = ivSize;
 		log.atDebug().log("Key created with type={}, algorithm={}", this.type, this.algorithm);
-		log.atTrace().log("Exiting Key constructor");
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return Arrays.equals(rawKey, ((Key) obj).rawKey);
 	}
 
 	@Override
 	public java.security.Key getKey() throws CryptoException {
-		log.atTrace().log("Entering getKey with type={}", this.type);
-		java.security.Key key_ = null;
-		Decoder b64Decoder = Base64.getDecoder();
-		byte[] decodedRawKey = b64Decoder.decode(this.rawKey);
+		byte[] decodedRawKey = Base64.getDecoder().decode(this.rawKey);
 		try {
-			if (this.type == KeyType.SECRET) {
-				log.atDebug().log("Creating SecretKey for algorithm {}", this.algorithm);
-				key_ = new SecretKeySpec(decodedRawKey, 0, decodedRawKey.length, this.algorithm.getName());
-			}
-			if (this.type == KeyType.PRIVATE) {
-				log.atDebug().log("Creating PrivateKey for algorithm {}", this.algorithm);
-				key_ = KeyFactory.getInstance(this.algorithm.getName())
+			return switch (this.type) {
+				case SECRET -> new SecretKeySpec(decodedRawKey, 0, decodedRawKey.length, this.algorithm.getName());
+				case PRIVATE -> KeyFactory.getInstance(this.algorithm.getName())
 						.generatePrivate(new PKCS8EncodedKeySpec(decodedRawKey));
-			}
-			if (this.type == KeyType.PUBLIC) {
-				log.atDebug().log("Creating PublicKey for algorithm {}", this.algorithm);
-				key_ = KeyFactory.getInstance(this.algorithm.getName())
+				case PUBLIC -> KeyFactory.getInstance(this.algorithm.getName())
 						.generatePublic(new X509EncodedKeySpec(decodedRawKey));
-			}
-			log.atDebug().log("Key retrieved successfully for type={}, algorithm={}", this.type, this.algorithm);
+			};
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-			log.atWarn().log("Error in getting keys from bytes", e);
-			throw new CryptoException(e);
+			throw new CryptoException("Failed to reconstruct key", e);
 		}
-		log.atTrace().log("Exiting getKey");
-		return key_;
 	}
 
 	@Override
 	public byte[] encrypt(byte[] clear) throws CryptoException {
-		log.atTrace().log("Entering encrypt with data length={}", clear != null ? clear.length : 0);
-		Cipher cipher;
-		try {
-			String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
-			log.atDebug().log("Initializing cipher {} for encryption", cipherName);
-			cipher = Cipher.getInstance(cipherName);
-			if (this.initializationVector != null)
-				if (this.encryptionMode == EncryptionMode.GCM)
-					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(), new GCMParameterSpec(128, this.initializationVector));
-				else
-					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(), new IvParameterSpec(this.initializationVector));
-			else
-				cipher.init(Cipher.ENCRYPT_MODE, this.getKey());
-			byte[] encrypted = cipher.doFinal(clear);
-			log.atDebug().log("Data encrypted successfully, output length={}", encrypted.length);
-			log.atTrace().log("Exiting encrypt");
-			return encrypted;
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException
-				| InvalidKeyException | InvalidAlgorithmParameterException e) {
-			log.atWarn().log("Encryption error", e);
-			throw new CryptoException(e);
-		}
+		String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
+		return Encryptor.encrypt(this.getKey(), cipherName, this.encryptionMode, this.ivSize, clear);
 	}
 
 	@Override
 	public byte[] decrypt(byte[] encoded) throws CryptoException {
-		log.atTrace().log("Entering decrypt with data length={}", encoded != null ? encoded.length : 0);
-		Cipher cipher;
-		try {
-			String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
-			log.atDebug().log("Initializing cipher {} for decryption", cipherName);
-			cipher = Cipher.getInstance(cipherName);
-			if (this.initializationVector != null)
-				if (this.encryptionMode == EncryptionMode.GCM)
-					cipher.init(Cipher.DECRYPT_MODE, this.getKey(), new GCMParameterSpec(128, this.initializationVector));
-				else
-					cipher.init(Cipher.DECRYPT_MODE, this.getKey(), new IvParameterSpec(this.initializationVector));
-			else
-				cipher.init(Cipher.DECRYPT_MODE, this.getKey());
-			byte[] decrypted = cipher.doFinal(encoded);
-			log.atDebug().log("Data decrypted successfully, output length={}", decrypted.length);
-			log.atTrace().log("Exiting decrypt");
-			return decrypted;
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException
-				| InvalidKeyException | InvalidAlgorithmParameterException e) {
-			log.atWarn().log("Decryption error", e);
-			throw new CryptoException(e);
-		}
+		String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
+		return Encryptor.decrypt(this.getKey(), cipherName, this.encryptionMode, this.ivSize, encoded);
 	}
 
 	@Override
 	public byte[] sign(byte[] data) throws CryptoException {
-		log.atTrace().log("Entering sign with data length={}", data != null ? data.length : 0);
 		if (this.type != KeyType.PRIVATE) {
-			log.atError().log("Attempt to sign with non-private key: type={}", this.type);
 			throw new CryptoException("Cannot sign with other than Private key");
 		}
-		try {
-			String signatureName = this.algorithm.getSignatureName(this.signatureAlgorithm);
-			log.atDebug().log("Creating signature with algorithm {}", signatureName);
-			Signature signature = Signature.getInstance(signatureName);
-			signature.initSign((PrivateKey) this.getKey());
-			signature.update(data);
-			byte[] signatureBytes = signature.sign();
-			log.atDebug().log("Data signed successfully, signature length={}", signatureBytes.length);
-			log.atTrace().log("Exiting sign");
-			return signatureBytes;
-		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-			log.atWarn().log("Signature error", e);
-			throw new CryptoException("Signature error", e);
-		}
+		String sigName = this.algorithm.getSignatureName(this.signatureAlgorithm);
+		return Signer.sign((PrivateKey) this.getKey(), sigName, data);
 	}
 
 	@Override
 	public boolean verifySignature(byte[] signature, byte[] originalData) throws CryptoException {
-		log.atTrace().log("Entering verifySignature with signature length={}, data length={}", signature != null ? signature.length : 0, originalData != null ? originalData.length : 0);
 		if (this.type != KeyType.PUBLIC) {
-			log.atError().log("Attempt to verify signature with non-public key: type={}", this.type);
 			throw new CryptoException("Cannot verify signature with other than Public key");
 		}
-		try {
-			String signatureName = this.algorithm.getSignatureName(this.signatureAlgorithm);
-			log.atDebug().log("Verifying signature with algorithm {}", signatureName);
-			Signature signatureVerify = Signature.getInstance(signatureName);
-			signatureVerify.initVerify((PublicKey) this.getKey());
-			signatureVerify.update(originalData);
-			boolean isValid = signatureVerify.verify(signature);
-			log.atDebug().log("Signature verification result: {}", isValid);
-			log.atTrace().log("Exiting verifySignature");
-			return isValid;
-		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-			log.atWarn().log("Signature verification error", e);
-			throw new CryptoException("Signature verification error", e);
-		}
+		String sigName = this.algorithm.getSignatureName(this.signatureAlgorithm);
+		return Signer.verify((PublicKey) this.getKey(), sigName, signature, originalData);
+	}
+
+	@Override
+	public byte[] getRawKey() {
+		return this.rawKey;
 	}
 
 	@Override
 	public IKeyAlgorithm getAlgorithm() {
 		return this.algorithm;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null || getClass() != obj.getClass()) return false;
+		Key other = (Key) obj;
+		return Arrays.equals(rawKey, other.rawKey);
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(rawKey);
 	}
 
 }

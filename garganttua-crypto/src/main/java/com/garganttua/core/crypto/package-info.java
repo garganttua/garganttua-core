@@ -2,36 +2,32 @@
  * Garganttua Cryptography Framework
  *
  * <p>This package provides a comprehensive cryptographic framework for secure key management,
- * encryption, decryption, and digital signatures. It supports both symmetric and asymmetric
+ * encryption, decryption, digital signatures, and hashing. It supports both symmetric and asymmetric
  * cryptography with a wide range of algorithms, modes, and padding schemes.</p>
  *
+ * <h2>Security Design</h2>
+ * <ul>
+ *   <li>Initialization vectors (IV) are generated per encryption operation and prepended to the ciphertext,
+ *       preventing IV reuse attacks in CBC, GCM, CTR, and CFB modes</li>
+ *   <li>GCM mode uses 128-bit authentication tags appended to the ciphertext by the JCA provider</li>
+ *   <li>Dangerous algorithms (DES, RC4, RC2, MD5 signatures) are marked {@code @Deprecated(forRemoval = true)}</li>
+ * </ul>
+ *
  * <h2>Core Components</h2>
+ * <ul>
+ *   <li>{@link com.garganttua.core.crypto.KeyRealmBuilder} - Fluent builder for creating key realms</li>
+ *   <li>{@link com.garganttua.core.crypto.Key} - IKey implementation with delegated crypto operations</li>
+ *   <li>{@link com.garganttua.core.crypto.KeyAlgorithm} - Standard algorithm enum (RSA, AES, EC, etc.)</li>
+ *   <li>{@link com.garganttua.core.crypto.CustomKeyAlgorithm} - Extensible algorithm definition for custom algorithms</li>
+ *   <li>{@link com.garganttua.core.crypto.Hash} - IHash implementation for secure hashing</li>
+ *   <li>{@link com.garganttua.core.crypto.KeySerializer} - Key import/export as Base64 strings</li>
+ *   <li>{@link com.garganttua.core.crypto.Encryptor} - Internal encryption/decryption with per-operation IV</li>
+ *   <li>{@link com.garganttua.core.crypto.Signer} - Internal signing/verification</li>
+ * </ul>
  *
- * <h3>KeyRealmBuilder</h3>
- * <p>Fluent builder for creating key realms with configurable algorithm, mode, padding, and signature.</p>
+ * <h2>Quick Start</h2>
  *
- * <h3>IKey / Key</h3>
- * <p>Interface and implementation for cryptographic key operations including encryption, decryption,
- * signing, and signature verification.</p>
- *
- * <h2>Quick Start Examples</h2>
- *
- * <h3>Digital Signatures with RSA</h3>
- * <pre>{@code
- * IKeyRealm realm = KeyRealmBuilder.builder()
- *     .name("myRealm")
- *     .algorithm(KeyAlgorithm.RSA_4096)
- *     .signatureAlgorithm(SignatureAlgorithm.SHA224)
- *     .build();
- *
- * IKey signingKey = realm.getKeyForSigning();
- * IKey verifyingKey = realm.getKeyForSignatureVerification();
- *
- * byte[] signature = signingKey.sign("Salut".getBytes());
- * boolean signatureOk = verifyingKey.verifySignature(signature, "Salut".getBytes());
- * }</pre>
- *
- * <h3>Symmetric Encryption (AES-256 with GCM)</h3>
+ * <h3>Encryption (AES-256-GCM)</h3>
  * <pre>{@code
  * IKeyRealm realm = KeyRealmBuilder.builder()
  *     .name("myRealm")
@@ -41,26 +37,27 @@
  *     .paddingMode(EncryptionPaddingMode.NO_PADDING)
  *     .build();
  *
- * byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
+ * byte[] encrypted = realm.getKeyForEncryption().encrypt("data".getBytes());
  * byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
  * }</pre>
  *
- * <h3>Asymmetric Encryption (RSA)</h3>
+ * <h3>Signatures (RSA-SHA256)</h3>
  * <pre>{@code
- * IKeyRealm realm = KeyRealmBuilder.builder()
+ * IKeyRealm realm = KeyRealmBuilder.forSignature(KeyAlgorithm.RSA_4096, SignatureAlgorithm.SHA256)
  *     .name("myRealm")
- *     .algorithm(KeyAlgorithm.RSA_4096)
- *     .encryptionMode(EncryptionMode.ECB)
- *     .paddingMode(EncryptionPaddingMode.PKCS1_PADDING)
  *     .build();
  *
- * byte[] encrypted = realm.getKeyForEncryption().encrypt("salut".getBytes());
- * byte[] decrypted = realm.getKeyForDecryption().decrypt(encrypted);
+ * byte[] signature = realm.getKeyForSigning().sign("data".getBytes());
+ * boolean valid = realm.getKeyForSignatureVerification().verifySignature(signature, "data".getBytes());
+ * }</pre>
+ *
+ * <h3>Hashing (SHA-256)</h3>
+ * <pre>{@code
+ * IHash hash = new Hash(HashAlgorithm.SHA_256);
+ * byte[] digest = hash.hash("data".getBytes());
+ * boolean ok = hash.verify("data".getBytes(), digest);
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
- * @see com.garganttua.core.crypto.KeyRealmBuilder
- * @see com.garganttua.core.crypto.IKey
- * @see com.garganttua.core.crypto.KeyAlgorithm
  */
 package com.garganttua.core.crypto;
