@@ -28,7 +28,7 @@ public class StatementBlock {
         return executeStatements(context, this.statements);
     }
 
-    private static Object executeStatements(IRuntimeContext<Object[], Object> context, List<IScriptNode> statements) {
+    static Object executeStatements(IRuntimeContext<Object[], Object> context, List<IScriptNode> statements) {
         Object lastResult = null;
         for (IScriptNode node : statements) {
             if (node instanceof StatementGroupNode group) {

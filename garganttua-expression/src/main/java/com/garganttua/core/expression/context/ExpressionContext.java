@@ -34,6 +34,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();
     private final Map<String, IClass<?>> variableTypes = new ConcurrentHashMap<>();
+    private volatile boolean dynamicFunctionsEnabled = false;
 
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         log.atTrace().log("Entering ExpressionContext constructor");
@@ -58,6 +59,12 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
         Objects.requireNonNull(factory, "Factory cannot be null");
         this.nodeFactories.put(key, factory);
         log.atDebug().log("Expression factory registered: {}", key);
+    }
+
+    @Override
+    public void enableDynamicFunctions() {
+        this.dynamicFunctionsEnabled = true;
+        log.atDebug().log("Dynamic function resolution enabled");
     }
 
     @Override
@@ -87,7 +94,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             log.atDebug().log("Expression parsed by ANTLR4");
 
             // Visit and build the expression tree
-            ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories, this.variableTypes);
+            ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories, this.variableTypes, this.dynamicFunctionsEnabled);
             IExpressionNode<?, ? extends ISupplier<?>> rootNode = visitor.visit(rootContext);
 
             if (rootNode == null) {
@@ -209,11 +216,13 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
         private final Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories;
         private final Map<String, IClass<?>> variableTypes;
+        private final boolean dynamicFunctionsEnabled;
 
         public ExpressionVisitor(Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories,
-                Map<String, IClass<?>> variableTypes) {
+                Map<String, IClass<?>> variableTypes, boolean dynamicFunctionsEnabled) {
             this.nodeFactories = nodeFactories;
             this.variableTypes = variableTypes;
+            this.dynamicFunctionsEnabled = dynamicFunctionsEnabled;
         }
 
         @Override
@@ -372,7 +381,16 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             }
 
             if (factory == null) {
-                log.atError().log("Unknown function: {}", functionKey);
+                if (dynamicFunctionsEnabled) {
+                    // Fallback: create a DynamicFunctionNode that resolves the function
+                    // from runtime variables (supports user-defined script functions)
+                    log.atDebug().log("No registered factory for '{}', creating dynamic function node", functionName);
+                    List<IExpressionNode<?, ? extends ISupplier<?>>> argNodes = new ArrayList<>();
+                    for (Object arg : arguments) {
+                        argNodes.add((IExpressionNode<?, ? extends ISupplier<?>>) arg);
+                    }
+                    return new com.garganttua.core.expression.DynamicFunctionNode(functionName, argNodes);
+                }
                 throw new ExpressionException("Unknown function: " + functionKey);
             }
 

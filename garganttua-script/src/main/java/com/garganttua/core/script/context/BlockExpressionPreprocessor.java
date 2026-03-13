@@ -135,7 +135,7 @@ class BlockExpressionPreprocessor {
             return false; // ( at start of source
         }
         char prev = source.charAt(k);
-        return prev == ',' || prev == '(';
+        return prev == ',' || prev == '(' || prev == '>';
     }
 
     /**

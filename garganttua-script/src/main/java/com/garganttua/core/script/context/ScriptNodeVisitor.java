@@ -11,6 +11,7 @@ import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.script.antlr4.ScriptBaseVisitor;
 import com.garganttua.core.script.antlr4.ScriptParser;
 import com.garganttua.core.script.nodes.CatchClause;
+import com.garganttua.core.script.nodes.FunctionDefNode;
 import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.PipeClause;
 import com.garganttua.core.script.nodes.StatementGroupNode;
@@ -83,6 +84,29 @@ public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
                 catchClauses, downstreamCatchClauses, pipeClauses,
                 ctx.start.getLine(), extractSourceText(ctx));
         this.statements.add(groupNode);
+        return null;
+    }
+
+    @Override
+    public Object visitFunctionDefStatement(ScriptParser.FunctionDefStatementContext ctx) {
+        String funcName = ctx.IDENTIFIER().getText();
+
+        // Extract parameter names
+        List<String> params = new ArrayList<>();
+        if (ctx.functionDef().parameterList() != null) {
+            for (org.antlr.v4.runtime.tree.TerminalNode id : ctx.functionDef().parameterList().IDENTIFIER()) {
+                params.add(id.getText());
+            }
+        }
+
+        // The body is a block reference like @__blkN (extracted by BlockExpressionPreprocessor)
+        String bodyRef = ctx.functionDef().expression().getText();
+        if (bodyRef.startsWith("@")) {
+            bodyRef = bodyRef.substring(1);
+        }
+
+        this.statements.add(new FunctionDefNode(funcName, params, bodyRef,
+                ctx.start.getLine(), extractSourceText(ctx)));
         return null;
     }
 

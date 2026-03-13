@@ -135,4 +135,16 @@ public interface IExpressionContext {
      */
     Set<String> getFactoryKeys();
 
+    /**
+     * Enables dynamic function resolution for user-defined script functions.
+     *
+     * <p>When enabled, unresolved function calls at parse time will produce a
+     * deferred node that resolves the function name from runtime variables
+     * instead of throwing an {@code ExpressionException}.</p>
+     *
+     * <p>This is intended to be called by the script engine, not by
+     * standalone expression users.</p>
+     */
+    void enableDynamicFunctions();
+
 }

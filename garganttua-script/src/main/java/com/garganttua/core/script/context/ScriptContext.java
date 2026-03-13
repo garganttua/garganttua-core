@@ -68,6 +68,7 @@ public class ScriptContext implements IScript {
         this.expressionContext = expressionContext;
         this.injectionContext = injectionContext;
         this.bootstrap = bootstrap;
+        this.expressionContext.enableDynamicFunctions();
     }
 
     @Override

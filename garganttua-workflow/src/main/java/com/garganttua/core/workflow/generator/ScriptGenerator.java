@@ -158,14 +158,13 @@ public class ScriptGenerator {
             script.append("include(\"").append(escapeString(ws.getPath())).append("\")\n");
 
             if (isConditional) {
-                // Conditional execution via noop + pipe
-                script.append(codeVarName).append(" <- noop() -> 0\n");
-                script.append("    | @").append(condVarName).append(" => ")
-                      .append(codeVarName).append(" <- execute_script(@").append(refVarName);
+                // Conditional execution via if()
+                script.append(codeVarName).append(" <- if(@").append(condVarName)
+                      .append(", execute_script(@").append(refVarName);
                 for (var input : ws.getInputs().entrySet()) {
                     script.append(", @").append(input.getKey());
                 }
-                script.append(")\n");
+                script.append("), 0)\n");
 
                 // Code actions as separate conditional pipes
                 boolean hasNonContinueCodeActions = ws.getCodeActions().entrySet().stream()

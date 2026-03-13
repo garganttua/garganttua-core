@@ -12,10 +12,14 @@ import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.runtime.RuntimeExceptionRecord;
 import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.core.runtime.RuntimeStepExecutionTools;
+import com.garganttua.core.expression.context.IScriptFunction;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.nodes.CatchClause;
+import com.garganttua.core.script.nodes.FunctionDefNode;
 import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.PipeClause;
+import com.garganttua.core.script.nodes.ScriptFunction;
+import com.garganttua.core.script.nodes.StatementBlock;
 import com.garganttua.core.script.nodes.StatementGroupNode;
 import com.garganttua.core.supply.ISupplier;
 
@@ -111,6 +115,11 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         Object lastResult = executeGroup(context, groupNode);
                         handleResult(context, node, lastResult);
                         evaluatePipeClauses(context, lastResult);
+                    } else if (node instanceof FunctionDefNode funcDef) {
+                        StatementBlock body = resolveBlock(context, funcDef.bodyBlockName());
+                        IScriptFunction func = new ScriptFunction(
+                                funcDef.variableName(), funcDef.parameterNames(), body);
+                        context.setVariable(funcDef.variableName(), func);
                     } else if (node.assignExpression() && node.variableName() != null) {
                         // For lazy assignment (=), store the expression without evaluating
                         ISupplier<?> supplier = node.expression().evaluate();
@@ -278,6 +287,11 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                 if (innerGroup.code() != null) {
                     context.setCode(innerGroup.code());
                 }
+            } else if (innerNode instanceof FunctionDefNode funcDef) {
+                StatementBlock body = resolveBlock(context, funcDef.bodyBlockName());
+                IScriptFunction func = new ScriptFunction(
+                        funcDef.variableName(), funcDef.parameterNames(), body);
+                context.setVariable(funcDef.variableName(), func);
             } else if (innerNode.assignExpression() && innerNode.variableName() != null) {
                 // Lazy assignment
                 ISupplier<?> supplier = innerNode.expression().evaluate();
@@ -410,6 +424,19 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
             root = root.getCause();
         }
         return root;
+    }
+
+    private StatementBlock resolveBlock(IRuntimeContext<Object[], Object> context, String blockName) {
+        Optional<Object> blockOpt = context.getVariable(blockName, IClass.getClass(Object.class));
+        Object blockObj = blockOpt.orElseThrow(
+                () -> new ScriptException("Function body block not found: " + blockName));
+        if (blockObj instanceof ISupplier<?> supplier) {
+            blockObj = supplier.supply().orElse(null);
+        }
+        if (!(blockObj instanceof StatementBlock body)) {
+            throw new ScriptException("Function body is not a StatementBlock: " + blockName);
+        }
+        return body;
     }
 
     private String logHeader() {

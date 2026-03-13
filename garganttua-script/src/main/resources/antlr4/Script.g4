@@ -21,7 +21,16 @@ script
 statement
     : (IDENTIFIER LARROW)? statementGroup (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)* # groupStatement
     | (IDENTIFIER LARROW)? expression (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)*     # resultAssignStatement
+    | IDENTIFIER '=' functionDef                                                                                                     # functionDefStatement
     | (IDENTIFIER '=')? expression (RARROW INT_LITERAL)? (NL+ catchClause)* (NL+ downstreamCatchClause)* (NL+ pipeClause)*        # expressionAssignStatement
+    ;
+
+functionDef
+    : '(' parameterList? ')' FAT_ARROW expression
+    ;
+
+parameterList
+    : IDENTIFIER (',' IDENTIFIER)*
     ;
 
 // ===============================
@@ -78,10 +87,12 @@ catchHandler
 // EXPRESSION (opaque text delegated to garganttua-expression)
 // ===============================
 expression
-    : expressionToken+
+    : expressionStartToken expressionToken*
     ;
 
-expressionToken
+// Tokens that can start an expression (excludes ')' ']' '}' '>' ',' to avoid ambiguity
+// with statementGroup closing parenthesis)
+expressionStartToken
     : IDENTIFIER
     | STRING
     | CHAR
@@ -90,17 +101,12 @@ expressionToken
     | BOOLEAN
     | NULL
     | '('
-    | ')'
-    | ','
     | ':'
     | '.'
     | '<'
-    | '>'
     | '?'
     | '['
-    | ']'
     | '{'
-    | '}'
     | '@'
     | '$'
     | BOOLEAN_TYPE
@@ -112,6 +118,15 @@ expressionToken
     | DOUBLE_TYPE
     | CHAR_TYPE
     | CLASS
+    ;
+
+expressionToken
+    : expressionStartToken
+    | ')'
+    | ','
+    | '>'
+    | ']'
+    | '}'
     ;
 
 // ===============================

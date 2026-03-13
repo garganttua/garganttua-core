@@ -268,13 +268,9 @@ class ScriptGeneratorTest {
         assertTrue(generated.contains("_run_deploy_ref <- include("),
                 "Include should be unconditional: " + generated);
 
-        // Should use noop() -> 0 for default code
-        assertTrue(generated.contains("_run_deploy_code <- noop() -> 0"),
-                "Should have noop() -> 0 for default code: " + generated);
-
-        // Should have conditional execute_script via pipe
-        assertTrue(generated.contains("| @_run_deploy_cond => _run_deploy_code <- execute_script(@_run_deploy_ref, @env)"),
-                "Should have conditional execute_script: " + generated);
+        // Should use if() for conditional execution
+        assertTrue(generated.contains("_run_deploy_code <- if(@_run_deploy_cond, execute_script(@_run_deploy_ref, @env), 0)"),
+                "Should have if() conditional execution: " + generated);
 
         // Code actions should use combined condition
         assertTrue(generated.contains("| and(@_run_deploy_cond, equals(@_run_deploy_code, 1)) => abort()"),
@@ -358,10 +354,10 @@ class ScriptGeneratorTest {
         assertTrue(generated.contains("_deploy_script2_cond <- @_deploy_cond"),
                 "Script2 should reference stage condition: " + generated);
 
-        // Both scripts should use conditional execution
-        assertTrue(generated.contains("| @_deploy_script1_cond => _deploy_script1_code <- execute_script("),
+        // Both scripts should use conditional execution via if()
+        assertTrue(generated.contains("_deploy_script1_code <- if(@_deploy_script1_cond, execute_script("),
                 "Script1 should have conditional execute_script: " + generated);
-        assertTrue(generated.contains("| @_deploy_script2_cond => _deploy_script2_code <- execute_script("),
+        assertTrue(generated.contains("_deploy_script2_code <- if(@_deploy_script2_cond, execute_script("),
                 "Script2 should have conditional execute_script: " + generated);
     }
 
