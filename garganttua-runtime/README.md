@@ -394,6 +394,24 @@ String fallbackMethod(@Input String input) {
 // Result: Fallback executed, custom logic runs
 ```
 
+## Expression Functions
+
+The runtime module exposes the following expression function, auto-discovered via `@Expression` annotation scanning on the `com.garganttua.core.runtime` package.
+
+### `context()`
+
+Returns the current `IRuntimeContext` for the executing thread. Since `IRuntimeContext` extends `IInjectionContext`, this gives scripts access to the **local child injection context** created by the runtime — as opposed to the global singleton used by `getBean()`, `getProperty()`, etc.
+
+```
+# Get the local runtime context
+ctx <- context()
+
+# Call methods on it via expression method-call syntax
+bean <- :queryBean(ctx, cast(Optional.class), "myBeanRef")
+```
+
+> **Note:** `context()` must be called during a runtime execution (i.e. inside a runtime step). Calling it outside of a runtime execution throws an `ExpressionException`.
+
 ## Advanced Patterns
 
 ### Testing Runtime Execution
