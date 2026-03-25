@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram id="main" name="garganttua-script - Scripting Engine">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="garganttua-script - Scripting Engine" style="text;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="350" y="8" width="500" height="30" as="geometry"/></mxCell>
+        <mxCell id="g_parse" value="Parsing" style="rounded=1;whiteSpace=wrap;fillColor=#f8f8f8;strokeColor=#cccccc;fontSize=12;fontStyle=1;dashed=1;verticalAlign=top;spacingTop=5;" vertex="1" parent="1"><mxGeometry x="40" y="265" width="830" height="85" as="geometry"/></mxCell>
+        <mxCell id="g_fn" value="Built-in Functions" style="rounded=1;whiteSpace=wrap;fillColor=#f8f8f8;strokeColor=#cccccc;fontSize=12;fontStyle=1;dashed=1;verticalAlign=top;spacingTop=5;" vertex="1" parent="1"><mxGeometry x="40" y="535" width="670" height="150" as="geometry"/></mxCell>
+        <mxCell id="main" value="Main (CLI)" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="50" y="80" width="150" height="45" as="geometry"/></mxCell>
+        <mxCell id="isc" value="IScript" style="rounded=0;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="80" width="140" height="45" as="geometry"/></mxCell>
+        <mxCell id="sctx" value="ScriptContext" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="50" y="180" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="sec" value="ScriptExecutionContext" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="280" y="180" width="230" height="45" as="geometry"/></mxCell>
+        <mxCell id="g4" value="Script.g4 (ANTLR4)" style="shape=note;whiteSpace=wrap;fillColor=#ffffcc;strokeColor=#cccc00;fontSize=10;align=left;verticalAlign=top;spacingLeft=4;" vertex="1" parent="1"><mxGeometry x="50" y="290" width="200" height="40" as="geometry"/></mxCell>
+        <mxCell id="bep" value="BlockExpressionPreprocessor" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="290" width="260" height="45" as="geometry"/></mxCell>
+        <mxCell id="snv" value="ScriptNodeVisitor" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="600" y="290" width="210" height="45" as="geometry"/></mxCell>
+        <mxCell id="srs" value="ScriptRuntimeStep" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="50" y="400" width="210" height="50" as="geometry"/></mxCell>
+        <mxCell id="sb" value="StatementBlock" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="350" y="400" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="sf" value="ScriptFunction" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="350" y="480" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="fdn" value="FunctionDefNode" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="560" y="400" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="isn" value="IScriptNode" style="rounded=0;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="560" y="480" width="160" height="45" as="geometry"/></mxCell>
+        <mxCell id="sfn" value="ScriptFunctions" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="50" y="560" width="200" height="45" as="geometry"/></mxCell>
+        <mxCell id="cff" value="ControlFlowFunctions" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="50" y="630" width="220" height="45" as="geometry"/></mxCell>
+        <mxCell id="rtf" value="RetryFunctions" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="560" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="syncf" value="SyncFunctions" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="630" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="timef" value="TimeFunctions" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="510" y="560" width="180" height="45" as="geometry"/></mxCell>
+        <mxCell id="n_inc" value="include() + execute_script()
++ script_variable()
+for script composition" style="shape=note;whiteSpace=wrap;fillColor=#ffffcc;strokeColor=#cccc00;fontSize=10;align=left;verticalAlign=top;spacingLeft=4;" vertex="1" parent="1"><mxGeometry x="750" y="80" width="210" height="60" as="geometry"/></mxCell>
+        <mxCell id="n_fn" value="User-defined functions:
+name = (params) =&gt; (body)
+Scope isolation via save/restore" style="shape=note;whiteSpace=wrap;fillColor=#ffffcc;strokeColor=#cccc00;fontSize=10;align=left;verticalAlign=top;spacingLeft=4;" vertex="1" parent="1"><mxGeometry x="750" y="180" width="220" height="60" as="geometry"/></mxCell>
+        <mxCell id="n_if" value="if(cond, thenBlock, elseBlock)
+Lazy StatementBlock evaluation" style="shape=note;whiteSpace=wrap;fillColor=#ffffcc;strokeColor=#cccc00;fontSize=10;align=left;verticalAlign=top;spacingLeft=4;" vertex="1" parent="1"><mxGeometry x="750" y="280" width="220" height="45" as="geometry"/></mxCell>
+        <mxCell id="e0" style="endArrow=block;endFill=0;dashed=1;strokeColor=#6c8ebf;" edge="1" source="sctx" target="isc" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e1" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="sctx" target="sec" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="snv" target="g4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="snv" target="bep" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="srs" target="sb" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="srs" target="sf" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="srs" target="fdn" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="endArrow=block;endFill=0;dashed=1;strokeColor=#6c8ebf;" edge="1" source="sf" target="isn" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="endArrow=block;endFill=0;dashed=1;strokeColor=#6c8ebf;" edge="1" source="fdn" target="isn" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" style="endArrow=open;dashed=1;strokeColor=#999999;" edge="1" source="main" target="sctx" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lg0" value="Interface" style="rounded=0;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1080" y="680" width="90" height="20" as="geometry"/></mxCell>
+        <mxCell id="lg1" value="Class" style="rounded=0;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1080" y="704" width="90" height="20" as="geometry"/></mxCell>
+        <mxCell id="lg2" value="Abstract" style="rounded=0;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=3;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1080" y="728" width="90" height="20" as="geometry"/></mxCell>
+        <mxCell id="lg3" value="Enum" style="rounded=0;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1080" y="752" width="90" height="20" as="geometry"/></mxCell>
+        <mxCell id="lg4" value="Annotation" style="rounded=0;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1080" y="776" width="90" height="20" as="geometry"/></mxCell>
+        <mxCell id="lg5" value="Record" style="rounded=0;whiteSpace=wrap;fillColor=#f0f0ff;strokeColor=#9999cc;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1080" y="800" width="90" height="20" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

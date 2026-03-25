@@ -8,7 +8,6 @@ import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IExecutable;
 import com.garganttua.core.reflection.IParameter;
-import com.garganttua.core.reflection.IReflection;
 
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
