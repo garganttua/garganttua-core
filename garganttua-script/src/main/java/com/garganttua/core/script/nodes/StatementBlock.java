@@ -47,18 +47,27 @@ public class StatementBlock {
     static Object executeStatements(IRuntimeContext<Object[], Object> context, List<IScriptNode> statements) {
         Object lastResult = null;
         for (IScriptNode node : statements) {
-            if (node instanceof StatementGroupNode group) {
-                lastResult = executeStatements(context, group.statements());
-                setVar(context, group, lastResult);
-            } else if (node.assignExpression() && node.variableName() != null) {
-                ISupplier<?> supplier = node.expression().evaluate();
-                context.setVariable(node.variableName(), supplier);
-                if (node.code() != null) {
-                    context.setCode(node.code());
+            try {
+                if (node instanceof StatementGroupNode group) {
+                    lastResult = executeStatements(context, group.statements());
+                    setVar(context, group, lastResult);
+                } else if (node.assignExpression() && node.variableName() != null) {
+                    ISupplier<?> supplier = node.expression().evaluate();
+                    context.setVariable(node.variableName(), supplier);
+                    if (node.code() != null) {
+                        context.setCode(node.code());
+                    }
+                } else {
+                    lastResult = node.execute();
+                    setVar(context, node, lastResult);
                 }
-            } else {
-                lastResult = node.execute();
-                setVar(context, node, lastResult);
+            } catch (ScriptException e) {
+                var cr = CatchClauseHandler.tryCatchClauses(context, node.catchClauses(), e);
+                if (cr.caught()) {
+                    lastResult = cr.handlerResult();
+                    break;
+                }
+                throw e;
             }
         }
         return lastResult;

@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import com.garganttua.core.CoreException;
 import com.garganttua.core.bootstrap.dsl.IBoostrap;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.injection.IInjectionContext;
@@ -234,8 +235,8 @@ public class ScriptContext implements IScript {
             this.lastVariables = Map.of();
             this.lastOutput = null;
             return IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
-        } catch (com.garganttua.core.runtime.RuntimeException e) {
-            // Capture the exception instead of rethrowing
+        } catch (CoreException e) {
+            // Capture RuntimeException and ScriptException (both extend CoreException)
             this.lastException = e;
             this.aborted = true;
             this.lastVariables = Map.of();

@@ -17,6 +17,7 @@ import com.garganttua.core.runtime.RuntimeStepExecutionTools;
 import com.garganttua.core.expression.context.IScriptFunction;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.nodes.CatchClause;
+import com.garganttua.core.script.nodes.CatchClauseHandler;
 import com.garganttua.core.script.nodes.FunctionDefNode;
 import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.PipeClause;
@@ -151,27 +152,11 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                         evaluatePipeClauses(context, result);
                     }
                 } catch (ScriptException e) {
-                    Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    for (CatchClause catchClause : node.catchClauses()) {
-                        if (catchClause.matches(cause)) {
-                            // Set exception-related variables for the handler
-                            context.setVariable("exception", cause);
-                            context.setVariable("message", cause.getMessage() != null ? cause.getMessage() : "");
-                            // Set current code value (default 0 if not set)
-                            Integer currentCode = context.getCode().orElse(0);
-                            context.setVariable("code", currentCode);
-                            if (catchClause.handler() != null) {
-                                Object handlerResult = catchClause.handler().execute();
-                                handleResult(context, catchClause.handler(), handlerResult);
-                            }
-                            if (catchClause.code() != null) {
-                                context.setCode(catchClause.code());
-                            }
-                            caught = true;
-                            break;
-                        }
-                    }
-                    if (!caught) {
+                    var cr = CatchClauseHandler.tryCatchClauses(context, node.catchClauses(), e);
+                    if (cr.caught()) {
+                        caught = true;
+                    } else {
+                        Throwable cause = e.getCause() != null ? e.getCause() : e;
                         storeErrorContext(context, cause);
                         RuntimeStepExecutionTools.handleException(
                                 "script", stepName, context, cause, true,
@@ -259,23 +244,12 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     Optional<RuntimeExceptionRecord> abortingEx = context.findAbortingExceptionReport();
                     if (abortingEx.isPresent()) {
                         Throwable cause = abortingEx.get().exception();
-                        for (CatchClause cc : node.downstreamCatchClauses()) {
-                            if (cc.matches(cause)) {
-                                // Set exception-related variables for the handler
-                                context.setVariable("exception", cause);
-                                context.setVariable("message", cause.getMessage() != null ? cause.getMessage() : "");
-                                // Set current code value (default 0 if not set)
-                                Integer currentCode = context.getCode().orElse(0);
-                                context.setVariable("code", currentCode);
-                                if (cc.handler() != null) {
-                                    Object handlerResult = cc.handler().execute();
-                                    handleResult(context, cc.handler(), handlerResult);
-                                }
-                                if (cc.code() != null) {
-                                    context.setCode(cc.code());
-                                }
-                                return;
-                            }
+                        ScriptException wrapped = (cause instanceof ScriptException se)
+                                ? se : new ScriptException(cause.getMessage(), cause);
+                        var cr = CatchClauseHandler.tryCatchClauses(
+                                context, node.downstreamCatchClauses(), wrapped);
+                        if (cr.caught()) {
+                            return;
                         }
                     }
                 } finally {
@@ -306,61 +280,49 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
 
         Object lastResult = null;
         for (IScriptNode innerNode : groupNode.statements()) {
-            if (innerNode instanceof StatementGroupNode innerGroup) {
-                // Recursively execute nested groups
-                lastResult = executeGroup(context, innerGroup);
-                // Handle nested group's variable assignment
-                if (innerGroup.variableName() != null) {
-                    String varName = innerGroup.variableName();
-                    if ("output".equals(varName)) {
-                        context.setOutput(lastResult);
-                    }
-                    context.setVariable(varName, lastResult);
-                }
-                if (innerGroup.code() != null) {
-                    context.setCode(innerGroup.code());
-                }
-            } else if (innerNode instanceof FunctionDefNode funcDef) {
-                StatementBlock body = resolveBlock(context, funcDef.bodyBlockName());
-                IScriptFunction func = new ScriptFunction(
-                        funcDef.variableName(), funcDef.parameterNames(), body);
-                context.setVariable(funcDef.variableName(), func);
-            } else if (innerNode.assignExpression() && innerNode.variableName() != null) {
-                // Lazy assignment
-                ISupplier<?> supplier = innerNode.expression().evaluate();
-                context.setVariable(innerNode.variableName(), supplier);
-                if (innerNode.code() != null) {
-                    context.setCode(innerNode.code());
-                }
-            } else {
-                // Eager execution
-                lastResult = innerNode.execute();
-                if (innerNode.variableName() != null) {
-                    String varName = innerNode.variableName();
-                    if ("output".equals(varName)) {
-                        context.setOutput(lastResult);
-                    }
-                    context.setVariable(varName, lastResult);
-                }
-                if (innerNode.code() != null) {
-                    context.setCode(innerNode.code());
-                }
-                // Evaluate inner pipe clauses
-                for (PipeClause pipe : innerNode.pipeClauses()) {
-                    if (pipe.isDefault()) {
-                        if (pipe.handler() != null) {
-                            lastResult = pipe.handler().execute();
-                            handleResult(context, pipe.handler(), lastResult);
+            try {
+                if (innerNode instanceof StatementGroupNode innerGroup) {
+                    // Recursively execute nested groups
+                    lastResult = executeGroup(context, innerGroup);
+                    // Handle nested group's variable assignment
+                    if (innerGroup.variableName() != null) {
+                        String varName = innerGroup.variableName();
+                        if ("output".equals(varName)) {
+                            context.setOutput(lastResult);
                         }
-                        if (pipe.code() != null) {
-                            context.setCode(pipe.code());
-                        }
-                        break;
+                        context.setVariable(varName, lastResult);
                     }
-                    try {
-                        ISupplier<?> conditionSupplier = pipe.condition().evaluate();
-                        Object conditionResult = conditionSupplier.supply().orElse(null);
-                        if (conditionResult instanceof Boolean b && b) {
+                    if (innerGroup.code() != null) {
+                        context.setCode(innerGroup.code());
+                    }
+                } else if (innerNode instanceof FunctionDefNode funcDef) {
+                    StatementBlock body = resolveBlock(context, funcDef.bodyBlockName());
+                    IScriptFunction func = new ScriptFunction(
+                            funcDef.variableName(), funcDef.parameterNames(), body);
+                    context.setVariable(funcDef.variableName(), func);
+                } else if (innerNode.assignExpression() && innerNode.variableName() != null) {
+                    // Lazy assignment
+                    ISupplier<?> supplier = innerNode.expression().evaluate();
+                    context.setVariable(innerNode.variableName(), supplier);
+                    if (innerNode.code() != null) {
+                        context.setCode(innerNode.code());
+                    }
+                } else {
+                    // Eager execution
+                    lastResult = innerNode.execute();
+                    if (innerNode.variableName() != null) {
+                        String varName = innerNode.variableName();
+                        if ("output".equals(varName)) {
+                            context.setOutput(lastResult);
+                        }
+                        context.setVariable(varName, lastResult);
+                    }
+                    if (innerNode.code() != null) {
+                        context.setCode(innerNode.code());
+                    }
+                    // Evaluate inner pipe clauses
+                    for (PipeClause pipe : innerNode.pipeClauses()) {
+                        if (pipe.isDefault()) {
                             if (pipe.handler() != null) {
                                 lastResult = pipe.handler().execute();
                                 handleResult(context, pipe.handler(), lastResult);
@@ -370,10 +332,33 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                             }
                             break;
                         }
-                    } catch (Exception e) {
-                        throw new ScriptException("Pipe condition evaluation failed", e);
+                        try {
+                            ISupplier<?> conditionSupplier = pipe.condition().evaluate();
+                            Object conditionResult = conditionSupplier.supply().orElse(null);
+                            if (conditionResult instanceof Boolean b && b) {
+                                if (pipe.handler() != null) {
+                                    lastResult = pipe.handler().execute();
+                                    handleResult(context, pipe.handler(), lastResult);
+                                }
+                                if (pipe.code() != null) {
+                                    context.setCode(pipe.code());
+                                }
+                                break;
+                            }
+                        } catch (Exception e) {
+                            throw new ScriptException("Pipe condition evaluation failed", e);
+                        }
                     }
                 }
+            } catch (ScriptException e) {
+                // Check inner node's catch clauses first, then the group's catch clauses
+                var cr = CatchClauseHandler.tryCatchClauses(context, innerNode.catchClauses(), e);
+                if (cr.caught()) {
+                    lastResult = cr.handlerResult();
+                    break; // Stop executing remaining statements in this group
+                }
+                // Not caught by inner node — re-throw for outer handler
+                throw e;
             }
         }
 

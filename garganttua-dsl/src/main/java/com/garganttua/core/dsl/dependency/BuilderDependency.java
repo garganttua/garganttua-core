@@ -149,14 +149,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         }
 
         this.builder = (Builder) observableBuilder;
-        try {
-            this.builtObject = this.builder.build();
-            log.atDebug().log("Dependency ready: {} -> {}, isReady: {}", 
-                dependencyClass.getName(), builtObject, isReady());
-        } catch (DslException e) {
-            log.atError().log("Failed to build dependency: {}", dependencyClass.getName(), e);
-            this.builtObject = null; // Ensure consistent state on failure
-        }
+        log.atDebug().log("Dependency builder stored: {}", dependencyClass.getName());
     }
 
     @Override
@@ -177,8 +170,25 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      *
      * @return true if both builder and builtObject are not null, false otherwise
      */
+    /**
+     * Attempts to resolve the built object from the builder if not already resolved.
+     * This supports deferred resolution where the builder may be provided during
+     * dependency resolution (Phase 1) but only built later (Phase 2).
+     */
+    private void tryResolve() {
+        if (builder != null && builtObject == null) {
+            try {
+                this.builtObject = this.builder.build();
+                log.atDebug().log("Dependency lazily resolved: {} -> {}", dependencyClass.getName(), builtObject);
+            } catch (DslException e) {
+                log.atTrace().log("Dependency {} not yet buildable: {}", dependencyClass.getName(), e.getMessage());
+            }
+        }
+    }
+
     @Override
     public boolean isReady() {
+        tryResolve();
         boolean ready = builder != null && builtObject != null;
         log.atTrace().log("Checking if dependency is ready: {} (builder: {}, builtObject: {})",
             ready,
@@ -216,6 +226,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
 
     @Override
     public Built get() {
+        tryResolve();
         log.atTrace().log("Getting built object: {}", builtObject);
         if (!isReady()) {
             log.atWarn().log("Attempting to get built object from non-ready dependency - builder: {}, builtObject: {}",
@@ -372,6 +383,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      * @throws DslException if provide() was called but the builder is not built
      */
     public void validateUseDependency() throws DslException {
+        tryResolve();
         // If builder was provided but not built, throw exception
         if (builder != null && builtObject == null) {
             String errorMsg = String.format(
@@ -391,6 +403,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      * @throws DslException if the required dependency is not provided or not built
      */
     public void validateRequiredDependency(String phase) throws DslException {
+        tryResolve();
         // If neither builder nor built object provided, throw exception
         if (isEmpty()) {
             String errorMsg = String.format(
