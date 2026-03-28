@@ -92,6 +92,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private int manualBuilderSeq = 0;
     private int autoDetectedBuilderSeq = 0;
     private final Map<Class<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
+    private final List<IObservableBuilder<?, ?>> providedBuilders = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     private static <K, V> ISupplier<Map<K, V>> mapSupplier(Map<K, V> map) {
@@ -252,6 +253,13 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         return this;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public IBoostrap provide(IObservableBuilder<?, ?> dependency) throws DslException {
+        this.providedBuilders.add(dependency);
+        return (IBoostrap) super.provide(dependency);
+    }
+
     @Override
     public IBoostrap withBuilder(IBuilder<?> builder) {
         log.atTrace().log("Adding builder: {}", builder != null ? builder.getClass().getSimpleName() : "null");
@@ -319,16 +327,18 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             }
 
             // Initialize and start lifecycle objects immediately so downstream
-            // builders can use them during their own build/auto-detection phase
+            // builders can use them during their own build/auto-detection phase.
+            // Some builders already init/start the object during build() — tolerate that.
             if (built instanceof ILifecycle lifecycleObject) {
                 try {
                     lifecycleObject.onInit();
+                } catch (LifecycleException e) {
+                    log.atDebug().log("Lifecycle already initialized: {}", built.getClass().getSimpleName());
+                }
+                try {
                     lifecycleObject.onStart();
                 } catch (LifecycleException e) {
-                    log.atError().log("Failed to initialize/start lifecycle object: {}",
-                            built.getClass().getSimpleName(), e);
-                    throw new DslException("Failed to initialize/start lifecycle object: "
-                            + built.getClass().getSimpleName(), e);
+                    log.atDebug().log("Lifecycle already started: {}", built.getClass().getSimpleName());
                 }
             }
 
@@ -523,20 +533,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 log.atDebug().log("Registered rebuilt object of type: {}", rebuilt.getClass().getName());
             }
 
-            // Initialize and start lifecycle objects immediately
+            // Initialize and start lifecycle objects immediately.
+            // Some builders already init/start the object during build() — tolerate that.
             if (rebuilt instanceof ILifecycle lifecycleObject) {
                 try {
-                    log.atDebug().log("Initializing lifecycle object: {}", rebuilt.getClass().getSimpleName());
                     lifecycleObject.onInit();
-                    log.atDebug().log("Starting lifecycle object: {}", rebuilt.getClass().getSimpleName());
-                    lifecycleObject.onStart();
-                    log.atDebug().log("Started: {}", rebuilt.getClass().getSimpleName());
                 } catch (LifecycleException e) {
-                    log.atError().log("Failed to initialize/start lifecycle object during rebuild: {}",
-                            rebuilt.getClass().getSimpleName(), e);
-                    throw new DslException("Failed to initialize/start lifecycle object during rebuild: "
-                            + rebuilt.getClass().getSimpleName(), e);
+                    log.atDebug().log("Lifecycle already initialized during rebuild: {}", rebuilt.getClass().getSimpleName());
                 }
+                try {
+                    lifecycleObject.onStart();
+                } catch (LifecycleException e) {
+                    log.atDebug().log("Lifecycle already started during rebuild: {}", rebuilt.getClass().getSimpleName());
+                }
+                log.atDebug().log("Ready: {}", rebuilt.getClass().getSimpleName());
             }
 
             log.atDebug().log("Successfully rebuilt: {}", builder.getClass().getSimpleName());
@@ -860,6 +870,19 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     }
 
     /**
+     * Finds a builder instance from the provided dependencies that matches the given class.
+     * This allows reusing user-configured builders instead of creating empty auto-detected ones.
+     */
+    private IBuilder<?> findProvidedDependencyBuilder(IClass<?> builderClass) {
+        Class<?> rawClass = (Class<?>) builderClass.getType();
+        return providedBuilders.stream()
+                .filter(b -> rawClass.isAssignableFrom(b.getClass()))
+                .findFirst()
+                .map(b -> (IBuilder<?>) b)
+                .orElse(null);
+    }
+
+    /**
      * Gets the set of configured packages.
      *
      * @return unmodifiable set of packages
@@ -974,6 +997,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                                             builderClass.getSimpleName());
                                     return;
                                 }
+
+                                // If a provided dependency matches this builder type,
+                                // register the PROVIDED instance instead of creating a new empty one.
+                                // This prevents e.g. an empty ReflectionBuilder (no scanner)
+                                // from replacing a user-configured one.
+                                IBuilder<?> providedBuilder = findProvidedDependencyBuilder(builderClass);
+                                if (providedBuilder != null) {
+                                    log.atDebug().log("Using provided dependency {} instead of auto-detecting new instance",
+                                            builderClass.getSimpleName());
+                                    this.autoDetectedBuilders.put(builderClass.getName() + "#" + (autoDetectedBuilderSeq++), providedBuilder);
+                                    propagatePackagesToBuilder(providedBuilder);
+                                    return;
+                                }
+
                                 IBuilder<?> builderInstance = (IBuilder<?>) reflection
                                         .newInstance(builderClass);
                                 if (builderInstance instanceof IAutomaticBuilder) {

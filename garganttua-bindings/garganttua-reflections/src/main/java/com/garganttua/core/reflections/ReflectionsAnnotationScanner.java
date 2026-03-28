@@ -21,9 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
-	private final Map<String, Reflections> typeAnnotationCache = new ConcurrentHashMap<>();
-	private final Map<String, Reflections> methodAnnotationCache = new ConcurrentHashMap<>();
-
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
 		return getClassesWithAnnotation("", annotation);
@@ -36,12 +33,8 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
 		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
-		Reflections reflections = typeAnnotationCache.computeIfAbsent(packageName, pkg -> {
-			log.atDebug().log("Initializing Reflections scanner for package '{}' (TypesAnnotated)", pkg);
-			return new Reflections(pkg, Scanners.TypesAnnotated);
-		});
-
-		log.atDebug().log("Fetching annotated classes for annotation '{}' in package {}", annotation.getName(), packageName);
+		log.atDebug().log("Scanning package '{}' for classes with annotation '{}'", packageName, annotation.getName());
+		Reflections reflections = new Reflections(packageName, Scanners.TypesAnnotated);
 		Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(rawAnnotation, true);
 
 		List<IClass<?>> result = new ArrayList<>(annotatedClasses.size());
@@ -50,7 +43,6 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		}
 
 		log.atDebug().log("Found {} classes annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
-		log.atTrace().log("Exiting getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 		return result;
 	}
 
@@ -66,12 +58,8 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
 		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
-		Reflections reflections = methodAnnotationCache.computeIfAbsent(packageName, pkg -> {
-			log.atDebug().log("Initializing Reflections scanner for package '{}' (MethodsAnnotated)", pkg);
-			return new Reflections(pkg, Scanners.MethodsAnnotated);
-		});
-
-		log.atDebug().log("Fetching annotated methods for annotation '{}' in package {}", annotation.getName(), packageName);
+		log.atDebug().log("Scanning package '{}' for methods with annotation '{}'", packageName, annotation.getName());
+		Reflections reflections = new Reflections(packageName, Scanners.MethodsAnnotated);
 		Set<Method> annotatedMethods = reflections.getMethodsAnnotatedWith(rawAnnotation);
 
 		List<IMethod> result = new ArrayList<>(annotatedMethods.size());
@@ -85,7 +73,6 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		}
 
 		log.atDebug().log("Found {} methods annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
-		log.atTrace().log("Exiting getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 		return result;
 	}
 }

@@ -273,6 +273,15 @@ public class ExpressionContextBuilder
                 "Found {} total methods with @Expression, {} unique after deduplication ({} duplicates removed)",
                 expressions.size(), uniqueMethods.size(), duplicateCount);
 
+        if (uniqueMethods.isEmpty() && !this.packages.isEmpty()) {
+            log.atWarn().log(
+                    "No @Expression methods found in packages {} — "
+                    + "check that IClass.getReflection() has a scanner configured "
+                    + "(e.g., ReflectionsAnnotationScanner). "
+                    + "This will cause parsing failures for integer/boolean/string literals.",
+                    this.packages);
+        }
+
         // Create factories for unique methods only — add to auto-detected source
         uniqueMethods.values()
                 .forEach(m -> {

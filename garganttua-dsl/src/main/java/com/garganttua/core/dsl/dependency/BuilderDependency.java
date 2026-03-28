@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.IPackageableBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -303,8 +304,19 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     @Override
     public void synchronizePackagesFromContext(Consumer<Set<String>> packageConsumer) {
         log.atTrace().log("Synchronizing packages from context");
+        // Read packages from the stored builder if it is packageable,
+        // since the local packages set is not populated via provide().
+        if (builder instanceof IPackageableBuilder<?, ?> packageable) {
+            String[] builderPackages = packageable.getPackages();
+            if (builderPackages != null && builderPackages.length > 0) {
+                Set<String> pkgSet = Set.of(builderPackages);
+                packageConsumer.accept(pkgSet);
+                log.atDebug().log("Packages synchronized from builder: {}", pkgSet.size());
+                return;
+            }
+        }
         packageConsumer.accept(packages);
-        log.atDebug().log("Packages synchronized: {}", packages.size());
+        log.atDebug().log("Packages synchronized (local): {}", packages.size());
     }
 
     /**

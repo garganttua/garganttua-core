@@ -6,9 +6,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
@@ -316,5 +319,72 @@ class ExpressionContextBuilderTest {
         IExpressionContextBuilder builder = ExpressionContextBuilder.builder()
                 .withPackage("com.garganttua.core.expression.dsl").autoDetect(true);
         builder.build();
+    }
+
+    @Test
+    void testIntFunctionSurvivesMultipleBuilds() {
+        // Exact reproduction from bug report: second ExpressionContextBuilder
+        // loses all base functions (int, boolean, string, etc.)
+        for (int i = 0; i < 5; i++) {
+            IExpressionContextBuilder ecb = ExpressionContextBuilder.builder();
+            ecb.autoDetect(true);
+            ecb.withPackage("com.garganttua.core.expression.functions");
+            var ctx = ecb.build();
+            final int iteration = i + 1;
+            // "405" triggers visitLiteral → createNode("int", "405") → needs int(String)
+            assertDoesNotThrow(() -> ctx.expression("405"),
+                    "Build #" + iteration + ": int(String) factory missing");
+            assertDoesNotThrow(() -> ctx.expression("true"),
+                    "Build #" + iteration + ": boolean(String) factory missing");
+            assertDoesNotThrow(() -> ctx.expression("string(\"hello\")"),
+                    "Build #" + iteration + ": string(String) factory missing");
+        }
+    }
+
+    @Test
+    void testIntFunctionSurvivesMultipleBuildsWithFreshReflection() {
+        // Each iteration creates a fresh IReflection (simulates multiple test setups)
+        for (int i = 0; i < 3; i++) {
+            IReflection reflection = ReflectionBuilder.builder()
+                    .withProvider(new RuntimeReflectionProvider(), 1)
+                    .withScanner(new ReflectionsAnnotationScanner(), 1)
+                    .build();
+            IClass.setReflection(reflection);
+
+            IExpressionContextBuilder ecb = ExpressionContextBuilder.builder();
+            ecb.autoDetect(true);
+            ecb.withPackage("com.garganttua.core.expression.functions");
+            var ctx = ecb.build();
+            final int iteration = i + 1;
+            assertDoesNotThrow(() -> ctx.expression("405"),
+                    "Build #" + iteration + ": int(String) factory missing after fresh reflection");
+        }
+    }
+
+    @Test
+    void testReflectionScannerReturnsSameResultsAcrossMultipleScans() {
+        // Verify the scanner doesn't degrade across multiple scans of the same package.
+        // This tests the Reflections library's behavior when scanning the same package
+        // repeatedly through multiple CompositeReflection instances.
+        IClass<Expression> exprAnno = IClass.getClass(Expression.class);
+        String pkg = "com.garganttua.core.expression.functions";
+
+        int firstScanCount = -1;
+        for (int i = 0; i < 5; i++) {
+            // Fresh reflection each time (same as user's @BeforeEach)
+            IReflection reflection = ReflectionBuilder.builder()
+                    .withProvider(new RuntimeReflectionProvider(), 1)
+                    .withScanner(new ReflectionsAnnotationScanner(), 1)
+                    .build();
+            // ReflectionBuilder.doBuild() calls IClass.setReflection()
+
+            List<IMethod> methods = reflection.getMethodsWithAnnotation(pkg, exprAnno);
+            if (firstScanCount == -1) {
+                firstScanCount = methods.size();
+                assertTrue(firstScanCount > 0, "First scan should find @Expression methods");
+            }
+            assertEquals(firstScanCount, methods.size(),
+                    "Scan #" + (i + 1) + ": should find same number of methods as first scan");
+        }
     }
 }
