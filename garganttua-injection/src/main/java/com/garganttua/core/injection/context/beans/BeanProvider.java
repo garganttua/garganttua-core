@@ -279,12 +279,15 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 			throw new DiException("Only prototype strategy is supported for manual bean addition, without object");
 		}
 
-		IBeanFactoryBuilder<?> factory = new BeanFactoryBuilder<>(reference.type())
+		IBeanFactoryBuilder<T> factory = new BeanFactoryBuilder<>(reference.type())
 				.provide(this.resolverBuilder)
 				.qualifiers(reference.qualifiers())
 				.autoDetect(autoDetect);
 		reference.strategy().ifPresent(factory::strategy);
 		reference.name().ifPresent(factory::name);
+		if (bean != null) {
+			factory.bean(bean);
+		}
 		this.beanFactories.add(factory.build());
 	}
 }

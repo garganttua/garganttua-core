@@ -845,12 +845,12 @@ class BootstrapTest {
 
             // When
             bootstrap.build();
-            java.util.Map<Class<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
+            java.util.Map<IClass<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
 
             // Then
             assertNotNull(allObjects);
             assertEquals(1, allObjects.size(), "Should have 1 unique type (String)");
-            assertTrue(allObjects.containsKey(String.class));
+            assertTrue(allObjects.containsKey(IClass.getClass(String.class)));
         }
 
         @Test
@@ -868,7 +868,7 @@ class BootstrapTest {
             java.util.Optional<String> stringResult = bootstrap.getBuiltObject(String.class);
             assertTrue(stringResult.isPresent());
 
-            java.util.Map<Class<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
+            java.util.Map<IClass<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
             assertEquals(1, allObjects.size(), "MockObservableBuilder also returns String, so only 1 type");
         }
 
@@ -881,11 +881,11 @@ class BootstrapTest {
             bootstrap.build();
 
             // When
-            java.util.Map<Class<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
+            java.util.Map<IClass<?>, Object> allObjects = bootstrap.getAllBuiltObjects();
 
             // Then
             assertThrows(UnsupportedOperationException.class,
-                    () -> allObjects.put(Integer.class, 42),
+                    () -> allObjects.put(IClass.getClass(Integer.class), 42),
                     "Registry should be immutable");
         }
     }

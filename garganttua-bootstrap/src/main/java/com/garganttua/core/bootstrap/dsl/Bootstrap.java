@@ -91,7 +91,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private final MultiSourceCollector<String, IBuilder<?>> builderCollector;
     private int manualBuilderSeq = 0;
     private int autoDetectedBuilderSeq = 0;
-    private final Map<Class<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
+    private final Map<IClass<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
     private final List<IObservableBuilder<?, ?>> providedBuilders = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
@@ -323,7 +323,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
             // Register the built object by its class
             if (built != null) {
-                builtObjectsRegistry.put(built.getClass(), built);
+                builtObjectsRegistry.put(IClass.getClass(built.getClass()), built);
             }
 
             // Initialize and start lifecycle objects immediately so downstream
@@ -528,7 +528,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             }
 
             if (rebuilt != null) {
-                builtObjectsRegistry.put(rebuilt.getClass(), rebuilt);
+                builtObjectsRegistry.put(IClass.getClass(rebuilt.getClass()), rebuilt);
                 newBuiltObjects.add(rebuilt);
                 log.atDebug().log("Registered rebuilt object of type: {}", rebuilt.getClass().getName());
             }
@@ -915,9 +915,10 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             throw new IllegalStateException("Cannot query registry before build() has been called");
         }
 
-        Object obj = builtObjectsRegistry.get(clazz);
-        if (obj != null && clazz.isInstance(obj)) {
-            return Optional.of(clazz.cast(obj));
+        IClass<T> iClass = IClass.getClass(clazz);
+        Object obj = builtObjectsRegistry.get(iClass);
+        if (obj != null && iClass.isInstance(obj)) {
+            return Optional.of(iClass.cast(obj));
         }
         return Optional.empty();
     }
@@ -934,7 +935,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @return unmodifiable map of built objects
      * @throws IllegalStateException if called before build() has been executed
      */
-    public Map<Class<?>, Object> getAllBuiltObjects() {
+    public Map<IClass<?>, Object> getAllBuiltObjects() {
         if (this.built == null) {
             throw new IllegalStateException("Cannot query registry before build() has been called");
         }
@@ -946,9 +947,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private static class BuiltRegistry implements IBuiltRegistry {
 
-        private final Map<Class<?>, Object> registry;
+        private final Map<IClass<?>, Object> registry;
 
-        public BuiltRegistry(Map<Class<?>, Object> registry) {
+        public BuiltRegistry(Map<IClass<?>, Object> registry) {
             this.registry = Map.copyOf(registry);
         }
 
