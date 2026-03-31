@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -111,7 +112,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     private static final String LOG_PRESENT = "present";
     private static final String LOG_ABSENT = "absent";
 
-    private final Class<Builder> dependencyClass;
+    private final IClass<Builder> dependencyClass;
     private final DependencySpec spec;
     private Builder builder;
     private Built builtObject;
@@ -124,10 +125,10 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      * @param spec the dependency specification including phase information
      */
     @SuppressWarnings("unchecked")
-    public BuilderDependency(Class<? extends IObservableBuilder<?, ?>> dependencyClass, DependencySpec spec) {
+    public BuilderDependency(IClass<? extends IObservableBuilder<?, ?>> dependencyClass, DependencySpec spec) {
         log.atTrace().log("Creating phase-aware BuilderDependency for class: {} with phase: {}",
             dependencyClass, spec.phase());
-        this.dependencyClass = (Class<Builder>) Objects.requireNonNull(dependencyClass,
+        this.dependencyClass = (IClass<Builder>) Objects.requireNonNull(dependencyClass,
             "Dependency class cannot be null");
         this.spec = Objects.requireNonNull(spec, "Dependency spec cannot be null");
         log.atDebug().log("BuilderDependency created for: {}, phase: {}, isReady: {}, isEmpty: {}",
@@ -143,7 +144,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     @SuppressWarnings("unchecked")
     void handle(IObservableBuilder<?, ?> observableBuilder) {
         log.atTrace().log("Handling observableBuilder provision: {}", observableBuilder);
-        if (!dependencyClass.isAssignableFrom(observableBuilder.getClass())) {
+        if (!dependencyClass.isAssignableFrom(IClass.getClass(observableBuilder.getClass()))) {
             log.atWarn().log("Dependency type mismatch: expected {}, got {}",
                 dependencyClass.getName(), observableBuilder.getClass().getName());
             return;
@@ -220,7 +221,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     }
 
     @Override
-    public Class<Builder> getDependency() {
+    public IClass<Builder> getDependency() {
         log.atTrace().log("Getting dependency class: {}", dependencyClass);
         return dependencyClass;
     }

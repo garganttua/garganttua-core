@@ -3,6 +3,7 @@ package com.garganttua.core.dsl.dependency;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Specification of a dependency with its lifecycle phase and requirement level.
@@ -39,7 +40,7 @@ import com.garganttua.core.dsl.IObservableBuilder;
  * @see IDependentBuilder
  */
 public record DependencySpec(
-        Class<? extends IObservableBuilder<?, ?>> dependencyBuilderClass,
+        IClass<? extends IObservableBuilder<?, ?>> dependencyBuilderClass,
         DependencyPhase phase,
         DependencyRequirement requirement) {
 
@@ -76,7 +77,7 @@ public record DependencySpec(
      * @return a new optional DependencySpec
      */
     public static DependencySpec use(
-            Class<? extends IObservableBuilder<?, ?>> dependencyClass,
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass,
             DependencyPhase phase) {
         return new DependencySpec(dependencyClass, phase, DependencyRequirement.OPTIONAL);
     }
@@ -89,7 +90,7 @@ public record DependencySpec(
      * @return a new required DependencySpec
      */
     public static DependencySpec require(
-            Class<? extends IObservableBuilder<?, ?>> dependencyClass,
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass,
             DependencyPhase phase) {
         return new DependencySpec(dependencyClass, phase, DependencyRequirement.REQUIRED);
     }
@@ -100,7 +101,7 @@ public record DependencySpec(
      * @param dependencyClass the class of the dependency builder
      * @return a new optional DependencySpec for both phases
      */
-    public static DependencySpec use(Class<? extends IObservableBuilder<?, ?>> dependencyClass) {
+    public static DependencySpec use(IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
         return new DependencySpec(dependencyClass, DependencyPhase.BOTH, DependencyRequirement.OPTIONAL);
     }
 
@@ -110,7 +111,7 @@ public record DependencySpec(
      * @param dependencyClass the class of the dependency builder
      * @return a new required DependencySpec for both phases
      */
-    public static DependencySpec require(Class<? extends IObservableBuilder<?, ?>> dependencyClass) {
+    public static DependencySpec require(IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
         return new DependencySpec(dependencyClass, DependencyPhase.BOTH, DependencyRequirement.REQUIRED);
     }
 
@@ -120,7 +121,7 @@ public record DependencySpec(
      * @param dependencyClass the class of the dependency builder
      * @return a new DependencySpecBuilder for fine-grained configuration
      */
-    public static DependencySpecBuilder of(Class<? extends IObservableBuilder<?, ?>> dependencyClass) {
+    public static DependencySpecBuilder of(IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
         return new DependencySpecBuilder(dependencyClass);
     }
 

@@ -68,8 +68,8 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
 
     private RuntimesBuilder() {
         super(Set.of(
-                DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.AUTO_DETECT),
-                DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)));
+                DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.AUTO_DETECT),
+                DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
 
         this.collector = new MultiSourceCollector<>();
         @SuppressWarnings("unchecked")

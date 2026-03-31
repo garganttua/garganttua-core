@@ -36,7 +36,7 @@ public class NativeConfigurationBuilder
     private Set<INativeBuilder<?, ?>> nativeConfigurationBuilder = new HashSet<>();
 
     public NativeConfigurationBuilder() {
-        super(Set.of(DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BOTH)));
+        super(Set.of(DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BOTH)));
     }
 
     @Override

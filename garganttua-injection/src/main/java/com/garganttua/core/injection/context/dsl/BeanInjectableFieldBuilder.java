@@ -77,12 +77,12 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
         }
 
         @Override
-        public Set<Class<? extends IObservableBuilder<?, ?>>> use() {
+        public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
                 return Collections.emptySet();
         }
 
         @Override
-        public Set<Class<? extends IObservableBuilder<?, ?>>> require() {
+        public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
                 return Collections.emptySet();
         }
 

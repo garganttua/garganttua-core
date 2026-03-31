@@ -18,6 +18,7 @@ import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 
@@ -34,7 +35,7 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
     private IReflection reflection;
 
     public ConfigurationBuilder() {
-        super(Set.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BOTH)));
+        super(Set.of(DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BOTH)));
         log.atTrace().log("Entering ConfigurationBuilder constructor");
         log.atTrace().log("Exiting ConfigurationBuilder constructor");
     }

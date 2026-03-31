@@ -68,7 +68,7 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder e
                 link,
                 Stream.concat(
                         dependencies.stream(),
-                        Stream.of(DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)))
+                        Stream.of(DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)))
                         .collect(Collectors.toUnmodifiableSet()));
         this.ownerSupplierBuilder = Objects.requireNonNull(ownerSupplierBuilder,
                 "Owner supplier builder cannot be null");

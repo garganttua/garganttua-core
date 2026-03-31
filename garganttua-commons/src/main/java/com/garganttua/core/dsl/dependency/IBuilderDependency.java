@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.reflection.IClass;
 
 public interface IBuilderDependency<Builder extends IObservableBuilder<Builder, Built>, Built> extends IBuilderObserver<Builder, Built> {
 
@@ -13,7 +14,7 @@ public interface IBuilderDependency<Builder extends IObservableBuilder<Builder, 
 
     boolean isEmpty();
 
-    Class<Builder> getDependency();
+    IClass<Builder> getDependency();
 
     Built get();
 

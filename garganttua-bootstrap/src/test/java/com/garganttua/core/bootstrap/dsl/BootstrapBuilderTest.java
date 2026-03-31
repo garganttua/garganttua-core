@@ -309,7 +309,7 @@ class BootstrapTest {
         @DisplayName("Should build builders in dependency order")
         void testDependencyOrder() throws DslException {
             MockObservableBuilder observableBuilder = new MockObservableBuilder("observable");
-            MockDependentBuilder dependentBuilder = new MockDependentBuilder("dependent", MockObservableBuilder.class);
+            MockDependentBuilder dependentBuilder = new MockDependentBuilder("dependent", IClass.getClass(MockObservableBuilder.class));
 
             bootstrap.withBuilder(dependentBuilder)
                     .withBuilder(observableBuilder);
@@ -327,8 +327,8 @@ class BootstrapTest {
         @DisplayName("Should handle complex dependency chains")
         void testDependencyChain() throws DslException {
             MockObservableBuilder builder1 = new MockObservableBuilder("builder1");
-            MockDependentObservableBuilder builder2 = new MockDependentObservableBuilder("builder2", MockObservableBuilder.class);
-            MockDependentBuilder builder3 = new MockDependentBuilder("builder3", MockDependentObservableBuilder.class);
+            MockDependentObservableBuilder builder2 = new MockDependentObservableBuilder("builder2", IClass.getClass(MockObservableBuilder.class));
+            MockDependentBuilder builder3 = new MockDependentBuilder("builder3", IClass.getClass(MockDependentObservableBuilder.class));
 
             // Add in reverse order to test topological sort
             bootstrap.withBuilder(builder3)
@@ -444,7 +444,7 @@ class BootstrapTest {
         @DisplayName("Should handle complete dependency resolution workflow")
         void testCompleteDependencyWorkflow() throws DslException {
             MockObservableBuilder observable = new MockObservableBuilder("observable");
-            MockDependentBuilder dependent = new MockDependentBuilder("dependent", MockObservableBuilder.class);
+            MockDependentBuilder dependent = new MockDependentBuilder("dependent", IClass.getClass(MockObservableBuilder.class));
             MockPackageableBuilder packageable = new MockPackageableBuilder("packageable");
 
             bootstrap.withPackage("com.example")
@@ -514,11 +514,11 @@ class BootstrapTest {
     // Mock dependent builder for testing dependency resolution
     static class MockDependentBuilder implements IDependentBuilder<MockDependentBuilder, String> {
         private final String name;
-        private final Class<? extends IObservableBuilder<?, ?>> requiredDependency;
+        private final IClass<? extends IObservableBuilder<?, ?>> requiredDependency;
         private boolean built = false;
         private boolean dependencyProvided = false;
 
-        MockDependentBuilder(String name, Class<? extends IObservableBuilder<?, ?>> requiredDependency) {
+        MockDependentBuilder(String name, IClass<? extends IObservableBuilder<?, ?>> requiredDependency) {
             this.name = name;
             this.requiredDependency = requiredDependency;
         }
@@ -536,13 +536,13 @@ class BootstrapTest {
         }
 
         @Override
-        public Set<Class<? extends IObservableBuilder<?, ?>>> use() {
+        public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
             return new HashSet<>();
         }
 
         @Override
-        public Set<Class<? extends IObservableBuilder<?, ?>>> require() {
-            Set<Class<? extends IObservableBuilder<?, ?>>> deps = new HashSet<>();
+        public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
+            Set<IClass<? extends IObservableBuilder<?, ?>>> deps = new HashSet<>();
             deps.add(requiredDependency);
             return deps;
         }
@@ -565,11 +565,11 @@ class BootstrapTest {
     static class MockDependentObservableBuilder implements IObservableBuilder<MockDependentObservableBuilder, String>,
             IDependentBuilder<MockDependentObservableBuilder, String> {
         private final String name;
-        private final Class<? extends IObservableBuilder<?, ?>> requiredDependency;
+        private final IClass<? extends IObservableBuilder<?, ?>> requiredDependency;
         private boolean built = false;
         private boolean dependencyProvided = false;
 
-        MockDependentObservableBuilder(String name, Class<? extends IObservableBuilder<?, ?>> requiredDependency) {
+        MockDependentObservableBuilder(String name, IClass<? extends IObservableBuilder<?, ?>> requiredDependency) {
             this.name = name;
             this.requiredDependency = requiredDependency;
         }
@@ -593,13 +593,13 @@ class BootstrapTest {
         }
 
         @Override
-        public Set<Class<? extends IObservableBuilder<?, ?>>> use() {
+        public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
             return new HashSet<>();
         }
 
         @Override
-        public Set<Class<? extends IObservableBuilder<?, ?>>> require() {
-            Set<Class<? extends IObservableBuilder<?, ?>>> deps = new HashSet<>();
+        public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
+            Set<IClass<? extends IObservableBuilder<?, ?>>> deps = new HashSet<>();
             deps.add(requiredDependency);
             return deps;
         }

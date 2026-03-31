@@ -4,10 +4,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Tests for Bootstrap package management capabilities.
@@ -19,6 +25,18 @@ import org.junit.jupiter.api.Test;
  */
 @DisplayName("Bootstrap Package Management Tests")
 class BootstrapPackageTest {
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build());
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
 
     @Test
     @DisplayName("Should implement IPackageableBuilder interface")

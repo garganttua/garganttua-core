@@ -29,7 +29,7 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
 
     protected AbstractConstructorArgInjectBinderBuilder(Link link,
             IClass<Constructed> constructed) {
-        super(link, constructed, Set.of(new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build()));
+        super(link, constructed, Set.of(new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build()));
         this.constructedClass = constructed;
         log.atTrace().log(
                 "Entering AbstractConstructorArgInjectBinderBuilder constructor with link: {}, constructed class: {}",

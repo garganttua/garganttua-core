@@ -89,7 +89,7 @@ public class ExpressionContextBuilder
     }
 
     protected ExpressionContextBuilder() {
-        super(Set.of(DependencySpec.use(IInjectionContextBuilder.class)));
+        super(Set.of(DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class))));
         log.atTrace().log("Entering ExpressionBuilder constructor");
 
         this.nodeCollector = new MultiSourceCollector<>();

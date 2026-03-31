@@ -10,9 +10,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Proxy;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * Tests for DependentBuilderSupport class.
@@ -21,6 +29,27 @@ import com.garganttua.core.dsl.IObservableBuilder;
  * including dependency provision, validation, and phase-specific processing.
  */
 class DependentBuilderSupportTest {
+
+    private static final RuntimeReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+
+    @BeforeAll
+    static void setUpReflection() {
+        IReflection reflection = (IReflection) Proxy.newProxyInstance(
+                IReflection.class.getClassLoader(),
+                new Class<?>[]{ IReflection.class },
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "getClass" -> PROVIDER.getClass((Class<?>) args[0]);
+                    case "supports" -> PROVIDER.supports((Class<?>) args[0]);
+                    case "forName" -> PROVIDER.forName((String) args[0]);
+                    default -> throw new UnsupportedOperationException(method.getName());
+                });
+        IClass.setReflection(reflection);
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
 
     // Mock builder classes for testing
     static class MockBuilder implements IObservableBuilder<MockBuilder, String> {
@@ -82,26 +111,26 @@ class DependentBuilderSupportTest {
         @DisplayName("Should create support with simple required dependency")
         void testSimpleRequiredDependency() {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.BUILD))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD))
             );
 
             assertNotNull(support);
             assertEquals(1, support.require().size());
             assertEquals(0, support.use().size());
-            assertTrue(support.require().contains(DependencyBuilder.class));
+            assertTrue(support.require().contains(IClass.getClass(DependencyBuilder.class)));
         }
 
         @Test
         @DisplayName("Should create support with simple optional dependency")
         void testSimpleOptionalDependency() {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.use(DependencyBuilder.class, DependencyPhase.BUILD))
+                Set.of(DependencySpec.use(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD))
             );
 
             assertNotNull(support);
             assertEquals(0, support.require().size());
             assertEquals(1, support.use().size());
-            assertTrue(support.use().contains(DependencyBuilder.class));
+            assertTrue(support.use().contains(IClass.getClass(DependencyBuilder.class)));
         }
 
         @Test
@@ -109,8 +138,8 @@ class DependentBuilderSupportTest {
         void testMultipleDependencies() {
             DependentBuilderSupport support = new DependentBuilderSupport(
                 Set.of(
-                    DependencySpec.require(DependencyBuilder.class, DependencyPhase.BUILD),
-                    DependencySpec.use(AnotherDependencyBuilder.class, DependencyPhase.AUTO_DETECT)
+                    DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD),
+                    DependencySpec.use(IClass.getClass(AnotherDependencyBuilder.class), DependencyPhase.AUTO_DETECT)
                 )
             );
 
@@ -124,7 +153,7 @@ class DependentBuilderSupportTest {
         void testPhaseSpecificRequirements() {
             DependentBuilderSupport support = new DependentBuilderSupport(
                 Set.of(
-                    DependencySpec.of(DependencyBuilder.class)
+                    DependencySpec.of(IClass.getClass(DependencyBuilder.class))
                         .requireForAutoDetect()
                         .useForBuild()
                         .build()
@@ -155,8 +184,8 @@ class DependentBuilderSupportTest {
         void setUp() {
             support = new DependentBuilderSupport(
                 Set.of(
-                    DependencySpec.require(DependencyBuilder.class, DependencyPhase.BUILD),
-                    DependencySpec.use(AnotherDependencyBuilder.class, DependencyPhase.AUTO_DETECT)
+                    DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD),
+                    DependencySpec.use(IClass.getClass(AnotherDependencyBuilder.class), DependencyPhase.AUTO_DETECT)
                 )
             );
         }
@@ -207,7 +236,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should process auto-detection dependencies")
         void testAutoDetectionProcessing() throws DslException {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.AUTO_DETECT))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.AUTO_DETECT))
             );
 
             DependencyBuilder dependency = new DependencyBuilder();
@@ -230,7 +259,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should process build dependencies")
         void testBuildProcessing() throws DslException {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.BUILD))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD))
             );
 
             DependencyBuilder dependency = new DependencyBuilder();
@@ -260,7 +289,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should validate required dependency for auto-detection")
         void testRequiredAutoDetectDependencyValidation() {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.AUTO_DETECT))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.AUTO_DETECT))
             );
 
             // Don't provide the dependency
@@ -276,7 +305,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should validate required dependency for build")
         void testRequiredBuildDependencyValidation() {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.BUILD))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD))
             );
 
             // Don't provide the dependency
@@ -292,7 +321,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should not process dependency in wrong phase")
         void testPhaseIsolation() throws DslException {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.BUILD))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD))
             );
 
             DependencyBuilder dependency = new DependencyBuilder();
@@ -316,7 +345,7 @@ class DependentBuilderSupportTest {
         void testPhaseSpecificRequirements() throws DslException {
             DependentBuilderSupport support = new DependentBuilderSupport(
                 Set.of(
-                    DependencySpec.of(DependencyBuilder.class)
+                    DependencySpec.of(IClass.getClass(DependencyBuilder.class))
                         .requireForAutoDetect()
                         .useForBuild()
                         .build()
@@ -367,7 +396,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should not fail with optional unmet dependency")
         void testOptionalUnmetDependency() {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.use(DependencyBuilder.class, DependencyPhase.BUILD))
+                Set.of(DependencySpec.use(IClass.getClass(DependencyBuilder.class), DependencyPhase.BUILD))
             );
 
             AtomicBoolean processed = new AtomicBoolean(false);
@@ -386,7 +415,7 @@ class DependentBuilderSupportTest {
         @DisplayName("Should handle BOTH phase dependency")
         void testBothPhaseDependency() throws DslException {
             DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(DependencyBuilder.class, DependencyPhase.BOTH))
+                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BOTH))
             );
 
             DependencyBuilder dependency = new DependencyBuilder();

@@ -3,6 +3,7 @@ package com.garganttua.core.dsl.dependency;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Fluent builder for creating DependencySpec with phase-specific requirements.
@@ -43,7 +44,7 @@ import com.garganttua.core.dsl.IObservableBuilder;
  */
 public class DependencySpecBuilder {
 
-    private final Class<? extends IObservableBuilder<?, ?>> dependencyBuilderClass;
+    private final IClass<? extends IObservableBuilder<?, ?>> dependencyBuilderClass;
     private boolean autoDetectConfigured = false;
     private boolean buildConfigured = false;
     private boolean requiredForAutoDetect = false;
@@ -55,7 +56,7 @@ public class DependencySpecBuilder {
      * @param dependencyBuilderClass the class of the dependency builder
      * @throws NullPointerException if dependencyClass is null
      */
-    public DependencySpecBuilder(Class<? extends IObservableBuilder<?, ?>> dependencyBuilderClass) {
+    public DependencySpecBuilder(IClass<? extends IObservableBuilder<?, ?>> dependencyBuilderClass) {
         this.dependencyBuilderClass = Objects.requireNonNull(dependencyBuilderClass, "Dependency builder class cannot be null");
     }
 

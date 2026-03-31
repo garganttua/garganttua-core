@@ -66,9 +66,9 @@ public class RuntimeBuilder<InputType, OutputType>
                         Class<OutputType> outputType) {
                 super(Objects.requireNonNull(runtimesBuilder, "RuntimesBuilder cannot be null"),
                                 Set.of(
-                                                new DependencySpecBuilder(IInjectionContextBuilder.class)
+                                                new DependencySpecBuilder(IClass.getClass(IInjectionContextBuilder.class))
                                                                 .requireForBuild().build(),
-                                                DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)));
+                                                DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
                 this.name = Objects.requireNonNull(name, "Name cannot be null");
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");

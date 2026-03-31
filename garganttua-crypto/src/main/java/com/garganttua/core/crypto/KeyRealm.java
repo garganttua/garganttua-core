@@ -86,16 +86,12 @@ public class KeyRealm implements IKeyRealm {
 
 	@Override
 	public IKey getKeyForEncryption() throws CryptoException {
-		this.throwExceptionIfExpired();
-		this.throwExceptionIfRevoked();
-		return this.encryptionKey;
+		return this.getKeyForSigning();
 	}
 
 	@Override
 	public IKey getKeyForDecryption() throws CryptoException {
-		this.throwExceptionIfExpired();
-		this.throwExceptionIfRevoked();
-		return this.decryptionKey;
+		return this.getKeyForSignatureVerification();
 	}
 
 	private void throwExceptionIfRevoked() throws CryptoException {

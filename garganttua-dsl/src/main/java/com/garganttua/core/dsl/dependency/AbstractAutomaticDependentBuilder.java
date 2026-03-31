@@ -6,6 +6,7 @@ import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -76,12 +77,12 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
     }
 
     @Override
-    public Set<Class<? extends IObservableBuilder<?, ?>>> use() {
+    public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
         return this.support.use();
     }
 
     @Override
-    public Set<Class<? extends IObservableBuilder<?, ?>>> require() {
+    public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
         return this.support.require();
     }
 

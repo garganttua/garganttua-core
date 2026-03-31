@@ -55,8 +55,8 @@ public class BeanProviderBuilder
 
 	public BeanProviderBuilder(IInjectionContextBuilder link) {
 		super(link, Set.of(
-				new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build(),
-				DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
+				new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build(),
+				DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
 		log.atTrace().log("Entering BeanProviderBuilder constructor with link: {}", link);
 		log.atTrace().log("BeanProviderBuilder initialized with link: {}", link);
 	}

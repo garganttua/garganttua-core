@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuilder;
@@ -20,6 +22,18 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 public class ConstructorBinderBuilderTest {
+
+    @BeforeAll
+    static void setUpReflection() throws Exception {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build());
+    }
+
+    @AfterAll
+    static void tearDownReflection() {
+        IClass.setReflection(null);
+    }
 
     public static class TargetClass {
         public final String name;

@@ -14,6 +14,7 @@ import com.garganttua.core.dsl.dependency.AbstractDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
@@ -34,8 +35,8 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         implements IWorkflowBuilder {
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
-            DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
-            DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD));
+            DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD),
+            DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class), DependencyPhase.BUILD));
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
     private final WorkflowRenderer renderer = new WorkflowRenderer();

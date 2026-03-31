@@ -118,7 +118,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     private IObservableBuilder<?, ?> reflectionBuilderRef;
 
     public InjectionContextBuilder() throws DslException {
-        super(Set.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BOTH)));
+        super(Set.of(DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BOTH)));
         log.atTrace().log("Entering InjectionContextBuilder constructor");
 
         // Initialize collectors

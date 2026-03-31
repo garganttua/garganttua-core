@@ -63,9 +63,9 @@ public interface IDependentBuilder<Builder extends IBuilder<Built>, Built>
      */
     Builder provide(IObservableBuilder<?, ?> dependency) throws DslException;
 
-    Set<Class<? extends IObservableBuilder<?, ?>>> use();
+    Set<IClass<? extends IObservableBuilder<?, ?>>> use();
 
-    Set<Class<? extends IObservableBuilder<?, ?>>> require();
+    Set<IClass<? extends IObservableBuilder<?, ?>>> require();
 
     default Set<IClass<?>> dependencies() {
         Set<IClass<?>> deps = new HashSet<>();

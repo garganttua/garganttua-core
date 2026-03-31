@@ -52,7 +52,7 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
                 link,
                 Stream.concat(
                         dependencies.stream(),
-                        Stream.of(DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)))
+                        Stream.of(DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)))
                         .collect(Collectors.toUnmodifiableSet()));
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
         this.parameterEntries = new ArrayList<>();

@@ -69,8 +69,8 @@ public class BeanFactoryBuilder<Bean>
 
     public BeanFactoryBuilder(IClass<Bean> beanClass) {
         super(Set.of(
-                new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build(),
-                DependencySpec.use(IReflectionBuilder.class, DependencyPhase.BUILD)));
+                new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build(),
+                DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
         this.beanClass = Objects.requireNonNull(beanClass, "Bean class cannot be null");
         log.atTrace().log("Exiting BeanFactoryBuilder constructor");
     }

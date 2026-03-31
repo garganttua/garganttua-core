@@ -135,7 +135,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * Default constructor.
      */
     public Bootstrap() {
-        super(Set.of(DependencySpec.require(IReflectionBuilder.class, DependencyPhase.AUTO_DETECT)));
+        super(Set.of(DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT)));
 
         this.builderCollector = new MultiSourceCollector<>();
         builderCollector.source(mapSupplier(manualBuilders), 0, SOURCE_MANUAL);
@@ -616,11 +616,11 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph,
             Map<IBuilder<?>, Integer> inDegree) {
 
-        Set<Class<? extends IObservableBuilder<?, ?>>> allDeps = new HashSet<>();
+        Set<IClass<? extends IObservableBuilder<?, ?>>> allDeps = new HashSet<>();
         allDeps.addAll(dependentBuilder.require());
         allDeps.addAll(dependentBuilder.use());
 
-        for (Class<? extends IObservableBuilder<?, ?>> depClass : allDeps) {
+        for (IClass<? extends IObservableBuilder<?, ?>> depClass : allDeps) {
             IBuilder<?> dependency = findBuilderInstanceByClass(depClass);
             if (dependency != null) {
                 dependencyGraph.get(dependency).add(dependentBuilder);
@@ -703,9 +703,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @param builderClass the class to search for
      * @return the builder instance or null if not found
      */
-    private IBuilder<?> findBuilderInstanceByClass(Class<? extends IObservableBuilder<?, ?>> builderClass) {
+    private IBuilder<?> findBuilderInstanceByClass(IClass<? extends IObservableBuilder<?, ?>> builderClass) {
         return getBuilders().stream()
-                .filter(b -> builderClass.isAssignableFrom(b.getClass()))
+                .filter(b -> builderClass.isAssignableFrom(IClass.getClass(b.getClass())))
                 .findFirst()
                 .orElse(null);
     }
@@ -757,8 +757,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             IDependentBuilder<?, ?> dependentBuilder,
             List<IObservableBuilder<?, ?>> observableBuilders) throws DslException {
 
-        Set<Class<? extends IObservableBuilder<?, ?>>> requiredDeps = dependentBuilder.require();
-        Set<Class<? extends IObservableBuilder<?, ?>>> usedDeps = dependentBuilder.use();
+        Set<IClass<? extends IObservableBuilder<?, ?>>> requiredDeps = dependentBuilder.require();
+        Set<IClass<? extends IObservableBuilder<?, ?>>> usedDeps = dependentBuilder.use();
 
         log.atDebug().log("Builder {} requires {} dependencies and uses {} dependencies",
                 dependentBuilder.getClass().getSimpleName(), requiredDeps.size(), usedDeps.size());
@@ -778,9 +778,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private void provideRequiredDependencies(
             IDependentBuilder<?, ?> dependentBuilder,
             List<IObservableBuilder<?, ?>> observableBuilders,
-            Set<Class<? extends IObservableBuilder<?, ?>>> requiredDeps) throws DslException {
+            Set<IClass<? extends IObservableBuilder<?, ?>>> requiredDeps) throws DslException {
 
-        for (Class<? extends IObservableBuilder<?, ?>> depClass : requiredDeps) {
+        for (IClass<? extends IObservableBuilder<?, ?>> depClass : requiredDeps) {
             IObservableBuilder<?, ?> dependency = findBuilderByClass(observableBuilders, depClass);
             if (dependency == null) {
                 throw new DslException("Required dependency not found: " + depClass.getName()
@@ -803,9 +803,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private void provideOptionalDependencies(
             IDependentBuilder<?, ?> dependentBuilder,
             List<IObservableBuilder<?, ?>> observableBuilders,
-            Set<Class<? extends IObservableBuilder<?, ?>>> usedDeps) throws DslException {
+            Set<IClass<? extends IObservableBuilder<?, ?>>> usedDeps) throws DslException {
 
-        for (Class<? extends IObservableBuilder<?, ?>> depClass : usedDeps) {
+        for (IClass<? extends IObservableBuilder<?, ?>> depClass : usedDeps) {
             IObservableBuilder<?, ?> dependency = findBuilderByClass(observableBuilders, depClass);
             if (dependency != null) {
                 dependentBuilder.provide(dependency);
@@ -827,9 +827,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private IObservableBuilder<?, ?> findBuilderByClass(
             List<IObservableBuilder<?, ?>> builders,
-            Class<? extends IObservableBuilder<?, ?>> builderClass) {
+            IClass<? extends IObservableBuilder<?, ?>> builderClass) {
         return builders.stream()
-                .filter(b -> builderClass.isAssignableFrom(b.getClass()))
+                .filter(b -> builderClass.isAssignableFrom(IClass.getClass(b.getClass())))
                 .findFirst()
                 .orElse(null);
     }

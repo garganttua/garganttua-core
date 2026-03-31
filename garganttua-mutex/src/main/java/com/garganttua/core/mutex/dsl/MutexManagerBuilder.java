@@ -50,7 +50,7 @@ public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMute
     private final MultiSourceCollector<IClass<? extends IMutex>, IMutexFactory> collector;
 
     private MutexManagerBuilder() {
-        super(Set.of(DependencySpec.use(IInjectionContextBuilder.class)));
+        super(Set.of(DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class))));
 
         this.collector = new MultiSourceCollector<>();
         collector.source(mapSupplier(manualFactories), 0, SOURCE_MANUAL);

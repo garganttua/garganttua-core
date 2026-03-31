@@ -9,6 +9,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
@@ -23,7 +24,7 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
         extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
 
     private static final Set<DependencySpec> INJECT_DEPS = Set.of(
-            new DependencySpecBuilder(IInjectableElementResolverBuilder.class).requireForAutoDetect().build());
+            new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build());
 
     protected AbstractMethodArgInjectBinderBuilder(Link up,
             ISupplierBuilder<?, ?> supplier) throws DslException {

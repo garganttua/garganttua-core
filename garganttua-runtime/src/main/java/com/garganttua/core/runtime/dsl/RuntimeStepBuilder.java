@@ -48,7 +48,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
             Class<ExecutionReturn> executionReturn,
             ISupplierBuilder<StepObjectType, ? extends ISupplier<StepObjectType>> supplier) {
         super(runtimeBuilder, Set.of(
-                new DependencySpecBuilder(IInjectionContextBuilder.class).useForAutoDetect().build()));
+                new DependencySpecBuilder(IClass.getClass(IInjectionContextBuilder.class)).useForAutoDetect().build()));
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
         this.executionReturn = Objects.requireNonNull(executionReturn, "Execution return type cannot be null");
