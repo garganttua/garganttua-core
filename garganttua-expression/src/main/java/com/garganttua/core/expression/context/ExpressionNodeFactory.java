@@ -191,9 +191,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
     static ResolvedMethod resolveReflectMethod(IClass<?> ownerType, IMethod method) {
         IReflection reflection = IClass.getReflection();
-        IClass<?>[] paramTypes = method.getParameterTypes();
-        return MethodResolver.methodByName(ownerType, reflection, method.getName(),
-                method.getReturnType(), paramTypes);
+        return MethodResolver.methodByMethod(ownerType, reflection, method);
     }
 
     // ========== Private Utility Methods ==========

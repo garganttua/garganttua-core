@@ -45,18 +45,23 @@ public record ResolvedMethod(ObjectAddress address, List<Object> methodPath) imp
         return this.method().equals(other);
     }
 
+    /**
+     * Checks if this method matches the given signature constraints.
+     *
+     * @param ownerType      the expected owner type
+     * @param returnType     the expected return type, or null for no constraint
+     * @param parameterTypes the expected parameter types, or null for no constraint.
+     *                       An empty array means "exactly 0 parameters".
+     */
     boolean matches(IClass<?> ownerType, IClass<?> returnType, IClass<?>[] parameterTypes) {
-        if( !method().getDeclaringClass().isAssignableFrom(ownerType) )
+        if (!method().getDeclaringClass().isAssignableFrom(ownerType))
             return false;
 
-        if (returnType != null && !method().getReturnType().isAssignableFrom(returnType)) {
+        if (returnType != null && !method().getReturnType().isAssignableFrom(returnType))
             return false;
-        }
 
-        if ((parameterTypes == null || parameterTypes.length == 0) && method().getParameterCount() != 0) {
-            return false;
-        }
-
+        // null = no constraint on parameters (wildcard match).
+        // Non-null (including empty) = exact parameter count and type match.
         if (parameterTypes != null) {
             IClass<?>[] actualParams = method().getParameterTypes();
             if (actualParams.length != parameterTypes.length) {

@@ -32,8 +32,13 @@ public class MethodResolver {
                                                 .stream())
                                 .toList();
 
+                // Empty varargs (no parameter types specified) = no constraint on parameters.
+                // Pass null to matches() to signal wildcard. Non-empty array = exact match.
+                IClass<?>[] effectiveParams = (parameterTypes == null || parameterTypes.length == 0)
+                                ? null : parameterTypes;
+
                 List<ResolvedMethod> found = methods.stream()
-                                .filter(m -> m.matches(ownerType, returnType, parameterTypes)).distinct().toList();
+                                .filter(m -> m.matches(ownerType, returnType, effectiveParams)).distinct().toList();
 
                 if (found.size() > 1) {
                         log.atError().log(
@@ -84,8 +89,29 @@ public class MethodResolver {
 
         public static ResolvedMethod methodByMethod(IClass<?> ownerType, IReflectionProvider provider,
                         IMethod method) throws ReflectionException {
-                return methodByName(ownerType, provider, method.getName(), method.getReturnType(),
-                                method.getParameterTypes());
+                log.atTrace().log("[methodByMethod] Start: method={}, ownerType={}", method.getName(), ownerType);
+
+                IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType, provider);
+
+                List<ResolvedMethod> methods = query.addresses(method.getName()).stream()
+                                .flatMap(a -> query.findAll(a).stream().map(m -> new ResolvedMethod(a, m)).toList()
+                                                .stream())
+                                .toList();
+
+                // Exact match: pass actual parameter types (including empty array for 0-param methods)
+                List<ResolvedMethod> found = methods.stream()
+                                .filter(m -> m.matches(ownerType, method.getReturnType(), method.getParameterTypes()))
+                                .distinct().toList();
+
+                if (found.size() > 1) {
+                        throw new ReflectionException("Multiple overloads of method " + method.getName()
+                                        + " in ownertype " + ownerType.getName() + " match the exact signature");
+                }
+                if (found.isEmpty()) {
+                        throw new ReflectionException("No overload of method " + method.getName()
+                                        + " in ownertype " + ownerType.getName() + " matches the exact signature");
+                }
+                return found.get(0);
         }
 
         public static ResolvedMethod methodByAddress(IClass<?> ownerType, IReflectionProvider provider,
