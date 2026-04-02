@@ -201,7 +201,7 @@ public class DependentBuilderSupport {
             IObservableBuilder<?, ?> dependency) {
         Set<IClass<? extends IObservableBuilder<?, ?>>> expectedDependencies = dependencies();
         return expectedDependencies.stream()
-                .anyMatch(expectedClass -> expectedClass.isAssignableFrom(IClass.getClass(dependency.getClass())));
+                .anyMatch(expectedClass -> expectedClass.isAssignableFrom(dependency.getClass()));
     }
 
     private Set<IClass<? extends IObservableBuilder<?, ?>>> dependencies() {
@@ -223,7 +223,7 @@ public class DependentBuilderSupport {
             Set<IBuilderDependency<?, ?>> dependencySet) {
 
         Optional<IBuilderDependency<?, ?>> foundDep = dependencySet.stream()
-                .filter(d -> d.getDependency().isAssignableFrom(IClass.getClass(dependency.getClass())))
+                .filter(d -> d.getDependency().isAssignableFrom(dependency.getClass()))
                 .findFirst();
 
         foundDep.ifPresent(d -> {

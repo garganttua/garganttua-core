@@ -213,7 +213,7 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
             ChildContext ctx = childContextFactories.stream()
                     .filter(factory -> {
                         Class<? extends IInjectionContext> childType = getChildContextType(factory);
-                        return childType != null && contextClass.isAssignableFrom(IClass.getClass(childType));
+                        return childType != null && contextClass.isAssignableFrom(childType);
                     })
                     .findFirst()
                     .map(factory -> contextClass.cast(factory.createChildContext(this.copy(), args)))

@@ -293,6 +293,10 @@ public class ScriptContext implements IScript {
         return this.aborted;
     }
 
+    public Map<String, Object> getAllVariables() {
+        return Map.copyOf(this.lastVariables);
+    }
+
     public ScriptContext createChildScript() {
         return new ScriptContext(this.expressionContext, this.injectionContext, this.bootstrap);
     }

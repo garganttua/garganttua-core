@@ -135,6 +135,8 @@ public interface IClass<T> extends IGenericDeclaration, Type,
 
 	boolean isAssignableFrom(IClass<?> cls);
 
+	boolean isAssignableFrom(Class<?> cls);
+
 	boolean isInstance(Object obj);
 
 	// --- Array ---

@@ -322,7 +322,7 @@ public class RuntimeBuilder<InputType, OutputType>
                 for (IField field : ownerClass.getDeclaredFields()) {
                         if (field.getAnnotation(iAnnotation) != null) {
                                 IClass<?> fieldType = field.getType();
-                                if (fieldType.isAssignableFrom(IClass.getClass(expectedType))
+                                if (fieldType.isAssignableFrom(expectedType)
                                                 || IClass.getClass(expectedType).isAssignableFrom(fieldType)) {
                                         return field.getName();
                                 }

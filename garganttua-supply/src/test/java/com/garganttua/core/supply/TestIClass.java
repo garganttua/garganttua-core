@@ -105,6 +105,11 @@ public final class TestIClass<T> implements IClass<T> {
     }
 
     @Override
+    public boolean isAssignableFrom(Class<?> cls) {
+        return wrapped.isAssignableFrom(cls);
+    }
+
+    @Override
     public boolean isInstance(Object obj) {
         return wrapped.isInstance(obj);
     }

@@ -8,6 +8,7 @@ import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowScript;
 import com.garganttua.core.workflow.WorkflowStage;
 import com.garganttua.core.workflow.chaining.CodeAction;
+import com.garganttua.core.workflow.header.ScriptHeaderParser;
 
 /**
  * Converts workflow stage definitions into Garganttua Script source code.
@@ -26,6 +27,8 @@ import com.garganttua.core.workflow.chaining.CodeAction;
  * {@code and()} when both are present.
  */
 public class ScriptGenerator {
+
+    private static final ScriptHeaderParser HEADER_PARSER = new ScriptHeaderParser();
 
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables)
             throws WorkflowException {
@@ -241,6 +244,9 @@ public class ScriptGenerator {
         } else {
             // Inline script (string or file with inline()) - insert content directly
             String content = ws.loadContent();
+
+            // Strip #@workflow header if present — it's metadata, not executable code
+            content = HEADER_PARSER.stripHeader(content);
 
             // Replace positional variables (@0, @1, ...) with named input variables
             content = replacePositionalVariables(content, ws.getInputs());

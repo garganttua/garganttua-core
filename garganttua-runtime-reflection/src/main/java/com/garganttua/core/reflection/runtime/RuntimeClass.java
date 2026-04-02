@@ -192,6 +192,11 @@ public class RuntimeClass<T> implements IClass<T> {
 	}
 
 	@Override
+	public boolean isAssignableFrom(Class<?> cls) {
+		return clazz.isAssignableFrom(cls);
+	}
+
+	@Override
 	public boolean isInstance(Object obj) {
 		return clazz.isInstance(obj);
 	}
@@ -489,6 +494,7 @@ public class RuntimeClass<T> implements IClass<T> {
 	public boolean equals(Object obj) {
 		if (this == obj) return true;
 		if (obj instanceof RuntimeClass<?> other) return clazz.equals(other.clazz);
+		if (obj instanceof Class<?> other) return clazz.equals(other);
 		return false;
 	}
 

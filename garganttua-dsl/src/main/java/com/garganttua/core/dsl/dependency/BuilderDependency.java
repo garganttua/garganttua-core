@@ -144,7 +144,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     @SuppressWarnings("unchecked")
     void handle(IObservableBuilder<?, ?> observableBuilder) {
         log.atTrace().log("Handling observableBuilder provision: {}", observableBuilder);
-        if (!dependencyClass.isAssignableFrom(IClass.getClass(observableBuilder.getClass()))) {
+        if (!dependencyClass.isAssignableFrom(observableBuilder.getClass())) {
             log.atWarn().log("Dependency type mismatch: expected {}, got {}",
                 dependencyClass.getName(), observableBuilder.getClass().getName());
             return;
@@ -152,6 +152,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
 
         this.builder = (Builder) observableBuilder;
         log.atDebug().log("Dependency builder stored: {}", dependencyClass.getName());
+        tryResolve();
     }
 
     @Override

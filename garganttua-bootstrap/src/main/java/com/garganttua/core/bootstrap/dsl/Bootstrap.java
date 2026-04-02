@@ -705,7 +705,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private IBuilder<?> findBuilderInstanceByClass(IClass<? extends IObservableBuilder<?, ?>> builderClass) {
         return getBuilders().stream()
-                .filter(b -> builderClass.isAssignableFrom(IClass.getClass(b.getClass())))
+                .filter(b -> builderClass.isAssignableFrom(b.getClass()))
                 .findFirst()
                 .orElse(null);
     }
@@ -829,7 +829,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             List<IObservableBuilder<?, ?>> builders,
             IClass<? extends IObservableBuilder<?, ?>> builderClass) {
         return builders.stream()
-                .filter(b -> builderClass.isAssignableFrom(IClass.getClass(b.getClass())))
+                .filter(b -> builderClass.isAssignableFrom(b.getClass()))
                 .findFirst()
                 .orElse(null);
     }

@@ -162,6 +162,7 @@ public class Workflow implements IWorkflow {
             Throwable exception = script.getLastException().orElse(null);
             String message = script.getLastExceptionMessage().orElse("Script execution aborted");
             log.error("Workflow '{}' aborted: {}", name, message, exception);
+            logErrorDump(script, scriptSource, stagesToCollect, message, exception);
             return WorkflowResult.failure(uuid, start, stop,
                     new WorkflowException(message, exception));
         }
@@ -330,6 +331,67 @@ public class Workflow implements IWorkflow {
             return "script";
         }
         return name.replaceAll("[^a-zA-Z0-9_]", "_");
+    }
+
+    private void logErrorDump(IScript script, String scriptSource,
+                              List<WorkflowStage> stagesToCollect, String message, Throwable exception) {
+        StringBuilder dump = new StringBuilder();
+        dump.append("\n╔══════════════════════════════════════════════════════════════════════╗\n");
+        dump.append("║  WORKFLOW ERROR DUMP                                                ║\n");
+        dump.append("╠══════════════════════════════════════════════════════════════════════╣\n");
+        dump.append("║  Workflow: ").append(name).append("\n");
+        dump.append("║  Error: ").append(message).append("\n");
+
+        // Exception chain
+        if (exception != null) {
+            dump.append("║\n║  Exception chain:\n");
+            Throwable t = exception;
+            int depth = 0;
+            while (t != null && depth < 10) {
+                dump.append("║    ").append("  ".repeat(depth))
+                    .append(t.getClass().getSimpleName()).append(": ").append(t.getMessage()).append("\n");
+                t = t.getCause();
+                depth++;
+            }
+        }
+
+        // Error context variables from script
+        dump.append("║\n║  Script error context:\n");
+        script.getVariable("_scriptErrorLine", IClass.getClass(Object.class))
+                .ifPresent(v -> dump.append("║    Line: ").append(v).append("\n"));
+        script.getVariable("_scriptErrorSource", IClass.getClass(Object.class))
+                .ifPresent(v -> dump.append("║    Source: ").append(v).append("\n"));
+        script.getVariable("_scriptErrorStep", IClass.getClass(Object.class))
+                .ifPresent(v -> dump.append("║    Step: ").append(v).append("\n"));
+        script.getVariable("_scriptErrorType", IClass.getClass(Object.class))
+                .ifPresent(v -> dump.append("║    Type: ").append(v).append("\n"));
+
+        // Collected variables at failure point
+        dump.append("║\n║  Variables at failure point:\n");
+        Map<String, Object> vars = collectVariables(script, stagesToCollect);
+        if (vars.isEmpty()) {
+            dump.append("║    (none)\n");
+        } else {
+            for (var entry : vars.entrySet()) {
+                String val = entry.getValue() != null ? entry.getValue().toString() : "null";
+                if (val.length() > 120) val = val.substring(0, 120) + "...";
+                dump.append("║    ").append(entry.getKey()).append(" = ").append(val).append("\n");
+            }
+        }
+
+        // Stages
+        dump.append("║\n║  Stages: ");
+        dump.append(stagesToCollect.stream().map(WorkflowStage::name).collect(Collectors.joining(" → ")));
+        dump.append("\n");
+
+        // Generated script (truncated)
+        dump.append("║\n║  Generated script:\n");
+        for (String line : scriptSource.split("\n")) {
+            dump.append("║    ").append(line).append("\n");
+        }
+
+        dump.append("╚══════════════════════════════════════════════════════════════════════╝");
+        log.error("{}", dump);
     }
 
     private Map<String, Object> collectStageOutputs(IScript script, List<WorkflowStage> stagesToCollect) {

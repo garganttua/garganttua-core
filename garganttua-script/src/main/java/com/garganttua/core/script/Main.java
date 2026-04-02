@@ -2,8 +2,10 @@ package com.garganttua.core.script;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Map;
 
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.expression.context.IExpressionContext;
@@ -66,16 +68,38 @@ public class Main {
             }
         }
 
-        File scriptFile = new File(firstArg);
-        if (!scriptFile.exists()) {
-            System.err.println("Error: Script file not found: " + firstArg);
+        // Check for --dump flag
+        boolean dumpOnError = false;
+        String[] filteredArgs = args;
+        for (int i = 0; i < args.length; i++) {
+            if ("--dump".equals(args[i]) || "-d".equals(args[i])) {
+                dumpOnError = true;
+                // Remove --dump from args
+                String[] newArgs = new String[args.length - 1];
+                System.arraycopy(args, 0, newArgs, 0, i);
+                System.arraycopy(args, i + 1, newArgs, i, args.length - i - 1);
+                filteredArgs = newArgs;
+                break;
+            }
+        }
+
+        if (filteredArgs.length == 0) {
+            printUsage();
             System.exit(1);
         }
 
-        String[] scriptArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
+        File scriptFile = new File(filteredArgs[0]);
+        if (!scriptFile.exists()) {
+            System.err.println("Error: Script file not found: " + filteredArgs[0]);
+            System.exit(1);
+        }
+
+        String[] scriptArgs = filteredArgs.length > 1
+                ? Arrays.copyOfRange(filteredArgs, 1, filteredArgs.length)
+                : new String[0];
 
         try {
-            int exitCode = executeScript(scriptFile, scriptArgs);
+            int exitCode = executeScript(scriptFile, scriptArgs, dumpOnError);
             System.exit(exitCode);
         } catch (ScriptException e) {
             System.err.println("Script error: " + e.getMessage());
@@ -100,7 +124,8 @@ public class Main {
         }
     }
 
-    private static int executeScript(File scriptFile, String[] args) throws ScriptException, IOException {
+    private static int executeScript(File scriptFile, String[] args, boolean dumpOnError)
+            throws ScriptException, IOException {
         IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(loadReflectionProvider())
                 .withScanner(new ReflectionsAnnotationScanner());
@@ -133,7 +158,83 @@ public class Main {
         script.load(scriptContent);
         script.compile();
 
-        return script.execute((Object[]) args);
+        int exitCode = script.execute((Object[]) args);
+
+        if (script.hasAborted() && dumpOnError) {
+            printErrorDump(System.err, script, scriptFile, scriptContent, args);
+        }
+
+        return exitCode;
+    }
+
+    private static void printErrorDump(PrintStream out, ScriptContext script,
+                                        File scriptFile, String scriptContent, String[] args) {
+        out.println();
+        out.println("╔══════════════════════════════════════════════════════════════════════╗");
+        out.println("║  SCRIPT ERROR DUMP                                                  ║");
+        out.println("╠══════════════════════════════════════════════════════════════════════╣");
+        out.println("║  File: " + scriptFile.getAbsolutePath());
+
+        // Exception chain
+        script.getLastException().ifPresent(ex -> {
+            out.println("║");
+            out.println("║  Exception chain:");
+            Throwable t = ex;
+            int depth = 0;
+            while (t != null && depth < 10) {
+                out.println("║    " + "  ".repeat(depth) + t.getClass().getSimpleName() + ": " + t.getMessage());
+                t = t.getCause();
+                depth++;
+            }
+        });
+
+        // Error context variables
+        out.println("║");
+        out.println("║  Error context:");
+        script.getVariable("_scriptErrorLine", com.garganttua.core.reflection.IClass.getClass(Object.class))
+                .ifPresent(v -> out.println("║    Line: " + v));
+        script.getVariable("_scriptErrorSource", com.garganttua.core.reflection.IClass.getClass(Object.class))
+                .ifPresent(v -> out.println("║    Source: " + v));
+        script.getVariable("_scriptErrorStep", com.garganttua.core.reflection.IClass.getClass(Object.class))
+                .ifPresent(v -> out.println("║    Step: " + v));
+        script.getVariable("_scriptErrorType", com.garganttua.core.reflection.IClass.getClass(Object.class))
+                .ifPresent(v -> out.println("║    Type: " + v));
+        script.getVariable("_scriptErrorMessage", com.garganttua.core.reflection.IClass.getClass(Object.class))
+                .ifPresent(v -> out.println("║    Message: " + v));
+
+        // Arguments
+        if (args != null && args.length > 0) {
+            out.println("║");
+            out.println("║  Arguments:");
+            for (int i = 0; i < args.length; i++) {
+                out.println("║    @" + i + " = " + args[i]);
+            }
+        }
+
+        // Variables at failure point
+        out.println("║");
+        out.println("║  Variables:");
+        Map<String, Object> vars = script.getAllVariables();
+        if (vars.isEmpty()) {
+            out.println("║    (none)");
+        } else {
+            for (var entry : vars.entrySet()) {
+                if (entry.getKey().startsWith("_scriptError")) continue;
+                String val = entry.getValue() != null ? entry.getValue().toString() : "null";
+                if (val.length() > 120) val = val.substring(0, 120) + "...";
+                out.println("║    " + entry.getKey() + " = " + val);
+            }
+        }
+
+        // Script source with line numbers
+        out.println("║");
+        out.println("║  Script source:");
+        String[] lines = scriptContent.split("\n");
+        for (int i = 0; i < lines.length; i++) {
+            out.printf("║    %3d │ %s%n", i + 1, lines[i]);
+        }
+
+        out.println("╚══════════════════════════════════════════════════════════════════════╝");
     }
 
     private static String readScriptFile(File file) throws IOException {
@@ -171,12 +272,13 @@ public class Main {
     private static void printUsage() {
         System.out.println("Garganttua Script Engine " + VERSION);
         System.out.println();
-        System.out.println("Usage: garganttua-script                    Start interactive console (requires garganttua-console)");
-        System.out.println("       garganttua-script <script.gs> [args] Execute a script file");
+        System.out.println("Usage: garganttua-script                            Start interactive console (requires garganttua-console)");
+        System.out.println("       garganttua-script [--dump] <script.gs> [args] Execute a script file");
         System.out.println("       garganttua-script [options]");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -c, --console      Start interactive console (REPL, requires garganttua-console)");
+        System.out.println("  -d, --dump         Print error dump on crash (variables, context, source)");
         System.out.println("  -h, --help         Show this help message");
         System.out.println("  -v, --version      Show version information");
         System.out.println("  -m, --man          List all available expression functions");

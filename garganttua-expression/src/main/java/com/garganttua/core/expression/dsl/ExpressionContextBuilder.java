@@ -337,7 +337,7 @@ public class ExpressionContextBuilder
         log.atTrace().log("Entering synchronizePackagesFromContext()");
 
         support.getUseDependencies().stream()
-                .filter(dep -> dep.getDependency().equals(IClass.getClass(IInjectionContextBuilder.class)))
+                .filter(dep -> dep.getDependency().equals(IInjectionContextBuilder.class))
                 .findFirst()
                 .ifPresent(dep -> dep.synchronizePackagesFromContext(contextPackages -> {
                     int beforeSize = this.packages.size();

@@ -34,7 +34,7 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
 
         for (int i = 0; i < parameterTypes.length; i++) {
             // If the factory expects an ISupplier (lazy parameter), accept any argument type
-            if (parameterTypes[i].isAssignableFrom(IClass.getClass(com.garganttua.core.supply.ISupplier.class))) {
+            if (parameterTypes[i].isAssignableFrom(com.garganttua.core.supply.ISupplier.class)) {
                 // Lazy parameters accept any type - they'll be wrapped in a supplier
                 continue;
             }
@@ -51,7 +51,7 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
                     return false;
                 }
             } else {
-                if (!((Class<?>) parameterTypes[i].getType()).isAssignableFrom(parameters().get(i).getClass())) {
+                if (!parameterTypes[i].isAssignableFrom(parameters().get(i).getClass())) {
                     log.atWarn()
                             .log("Expression node is expecting parameter " + i + " of type "
                                     + parameterTypes[i].getSimpleName() + " but context provided "

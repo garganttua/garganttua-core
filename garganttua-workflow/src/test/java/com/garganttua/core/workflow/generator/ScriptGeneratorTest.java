@@ -3,19 +3,27 @@ package com.garganttua.core.workflow.generator;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowScript;
 import com.garganttua.core.workflow.WorkflowStage;
 import com.garganttua.core.workflow.chaining.CodeAction;
+import com.garganttua.core.workflow.dsl.WorkflowScriptBuilder;
 
 class ScriptGeneratorTest {
+
+    @TempDir
+    Path tempDir;
 
     private ScriptGenerator generator;
 
@@ -437,5 +445,105 @@ class ScriptGeneratorTest {
         // Should have normal output mapping
         assertTrue(generated.contains("result <- script_variable(@_run_processor_ref, \"output\")"),
                 "Should have normal output mapping: " + generated);
+    }
+
+    @Test
+    void testHeaderAutoParsingForFileScript() throws IOException, WorkflowException {
+        // Create a script file with a #@workflow header
+        String scriptContent = """
+                #@workflow
+                #  @in  operationRequest: IOperationRequest
+                #  @in  repository: IRepository
+                #  @out authResult -> output: IAuthentication
+                #  @return 0: SUCCESS
+                #  @return 401: UNAUTHORIZED
+                #@end
+
+                result <- authenticate(@0, @1)
+                output <- @result
+                """;
+        Path scriptFile = tempDir.resolve("authenticate.gs");
+        Files.writeString(scriptFile, scriptContent);
+
+        // Build via WorkflowScriptBuilder WITHOUT explicit input/output declarations
+        WorkflowScriptBuilder builder = new WorkflowScriptBuilder(
+                WorkflowScript.ScriptSource.of(scriptFile));
+        builder.name("authenticator");
+        WorkflowScript ws = builder.build();
+
+        // Verify inputs were auto-populated from header
+        assertEquals(2, ws.getInputs().size(), "Should have 2 inputs from header");
+        assertTrue(ws.getInputs().containsKey("operationRequest"), "Should have operationRequest input");
+        assertTrue(ws.getInputs().containsKey("repository"), "Should have repository input");
+
+        // Verify outputs were auto-populated from header
+        assertEquals(1, ws.getOutputs().size(), "Should have 1 output from header");
+        assertEquals("output", ws.getOutputs().get("authResult"), "authResult should map to 'output' variable");
+
+        // Verify the generated script uses the auto-parsed inputs/outputs
+        WorkflowStage stage = new WorkflowStage("auth", List.of(ws), null, null, null, null);
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        assertTrue(generated.contains("execute_script(@_auth_authenticator_ref, @operationRequest, @repository)"),
+                "Should pass header-declared inputs to execute_script: " + generated);
+        assertTrue(generated.contains("authResult <- script_variable(@_auth_authenticator_ref, \"output\")"),
+                "Should extract header-declared outputs via script_variable: " + generated);
+    }
+
+    @Test
+    void testHeaderAutoParsingExplicitOverridesHeader() throws IOException, WorkflowException {
+        // Script with header declaring 2 inputs
+        String scriptContent = """
+                #@workflow
+                #  @in  data: Object
+                #  @in  config: Object
+                #  @out result -> output: Object
+                #@end
+                output <- process(@0, @1)
+                """;
+        Path scriptFile = tempDir.resolve("process.gs");
+        Files.writeString(scriptFile, scriptContent);
+
+        // Build with explicit input that overrides one header input
+        WorkflowScriptBuilder builder = new WorkflowScriptBuilder(
+                WorkflowScript.ScriptSource.of(scriptFile));
+        builder.name("processor");
+        builder.input("data", "@customExpression");  // Override header's default
+        WorkflowScript ws = builder.build();
+
+        // "data" should use explicit value, "config" should come from header
+        assertEquals("@customExpression", ws.getInputs().get("data"),
+                "Explicit input should override header default");
+        assertEquals("@config", ws.getInputs().get("config"),
+                "Non-overridden header input should use default @name binding");
+    }
+
+    @Test
+    void testHeaderStrippedForInlineScripts() throws IOException, WorkflowException {
+        // Inline script with a header — header should be stripped from generated output
+        String scriptContent = """
+                #@workflow
+                #  @in  data: Object
+                #  @out result -> output: Object
+                #@end
+                output <- process(@0)
+                """;
+
+        WorkflowScriptBuilder builder = new WorkflowScriptBuilder(
+                WorkflowScript.ScriptSource.of(scriptContent));
+        builder.name("processor");
+        builder.inline();
+        WorkflowScript ws = builder.build();
+
+        WorkflowStage stage = new WorkflowStage("run", List.of(ws), null, null, null, null);
+        String generated = generator.generate("test-workflow", List.of(stage), null);
+
+        // Header metadata should NOT appear in generated script
+        assertFalse(generated.contains("#@workflow"), "Header should be stripped from inline content: " + generated);
+        assertFalse(generated.contains("#@end"), "Header end should be stripped: " + generated);
+
+        // But the script body should be there (with @0 replaced by input name)
+        assertTrue(generated.contains("process(@data)"),
+                "Script body should be present with positional vars replaced: " + generated);
     }
 }

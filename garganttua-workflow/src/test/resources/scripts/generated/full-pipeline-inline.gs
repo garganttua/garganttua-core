@@ -1,5 +1,5 @@
 # Workflow: full-pipeline
-# Generated: 2026-03-31T14:35:32.465060553Z
+# Generated: 2026-04-02T12:04:03.626535266Z
 
 # Preset variables
 apiUrl <- "https://api.example.com/data"
@@ -13,8 +13,10 @@ timeout <- @requestTimeout
     apiResponse <- "fetched data from " + @url
     httpStatus <- 200
     fetchComplete <- true
-    httpCode <- @httpStatus
     rawData <- @apiResponse
+    httpCode <- @httpStatus
+    response <- @apiResponse
+    statusCode <- @httpStatus
 )
 
 
@@ -27,6 +29,7 @@ strict <- true
     validatedData <- @data
     validationStatus <- "completed"
     validated <- @validatedData
+    status <- @validationStatus
 )
 
 
@@ -37,6 +40,7 @@ format <- @targetFormat
     processingStep <- "transform"
     transformedData <- @inputData
     outputFormat <- @format
+    result <- @transformedData
     result <- @transformedData
     transformed <- @transformedData
 )
@@ -61,6 +65,8 @@ metadata <- "pipeline-v1"
     finalStatus <- "success"
     output <- @finalOutput
     result <- @finalOutput
+    finalResult <- @finalOutput
+    status <- @finalStatus
 )
 
 
