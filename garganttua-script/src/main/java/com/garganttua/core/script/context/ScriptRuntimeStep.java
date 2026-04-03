@@ -104,7 +104,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                             return java.util.Optional.empty();
                         }
                         if ("output".equals(name)) {
-                            Object output = context.getResult().output();
+                            Object output = context.getOutput();
                             if (output != null && type.isInstance(output)) {
                                 return java.util.Optional.of(type.cast(output));
                             }
@@ -218,7 +218,7 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                             return java.util.Optional.empty();
                         }
                         if ("output".equals(name)) {
-                            Object output = context.getResult().output();
+                            Object output = context.getOutput();
                             if (output != null && type.isInstance(output)) {
                                 return java.util.Optional.of(type.cast(output));
                             }
@@ -416,12 +416,13 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     // Store expression for lazy evaluation - also set as output
                     runtimeContext.setVariable(varName, node.expression());
                     runtimeContext.setOutput(node.expression());
-                } else {
+                } else if (result != null) {
                     runtimeContext.setOutput(result);
+                    runtimeContext.setVariable(varName, result);
                 }
             } else if (node.assignExpression()) {
                 runtimeContext.setVariable(varName, node.expression());
-            } else {
+            } else if (result != null) {
                 runtimeContext.setVariable(varName, result);
             }
         }

@@ -207,10 +207,17 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     }
 
     @Override
+    public OutputType getOutput() {
+        log.atTrace().log("[RuntimeContext.getOutput] Getting current output");
+        wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
+        return this.output;
+    }
+
+    @Override
     public void setOutput(OutputType output) {
         log.atTrace().log("[RuntimeContext.setOutput] Setting output={}", output);
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
-        this.output = Objects.requireNonNull(output, "output cannot be null");
+        this.output = output;
     }
 
     @Override

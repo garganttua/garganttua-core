@@ -76,10 +76,12 @@ public class StatementBlock {
     private static void setVar(IRuntimeContext<Object[], Object> context, IScriptNode node, Object result) {
         if (node.variableName() != null) {
             String name = node.variableName();
-            if ("output".equals(name)) {
+            if ("output".equals(name) && result != null) {
                 context.setOutput(result);
             }
-            context.setVariable(name, result);
+            if (result != null) {
+                context.setVariable(name, result);
+            }
         }
         if (node.code() != null) {
             context.setCode(node.code());

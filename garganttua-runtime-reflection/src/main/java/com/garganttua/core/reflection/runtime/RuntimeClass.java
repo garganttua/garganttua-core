@@ -490,6 +490,16 @@ public class RuntimeClass<T> implements IClass<T> {
 
 	// --- Object overrides ---
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p><b>Note:</b> This method also accepts raw {@link Class} objects for
+	 * backward compatibility, but this usage is <b>deprecated</b> because it
+	 * violates the symmetry contract of {@code equals} ({@code iclass.equals(clazz)}
+	 * returns {@code true} while {@code clazz.equals(iclass)} returns {@code false}).
+	 * Use {@link #represents(Class)} instead for comparing an {@code IClass} with
+	 * a raw {@code Class<?>}.</p>
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) return true;

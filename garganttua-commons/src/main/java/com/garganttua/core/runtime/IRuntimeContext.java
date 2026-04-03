@@ -170,6 +170,19 @@ public interface IRuntimeContext<InputType, OutputType> extends IInjectionContex
     void setOutput(OutputType output);
 
     /**
+     * Returns the current output value during execution.
+     *
+     * <p>
+     * Unlike {@link #getResult()}, this method can be called while the context
+     * is still in the "started" state. It returns the last value set via
+     * {@link #setOutput(Object)}, or {@code null} if no output has been set yet.
+     * </p>
+     *
+     * @return the current output value, or null
+     */
+    OutputType getOutput();
+
+    /**
      * Checks if the provided class is compatible with the runtime's output type.
      *
      * @param class1 the class to check for compatibility

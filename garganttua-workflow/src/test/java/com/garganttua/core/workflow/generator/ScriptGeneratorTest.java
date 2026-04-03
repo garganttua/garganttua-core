@@ -277,16 +277,16 @@ class ScriptGeneratorTest {
                 "Include should be unconditional: " + generated);
 
         // Should use if() for conditional execution
-        assertTrue(generated.contains("_run_deploy_code <- if(@_run_deploy_cond, execute_script(@_run_deploy_ref, @env), 0)"),
+        assertTrue(generated.contains("_run_deploy_code <- if(@_run_deploy_cond, execute_script(@_run_deploy_ref, @env))"),
                 "Should have if() conditional execution: " + generated);
 
-        // Code actions should use if() with combined condition
-        assertTrue(generated.contains("if(and(@_run_deploy_cond, equals(@_run_deploy_code, 1)), (abort()), 0)"),
+        // Code actions should use if() with combined condition (two-argument form)
+        assertTrue(generated.contains("if(and(@_run_deploy_cond, equals(@_run_deploy_code, 1)), (abort()))"),
                 "Code actions should use if() with combined condition: " + generated);
 
-        // Output mappings should be conditional via if() block
-        assertTrue(generated.contains("if(@_run_deploy_cond, (\n    deployResult <- script_variable(@_run_deploy_ref, \"result\")\n), 0)"),
-                "Output mappings should use if() block: " + generated);
+        // Output mappings should be individual conditional assignments (two-argument form)
+        assertTrue(generated.contains("deployResult <- if(@_run_deploy_cond, script_variable(@_run_deploy_ref, \"result\"))"),
+                "Output mappings should use individual conditional assignments: " + generated);
 
         // Should NOT have catch clauses (omitted when conditional)
         assertFalse(generated.contains("! =>"),
@@ -330,8 +330,8 @@ class ScriptGeneratorTest {
                 "Second line should be inside if() block: " + generated);
         assertTrue(generated.contains("    workflowResult <- @output"),
                 "Output mapping should be inside if() block: " + generated);
-        assertTrue(generated.contains("), 0)"),
-                "if() block should close with null else: " + generated);
+        assertTrue(generated.contains("))"),
+                "if() block should close without else branch: " + generated);
 
         // Should NOT have noop()
         assertFalse(generated.contains("noop()"),

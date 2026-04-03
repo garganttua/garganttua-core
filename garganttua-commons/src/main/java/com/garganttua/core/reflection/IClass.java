@@ -139,6 +139,22 @@ public interface IClass<T> extends IGenericDeclaration, Type,
 
 	boolean isInstance(Object obj);
 
+	/**
+	 * Checks whether this {@code IClass} represents the given raw {@code Class}.
+	 *
+	 * <p>
+	 * This is the recommended way to compare an {@code IClass} with a raw {@code Class<?>}.
+	 * Unlike {@code equals(Class)}, this method is explicitly directional and does not
+	 * interfere with the symmetric contract of {@link Object#equals(Object)}.
+	 * </p>
+	 *
+	 * @param cls the raw class to compare against
+	 * @return {@code true} if this IClass represents the same type as {@code cls}
+	 */
+	default boolean represents(Class<?> cls) {
+		return cls != null && cls.equals(getType());
+	}
+
 	// --- Array ---
 
 	IClass<?> getComponentType();

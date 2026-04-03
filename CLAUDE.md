@@ -203,7 +203,7 @@ The reflection subsystem uses a pluggable provider architecture:
 - All modules must be thread-safe. Use `Collections.synchronizedMap/List` or concurrent collections for shared state.
 - See `.claude/rules/java-conventions.md` for full naming and style conventions.
 - Key points: Lombok for boilerplate, `I` prefix for interfaces, Java records for value objects, `Optional<T>` for nullable values, SLF4J logging via `@Slf4j`.
-- **`Class<?>` usage is prohibited** — always use `IClass<?>` from `garganttua-commons` instead. Use `IClass.getClass(clazz)` to wrap a raw `Class<?>`.
+- **`Class<?>` usage is prohibited** — always use `IClass<?>` from `garganttua-commons` instead. Use `IClass.getClass(clazz)` to wrap a raw `Class<?>`. **Exception**: for pure type hierarchy checks that must not depend on `IReflection`, use the `IClass.isAssignableFrom(Class<?>)` surcharge or `IClass.represents(Class<?>)` — these accept a raw `Class<?>` directly. Never use `IClass.getClass()` solely to satisfy an `isAssignableFrom(IClass)` or `equals()` call; prefer the `Class<?>` surcharges instead. Note: `IClass.equals(Class<?>)` exists for backward compatibility but is deprecated — use `represents(Class<?>)` for new code.
 - Use `FieldAccessor` and `MethodInvoker` from `garganttua-reflection` for field access/method invocation instead of raw `IField.get()/set()` and `IMethod.invoke()`.
 - `InjectionContextBuilder` requires `IReflectionBuilder` as a build dependency. Tests must create an `IReflectionBuilder`, build it, then provide it via `.provide(reflectionBuilder)`.
 

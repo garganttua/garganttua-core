@@ -22,8 +22,10 @@ import com.garganttua.core.workflow.header.ScriptHeaderParser;
  *       name collisions between stages.</li>
  * </ul>
  *
- * <p>Conditional execution uses {@code if(condition, block, 0)} for lazy evaluation
- * of statement blocks. Stage-level and script-level conditions are combined with
+ * <p>Conditional execution uses {@code if(condition, block)} (two-argument form)
+ * for lazy evaluation of statement blocks. When the condition is false, {@code if()}
+ * returns null and the null guard in variable assignment skips the write.
+ * Stage-level and script-level conditions are combined with
  * {@code and()} when both are present.
  */
 public class ScriptGenerator {
@@ -183,7 +185,7 @@ public class ScriptGenerator {
                 for (var input : ws.getInputs().entrySet()) {
                     script.append(", @").append(input.getKey());
                 }
-                script.append("), 0)\n");
+                script.append("))\n");
 
                 // Code actions as separate conditional if() blocks
                 for (var codeAction : ws.getCodeActions().entrySet()) {
@@ -192,19 +194,19 @@ public class ScriptGenerator {
                               .append(", equals(@").append(codeVarName).append(", ")
                               .append(codeAction.getKey()).append(")), (")
                               .append(codeAction.getValue().toScript())
-                              .append("), 0)\n");
+                              .append("))\n");
                     }
                 }
 
-                // Output mappings (conditional via if() block)
-                if (!ws.getOutputs().isEmpty()) {
-                    script.append("if(@").append(condVarName).append(", (\n");
-                    for (var output : ws.getOutputs().entrySet()) {
-                        script.append("    ").append(output.getKey())
-                              .append(" <- script_variable(@").append(refVarName)
-                              .append(", \"").append(escapeString(output.getValue())).append("\")\n");
-                    }
-                    script.append("), 0)\n");
+                // Output mappings as individual conditional assignments.
+                // When condition is false, if() returns null and the null guard
+                // in setVar skips the assignment.
+                for (var output : ws.getOutputs().entrySet()) {
+                    script.append(output.getKey())
+                          .append(" <- if(@").append(condVarName)
+                          .append(", script_variable(@").append(refVarName)
+                          .append(", \"").append(escapeString(output.getValue()))
+                          .append("\"))\n");
                 }
             } else {
                 // Unconditional execution
@@ -271,7 +273,7 @@ public class ScriptGenerator {
                               .append(" <- @").append(scriptVar).append("\n");
                     }
                 }
-                script.append("), 0)\n");
+                script.append("))\n");
             } else {
                 // Unconditional inline — wrap in a group for function scope isolation
                 script.append("(\n");

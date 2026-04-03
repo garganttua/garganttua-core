@@ -34,8 +34,11 @@ import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
+import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+
+import java.lang.reflect.Modifier;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -283,10 +286,15 @@ public class ExpressionContextBuilder
         }
 
         // Create factories for unique methods only — add to auto-detected source
+        // Static methods use NullSupplierBuilder (no bean instance needed),
+        // non-static methods use BeanSupplierBuilder (requires bean registration)
         uniqueMethods.values()
                 .forEach(m -> {
+                    ISupplierBuilder<?, ?> supplier = Modifier.isStatic(m.getModifiers())
+                            ? new NullSupplierBuilder<>(m.getDeclaringClass())
+                            : new BeanSupplierBuilder<>(m.getDeclaringClass());
                     ExpressionNodeFactoryBuilder<?> builder = new ExpressionNodeFactoryBuilder<>(this,
-                            new BeanSupplierBuilder<>(m.getDeclaringClass()),
+                            supplier,
                             (IClass) m.getReturnType());
                     builder.method(m).autoDetect(true);
                     this.autoDetectedNodes.add(builder);
@@ -337,7 +345,7 @@ public class ExpressionContextBuilder
         log.atTrace().log("Entering synchronizePackagesFromContext()");
 
         support.getUseDependencies().stream()
-                .filter(dep -> dep.getDependency().equals(IInjectionContextBuilder.class))
+                .filter(dep -> dep.getDependency().represents(IInjectionContextBuilder.class))
                 .findFirst()
                 .ifPresent(dep -> dep.synchronizePackagesFromContext(contextPackages -> {
                     int beforeSize = this.packages.size();

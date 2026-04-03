@@ -37,13 +37,16 @@ public class WorkflowScript {
     private final Map<Integer, CodeAction> codeActions = Collections.emptyMap();
 
     public boolean isFile() {
-        return source.type() == ScriptSourceType.FILE || source.type() == ScriptSourceType.PATH;
+        return source.type() == ScriptSourceType.FILE
+                || source.type() == ScriptSourceType.PATH
+                || source.type() == ScriptSourceType.CLASSPATH;
     }
 
     public String getPath() {
         return switch (source.type()) {
             case FILE -> ((File) source.value()).getAbsolutePath();
             case PATH -> ((Path) source.value()).toAbsolutePath().toString();
+            case CLASSPATH -> (String) source.value();
             default -> null;
         };
     }
@@ -54,6 +57,17 @@ public class WorkflowScript {
                 case STRING -> (String) source.value();
                 case FILE -> Files.readString(((File) source.value()).toPath(), StandardCharsets.UTF_8);
                 case PATH -> Files.readString((Path) source.value(), StandardCharsets.UTF_8);
+                case CLASSPATH -> {
+                    String path = (String) source.value();
+                    String resource = path.startsWith("classpath:") ? path.substring("classpath:".length()) : path;
+                    InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+                    if (is == null) {
+                        throw new IOException("Classpath resource not found: " + path);
+                    }
+                    try (is) {
+                        yield new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    }
+                }
                 case INPUT_STREAM -> new String(((InputStream) source.value()).readAllBytes(), StandardCharsets.UTF_8);
                 case READER -> {
                     Reader reader = (Reader) source.value();
@@ -75,12 +89,16 @@ public class WorkflowScript {
         STRING,
         FILE,
         PATH,
+        CLASSPATH,
         INPUT_STREAM,
         READER
     }
 
     public record ScriptSource(ScriptSourceType type, Object value) {
         public static ScriptSource of(String content) {
+            if (content != null && content.startsWith("classpath:")) {
+                return new ScriptSource(ScriptSourceType.CLASSPATH, content);
+            }
             return new ScriptSource(ScriptSourceType.STRING, content);
         }
 
