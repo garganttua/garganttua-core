@@ -179,35 +179,37 @@ public class ScriptGenerator {
             script.append("include(\"").append(escapeString(ws.getPath())).append("\")\n");
 
             if (isConditional) {
-                // Conditional execution via if()
-                script.append(codeVarName).append(" <- if(@").append(condVarName)
-                      .append(", execute_script(@").append(refVarName);
+                // Conditional execution: group execute_script + output mappings
+                // in a single if() lazy block. When condition is false, nothing
+                // inside the block executes — no side effects on output variables.
+                script.append("if(@").append(condVarName).append(", (\n");
+
+                // Execute the script
+                script.append("    ").append(codeVarName).append(" <- execute_script(@").append(refVarName);
                 for (var input : ws.getInputs().entrySet()) {
                     script.append(", @").append(input.getKey());
                 }
-                script.append("))\n");
+                script.append(")\n");
 
-                // Code actions as separate conditional if() blocks
+                // Code actions inside the block
                 for (var codeAction : ws.getCodeActions().entrySet()) {
                     if (codeAction.getValue() != CodeAction.CONTINUE) {
-                        script.append("if(and(@").append(condVarName)
-                              .append(", equals(@").append(codeVarName).append(", ")
-                              .append(codeAction.getKey()).append(")), (")
+                        script.append("    if(equals(@").append(codeVarName).append(", ")
+                              .append(codeAction.getKey()).append("), (")
                               .append(codeAction.getValue().toScript())
                               .append("))\n");
                     }
                 }
 
-                // Output mappings as individual conditional assignments.
-                // When condition is false, if() returns null and the null guard
-                // in setVar skips the assignment.
+                // Output mappings inside the block
                 for (var output : ws.getOutputs().entrySet()) {
-                    script.append(output.getKey())
-                          .append(" <- if(@").append(condVarName)
-                          .append(", script_variable(@").append(refVarName)
+                    script.append("    ").append(output.getKey())
+                          .append(" <- script_variable(@").append(refVarName)
                           .append(", \"").append(escapeString(output.getValue()))
-                          .append("\"))\n");
+                          .append("\")\n");
                 }
+
+                script.append("))\n");
             } else {
                 // Unconditional execution
                 script.append(codeVarName).append(" <- ");

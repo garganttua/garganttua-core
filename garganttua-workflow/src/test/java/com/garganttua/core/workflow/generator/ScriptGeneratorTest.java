@@ -276,17 +276,17 @@ class ScriptGeneratorTest {
         assertTrue(generated.contains("_run_deploy_ref <- include("),
                 "Include should be unconditional: " + generated);
 
-        // Should use if() for conditional execution
-        assertTrue(generated.contains("_run_deploy_code <- if(@_run_deploy_cond, execute_script(@_run_deploy_ref, @env))"),
-                "Should have if() conditional execution: " + generated);
+        // execute_script + outputs should be grouped in a single if() block
+        assertTrue(generated.contains("if(@_run_deploy_cond, ("),
+                "Should have if() block grouping execution and outputs: " + generated);
+        assertTrue(generated.contains("    _run_deploy_code <- execute_script(@_run_deploy_ref, @env)"),
+                "execute_script should be inside if() block: " + generated);
+        assertTrue(generated.contains("    deployResult <- script_variable(@_run_deploy_ref, \"result\")"),
+                "Output mapping should be inside if() block: " + generated);
 
-        // Code actions should use if() with combined condition (two-argument form)
-        assertTrue(generated.contains("if(and(@_run_deploy_cond, equals(@_run_deploy_code, 1)), (abort()))"),
-                "Code actions should use if() with combined condition: " + generated);
-
-        // Output mappings should be individual conditional assignments (two-argument form)
-        assertTrue(generated.contains("deployResult <- if(@_run_deploy_cond, script_variable(@_run_deploy_ref, \"result\"))"),
-                "Output mappings should use individual conditional assignments: " + generated);
+        // Code actions should be inside the block
+        assertTrue(generated.contains("    if(equals(@_run_deploy_code, 1), (abort()))"),
+                "Code actions should be inside if() block: " + generated);
 
         // Should NOT have catch clauses (omitted when conditional)
         assertFalse(generated.contains("! =>"),
@@ -372,11 +372,15 @@ class ScriptGeneratorTest {
         assertTrue(generated.contains("_deploy_script2_cond <- @_deploy_cond"),
                 "Script2 should reference stage condition: " + generated);
 
-        // Both scripts should use conditional execution via if()
-        assertTrue(generated.contains("_deploy_script1_code <- if(@_deploy_script1_cond, execute_script("),
-                "Script1 should have conditional execute_script: " + generated);
-        assertTrue(generated.contains("_deploy_script2_code <- if(@_deploy_script2_cond, execute_script("),
-                "Script2 should have conditional execute_script: " + generated);
+        // Both scripts should use conditional if() blocks with execute_script inside
+        assertTrue(generated.contains("if(@_deploy_script1_cond, ("),
+                "Script1 should have conditional if() block: " + generated);
+        assertTrue(generated.contains("    _deploy_script1_code <- execute_script("),
+                "Script1 execute_script should be inside if() block: " + generated);
+        assertTrue(generated.contains("if(@_deploy_script2_cond, ("),
+                "Script2 should have conditional if() block: " + generated);
+        assertTrue(generated.contains("    _deploy_script2_code <- execute_script("),
+                "Script2 execute_script should be inside if() block: " + generated);
     }
 
     @Test

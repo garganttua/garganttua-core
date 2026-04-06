@@ -120,8 +120,9 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     public void setVariable(String name, Object value) {
                         // Handle special variable @output
                         if ("output".equals(name)) {
-                            Object output = value;
-                            context.setOutput(output);
+                            if (value != null) {
+                                context.setOutput(value);
+                            }
                             return;
                         }
                         context.setVariable(name, value);
@@ -233,8 +234,9 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     @Override
                     public void setVariable(String name, Object value) {
                         if ("output".equals(name)) {
-                            Object output = value;
-                            context.setOutput(output);
+                            if (value != null) {
+                                context.setOutput(value);
+                            }
                             return;
                         }
                         context.setVariable(name, value);
@@ -287,10 +289,12 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     // Handle nested group's variable assignment
                     if (innerGroup.variableName() != null) {
                         String varName = innerGroup.variableName();
-                        if ("output".equals(varName)) {
+                        if ("output".equals(varName) && lastResult != null) {
                             context.setOutput(lastResult);
                         }
-                        context.setVariable(varName, lastResult);
+                        if (lastResult != null) {
+                            context.setVariable(varName, lastResult);
+                        }
                     }
                     if (innerGroup.code() != null) {
                         context.setCode(innerGroup.code());
@@ -312,10 +316,12 @@ public class ScriptRuntimeStep implements IRuntimeStep<Object, Object[], Object>
                     lastResult = innerNode.execute();
                     if (innerNode.variableName() != null) {
                         String varName = innerNode.variableName();
-                        if ("output".equals(varName)) {
+                        if ("output".equals(varName) && lastResult != null) {
                             context.setOutput(lastResult);
                         }
-                        context.setVariable(varName, lastResult);
+                        if (lastResult != null) {
+                            context.setVariable(varName, lastResult);
+                        }
                     }
                     if (innerNode.code() != null) {
                         context.setCode(innerNode.code());
