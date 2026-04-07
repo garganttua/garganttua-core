@@ -135,10 +135,8 @@ public class ScriptContext implements IScript {
             throw new ScriptException("Failed to compile script: no statements found");
         }
 
-        Map<String, IRuntimeStep<?, Object[], Object>> steps = new LinkedHashMap<>();
-        for (int i = 0; i < statements.size(); i++) {
-            steps.put("step-" + i, new ScriptRuntimeStep("step-" + i, statements.get(i)));
-        }
+        ScriptStepFactory stepFactory = new ScriptStepFactory();
+        Map<String, IRuntimeStep<?, Object[], Object>> steps = stepFactory.compile(statements);
 
         // Convert initial variables and compiled blocks to suppliers
         Map<String, ISupplier<?>> variableSuppliers = new HashMap<>();
