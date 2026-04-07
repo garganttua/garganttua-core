@@ -457,4 +457,28 @@ class ScriptGroupTest {
         assertEquals("step1:test-ref", s.getVariable("first", IClass.getClass(String.class)).orElse(null));
         assertEquals("step2:test-ref", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
+
+    @Test
+    void testVariableResolvableAfterIncludeAndExecuteInBlock() throws Exception {
+        // Regression test: include() sets a ref variable, then inside a conditional
+        // block, execute_script() clears RuntimeExpressionContext. The next statement
+        // in the block must still resolve the ref variable.
+        // This simulates the workflow pattern: include + if(@cond, (execute_script + script_variable)).
+        java.io.File subScript = java.nio.file.Files.createTempFile("test-script", ".gs").toFile();
+        subScript.deleteOnExit();
+        java.nio.file.Files.writeString(subScript.toPath(), "output <- string(\"sub-output\")");
+
+        String path = subScript.getAbsolutePath().replace("\\", "\\\\");
+        IScript s = createScript(String.format("""
+                ref <- include("%s")
+                result <- if(true, (
+                    code <- execute_script(@ref)
+                    val <- script_variable(@ref, "output")
+                    @val
+                ))
+                """, path));
+        int code = s.execute();
+        assertEquals(0, code);
+        assertEquals("sub-output", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
+    }
 }

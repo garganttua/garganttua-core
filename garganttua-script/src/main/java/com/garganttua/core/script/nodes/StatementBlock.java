@@ -65,8 +65,9 @@ public class StatementBlock {
     static Object executeStatements(IRuntimeContext<Object[], Object> context, List<IScriptNode> statements) {
         Object lastResult = null;
         for (IScriptNode node : statements) {
-            // Ensure the resolver is set before each statement — previous statements
-            // (e.g. execute_script) may have cleared it via sub-script execution
+            // Restore both contexts before each statement — previous statements
+            // (e.g. execute_script) may have cleared them via sub-script execution
+            RuntimeExpressionContext.set(context);
             ExpressionVariableContext.set(RESOLVER);
             try {
                 if (node instanceof StatementGroupNode group) {
