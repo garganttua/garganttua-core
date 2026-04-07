@@ -84,7 +84,6 @@ public class ScriptStepFactory {
         return steps;
     }
 
-    @SuppressWarnings("unchecked")
     private RuntimeStep<Object, Object[], Object> compileNode(String stepName, IScriptNode node) {
         IExpression<Object, ISupplier<Object>> expression;
 
@@ -144,12 +143,10 @@ public class ScriptStepFactory {
 
     // --- Expression compilation ---
 
-    @SuppressWarnings("unchecked")
     private IExpression<Object, ISupplier<Object>> wrapExpression(IExpression<Object, ISupplier<Object>> expr) {
         return new ScriptExpressionWrapper<>(expr);
     }
 
-    @SuppressWarnings("unchecked")
     private IExpression<Object, ISupplier<Object>> compileGroup(String stepName, StatementGroupNode groupNode) {
         // Recursively compile inner statements as steps
         List<IScriptNode> stmts = groupNode.statements();
@@ -180,7 +177,6 @@ public class ScriptStepFactory {
      * Compiles a node like compileNode but forces isOutput=true so its result
      * becomes the sub-runtime's output (used for the last statement in a group).
      */
-    @SuppressWarnings("unchecked")
     private RuntimeStep<Object, Object[], Object> compileNodeAsOutput(String stepName, IScriptNode node) {
         IExpression<Object, ISupplier<Object>> expression;
 
@@ -215,7 +211,6 @@ public class ScriptStepFactory {
         return new RuntimeStep<>(RUNTIME_NAME, stepName, Object.class, methodBinder, fallback);
     }
 
-    @SuppressWarnings("unchecked")
     private IExpression<Object, ISupplier<Object>> compileFunctionDef(FunctionDefNode funcDef) {
         // Expression that resolves the body block and creates a ScriptFunction
         return new IExpression<>() {
@@ -257,7 +252,6 @@ public class ScriptStepFactory {
         };
     }
 
-    @SuppressWarnings("unchecked")
     private IExpression<Object, ISupplier<Object>> compileLazy(IScriptNode node) {
         // Returns the supplier itself as the result value (not evaluated)
         IExpression<?, ? extends ISupplier<?>> innerExpr = node.expression();
