@@ -437,4 +437,24 @@ class ScriptGroupTest {
         assertEquals(0, code);
         assertEquals("called:my-script-ref", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
     }
+
+    @Test
+    void testVariableResolverSurvivesNestedExecution() {
+        // Regression test: execute_script() inside a lazy block clears ExpressionVariableContext
+        // via its sub-script execution. The next statement in the same block must still
+        // resolve variables. This simulates the workflow include+execute_script+script_variable
+        // pattern inside an if() conditional block.
+        IScript s = createScript("""
+                ref <- string("test-ref")
+                result <- if(true, (
+                    first <- concatenate("step1:", @ref)
+                    second <- concatenate("step2:", @ref)
+                    @second
+                ))
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertEquals("step1:test-ref", s.getVariable("first", IClass.getClass(String.class)).orElse(null));
+        assertEquals("step2:test-ref", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
+    }
 }
