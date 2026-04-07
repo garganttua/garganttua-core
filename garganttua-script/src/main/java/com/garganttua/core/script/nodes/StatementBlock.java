@@ -2,9 +2,11 @@ package com.garganttua.core.script.nodes;
 
 import java.util.List;
 
+import com.garganttua.core.expression.context.ExpressionVariableContext;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.core.script.ScriptException;
+import com.garganttua.core.script.context.ScriptVariableResolver;
 import com.garganttua.core.supply.ISupplier;
 
 /**
@@ -35,13 +37,29 @@ public class StatementBlock {
         return this.statements;
     }
 
+    private static final ScriptVariableResolver RESOLVER = new ScriptVariableResolver();
+
     @SuppressWarnings("unchecked")
     public Object execute() {
         IRuntimeContext<Object[], Object> context = RuntimeExpressionContext.get();
         if (context == null) {
             throw new ScriptException("StatementBlock: no runtime context available");
         }
-        return executeStatements(context, this.statements);
+        // Ensure ExpressionVariableContext is set so inner expressions can
+        // resolve script variables (@0, @code, @output, named variables).
+        // This is needed because StatementBlock is executed by ControlFlowFunctions.ifExpr()
+        // and ScriptFunction, which are outside the ScriptExpressionWrapper scope.
+        var previous = ExpressionVariableContext.get();
+        ExpressionVariableContext.set(RESOLVER);
+        try {
+            return executeStatements(context, this.statements);
+        } finally {
+            if (previous != null) {
+                ExpressionVariableContext.set(previous);
+            } else {
+                ExpressionVariableContext.clear();
+            }
+        }
     }
 
     static Object executeStatements(IRuntimeContext<Object[], Object> context, List<IScriptNode> statements) {

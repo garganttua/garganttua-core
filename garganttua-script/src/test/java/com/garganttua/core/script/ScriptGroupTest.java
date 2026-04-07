@@ -399,4 +399,42 @@ class ScriptGroupTest {
         assertEquals(20, s.getVariable("rb", IClass.getClass(Integer.class)).orElse(null));
         assertEquals(30, s.getVariable("rc", IClass.getClass(Integer.class)).orElse(null));
     }
+
+    // =====================================================================
+    // REGRESSION: PARENT SCOPE VARIABLES INSIDE LAZY BLOCKS
+    // =====================================================================
+
+    @Test
+    void testParentVariableAccessibleInLazyBlock() {
+        // Variables defined in parent scope must be resolvable inside (...) lazy blocks.
+        // Regression test for: variables not resolvable inside lazy blocks after
+        // ScriptStepFactory refactoring (ExpressionVariableContext not set in StatementBlock).
+        IScript s = createScript("""
+                ref <- string("parent-value")
+                result <- if(true, (
+                    captured <- @ref
+                    @captured
+                ))
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertEquals("parent-value", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
+        assertEquals("parent-value", s.getVariable("captured", IClass.getClass(String.class)).orElse(null));
+    }
+
+    @Test
+    void testParentVariableAccessibleInConditionalLazyBlock() {
+        // Simulates the workflow pattern: include() sets a ref, then if() block reads it
+        IScript s = createScript("""
+                scriptRef <- string("my-script-ref")
+                cond <- true
+                result <- if(@cond, (
+                    val <- concatenate("called:", @scriptRef)
+                    @val
+                ))
+                """);
+        int code = s.execute();
+        assertEquals(0, code);
+        assertEquals("called:my-script-ref", s.getVariable("result", IClass.getClass(String.class)).orElse(null));
+    }
 }
