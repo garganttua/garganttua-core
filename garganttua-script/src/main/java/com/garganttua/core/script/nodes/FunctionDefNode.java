@@ -11,10 +11,10 @@ import com.garganttua.core.supply.ISupplier;
  *
  * <p>Syntax: {@code myFunc = (param1, param2) => (body)}
  *
- * <p>This node is not directly executable — it is handled by
- * {@link com.garganttua.core.script.context.ScriptRuntimeStep#executeGroup}
- * which creates a {@link ScriptFunction} and stores it as a variable in
- * the runtime context. The function can then be invoked via
+ * <p>This node is not directly executable — it is compiled by
+ * {@link com.garganttua.core.script.context.ScriptStepFactory}
+ * into a RuntimeStep that creates a {@link ScriptFunction} and stores it
+ * as a variable in the runtime context. The function can then be invoked via
  * {@link com.garganttua.core.expression.DynamicFunctionNode} dynamic resolution.
  *
  * <p>The {@code bodyBlockName} references a pre-compiled {@link StatementBlock}

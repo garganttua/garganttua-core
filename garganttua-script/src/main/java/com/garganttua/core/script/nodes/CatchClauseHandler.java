@@ -7,9 +7,8 @@ import com.garganttua.core.script.ScriptException;
 
 /**
  * Utility for matching catch clauses against exceptions and executing handlers.
- * Used by {@link com.garganttua.core.script.context.ScriptRuntimeStep} and
- * {@link StatementBlock} to process catch clauses in nested execution contexts
- * (statement groups, function bodies, if-blocks).
+ * Used by {@link StatementBlock} to process catch clauses in nested execution
+ * contexts (function bodies, if-blocks).
  */
 public class CatchClauseHandler {
 

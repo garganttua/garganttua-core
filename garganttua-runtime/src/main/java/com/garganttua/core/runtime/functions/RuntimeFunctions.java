@@ -24,7 +24,7 @@ import com.garganttua.core.runtime.RuntimeExpressionContext;
  *
  * <p>
  * The {@link RuntimeExpressionContext} ThreadLocal is set by
- * {@code ScriptRuntimeStep} and {@code RuntimeStepMethodBinder} before any
+ * {@code RuntimeStepMethodBinder} before any
  * expression evaluation, so {@code context()} is guaranteed to return a
  * non-null value when called during runtime execution.
  * </p>
