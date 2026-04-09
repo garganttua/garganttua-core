@@ -66,6 +66,13 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
                 return m;
             }
         }
+        // Traverse interfaces (needed for anonymous classes implementing interfaces)
+        for (IClass<?> iface : clazz.getInterfaces()) {
+            IMethod m = getMethod(iface, name);
+            if (m != null) {
+                return m;
+            }
+        }
         IClass<?> superclass = clazz.getSuperclass();
         if (superclass != null) {
             return getMethod(superclass, name);
@@ -79,6 +86,17 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
 
         for (IMethod m : clazz.getDeclaredMethods()) {
             if (m.getName().equals(name)) {
+                String signature = buildMethodSignature(m);
+                if (!seenSignatures.contains(signature)) {
+                    methods.add(m);
+                    seenSignatures.add(signature);
+                }
+            }
+        }
+
+        // Traverse interfaces (needed for anonymous classes implementing interfaces)
+        for (IClass<?> iface : clazz.getInterfaces()) {
+            for (IMethod m : getMethods(iface, name)) {
                 String signature = buildMethodSignature(m);
                 if (!seenSignatures.contains(signature)) {
                     methods.add(m);
