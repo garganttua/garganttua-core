@@ -48,10 +48,28 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        server-id: github garganttua tooling
-        settings-path: ${{ github.workspace }}
+
+    - name: Generate Maven settings
+      run: |
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml << 'SETTINGS'
+        <settings>
+          <servers>
+            <server>
+              <id>garganttua_core_github_repository</id>
+              <username>${env.GITHUB_ACTOR}</username>
+              <password>${env.GITHUB_TOKEN}</password>
+            </server>
+            <server>
+              <id>garganttua_core_github_snapshot_repository</id>
+              <username>${env.GITHUB_ACTOR}</username>
+              <password>${env.GITHUB_TOKEN}</password>
+            </server>
+          </servers>
+        </settings>
+        SETTINGS
 
     - name: Deploy to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn deploy
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
