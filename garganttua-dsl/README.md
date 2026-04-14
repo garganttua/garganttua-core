@@ -31,6 +31,7 @@ This module is the foundation for all DSL implementations across the Garganttua 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
 
 <!-- AUTO-GENERATED-END -->
 

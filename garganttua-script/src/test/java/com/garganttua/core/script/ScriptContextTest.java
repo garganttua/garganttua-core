@@ -46,7 +46,7 @@ class ScriptContextTest {
 
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        ScriptContext ctx = new ScriptContext(expressionContext, injectionContext);
+        ScriptContext ctx = new ScriptContext(expressionContext, injectionContext, null);
         ctx.load(source);
         ctx.compile();
         return ctx;
@@ -171,7 +171,7 @@ class ScriptContextTest {
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
         injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();
-        ScriptContext ctx = new ScriptContext(expressionContext, injectionContextBuilder.build());
+        ScriptContext ctx = new ScriptContext(expressionContext, injectionContextBuilder.build(), null);
         assertThrows(ScriptException.class, () -> ctx.execute());
     }
 
@@ -184,7 +184,7 @@ class ScriptContextTest {
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
         injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();
-        ScriptContext ctx = new ScriptContext(expressionContext, injectionContextBuilder.build());
+        ScriptContext ctx = new ScriptContext(expressionContext, injectionContextBuilder.build(), null);
         assertThrows(ScriptException.class, () -> ctx.compile());
     }
 

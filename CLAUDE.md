@@ -57,7 +57,6 @@ python3 scripts/run_all.py
 
 ## Build Caveats
 
-- The `garganttua-reflection` module has a pre-existing compilation issue (`FieldBinder` missing `ISupplier` import) when building from root. Use `-pl <module>` to build specific modules when the root build fails.
 - When modifying `garganttua-script` and testing from `garganttua-workflow`, you must `mvn install -pl garganttua-script -DskipTests` first so the workflow module picks up the updated JAR.
 - The shade plugin in `garganttua-script` and `garganttua-console` uses `AppendingTransformer` to merge annotation index files from multiple JARs. This must be updated when adding new `@Indexed` annotations.
 - The `garganttua-annotation-processor` module disables annotation processing (`-proc:none`) to avoid self-processing. It is **commented out** of the root reactor `<modules>` — it must be pre-installed separately (`mvn install -pl garganttua-annotation-processor`).

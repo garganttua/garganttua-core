@@ -23,7 +23,7 @@ When compiling Java applications to native images with GraalVM, reflection-based
 ```xml
 <dependency>
     <groupId>com.garganttua.core</groupId>
-    <artifactId>garganttua-native</artifactId>
+    <artifactId>garganttua-native-commons</artifactId>
     <version>2.0.0-ALPHA01</version>
 </dependency>
 ```

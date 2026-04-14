@@ -32,7 +32,7 @@ Garganttua Mapper is a powerful, **declarative object-to-object mapping engine**
 
 ### Dependencies
  - `com.garganttua.core:garganttua-reflection`
- - `com.garganttua.core:garganttua-native:provided`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
 
 <!-- AUTO-GENERATED-END -->
 

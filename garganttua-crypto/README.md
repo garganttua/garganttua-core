@@ -26,6 +26,7 @@ The Garganttua Crypto module provides a comprehensive cryptographic framework fo
 2.0.0-ALPHA01
 
 ### Dependencies
+ - `com.garganttua.core:garganttua-commons`
 
 <!-- AUTO-GENERATED-END -->
 

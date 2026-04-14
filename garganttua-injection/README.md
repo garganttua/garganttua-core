@@ -42,8 +42,9 @@ Beyond JSR-330, this module offers:
  - `com.garganttua.core:garganttua-supply`
  - `com.garganttua.core:garganttua-dsl`
  - `com.garganttua.core:garganttua-reflection`
- - `com.garganttua.core:garganttua-reflections:provided`
- - `com.garganttua.core:garganttua-native:provided`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
+ - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-native-commons:provided`
 
 <!-- AUTO-GENERATED-END -->
 

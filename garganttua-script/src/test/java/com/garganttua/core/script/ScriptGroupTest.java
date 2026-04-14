@@ -56,7 +56,7 @@ class ScriptGroupTest {
 
     @Test
     void testSimpleStatementGroup() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build());
+        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build(), null);
         script.load("""
             result <- (
                 a <- 10
@@ -73,7 +73,7 @@ class ScriptGroupTest {
 
     @Test
     void testGroupWithCodeMapping() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build());
+        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build(), null);
         script.load("""
             result <- (
                 value <- 42
@@ -88,7 +88,7 @@ class ScriptGroupTest {
 
     @Test
     void testGroupWithInnerCodeMappings() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build());
+        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build(), null);
         script.load("""
             (
                 first <- 1 -> 10
@@ -104,7 +104,7 @@ class ScriptGroupTest {
 
     @Test
     void testNestedGroups() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build());
+        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build(), null);
         script.load("""
             outer <- (
                 a <- 5
@@ -125,7 +125,7 @@ class ScriptGroupTest {
 
     @Test
     void testGroupVariablesVisibility() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build());
+        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder.build(), null);
         script.load("""
             x <- 100
             (
@@ -161,7 +161,7 @@ class ScriptGroupTest {
         ic.onInit().onStart();
         IExpressionContext ec = ecb.build();
 
-        ScriptContext ctx = new ScriptContext(ec, ic);
+        ScriptContext ctx = new ScriptContext(ec, ic, null);
         ctx.load(source);
         ctx.compile();
         return ctx;

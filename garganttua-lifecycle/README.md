@@ -41,7 +41,6 @@ The lifecycle state machine follows this flow:
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
- - `com.garganttua.core:garganttua-reflection`
 
 <!-- AUTO-GENERATED-END -->
 

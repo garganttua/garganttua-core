@@ -47,18 +47,6 @@ public class ScriptContext implements IScript {
     private final Map<String, IScript> includedScripts = new ConcurrentHashMap<>();
 
     /**
-     * Creates a new ScriptContext with expression and injection contexts.
-     *
-     * @param expressionContext the expression context for evaluating expressions
-     * @param injectionContext the injection context for bean resolution
-     * @deprecated Use {@link #ScriptContext(IExpressionContext, IInjectionContext, IBoostrap)} instead
-     */
-    @Deprecated
-    public ScriptContext(IExpressionContext expressionContext, IInjectionContext injectionContext) {
-        this(expressionContext, injectionContext, null);
-    }
-
-    /**
      * Creates a new ScriptContext with expression, injection contexts, and bootstrap.
      *
      * @param expressionContext the expression context for evaluating expressions

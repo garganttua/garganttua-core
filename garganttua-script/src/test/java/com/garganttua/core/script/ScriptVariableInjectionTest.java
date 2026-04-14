@@ -49,7 +49,7 @@ class ScriptVariableInjectionTest {
 
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        ScriptContext ctx = new ScriptContext(expressionContext, injectionContext);
+        ScriptContext ctx = new ScriptContext(expressionContext, injectionContext, null);
         ctx.load(source);
         ctx.compile();
         return ctx;

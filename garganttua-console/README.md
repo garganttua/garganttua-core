@@ -36,12 +36,12 @@ The `garganttua-console` module provides a terminal-based interactive console (R
  - `com.garganttua.core:garganttua-expression`
  - `com.garganttua.core:garganttua-injection`
  - `com.garganttua.core:garganttua-bootstrap`
- - `com.garganttua.core:garganttua-annotation-processor`
+ - `com.garganttua.core:garganttua-reflections:provided`
  - `com.garganttua.core:garganttua-mutex`
  - `org.jline:jline:3.25.1`
  - `org.slf4j:slf4j-api:2.0.17:compile`
  - `ch.qos.logback:logback-classic:compile`
- - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-runtime-reflection:provided`
 
 <!-- AUTO-GENERATED-END -->
 

@@ -39,9 +39,10 @@ The `garganttua-configuration` module provides a unified API for loading configu
  - `com.fasterxml.jackson.core:jackson-databind`
  - `com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:provided`
  - `com.fasterxml.jackson.dataformat:jackson-dataformat-xml:provided`
- - `com.fasterxml.jackson.dataformat:jackson-dataformat-toml:provided`
  - `com.fasterxml.jackson.dataformat:jackson-dataformat-properties:provided`
+ - `com.fasterxml.jackson.dataformat:jackson-dataformat-toml:provided`
  - `com.garganttua.core:garganttua-injection:provided`
+ - `org.slf4j:slf4j-simple:test`
 
 <!-- AUTO-GENERATED-END -->
 

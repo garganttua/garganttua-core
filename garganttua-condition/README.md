@@ -39,7 +39,9 @@ Key features:
  - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-dsl`
  - `com.garganttua.core:garganttua-supply`
+ - `com.garganttua.core:garganttua-reflection`
  - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
 
 <!-- AUTO-GENERATED-END -->
 

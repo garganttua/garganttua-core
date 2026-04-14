@@ -71,6 +71,7 @@
     <build.helper.maven.plugin.version>3.4.0</build.helper.maven.plugin.version>
     <jacoco.maven.plugin.version>0.8.11</jacoco.maven.plugin.version>
     <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
+    <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
 
     <!-- Compiler Configuration -->
     <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -407,6 +408,47 @@
             <goals>
               <goal>jar</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${maven.javadoc.plugin.version}</version>
+        <configuration>
+          <source>${java.version}</source>
+          <failOnError>false</failOnError>
+          <doclint>none</doclint>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>${maven.exec.plugin.version}</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>update-documentation</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>python3</executable>
+              <workingDirectory>${project.basedir}/scripts</workingDirectory>
+              <arguments>
+                <argument>run_all.py</argument>
+              </arguments>
+            </configuration>
           </execution>
         </executions>
       </plugin>
