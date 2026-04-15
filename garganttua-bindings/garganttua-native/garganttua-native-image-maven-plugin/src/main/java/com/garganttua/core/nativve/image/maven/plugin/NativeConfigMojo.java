@@ -22,7 +22,6 @@ import com.garganttua.core.nativve.INativeConfiguration;
 import com.garganttua.core.nativve.INativeConfigurationBuilder;
 import com.garganttua.core.nativve.NativeConfigurationBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntry;
-import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
@@ -62,10 +61,9 @@ public class NativeConfigMojo extends AbstractMojo {
 	public void execute() throws MojoExecutionException {
 		getLog().info("Generating Native-image configuration in directory: " + this.buildOutputDirectory);
 
-		IAnnotationScanner scanner = createAnnotationScanner();
 		IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
 				.withProvider(new RuntimeReflectionProvider())
-				.withScanner(scanner);
+				.withScanner(new ReflectionsAnnotationScanner());
 
 		File outputDir = new File(buildDirectory, "classes/META-INF/native-image");
 		if (!outputDir.exists() && !outputDir.mkdirs()) {
@@ -128,29 +126,6 @@ public class NativeConfigMojo extends AbstractMojo {
 			}
 			getLog().info("Native-image resource added " + filePath);
 		}
-	}
-
-	/**
-	 * Creates the best available annotation scanner.
-	 * Prefers IndexedAnnotationScanner (AOT indices) with ReflectionsAnnotationScanner
-	 * as fallback. Falls back to ReflectionsAnnotationScanner alone if AOT is not on the classpath.
-	 */
-	private IAnnotationScanner createAnnotationScanner() {
-		try {
-			Class<?> indexedScannerClass = Class.forName(
-					"com.garganttua.core.aot.annotation.scanner.IndexedAnnotationScanner");
-			// Use the constructor that takes a fallback scanner
-			var constructor = indexedScannerClass.getConstructor(IAnnotationScanner.class);
-			IAnnotationScanner indexedScanner = (IAnnotationScanner) constructor.newInstance(
-					new ReflectionsAnnotationScanner());
-			getLog().info("Using IndexedAnnotationScanner with Reflections fallback for native config");
-			return indexedScanner;
-		} catch (ClassNotFoundException e) {
-			getLog().debug("AOT annotation scanner not on classpath, using Reflections scanner");
-		} catch (Exception e) {
-			getLog().warn("Failed to create IndexedAnnotationScanner, falling back to Reflections", e);
-		}
-		return new ReflectionsAnnotationScanner();
 	}
 
 	private void processArtifact(Artifact artifact, File outputDir) throws IOException {

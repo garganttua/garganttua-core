@@ -18,11 +18,13 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.bootstrap.dsl.IBoostrap;
 import com.garganttua.core.expression.context.IExpressionContext;
-import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeResult;
 import com.garganttua.core.runtime.IRuntimeStep;
-import com.garganttua.core.runtime.Runtime;
+import com.garganttua.core.runtime.dsl.IRuntimeBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.script.ScriptException;
@@ -35,7 +37,7 @@ import com.garganttua.core.supply.ISupplier;
 public class ScriptContext implements IScript {
 
     private final IExpressionContext expressionContext;
-    private final IInjectionContext injectionContext;
+    private final IInjectionContextBuilder injectionContextBuilder;
     private final IBoostrap bootstrap;
     private volatile String scriptSource;
     private volatile IRuntime<Object[], Object> runtime;
@@ -47,15 +49,15 @@ public class ScriptContext implements IScript {
     private final Map<String, IScript> includedScripts = new ConcurrentHashMap<>();
 
     /**
-     * Creates a new ScriptContext with expression, injection contexts, and bootstrap.
+     * Creates a new ScriptContext with expression context, injection context builder, and bootstrap.
      *
      * @param expressionContext the expression context for evaluating expressions
-     * @param injectionContext the injection context for bean resolution
+     * @param injectionContextBuilder the injection context builder for runtime construction
      * @param bootstrap the bootstrap for rebuilding components after JAR loading (may be null)
      */
-    public ScriptContext(IExpressionContext expressionContext, IInjectionContext injectionContext, IBoostrap bootstrap) {
+    public ScriptContext(IExpressionContext expressionContext, IInjectionContextBuilder injectionContextBuilder, IBoostrap bootstrap) {
         this.expressionContext = expressionContext;
-        this.injectionContext = injectionContext;
+        this.injectionContextBuilder = injectionContextBuilder;
         this.bootstrap = bootstrap;
         this.expressionContext.enableDynamicFunctions();
     }
@@ -126,55 +128,37 @@ public class ScriptContext implements IScript {
         ScriptStepFactory stepFactory = new ScriptStepFactory();
         Map<String, IRuntimeStep<?, Object[], Object>> steps = stepFactory.compile(statements);
 
-        // Convert initial variables and compiled blocks to suppliers
-        Map<String, ISupplier<?>> variableSuppliers = new HashMap<>();
+        // Build runtime via RuntimesBuilder — script just declares steps and variables
+        @SuppressWarnings("unchecked")
+        IClass<Object[]> inputType = (IClass<Object[]>) (IClass<?>) IClass.getClass(Object[].class);
+        IClass<Object> outputType = IClass.getClass(Object.class);
+
+        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder()
+                .provide(this.injectionContextBuilder);
+
+        IRuntimeBuilder<Object[], Object> runtimeBuilder = runtimesBuilder
+                .runtime("script", inputType, outputType);
+
+        // Add pre-compiled steps
+        for (Map.Entry<String, IRuntimeStep<?, Object[], Object>> entry : steps.entrySet()) {
+            runtimeBuilder.step(entry.getKey(), entry.getValue());
+        }
+
+        // Add compiled blocks as variables
         for (Map.Entry<String, StatementBlock> blockEntry : compiledBlocks.entrySet()) {
             StatementBlock block = blockEntry.getValue();
-            variableSuppliers.put(blockEntry.getKey(), new ISupplier<StatementBlock>() {
-                @Override
-                public Optional<StatementBlock> supply() {
-                    return Optional.of(block);
-                }
-
-                @Override
-                public java.lang.reflect.Type getSuppliedType() {
-                    return StatementBlock.class;
-                }
-
-                @Override
-                public IClass<StatementBlock> getSuppliedClass() {
-                    return IClass.getClass(StatementBlock.class);
-                }
-            });
+            runtimeBuilder.variable(blockEntry.getKey(), block);
         }
+
+        // Add initial variables
         for (Map.Entry<String, Object> entry : this.initialVariables.entrySet()) {
-            Object value = entry.getValue();
-            variableSuppliers.put(entry.getKey(), new ISupplier<Object>() {
-                @Override
-                public Optional<Object> supply() {
-                    return Optional.ofNullable(value);
-                }
-
-                @Override
-                public java.lang.reflect.Type getSuppliedType() {
-                    return value != null ? value.getClass() : Object.class;
-                }
-
-                @Override
-                public IClass<Object> getSuppliedClass() {
-                    return IClass.getClass(Object.class);
-                }
-            });
+            runtimeBuilder.variable(entry.getKey(), entry.getValue());
         }
 
-        this.runtime = new Runtime<>(
-                "script",
-                steps,
-                this.injectionContext,
-                Object[].class,
-                Object.class,
-                variableSuppliers
-        );
+        Map<String, IRuntime<?, ?>> runtimes = runtimesBuilder.build();
+        @SuppressWarnings("unchecked")
+        IRuntime<Object[], Object> scriptRuntime = (IRuntime<Object[], Object>) runtimes.get("script");
+        this.runtime = scriptRuntime;
     }
 
     private List<IScriptNode> parseStatements(String source) {
@@ -284,7 +268,7 @@ public class ScriptContext implements IScript {
     }
 
     public ScriptContext createChildScript() {
-        return new ScriptContext(this.expressionContext, this.injectionContext, this.bootstrap);
+        return new ScriptContext(this.expressionContext, this.injectionContextBuilder, this.bootstrap);
     }
 
     public void registerIncludedScript(String name, IScript script) {
@@ -305,12 +289,12 @@ public class ScriptContext implements IScript {
     }
 
     /**
-     * Returns the injection context used by this script.
+     * Returns the injection context builder used by this script.
      *
-     * @return the injection context
+     * @return the injection context builder
      */
-    public IInjectionContext getInjectionContext() {
-        return this.injectionContext;
+    public IInjectionContextBuilder getInjectionContextBuilder() {
+        return this.injectionContextBuilder;
     }
 
     /**

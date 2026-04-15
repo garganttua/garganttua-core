@@ -36,7 +36,6 @@
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-reflections</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
@@ -62,7 +61,10 @@
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-runtime-reflection</artifactId>
-      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-aot-annotation-scanner</artifactId>
     </dependency>
   </dependencies>
 
@@ -91,6 +93,18 @@
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.bootstrap.annotations.Bootstrap</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.mutex.annotations.Mutex</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.mutex.annotations.MutexFactory</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/garganttua/index/com.garganttua.core.dsl.annotations.Scan</resource>
                 </transformer>
               </transformers>
               <filters>

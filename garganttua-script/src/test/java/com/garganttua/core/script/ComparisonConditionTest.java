@@ -49,7 +49,7 @@ class ComparisonConditionTest {
 
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        ScriptContext ctx = new ScriptContext(expressionContext, injectionContext, null);
+        ScriptContext ctx = new ScriptContext(expressionContext, injectionContextBuilder, null);
         ctx.load(source);
         ctx.compile();
         return ctx;

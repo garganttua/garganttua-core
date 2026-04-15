@@ -17,7 +17,6 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;

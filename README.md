@@ -73,7 +73,6 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-bindings**](./garganttua-bindings/README.md) | Modules providing bindings to external libs and frameworks. |
 | \|    \|- [**garganttua-mutex-redis**](./garganttua-bindings/garganttua-mutex-redis/README.md) | Distributed mutex over redis. |
 | \|    \|- [**garganttua-native**](./garganttua-bindings/garganttua-native/README.md) | Garganttua Native support - parent module. |
-| \|    \|    \|- [**garganttua-native-annotation-processor**](./garganttua-bindings/garganttua-native/garganttua-native-annotation-processor/README.md) | Compile-time annotation processor for GraalVM native image configuration generation. |
 | \|    \|    \|- [**garganttua-native-commons**](./garganttua-bindings/garganttua-native/garganttua-native-commons/README.md) | Low-level native integrations and system abstractions. |
 | \|    \|    \|- [**garganttua-native-image-maven-plugin**](./garganttua-bindings/garganttua-native/garganttua-native-image-maven-plugin/README.md) | Maven plugin to build native images (GraalVM support). |
 | \|    \|- [**garganttua-reflections**](./garganttua-bindings/garganttua-reflections/README.md) | Annotation scanner implementation based on org.reflections:reflections |
@@ -100,6 +99,20 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 | \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -152,7 +152,7 @@ public class Main {
         // Now build expression context
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        ScriptContext script = new ScriptContext(expressionContext, injectionContext, null);
+        ScriptContext script = new ScriptContext(expressionContext, injectionContextBuilder, null);
 
         String scriptContent = readScriptFile(scriptFile);
         script.load(scriptContent);

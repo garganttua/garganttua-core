@@ -4,6 +4,7 @@ import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntime;
+import com.garganttua.core.runtime.IRuntimeStep;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
@@ -13,6 +14,8 @@ public interface IRuntimeBuilder<InputType, OutputType> extends IAutomaticLinked
     IRuntimeBuilder<InputType, OutputType> variable(String name, Object value);
 
     IRuntimeBuilder<InputType, OutputType> variable(String name, ISupplierBuilder<?, ? extends ISupplier<?>> value);
+
+    IRuntimeBuilder<InputType, OutputType> step(String name, IRuntimeStep<?, InputType, OutputType> step);
 
     <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(String string, ISupplierBuilder<StepObjectType, ISupplier<StepObjectType>> objectSupplier, IClass<ExecutionReturn> returnType);
 

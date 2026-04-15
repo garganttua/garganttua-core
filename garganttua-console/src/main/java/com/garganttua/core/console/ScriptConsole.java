@@ -41,6 +41,8 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.aot.annotation.scanner.AOTAnnotationScanner;
+import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
@@ -120,7 +122,10 @@ public class ScriptConsole {
 
     private IExpressionContext expressionContext;
     private IInjectionContext injectionContext;
+    private IInjectionContextBuilder injectionContextBuilder;
     private IBoostrap bootstrap;
+
+    private final boolean useAOT;
 
     private final Map<String, Object> sessionVariables = new LinkedHashMap<>();
     private int statementCount = 0;
@@ -130,11 +135,21 @@ public class ScriptConsole {
      * Creates a new console with standard I/O using JLine for history support.
      */
     public ScriptConsole() {
+        this(false);
+    }
+
+    /**
+     * Creates a new console with standard I/O using JLine for history support.
+     *
+     * @param useAOT if true, use IndexedAnnotationScanner for faster startup
+     */
+    public ScriptConsole(boolean useAOT) {
         this.fallbackReader = null;
         this.out = System.out;
         this.err = System.err;
         this.colorsEnabled = detectColorSupport();
         this.useJLine = true;
+        this.useAOT = useAOT;
         initializeJLine();
     }
 
@@ -165,6 +180,7 @@ public class ScriptConsole {
         this.err = err;
         this.colorsEnabled = colorsEnabled;
         this.useJLine = false;
+        this.useAOT = false;
         // Don't initialize JLine in test mode
     }
 
@@ -361,8 +377,15 @@ public class ScriptConsole {
                     (Class<? extends IReflectionProvider>) Class.forName(
                             "com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
             reflectionBuilder = ReflectionBuilder.builder()
-                    .withProvider(providerClass.getDeclaredConstructor().newInstance())
-                    .withScanner(new ReflectionsAnnotationScanner());
+                    .withProvider(providerClass.getDeclaredConstructor().newInstance());
+            if (useAOT) {
+                out.println(color("  AOT annotation scanner enabled", DIM, BRIGHT_CYAN));
+                reflectionBuilder
+                        .withScanner(new AOTAnnotationScanner(), 20)
+                        .withScanner(new ReflectionsAnnotationScanner(), 10);
+            } else {
+                reflectionBuilder.withScanner(new ReflectionsAnnotationScanner());
+            }
             reflectionBuilder.build();
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize reflection provider", e);
@@ -393,6 +416,7 @@ public class ScriptConsole {
                 .provide(injectionContextBuilder);
 
         // Build contexts manually to ensure proper lifecycle
+        this.injectionContextBuilder = injectionContextBuilder;
         this.injectionContext = injectionContextBuilder.build();
         this.injectionContext.onInit().onStart();
 
@@ -602,7 +626,7 @@ public class ScriptConsole {
         statementCount++;
 
         try {
-            ScriptContext script = new ScriptContext(expressionContext, injectionContext, bootstrap);
+            ScriptContext script = new ScriptContext(expressionContext, injectionContextBuilder, bootstrap);
 
             // Inject session variables from previous statements
             for (Map.Entry<String, Object> entry : sessionVariables.entrySet()) {

@@ -50,6 +50,7 @@ public class RuntimeBuilder<InputType, OutputType>
 
         private String name;
         private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> steps = new OrderedMapBuilder<>();
+        private final java.util.LinkedHashMap<String, IRuntimeStep<?, InputType, OutputType>> prebuiltSteps = new java.util.LinkedHashMap<>();
         private IInjectionContextBuilder injectionContextBuilder;
         private Class<InputType> inputType;
         private Class<OutputType> outputType;
@@ -129,6 +130,15 @@ public class RuntimeBuilder<InputType, OutputType>
         }
 
         @Override
+        public IRuntimeBuilder<InputType, OutputType> step(String name, IRuntimeStep<?, InputType, OutputType> step) {
+                Objects.requireNonNull(name, "Step name cannot be null");
+                Objects.requireNonNull(step, "Step cannot be null");
+                this.prebuiltSteps.put(name, step);
+                log.atDebug().log("{} Added pre-built step [{}]", logLineHeader(), name);
+                return this;
+        }
+
+        @Override
         protected IRuntime<InputType, OutputType> doBuild() throws DslException {
 
                 log.atTrace().log("{} Entering doBuild method", logLineHeader());
@@ -143,7 +153,9 @@ public class RuntimeBuilder<InputType, OutputType>
                         });
                 }
 
-                Map<String, IRuntimeStep<?, InputType, OutputType>> builtSteps = this.steps.build();
+                Map<String, IRuntimeStep<?, InputType, OutputType>> builtSteps = new java.util.LinkedHashMap<>(this.steps.build());
+                builtSteps.putAll(this.prebuiltSteps);
+
                 Map<String, ISupplier<?>> variables = this.presetVariables.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build()));
 

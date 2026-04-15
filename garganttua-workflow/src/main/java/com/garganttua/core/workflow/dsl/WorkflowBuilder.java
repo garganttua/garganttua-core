@@ -16,7 +16,6 @@ import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
-import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.Workflow;
@@ -45,7 +44,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private final Map<String, Object> presetVariables = new LinkedHashMap<>();
     private final List<WorkflowStage> stages = new ArrayList<>();
     private IExpressionContext expressionContext;
-    private IInjectionContext injectionContext;
+    private IInjectionContextBuilder injectionContextBuilder;
     private boolean inlineAll = false;
 
     private WorkflowBuilder() {
@@ -94,8 +93,8 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("Workflow must have at least one stage");
         }
 
-        if (injectionContext == null) {
-            throw new DslException("InjectionContext is required");
+        if (injectionContextBuilder == null) {
+            throw new DslException("InjectionContextBuilder is required");
         }
 
         if (expressionContext == null) {
@@ -116,7 +115,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
                 new ArrayList<>(stages),
                 new LinkedHashMap<>(presetVariables),
                 expressionContext,
-                injectionContext,
+                injectionContextBuilder,
                 inlineAll);
 
         log.atDebug().log("Workflow '{}' built with {} stages", name, stages.size());
@@ -125,9 +124,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
-        if (dependency instanceof IInjectionContext ctx) {
-            this.injectionContext = ctx;
-        } else if (dependency instanceof IExpressionContext ctx) {
+        if (dependency instanceof IExpressionContext ctx) {
             this.expressionContext = ctx;
         }
     }
@@ -139,6 +136,9 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     @Override
     public IWorkflowBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
+        if (dependency instanceof IInjectionContextBuilder builder) {
+            this.injectionContextBuilder = builder;
+        }
         return super.provide(dependency);
     }
 

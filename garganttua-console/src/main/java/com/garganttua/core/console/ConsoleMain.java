@@ -9,7 +9,13 @@ package com.garganttua.core.console;
 public class ConsoleMain {
 
     public static void main(String[] args) {
-        ScriptConsole console = new ScriptConsole();
+        boolean useAOT = false;
+        for (String arg : args) {
+            if ("--aot".equals(arg)) {
+                useAOT = true;
+            }
+        }
+        ScriptConsole console = new ScriptConsole(useAOT);
         console.start();
     }
 }
