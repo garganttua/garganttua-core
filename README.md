@@ -42,12 +42,12 @@ Garganttua Core is built on three core principles:
 <dependency>
     <groupId>com.garganttua</groupId>
     <artifactId>garganttua-core</artifactId>
-    <version>2.0.0-ALPHA01</version>
+    <version>2.0.0-ALPHA02</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA01
+2.0.0-ALPHA02
 
 ### Dependencies
  - `org.junit.jupiter:junit-jupiter-engine:test`
@@ -87,6 +87,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-dsl**](./garganttua-dsl/README.md) | Declarative language and builder framework for Garganttua DSLs. |
 | \|- [**garganttua-execution**](./garganttua-execution/README.md) | Task execution, orchestration, and fallback handling engine. |
 | \|- [**garganttua-expression**](./garganttua-expression/README.md) | Advanced expression language for object supplying. |
+| \|    \|- [**bin**](./garganttua-expression/bin/README.md) | Advanced expression language for object supplying. |
 | \|- [**garganttua-injection**](./garganttua-injection/README.md) | Dependency injection container with modular context support. |
 | \|- [**garganttua-lifecycle**](./garganttua-lifecycle/README.md) | Abstract lifecycle management with thread-safe state transitions. |
 | \|- [**garganttua-mapper**](./garganttua-mapper/README.md) | Declarative object-to-object mapping engine. |
@@ -95,9 +96,22 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-runtime**](./garganttua-runtime/README.md) | Runtime context management and lifecycle orchestration. |
 | \|- [**garganttua-runtime-reflection**](./garganttua-runtime-reflection/README.md) | Runtime reflection utilities for Garganttua Core. |
 | \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
+| \|    \|- [**bin**](./garganttua-script/bin/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 | \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -18,8 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.annotations.IAnnotationIndex;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
-import com.garganttua.core.reflection.runtime.RuntimeMethod;
 
 /**
  * Runtime implementation of {@link IAnnotationIndex} that reads compile-time
@@ -70,13 +68,13 @@ public class AnnotationIndex implements IAnnotationIndex {
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());
-        return data.loaded ? data.classes.stream().<IClass<?>>map(RuntimeClass::ofUnchecked).toList() : Collections.emptyList();
+        return data.loaded ? data.classes.stream().<IClass<?>>map(IClass::getClass).toList() : Collections.emptyList();
     }
 
     @Override
     public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());
-        return data.loaded ? data.methods.stream().<IMethod>map(RuntimeMethod::of).toList() : Collections.emptyList();
+        return data.loaded ? data.methods.stream().<IMethod>map(AnnotationIndex::wrapMethod).toList() : Collections.emptyList();
     }
 
     @Override
@@ -261,6 +259,32 @@ public class AnnotationIndex implements IAnnotationIndex {
             case "void" -> void.class;
             default -> Class.forName(typeName, false, Thread.currentThread().getContextClassLoader());
         };
+    }
+
+    /**
+     * Wraps a raw {@link Method} into an {@link IMethod} via the composite
+     * reflection system. When an AOT provider is active, this returns AOT
+     * descriptors instead of runtime wrappers.
+     */
+    private static IMethod wrapMethod(Method method) {
+        IClass<?> declaringClass = IClass.getClass(method.getDeclaringClass());
+        IClass<?>[] paramTypes = new IClass<?>[method.getParameterCount()];
+        Class<?>[] rawParams = method.getParameterTypes();
+        for (int i = 0; i < rawParams.length; i++) {
+            paramTypes[i] = IClass.getClass(rawParams[i]);
+        }
+        try {
+            return declaringClass.getDeclaredMethod(method.getName(), paramTypes);
+        } catch (NoSuchMethodException | SecurityException e) {
+            // Fallback: scan declared methods by name and param count
+            for (IMethod m : declaringClass.getDeclaredMethods()) {
+                if (m.getName().equals(method.getName())
+                        && m.getParameterCount() == method.getParameterCount()) {
+                    return m;
+                }
+            }
+            throw new IllegalStateException("Cannot resolve method: " + method, e);
+        }
     }
 
     /**

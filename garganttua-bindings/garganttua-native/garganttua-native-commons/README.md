@@ -24,12 +24,12 @@ When compiling Java applications to native images with GraalVM, reflection-based
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-native-commons</artifactId>
-    <version>2.0.0-ALPHA01</version>
+    <version>2.0.0-ALPHA02</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA01
+2.0.0-ALPHA02
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`

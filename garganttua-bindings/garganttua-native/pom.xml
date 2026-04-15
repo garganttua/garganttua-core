@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-bindings</artifactId>
-        <version>2.0.0-ALPHA01</version>
+        <version>2.0.0-ALPHA02</version>
     </parent>
     <artifactId>garganttua-native</artifactId>
     <packaging>pom</packaging>
@@ -14,7 +14,6 @@
 
     <modules>
         <module>garganttua-native-commons</module>
-        <module>garganttua-native-annotation-processor</module>
         <module>garganttua-native-image-maven-plugin</module>
     </modules>
 </project>
