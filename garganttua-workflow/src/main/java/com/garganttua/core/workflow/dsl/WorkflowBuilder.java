@@ -17,6 +17,8 @@ import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.Workflow;
 import com.garganttua.core.workflow.WorkflowException;
@@ -109,13 +111,16 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("Failed to generate workflow script", e);
         }
 
+        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder()
+                .provide(injectionContextBuilder);
+
         Workflow workflow = new Workflow(
                 name,
                 generatedScript,
                 new ArrayList<>(stages),
                 new LinkedHashMap<>(presetVariables),
                 expressionContext,
-                injectionContextBuilder,
+                runtimesBuilder,
                 inlineAll);
 
         log.atDebug().log("Workflow '{}' built with {} stages", name, stages.size());

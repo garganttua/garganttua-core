@@ -13,6 +13,8 @@ import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
@@ -56,7 +58,7 @@ class ScriptGroupTest {
 
     @Test
     void testSimpleStatementGroup() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder, null);
+        IScript script = new ScriptContext(expressionContextBuilder.build(), RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         script.load("""
             result <- (
                 a <- 10
@@ -73,7 +75,7 @@ class ScriptGroupTest {
 
     @Test
     void testGroupWithCodeMapping() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder, null);
+        IScript script = new ScriptContext(expressionContextBuilder.build(), RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         script.load("""
             result <- (
                 value <- 42
@@ -88,7 +90,7 @@ class ScriptGroupTest {
 
     @Test
     void testGroupWithInnerCodeMappings() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder, null);
+        IScript script = new ScriptContext(expressionContextBuilder.build(), RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         script.load("""
             (
                 first <- 1 -> 10
@@ -104,7 +106,7 @@ class ScriptGroupTest {
 
     @Test
     void testNestedGroups() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder, null);
+        IScript script = new ScriptContext(expressionContextBuilder.build(), RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         script.load("""
             outer <- (
                 a <- 5
@@ -125,7 +127,7 @@ class ScriptGroupTest {
 
     @Test
     void testGroupVariablesVisibility() throws Exception {
-        IScript script = new ScriptContext(expressionContextBuilder.build(), injectionContextBuilder, null);
+        IScript script = new ScriptContext(expressionContextBuilder.build(), RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         script.load("""
             x <- 100
             (
@@ -161,7 +163,8 @@ class ScriptGroupTest {
         ic.onInit().onStart();
         IExpressionContext ec = ecb.build();
 
-        ScriptContext ctx = new ScriptContext(ec, ijb, null);
+        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder().provide(ijb);
+        ScriptContext ctx = new ScriptContext(ec, runtimesBuilder, null);
         ctx.load(source);
         ctx.compile();
         return ctx;

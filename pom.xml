@@ -192,6 +192,11 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-properties</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-runtime-reflection</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -478,6 +483,7 @@
     <module>garganttua-script</module>
     <module>garganttua-console</module>
     <module>garganttua-configuration</module>
+    <module>garganttua-properties</module>
     <module>garganttua-script-maven-plugin</module>
     <module>garganttua-workflow</module>
     <module>garganttua-runtime-reflection</module>

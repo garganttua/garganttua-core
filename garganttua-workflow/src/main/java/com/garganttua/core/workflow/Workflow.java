@@ -12,8 +12,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.expression.context.IExpressionContext;
-import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.context.ScriptContext;
@@ -48,7 +48,7 @@ public class Workflow implements IWorkflow {
     private final List<WorkflowStage> stages;
     private final Map<String, Object> presetVariables;
     private final IExpressionContext expressionContext;
-    private final IInjectionContextBuilder injectionContextBuilder;
+    private final IRuntimesBuilder runtimesBuilder;
     private final boolean inlineAll;
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
     private final WorkflowRenderer renderer = new WorkflowRenderer();
@@ -60,19 +60,19 @@ public class Workflow implements IWorkflow {
      * @param generatedScript   the pre-generated script to execute
      * @param stages            the workflow stages (for result collection)
      * @param presetVariables   preset variables for the workflow
-     * @param expressionContext      the expression context for script evaluation
-     * @param injectionContextBuilder the injection context builder for bean resolution
-     * @param inlineAll              whether all file-based scripts should be inlined
+     * @param expressionContext the expression context for script evaluation
+     * @param runtimesBuilder  the runtimes builder for runtime resolution
+     * @param inlineAll        whether all file-based scripts should be inlined
      */
     public Workflow(String name, String generatedScript, List<WorkflowStage> stages,
             Map<String, Object> presetVariables, IExpressionContext expressionContext,
-            IInjectionContextBuilder injectionContextBuilder, boolean inlineAll) {
+            IRuntimesBuilder runtimesBuilder, boolean inlineAll) {
         this.name = name;
         this.generatedScript = generatedScript;
         this.stages = List.copyOf(stages);
         this.presetVariables = Map.copyOf(presetVariables);
         this.expressionContext = expressionContext;
-        this.injectionContextBuilder = injectionContextBuilder;
+        this.runtimesBuilder = runtimesBuilder;
         this.inlineAll = inlineAll;
     }
 
@@ -133,7 +133,7 @@ public class Workflow implements IWorkflow {
     private WorkflowResult executeScript(UUID uuid, Instant start, String scriptSource,
             WorkflowInput input, List<WorkflowStage> stagesToCollect) throws ScriptException {
         // 1. Create and configure the ScriptContext
-        IScript script = new ScriptContext(expressionContext, injectionContextBuilder, null);
+        IScript script = new ScriptContext(expressionContext, runtimesBuilder, null);
         script.load(scriptSource);
 
         // 2. Inject preset variables (named)
