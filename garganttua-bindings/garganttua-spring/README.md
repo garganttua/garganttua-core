@@ -29,11 +29,15 @@ Spring dependencies are declared with `provided` scope, so the consuming applica
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-bindings/garganttua-spring
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

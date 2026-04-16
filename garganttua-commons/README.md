@@ -1,4 +1,4 @@
-# 🛠️ Garganttua Commons
+# Garganttua Commons
 
 ## Description
 
@@ -61,7 +61,7 @@ The module implements several design patterns consistently across packages:
 - **Annotation-Driven** - Declarative configuration through annotations alongside programmatic APIs
 - **Immutable Records** - Use of Java records for data transfer objects (e.g., `BeanDefinition`, `RuntimeExceptionRecord`)
 
-## Packages Overview
+### Packages Overview
 
 ### Core Framework Packages
 

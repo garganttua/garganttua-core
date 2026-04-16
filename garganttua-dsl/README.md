@@ -1,4 +1,4 @@
-# 📜 Garganttua DSL
+# Garganttua DSL
 
 ## Description
 
@@ -68,7 +68,7 @@ public interface IBuilder<Built> {
 
 All builders in the Garganttua ecosystem implement this interface.
 
-## Builder Types
+### Builder Types
 
 ### 1. Abstract Automatic Builder
 
@@ -492,7 +492,7 @@ Api api = new ApiBuilder()
     .build();
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Build Caching
 
@@ -567,7 +567,7 @@ builder.section("app")
 Config config = builder.build();
 ```
 
-## Dependency Management and Validation
+### Dependency Management and Validation
 
 ### Phase-Aware Dependencies
 
@@ -691,7 +691,7 @@ support.processPreBuildDependencies(ctx -> {
 
 20. **Validate early when possible** - Validate configuration as it's set (in fluent methods) rather than waiting until `build()`.
 
-## Design Patterns
+### Design Patterns
 
 ### Composite Pattern
 
@@ -743,5 +743,4 @@ public final Built build() {
 ```
 
 ## License
-
 This module is distributed under the MIT License.

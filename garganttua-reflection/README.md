@@ -1,4 +1,4 @@
-# 🔍 Garganttua Reflection
+# Garganttua Reflection
 
 ## Description
 
@@ -301,7 +301,7 @@ Object nestedValue = nestedGetter.getValue(o);
 assertNull(nestedValue);  // Returns null when traversing through null
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Complex Nested Structure Access (ObjectFieldGetterTest.java)
 
@@ -394,9 +394,9 @@ assertEquals(1L, object.getInner().getInner().getInner().getInner().getInner().g
 ```
 
 
-## Performance
+### Performance
 
-### Caching Strategy
+#### Caching Strategy
 
 Garganttua Reflection implements intelligent caching for:
 - **Field lookups** - Resolved fields cached per class
@@ -421,7 +421,7 @@ Garganttua Reflection implements intelligent caching for:
 | Collection traversal | ~1-5ms per element | ~0.5-2ms per element |
 | Method invocation | ~0.2-1ms | ~0.1-0.5ms |
 
-## Error Handling
+### Error Handling
 
 ### ReflectionException
 
@@ -541,5 +541,4 @@ query.setValue("age", "not a number");
 42. **Security Considerations** - Be cautious with reflection in security-sensitive contexts
 
 ## License
-
 This module is distributed under the MIT License.

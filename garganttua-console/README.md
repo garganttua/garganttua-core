@@ -1,8 +1,8 @@
 # Garganttua Console
 
-Interactive REPL console for Garganttua Script.
-
 ## Description
+
+Interactive REPL console for Garganttua Script.
 
 The `garganttua-console` module provides a terminal-based interactive console (REPL) for executing Garganttua Script expressions and statements. It is built on JLine for full terminal support including command history, tab completion, and multi-line input.
 
@@ -46,6 +46,8 @@ The `garganttua-console` module provides a terminal-based interactive console (R
 
 <!-- AUTO-GENERATED-END -->
 
+## Core Concepts
+
 ## Usage
 
 ### Running the Console
@@ -85,7 +87,7 @@ garganttua> vars()
 garganttua> exit()
 ```
 
-## Architecture
+### Architecture
 
 ```
 garganttua-console/
@@ -97,11 +99,7 @@ garganttua-console/
     └── ScriptCompleter.java          # JLine tab completion
 ```
 
+## Tips and best practices
+
 ## License
-
 This module is distributed under the MIT License.
-
----
-
-**Version**: 2.0.0-ALPHA01
-**Maintainer**: Garganttua Team

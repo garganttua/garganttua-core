@@ -1,4 +1,4 @@
-# 🧩 Garganttua Injection
+# Garganttua Injection
 
 ## Description
 
@@ -656,7 +656,7 @@ DiException ex3 = assertThrows(DiException.class, () -> detector.detectCycles(se
 assertTrue(ex3.getMessage().contains("A"));
 ```
 
-## Advanced Integration
+### Advanced Integration
 
 ### Creating a Custom BeanProvider
 

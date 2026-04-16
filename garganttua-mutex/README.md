@@ -1,4 +1,4 @@
-# 🚦 Garganttua Mutex
+# Garganttua Mutex
 
 ## Description
 
@@ -39,12 +39,12 @@ The Garganttua Mutex module provides a thread-safe mutex synchronization framewo
 
 
 
-## Usage Patterns
+### Usage Patterns
 
 
-## Exception Handling
+### Exception Handling
 
-## Tips and Best Practices
+## Tips and best practices
 
 1. **Use named mutexes**: Consistently name mutexes based on the resource they protect (e.g., "db:user:123", "cache:session:abc")
 2. **Configure appropriate timeouts**: Use realistic wait times based on expected operation duration

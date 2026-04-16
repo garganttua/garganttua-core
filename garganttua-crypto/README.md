@@ -1,12 +1,8 @@
-# 🛠️ 🔐 Garganttua Crypto
-
-## ⚠️ DISCLAIMER
-
-This module is not yet finished and is not at a high priority at this time. So it will obviously be fully updated.
-
-**⚠️Please do not use this module !!!⚠️**
+# Garganttua Crypto
 
 ## Description
+
+> **DISCLAIMER**: This module is not yet finished and is not at a high priority at this time. It will be fully updated. Please do not use this module yet.
 
 The Garganttua Crypto module provides a comprehensive cryptographic framework for secure key management, encryption, decryption, and digital signatures. It supports both symmetric and asymmetric cryptography with a wide range of algorithms, modes, and padding schemes.
 
@@ -330,7 +326,33 @@ try {
 }
 ```
 
-## Tips and Best Practices
+### Exception Handling
+
+All cryptographic operations can throw `CryptoException`. Common scenarios include:
+- Using an expired key realm
+- Using a revoked key realm
+- Invalid encryption/decryption operations
+- Signature verification failures
+
+```java
+try {
+    IKeyRealm realm = KeyRealmBuilder.builder()
+        .name("myRealm")
+        .algorithm(KeyAlgorithm.AES_256)
+        .encryptionMode(EncryptionMode.GCM)
+        .paddingMode(EncryptionPaddingMode.NO_PADDING)
+        .build();
+
+    IKey key = realm.getKeyForEncryption();
+    byte[] encrypted = key.encrypt("sensitive data".getBytes());
+
+} catch (CryptoException e) {
+    // Handle cryptographic errors
+    System.err.println("Cryptographic error: " + e.getMessage());
+}
+```
+
+## Tips and best practices
 
 ### Choosing Algorithms
 1. **For new applications**: Use AES-256 (symmetric) or RSA-2048/RSA-4096 (asymmetric)
@@ -365,32 +387,6 @@ try {
 1. **Symmetric encryption (AES)** is much faster than asymmetric (RSA) for large data
 2. **Use RSA for key exchange**, then use AES for data encryption (hybrid cryptography)
 3. **Consider key size vs performance**: Larger keys are more secure but slower
-
-## Exception Handling
-
-All cryptographic operations can throw `CryptoException`. Common scenarios include:
-- Using an expired key realm
-- Using a revoked key realm
-- Invalid encryption/decryption operations
-- Signature verification failures
-
-```java
-try {
-    IKeyRealm realm = KeyRealmBuilder.builder()
-        .name("myRealm")
-        .algorithm(KeyAlgorithm.AES_256)
-        .encryptionMode(EncryptionMode.GCM)
-        .paddingMode(EncryptionPaddingMode.NO_PADDING)
-        .build();
-
-    IKey key = realm.getKeyForEncryption();
-    byte[] encrypted = key.encrypt("sensitive data".getBytes());
-
-} catch (CryptoException e) {
-    // Handle cryptographic errors
-    System.err.println("Cryptographic error: " + e.getMessage());
-}
-```
 
 ## License
 This module is distributed under the MIT License.

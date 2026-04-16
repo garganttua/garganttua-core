@@ -31,11 +31,15 @@ Parent module for Garganttua AOT (Ahead-of-Time) compilation support. This POM a
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-aot
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

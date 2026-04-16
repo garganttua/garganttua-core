@@ -1,4 +1,4 @@
-# ⚡ Garganttua Native
+# Garganttua Native Commons
 
 ## Description
 
@@ -486,7 +486,7 @@ public class GenerateNativeConfigMojo extends AbstractMojo {
 }
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Conditional Configuration Based on Annotations
 
@@ -597,7 +597,7 @@ public class IncrementalUpdater {
 }
 ```
 
-## Performance
+### Performance
 
 ### Configuration File Loading
 
@@ -620,7 +620,7 @@ Garganttua Native is intended for **build-time use**, not runtime:
 3. **Use specific registration** - Prefer `field()` / `method()` over `allDeclaredFields` when possible (smaller config files = faster native image builds)
 4. **Cache ReflectConfig instances** - Reuse loaded configurations across multiple operations
 
-## Tips and Best Practices
+## Tips and best practices
 
 ### Reflection Configuration Strategy
 
@@ -675,7 +675,7 @@ Garganttua Native is intended for **build-time use**, not runtime:
 31. **Don't Forget Constructor Registration** - Many frameworks require constructor reflection for instantiation
 32. **Version Compatibility** - Ensure Garganttua Native version is compatible with your GraalVM version
 
-## GraalVM Integration
+### GraalVM Integration
 
 ### Standard Workflow
 
@@ -731,5 +731,4 @@ ReflectConfigEntry entityEntry = ReflectConfigEntryBuilder
 ```
 
 ## License
-
 This module is distributed under the MIT License.

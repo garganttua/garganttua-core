@@ -26,11 +26,15 @@ Distributed mutex implementation over Redis for Garganttua Core. This binding mo
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-bindings/garganttua-mutex-redis
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

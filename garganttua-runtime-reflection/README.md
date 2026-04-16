@@ -26,11 +26,15 @@ This is the default reflection provider used throughout the framework. Alternati
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-runtime-reflection
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

@@ -1,8 +1,8 @@
-# :gear: Garganttua Properties
-
-Property provider that loads `.properties` files into the injection context.
+# Garganttua Properties
 
 ## Description
+
+Property provider that loads `.properties` files into the injection context.
 
 The `garganttua-properties` module bridges standard Java `.properties` files with the Garganttua dependency injection system. It implements `IPropertyProviderBuilder` to load properties from classpath resources (inside JARs) and filesystem files, making them available for `@Property` injection.
 
@@ -35,6 +35,8 @@ The `garganttua-properties` module bridges standard Java `.properties` files wit
  - `com.garganttua.core:garganttua-injection`
 
 <!-- AUTO-GENERATED-END -->
+
+## Core Concepts
 
 ## Usage
 
@@ -95,7 +97,7 @@ Sources are loaded in declaration order. Later sources override earlier ones:
 | 2 | Explicit classpath resource | `classpathResource("x.properties")` |
 | 3 (highest) | Filesystem file | `file("/path/to/x.properties")` |
 
-## Testing
+### Testing
 
 ```bash
 mvn test -pl garganttua-properties
@@ -110,6 +112,7 @@ Test coverage includes:
 - Empty builder produces empty provider
 - Property key enumeration
 
-## License
+## Tips and best practices
 
+## License
 This module is distributed under the MIT License.

@@ -1,4 +1,4 @@
-# ♻️ Garganttua Lifecycle
+# Garganttua Lifecycle
 
 ## Description
 
@@ -269,7 +269,7 @@ lifecycle.onInit().onStart();
 assertThrows(LifecycleException.class, () -> lifecycle.onStart());
 ```
 
-## Advanced Usage Patterns
+### Advanced Usage Patterns
 
 ### Reload Support
 
@@ -577,7 +577,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 }));
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Idempotent Lifecycle Operations
 

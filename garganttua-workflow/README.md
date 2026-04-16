@@ -46,7 +46,9 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
 
 <!-- AUTO-GENERATED-END -->
 
-## Context Setup
+## Core Concepts
+
+### Context Setup
 
 The workflow module requires both an injection context and an expression context:
 
@@ -199,7 +201,7 @@ WorkflowBuilder.create()
 
 For include mode, outputs use `script_variable()`. For inline mode, they become an assignment `workflowVar <- @scriptVar` inside the group.
 
-## Conditional Execution with `when()`
+### Conditional Execution with `when()`
 
 ### Condition on a script
 
@@ -304,7 +306,7 @@ All expressions from the `garganttua-expression` language are available:
 .when("not(is_empty(@inputData))")
 ```
 
-## Error Handling
+### Error Handling
 
 ### Catch on a script
 
@@ -366,7 +368,7 @@ Wraps the entire stage content in an expression, using `@0` as a placeholder:
     .up()
 ```
 
-## Execution
+### Execution
 
 ### Simple execution
 
@@ -434,7 +436,7 @@ result.start();            // Start Instant
 result.stop();             // Stop Instant
 ```
 
-## Introspection
+### Introspection
 
 ```java
 // Generated script (useful for debugging)
@@ -449,7 +451,7 @@ descriptor.stages();       // List of StageDescriptor
 descriptor.presetVariables();
 ```
 
-## Script Headers
+### Script Headers
 
 Scripts can include metadata headers for documentation and introspection:
 
@@ -476,7 +478,7 @@ validationStatus <- "completed"
 
 Parse headers programmatically with `ScriptHeaderParser.parse(scriptContent)`.
 
-## Complete Example
+### Complete Example
 
 ```java
 IWorkflow workflow = WorkflowBuilder.create()
@@ -546,7 +548,7 @@ if (result.isSuccess()) {
 }
 ```
 
-## Architecture
+### Architecture
 
 ### Module Structure
 
@@ -584,7 +586,7 @@ garganttua-workflow/
 | `WorkflowExecutionOptions` | Stage filtering (startFrom, stopAfter, skipStages) |
 | `CodeAction` | Exit code handling: CONTINUE, ABORT, SKIP_STAGE, RETRY |
 
-## Script Generation Rules
+### Script Generation Rules
 
 | Situation | Generated code |
 |:--|:--|
@@ -598,7 +600,7 @@ garganttua-workflow/
 | Catch (unconditional) | Clause: `! => handler` |
 | Stage with wrap | `_stage_result <- wrapExpr(@0 replaced by (content))` |
 
-## Integration with Other Modules
+### Integration with Other Modules
 
 ### garganttua-script
 - Workflows generate Garganttua Script code for execution
@@ -614,6 +616,8 @@ garganttua-workflow/
 ### garganttua-injection
 - Required dependency for the expression and runtime context initialization
 - Bean resolution for workflow components
+
+## Tips and best practices
 
 ## License
 

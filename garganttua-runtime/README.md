@@ -1,4 +1,4 @@
-# ▶️ Garganttua Runtime
+# Garganttua Runtime
 
 ## Description
 
@@ -395,7 +395,7 @@ String fallbackMethod(@Input String input) {
 // Result: Fallback executed, custom logic runs
 ```
 
-## Expression Functions
+### Expression Functions
 
 The runtime module exposes the following expression function, auto-discovered via `@Expression` annotation scanning on the `com.garganttua.core.runtime` package.
 
@@ -413,7 +413,7 @@ bean <- :queryBean(ctx, cast(Optional.class), "myBeanRef")
 
 > **Note:** `context()` must be called during a runtime execution (i.e. inside a runtime step). Calling it outside of a runtime execution throws an `ExpressionException`.
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Testing Runtime Execution
 
@@ -549,9 +549,9 @@ private TestPerfReport runTest(int runs, IRuntime<String, String> runtime, int p
 }
 ```
 
-## Performance
+### Performance
 
-### Execution Overhead
+#### Execution Overhead
 
 Runtime execution introduces minimal overhead:
 

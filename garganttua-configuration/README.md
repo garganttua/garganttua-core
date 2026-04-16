@@ -1,8 +1,8 @@
-# :gear: Garganttua Configuration
-
-Multi-format configuration loading and builder population for Garganttua DSLs.
+# Garganttua Configuration
 
 ## Description
+
+Multi-format configuration loading and builder population for Garganttua DSLs.
 
 The `garganttua-configuration` module provides a unified API for loading configuration from multiple sources (files, classpath, environment variables, inline strings) in multiple formats (JSON, YAML, XML, TOML, Properties), and automatically populating Garganttua builder objects via intelligent method mapping.
 
@@ -45,6 +45,8 @@ The `garganttua-configuration` module provides a unified API for loading configu
  - `org.slf4j:slf4j-simple:test`
 
 <!-- AUTO-GENERATED-END -->
+
+## Core Concepts
 
 ### Optional Format Libraries
 
@@ -189,7 +191,7 @@ public MyBuilder tags(String[] tags) { this.tags = Arrays.asList(tags); return t
 
 Arrays of objects are supported too: each element creates a child builder via repeated method calls.
 
-## Method Mapping
+### Method Mapping
 
 The populator resolves configuration keys to builder methods using a priority chain:
 
@@ -214,7 +216,7 @@ Strategies 4-7 are only available with `SMART` mapping strategy (the default). `
 | `@Configurable` | Type | Marks a class as configurable (indexed at compile-time via `@Indexed`) |
 | `@ConfigurationFormat` | Type | Marks a format implementation for runtime discovery |
 
-## Type Conversion
+### Type Conversion
 
 String configuration values are automatically converted to the target method parameter type:
 
@@ -226,7 +228,7 @@ String configuration values are automatically converted to the target method par
 | IO / Net | `Path`, `URI`, `URL` |
 | Misc | `UUID`, `Class<?>`, any `Enum` (case-insensitive) |
 
-## DI Integration
+### DI Integration
 
 `ConfigurationPropertyProvider` adapts a parsed configuration tree into an `IPropertyProvider` for the injection module:
 
@@ -249,7 +251,7 @@ provider.copy();        // independent copy
 
 Nested objects are flattened with `.` separators, arrays with `[index]` notation.
 
-## Architecture
+### Architecture
 
 ### Module Structure
 
@@ -282,7 +284,7 @@ garganttua-configuration/
 - **Strategy**: `MethodMappingStrategy` controls method resolution behavior
 - **Auto-Detection**: Format classes use `isClassAvailable()` to check optional dependencies at runtime
 
-## Testing
+### Testing
 
 ```bash
 # Run all configuration tests
@@ -301,11 +303,7 @@ Test coverage includes:
 - `MethodMappingTest` - annotation matching, naming conversions, strategies
 - `TypeConverterTest` - all type conversions (temporal, URI, UUID, enums, etc.)
 
+## Tips and best practices
+
 ## License
-
 This module is distributed under the MIT License.
-
----
-
-**Version**: 2.0.0-ALPHA01
-**Maintainer**: Garganttua Team

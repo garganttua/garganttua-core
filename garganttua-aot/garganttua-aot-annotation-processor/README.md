@@ -26,11 +26,15 @@ Compile-time annotation processor for generating AOT class descriptors. This pro
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-aot/garganttua-aot-annotation-processor
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

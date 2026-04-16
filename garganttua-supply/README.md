@@ -1,4 +1,4 @@
-# 📦 Garganttua Supply
+# Garganttua Supply
 
 ## Description
 
@@ -371,7 +371,7 @@ var b = new SupplierBuilder<>(String.class)
 assertThrows(DslException.class, () -> b.withConstructor(new FakeConstructorBinder<>()).build());
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 The test files demonstrate the following patterns:
 
@@ -384,9 +384,9 @@ The test files demonstrate the following patterns:
 7. **Type Safety** - Generic type parameters ensure compile-time type safety
 8. **Error Handling** - DslException thrown for invalid configurations
 
-## Performance
+### Performance
 
-### Supply Overhead
+#### Supply Overhead
 
 The framework introduces minimal overhead for object supplying:
 
@@ -409,7 +409,7 @@ The framework introduces minimal overhead for object supplying:
 7. **Profile Constructor Bindings** - Optimize expensive constructor parameter resolution
 8. **Type Caching** - Cache `Class<?>` objects to avoid repeated lookups
 
-## Tips and Best Practices
+## Tips and best practices
 
 ### Supplier Design
 
@@ -486,5 +486,4 @@ The framework introduces minimal overhead for object supplying:
 47. **Version Compatibility** - Ensure all Garganttua modules are same version
 
 ## License
-
 This module is distributed under the MIT License.

@@ -1,4 +1,4 @@
-# 🚀 Garganttua Bootstrap
+# Garganttua Bootstrap
 
 ## Description
 

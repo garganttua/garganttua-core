@@ -1,8 +1,8 @@
-# 🧠 Garganttua Expression
-
-Advanced expression language for dynamic object creation and type-safe evaluation in Java applications.
+# Garganttua Expression
 
 ## Description
+
+Advanced expression language for dynamic object creation and type-safe evaluation in Java applications.
 
 The `garganttua-expression` module provides a powerful, extensible expression language built on ANTLR4 that enables runtime expression parsing, evaluation, and type-safe object creation. It integrates seamlessly with the Garganttua dependency injection framework to support dynamic configuration and complex object composition patterns.
 
@@ -389,7 +389,7 @@ Optional<IExpressionNode<String,ISupplier<String>>> expression =
 assertEquals("Hello, greet", expression.get().evaluate().supply().get());
 ```
 
-## Expression Language Syntax
+### Expression Language Syntax
 
 ### Literals
 
@@ -466,7 +466,7 @@ Simple identifiers are treated as string literals:
 myIdentifier → string("myIdentifier")
 ```
 
-## Standard Expression Leafs
+### Standard Expression Leafs
 
 The module provides built-in conversion functions in `StandardExpressionLeafs` (from the actual source code):
 
@@ -548,7 +548,7 @@ Usage examples from tests:
 - `"java.lang.String"` returns `String.class`
 - `"Class<?>"` returns `Class.class`
 
-## Architecture
+### Architecture
 
 ### Module Structure
 
@@ -588,7 +588,7 @@ IExpressionNodeFactory<R, S>
   └── ExpressionNodeFactory<R, S> implements IExpressionNodeFactory<R, S>
 ```
 
-## Advanced Features
+### Advanced Features
 
 ### Working with Expression Nodes
 
@@ -716,7 +716,7 @@ The auto-detection will find all methods annotated with:
 - `@ExpressionLeaf` - for leaf nodes
 - `@ExpressionNode` - for composite nodes
 
-## Error Handling
+### Error Handling
 
 ### Type Mismatch Errors
 
@@ -765,7 +765,7 @@ assertThrows(DslException.class, () -> {
 });
 ```
 
-## Testing
+### Testing
 
 The module includes comprehensive tests. Here are some examples:
 
@@ -840,7 +840,7 @@ public void setUp() throws Exception {
 }
 ```
 
-## Tips and Best Practices
+## Tips and best practices
 
 ### 1. Methods Must Be Static
 
@@ -935,7 +935,7 @@ assertThrows(DslException.class, () -> {
 });
 ```
 
-## Performance Considerations
+### Performance Considerations
 
 ### Parsing Overhead
 
@@ -955,14 +955,14 @@ assertThrows(DslException.class, () -> {
 - Composite nodes chain supplier evaluations
 - Contextual nodes have additional context resolution cost
 
-## Thread Safety
+### Thread Safety
 
 - `ExpressionContext` is thread-safe and can be shared
 - `IExpression` instances are immutable and thread-safe
 - `ISupplier` evaluation is thread-safe but depends on implementation
 - Expression node factories are immutable and thread-safe
 
-## cast() Function
+### cast() Function
 
 The `cast()` expression function enables explicit type casting within expressions:
 
@@ -974,7 +974,7 @@ cast(Object.class, @x)
 
 `cast()` leverages the dynamic return type resolution feature — its declared return type is `Object`, but the actual return type is resolved at runtime from the result value, enabling type-aware method chaining after a cast.
 
-## Dynamic Return Type Resolution
+### Dynamic Return Type Resolution
 
 When an expression method returns `Object` (e.g., generic methods like `cast()`), the expression engine dynamically resolves the actual return type at runtime:
 
@@ -984,7 +984,7 @@ When an expression method returns `Object` (e.g., generic methods like `cast()`)
 
 This enables generic functions to participate correctly in type-checked expression chains.
 
-## Dynamic Function Resolution
+### Dynamic Function Resolution
 
 The expression context supports an opt-in dynamic function resolution mode for integration with the script module's user-defined functions:
 
@@ -994,7 +994,7 @@ expressionContext.enableDynamicFunctions();
 
 When enabled, if a function call cannot be resolved statically, a `DynamicFunctionNode` is created as a fallback. This node resolves the function name from runtime variables (looking for `IScriptFunction` instances) and invokes it dynamically. This is **disabled by default** to preserve strict error handling in standalone expressions.
 
-## Limitations and Known Issues
+### Limitations and Known Issues
 
 1. **No Operator Support**: Currently only supports function call syntax, no infix operators (`+`, `-`, `*`, `/`)
 2. **Limited Array Support**: Array literal syntax defined but not fully implemented
@@ -1002,7 +1002,7 @@ When enabled, if a function call cannot be resolved statically, a `DynamicFuncti
 
 > **Note:** Control flow (`if()`) and user-defined functions are available in the `garganttua-script` module, which extends the expression language with scripting capabilities.
 
-## Integration with Other Modules
+### Integration with Other Modules
 
 ### garganttua-commons
 - Uses `ISupplier` interface for value wrapping
@@ -1025,10 +1025,4 @@ When enabled, if a function call cannot be resolved statically, a `DynamicFuncti
 - Integrates with reflection-based parameter resolution
 
 ## License
-
 This module is distributed under the MIT License.
-
----
-
-**Version**: 2.0.0-ALPHA01
-**Maintainer**: Garganttua Team

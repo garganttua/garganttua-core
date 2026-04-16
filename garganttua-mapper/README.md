@@ -1,4 +1,4 @@
-# 🔄 Garganttua Mapper
+# Garganttua Mapper
 
 ## Description
 
@@ -417,7 +417,7 @@ mapper.recordMappingConfiguration(GenericEntity.class, GenericDto.class);
 assertEquals(1, mapper.mappingConfigurations.size());
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Pre-recording Mapping Configurations
 
@@ -444,7 +444,7 @@ GenericDto dto = mapper.map(entity, GenericDto.class); // Fast path
 - Configuration cache shared across all mappings
 - Reduced memory footprint
 
-## Thread-Safety
+### Thread-Safety
 
 ### Concurrent Mapping Operations
 
@@ -628,9 +628,9 @@ public void testConcurrentMapping() throws Exception {
 }
 ```
 
-## Performance
+### Performance
 
-### Mapping Configuration Caching
+#### Mapping Configuration Caching
 
 Garganttua Mapper automatically caches mapping configurations after the first use:
 
@@ -668,9 +668,9 @@ assertEquals(1, mapper.mappingConfigurations.size());
 // Runtime mappings are now optimized
 ```
 
-## Error Handling
+### Error Handling
 
-### MapperException
+#### MapperException
 
 The mapper throws `MapperException` when mapping rules are invalid or execution fails:
 
@@ -742,7 +742,7 @@ GenericDto dto = mapper.map(entity, GenericDto.class);
 // Continues mapping even if some fields fail
 ```
 
-## Tips and Best Practices
+## Tips and best practices
 
 ### Design Principles
 
@@ -790,7 +790,7 @@ GenericDto dto = mapper.map(entity, GenericDto.class);
 27. **Log Mapping Errors** - Configure proper logging to diagnose mapping failures in production
 28. **Monitor Performance** - Track mapping execution times in high-throughput scenarios
 
-### Thread-Safety and Concurrency
+#### Thread-Safety and Concurrency
 
 29. **Share Mapper Instances** - The `Mapper` is fully thread-safe; share a single instance across all threads
 30. **Stateless Converters** - Ensure custom conversion methods (`fromSourceMethod`, `toSourceMethod`) are stateless and thread-safe
@@ -805,5 +805,4 @@ GenericDto dto = mapper.map(entity, GenericDto.class);
 36. **Version Compatibility** - When evolving DTOs, ensure backward compatibility with old source objects
 
 ## License
-
 This module is distributed under the MIT License.

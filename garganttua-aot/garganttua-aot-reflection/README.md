@@ -26,11 +26,15 @@ AOT reflection descriptors and registry for Garganttua Core. This module provide
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-aot/garganttua-aot-reflection
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

@@ -18,6 +18,7 @@ This module acts as a **bridge between Garganttua Core and Reflections**, enabli
 
 ## Installation
 
+<!-- AUTO-GENERATED-START -->
 ### Installation with Maven
 
 ```xml
@@ -34,6 +35,7 @@ This module acts as a **bridge between Garganttua Core and Reflections**, enabli
 ### Dependencies
 - `com.garganttua.core:garganttua-commons`
 - `org.reflections:reflections`
+<!-- AUTO-GENERATED-END -->
 
 ## Core Concepts
 
@@ -427,7 +429,7 @@ componentsByPackage.forEach((pkg, classes) -> {
 });
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Annotation Metadata Extraction
 
@@ -581,9 +583,9 @@ public class ConditionalBeanRegistry {
 }
 ```
 
-## Performance
+### Performance
 
-### Scanning Performance
+#### Scanning Performance
 
 The Reflections library uses indexing to optimize performance:
 
@@ -696,5 +698,4 @@ List<Class<?>> allRepositories = repositories.get();
 42. **Package Naming** - Use exact package names; partial names won't work
 
 ## License
-
 This module is distributed under the MIT License.

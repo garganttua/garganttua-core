@@ -50,7 +50,9 @@ The **garganttua-script** module provides a scripting language engine for compos
 
 <!-- AUTO-GENERATED-END -->
 
-## Script Syntax
+## Core Concepts
+
+### Script Syntax
 
 ### Statement with Result Assignment
 
@@ -171,7 +173,9 @@ result <- :processOrder(order) -> 200
    comment */
 ```
 
-## Core API
+## Usage
+
+### Core API
 
 ### IScript
 
@@ -199,7 +203,7 @@ int exitCode = script.execute(args);
 Optional<String> result = script.getVariable("result", String.class);
 ```
 
-## Built-in Functions
+### Built-in Functions
 
 ### Script Inclusion & Execution
 
@@ -273,7 +277,7 @@ delay <- seconds(10)     // 10000
 timeout <- minutes(5)    // 300000
 ```
 
-## Command Line Usage
+### Command Line Usage
 
 ```bash
 # Execute a script file
@@ -299,7 +303,7 @@ Scripts support shebang lines for direct execution:
 result <- print("Hello from script")
 ```
 
-## Architecture
+### Architecture
 
 ### Module Structure
 
@@ -318,7 +322,7 @@ garganttua-script/
 
 > **Note:** The interactive REPL console has been extracted to the separate [`garganttua-console`](../garganttua-console/README.md) module.
 
-## Integration with Other Modules
+### Integration with Other Modules
 
 ### garganttua-expression
 - Scripts use the expression language for all value expressions
@@ -334,6 +338,7 @@ garganttua-script/
 - Uses `include()`, `execute_script()`, `script_variable()` for inter-script communication
 - Supports inline (embedded) and include (file-based) script modes
 
-## License
+## Tips and best practices
 
+## License
 This module is distributed under the MIT License.

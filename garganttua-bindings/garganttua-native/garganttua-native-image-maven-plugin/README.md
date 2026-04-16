@@ -1,4 +1,4 @@
-# 🏗️ Garganttua Native Image Maven Plugin
+# Garganttua Native Image Maven Plugin
 
 ## Description
 
@@ -483,7 +483,7 @@ Configure for Quarkus applications:
 </build>
 ```
 
-## Advanced Patterns
+### Advanced Patterns
 
 ### Automated Resource Discovery
 
@@ -608,7 +608,7 @@ jobs:
           path: target/my-app
 ```
 
-## Performance
+### Performance
 
 ### Build Time Impact
 
@@ -635,7 +635,7 @@ Proper configuration management improves native image compilation:
 - **Smaller binaries**: Precise resource inclusion prevents bloat
 - **Faster iterations**: Cached configurations speed up incremental builds
 
-## Troubleshooting
+### Troubleshooting
 
 ### Common Issues
 
@@ -707,7 +707,7 @@ ls -la src/main/resources/config/missing.yml
    ls -R src/main/resources/
    ```
 
-## Tips and Best Practices
+## Tips and best practices
 
 ### Plugin Configuration
 
@@ -766,7 +766,7 @@ ls -la src/main/resources/config/missing.yml
 35. **Don't Over-Include** - Including too many resources bloats native image size
 36. **Version Compatibility** - Ensure plugin version matches Garganttua Native library version
 
-## Integration Examples
+### Integration Examples
 
 ### Complete Spring Boot Example
 
@@ -875,5 +875,4 @@ ls -la src/main/resources/config/missing.yml
 ```
 
 ## License
-
 This module is distributed under the MIT License.

@@ -24,11 +24,15 @@ Compile-time annotation scanner for AOT class descriptor generation. This module
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-aot/garganttua-aot-annotation-scanner
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

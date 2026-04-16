@@ -1,15 +1,22 @@
 # Garganttua Script Maven Plugin
 
-Maven plugin to build JARs that can be dynamically included in Garganttua scripts (`.gs` files).
+## Description
 
-## Overview
+Maven plugin to build JARs that can be dynamically included in Garganttua scripts (`.gs` files).
 
 This plugin adds the `Garganttua-Packages` attribute to your JAR's manifest, enabling the Garganttua script engine to:
 1. Load the JAR at runtime using `include("path/to/plugin.jar")`
 2. Automatically discover packages containing Garganttua annotations
 3. Rebuild the application context to integrate new expressions, beans, and builders
 
-## Goals
+## Installation
+
+<!-- AUTO-GENERATED-START -->
+<!-- AUTO-GENERATED-END -->
+
+## Core Concepts
+
+### Goals
 
 | Goal | Description | Default Phase |
 |------|-------------|---------------|
@@ -93,7 +100,7 @@ Specify packages explicitly instead of auto-detection:
 </configuration>
 ```
 
-## Configuration Options
+### Configuration Options
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -103,7 +110,7 @@ Specify packages explicitly instead of auto-detection:
 | `jarName` | `String` | `${artifactId}-${version}-script.jar` | Name of the output JAR file |
 | `includeResources` | `boolean` | `true` | Whether to include resources in the JAR |
 
-## Generated Manifest
+### Generated Manifest
 
 The plugin adds the following manifest attribute:
 
@@ -111,7 +118,7 @@ The plugin adds the following manifest attribute:
 Garganttua-Packages: com.myapp.expressions,com.myapp.beans
 ```
 
-## Detected Annotations
+### Detected Annotations
 
 The plugin automatically detects packages containing classes/methods with these annotations:
 
@@ -153,7 +160,7 @@ The plugin automatically detects packages containing classes/methods with these 
 - `@ObjectMappingRule` - Object mapping rules
 - `@FieldMappingRule` - Field mapping rules
 
-## Using in Scripts
+### Using in Scripts
 
 Once your JAR is built with this plugin, include it in a Garganttua script:
 
@@ -165,7 +172,7 @@ include("path/to/my-plugin.jar")
 myCustomExpression("argument")
 ```
 
-## Example Project Structure
+### Example Project Structure
 
 ```
 my-plugin/
@@ -236,3 +243,8 @@ public class MyExpressions {
 include("target/my-plugin-1.0.0-script.jar")
 greet("World")  # Output: Hello, World!
 ```
+
+## Tips and best practices
+
+## License
+This module is distributed under the MIT License.

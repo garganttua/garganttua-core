@@ -28,11 +28,15 @@ Maven plugin for Garganttua AOT processing. This plugin integrates AOT descripto
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-aot/garganttua-aot-maven-plugin
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.

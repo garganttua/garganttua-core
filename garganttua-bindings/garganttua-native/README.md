@@ -29,11 +29,15 @@ Parent module for Garganttua Native support. This POM aggregates submodules that
 
 <!-- AUTO-GENERATED-END -->
 
-## Build
+## Core Concepts
+
+## Usage
 
 ```bash
 mvn clean install -pl garganttua-bindings/garganttua-native
 ```
+
+## Tips and best practices
 
 ## License
 This module is distributed under the MIT License.
