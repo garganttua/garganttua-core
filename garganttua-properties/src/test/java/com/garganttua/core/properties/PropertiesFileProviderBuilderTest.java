@@ -139,6 +139,105 @@ class PropertiesFileProviderBuilderTest {
     }
 
     @Test
+    void testPlaceholderWithDefaultValue(@TempDir Path tempDir) throws IOException {
+        File propsFile = tempDir.resolve("placeholder.properties").toFile();
+        try (FileWriter writer = new FileWriter(propsFile)) {
+            writer.write("mail.host=${MAIL_HOST:smtp.gmail.com}\n");
+            writer.write("mail.port=${MAIL_PORT:587}\n");
+        }
+
+        PropertiesFileProviderBuilder builder = PropertiesFileProviderBuilder.create(injectionContextBuilder);
+        builder.file(propsFile);
+
+        IPropertyProvider provider = builder.build();
+
+        // MAIL_HOST is not set in env, should use default
+        Optional<String> host = provider.getProperty("mail.host", IClass.getClass(String.class));
+        assertTrue(host.isPresent());
+        assertEquals("smtp.gmail.com", host.get());
+
+        Optional<String> port = provider.getProperty("mail.port", IClass.getClass(String.class));
+        assertTrue(port.isPresent());
+        assertEquals("587", port.get());
+    }
+
+    @Test
+    void testPlaceholderWithSystemProperty(@TempDir Path tempDir) throws IOException {
+        File propsFile = tempDir.resolve("sysprop.properties").toFile();
+        try (FileWriter writer = new FileWriter(propsFile)) {
+            writer.write("test.value=${garganttua.test.sysprop:fallback}\n");
+        }
+
+        System.setProperty("garganttua.test.sysprop", "from-system");
+        try {
+            PropertiesFileProviderBuilder builder = PropertiesFileProviderBuilder.create(injectionContextBuilder);
+            builder.file(propsFile);
+
+            IPropertyProvider provider = builder.build();
+
+            Optional<String> val = provider.getProperty("test.value", IClass.getClass(String.class));
+            assertTrue(val.isPresent());
+            assertEquals("from-system", val.get());
+        } finally {
+            System.clearProperty("garganttua.test.sysprop");
+        }
+    }
+
+    @Test
+    void testPlaceholderWithEnvVariable(@TempDir Path tempDir) throws IOException {
+        File propsFile = tempDir.resolve("env.properties").toFile();
+        try (FileWriter writer = new FileWriter(propsFile)) {
+            // HOME env var is always set on Linux
+            writer.write("user.home.dir=${HOME:/tmp}\n");
+        }
+
+        PropertiesFileProviderBuilder builder = PropertiesFileProviderBuilder.create(injectionContextBuilder);
+        builder.file(propsFile);
+
+        IPropertyProvider provider = builder.build();
+
+        Optional<String> val = provider.getProperty("user.home.dir", IClass.getClass(String.class));
+        assertTrue(val.isPresent());
+        assertNotEquals("/tmp", val.get()); // should resolve to actual HOME, not fallback
+        assertFalse(val.get().contains("${"));
+    }
+
+    @Test
+    void testPlaceholderWithoutDefault(@TempDir Path tempDir) throws IOException {
+        File propsFile = tempDir.resolve("nodefault.properties").toFile();
+        try (FileWriter writer = new FileWriter(propsFile)) {
+            writer.write("test.unresolved=${GARGANTTUA_NONEXISTENT_VAR_12345}\n");
+        }
+
+        PropertiesFileProviderBuilder builder = PropertiesFileProviderBuilder.create(injectionContextBuilder);
+        builder.file(propsFile);
+
+        IPropertyProvider provider = builder.build();
+
+        // No default, no env var → keeps original placeholder
+        Optional<String> val = provider.getProperty("test.unresolved", IClass.getClass(String.class));
+        assertTrue(val.isPresent());
+        assertEquals("${GARGANTTUA_NONEXISTENT_VAR_12345}", val.get());
+    }
+
+    @Test
+    void testMultiplePlaceholdersInOneValue(@TempDir Path tempDir) throws IOException {
+        File propsFile = tempDir.resolve("multi.properties").toFile();
+        try (FileWriter writer = new FileWriter(propsFile)) {
+            writer.write("jdbc.url=jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5432}/mydb\n");
+        }
+
+        PropertiesFileProviderBuilder builder = PropertiesFileProviderBuilder.create(injectionContextBuilder);
+        builder.file(propsFile);
+
+        IPropertyProvider provider = builder.build();
+
+        Optional<String> url = provider.getProperty("jdbc.url", IClass.getClass(String.class));
+        assertTrue(url.isPresent());
+        assertEquals("jdbc:postgresql://localhost:5432/mydb", url.get());
+    }
+
+    @Test
     void testMissingFileIgnored() {
         PropertiesFileProviderBuilder builder = PropertiesFileProviderBuilder.create(injectionContextBuilder);
         builder.file("/nonexistent/path/nope.properties");

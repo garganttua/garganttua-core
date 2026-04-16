@@ -11,6 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -62,6 +64,9 @@ public class PropertiesFileProviderBuilder
         implements IPropertyProviderBuilder {
 
     private static final String DEFAULT_CLASSPATH_RESOURCE = "application.properties";
+
+    /** Matches ${VAR_NAME} or ${VAR_NAME:default_value} placeholders. */
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([^}:]+)(?::([^}]*))?}");
 
     private final List<PropertySource> sources = new ArrayList<>();
 
@@ -146,8 +151,67 @@ public class PropertiesFileProviderBuilder
             }
         }
 
+        // Resolve ${VAR:default} placeholders in property values
+        resolvePlaceholders(allProperties);
+
         log.atDebug().log("Built PropertiesFileProvider with {} total properties", allProperties.size());
         return new PropertyProvider(allProperties);
+    }
+
+    /**
+     * Resolves {@code ${VAR:default}} placeholders in all property values.
+     *
+     * <p>Resolution order for each placeholder:</p>
+     * <ol>
+     *   <li>JVM system property ({@code -DVAR=value})</li>
+     *   <li>Environment variable ({@code VAR=value})</li>
+     *   <li>Other loaded properties (cross-reference)</li>
+     *   <li>Default value after the {@code :} separator</li>
+     *   <li>Original placeholder string if nothing resolves</li>
+     * </ol>
+     */
+    private void resolvePlaceholders(Map<String, Object> properties) {
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String strValue && strValue.contains("${")) {
+                String resolved = resolvePlaceholdersInValue(strValue, properties);
+                if (!resolved.equals(strValue)) {
+                    entry.setValue(resolved);
+                    log.atTrace().log("Resolved placeholder in '{}': {} -> {}", entry.getKey(), strValue, resolved);
+                }
+            }
+        }
+    }
+
+    /**
+     * Resolves all {@code ${VAR:default}} placeholders in a single value string.
+     * Supports multiple placeholders in the same value.
+     */
+    private String resolvePlaceholdersInValue(String value, Map<String, Object> properties) {
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(value);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            String varName = matcher.group(1);
+            String defaultValue = matcher.group(2);
+
+            String resolved = System.getProperty(varName);
+            if (resolved == null) {
+                resolved = System.getenv(varName);
+            }
+            if (resolved == null && properties.containsKey(varName)) {
+                resolved = properties.get(varName).toString();
+            }
+            if (resolved == null) {
+                resolved = defaultValue;
+            }
+            if (resolved == null) {
+                resolved = matcher.group(0); // keep original ${...} if unresolved
+                log.atWarn().log("Unresolved placeholder: {}", matcher.group(0));
+            }
+            matcher.appendReplacement(result, Matcher.quoteReplacement(resolved));
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 
     private Map<String, String> loadSource(PropertySource source) throws IOException {

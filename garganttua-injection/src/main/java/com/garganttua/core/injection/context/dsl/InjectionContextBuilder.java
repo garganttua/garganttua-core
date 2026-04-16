@@ -35,9 +35,11 @@ import com.garganttua.core.injection.IInjectionChildContextFactory;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
+import com.garganttua.core.injection.annotations.BeanProviderAnnotation;
 import com.garganttua.core.injection.annotations.ChildContext;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.injection.annotations.Null;
+import com.garganttua.core.injection.annotations.PropertyProviderAnnotation;
 import com.garganttua.core.injection.annotations.Property;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.InjectionContext;
@@ -431,6 +433,52 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                             log.atError().log("Failed to instantiate child context factory {}: {}",
                                     factoryClass.getName(), e.getMessage(), e);
                             throw new DslException("Failed to auto-detect child context factory: " + factoryClass.getName(), e);
+                        }
+                    });
+
+            // Auto-detect @BeanProviderAnnotation annotated classes
+            IClass<? extends Annotation> beanProviderAnnotation = (IClass<? extends Annotation>) reflection.getClass(BeanProviderAnnotation.class);
+            IClass<?> beanProviderBuilderInterface = reflection.getClass(IBeanProviderBuilder.class);
+
+            this.packages.stream()
+                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, beanProviderAnnotation).stream())
+                    .forEach(providerClass -> {
+                        try {
+                            if (beanProviderBuilderInterface.isAssignableFrom(providerClass)) {
+                                BeanProviderAnnotation anno = ((Class<?>) providerClass.getType()).getAnnotation(BeanProviderAnnotation.class);
+                                String scope = anno.value();
+                                IBeanProviderBuilder provider = (IBeanProviderBuilder) reflection.newInstance(providerClass, this);
+                                this.beanProvider(scope, provider);
+                                log.atInfo().log("Auto-registered bean provider '{}' from {}", scope, providerClass.getName());
+                            } else {
+                                log.atWarn().log("Class {} annotated with @BeanProviderAnnotation but does not implement IBeanProviderBuilder",
+                                        providerClass.getName());
+                            }
+                        } catch (Exception e) {
+                            log.atError().log("Failed to instantiate bean provider {}: {}", providerClass.getName(), e.getMessage(), e);
+                        }
+                    });
+
+            // Auto-detect @PropertyProviderAnnotation annotated classes
+            IClass<? extends Annotation> propertyProviderAnnotation = (IClass<? extends Annotation>) reflection.getClass(PropertyProviderAnnotation.class);
+            IClass<?> propertyProviderBuilderInterface = reflection.getClass(IPropertyProviderBuilder.class);
+
+            this.packages.stream()
+                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, propertyProviderAnnotation).stream())
+                    .forEach(providerClass -> {
+                        try {
+                            if (propertyProviderBuilderInterface.isAssignableFrom(providerClass)) {
+                                PropertyProviderAnnotation anno = ((Class<?>) providerClass.getType()).getAnnotation(PropertyProviderAnnotation.class);
+                                String scope = anno.value();
+                                IPropertyProviderBuilder provider = (IPropertyProviderBuilder) reflection.newInstance(providerClass, this);
+                                this.propertyProvider(scope, provider);
+                                log.atInfo().log("Auto-registered property provider '{}' from {}", scope, providerClass.getName());
+                            } else {
+                                log.atWarn().log("Class {} annotated with @PropertyProviderAnnotation but does not implement IPropertyProviderBuilder",
+                                        providerClass.getName());
+                            }
+                        } catch (Exception e) {
+                            log.atError().log("Failed to instantiate property provider {}: {}", providerClass.getName(), e.getMessage(), e);
                         }
                     });
 
