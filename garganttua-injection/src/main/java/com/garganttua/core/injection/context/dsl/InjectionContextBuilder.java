@@ -11,12 +11,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -24,10 +26,6 @@ import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
-import com.garganttua.core.reflection.IReflection;
-import com.garganttua.core.reflection.dsl.IReflectionBuilder;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.injection.IBeanProvider;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -35,12 +33,12 @@ import com.garganttua.core.injection.IInjectionChildContextFactory;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.Predefined;
-import com.garganttua.core.injection.annotations.BeanProviderAnnotation;
+import com.garganttua.core.injection.annotations.BeanProvider;
 import com.garganttua.core.injection.annotations.ChildContext;
 import com.garganttua.core.injection.annotations.Fixed;
 import com.garganttua.core.injection.annotations.Null;
-import com.garganttua.core.injection.annotations.PropertyProviderAnnotation;
 import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.annotations.PropertyProvider;
 import com.garganttua.core.injection.annotations.Prototype;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.beans.resolver.PrototypeElementResolver;
@@ -48,9 +46,12 @@ import com.garganttua.core.injection.context.beans.resolver.SingletonElementReso
 import com.garganttua.core.injection.context.properties.resolver.PropertyElementResolver;
 import com.garganttua.core.injection.context.resolver.FixedElementResolver;
 import com.garganttua.core.injection.context.resolver.NullElementResolver;
-import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.reflection.annotations.ReflectedBuilder;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.annotations.ReflectedBuilder;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -437,7 +438,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                     });
 
             // Auto-detect @BeanProviderAnnotation annotated classes
-            IClass<? extends Annotation> beanProviderAnnotation = (IClass<? extends Annotation>) reflection.getClass(BeanProviderAnnotation.class);
+            IClass<? extends Annotation> beanProviderAnnotation = reflection.getClass(BeanProvider.class);
             IClass<?> beanProviderBuilderInterface = reflection.getClass(IBeanProviderBuilder.class);
 
             this.packages.stream()
@@ -445,8 +446,8 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                     .forEach(providerClass -> {
                         try {
                             if (beanProviderBuilderInterface.isAssignableFrom(providerClass)) {
-                                BeanProviderAnnotation anno = ((Class<?>) providerClass.getType()).getAnnotation(BeanProviderAnnotation.class);
-                                String scope = anno.value();
+                                BeanProvider anno = ((Class<?>) providerClass.getType()).getAnnotation(BeanProvider.class);
+                                String scope = anno.scope();
                                 IBeanProviderBuilder provider = (IBeanProviderBuilder) reflection.newInstance(providerClass, this);
                                 this.beanProvider(scope, provider);
                                 log.atInfo().log("Auto-registered bean provider '{}' from {}", scope, providerClass.getName());
@@ -460,7 +461,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                     });
 
             // Auto-detect @PropertyProviderAnnotation annotated classes
-            IClass<? extends Annotation> propertyProviderAnnotation = (IClass<? extends Annotation>) reflection.getClass(PropertyProviderAnnotation.class);
+            IClass<? extends Annotation> propertyProviderAnnotation = (IClass<? extends Annotation>) reflection.getClass(PropertyProvider.class);
             IClass<?> propertyProviderBuilderInterface = reflection.getClass(IPropertyProviderBuilder.class);
 
             this.packages.stream()
@@ -468,8 +469,8 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
                     .forEach(providerClass -> {
                         try {
                             if (propertyProviderBuilderInterface.isAssignableFrom(providerClass)) {
-                                PropertyProviderAnnotation anno = ((Class<?>) providerClass.getType()).getAnnotation(PropertyProviderAnnotation.class);
-                                String scope = anno.value();
+                                PropertyProvider anno = ((Class<?>) providerClass.getType()).getAnnotation(PropertyProvider.class);
+                                String scope = anno.scope();
                                 IPropertyProviderBuilder provider = (IPropertyProviderBuilder) reflection.newInstance(providerClass, this);
                                 this.propertyProvider(scope, provider);
                                 log.atInfo().log("Auto-registered property provider '{}' from {}", scope, providerClass.getName());

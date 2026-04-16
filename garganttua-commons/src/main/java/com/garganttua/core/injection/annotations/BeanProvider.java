@@ -46,13 +46,13 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface BeanProviderAnnotation {
+public @interface BeanProvider {
 
     /**
      * The scope name under which this bean provider is registered.
      *
      * @return the provider scope name
      */
-    String value();
+    String scope();
 
 }

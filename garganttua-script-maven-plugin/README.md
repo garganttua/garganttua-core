@@ -12,6 +12,30 @@ This plugin adds the `Garganttua-Packages` attribute to your JAR's manifest, ena
 ## Installation
 
 <!-- AUTO-GENERATED-START -->
+### Installation with Maven
+```xml
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-script-maven-plugin</artifactId>
+    <version>2.0.0-ALPHA02</version>
+</dependency>
+```
+
+### Actual version
+2.0.0-ALPHA02
+
+### Dependencies
+ - `org.apache.maven.plugin-tools:maven-plugin-annotations:provided`
+ - `org.apache.maven:maven-plugin-api:provided`
+ - `org.apache.maven:maven-core`
+ - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-reflection`
+ - `com.garganttua.core:garganttua-reflections:provided`
+ - `com.garganttua.core:garganttua-runtime-reflection:provided`
+ - `javax.inject:javax.inject`
+ - `org.slf4j:slf4j-api:compile`
+ - `org.slf4j:slf4j-simple:compile`
+
 <!-- AUTO-GENERATED-END -->
 
 ## Core Concepts

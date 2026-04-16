@@ -33,6 +33,8 @@ The `garganttua-properties` module bridges standard Java `.properties` files wit
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-injection`
+ - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
 
 <!-- AUTO-GENERATED-END -->
 

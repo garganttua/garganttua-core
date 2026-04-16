@@ -33,7 +33,6 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.mutex.IMutexManager;
 import com.garganttua.core.mutex.context.MutexContext;
@@ -125,7 +124,6 @@ public class ScriptConsole {
     private IExpressionContext expressionContext;
     private IInjectionContext injectionContext;
     private IInjectionContextBuilder injectionContextBuilder;
-    private IRuntimesBuilder runtimesBuilder;
     private IBoostrap bootstrap;
 
     private final boolean useAOT;
@@ -420,8 +418,6 @@ public class ScriptConsole {
 
         // Build contexts manually to ensure proper lifecycle
         this.injectionContextBuilder = injectionContextBuilder;
-        this.runtimesBuilder = RuntimesBuilder.builder()
-                .provide(injectionContextBuilder);
         this.injectionContext = injectionContextBuilder.build();
         this.injectionContext.onInit().onStart();
 
@@ -631,7 +627,7 @@ public class ScriptConsole {
         statementCount++;
 
         try {
-            ScriptContext script = new ScriptContext(expressionContext, runtimesBuilder, bootstrap);
+            ScriptContext script = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), bootstrap);
 
             // Inject session variables from previous statements
             for (Map.Entry<String, Object> entry : sessionVariables.entrySet()) {

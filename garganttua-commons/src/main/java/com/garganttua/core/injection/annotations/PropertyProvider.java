@@ -43,13 +43,13 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PropertyProviderAnnotation {
+public @interface PropertyProvider {
 
     /**
      * The scope name under which this property provider is registered.
      *
      * @return the provider scope name
      */
-    String value();
+    String scope();
 
 }

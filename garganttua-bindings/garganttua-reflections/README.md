@@ -20,21 +20,21 @@ This module acts as a **bridge between Garganttua Core and Reflections**, enabli
 
 <!-- AUTO-GENERATED-START -->
 ### Installation with Maven
-
 ```xml
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-reflections</artifactId>
-    <version>2.0.0-ALPHA01</version>
+    <version>2.0.0-ALPHA02</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA01
+2.0.0-ALPHA02
 
 ### Dependencies
-- `com.garganttua.core:garganttua-commons`
-- `org.reflections:reflections`
+ - `com.garganttua.core:garganttua-commons`
+ - `org.reflections:reflections`
+
 <!-- AUTO-GENERATED-END -->
 
 ## Core Concepts

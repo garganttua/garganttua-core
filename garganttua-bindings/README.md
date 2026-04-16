@@ -15,6 +15,20 @@ The **garganttua-bindings** module is the parent module for external framework i
 ## Installation
 
 <!-- AUTO-GENERATED-START -->
+### Installation with Maven
+```xml
+<dependency>
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-bindings</artifactId>
+    <version>2.0.0-ALPHA02</version>
+</dependency>
+```
+
+### Actual version
+2.0.0-ALPHA02
+
+### Dependencies
+
 <!-- AUTO-GENERATED-END -->
 
 ## Core Concepts

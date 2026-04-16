@@ -16,7 +16,6 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
-import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 
@@ -154,9 +153,7 @@ public class Main {
         // Now build expression context
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder()
-                .provide(injectionContextBuilder);
-        ScriptContext script = new ScriptContext(expressionContext, runtimesBuilder, null);
+        ScriptContext script = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), null);
 
         String scriptContent = readScriptFile(scriptFile);
         script.load(scriptContent);

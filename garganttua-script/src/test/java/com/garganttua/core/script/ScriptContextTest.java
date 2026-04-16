@@ -10,7 +10,6 @@ import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.IReflectionProvider;
@@ -48,8 +47,7 @@ class ScriptContextTest {
 
         IExpressionContext expressionContext = expressionContextBuilder.build();
 
-        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
-        ScriptContext ctx = new ScriptContext(expressionContext, runtimesBuilder, null);
+        ScriptContext ctx = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         ctx.load(source);
         ctx.compile();
         return ctx;
@@ -174,8 +172,7 @@ class ScriptContextTest {
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
         injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();
-        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
-        ScriptContext ctx = new ScriptContext(expressionContext, runtimesBuilder, null);
+        ScriptContext ctx = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         assertThrows(ScriptException.class, () -> ctx.execute());
     }
 
@@ -188,8 +185,7 @@ class ScriptContextTest {
         expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
         injectionContextBuilder.build().onInit().onStart();
         IExpressionContext expressionContext = expressionContextBuilder.build();
-        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
-        ScriptContext ctx = new ScriptContext(expressionContext, runtimesBuilder, null);
+        ScriptContext ctx = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), null);
         assertThrows(ScriptException.class, () -> ctx.compile());
     }
 

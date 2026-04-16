@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -35,7 +36,7 @@ import com.garganttua.core.supply.ISupplier;
 public class ScriptContext implements IScript {
 
     private final IExpressionContext expressionContext;
-    private final IRuntimesBuilder runtimesBuilder;
+    private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
     private final IBoostrap bootstrap;
     private volatile String scriptSource;
     private volatile IRuntime<Object[], Object> runtime;
@@ -47,15 +48,19 @@ public class ScriptContext implements IScript {
     private final Map<String, IScript> includedScripts = new ConcurrentHashMap<>();
 
     /**
-     * Creates a new ScriptContext with expression context, runtimes builder, and bootstrap.
+     * Creates a new ScriptContext with expression context, runtimes builder factory, and bootstrap.
+     *
+     * <p>The factory is called once per {@link #compile()} invocation, producing a fresh
+     * {@code IRuntimesBuilder} for each script (including child scripts from {@code include()}).
+     * This prevents builder state sharing between independent script compilations.</p>
      *
      * @param expressionContext the expression context for evaluating expressions
-     * @param runtimesBuilder the runtimes builder for runtime construction (provided by the caller)
+     * @param runtimesBuilderFactory factory that creates a new IRuntimesBuilder for each compilation
      * @param bootstrap the bootstrap for rebuilding components after JAR loading (may be null)
      */
-    public ScriptContext(IExpressionContext expressionContext, IRuntimesBuilder runtimesBuilder, IBoostrap bootstrap) {
+    public ScriptContext(IExpressionContext expressionContext, Supplier<IRuntimesBuilder> runtimesBuilderFactory, IBoostrap bootstrap) {
         this.expressionContext = expressionContext;
-        this.runtimesBuilder = runtimesBuilder;
+        this.runtimesBuilderFactory = runtimesBuilderFactory;
         this.bootstrap = bootstrap;
         this.expressionContext.enableDynamicFunctions();
     }
@@ -126,12 +131,14 @@ public class ScriptContext implements IScript {
         ScriptStepFactory stepFactory = new ScriptStepFactory();
         Map<String, IRuntimeStep<?, Object[], Object>> steps = stepFactory.compile(statements);
 
-        // Declare the script runtime — the caller provides the RuntimesBuilder
+        // Create a fresh RuntimesBuilder for this compilation via the factory
+        IRuntimesBuilder runtimesBuilder = this.runtimesBuilderFactory.get();
+
         @SuppressWarnings("unchecked")
         IClass<Object[]> inputType = (IClass<Object[]>) (IClass<?>) IClass.getClass(Object[].class);
         IClass<Object> outputType = IClass.getClass(Object.class);
 
-        IRuntimeBuilder<Object[], Object> runtimeBuilder = this.runtimesBuilder
+        IRuntimeBuilder<Object[], Object> runtimeBuilder = runtimesBuilder
                 .runtime("script", inputType, outputType);
 
         // Add pre-compiled steps
@@ -150,7 +157,7 @@ public class ScriptContext implements IScript {
             runtimeBuilder.variable(entry.getKey(), entry.getValue());
         }
 
-        Map<String, IRuntime<?, ?>> runtimes = this.runtimesBuilder.build();
+        Map<String, IRuntime<?, ?>> runtimes = runtimesBuilder.build();
         @SuppressWarnings("unchecked")
         IRuntime<Object[], Object> scriptRuntime = (IRuntime<Object[], Object>) runtimes.get("script");
         this.runtime = scriptRuntime;
@@ -263,7 +270,7 @@ public class ScriptContext implements IScript {
     }
 
     public ScriptContext createChildScript() {
-        return new ScriptContext(this.expressionContext, this.runtimesBuilder, this.bootstrap);
+        return new ScriptContext(this.expressionContext, this.runtimesBuilderFactory, this.bootstrap);
     }
 
     public void registerIncludedScript(String name, IScript script) {
@@ -284,12 +291,12 @@ public class ScriptContext implements IScript {
     }
 
     /**
-     * Returns the runtimes builder used by this script.
+     * Returns the runtimes builder factory used by this script.
      *
-     * @return the runtimes builder
+     * @return the runtimes builder factory
      */
-    public IRuntimesBuilder getRuntimesBuilder() {
-        return this.runtimesBuilder;
+    public Supplier<IRuntimesBuilder> getRuntimesBuilderFactory() {
+        return this.runtimesBuilderFactory;
     }
 
     /**
