@@ -1,6 +1,7 @@
 package com.garganttua.core.mapper.annotations;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -82,6 +83,7 @@ import com.garganttua.core.reflection.annotations.Indexed;
 @Reflected
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Repeatable(FieldMappingRules.class)
 public @interface FieldMappingRule {
 
 	/**
@@ -135,5 +137,33 @@ public @interface FieldMappingRule {
 	 * @return the reverse transformation method name, or empty string for no transformation
 	 */
 	String toSourceMethod() default "";
+
+	/**
+	 * The source class this rule applies to.
+	 * <p>
+	 * Default {@code void.class} marks the rule as a <em>wildcard</em>: it applies
+	 * to any source, and is overridden by a typed rule whose {@code source()}
+	 * matches the actual source class (exact match preferred, then most-specific
+	 * assignable type).
+	 * </p>
+	 * <p>
+	 * Declare several {@code @FieldMappingRule} on the same field — one per source
+	 * class — to map a single DTO from multiple entity types with distinct field
+	 * paths or converter methods.
+	 * </p>
+	 *
+	 * <h3>Usage example (multi-source DTO):</h3>
+	 * <pre>
+	 * public class UserDTO {
+	 *     {@literal @}FieldMappingRule(source = UserEntity.class, sourceFieldAddress = "firstName")
+	 *     {@literal @}FieldMappingRule(source = LegacyUser.class, sourceFieldAddress = "prenom")
+	 *     private String name;
+	 * }
+	 * </pre>
+	 *
+	 * @return the source class, or {@code void.class} for wildcard semantics
+	 * @since 2.0.0-ALPHA02
+	 */
+	Class<?> source() default void.class;
 
 }

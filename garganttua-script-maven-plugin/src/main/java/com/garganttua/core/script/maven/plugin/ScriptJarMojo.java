@@ -116,7 +116,9 @@ public class ScriptJarMojo extends AbstractMojo {
 
             // Mapper annotations
             "com.garganttua.core.mapper.annotations.ObjectMappingRule",
-            "com.garganttua.core.mapper.annotations.FieldMappingRule"
+            "com.garganttua.core.mapper.annotations.ObjectMappingRules",
+            "com.garganttua.core.mapper.annotations.FieldMappingRule",
+            "com.garganttua.core.mapper.annotations.FieldMappingRules"
     );
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)

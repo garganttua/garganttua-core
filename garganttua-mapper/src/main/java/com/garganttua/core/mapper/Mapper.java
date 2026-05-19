@@ -256,8 +256,8 @@ public class Mapper implements IMapper {
 			throws MapperException {
 		log.atDebug().log("Creating mapping config: {} -> {}", source.getSimpleName(), destination.getSimpleName());
 
-		List<MappingRule> destinationRules = this.mappingRules.parse(destination);
-		List<MappingRule> sourceRules = this.mappingRules.parse(source);
+		List<MappingRule> destinationRules = this.mappingRules.parse(destination, source);
+		List<MappingRule> sourceRules = this.mappingRules.parse(source, destination);
 
 		boolean conventionGenerated = false;
 

@@ -44,42 +44,65 @@ public class MappingRules {
 		this.mapClass = reflection.getClass(Map.class);
 	}
 
+	/**
+	 * Backward-compatible parse — equivalent to {@link #parse(IClass, IClass)} with
+	 * a {@code null} source. Only wildcard mapping rules ({@code source = void.class},
+	 * which is the default) are applied; typed rules are ignored because no
+	 * source is provided to match against.
+	 */
 	public List<MappingRule> parse(IClass<?> destinationClass) throws MapperException {
-		log.atDebug().log("Parsing mapping rules for {}", destinationClass.getSimpleName());
+		return this.parse(destinationClass, null);
+	}
+
+	/**
+	 * Source-aware parsing. Annotation resolution picks at most one rule per field
+	 * (and per class for {@code @ObjectMappingRule}) by ranking candidates:
+	 * exact match on {@code source()} &gt; most-specific assignable &gt; wildcard
+	 * ({@code source == void.class}). Ambiguity and duplicates throw at parse time.
+	 */
+	public List<MappingRule> parse(IClass<?> destinationClass, IClass<?> sourceClass) throws MapperException {
+		log.atDebug().log("Parsing mapping rules for {} (source={})",
+				destinationClass.getSimpleName(),
+				sourceClass != null ? sourceClass.getSimpleName() : "<wildcard>");
 		List<MappingRule> mappingRules = new ArrayList<>();
-		List<MappingRule> result = this.recursiveParsing(destinationClass, mappingRules, "");
+		List<MappingRule> result = this.recursiveParsing(destinationClass, sourceClass, mappingRules, "");
 		log.atDebug().log("Parsed {} rules for {}", result.size(), destinationClass.getSimpleName());
 		return result;
 	}
 
-	private List<MappingRule> recursiveParsing(IClass<?> destinationClass, List<MappingRule> mappingRules,
-			String fieldAddress) throws MapperException {
+	private List<MappingRule> recursiveParsing(IClass<?> destinationClass, IClass<?> sourceClass,
+			List<MappingRule> mappingRules, String fieldAddress) throws MapperException {
 		try {
 			boolean objectMapping = false;
 			IClass<ObjectMappingRule> objectMappingRuleClass = this.reflection.getClass(ObjectMappingRule.class);
-			if (destinationClass.isAnnotationPresent(objectMappingRuleClass)) {
-				ObjectMappingRule annotation = destinationClass.getDeclaredAnnotation(objectMappingRuleClass);
-				ObjectAddress fromSourceMethod = new ObjectAddress(annotation.fromSourceMethod());
-				ObjectAddress toSourceMethod = new ObjectAddress(annotation.toSourceMethod());
+			ObjectMappingRule[] classRules = destinationClass.getDeclaredAnnotationsByType(objectMappingRuleClass);
+			ObjectMappingRule pickedClassRule = resolveBestMatching(classRules, sourceClass,
+					ObjectMappingRule::source, "class " + destinationClass.getSimpleName());
+			if (pickedClassRule != null) {
+				ObjectAddress fromSourceMethod = new ObjectAddress(pickedClassRule.fromSourceMethod());
+				ObjectAddress toSourceMethod = new ObjectAddress(pickedClassRule.toSourceMethod());
 				mappingRules.add(new MappingRule(null, null, destinationClass, fromSourceMethod, toSourceMethod));
 				objectMapping = true;
 			}
 
 			IClass<FieldMappingRule> fieldMappingRuleClass = this.reflection.getClass(FieldMappingRule.class);
 			for (IField field : destinationClass.getDeclaredFields()) {
-				if (field.isAnnotationPresent(fieldMappingRuleClass) && !objectMapping) {
-					FieldMappingRule annotation = field.getDeclaredAnnotation(fieldMappingRuleClass);
-
+				FieldMappingRule[] fieldRules = field.getDeclaredAnnotationsByType(fieldMappingRuleClass);
+				FieldMappingRule pickedField = (fieldRules.length == 0) ? null
+						: resolveBestMatching(fieldRules, sourceClass,
+								FieldMappingRule::source,
+								"field " + destinationClass.getSimpleName() + "." + field.getName());
+				if (pickedField != null && !objectMapping) {
 					ObjectAddress fromSourceMethod = null;
-					if (!annotation.fromSourceMethod().isEmpty()) {
-						fromSourceMethod = new ObjectAddress(annotation.fromSourceMethod());
+					if (!pickedField.fromSourceMethod().isEmpty()) {
+						fromSourceMethod = new ObjectAddress(pickedField.fromSourceMethod());
 					}
 					ObjectAddress toSourceMethod = null;
-					if (!annotation.toSourceMethod().isEmpty()) {
-						toSourceMethod = new ObjectAddress(annotation.toSourceMethod());
+					if (!pickedField.toSourceMethod().isEmpty()) {
+						toSourceMethod = new ObjectAddress(pickedField.toSourceMethod());
 					}
 
-					ObjectAddress sourceFieldAddress = new ObjectAddress(annotation.sourceFieldAddress());
+					ObjectAddress sourceFieldAddress = new ObjectAddress(pickedField.sourceFieldAddress());
 					ObjectAddress destFieldAddress = new ObjectAddress(fieldAddress + field.getName());
 
 					mappingRules.add(new MappingRule(sourceFieldAddress, destFieldAddress, destinationClass,
@@ -90,24 +113,24 @@ public class MappingRules {
 							!collectionClass.isAssignableFrom(fieldType) &&
 							!mapClass.isAssignableFrom(fieldType) &&
 							fieldType.isArray()) {
-						this.recursiveParsing(fieldType, mappingRules,
+						this.recursiveParsing(fieldType, sourceClass, mappingRules,
 								fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
 					} else if (collectionClass.isAssignableFrom(fieldType)) {
 						IClass<?> genericType = getFieldGenericType(field, 0);
 						if (genericType != null) {
-							this.recursiveParsing(genericType, mappingRules,
+							this.recursiveParsing(genericType, sourceClass, mappingRules,
 									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
 						}
 					} else if (mapClass.isAssignableFrom(fieldType)) {
 						IClass<?> keyType = getFieldGenericType(field, 0);
 						IClass<?> valueType = getFieldGenericType(field, 1);
 						if (keyType != null) {
-							this.recursiveParsing(keyType, mappingRules,
+							this.recursiveParsing(keyType, sourceClass, mappingRules,
 									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
 											+ ObjectAddress.MAP_KEY_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
 						}
 						if (valueType != null) {
-							this.recursiveParsing(valueType, mappingRules,
+							this.recursiveParsing(valueType, sourceClass, mappingRules,
 									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
 											+ ObjectAddress.MAP_VALUE_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
 						}
@@ -116,13 +139,88 @@ public class MappingRules {
 			}
 			IClass<?> superclass = destinationClass.getSuperclass();
 			if (superclass != null) {
-				this.recursiveParsing(superclass, mappingRules, fieldAddress);
+				this.recursiveParsing(superclass, sourceClass, mappingRules, fieldAddress);
 			}
 
 			return mappingRules;
 		} catch (ReflectionException e) {
 			throw new MapperException(e);
 		}
+	}
+
+	@FunctionalInterface
+	private interface SourceExtractor<A> {
+		Class<?> sourceOf(A annotation);
+	}
+
+	/**
+	 * Pick the single best-matching annotation for a given source class.
+	 * Order: exact match &gt; most-specific assignable &gt; wildcard.
+	 * Throws {@link MapperException} on duplicate exact, duplicate wildcard, or
+	 * incomparable assignable matches.
+	 */
+	private <A> A resolveBestMatching(A[] candidates, IClass<?> sourceClass,
+			SourceExtractor<A> sourceOf, String memberLabel) throws MapperException {
+		if (candidates == null || candidates.length == 0) {
+			return null;
+		}
+
+		Class<?> actualSource = (sourceClass == null) ? null : (Class<?>) sourceClass.getType();
+
+		A exact = null;
+		A wildcard = null;
+		List<A> assignable = new ArrayList<>();
+
+		for (A candidate : candidates) {
+			Class<?> declared = sourceOf.sourceOf(candidate);
+			if (declared == void.class) {
+				if (wildcard != null) {
+					throw new MapperException("Duplicate wildcard mapping rule on " + memberLabel);
+				}
+				wildcard = candidate;
+			} else if (actualSource != null && declared.equals(actualSource)) {
+				if (exact != null) {
+					throw new MapperException("Duplicate mapping rule for source "
+							+ declared.getName() + " on " + memberLabel);
+				}
+				exact = candidate;
+			} else if (actualSource != null && declared.isAssignableFrom(actualSource)) {
+				assignable.add(candidate);
+			}
+		}
+
+		if (exact != null) {
+			return exact;
+		}
+
+		if (!assignable.isEmpty()) {
+			A best = null;
+			for (A candidate : assignable) {
+				Class<?> candidateSrc = sourceOf.sourceOf(candidate);
+				boolean dominated = false;
+				for (A other : assignable) {
+					if (other == candidate) {
+						continue;
+					}
+					Class<?> otherSrc = sourceOf.sourceOf(other);
+					if (!otherSrc.equals(candidateSrc) && candidateSrc.isAssignableFrom(otherSrc)) {
+						dominated = true;
+						break;
+					}
+				}
+				if (!dominated) {
+					if (best != null) {
+						throw new MapperException("Ambiguous mapping rules on " + memberLabel
+								+ " for source " + actualSource.getName()
+								+ " (multiple incomparable matching source types)");
+					}
+					best = candidate;
+				}
+			}
+			return best;
+		}
+
+		return wildcard;
 	}
 
 	public void validate(IClass<?> sourceClass, List<MappingRule> rules) throws MapperException {
