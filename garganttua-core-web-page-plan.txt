@@ -44,7 +44,7 @@ du projet, stylise en mode "circuit board" avec des couleurs differentes par cou
 
 [BADGE]
 En haut a droite du titre :
-    v2.0.0-ALPHA01  |  MIT License  |  746 fichiers source  |  108 suites de tests
+    v2.0.0-ALPHA02  |  MIT License  |  849 fichiers source  |  114 suites de tests
 
 
 ================================================================================
@@ -107,9 +107,9 @@ Graphe de dependances interactif (librairie : D3.js, vis.js, ou Cytoscape.js).
 Les modules sont des noeuds colores par couche :
 - Vert clair   : Foundation (commons, dsl, supply, lifecycle, mutex)
 - Bleu         : Infrastructure (reflection, runtime-reflection, condition, execution, crypto, configuration)
-- Violet       : Framework (injection, runtime, mapper, expression, bootstrap)
+- Violet       : Framework (injection, properties, runtime, mapper, expression, bootstrap)
 - Orange       : Application (script, console, workflow)
-- Gris         : Build Tools (annotation-processor, script-maven-plugin)
+- Gris         : Build Tools (script-maven-plugin)
 - Jaune        : Integration (bindings: spring, reflections, mutex-redis, native)
 - Rouge        : AOT (aot-commons, aot-reflection, aot-annotation-scanner, aot-annotation-processor, aot-maven-plugin)
 
@@ -135,13 +135,13 @@ avec une legende des couleurs par couche en dessous.
 
 [LEGENDE sous le graphe]
 
-    Foundation          Interfaces, builders, suppliers, lifecycle
+    Foundation          Interfaces, builders, suppliers, lifecycle, mutex
     Infrastructure      Reflexion (IClass, force access), conditions, execution, crypto, configuration multi-format
-    Framework           Injection, runtime, mapping, expressions, bootstrap
+    Framework           Injection, properties, runtime, mapping, expressions, bootstrap
     Application         Scripts, workflows, console
-    Build Tools         Annotation processing, plugins Maven
+    Build Tools         Plugin Maven pour scripts
     Integration         Spring, Reflections, Redis, GraalVM native
-    AOT                 Compilation anticipee, generation de code, plugin Maven
+    AOT                 Compilation anticipee, scanner & processor d'annotations, plugin Maven
 
 
 ================================================================================
@@ -173,14 +173,16 @@ Chaque carte contient :
     enfants, detection de cycles, et instanciation zero-reflexion
     optionnelle via binders compiles.
 
-    IDiContextBuilder builder = DiContextBuilder.create()
-        .withBean(UserService.class)
-        .withBean(UserRepository.class)
-        .withProperty("app.name", "MyApp")
-        .build();
-
-    context.onStart();
-    UserService service = context.getBean(UserService.class);
+    IInjectionContext context = InjectionContext.builder()
+        .provide(reflectionBuilder)
+        .withPackage("com.garganttua")
+        .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+            .withProperty(String.class, "app.name", "MyApp")
+            .up()
+        .autoDetect(true)
+        .build()
+        .onInit()
+        .onStart();
 
 --- Carte 2 : Expression ---
 
@@ -263,6 +265,7 @@ Chaque carte contient :
     conversion de types, et integration DI.
 
     var populator = ConfigurationBuilder.builder()
+        .provide(reflectionBuilder)
         .withMappingStrategy("SMART")
         .strict(true)
         .build();
@@ -282,17 +285,19 @@ Chaque carte contient :
     commune pour methodes et constructeurs.
 
     // Construire la facade composite avec priorites
-    var reflection = ReflectionBuilder.builder()
+    IReflection reflection = ReflectionBuilder.builder()
         .withProvider(new RuntimeReflectionProvider(), 10)
         .withScanner(new MyAnnotationScanner(), 10)
         .build();
 
-    // Acces force a un champ prive via ObjectAddress
-    reflection.forceGetFieldValue(obj, new ObjectAddress("inner.secret"));
+    // Acces a un champ imbrique via dot-notation
+    Object value = reflection.getFieldValue(obj, "inner.secret");
 
-    // FieldAccessor avec dot-notation
-    var accessor = new FieldAccessor<>(ownerType, "address.city");
-    var value = accessor.supply();
+    // Resolution type-safe d'un champ puis FieldAccessor
+    ResolvedField resolved = FieldResolver.fieldByFieldName(
+        IClass.getClass(User.class), provider, "address.city");
+    var accessor = new FieldAccessor<>(resolved, /* force= */ true);
+    IFieldValue<String> fv = accessor.getValue(user);
 
 
 ================================================================================
@@ -367,7 +372,7 @@ avec un label en dessous en texte plus petit et plus clair.
 
 [TEXTE]
 
-    34                  746                108              95 327            0
+    34                  849                114              ~104 000         0
     modules             fichiers source    suites           lignes           dependances
     independants        Java               de tests         de code          circulaires
 
@@ -482,19 +487,26 @@ Java avec la palette du site.
     <dependency>
         <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-injection</artifactId>
-        <version>2.0.0-ALPHA01</version>
+        <version>2.0.0-ALPHA02</version>
     </dependency>
 
 --- Onglet 2 : "Injection de dependances" ---
 
-    // Creer un contexte d'injection
-    var context = DiContextBuilder.create()
-        .withBean(UserService.class)
-        .withBean(UserRepository.class)
-        .withProperty("app.name", "MyApp")
-        .build();
+    // Construire la facade de reflexion (dependance de build)
+    var reflectionBuilder = ReflectionBuilder.builder()
+        .withProvider(new RuntimeReflectionProvider(), 10);
 
-    context.onStart();
+    // Creer un contexte d'injection avec scan de package
+    var context = InjectionContext.builder()
+        .provide(reflectionBuilder)
+        .withPackage("com.garganttua")
+        .propertyProvider(Predefined.PropertyProviders.garganttua.toString())
+            .withProperty(String.class, "app.name", "MyApp")
+            .up()
+        .autoDetect(true)
+        .build()
+        .onInit()
+        .onStart();
 
     // Recuperer et utiliser un bean
     var service = context.getBean(UserService.class);
@@ -541,7 +553,7 @@ Java avec la palette du site.
 
 --- Onglet 5 : "Console REPL" ---
 
-    $ java -jar garganttua-console-2.0.0-ALPHA01-executable.jar
+    $ java -jar garganttua-console-2.0.0-ALPHA02-executable.jar
 
     garganttua> help()
     Available functions: help(), vars(), clear(), load(), man(), syntax(), exit()

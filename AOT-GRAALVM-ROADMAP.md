@@ -11,7 +11,7 @@ Les annotations décrivent la **vérité** sur le code, pas la stratégie de bui
 Deux pipelines consomment les mêmes annotations :
 
 ```
-@Reflected / @ReflectedBuilder / @Indexed
+@Reflected / @ReflectedBuilder / @Indexed 
         │
         ├── garganttua-graalvm-*     → reflect-config.json / resource-config.json
         │

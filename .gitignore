@@ -83,3 +83,9 @@ node_modules/
 
 .claude/
 bin/
+
+garganttua-core-web-page-plan.txt
+
+AOT-GRAALVM-ROADMAP.md
+
+docs/aot-implementation-plan.md

@@ -1,0 +1,401 @@
+package com.garganttua.core.aot.annotation.processor;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+/**
+ * Tests for {@link DirectBinderGenerator} covering:
+ * <ul>
+ *   <li>Member-level {@code @Reflected} inclusion (fields, methods, constructors).</li>
+ *   <li>Direct binders: the generated sub-classes contain typed direct access
+ *       (no {@code Field.get}, {@code Method.invoke}, {@code Constructor.newInstance}).</li>
+ *   <li>Strict rejection of {@code private} members.</li>
+ *   <li>Validation: a member-only {@code @Reflected} requires the enclosing class to be {@code @Reflected}.</li>
+ *   <li>Redundancy warning when a member is already covered by a class-level flag.</li>
+ * </ul>
+ */
+class DirectBinderGeneratorTest {
+
+    // --- Inclusion: explicit members are included even without queryAll* flags ---
+
+    @Test
+    void explicitMethodIsIncludedWithoutQueryAllFlag(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class WithMethod {
+                    @Reflected
+                    public String wanted() { return "x"; }
+                    public String notWanted() { return "y"; }
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.WithMethod", src);
+        assertCompiled(r);
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_WithMethod.java"));
+        assertTrue(aotClass.contains("AOTMethod_WithMethod_wanted_0.INSTANCE"),
+                () -> "expected reference to AOTMethod_WithMethod_wanted_0 in:\n" + aotClass);
+        assertFalse(aotClass.contains("notWanted"),
+                () -> "method 'notWanted' should not be referenced; got:\n" + aotClass);
+        // The per-method file was generated
+        assertTrue(Files.exists(r.outputDir.resolve("sample/AOTMethod_WithMethod_wanted_0.java")));
+    }
+
+    @Test
+    void explicitFieldIsIncludedWithoutAllDeclaredFieldsFlag(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class WithField {
+                    @Reflected
+                    String wanted;
+                    String notWanted;
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.WithField", src);
+        assertCompiled(r);
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_WithField.java"));
+        assertTrue(aotClass.contains("AOTField_WithField_wanted.INSTANCE"),
+                () -> "expected reference to AOTField_WithField_wanted in:\n" + aotClass);
+        assertFalse(aotClass.contains("notWanted"),
+                () -> "field 'notWanted' should not be referenced; got:\n" + aotClass);
+    }
+
+    @Test
+    void explicitConstructorIsIncludedWithoutQueryAllFlag(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class WithCtor {
+                    @Reflected
+                    public WithCtor(String wantedParam) {}
+                    public WithCtor(int notWantedParam) {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.WithCtor", src);
+        assertCompiled(r);
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_WithCtor.java"));
+        assertTrue(aotClass.contains("AOTConstructor_WithCtor_0.INSTANCE"),
+                () -> "expected reference to AOTConstructor_WithCtor_0 in:\n" + aotClass);
+        // Only one constructor is included → no _1
+        assertFalse(aotClass.contains("AOTConstructor_WithCtor_1"),
+                () -> "no second constructor descriptor expected; got:\n" + aotClass);
+    }
+
+    // --- Direct binders: the generated source uses direct typed access ---
+
+    @Test
+    void generatedFieldDescriptorUsesDirectAccess(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class DirectField {
+                    @Reflected String name;
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.DirectField", src);
+        assertCompiled(r);
+        String fieldSrc = Files.readString(r.outputDir.resolve("sample/AOTField_DirectField_name.java"));
+        assertTrue(fieldSrc.contains("return ((DirectField) obj).name;"),
+                () -> "expected direct read access in:\n" + fieldSrc);
+        assertTrue(fieldSrc.contains("((DirectField) obj).name = (java.lang.String) value;"),
+                () -> "expected direct write access in:\n" + fieldSrc);
+        assertFalse(fieldSrc.contains("resolveField"),
+                () -> "no Field.get() reflection should appear; got:\n" + fieldSrc);
+    }
+
+    @Test
+    void generatedFieldDescriptorHandlesPrimitiveTyped(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class PrimField {
+                    @Reflected int score;
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.PrimField", src);
+        assertCompiled(r);
+        String fieldSrc = Files.readString(r.outputDir.resolve("sample/AOTField_PrimField_score.java"));
+        assertTrue(fieldSrc.contains("public int getInt(Object obj)"),
+                () -> "expected getInt variant in:\n" + fieldSrc);
+        assertTrue(fieldSrc.contains("public void setInt(Object obj, int v)"),
+                () -> "expected setInt variant in:\n" + fieldSrc);
+        assertTrue(fieldSrc.contains("(Integer) value"),
+                () -> "expected boxed unbox in generic set; got:\n" + fieldSrc);
+    }
+
+    @Test
+    void generatedFieldDescriptorRejectsFinalSet(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class FinalField {
+                    @Reflected final String name = "x";
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.FinalField", src);
+        assertCompiled(r);
+        String fieldSrc = Files.readString(r.outputDir.resolve("sample/AOTField_FinalField_name.java"));
+        assertTrue(fieldSrc.contains("UnsupportedOperationException"),
+                () -> "expected UnsupportedOperationException on set for final field; got:\n" + fieldSrc);
+        assertTrue(fieldSrc.contains("return ((FinalField) obj).name;"),
+                () -> "final field should still allow read; got:\n" + fieldSrc);
+    }
+
+    @Test
+    void generatedMethodDescriptorUsesDirectInvoke(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class DirectMethod {
+                    @Reflected public String greet(String who) { return "hi " + who; }
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.DirectMethod", src);
+        assertCompiled(r);
+        String methodSrc = Files.readString(r.outputDir.resolve("sample/AOTMethod_DirectMethod_greet_0.java"));
+        assertTrue(methodSrc.contains("return ((DirectMethod) obj).greet((java.lang.String) args[0]);"),
+                () -> "expected direct invocation in:\n" + methodSrc);
+        assertFalse(methodSrc.contains("resolveMethod"),
+                () -> "no Method.invoke() reflection should appear; got:\n" + methodSrc);
+    }
+
+    @Test
+    void generatedMethodDescriptorHandlesVoidAndStatic(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class StaticVoid {
+                    @Reflected public static void log(String msg) {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.StaticVoid", src);
+        assertCompiled(r);
+        String methodSrc = Files.readString(r.outputDir.resolve("sample/AOTMethod_StaticVoid_log_0.java"));
+        assertTrue(methodSrc.contains("StaticVoid.log((java.lang.String) args[0]);"),
+                () -> "expected static call without receiver cast; got:\n" + methodSrc);
+        assertTrue(methodSrc.contains("return null;"),
+                () -> "void method must return null; got:\n" + methodSrc);
+    }
+
+    @Test
+    void generatedConstructorDescriptorUsesNew(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class DirectCtor {
+                    @Reflected public DirectCtor(String n, int i) {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.DirectCtor", src);
+        assertCompiled(r);
+        String ctorSrc = Files.readString(r.outputDir.resolve("sample/AOTConstructor_DirectCtor_0.java"));
+        assertTrue(ctorSrc.contains("return new DirectCtor((java.lang.String) args[0], (Integer) args[1]);"),
+                () -> "expected direct new expression in:\n" + ctorSrc);
+        assertFalse(ctorSrc.contains("resolveConstructor"),
+                () -> "no Constructor.newInstance() reflection should appear; got:\n" + ctorSrc);
+    }
+
+    @Test
+    void methodOverloadsAreNumbered(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected(queryAllPublicMethods = true)
+                public class Overloads {
+                    public void doIt() {}
+                    public void doIt(String s) {}
+                    public void other() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Overloads", src);
+        assertCompiled(r);
+        assertTrue(Files.exists(r.outputDir.resolve("sample/AOTMethod_Overloads_doIt_0.java")));
+        assertTrue(Files.exists(r.outputDir.resolve("sample/AOTMethod_Overloads_doIt_1.java")));
+        assertTrue(Files.exists(r.outputDir.resolve("sample/AOTMethod_Overloads_other_0.java")));
+    }
+
+    // --- Validation errors ---
+
+    @Test
+    void memberAnnotatedButClassNotIsCompileError(@TempDir Path tmp) {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                public class NotReflectedClass {
+                    @Reflected
+                    public void method() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.NotReflectedClass", src);
+        assertTrue(hasError(r, "requires its enclosing type"),
+                () -> "expected an enclosing-type ERROR; got: " + diagSummary(r));
+    }
+
+    @Test
+    void privateMemberIsRejected(@TempDir Path tmp) {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class PrivateMember {
+                    @Reflected private String secret;
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.PrivateMember", src);
+        assertTrue(hasError(r, "cannot access private members"),
+                () -> "expected a private-rejection ERROR; got: " + diagSummary(r));
+    }
+
+    @Test
+    void privateMemberCapturedByFlagIsRejected(@TempDir Path tmp) {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected(allDeclaredFields = true)
+                public class PrivateViaFlag {
+                    private String secret;
+                    String visible;
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.PrivateViaFlag", src);
+        assertTrue(hasError(r, "cannot access private members"),
+                () -> "expected a private-rejection ERROR; got: " + diagSummary(r));
+    }
+
+    @Test
+    void redundantMemberWithQueryAllFlagWarns(@TempDir Path tmp) {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected(queryAllDeclaredMethods = true)
+                public class RedundantMethod {
+                    @Reflected
+                    public void method() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.RedundantMethod", src);
+        assertCompiled(r);
+        boolean hasWarning = r.diagnostics.getDiagnostics().stream()
+                .anyMatch(d -> d.getKind() == Diagnostic.Kind.WARNING
+                        && d.getMessage(null).contains("redundant"));
+        assertTrue(hasWarning,
+                () -> "expected a redundancy WARNING; got: " + diagSummary(r));
+    }
+
+    @Test
+    void noFlagsAndNoExplicitMembersProducesEmptyArrays(@TempDir Path tmp) throws IOException {
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected
+                public class Bare {
+                    String unused;
+                    public void unusedMethod() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Bare", src);
+        assertCompiled(r);
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_Bare.java"));
+        assertTrue(aotClass.contains("new AOTField[0]"), () -> aotClass);
+        assertTrue(aotClass.contains("new AOTMethod[0]"), () -> aotClass);
+        assertTrue(aotClass.contains("new AOTConstructor[0]"), () -> aotClass);
+    }
+
+    // --- harness ---
+
+    private record CompileResult(boolean success, Path outputDir,
+                                 DiagnosticCollector<JavaFileObject> diagnostics) {}
+
+    private CompileResult compile(Path tmp, String className, String source) {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assertNotNull(compiler, "this test requires a JDK (not JRE)");
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        Path outputDir = tmp.resolve("out");
+        try {
+            Files.createDirectories(outputDir);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        try (StandardJavaFileManager fm = compiler.getStandardFileManager(diagnostics, null, null)) {
+            fm.setLocationFromPaths(StandardLocation.CLASS_OUTPUT, List.of(outputDir));
+            fm.setLocationFromPaths(StandardLocation.SOURCE_OUTPUT, List.of(outputDir));
+            JavaFileObject file = new InMemorySource(className, source);
+            JavaCompiler.CompilationTask task = compiler.getTask(
+                    null, fm, diagnostics,
+                    List.of("-Agarganttua.direct.binders=true", "-proc:only"),
+                    null, List.of(file));
+            task.setProcessors(List.of(new DirectBinderGenerator()));
+            boolean ok = task.call();
+            return new CompileResult(ok, outputDir, diagnostics);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * The processor writes generated sources, but javac will complain that it
+     * cannot resolve AOTClass / AOTField / ... (the runtime AOT modules are
+     * not on the test classpath). Those compilation errors are unrelated to
+     * the processor's behaviour, so we only fail on diagnostics emitted by
+     * the processor itself ({@code [garganttua-aot]}).
+     */
+    private static void assertCompiled(CompileResult r) {
+        assertFalse(hasError(r, "[garganttua-aot]"),
+                () -> "processor emitted an unexpected ERROR; got: " + diagSummary(r));
+    }
+
+    private static boolean hasError(CompileResult r, String messageFragment) {
+        return r.diagnostics.getDiagnostics().stream()
+                .anyMatch(d -> d.getKind() == Diagnostic.Kind.ERROR
+                        && d.getMessage(null).contains(messageFragment));
+    }
+
+    private static String diagSummary(CompileResult r) {
+        StringBuilder sb = new StringBuilder("\n");
+        for (Diagnostic<? extends JavaFileObject> d : r.diagnostics.getDiagnostics()) {
+            sb.append("  ").append(d.getKind()).append(": ").append(d.getMessage(null)).append('\n');
+        }
+        return sb.toString();
+    }
+
+    private static final class InMemorySource extends SimpleJavaFileObject {
+        private final String content;
+        InMemorySource(String className, String content) {
+            super(URI.create("string:///" + className.replace('.', '/') + Kind.SOURCE.extension),
+                    Kind.SOURCE);
+            this.content = content;
+        }
+        @Override
+        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+            return content;
+        }
+    }
+}

@@ -91,6 +91,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-lifecycle**](./garganttua-lifecycle/README.md) | Abstract lifecycle management with thread-safe state transitions. |
 | \|- [**garganttua-mapper**](./garganttua-mapper/README.md) | Declarative object-to-object mapping engine. |
 | \|- [**garganttua-mutex**](./garganttua-mutex/README.md) | Thread-safe mutex synchronization with configurable acquisition strategies. |
+| \|- [**garganttua-observability**](./garganttua-observability/README.md) | Generic observer pattern primitives with sealed event hierarchy and script-side instrumentation. |
 | \|- [**garganttua-properties**](./garganttua-properties/README.md) | Property provider that loads application.properties files from classpath and filesystem into the injection context. |
 | \|- [**garganttua-reflection**](./garganttua-reflection/README.md) | Advanced reflection utilities for classes, methods, and annotations. |
 | \|- [**garganttua-runtime**](./garganttua-runtime/README.md) | Runtime context management and lifecycle orchestration. |
@@ -100,6 +101,58 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 | \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

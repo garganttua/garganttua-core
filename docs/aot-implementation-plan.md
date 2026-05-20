@@ -1,4 +1,4 @@
-# Plan d'implémentation : Suite AOT & Harmonisation Native
+# Plan d'implémentation : Suite AOT & Harmonisation Native 
 
 ## Contexte
 
