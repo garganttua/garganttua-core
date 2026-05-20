@@ -72,7 +72,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... contexts) throws ReflectionException {
         log.atDebug().log("{}Evaluating fallback expression via execute()", logLineHeader());
-        RuntimeExpressionContext.set(ownerContext);
+        IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(ownerContext);
         try {
             ISupplier<ExecutionReturned> supplier = expression.evaluate();
             Optional<ExecutionReturned> result = supplier.supply();
@@ -80,7 +80,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         } catch (Exception e) {
             return Optional.of(SingleMethodReturn.ofException(e, null));
         } finally {
-            RuntimeExpressionContext.clear();
+            RuntimeExpressionContext.pop(previous);
         }
     }
 
@@ -134,13 +134,13 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             log.atDebug().log("{}Evaluating fallback expression", logLineHeader());
-            RuntimeExpressionContext.set(context);
+            IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(context);
             try {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
                 Optional<ExecutionReturned> result = supplier.supply();
                 returned = result.orElse(null);
             } finally {
-                RuntimeExpressionContext.clear();
+                RuntimeExpressionContext.pop(previous);
             }
             log.atTrace().log("{}Fallback returned value={}", logLineHeader(), returned);
         } catch (Exception e) {

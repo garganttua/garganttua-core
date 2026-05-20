@@ -97,7 +97,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... contexts) throws ReflectionException {
         log.atDebug().log("{}Evaluating expression via execute()", logLineHeader());
-        RuntimeExpressionContext.set(ownerContext);
+        IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(ownerContext);
         try {
             ISupplier<ExecutionReturned> supplier = expression.evaluate();
             Optional<ExecutionReturned> result = supplier.supply();
@@ -105,7 +105,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         } catch (Exception e) {
             return Optional.of(SingleMethodReturn.ofException(e, null));
         } finally {
-            RuntimeExpressionContext.clear();
+            RuntimeExpressionContext.pop(previous);
         }
     }
 
@@ -151,7 +151,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             log.atDebug().log("{}Evaluating expression", logLineHeader());
-            RuntimeExpressionContext.set(context);
+            IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(context);
             try {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
                 Optional<ExecutionReturned> result = supplier.supply();
@@ -159,7 +159,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
                 log.atTrace().log("{}Returned value={}", logLineHeader(), returned);
                 returned = evaluatePipes(context, returned);
             } finally {
-                RuntimeExpressionContext.clear();
+                RuntimeExpressionContext.pop(previous);
             }
             processExecutionReturn(context, variable, returned);
         } catch (CatchAwareExpression.CatchResultException cre) {

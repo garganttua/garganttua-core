@@ -127,44 +127,46 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
 
         @Override
         public Optional<R> supply() throws SupplyException {
+            // Capture context BEFORE inner evaluation — the inner expression may
+            // trigger nested step execution that clears the ThreadLocal. Capturing
+            // here guarantees a valid reference for the catch handler even if the
+            // inner does not properly restore the ThreadLocal.
+            IRuntimeContext<?, ?> savedCtx = RuntimeExpressionContext.get();
             try {
                 return inner.evaluate().supply();
             } catch (Exception e) {
-                // Match against the full exception (not just cause) — CatchClause.matches()
-                // checks both the exception itself and its cause chain
-                // Save context — handler evaluation might clear it (sub-scripts)
-                IRuntimeContext<?, ?> savedCtx = RuntimeExpressionContext.get();
-                for (CatchHandler<R> handler : handlers) {
-                    if (handler.matches(e) || (e.getCause() != null && handler.matches(e.getCause()))) {
-                        log.atDebug().log("Catch handler matched for {}, executing handler",
-                                e.getClass().getSimpleName());
-                        try {
-                            // Set exception context variables for handler access (@exception, @message)
-                            if (savedCtx != null) {
-                                Throwable actualCause = e.getCause() != null ? e.getCause() : e;
-                                savedCtx.setVariable("exception", actualCause);
-                                savedCtx.setVariable("message", actualCause.getMessage());
-                            }
-                            // Set code if specified
-                            handler.code().ifPresent(code -> {
+                // Restore the ThreadLocal so the handler expression (and the
+                // functions/resolvers it invokes) can read the parent context.
+                IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(savedCtx);
+                try {
+                    for (CatchHandler<R> handler : handlers) {
+                        if (handler.matches(e) || (e.getCause() != null && handler.matches(e.getCause()))) {
+                            log.atDebug().log("Catch handler matched for {}, executing handler",
+                                    e.getClass().getSimpleName());
+                            try {
                                 if (savedCtx != null) {
-                                    savedCtx.setCode(code);
+                                    Throwable actualCause = e.getCause() != null ? e.getCause() : e;
+                                    savedCtx.setVariable("exception", actualCause);
+                                    savedCtx.setVariable("message", actualCause.getMessage());
                                 }
-                            });
-                            // Execute handler, then throw to stop the chain
-                            Optional<R> handlerResult = handler.handler().evaluate().supply();
-                            // Wrap result in a CatchResult exception — the RuntimeStepMethodBinder
-                            // will detect this, extract the result, and stop the chain
-                            throw new CatchResultException(handlerResult.orElse(null), handler.variableName());
-                        } catch (CatchResultException cre) {
-                            throw cre; // rethrow — handled by caller
-                        } catch (Exception handlerEx) {
-                            throw new SupplyException("Catch handler failed", handlerEx);
+                                handler.code().ifPresent(code -> {
+                                    if (savedCtx != null) {
+                                        savedCtx.setCode(code);
+                                    }
+                                });
+                                Optional<R> handlerResult = handler.handler().evaluate().supply();
+                                throw new CatchResultException(handlerResult.orElse(null), handler.variableName());
+                            } catch (CatchResultException cre) {
+                                throw cre;
+                            } catch (Exception handlerEx) {
+                                throw new SupplyException("Catch handler failed", handlerEx);
+                            }
                         }
                     }
+                    throw e instanceof SupplyException se ? se : new SupplyException(e);
+                } finally {
+                    RuntimeExpressionContext.pop(previous);
                 }
-                // No handler matched — propagate
-                throw e instanceof SupplyException se ? se : new SupplyException(e);
             }
         }
 
