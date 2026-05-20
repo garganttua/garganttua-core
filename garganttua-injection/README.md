@@ -131,6 +131,24 @@ public class DatabaseConfig {
 }
 ```
 
+### Provider Auto-Detection
+
+Two annotations let `InjectionContextBuilder` discover and register providers without manual wiring:
+
+- `@BeanProviderAnnotation("scope")` on `IBeanProviderBuilder` implementations
+- `@PropertyProviderAnnotation("scope")` on `IPropertyProviderBuilder` implementations
+
+Both annotations are `@Indexed` and `@Reflected`, so they're discovered at compile time via the annotation processor. When `autoDetect(true)` is enabled, `InjectionContextBuilder.doAutoDetectionWithDependency` instantiates annotated classes and registers them as providers under the declared scope.
+
+```java
+@PropertyProviderAnnotation("config")
+public class MyPropertiesBuilder implements IPropertyProviderBuilder { ... }
+
+// At runtime, MyPropertiesBuilder is auto-registered under scope "config"
+// without explicit propertyProvider("config", ...) call
+DiContext.builder().autoDetect(true).build();
+```
+
 ### Lifecycle Callbacks
 
 Execute initialization logic after dependency injection:

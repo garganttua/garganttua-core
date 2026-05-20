@@ -7,6 +7,7 @@ Garganttua Mapper is a powerful, **declarative object-to-object mapping engine**
 **Key Features:**
 - **Declarative Mapping** - Define mappings using annotations, no manual mapping code required
 - **Bi-directional** - Same configuration works for both source→destination and destination→source mappings
+- **Per-Source Rules** - A single DTO can declare distinct mapping rules per source class via the `source()` attribute, with `@Repeatable` containers
 - **Thread-Safe** - Fully thread-safe for concurrent mapping operations with lock-free configuration caching
 - **Deep Nesting Support** - Map nested objects, collections, and complex hierarchies with dot notation
 - **Collection Mapping** - Automatic handling of Lists, Sets, Maps with element-level transformations
@@ -153,6 +154,35 @@ class Destination {
 ```
 
 For complete ObjectAddress syntax documentation, see [ObjectAddress README](../garganttua-commons/ObjectAddress-README.md).
+
+### Per-Source Rules
+
+Both `@FieldMappingRule` and `@ObjectMappingRule` carry an optional `source()` attribute (default `void.class` = wildcard, matches any source). Both annotations are `@Repeatable` via the `@FieldMappingRules` / `@ObjectMappingRules` container annotations. This lets a single DTO be mapped from multiple source classes with distinct field paths or converter methods.
+
+**Resolution priority** (highest wins):
+1. **Exact match** — rule's `source()` equals the actual source class
+2. **Most-specific assignable** — rule's `source()` is the closest superclass/superinterface of the actual source class
+3. **Wildcard** — `source() = void.class`
+
+`MappingRules.parse(source, destination)` throws on duplicate exact matches or incomparable ambiguities (multiple rules with sibling assignable sources, none more specific). The single-arg `parse(destination)` overload remains for backward compatibility and uses wildcard-only resolution.
+
+**Example:**
+```java
+class UserDto {
+    // Default rule applies when no source-specific rule matches
+    @FieldMappingRule(sourceFieldAddress = "fullName")
+    String name;
+
+    // From AdminUser: pull "displayName" instead
+    @FieldMappingRule(source = AdminUser.class, sourceFieldAddress = "displayName")
+    @FieldMappingRule(sourceFieldAddress = "fullName")
+    String displayName;
+}
+
+Mapper mapper = new Mapper();
+UserDto fromRegular = mapper.map(regularUser, UserDto.class);  // uses "fullName"
+UserDto fromAdmin   = mapper.map(adminUser, UserDto.class);    // uses "displayName"
+```
 
 ### Bi-directional Mapping
 

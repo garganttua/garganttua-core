@@ -395,6 +395,23 @@ String fallbackMethod(@Input String input) {
 // Result: Fallback executed, custom logic runs
 ```
 
+### RuntimeExpressionContext (ThreadLocal)
+
+`RuntimeExpressionContext` is a static `ThreadLocal<IRuntimeContext<?, ?>>` set by `RuntimeStepMethodBinder` / `RuntimeStepFallbackBinder` before evaluating an expression, so any expression node in the evaluation tree can read the current context without it being threaded through every signature.
+
+**Use `push(ctx)` / `pop(previous)`, not `set(ctx)` / `clear()`** when invoking a nested step from within an expression. `set` / `clear` nukes the outer context; `push` / `pop` saves the previous value and restores it:
+
+```java
+IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(ctx);
+try {
+    // ... evaluate / execute ...
+} finally {
+    RuntimeExpressionContext.pop(previous);
+}
+```
+
+This pattern is required by `CatchAwareExpression`, `SubRuntimeExpression`, and any other consumer that may invoke a runtime step re-entrantly.
+
 ### Expression Functions
 
 The runtime module exposes the following expression function, auto-discovered via `@Expression` annotation scanning on the `com.garganttua.core.runtime` package.

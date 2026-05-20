@@ -11,8 +11,8 @@ If you need additional information, code snippets, examples, or further explanat
 
 ## 🎯 Key Features
 
-- **Modular Architecture** - 20+ independent modules, each solving a specific technical concern
-- **Dependency Injection** - Lightweight IoC container with context management and bean lifecycle
+- **Modular Architecture** - 30+ independent modules, each solving a specific technical concern
+- **Dependency Injection** - Lightweight IoC container with context management, bean lifecycle, and auto-detection of `@BeanProviderAnnotation` / `@PropertyProviderAnnotation` providers
 - **Runtime Workflows** - Sophisticated orchestration engine with steps and exception handling
 - **Script Engine** - Scripting language with REPL console, retry logic, synchronization, and expression evaluation
 - **Workflow Orchestration** - High-level DSL for composing multi-stage pipelines with script generation
@@ -20,11 +20,13 @@ If you need additional information, code snippets, examples, or further explanat
 - **Advanced Reflection** - Type-safe reflection utilities with annotation scanning and dynamic binding
 - **Declarative DSL** - Fluent builder APIs for creating domain-specific languages
 - **Condition Engine** - Expressive DSL for defining and evaluating complex runtime conditions
-- **Object Mapping** - Declarative field-level mapping with bidirectional support
+- **Object Mapping** - Declarative field-level mapping with bidirectional support and per-source rules
+- **Properties Loading** - `.properties` file provider with classpath + filesystem sources and `${VAR:default}` placeholder resolution
+- **Observability** - Generic observer-pattern primitives with sealed event hierarchy and script-side instrumentation
 - **Execution Chains** - Chain-of-responsibility pattern with fallback handling
 - **Lifecycle Management** - Thread-safe state transitions and component lifecycle hooks
 - **Native Image Support** - GraalVM compatibility with Maven plugin for native compilation
-- **Zero Reflection at Runtime** - Optional compile-time code generation for optimal performance
+- **Zero Reflection at Runtime** - AOT module suite generating `IClass<T>` descriptors and direct binders at compile time
 - **Cryptography** - Secure encryption, hashing, and key management utilities
 
 ## 💡 Philosophy
@@ -248,9 +250,15 @@ These modules implement the primary framework capabilities:
 
 Specialized modules for specific technical needs:
 
-- **[garganttua-mapper](./garganttua-mapper/README.md)** - Declarative object-to-object mapping with annotation-based rules, bidirectional mapping, and field-level transformation support.
+- **[garganttua-mapper](./garganttua-mapper/README.md)** - Declarative object-to-object mapping with annotation-based rules, bidirectional mapping, field-level transformation support, and **per-source rules** (one DTO can map distinctly from multiple source classes).
 
 - **[garganttua-crypto](./garganttua-crypto/README.md)** - Cryptography utilities for encryption, decryption, hashing, and secure key management.
+
+- **[garganttua-properties](./garganttua-properties/README.md)** - Property provider that loads `.properties` files from classpath and filesystem into the injection context. Supports `${VAR:default}` placeholder resolution against JVM properties, environment variables, and other loaded properties.
+
+- **[garganttua-observability](./garganttua-observability/README.md)** - Generic observer-pattern primitives with sealed event hierarchy (`StartEvent`, `EndEvent`, `ErrorEvent`) and thread-safe registry. Includes script-side `:observe(...)` expression function for instrumenting workflows without leaking observer concerns into user code.
+
+- **[garganttua-configuration](./garganttua-configuration/README.md)** - Multi-format configuration loading (JSON, YAML, XML, TOML, Properties) with automatic builder population from JSON/YAML/etc.
 
 ### Integration Modules
 
@@ -264,7 +272,7 @@ Modules providing integration with external frameworks and tools:
 
 Modules for build-time tooling and native compilation:
 
-- **[garganttua-native-annotation-processor](./garganttua-bindings/garganttua-native/garganttua-native-annotation-processor/)** - Compile-time annotation indexing processor. Generates index files in `META-INF/garganttua/index/` for zero-overhead annotation discovery at runtime. Also generates direct-call binder classes for `@Expression` methods and DI bean constructors (toggleable via `-Dgarganttua.direct.binders=false`).
+- **[garganttua-aot](./garganttua-aot/README.md)** - AOT (Ahead-of-Time) compilation support — parent of `garganttua-aot-commons`, `garganttua-aot-reflection`, `garganttua-aot-annotation-scanner`, `garganttua-aot-annotation-processor`, `garganttua-aot-maven-plugin`. Generates `IClass<T>` descriptors and direct binders at compile time so reflection can be eliminated entirely from the runtime path.
 
 - **[garganttua-native-commons](./garganttua-bindings/garganttua-native/garganttua-native-commons/README.md)** - Native image shared utilities and system abstractions.
 
@@ -423,11 +431,11 @@ The module dependency structure follows these principles:
 
 1. **Foundation Layer** - commons, dsl, supply, lifecycle, mutex
 2. **Infrastructure Layer** - reflection, runtime-reflection, condition, execution, crypto, configuration
-3. **Framework Layer** - injection, runtime, mapper, expression, bootstrap
+3. **Framework Layer** - injection, runtime, mapper, expression, bootstrap, properties, observability
 4. **Application Layer** - script, console, workflow
 5. **Integration Layer** - bindings (reflections, spring, native, mutex-redis)
 6. **Build Layer** - native-image-maven-plugin, script-maven-plugin, annotation-processor
-7. **AOT Layer** (WIP) - aot-commons, aot-reflection, aot-annotation-scanner, aot-annotation-processor, aot-maven-plugin
+7. **AOT Layer** - aot-commons, aot-reflection, aot-annotation-scanner, aot-annotation-processor, aot-maven-plugin (parent: `garganttua-aot`)
 
 <!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-START -->
 ```mermaid
@@ -597,13 +605,21 @@ This project is distributed under the MIT License. See individual module READMEs
 
 ## 🗺️ Roadmap
 
-### Version 2.0 (Current - ALPHA)
+### Version 2.0.0-ALPHA02 (Current)
 
-- Core modules stabilization
-- Comprehensive documentation
-- Performance benchmarks
-- Cryptographic features development
-- Native image support
+- 30+ modules, 1175+ tests passing
+- AOT module suite generating reflection-free runtime descriptors
+- `garganttua-properties` and `garganttua-observability` modules
+- Per-source mapping rules in `garganttua-mapper`
+- Provider auto-detection via `@BeanProviderAnnotation` / `@PropertyProviderAnnotation`
+- Workflow timing observers integrated with the script generator
+- ThreadLocal preservation across nested runtime step execution
+
+### Next
+
+- Stabilize AOT pipeline and integrate into `CompositeReflection`
+- Rename `native` → `graalvm` and move under `bindings/`
+- Documentation: tutorials per module, end-to-end examples
 
 ---
 

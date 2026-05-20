@@ -437,6 +437,30 @@ result.start();            // Start Instant
 result.stop();             // Stop Instant
 ```
 
+### Observability and Timing
+
+Workflows integrate with `garganttua-observability` — attach an observer to receive `StartEvent` / `EndEvent` / `ErrorEvent` for the workflow, each stage, and each script:
+
+```java
+IWorkflow workflow = WorkflowBuilder.create()
+    .name("my-workflow")
+    .timing(WorkflowTimingConfig.of().stages(true).scripts(true))
+    .stage("fetch").script(...).up()
+    .build();
+
+workflow.addObserver(event -> {
+    switch (event) {
+        case StartEvent s -> log.info("start {}", s.source());
+        case EndEvent e   -> log.info("end   {} took {}", e.source(), e.duration());
+        case ErrorEvent x -> log.warn("error {}: {}", x.source(), x.failure());
+    }
+});
+
+workflow.execute();
+```
+
+`WorkflowTimingConfig.stages(true)` instruments stage boundaries, `scripts(true)` instruments individual scripts. Without timing enabled, only the workflow itself emits events. Observers run on the caller thread — keep them fast.
+
 ### Introspection
 
 ```java

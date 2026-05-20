@@ -63,7 +63,7 @@ python3 scripts/run_all.py
 
 ## Architecture Overview
 
-Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA01`) is a modular Java 21 framework providing dependency injection, reflection utilities, expression language evaluation, scripting, and workflow orchestration. Base package: `com.garganttua.core`. The codebase follows a layered architecture with strict acyclic dependencies.
+Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA02`) is a modular Java 21 framework providing dependency injection, reflection utilities, expression language evaluation, scripting, and workflow orchestration. Base package: `com.garganttua.core`. The codebase follows a layered architecture with strict acyclic dependencies.
 
 ### Module Layers
 
@@ -71,15 +71,15 @@ Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA01`) is a modular Ja
 
 2. **Infrastructure**: `garganttua-reflection` (type-safe reflection binders + composite `IReflection` facade), `garganttua-runtime-reflection` (JVM runtime reflection provider), `garganttua-condition` (boolean condition DSL), `garganttua-execution` (chain-of-responsibility), `garganttua-crypto` (cryptographic utilities), `garganttua-configuration` (multi-format config loading & builder population)
 
-3. **Framework**: `garganttua-injection` (DI container), `garganttua-runtime` (workflow engine), `garganttua-mapper` (object mapping), `garganttua-expression` (ANTLR4 expression language), `garganttua-bootstrap` (application bootstrapping)
+3. **Framework**: `garganttua-injection` (DI container with `@BeanProviderAnnotation` / `@PropertyProviderAnnotation` auto-detection), `garganttua-runtime` (workflow engine), `garganttua-mapper` (object mapping with per-source rules), `garganttua-expression` (ANTLR4 expression language), `garganttua-bootstrap` (application bootstrapping), `garganttua-properties` (`.properties` file provider with `${VAR:default}` placeholders), `garganttua-observability` (sealed observer primitives + `:observe(...)` script expression)
 
-4. **Application**: `garganttua-script` (scripting engine), `garganttua-console` (interactive REPL, extracted from script), `garganttua-workflow` (high-level workflow DSL with script generation)
+4. **Application**: `garganttua-script` (scripting engine — script runtime construction delegated to `RuntimesBuilder`), `garganttua-console` (interactive REPL, extracted from script), `garganttua-workflow` (high-level workflow DSL with script generation and observability timing integration)
 
 5. **Integration**: `garganttua-bindings/` (Spring, Reflections library bindings)
 
-6. **Build Tools**: `garganttua-native`, `garganttua-native-image-maven-plugin` (GraalVM support), `garganttua-annotation-processor` (compile-time annotation indexing — commented out of reactor), `garganttua-script-maven-plugin` (script plugin JAR packaging)
+6. **Build Tools**: `garganttua-native-image-maven-plugin` (GraalVM support), `garganttua-annotation-processor` (compile-time annotation indexing — commented out of reactor), `garganttua-script-maven-plugin` (script plugin JAR packaging)
 
-7. **AOT (Work in Progress)**: `garganttua-aot-commons` (shared AOT interfaces), `garganttua-aot/` (parent with submodules: `garganttua-aot-reflection`, `garganttua-aot-annotation-scanner`, `garganttua-aot-annotation-processor`, `garganttua-aot-maven-plugin`)
+7. **AOT (Work in Progress)**: `garganttua-aot/` (parent) with submodules `garganttua-aot-commons` (shared AOT interfaces), `garganttua-aot-reflection` (pre-generated `IClass<T>` descriptors), `garganttua-aot-annotation-scanner`, `garganttua-aot-annotation-processor` (compile-time code generator for direct binders + class descriptors), `garganttua-aot-maven-plugin`. The annotation processor was recently refactored into per-member generators (`AOTConstructorSourceGenerator`, `AOTFieldSourceGenerator`, `AOTMethodSourceGenerator`, `AOTNaming`, `TypeNames`, `MemberInclusion`).
 
 ### Key Design Patterns
 
@@ -111,6 +111,8 @@ Key interfaces:
 - `BeanDefinition<T>` - immutable bean metadata (Java record)
 
 Supports singleton/prototype strategies, child contexts, and property injection.
+
+**Provider auto-detection** (added 2026-04-16): `@BeanProviderAnnotation("scope")` and `@PropertyProviderAnnotation("scope")` mark `IBeanProviderBuilder` / `IPropertyProviderBuilder` implementations. Both annotations are `@Indexed` and `@Reflected` so they're discovered at compile time. The `InjectionContextBuilder` auto-detects annotated classes during `doAutoDetectionWithDependency` and registers them under the declared scope.
 
 ### Expression Language (ANTLR4)
 
@@ -174,6 +176,22 @@ Orchestrates multi-stage workflows with annotation or programmatic definition:
 - `@Input`, `@Output`, `@Context`, `@Variable` - parameter injection
 - `@Catch`, `@FallBack` - exception handling
 
+**`RuntimeExpressionContext` ThreadLocal** — used by step binders to pass the current `IRuntimeContext` to expressions during evaluation. Use `push(ctx)` / `pop(previous)` (not `set` / `clear`) when invoking nested step execution so the outer context survives. `RuntimeStepMethodBinder`, `RuntimeStepFallbackBinder`, and `CatchAwareExpression` all follow this pattern (fixed 2026-05-20). Lookup sites: `SubRuntimeExpression`, `MethodBinderExpression`, `RuntimeFunctions`, `ScriptVariableResolver`.
+
+### Mapper Per-Source Rules
+
+Both `@FieldMappingRule` and `@ObjectMappingRule` carry a `source()` attribute (default `void.class` = wildcard) and are `@Repeatable` (via `@FieldMappingRules` / `@ObjectMappingRules` container annotations). A single DTO can therefore be mapped from multiple source classes with distinct field paths or converter methods. `MappingRules.parse(source, destination)` picks the best matching rule per field via exact match > most-specific assignable > wildcard, throwing on duplicates or incomparable ambiguities. The single-arg `parse(destination)` overload is preserved for backward compatibility (wildcard-only resolution).
+
+### Observability
+
+`garganttua-observability` provides generic observer-pattern primitives:
+- Sealed event hierarchy: `StartEvent`, `EndEvent`, `ErrorEvent` (each carrying `executionId`, `timestamp`, `source`).
+- `IObserver<E>` with a single `onEvent(E)` callback — implementations use pattern matching to dispatch.
+- `ObservableRegistry<E>` backed by `CopyOnWriteArrayList`, exception-isolated, with `hasObservers()` short-circuit.
+- `ObservableContextHolder` ThreadLocal so engines that fire events from generated scripts can push their registry before execution.
+- Script-side expression function `:observe(eventType, source[, code])` reads the holder and fires the event.
+- `garganttua-workflow` integrates timing observers via `WorkflowTimingConfig` and `WorkflowBuilder.timing(...)`.
+
 ### Reflection Abstraction (`IReflection` Facade)
 
 The reflection subsystem uses a pluggable provider architecture:
@@ -229,7 +247,9 @@ All modules depend on `garganttua-commons`. Key dependency chains:
 - `mutex` → `dsl`, `injection`
 - `script` → `expression`, `runtime`, `bootstrap`, `condition`, `mutex`, `annotation-processor`
 - `console` → `script`, `expression`, `injection`, `bootstrap`, `annotation-processor`, `mutex`, `reflections`
-- `workflow` → `script`, `expression`, `injection`, `dsl` (execution requires both `IInjectionContext` and `IExpressionContext`)
+- `workflow` → `script`, `expression`, `injection`, `dsl`, `observability` (execution requires both `IInjectionContext` and `IExpressionContext`)
+- `properties` → `commons`, `injection`
+- `observability` → `commons`, `expression`
 - `reflection` → `commons`, `supply`
 - `configuration` → `commons`, `dsl`, `reflection`, `jackson-databind`; `injection` as `provided`
 - `runtime-reflection` → `commons`
