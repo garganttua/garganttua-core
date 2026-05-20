@@ -14,10 +14,12 @@ import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.context.beans.BeanSupplier;
 import com.garganttua.core.injection.context.beans.ContextualBeanSupplier;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
 
     private String name = null;

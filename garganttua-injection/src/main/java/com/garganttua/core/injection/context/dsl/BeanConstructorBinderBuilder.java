@@ -8,10 +8,12 @@ import javax.inject.Inject;
 
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class BeanConstructorBinderBuilder<Bean> extends
         AbstractConstructorArgInjectBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
         implements IBeanConstructorBinderBuilder<Bean> {

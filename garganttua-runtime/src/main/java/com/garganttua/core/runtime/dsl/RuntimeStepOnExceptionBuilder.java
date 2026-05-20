@@ -8,10 +8,12 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeStepOnException;
 import com.garganttua.core.runtime.RuntimeStepOnException;
 import com.garganttua.core.runtime.annotations.OnException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractAutomaticLinkedBuilder<IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepOnException>
         implements IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {

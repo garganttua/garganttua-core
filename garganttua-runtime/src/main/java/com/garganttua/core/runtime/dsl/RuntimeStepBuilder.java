@@ -24,10 +24,12 @@ import com.garganttua.core.runtime.annotations.Output;
 import com.garganttua.core.runtime.annotations.Variable;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>
         extends
         AbstractAutomaticLinkedDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>

@@ -21,6 +21,7 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.core.injection.context.properties.PropertyProvider;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA02
  */
 @Slf4j
+@Reflected
 public class PropertiesFileProviderBuilder
         extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {

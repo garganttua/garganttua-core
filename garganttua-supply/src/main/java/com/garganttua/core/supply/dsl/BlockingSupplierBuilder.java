@@ -8,6 +8,7 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.BlockingSupplier;
 import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * @see BlockingSupplier
  */
 @Slf4j
+@Reflected
 public class BlockingSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
 

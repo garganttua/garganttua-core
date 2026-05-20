@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Fluent builder for creating DependencySpec with phase-specific requirements.
@@ -42,6 +43,7 @@ import com.garganttua.core.reflection.IClass;
  * @see DependencyPhase
  * @see DependencyRequirement
  */
+@Reflected
 public class DependencySpecBuilder {
 
     private final IClass<? extends IObservableBuilder<?, ?>> dependencyBuilderClass;

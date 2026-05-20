@@ -8,10 +8,12 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeStepCatch;
 import com.garganttua.core.runtime.RuntimeStepCatch;
 import com.garganttua.core.runtime.annotations.Catch;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
                 AbstractAutomaticLinkedBuilder<IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepCatch>
                 implements IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {

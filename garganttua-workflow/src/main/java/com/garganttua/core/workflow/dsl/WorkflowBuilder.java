@@ -26,6 +26,7 @@ import com.garganttua.core.workflow.WorkflowTimingConfig;
 import com.garganttua.core.workflow.generator.ScriptGenerationOptions;
 import com.garganttua.core.workflow.generator.ScriptGenerator;
 import com.garganttua.core.workflow.renderer.WorkflowRenderer;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * Builder for constructing {@link IWorkflow} instances with fluent API.
  */
 @Slf4j
+@Reflected
 public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, IWorkflow>
         implements IWorkflowBuilder {
 

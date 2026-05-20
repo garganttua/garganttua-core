@@ -11,10 +11,12 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.injection.context.properties.PropertyProvider;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
 

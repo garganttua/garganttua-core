@@ -31,6 +31,7 @@ import com.garganttua.core.runtime.resolver.ExceptionElementResolver;
 import com.garganttua.core.runtime.resolver.ExceptionMessageElementResolver;
 import com.garganttua.core.runtime.resolver.InputElementResolver;
 import com.garganttua.core.runtime.resolver.VariableElementResolver;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @ReflectedBuilder
+@Reflected
 public class RuntimeNativeConfigurationBuilder
         extends AbstractAutomaticBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter>
         implements INativeBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter> {

@@ -30,11 +30,13 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bootstrap
+@Reflected
 public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMutexManagerBuilder, IMutexManager>
         implements IMutexManagerBuilder {
 

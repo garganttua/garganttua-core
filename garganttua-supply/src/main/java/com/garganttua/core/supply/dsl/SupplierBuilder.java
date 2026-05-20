@@ -21,10 +21,12 @@ import com.garganttua.core.supply.NullableContextualSupplier;
 import com.garganttua.core.supply.NullableSupplier;
 import com.garganttua.core.supply.FutureSupplier;
 import com.garganttua.core.supply.BlockingSupplier;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class SupplierBuilder<Supplied>
         implements ICommonSupplierBuilder<Supplied> {
 

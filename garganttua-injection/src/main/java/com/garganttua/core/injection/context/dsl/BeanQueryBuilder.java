@@ -14,12 +14,14 @@ import com.garganttua.core.injection.IBeanQuery;
 import com.garganttua.core.injection.IBeanQueryBuilder;
 import com.garganttua.core.injection.context.beans.BeanQuery;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @NoArgsConstructor
+@Reflected
 public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
 
     private IClass<Bean> type;

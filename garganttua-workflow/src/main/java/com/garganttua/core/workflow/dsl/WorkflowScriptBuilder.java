@@ -13,11 +13,13 @@ import com.garganttua.core.workflow.header.ScriptHeader;
 import com.garganttua.core.workflow.header.ScriptHeader.HeaderInput;
 import com.garganttua.core.workflow.header.ScriptHeader.HeaderOutput;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
 
     private static final ScriptHeaderParser HEADER_PARSER = new ScriptHeaderParser();

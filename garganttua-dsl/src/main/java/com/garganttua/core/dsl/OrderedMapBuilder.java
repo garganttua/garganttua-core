@@ -1,10 +1,12 @@
 package com.garganttua.core.dsl;
 
 import com.garganttua.core.utils.OrderedMap;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class OrderedMapBuilder<K, V extends IBuilder<B>, B> extends OrderedMap<K, V> implements IBuilder<OrderedMap<K, B>> {
 
     @Override

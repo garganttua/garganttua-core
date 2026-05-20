@@ -8,6 +8,7 @@ import com.garganttua.core.mapper.MappingConfiguration;
 import com.garganttua.core.mapper.MappingDirection;
 import com.garganttua.core.mapper.MappingRule;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Fluent builder for creating {@link MappingConfiguration} programmatically.
@@ -21,6 +22,7 @@ import com.garganttua.core.reflection.IClass;
  *     .build();
  * </pre>
  */
+@Reflected
 public class MappingConfigurationBuilder implements IMappingConfigurationBuilder {
 
 	private IClass<?> source;

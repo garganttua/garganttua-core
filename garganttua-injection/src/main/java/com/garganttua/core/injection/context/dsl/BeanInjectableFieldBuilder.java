@@ -11,10 +11,12 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.binders.dsl.AbstractFieldBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class BeanInjectableFieldBuilder<FieldType, BeanType>
                 extends
                 AbstractFieldBinderBuilder<FieldType, BeanType, IBeanInjectableFieldBuilder<FieldType, BeanType>, IBeanFactoryBuilder<BeanType>>

@@ -8,10 +8,12 @@ import com.garganttua.core.condition.AndCondition;
 import com.garganttua.core.condition.ConditionException;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class AndConditionBuilder implements IConditionBuilder {
 
     private IConditionBuilder[] conditions;

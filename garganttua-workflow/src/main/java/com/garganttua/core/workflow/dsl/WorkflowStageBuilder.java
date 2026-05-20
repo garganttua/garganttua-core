@@ -11,9 +11,11 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.workflow.WorkflowScript;
 import com.garganttua.core.workflow.WorkflowScript.ScriptSource;
 import com.garganttua.core.workflow.WorkflowStage;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.Setter;
 
+@Reflected
 public class WorkflowStageBuilder implements IWorkflowStageBuilder {
 
     @Setter

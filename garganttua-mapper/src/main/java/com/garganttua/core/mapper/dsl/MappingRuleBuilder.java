@@ -4,7 +4,9 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.mapper.MappingRule;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.annotations.Reflected;
 
+@Reflected
 public class MappingRuleBuilder implements IMappingRuleBuilder {
 
 	private final IMappingConfigurationBuilder parent;

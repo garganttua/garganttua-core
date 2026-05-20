@@ -3,7 +3,9 @@ package com.garganttua.core.crypto;
 import java.util.Date;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
+@Reflected
 public class KeyRealmBuilder implements IKeyRealmBuilder {
 
 	private String name;

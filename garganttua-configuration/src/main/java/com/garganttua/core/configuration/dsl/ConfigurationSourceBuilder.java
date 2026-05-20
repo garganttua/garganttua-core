@@ -11,11 +11,13 @@ import com.garganttua.core.configuration.source.InputStreamConfigurationSource;
 import com.garganttua.core.configuration.source.StringConfigurationSource;
 import com.garganttua.core.dsl.AbstractLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class ConfigurationSourceBuilder extends AbstractLinkedBuilder<IConfigurationBuilder, Void>
         implements IConfigurationSourceBuilder {
 

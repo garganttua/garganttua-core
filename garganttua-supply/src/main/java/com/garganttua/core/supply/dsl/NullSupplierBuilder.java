@@ -6,10 +6,12 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.NullSupplier;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class NullSupplierBuilder<SuppliedType>
         implements ISupplierBuilder<SuppliedType, ISupplier<SuppliedType>> {
 

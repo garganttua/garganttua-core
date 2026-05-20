@@ -8,10 +8,12 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ContextualSupplier;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.IContextualSupply;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class ContextualSupplierBuilder<Supplied, Context> implements ISupplierBuilder<Supplied, IContextualSupplier<Supplied, Context>> {
 
     private IContextualSupply<Supplied, Context> supply;

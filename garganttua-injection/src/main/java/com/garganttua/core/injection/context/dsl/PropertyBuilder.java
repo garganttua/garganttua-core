@@ -4,10 +4,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class PropertyBuilder<PropertyType> implements IPropertyBuilder<PropertyType> {
 
     private final String key;

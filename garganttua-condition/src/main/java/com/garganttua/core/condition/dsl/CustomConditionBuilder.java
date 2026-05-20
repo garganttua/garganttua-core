@@ -8,10 +8,12 @@ import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class CustomConditionBuilder<T> implements IConditionBuilder {
 
     private final ISupplierBuilder<T, ? extends ISupplier<T>> builder;

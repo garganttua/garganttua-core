@@ -22,11 +22,13 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class InjectableElementResolverBuilder
         extends
         AbstractAutomaticLinkedBuilder<IInjectableElementResolverBuilder, IInjectionContextBuilder, IInjectableElementResolver>

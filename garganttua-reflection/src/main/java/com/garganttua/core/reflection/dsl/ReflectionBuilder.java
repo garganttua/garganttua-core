@@ -15,11 +15,13 @@ import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bootstrap
+@Reflected
 public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuilder, IReflection>
         implements IReflectionBuilder {
 

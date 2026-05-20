@@ -34,11 +34,13 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class BeanFactoryBuilder<Bean>
         extends AbstractAutomaticDependentBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {

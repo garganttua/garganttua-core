@@ -52,12 +52,14 @@ import com.garganttua.core.reflection.annotations.ReflectedBuilder;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bootstrap
 @ReflectedBuilder
+@Reflected
 public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
 

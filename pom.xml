@@ -78,7 +78,7 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
 
     <!-- Direct Binder Generation: set to false to disable compile-time binder generation -->
-    <garganttua.direct.binders>true</garganttua.direct.binders>
+    <garganttua.direct.binders>false</garganttua.direct.binders>
   </properties>
   <dependencyManagement>
     <dependencies>

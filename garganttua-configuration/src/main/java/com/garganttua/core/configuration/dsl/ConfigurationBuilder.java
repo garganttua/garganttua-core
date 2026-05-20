@@ -21,10 +21,12 @@ import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Reflected
 public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<IConfigurationBuilder, IConfigurationPopulator>
         implements IConfigurationBuilder {
 

@@ -37,6 +37,7 @@ import com.garganttua.core.supply.dsl.FutureSupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.lang.reflect.Modifier;
 
@@ -68,6 +69,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Bootstrap
+@Reflected
 public class ExpressionContextBuilder
         extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
