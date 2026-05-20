@@ -1,0 +1,186 @@
+package com.garganttua.core.workflow;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
+import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.observability.EndEvent;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.StartEvent;
+import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+
+class WorkflowTimingTest {
+
+    private static IReflectionBuilder reflectionBuilder;
+    private IInjectionContextBuilder injectionContextBuilder;
+    private IExpressionContextBuilder expressionContextBuilder;
+
+    @SuppressWarnings("unchecked")
+    @BeforeAll
+    static void setupClass() throws Exception {
+        Class<? extends IReflectionProvider> providerClass = (Class<? extends IReflectionProvider>) Class
+                .forName("com.garganttua.core.reflection.runtime.RuntimeReflectionProvider");
+        reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(providerClass.getDeclaredConstructor().newInstance())
+                .withScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder.build();
+    }
+
+    @BeforeEach
+    void setup() {
+        injectionContextBuilder = InjectionContext.builder()
+                .provide(reflectionBuilder)
+                .autoDetect(true)
+                .withPackage("com.garganttua.core.runtime");
+
+        expressionContextBuilder = ExpressionContextBuilder.builder();
+        expressionContextBuilder.withPackage("com.garganttua").autoDetect(true).provide(injectionContextBuilder);
+
+        injectionContextBuilder.build().onInit().onStart();
+        expressionContextBuilder.build();
+    }
+
+    @Test
+    void timingDisabled_byDefault_producesScriptWithoutObserveCalls() {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("untimed-workflow")
+                .stage("step")
+                    .script("result <- \"x\"").name("doit").output("greeting", "result").up()
+                    .up()
+                .build();
+
+        assertFalse(workflow.getGeneratedScript().contains("observe("),
+                "default config must produce a script byte-identical to the historical output (no observe() calls)");
+    }
+
+    @Test
+    void timingEnabled_emitsStartAndEndForEachStage() {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("timed-workflow")
+                .stage("decode")
+                    .script("result <- \"ok\"").name("d1").output("decoded", "result").up()
+                    .up()
+                .stage("verify")
+                    .script("result <- \"ok\"").name("v1").output("verified", "result").up()
+                    .up()
+                .timing(WorkflowTimingConfig.of())
+                .build();
+
+        String script = workflow.getGeneratedScript();
+        assertTrue(script.contains("observe(\"start\", \"stage:decode\")"), script);
+        assertTrue(script.contains("observe(\"end\", \"stage:decode\")"), script);
+        assertTrue(script.contains("observe(\"start\", \"stage:verify\")"), script);
+        assertTrue(script.contains("observe(\"end\", \"stage:verify\")"), script);
+        assertTrue(script.contains("observe(\"start\", \"script:decode.d1\")"), script);
+        assertTrue(script.contains("observe(\"end\", \"script:decode.d1\""), script);
+    }
+
+    @Test
+    void timingStagesOnly_omitsScriptMarkers() {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("stages-only")
+                .stage("only")
+                    .script("result <- \"ok\"").name("inner").output("o", "result").up()
+                    .up()
+                .timing(WorkflowTimingConfig.of().scripts(false))
+                .build();
+
+        String script = workflow.getGeneratedScript();
+        assertTrue(script.contains("observe(\"start\", \"stage:only\")"));
+        assertFalse(script.contains("script:only.inner"),
+                "scripts(false) must suppress script-level markers");
+    }
+
+    @Test
+    void timingDisableStage_excludesNamedStage() {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("partial")
+                .stage("hot")
+                    .script("result <- \"ok\"").name("h").output("o", "result").up()
+                    .up()
+                .stage("cold")
+                    .script("result <- \"ok\"").name("c").output("o2", "result").up()
+                    .up()
+                .timing(WorkflowTimingConfig.of().disableStage("cold"))
+                .build();
+
+        String script = workflow.getGeneratedScript();
+        assertTrue(script.contains("stage:hot"));
+        assertFalse(script.contains("\"stage:cold\""),
+                "disableStage must exclude the named stage from markers");
+    }
+
+    @Test
+    void timingEnabled_observerReceivesStartAndEndEvents() {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("live-events")
+                .stage("alpha")
+                    .script("result <- \"ok\"").name("step").output("out", "result").up()
+                    .up()
+                .timing(WorkflowTimingConfig.of())
+                .build();
+
+        List<ObservableEvent> received = new CopyOnWriteArrayList<>();
+        ((Workflow) workflow).addObserver(received::add);
+
+        WorkflowResult result = workflow.execute();
+        assertTrue(result.isSuccess(), () -> "workflow failed: " + result.exceptionMessage().orElse("?"));
+
+        long startEvents = received.stream().filter(e -> e instanceof StartEvent).count();
+        long endEvents = received.stream().filter(e -> e instanceof EndEvent).count();
+        assertEquals(2, startEvents, "expected 2 StartEvents (stage + script), got: " + received);
+        assertEquals(2, endEvents, "expected 2 EndEvents (stage + script), got: " + received);
+
+        EndEvent stageEnd = received.stream()
+                .filter(e -> e instanceof EndEvent && e.source().equals("stage:alpha"))
+                .map(e -> (EndEvent) e)
+                .findFirst().orElse(null);
+        assertNotNull(stageEnd, "stage end event not received");
+        assertTrue(!stageEnd.duration().isNegative(), "duration must be non-negative");
+    }
+
+    @Test
+    void timingDisabled_observerReceivesNothing() {
+        IWorkflow workflow = WorkflowBuilder.create()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .name("silent")
+                .stage("stage")
+                    .script("result <- \"ok\"").name("s").output("o", "result").up()
+                    .up()
+                .build();
+
+        List<ObservableEvent> received = new CopyOnWriteArrayList<>();
+        ((Workflow) workflow).addObserver(received::add);
+
+        WorkflowResult result = workflow.execute();
+        assertTrue(result.isSuccess());
+        assertEquals(0, received.size(), "no events should fire when timing is disabled (default)");
+    }
+}

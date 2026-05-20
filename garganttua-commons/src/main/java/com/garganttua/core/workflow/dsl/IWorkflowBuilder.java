@@ -2,6 +2,7 @@ package com.garganttua.core.workflow.dsl;
 
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.workflow.IWorkflow;
+import com.garganttua.core.workflow.WorkflowTimingConfig;
 
 /**
  * Builder interface for constructing {@link IWorkflow} instances.
@@ -73,6 +74,18 @@ public interface IWorkflowBuilder extends IDependentBuilder<IWorkflowBuilder, IW
      * @return a new stage builder
      */
     IWorkflowStageBuilder stage(String name);
+
+    /**
+     * Configures emission of observability timing markers in the generated
+     * script. Defaults to {@link WorkflowTimingConfig#disabled()} — when not
+     * set, the generated script is byte-identical to a workflow built without
+     * this call.
+     *
+     * @param config the timing config (must not be {@code null})
+     * @return this builder for method chaining
+     * @since 2.0.0-ALPHA02
+     */
+    IWorkflowBuilder timing(WorkflowTimingConfig config);
 
     /**
      * Returns a textual representation of the workflow structure.

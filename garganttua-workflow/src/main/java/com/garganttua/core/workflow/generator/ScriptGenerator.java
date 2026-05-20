@@ -7,6 +7,7 @@ import java.util.Map;
 import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowScript;
 import com.garganttua.core.workflow.WorkflowStage;
+import com.garganttua.core.workflow.WorkflowTimingConfig;
 import com.garganttua.core.workflow.chaining.CodeAction;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
 
@@ -34,18 +35,24 @@ public class ScriptGenerator {
 
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables)
             throws WorkflowException {
-        return generate(workflowName, stages, presetVariables, false);
+        return generate(workflowName, stages, presetVariables, false, ScriptGenerationOptions.defaults());
     }
 
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables,
             boolean inlineAll) throws WorkflowException {
+        return generate(workflowName, stages, presetVariables, inlineAll, ScriptGenerationOptions.defaults());
+    }
+
+    public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables,
+            boolean inlineAll, ScriptGenerationOptions options) throws WorkflowException {
         StringBuilder script = new StringBuilder();
+        WorkflowTimingConfig timing = options == null ? WorkflowTimingConfig.disabled() : options.timing();
 
         appendHeader(script, workflowName);
         appendPresetVariables(script, presetVariables);
 
         for (WorkflowStage stage : stages) {
-            appendStage(script, stage, inlineAll);
+            appendStage(script, stage, inlineAll, timing);
         }
 
         appendOutput(script, stages);
@@ -70,7 +77,8 @@ public class ScriptGenerator {
         script.append("\n");
     }
 
-    private void appendStage(StringBuilder script, WorkflowStage stage, boolean inlineAll) throws WorkflowException {
+    private void appendStage(StringBuilder script, WorkflowStage stage, boolean inlineAll,
+            WorkflowTimingConfig timing) throws WorkflowException {
         String stageName = sanitizeIdentifier(stage.name());
         script.append("# Stage: ").append(stage.name()).append("\n");
 
@@ -80,6 +88,11 @@ public class ScriptGenerator {
             script.append("_").append(stageName).append("_cond <- ").append(stageCondition).append("\n");
         }
 
+        boolean emitStageTiming = timing.isStageEnabled(stage.name());
+        if (emitStageTiming) {
+            script.append("observe(\"start\", \"stage:").append(escapeString(stage.name())).append("\")\n");
+        }
+
         boolean hasWrap = stage.hasWrap();
         boolean hasCatch = stage.hasCatch();
 
@@ -87,7 +100,7 @@ public class ScriptGenerator {
             // Generate stage content into a temporary buffer
             StringBuilder stageContent = new StringBuilder();
             for (WorkflowScript ws : stage.scripts()) {
-                appendScript(stageContent, stageName, ws, inlineAll, stageCondition);
+                appendScript(stageContent, stageName, ws, inlineAll, stageCondition, stage.name(), timing);
             }
 
             // Apply wrapper if present
@@ -115,8 +128,12 @@ public class ScriptGenerator {
         } else {
             // No wrap or catch - emit scripts directly
             for (WorkflowScript ws : stage.scripts()) {
-                appendScript(script, stageName, ws, inlineAll, stageCondition);
+                appendScript(script, stageName, ws, inlineAll, stageCondition, stage.name(), timing);
             }
+        }
+
+        if (emitStageTiming) {
+            script.append("observe(\"end\", \"stage:").append(escapeString(stage.name())).append("\")\n");
         }
 
         script.append("\n");
@@ -135,8 +152,15 @@ public class ScriptGenerator {
     }
 
     private void appendScript(StringBuilder script, String stageName, WorkflowScript ws, boolean inlineAll,
-            String stageCondition) throws WorkflowException {
+            String stageCondition, String rawStageName, WorkflowTimingConfig timing) throws WorkflowException {
         String scriptName = sanitizeIdentifier(ws.getName() != null ? ws.getName() : "script");
+        String rawScriptName = ws.getName() != null ? ws.getName() : "script";
+
+        boolean emitScriptTiming = timing.isScriptEnabled(rawStageName, rawScriptName);
+        String scriptSource = rawStageName + "." + rawScriptName;
+        if (emitScriptTiming) {
+            script.append("observe(\"start\", \"script:").append(escapeString(scriptSource)).append("\")\n");
+        }
 
         // Input mappings (always emitted — needed for condition evaluation)
         for (var input : ws.getInputs().entrySet()) {
@@ -306,6 +330,12 @@ public class ScriptGenerator {
                     }
                 }
             }
+        }
+
+        if (emitScriptTiming) {
+            String codeVarName = "_" + stageName + "_" + scriptName + "_code";
+            script.append("observe(\"end\", \"script:").append(escapeString(scriptSource))
+                  .append("\", @").append(codeVarName).append(")\n");
         }
 
         script.append("\n");

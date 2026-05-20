@@ -22,6 +22,8 @@ import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.Workflow;
 import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowStage;
+import com.garganttua.core.workflow.WorkflowTimingConfig;
+import com.garganttua.core.workflow.generator.ScriptGenerationOptions;
 import com.garganttua.core.workflow.generator.ScriptGenerator;
 import com.garganttua.core.workflow.renderer.WorkflowRenderer;
 
@@ -47,6 +49,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private IExpressionContext expressionContext;
     private IInjectionContextBuilder injectionContextBuilder;
     private boolean inlineAll = false;
+    private WorkflowTimingConfig timingConfig = WorkflowTimingConfig.disabled();
 
     private WorkflowBuilder() {
         super(DEPENDENCIES);
@@ -72,6 +75,15 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     @Override
     public IWorkflowBuilder inlineAll() {
         this.inlineAll = true;
+        return this;
+    }
+
+    @Override
+    public IWorkflowBuilder timing(WorkflowTimingConfig config) {
+        if (config == null) {
+            throw new IllegalArgumentException("timing config cannot be null; use WorkflowTimingConfig.disabled()");
+        }
+        this.timingConfig = config;
         return this;
     }
 
@@ -103,8 +115,9 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         }
 
         String generatedScript;
+        ScriptGenerationOptions generationOptions = ScriptGenerationOptions.withTiming(timingConfig);
         try {
-            generatedScript = scriptGenerator.generate(name, stages, presetVariables, inlineAll);
+            generatedScript = scriptGenerator.generate(name, stages, presetVariables, inlineAll, generationOptions);
             log.atDebug().log("Generated workflow script for '{}':\n{}", name, generatedScript);
         } catch (WorkflowException e) {
             throw new DslException("Failed to generate workflow script", e);
@@ -117,7 +130,8 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
                 new LinkedHashMap<>(presetVariables),
                 expressionContext,
                 () -> RuntimesBuilder.builder().provide(injectionContextBuilder),
-                inlineAll);
+                inlineAll,
+                timingConfig);
 
         log.atDebug().log("Workflow '{}' built with {} stages", name, stages.size());
         return workflow;

@@ -13,12 +13,18 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservableContextHolder;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
+import com.garganttua.core.workflow.generator.ScriptGenerationOptions;
 import com.garganttua.core.workflow.generator.ScriptGenerator;
 import com.garganttua.core.workflow.renderer.WorkflowRenderer;
 
@@ -42,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class Workflow implements IWorkflow {
+public class Workflow implements IWorkflow, IObservable<ObservableEvent> {
 
     private final String name;
     private final String generatedScript;
@@ -51,23 +57,18 @@ public class Workflow implements IWorkflow {
     private final IExpressionContext expressionContext;
     private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
     private final boolean inlineAll;
+    private final WorkflowTimingConfig timingConfig;
+    private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
     private final WorkflowRenderer renderer = new WorkflowRenderer();
 
     /**
      * Creates a new Workflow with all required components.
-     *
-     * @param name              the workflow name
-     * @param generatedScript   the pre-generated script to execute
-     * @param stages            the workflow stages (for result collection)
-     * @param presetVariables   preset variables for the workflow
-     * @param expressionContext the expression context for script evaluation
-     * @param runtimesBuilderFactory factory that creates a new IRuntimesBuilder for each execution
-     * @param inlineAll        whether all file-based scripts should be inlined
      */
     public Workflow(String name, String generatedScript, List<WorkflowStage> stages,
             Map<String, Object> presetVariables, IExpressionContext expressionContext,
-            Supplier<IRuntimesBuilder> runtimesBuilderFactory, boolean inlineAll) {
+            Supplier<IRuntimesBuilder> runtimesBuilderFactory, boolean inlineAll,
+            WorkflowTimingConfig timingConfig) {
         this.name = name;
         this.generatedScript = generatedScript;
         this.stages = List.copyOf(stages);
@@ -75,6 +76,17 @@ public class Workflow implements IWorkflow {
         this.expressionContext = expressionContext;
         this.runtimesBuilderFactory = runtimesBuilderFactory;
         this.inlineAll = inlineAll;
+        this.timingConfig = timingConfig != null ? timingConfig : WorkflowTimingConfig.disabled();
+    }
+
+    @Override
+    public void addObserver(IObserver<ObservableEvent> observer) {
+        this.observers.addObserver(observer);
+    }
+
+    @Override
+    public void removeObserver(IObserver<ObservableEvent> observer) {
+        this.observers.removeObserver(observer);
     }
 
     @Override
@@ -108,7 +120,8 @@ public class Workflow implements IWorkflow {
 
             if (options.hasFiltering()) {
                 effectiveStages = filterStages(stages, options);
-                scriptSource = scriptGenerator.generate(name, effectiveStages, presetVariables, inlineAll);
+                scriptSource = scriptGenerator.generate(name, effectiveStages, presetVariables, inlineAll,
+                        ScriptGenerationOptions.withTiming(timingConfig));
                 log.debug("Executing workflow '{}' with filtered stages {} and script:\n{}",
                         name, effectiveStages.stream().map(WorkflowStage::name).toList(), scriptSource);
             } else {
@@ -151,11 +164,18 @@ public class Workflow implements IWorkflow {
             args.add(param);
         }
 
-        // 4. Compile and execute
+        // 4. Compile and execute (bind the observer session for this thread so
+        // script-side `:observe(...)` calls dispatch to this workflow's registry)
         script.compile();
-        int code = args.isEmpty()
-                ? script.execute()
-                : script.execute(args.toArray());
+        int code;
+        ObservableContextHolder.push(observers, uuid);
+        try {
+            code = args.isEmpty()
+                    ? script.execute()
+                    : script.execute(args.toArray());
+        } finally {
+            ObservableContextHolder.pop();
+        }
 
         // 4. Check for execution errors
         if (script.hasAborted()) {
