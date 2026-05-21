@@ -8,10 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.garganttua.core.mapper.annotations.MappingIgnore;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservabilityEmitter;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
@@ -20,7 +26,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Mapper implements IMapper {
+public class Mapper implements IMapper, IObservable<ObservableEvent> {
 
 	protected final Map<MappingKey, CachedMappingConfiguration> mappingConfigurations = new ConcurrentHashMap<>();
 
@@ -29,6 +35,7 @@ public class Mapper implements IMapper {
 	private final MappingRules mappingRules;
 	private final List<IMappingListener> listeners = new CopyOnWriteArrayList<>();
 	private final MapperMetrics metrics = new MapperMetrics();
+	private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
 
 	private static final ThreadLocal<Set<Object>> VISITED = new ThreadLocal<>();
 
@@ -59,6 +66,16 @@ public class Mapper implements IMapper {
 	}
 
 	@Override
+	public void addObserver(IObserver<ObservableEvent> observer) {
+		this.observers.addObserver(observer);
+	}
+
+	@Override
+	public void removeObserver(IObserver<ObservableEvent> observer) {
+		this.observers.removeObserver(observer);
+	}
+
+	@Override
 	public <destination> destination map(Object source, IClass<destination> destinationClass, destination destination)
 			throws MapperException {
 		// Determine if this is the root call (for metrics/listeners/cycle init)
@@ -70,6 +87,17 @@ public class Mapper implements IMapper {
 		}
 
 		long startNanos = isRoot ? System.nanoTime() : 0;
+		ObservabilityEmitter.Scope scope = isRoot
+				? ObservabilityEmitter.open(this.observers, UUID.randomUUID())
+				: null;
+		String mapperSource = null;
+		if (isRoot) {
+			String srcName = source != null ? source.getClass().getSimpleName() : "null";
+			String dstName = destinationClass != null ? destinationClass.getSimpleName()
+					: (destination != null ? destination.getClass().getSimpleName() : "null");
+			mapperSource = "mapper:" + srcName + "->" + dstName;
+			scope.fireStart(mapperSource);
+		}
 
 		try {
 			if (destinationClass == null)
@@ -116,6 +144,7 @@ public class Mapper implements IMapper {
 						: cachedConfig.sourceExecutors().size();
 				this.metrics.recordMapping(durationNanos, rulesCount);
 				notifyAfterMapping(source, result, durationNanos);
+				scope.fireEnd(mapperSource);
 			}
 			return result;
 
@@ -123,11 +152,15 @@ public class Mapper implements IMapper {
 			if (isRoot) {
 				this.metrics.recordFailure();
 				notifyMappingError(source, destinationClass, e);
+				scope.fireError(mapperSource, e);
 			}
 			throw new MapperException(e.getMessage(), e);
 		} finally {
 			if (isRoot) {
 				VISITED.remove();
+				if (scope != null) {
+					scope.close();
+				}
 			}
 		}
 	}

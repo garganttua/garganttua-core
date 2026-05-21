@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
@@ -11,6 +12,7 @@ import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.observability.ObservabilityEmitter;
 import com.garganttua.core.injection.context.dsl.IBeanPostConstructMethodBinderBuilder;
 import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
@@ -92,20 +94,28 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 
 	private Bean createBeanInstance() throws DiException {
 		log.atTrace().log("Instantiating bean of type: {}", definition.reference().type());
-		try {
-			if (this.definition.constructorBinder().isPresent()) {
-				Optional<Bean> constructed = executeConstructorBinder();
-				return constructed.orElseThrow(() -> new DiException(
-						"Constructor binder returned empty for bean of type "
-								+ this.definition.reference().effectiveName()));
-			} else {
-				return IClass.getReflection().newInstance(this.definition.reference().type());
+		String source = "injection:bean:" + this.definition.reference().effectiveName();
+		try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
+			scope.fireStart(source);
+			try {
+				Bean result;
+				if (this.definition.constructorBinder().isPresent()) {
+					Optional<Bean> constructed = executeConstructorBinder();
+					result = constructed.orElseThrow(() -> new DiException(
+							"Constructor binder returned empty for bean of type "
+									+ this.definition.reference().effectiveName()));
+				} else {
+					result = IClass.getReflection().newInstance(this.definition.reference().type());
+				}
+				scope.fireEnd(source);
+				return result;
+			} catch (Exception e) {
+				log.atError().log("Failed to instantiate bean of type {}: {}",
+						this.definition.reference().effectiveName(), e.getMessage());
+				scope.fireError(source, e);
+				throw new DiException(
+						"Failed to instantiate bean of type " + this.definition.reference().effectiveName(), e);
 			}
-		} catch (Exception e) {
-			log.atError().log("Failed to instantiate bean of type {}: {}", this.definition.reference().effectiveName(),
-					e.getMessage());
-			throw new DiException("Failed to instantiate bean of type " + this.definition.reference().effectiveName(),
-					e);
 		}
 	}
 

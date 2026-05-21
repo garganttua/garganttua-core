@@ -11,6 +11,11 @@ import org.slf4j.MDC;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservabilityEmitter;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
@@ -18,115 +23,134 @@ import com.github.f4b6a3.uuid.UuidCreator;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Runtime<InputType, OutputType> implements IRuntime<InputType, OutputType> {
+public class Runtime<InputType, OutputType>
+		implements IRuntime<InputType, OutputType>, IObservable<ObservableEvent> {
 
-        private final String name;
-        private final IInjectionContext injectionContext;
-        private final Class<InputType> inputType;
-        private final Class<OutputType> outputType;
-        private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;
-        private final Map<String, ISupplier<?>> presetVariables;
+	private final String name;
+	private final IInjectionContext injectionContext;
+	private final Class<InputType> inputType;
+	private final Class<OutputType> outputType;
+	private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;
+	private final Map<String, ISupplier<?>> presetVariables;
+	private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
 
-        public Runtime(
-                        String name,
-                        Map<String, IRuntimeStep<?, InputType, OutputType>> steps,
-                        IInjectionContext injectionContext,
-                        Class<InputType> inputType,
-                        Class<OutputType> outputType,
-                        Map<String, ISupplier<?>> variables) {
+	public Runtime(
+			String name,
+			Map<String, IRuntimeStep<?, InputType, OutputType>> steps,
+			IInjectionContext injectionContext,
+			Class<InputType> inputType,
+			Class<OutputType> outputType,
+			Map<String, ISupplier<?>> variables) {
 
-                log.atTrace().log(
-                                "[Runtime.<init>] Initializing Runtime with name={}, inputType={}, outputType={}, steps={}, presetVariables={}",
-                                name, inputType, outputType, steps, variables);
+		log.atTrace().log(
+				"[Runtime.<init>] Initializing Runtime with name={}, inputType={}, outputType={}, steps={}, presetVariables={}",
+				name, inputType, outputType, steps, variables);
 
-                this.steps = Collections.synchronizedMap(
-                                new java.util.LinkedHashMap<>(Objects.requireNonNull(steps, "Steps map cannot be null")));
+		this.steps = Collections.synchronizedMap(
+				new java.util.LinkedHashMap<>(Objects.requireNonNull(steps, "Steps map cannot be null")));
 
-                this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
-                this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
-                this.name = Objects.requireNonNull(name, "Name cannot be null");
-                this.injectionContext = Objects.requireNonNull(injectionContext, "Context cannot be null");
-                this.presetVariables = Collections.synchronizedMap(
-                                Map.copyOf(Objects.requireNonNull(variables, "Preset variables map cannot be null")));
+		this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
+		this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
+		this.name = Objects.requireNonNull(name, "Name cannot be null");
+		this.injectionContext = Objects.requireNonNull(injectionContext, "Context cannot be null");
+		this.presetVariables = Collections.synchronizedMap(
+				Map.copyOf(Objects.requireNonNull(variables, "Preset variables map cannot be null")));
 
-                log.atDebug().log("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
-        }
+		log.atDebug().log("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
+	}
 
-        @Override
-        public Optional<IRuntimeResult<InputType, OutputType>> execute(InputType input) throws RuntimeException {
-                return this.execute(UuidCreator.getTimeOrderedEpoch(), input);
-        }
+	@Override
+	public void addObserver(IObserver<ObservableEvent> observer) {
+		this.observers.addObserver(observer);
+	}
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public Optional<IRuntimeResult<InputType, OutputType>> execute(UUID uuid, InputType input)
-                        throws RuntimeException {
+	@Override
+	public void removeObserver(IObserver<ObservableEvent> observer) {
+		this.observers.removeObserver(observer);
+	}
 
-                MDC.put("uuid", uuid.toString());
+	@Override
+	public Optional<IRuntimeResult<InputType, OutputType>> execute(InputType input) throws RuntimeException {
+		return this.execute(UuidCreator.getTimeOrderedEpoch(), input);
+	}
 
-                log.atInfo().log("Starting runtime execution");
-                log.atTrace().log("Runtime input received");
+	@SuppressWarnings("unchecked")
+	@Override
+	public Optional<IRuntimeResult<InputType, OutputType>> execute(UUID uuid, InputType input)
+			throws RuntimeException {
 
-                IRuntimeContext<InputType, OutputType> runtimeContext = null;
-                IRuntimeResult<InputType, OutputType> result = null;
+		MDC.put("uuid", uuid.toString());
 
-                try {
+		log.atInfo().log("Starting runtime execution");
+		log.atTrace().log("Runtime input received");
 
-                        // CREATE CONTEXT
-                        log.atDebug().log("Creating runtime context");
+		IRuntimeContext<InputType, OutputType> runtimeContext = null;
+		IRuntimeResult<InputType, OutputType> result = null;
+		Integer endCode = null;
+		String runtimeSource = "runtime:" + this.name;
 
-                        runtimeContext = this.injectionContext
-                                        .newChildContext(IClass.getClass(IRuntimeContext.class), input, this.outputType,
-                                                        this.presetVariables, uuid);
+		try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.open(this.observers, uuid)) {
+			scope.fireStart(runtimeSource);
 
-                        runtimeContext.onInit().onStart();
+			try {
+				log.atDebug().log("Creating runtime context");
 
-                        // BUILD EXECUTION CHAIN
-                        log.atDebug().log("Building executor chain");
+				runtimeContext = this.injectionContext
+						.newChildContext(IClass.getClass(IRuntimeContext.class), input, this.outputType,
+								this.presetVariables, uuid);
 
-                        IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>(false);
+				runtimeContext.onInit().onStart();
 
-                        this.steps.values().forEach(step -> {
-                                log.atTrace().log("Registering step");
-                                step.defineExecutionStep(chain);
-                        });
+				log.atDebug().log("Building executor chain");
 
-                        // EXECUTE
-                        log.atDebug().log("Executing runtime chain");
+				IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>(false);
 
-                        chain.execute(runtimeContext);
+				this.steps.values().forEach(step -> {
+					log.atTrace().log("Registering step");
+					step.defineExecutionStep(chain);
+				});
 
-                } catch (Exception e) {
+				log.atDebug().log("Executing runtime chain");
 
-                        log.atError()
-                                        .setCause(e)
-                                        .log("Fatal error during runtime execution");
+				chain.execute(runtimeContext);
 
-                        throw new RuntimeException(e, Optional.ofNullable(runtimeContext));
+			} catch (Exception e) {
 
-                } finally {
+				log.atError()
+						.setCause(e)
+						.log("Fatal error during runtime execution");
 
-                        if (runtimeContext != null) {
-                                log.atDebug()
-                                                .log("Stopping runtime context");
+				scope.fireError(runtimeSource, e);
+				throw new RuntimeException(e, Optional.ofNullable(runtimeContext));
 
-                                runtimeContext.onStop();
+			} finally {
 
-                                result = runtimeContext.getResult();
+				if (runtimeContext != null) {
+					log.atDebug()
+							.log("Stopping runtime context");
 
-                                log.atTrace()
-                                                .log("Runtime result collected");
+					endCode = runtimeContext.getCode().orElse(null);
 
-                                runtimeContext.onFlush();
-                        }
+					runtimeContext.onStop();
 
-                        log.atInfo()
-                                        .log("Runtime execution finished");
+					result = runtimeContext.getResult();
 
-                        MDC.remove("uuid");
-                        MDC.clear();
-                }
+					log.atTrace()
+							.log("Runtime result collected");
 
-                return Optional.ofNullable(result);
-        }
+					runtimeContext.onFlush();
+				}
+
+				log.atInfo()
+						.log("Runtime execution finished");
+
+				MDC.remove("uuid");
+				MDC.clear();
+			}
+
+			scope.fireEnd(runtimeSource, endCode);
+		}
+
+		return Optional.ofNullable(result);
+	}
 }

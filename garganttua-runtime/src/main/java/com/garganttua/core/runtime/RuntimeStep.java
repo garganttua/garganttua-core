@@ -2,7 +2,10 @@ package com.garganttua.core.runtime;
 
 import java.util.Optional;
 
+import com.garganttua.core.execution.IExecutor;
 import com.garganttua.core.execution.IExecutorChain;
+import com.garganttua.core.execution.IFallBackExecutor;
+import com.garganttua.core.observability.ObservabilityEmitter;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,12 +46,40 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
     public void defineExecutionStep(IExecutorChain<IRuntimeContext<InputType, OutputType>> chain) {
         log.atDebug().log("{}Defining execution step in chain. Fallback present: {}", logLineHeader(), fallbackBinder.isPresent());
 
+        String source = "runtime:" + runtimeName + ":step:" + stepName;
+
+        IExecutor<IRuntimeContext<InputType, OutputType>> observedExecutor = (ctx, next) -> {
+            try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
+                scope.fireStart(source);
+                try {
+                    operationBinder.execute(ctx, next);
+                    scope.fireEnd(source);
+                } catch (RuntimeException | com.garganttua.core.execution.ExecutorException e) {
+                    scope.fireError(source, e);
+                    throw e;
+                }
+            }
+        };
+
         if (this.fallbackBinder.isPresent()) {
             log.atDebug().log("{}Adding executor with fallback", logLineHeader());
-            chain.addExecutor(operationBinder, fallbackBinder.get());
+            String fbSource = source + ":fallback";
+            IFallBackExecutor<IRuntimeContext<InputType, OutputType>> observedFallback = (ctx, next) -> {
+                try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
+                    scope.fireStart(fbSource);
+                    try {
+                        fallbackBinder.get().fallBack(ctx, next);
+                        scope.fireEnd(fbSource);
+                    } catch (RuntimeException e) {
+                        scope.fireError(fbSource, e);
+                        throw e;
+                    }
+                }
+            };
+            chain.addExecutor(observedExecutor, observedFallback);
         } else {
             log.atDebug().log("{}Adding executor without fallback", logLineHeader());
-            chain.addExecutor(operationBinder);
+            chain.addExecutor(observedExecutor);
         }
     }
 

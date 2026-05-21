@@ -28,7 +28,7 @@ class ObservabilityExpressionsTest {
 
 	@AfterEach
 	void teardown() {
-		ObservableContextHolder.pop();
+		ObservableContextHolder.pop(null);
 		ObservabilityExpressions.clearStarts();
 	}
 
@@ -82,7 +82,7 @@ class ObservabilityExpressionsTest {
 
 	@Test
 	void observe_noSession_isNoop() {
-		ObservableContextHolder.pop();
+		ObservableContextHolder.pop(null);
 		ObservabilityExpressions.observe("start", "anywhere");
 		assertEquals(0, received.size());
 		ObservableContextHolder.push(registry, UUID.randomUUID());

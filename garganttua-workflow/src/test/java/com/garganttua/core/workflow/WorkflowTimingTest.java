@@ -152,10 +152,22 @@ class WorkflowTimingTest {
         WorkflowResult result = workflow.execute();
         assertTrue(result.isSuccess(), () -> "workflow failed: " + result.exceptionMessage().orElse("?"));
 
-        long startEvents = received.stream().filter(e -> e instanceof StartEvent).count();
-        long endEvents = received.stream().filter(e -> e instanceof EndEvent).count();
-        assertEquals(2, startEvents, "expected 2 StartEvents (stage + script), got: " + received);
-        assertEquals(2, endEvents, "expected 2 EndEvents (stage + script), got: " + received);
+        long stageStarts = received.stream()
+                .filter(e -> e instanceof StartEvent && e.source().startsWith("stage:"))
+                .count();
+        long stageEnds = received.stream()
+                .filter(e -> e instanceof EndEvent && e.source().startsWith("stage:"))
+                .count();
+        long scriptStarts = received.stream()
+                .filter(e -> e instanceof StartEvent && e.source().startsWith("script:"))
+                .count();
+        long scriptEnds = received.stream()
+                .filter(e -> e instanceof EndEvent && e.source().startsWith("script:"))
+                .count();
+        assertEquals(1, stageStarts, "expected 1 stage StartEvent, got: " + received);
+        assertEquals(1, stageEnds, "expected 1 stage EndEvent, got: " + received);
+        assertEquals(1, scriptStarts, "expected 1 script StartEvent, got: " + received);
+        assertEquals(1, scriptEnds, "expected 1 script EndEvent, got: " + received);
 
         EndEvent stageEnd = received.stream()
                 .filter(e -> e instanceof EndEvent && e.source().equals("stage:alpha"))
@@ -166,7 +178,7 @@ class WorkflowTimingTest {
     }
 
     @Test
-    void timingDisabled_observerReceivesNothing() {
+    void timingDisabled_observerReceivesNoStageOrScriptEvents() {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
@@ -181,6 +193,11 @@ class WorkflowTimingTest {
 
         WorkflowResult result = workflow.execute();
         assertTrue(result.isSuccess());
-        assertEquals(0, received.size(), "no events should fire when timing is disabled (default)");
+
+        long stageOrScript = received.stream()
+                .filter(e -> e.source().startsWith("stage:") || e.source().startsWith("script:"))
+                .count();
+        assertEquals(0, stageOrScript,
+                "no stage/script events should fire when timing is disabled (Runtime events still propagate)");
     }
 }

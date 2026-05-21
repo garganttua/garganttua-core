@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.UUID;
 
 import com.garganttua.core.bootstrap.banner.BannerMode;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
@@ -37,6 +38,11 @@ import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservabilityEmitter;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
@@ -79,7 +85,8 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  */
 @Slf4j
-public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBuiltRegistry> implements IBoostrap {
+public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBuiltRegistry>
+        implements IBoostrap, IObservable<ObservableEvent> {
 
     private static final String DEFAULT_VERSION = "2.0.0-ALPHA01";
     private static final String SOURCE_MANUAL = "manual";
@@ -93,6 +100,17 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private int autoDetectedBuilderSeq = 0;
     private final Map<IClass<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
     private final List<IObservableBuilder<?, ?>> providedBuilders = new ArrayList<>();
+    private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
+
+    @Override
+    public void addObserver(IObserver<ObservableEvent> observer) {
+        this.observers.addObserver(observer);
+    }
+
+    @Override
+    public void removeObserver(IObserver<ObservableEvent> observer) {
+        this.observers.removeObserver(observer);
+    }
 
     @SuppressWarnings("unchecked")
     private static <K, V> ISupplier<Map<K, V>> mapSupplier(Map<K, V> map) {
@@ -290,6 +308,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         log.atTrace().log("Entering doBuild()");
         Instant startTime = Instant.now();
 
+        try (ObservabilityEmitter.Scope outer = ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
+            outer.fireStart("bootstrap:build");
+            try {
+                IBuiltRegistry registry = doBuildInternal(startTime);
+                outer.fireEnd("bootstrap:build");
+                return registry;
+            } catch (RuntimeException e) {
+                outer.fireError("bootstrap:build", e);
+                throw e;
+            }
+        }
+    }
+
+    private IBuiltRegistry doBuildInternal(Instant startTime) throws DslException {
         // Print banner at the start of build
         printBanner();
 
@@ -303,7 +335,16 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         printPhase(1, "Resolving dependencies", allBuilders.size() + " builders");
 
         // Phase 1: Resolve dependencies between builders
-        resolveDependencies();
+        try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
+            phase.fireStart("bootstrap:phase:resolve");
+            try {
+                resolveDependencies();
+                phase.fireEnd("bootstrap:phase:resolve");
+            } catch (RuntimeException e) {
+                phase.fireError("bootstrap:phase:resolve", e);
+                throw e;
+            }
+        }
 
         // Phase 2: Sort builders by dependency order (topological sort)
         List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
@@ -318,7 +359,18 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         List<Object> builtObjects = new ArrayList<>();
         for (IBuilder<?> builder : sortedBuilders) {
             printBuilderStart(builder.getClass().getSimpleName());
-            Object built = builder.build();
+            String builderSource = "bootstrap:builder:" + builder.getClass().getSimpleName();
+            Object built;
+            try (ObservabilityEmitter.Scope buildScope = ObservabilityEmitter.joinCurrent()) {
+                buildScope.fireStart(builderSource);
+                try {
+                    built = builder.build();
+                    buildScope.fireEnd(builderSource);
+                } catch (RuntimeException e) {
+                    buildScope.fireError(builderSource, e);
+                    throw e;
+                }
+            }
             builtObjects.add(built);
 
             // Register the built object by its class

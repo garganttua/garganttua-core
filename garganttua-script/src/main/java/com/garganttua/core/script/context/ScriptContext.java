@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -19,6 +20,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.bootstrap.dsl.IBoostrap;
 import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservabilityEmitter;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.runtime.IRuntime;
 import com.garganttua.core.runtime.IRuntimeResult;
 import com.garganttua.core.runtime.IRuntimeStep;
@@ -33,7 +39,7 @@ import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.StatementBlock;
 import com.garganttua.core.supply.ISupplier;
 
-public class ScriptContext implements IScript {
+public class ScriptContext implements IScript, IObservable<ObservableEvent> {
 
     private final IExpressionContext expressionContext;
     private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
@@ -46,6 +52,7 @@ public class ScriptContext implements IScript {
     private volatile boolean aborted = false;
     private final Map<String, Object> initialVariables = Collections.synchronizedMap(new HashMap<>());
     private final Map<String, IScript> includedScripts = new ConcurrentHashMap<>();
+    private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
 
     /**
      * Creates a new ScriptContext with expression context, runtimes builder factory, and bootstrap.
@@ -99,11 +106,37 @@ public class ScriptContext implements IScript {
     }
 
     @Override
+    public void addObserver(IObserver<ObservableEvent> observer) {
+        this.observers.addObserver(observer);
+    }
+
+    @Override
+    public void removeObserver(IObserver<ObservableEvent> observer) {
+        this.observers.removeObserver(observer);
+    }
+
+    @Override
     public void compile() throws ScriptException {
         if (this.scriptSource == null) {
             throw new ScriptException("No script loaded. Call load() before compile()");
         }
 
+        try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
+            scope.fireStart("scriptcontext:compile");
+            try {
+                doCompile();
+                scope.fireEnd("scriptcontext:compile");
+            } catch (ScriptException e) {
+                scope.fireError("scriptcontext:compile", e);
+                throw e;
+            } catch (RuntimeException e) {
+                scope.fireError("scriptcontext:compile", e);
+                throw e;
+            }
+        }
+    }
+
+    private void doCompile() throws ScriptException {
         // Register variable types before parsing so expressions can resolve method calls
         for (Map.Entry<String, Object> entry : this.initialVariables.entrySet()) {
             if (entry.getValue() != null) {
@@ -185,6 +218,24 @@ public class ScriptContext implements IScript {
         this.lastException = null;
         this.aborted = false;
 
+        try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
+            scope.fireStart("scriptcontext:execute");
+            int code;
+            try {
+                code = doExecute(args);
+            } catch (ScriptException e) {
+                scope.fireError("scriptcontext:execute", e);
+                throw e;
+            } catch (RuntimeException e) {
+                scope.fireError("scriptcontext:execute", e);
+                throw e;
+            }
+            scope.fireEnd("scriptcontext:execute", code);
+            return code;
+        }
+    }
+
+    private int doExecute(Object... args) throws ScriptException {
         ScriptContext previous = ScriptExecutionContext.get();
         ScriptExecutionContext.set(this);
         try {

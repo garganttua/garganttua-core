@@ -184,13 +184,26 @@ Both `@FieldMappingRule` and `@ObjectMappingRule` carry a `source()` attribute (
 
 ### Observability
 
-`garganttua-observability` provides generic observer-pattern primitives:
+The observability primitives live in **`garganttua-commons`** (package `com.garganttua.core.observability`) so any module — including foundation layers — can be made observable without creating a dependency cycle. `garganttua-observability` keeps only the script-side `:observe(...)` expression bridge (which needs `expression`).
+
+**Primitives (in `commons`):**
 - Sealed event hierarchy: `StartEvent`, `EndEvent`, `ErrorEvent` (each carrying `executionId`, `timestamp`, `source`).
 - `IObserver<E>` with a single `onEvent(E)` callback — implementations use pattern matching to dispatch.
 - `ObservableRegistry<E>` backed by `CopyOnWriteArrayList`, exception-isolated, with `hasObservers()` short-circuit.
-- `ObservableContextHolder` ThreadLocal so engines that fire events from generated scripts can push their registry before execution.
-- Script-side expression function `:observe(eventType, source[, code])` reads the holder and fires the event.
-- `garganttua-workflow` integrates timing observers via `WorkflowTimingConfig` and `WorkflowBuilder.timing(...)`.
+- `ObservableContextHolder` ThreadLocal **stack-based** holder. Use `push(registry, uuid)` (returns previous `Session`) and `pop(previous)` to support nested engine invocations. Mirrors the pattern fixed for `RuntimeExpressionContext` (2026-05-20).
+- `ObservabilityEmitter` helper — `open(localRegistry, localUuid)` opens a `Scope` that either reuses the parent session (if one is active) or pushes its own, then provides `fireStart/fireEnd/fireError` and auto-closes via try-with-resources. `joinCurrent()` is the passive variant used by nested units of work (e.g. steps) that piggy-back on a parent session.
+
+**Engines instrumented (as of 2026-05-20):**
+- **Workflow** — `stage:<name>`, `script:<stage>.<scriptName>` (generated `:observe`).
+- **Runtime** — `runtime:<name>` for the whole execution and `runtime:<name>:step:<stepName>` (+ `:fallback`) per step.
+- **ScriptContext** — `scriptcontext:compile`, `scriptcontext:execute` (renamed from `script:*` to avoid colliding with workflow-generated `script:<stage>.<name>`).
+- **Mapper** — `mapper:<src>-><dst>` at the root mapping call only (nested mappings inherit).
+- **InjectionContext** — `injection:bean:<beanRef>` fired by `BeanFactory.createBeanInstance()`; propagates via `joinCurrent()` to whichever parent (Bootstrap, Runtime, Workflow) is observing.
+- **Bootstrap** — `bootstrap:build`, `bootstrap:phase:resolve`, `bootstrap:builder:<simpleName>` per builder.
+- **InterruptibleLeaseMutex** — `mutex:<name>` start/end/error.
+- **Expression** — deliberately not instrumented (per-node evaluation would flood the registry).
+
+**Cross-engine propagation:** when a `Workflow` calls a `Script` that calls a `Runtime` that runs a step, the same `executionId` flows through all layers via `ObservableContextHolder` stack semantics. A single observer attached at the workflow level sees the entire chain with consistent correlation. Verified by `CrossEngineObservabilityTest` in `garganttua-workflow`.
 
 ### Reflection Abstraction (`IReflection` Facade)
 

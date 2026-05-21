@@ -168,13 +168,13 @@ public class Workflow implements IWorkflow, IObservable<ObservableEvent> {
         // script-side `:observe(...)` calls dispatch to this workflow's registry)
         script.compile();
         int code;
-        ObservableContextHolder.push(observers, uuid);
+        ObservableContextHolder.Session previous = ObservableContextHolder.push(observers, uuid);
         try {
             code = args.isEmpty()
                     ? script.execute()
                     : script.execute(args.toArray());
         } finally {
-            ObservableContextHolder.pop();
+            ObservableContextHolder.pop(previous);
         }
 
         // 4. Check for execution errors

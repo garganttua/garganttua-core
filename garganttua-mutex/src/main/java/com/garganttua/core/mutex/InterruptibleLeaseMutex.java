@@ -8,6 +8,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.garganttua.core.observability.ObservabilityEmitter;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -102,19 +104,28 @@ public class InterruptibleLeaseMutex implements IMutex {
     @Override
     public <R> R acquire(ThrowingFunction<R> function) throws MutexException {
         log.atDebug().log("Acquiring mutex (simple): {}", name);
-        lock.lock();
-        try {
-            log.atTrace().log("Mutex acquired: {}", name);
-            return function.execute();
-        } catch (MutexException e) {
-            log.atWarn().log("Mutex execution failed for {}: {}", name, e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.atError().log("Unexpected exception in mutex {}: {}", name, e.getMessage(), e);
-            throw new MutexException("Unexpected exception during mutex execution", e);
-        } finally {
-            lock.unlock();
-            log.atTrace().log(MUTEX_RELEASED_MSG, name);
+        String source = "mutex:" + name;
+        try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
+            scope.fireStart(source);
+            lock.lock();
+            try {
+                log.atTrace().log("Mutex acquired: {}", name);
+                R result = function.execute();
+                scope.fireEnd(source);
+                return result;
+            } catch (MutexException e) {
+                log.atWarn().log("Mutex execution failed for {}: {}", name, e.getMessage());
+                scope.fireError(source, e);
+                throw e;
+            } catch (Exception e) {
+                log.atError().log("Unexpected exception in mutex {}: {}", name, e.getMessage(), e);
+                MutexException me = new MutexException("Unexpected exception during mutex execution", e);
+                scope.fireError(source, me);
+                throw me;
+            } finally {
+                lock.unlock();
+                log.atTrace().log(MUTEX_RELEASED_MSG, name);
+            }
         }
     }
 
@@ -128,25 +139,38 @@ public class InterruptibleLeaseMutex implements IMutex {
                 strategy.leaseTime(),
                 strategy.leaseTimeUnit());
 
+        String source = "mutex:" + name;
         int maxAttempts = 1 + strategy.retries();
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                if (tryAcquireLock(strategy)) {
-                    return executeWithLockAndLease(function, strategy, attempt, maxAttempts);
+        try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
+            scope.fireStart(source);
+            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    if (tryAcquireLock(strategy)) {
+                        R result = executeWithLockAndLease(function, strategy, attempt, maxAttempts);
+                        scope.fireEnd(source);
+                        return result;
+                    }
+                    handleFailedAttempt(attempt, maxAttempts, strategy);
+                } catch (InterruptedException e) {
+                    MutexException me = handleInterruption(e);
+                    scope.fireError(source, me);
+                    throw me;
+                } catch (MutexException e) {
+                    log.atWarn().log("Mutex execution failed for {}: {}", name, e.getMessage());
+                    scope.fireError(source, e);
+                    throw e;
+                } catch (Exception e) {
+                    MutexException me = handleUnexpectedException(e);
+                    scope.fireError(source, me);
+                    throw me;
                 }
-                handleFailedAttempt(attempt, maxAttempts, strategy);
-            } catch (InterruptedException e) {
-                throw handleInterruption(e);
-            } catch (MutexException e) {
-                log.atWarn().log("Mutex execution failed for {}: {}", name, e.getMessage());
-                throw e;
-            } catch (Exception e) {
-                throw handleUnexpectedException(e);
             }
-        }
 
-        throw createExhaustedException(maxAttempts);
+            MutexException me = createExhaustedException(maxAttempts);
+            scope.fireError(source, me);
+            throw me;
+        }
     }
 
     private boolean tryAcquireLock(MutexStrategy strategy) throws InterruptedException {
