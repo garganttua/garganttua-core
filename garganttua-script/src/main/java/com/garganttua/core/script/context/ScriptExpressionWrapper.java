@@ -39,14 +39,13 @@ public class ScriptExpressionWrapper<R> implements IExpression<R, ISupplier<R>> 
         return new ISupplier<>() {
             @Override
             public Optional<R> supply() throws SupplyException {
-                ExpressionVariableContext.set(RESOLVER);
-                try {
-                    return inner.evaluate().supply();
-                } catch (ExpressionException e) {
-                    throw new SupplyException(e);
-                } finally {
-                    ExpressionVariableContext.clear();
-                }
+                return ExpressionVariableContext.callIn(RESOLVER, () -> {
+                    try {
+                        return inner.evaluate().supply();
+                    } catch (ExpressionException e) {
+                        throw new SupplyException(e);
+                    }
+                });
             }
 
             @Override

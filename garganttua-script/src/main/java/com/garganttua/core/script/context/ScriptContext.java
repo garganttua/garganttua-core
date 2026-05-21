@@ -236,42 +236,34 @@ public class ScriptContext implements IScript, IObservable<ObservableEvent> {
     }
 
     private int doExecute(Object... args) throws ScriptException {
-        ScriptContext previous = ScriptExecutionContext.get();
-        ScriptExecutionContext.set(this);
-        try {
-            Optional<IRuntimeResult<Object[], Object>> result = this.runtime.execute(args);
-            if (result.isPresent()) {
-                IRuntimeResult<Object[], Object> r = result.get();
-                this.lastVariables = r.variables() != null ? r.variables() : Map.of();
-                this.lastOutput = r.output();
+        return ScriptExecutionContext.callIn(this, () -> {
+            try {
+                Optional<IRuntimeResult<Object[], Object>> result = this.runtime.execute(args);
+                if (result.isPresent()) {
+                    IRuntimeResult<Object[], Object> r = result.get();
+                    this.lastVariables = r.variables() != null ? r.variables() : Map.of();
+                    this.lastOutput = r.output();
 
-                // Check if the runtime aborted due to an exception
-                if (r.hasAborted()) {
-                    this.aborted = true;
-                    r.getAbortingException().ifPresent(exRecord -> {
-                        this.lastException = exRecord.exception();
-                    });
+                    if (r.hasAborted()) {
+                        this.aborted = true;
+                        r.getAbortingException().ifPresent(exRecord -> {
+                            this.lastException = exRecord.exception();
+                        });
+                    }
+
+                    return r.code() != null ? r.code() : IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
                 }
-
-                return r.code() != null ? r.code() : IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
+                this.lastVariables = Map.of();
+                this.lastOutput = null;
+                return IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
+            } catch (CoreException e) {
+                this.lastException = e;
+                this.aborted = true;
+                this.lastVariables = Map.of();
+                this.lastOutput = null;
+                return IRuntime.GENERIC_RUNTIME_ERROR_CODE;
             }
-            this.lastVariables = Map.of();
-            this.lastOutput = null;
-            return IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
-        } catch (CoreException e) {
-            // Capture RuntimeException and ScriptException (both extend CoreException)
-            this.lastException = e;
-            this.aborted = true;
-            this.lastVariables = Map.of();
-            this.lastOutput = null;
-            return IRuntime.GENERIC_RUNTIME_ERROR_CODE;
-        } finally {
-            if (previous != null) {
-                ScriptExecutionContext.set(previous);
-            } else {
-                ScriptExecutionContext.clear();
-            }
-        }
+        });
     }
 
     @Override

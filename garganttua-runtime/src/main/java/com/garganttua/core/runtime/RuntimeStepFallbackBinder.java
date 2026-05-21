@@ -72,16 +72,15 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... contexts) throws ReflectionException {
         log.atDebug().log("{}Evaluating fallback expression via execute()", logLineHeader());
-        IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(ownerContext);
-        try {
-            ISupplier<ExecutionReturned> supplier = expression.evaluate();
-            Optional<ExecutionReturned> result = supplier.supply();
-            return result.map(r -> SingleMethodReturn.of(r, expression.getSuppliedClass()));
-        } catch (Exception e) {
-            return Optional.of(SingleMethodReturn.ofException(e, null));
-        } finally {
-            RuntimeExpressionContext.pop(previous);
-        }
+        return RuntimeExpressionContext.callIn(ownerContext, () -> {
+            try {
+                ISupplier<ExecutionReturned> supplier = expression.evaluate();
+                Optional<ExecutionReturned> result = supplier.supply();
+                return result.map(r -> SingleMethodReturn.of(r, expression.getSuppliedClass()));
+            } catch (Exception e) {
+                return Optional.of(SingleMethodReturn.ofException(e, null));
+            }
+        });
     }
 
     @Override
@@ -134,14 +133,11 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             log.atDebug().log("{}Evaluating fallback expression", logLineHeader());
-            IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(context);
-            try {
+            returned = RuntimeExpressionContext.callIn(context, () -> {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
                 Optional<ExecutionReturned> result = supplier.supply();
-                returned = result.orElse(null);
-            } finally {
-                RuntimeExpressionContext.pop(previous);
-            }
+                return result.orElse(null);
+            });
             log.atTrace().log("{}Fallback returned value={}", logLineHeader(), returned);
         } catch (Exception e) {
             log.atWarn().log("{}Exception occurred during fallback execution: {}", logLineHeader(), e.getMessage(), e);

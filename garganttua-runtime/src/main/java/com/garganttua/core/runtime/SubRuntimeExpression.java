@@ -93,16 +93,10 @@ public class SubRuntimeExpression implements IExpression<Object, ISupplier<Objec
             }
 
             try {
-                // Save RuntimeExpressionContext — sub-runtime steps will clear it
-                IRuntimeContext savedCtx = RuntimeExpressionContext.get();
-                try {
-                    subRuntime.execute(context);
-                } finally {
-                    // Restore so parent wrappers (CodeWrapper, etc.) can still read it
-                    if (savedCtx != null) {
-                        RuntimeExpressionContext.set(savedCtx);
-                    }
-                }
+                // No need to defensively save/restore RuntimeExpressionContext:
+                // ScopedValue scoping inside subRuntime.execute is lambda-local and
+                // automatically restored on return (normal or exceptional).
+                subRuntime.execute(context);
                 Object output = context.getOutput();
                 return Optional.ofNullable(output);
             } catch (Exception e) {

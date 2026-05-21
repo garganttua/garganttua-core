@@ -127,46 +127,38 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
 
         @Override
         public Optional<R> supply() throws SupplyException {
-            // Capture context BEFORE inner evaluation — the inner expression may
-            // trigger nested step execution that clears the ThreadLocal. Capturing
-            // here guarantees a valid reference for the catch handler even if the
-            // inner does not properly restore the ThreadLocal.
+            // ScopedValue ensures that whatever context is bound at entry remains
+            // bound when an inner scope ends (whether normally or by exception).
+            // No more defensive push/pop save-and-restore needed.
             IRuntimeContext<?, ?> savedCtx = RuntimeExpressionContext.get();
             try {
                 return inner.evaluate().supply();
             } catch (Exception e) {
-                // Restore the ThreadLocal so the handler expression (and the
-                // functions/resolvers it invokes) can read the parent context.
-                IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(savedCtx);
-                try {
-                    for (CatchHandler<R> handler : handlers) {
-                        if (handler.matches(e) || (e.getCause() != null && handler.matches(e.getCause()))) {
-                            log.atDebug().log("Catch handler matched for {}, executing handler",
-                                    e.getClass().getSimpleName());
-                            try {
-                                if (savedCtx != null) {
-                                    Throwable actualCause = e.getCause() != null ? e.getCause() : e;
-                                    savedCtx.setVariable("exception", actualCause);
-                                    savedCtx.setVariable("message", actualCause.getMessage());
-                                }
-                                handler.code().ifPresent(code -> {
-                                    if (savedCtx != null) {
-                                        savedCtx.setCode(code);
-                                    }
-                                });
-                                Optional<R> handlerResult = handler.handler().evaluate().supply();
-                                throw new CatchResultException(handlerResult.orElse(null), handler.variableName());
-                            } catch (CatchResultException cre) {
-                                throw cre;
-                            } catch (Exception handlerEx) {
-                                throw new SupplyException("Catch handler failed", handlerEx);
+                for (CatchHandler<R> handler : handlers) {
+                    if (handler.matches(e) || (e.getCause() != null && handler.matches(e.getCause()))) {
+                        log.atDebug().log("Catch handler matched for {}, executing handler",
+                                e.getClass().getSimpleName());
+                        try {
+                            if (savedCtx != null) {
+                                Throwable actualCause = e.getCause() != null ? e.getCause() : e;
+                                savedCtx.setVariable("exception", actualCause);
+                                savedCtx.setVariable("message", actualCause.getMessage());
                             }
+                            handler.code().ifPresent(code -> {
+                                if (savedCtx != null) {
+                                    savedCtx.setCode(code);
+                                }
+                            });
+                            Optional<R> handlerResult = handler.handler().evaluate().supply();
+                            throw new CatchResultException(handlerResult.orElse(null), handler.variableName());
+                        } catch (CatchResultException cre) {
+                            throw cre;
+                        } catch (Exception handlerEx) {
+                            throw new SupplyException("Catch handler failed", handlerEx);
                         }
                     }
-                    throw e instanceof SupplyException se ? se : new SupplyException(e);
-                } finally {
-                    RuntimeExpressionContext.pop(previous);
                 }
+                throw e instanceof SupplyException se ? se : new SupplyException(e);
             }
         }
 

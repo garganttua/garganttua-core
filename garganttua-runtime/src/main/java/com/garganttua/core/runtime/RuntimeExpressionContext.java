@@ -1,60 +1,81 @@
 package com.garganttua.core.runtime;
 
 /**
- * Thread-local holder for the current runtime context during expression evaluation.
+ * Scoped accessor for the currently-executing {@link IRuntimeContext} during
+ * expression evaluation.
  *
- * <p>
- * This class provides a mechanism for expressions to access the current
- * {@link IRuntimeContext} during evaluation. The runtime step binders set the
- * context before evaluating expressions and clear it afterwards.
- * </p>
+ * <p>Backed by a Java 21 {@link ScopedValue} (preview): the runtime context is
+ * bound for the duration of a structured scope rather than imperatively pushed
+ * and popped on a {@code ThreadLocal}. Callers use {@link #runIn} or
+ * {@link #callIn} to establish the scope; nested runtime invocations create
+ * nested scopes naturally — the outer binding is automatically restored when
+ * the inner scope ends, so the propagation bugs that the previous push/pop
+ * design needed to defend against (e.g., a sub-runtime clearing the holder
+ * before the outer step's catch handler could read it) are eliminated by
+ * construction.
+ *
+ * <p>Read sites use {@link #get()}, which returns {@code null} when no scope is
+ * active (matching the previous {@code ThreadLocal.get()} semantics so existing
+ * null-checks keep working).
+ *
+ * @since 2.0.0-ALPHA02
  */
 public final class RuntimeExpressionContext {
 
-    private static final ThreadLocal<IRuntimeContext<?, ?>> CURRENT = new ThreadLocal<>();
+    private static final ScopedValue<IRuntimeContext<?, ?>> CURRENT = ScopedValue.newInstance();
 
     private RuntimeExpressionContext() {
     }
 
-    public static void set(IRuntimeContext<?, ?> context) {
-        CURRENT.set(context);
+    /**
+     * @return the runtime context bound to the current scope, or {@code null}
+     *         if no scope is active.
+     */
+    @SuppressWarnings("unchecked")
+    public static <I, O> IRuntimeContext<I, O> get() {
+        return CURRENT.isBound() ? (IRuntimeContext<I, O>) CURRENT.get() : null;
+    }
+
+    /**
+     * Run {@code body} with {@code context} bound. The binding is unbound
+     * automatically when {@code body} returns.
+     */
+    public static <X extends Throwable> void runIn(IRuntimeContext<?, ?> context, CtxRunnable<X> body) throws X {
+        ScopedValue.where(CURRENT, context).run(() -> {
+            try {
+                body.run();
+            } catch (Throwable t) {
+                throwUnchecked(t);
+            }
+        });
+    }
+
+    /**
+     * Call {@code body} with {@code context} bound and return its result.
+     */
+    public static <R, X extends Exception> R callIn(IRuntimeContext<?, ?> context, CtxCallable<R, X> body) throws X {
+        try {
+            return ScopedValue.where(CURRENT, context).call(body::call);
+        } catch (RuntimeException | Error re) {
+            throw re;
+        } catch (Exception e) {
+            throwUnchecked(e);
+            throw new IllegalStateException(e); // unreachable
+        }
     }
 
     @SuppressWarnings("unchecked")
-    public static <I, O> IRuntimeContext<I, O> get() {
-        return (IRuntimeContext<I, O>) CURRENT.get();
+    private static <X extends Throwable> void throwUnchecked(Throwable t) throws X {
+        throw (X) t;
     }
 
-    public static void clear() {
-        CURRENT.remove();
+    @FunctionalInterface
+    public interface CtxRunnable<X extends Throwable> {
+        void run() throws X;
     }
 
-    /**
-     * Push a context onto the thread-local stack, returning the previous value so
-     * the caller can restore it via {@link #pop(IRuntimeContext)} in a {@code finally}.
-     *
-     * <p>
-     * Use this pattern when a binder may be invoked in a nested fashion (e.g., a
-     * nested step triggered from within a parent step's expression evaluation).
-     * A naive {@code set()} / {@code clear()} pair nukes the outer context;
-     * push/pop preserves it.
-     * </p>
-     */
-    public static IRuntimeContext<?, ?> push(IRuntimeContext<?, ?> context) {
-        IRuntimeContext<?, ?> previous = CURRENT.get();
-        CURRENT.set(context);
-        return previous;
-    }
-
-    /**
-     * Restore the context returned by a prior {@link #push(IRuntimeContext)} call.
-     * If {@code previous} is {@code null}, the thread-local is cleared.
-     */
-    public static void pop(IRuntimeContext<?, ?> previous) {
-        if (previous != null) {
-            CURRENT.set(previous);
-        } else {
-            CURRENT.remove();
-        }
+    @FunctionalInterface
+    public interface CtxCallable<R, X extends Exception> {
+        R call() throws X;
     }
 }

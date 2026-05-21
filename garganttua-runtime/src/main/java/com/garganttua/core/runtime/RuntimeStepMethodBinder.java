@@ -97,16 +97,15 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... contexts) throws ReflectionException {
         log.atDebug().log("{}Evaluating expression via execute()", logLineHeader());
-        IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(ownerContext);
-        try {
-            ISupplier<ExecutionReturned> supplier = expression.evaluate();
-            Optional<ExecutionReturned> result = supplier.supply();
-            return result.map(r -> SingleMethodReturn.of(r, expression.getSuppliedClass()));
-        } catch (Exception e) {
-            return Optional.of(SingleMethodReturn.ofException(e, null));
-        } finally {
-            RuntimeExpressionContext.pop(previous);
-        }
+        return RuntimeExpressionContext.callIn(ownerContext, () -> {
+            try {
+                ISupplier<ExecutionReturned> supplier = expression.evaluate();
+                Optional<ExecutionReturned> result = supplier.supply();
+                return result.map(r -> SingleMethodReturn.of(r, expression.getSuppliedClass()));
+            } catch (Exception e) {
+                return Optional.of(SingleMethodReturn.ofException(e, null));
+            }
+        });
     }
 
     @Override
@@ -151,16 +150,13 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
         try {
             log.atDebug().log("{}Evaluating expression", logLineHeader());
-            IRuntimeContext<?, ?> previous = RuntimeExpressionContext.push(context);
-            try {
+            returned = RuntimeExpressionContext.callIn(context, () -> {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
                 Optional<ExecutionReturned> result = supplier.supply();
-                returned = result.orElse(null);
-                log.atTrace().log("{}Returned value={}", logLineHeader(), returned);
-                returned = evaluatePipes(context, returned);
-            } finally {
-                RuntimeExpressionContext.pop(previous);
-            }
+                ExecutionReturned r = result.orElse(null);
+                log.atTrace().log("{}Returned value={}", logLineHeader(), r);
+                return evaluatePipes(context, r);
+            });
             processExecutionReturn(context, variable, returned);
         } catch (CatchAwareExpression.CatchResultException cre) {
             // Catch handler matched and executed — extract result, stop chain

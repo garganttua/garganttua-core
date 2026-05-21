@@ -374,6 +374,7 @@
           <compilerArgs>
             <arg>-parameters</arg>
             <arg>-Agarganttua.direct.binders=${garganttua.direct.binders}</arg>
+            <arg>--enable-preview</arg>
           </compilerArgs>
           <release>${java.version}</release>
           <annotationProcessorPaths>
@@ -393,6 +394,9 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <argLine>--enable-preview</argLine>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
@@ -434,6 +438,9 @@
           <source>${java.version}</source>
           <failOnError>false</failOnError>
           <doclint>none</doclint>
+          <additionalOptions>
+            <additionalOption>--enable-preview</additionalOption>
+          </additionalOptions>
         </configuration>
         <executions>
           <execution>

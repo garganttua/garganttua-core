@@ -45,30 +45,16 @@ public class StatementBlock {
         if (context == null) {
             throw new ScriptException("StatementBlock: no runtime context available");
         }
-        // Ensure ExpressionVariableContext is set so inner expressions can
-        // resolve script variables (@0, @code, @output, named variables).
-        // This is needed because StatementBlock is executed by ControlFlowFunctions.ifExpr()
-        // and ScriptFunction, which are outside the ScriptExpressionWrapper scope.
-        var previous = ExpressionVariableContext.get();
-        ExpressionVariableContext.set(RESOLVER);
-        try {
-            return executeStatements(context, this.statements);
-        } finally {
-            if (previous != null) {
-                ExpressionVariableContext.set(previous);
-            } else {
-                ExpressionVariableContext.clear();
-            }
-        }
+        // ScopedValue: ExpressionVariableContext is bound for the duration of
+        // the lambda. Inner sub-scripts that re-bind it (via ScriptExpressionWrapper)
+        // create nested scopes whose values are auto-discarded on return, so the
+        // outer binding remains valid across the whole statement list.
+        return ExpressionVariableContext.callIn(RESOLVER, () -> executeStatements(context, this.statements));
     }
 
     static Object executeStatements(IRuntimeContext<Object[], Object> context, List<IScriptNode> statements) {
         Object lastResult = null;
         for (IScriptNode node : statements) {
-            // Restore both contexts before each statement — previous statements
-            // (e.g. execute_script) may have cleared them via sub-script execution
-            RuntimeExpressionContext.set(context);
-            ExpressionVariableContext.set(RESOLVER);
             try {
                 if (node instanceof StatementGroupNode group) {
                     lastResult = executeStatements(context, group.statements());
