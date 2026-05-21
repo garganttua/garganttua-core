@@ -61,4 +61,23 @@ public interface IMappingRuleExecutor {
 	<destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException;
 
+	/**
+	 * Variant invoked by the mapper that gives the executor a {@link IMappingRecursion}
+	 * callback to recurse on nested values while preserving the per-invocation state
+	 * (cycle-detection set, etc.). Executors that need to recurse on nested objects
+	 * should override this method and use {@code recursion.map(...)} instead of
+	 * holding a reference to the {@link IMapper}.
+	 *
+	 * <p>
+	 * Default implementation falls back to {@link #doMapping(IClass, Object, Object)},
+	 * which is fine for terminal executors (no nested mapping). Non-recursing
+	 * executors do not need to override this method.
+	 *
+	 * @since 2.0.0-ALPHA02
+	 */
+	default <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
+		return doMapping(destinationClass, destinationObject, sourceObject);
+	}
+
 }

@@ -3,6 +3,7 @@ package com.garganttua.core.mapper.rules;
 import java.util.List;
 
 import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
@@ -39,6 +40,29 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject, Object sourceObject) throws MapperException {
+		// Fallback path (no recursion scope provided): use the bare mapper. Cycle
+		// detection won't span this boundary — prefer the IMappingRecursion overload.
+		return doMappingInternal(destinationClass, destinationObject, sourceObject, bareRecursion());
+	}
+
+	private IMappingRecursion bareRecursion() {
+		return new IMappingRecursion() {
+			@Override
+			public <D> D map(Object src, IClass<D> destCls) throws MapperException {
+				return SimpleMapableFieldMappingExecutor.this.mapper.map(src, destCls);
+			}
+		};
+	}
+
+	@Override
+	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
+		return doMappingInternal(destinationClass, destinationObject, sourceObject, recursion);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <destination> destination doMappingInternal(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
 		log.atDebug().log("Mapable: {} ({}) -> {} ({})", this.sourceFieldLeaf.getName(), this.sourceFieldLeaf.getType().getSimpleName(), this.destinationFieldLeaf.getName(), this.destinationFieldLeaf.getType().getSimpleName());
 
 		if( destinationObject == null ) {
@@ -52,7 +76,7 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 			Object sourceObjectToMap = this.sourceFieldAccessor.getValue(sourceObject).single();
 
 			if( sourceObjectToMap != null ) {
-				destination destinationObjectMapped = (destination) this.mapper.map(sourceObjectToMap, this.destinationFieldLeaf.getType());
+				destination destinationObjectMapped = (destination) recursion.map(sourceObjectToMap, this.destinationFieldLeaf.getType());
 				this.destinationFieldAccessor.setValue(destinationObject,
 						SingleFieldValue.of((Object) destinationObjectMapped, (IClass<Object>) this.destinationFieldLeaf.getType()));
 			}

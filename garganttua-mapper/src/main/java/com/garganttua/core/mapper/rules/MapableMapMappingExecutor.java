@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
@@ -50,10 +51,30 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 		this.destValueType = getFieldGenericType(destinationField, 1, reflection);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException {
+		return doMappingInternal(destinationClass, destinationObject, sourceObject, bareRecursion());
+	}
+
+	private IMappingRecursion bareRecursion() {
+		return new IMappingRecursion() {
+			@Override
+			public <D> D map(Object src, IClass<D> destCls) throws MapperException {
+				return MapableMapMappingExecutor.this.mapper.map(src, destCls);
+			}
+		};
+	}
+
+	@Override
+	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
+		return doMappingInternal(destinationClass, destinationObject, sourceObject, recursion);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private <destination> destination doMappingInternal(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
 		log.atDebug().log("MapableMap: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
 
 		if (destinationObject == null) {
@@ -84,8 +105,8 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 				Object key = mapEntry.getKey();
 				Object value = mapEntry.getValue();
 
-				Object destKey = keysNeedMapping && key != null ? this.mapper.map(key, destKeyType) : key;
-				Object destValue = valuesNeedMapping && value != null ? this.mapper.map(value, destValueType) : value;
+				Object destKey = keysNeedMapping && key != null ? recursion.map(key, destKeyType) : key;
+				Object destValue = valuesNeedMapping && value != null ? recursion.map(value, destValueType) : value;
 				destMap.put(destKey, destValue);
 			}
 

@@ -37,8 +37,6 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 	private final MapperMetrics metrics = new MapperMetrics();
 	private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
 
-	private static final ThreadLocal<Set<Object>> VISITED = new ThreadLocal<>();
-
 	public Mapper(IReflection reflection) {
 		this.reflection = Objects.requireNonNull(reflection, "IReflection implementation cannot be null");
 		this.mappingRules = new MappingRules(reflection);
@@ -76,99 +74,92 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <destination> destination map(Object source, IClass<destination> destinationClass, destination destination)
 			throws MapperException {
-		// Determine if this is the root call (for metrics/listeners/cycle init)
-		boolean isRoot = VISITED.get() == null;
+		// Top-level entry: create the per-call cycle-detection set and bind it via
+		// IMappingRecursion. Recursive executors receive a recursion callback that
+		// closes over this set, replacing the previous ThreadLocal-based design.
+		Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+		notifyBeforeMapping(source, destinationClass);
 
-		if (isRoot) {
-			VISITED.set(Collections.newSetFromMap(new IdentityHashMap<>()));
-			notifyBeforeMapping(source, destinationClass);
-		}
-
-		long startNanos = isRoot ? System.nanoTime() : 0;
-		ObservabilityEmitter.Scope scope = isRoot
-				? ObservabilityEmitter.open(this.observers, UUID.randomUUID())
-				: null;
-		String mapperSource = null;
-		if (isRoot) {
+		long startNanos = System.nanoTime();
+		try (ObservabilityEmitter.Scope scope =
+				ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
 			String srcName = source != null ? source.getClass().getSimpleName() : "null";
-			String dstName = destinationClass != null ? destinationClass.getSimpleName()
-					: (destination != null ? destination.getClass().getSimpleName() : "null");
-			mapperSource = "mapper:" + srcName + "->" + dstName;
+			IClass<destination> resolvedDestClass = destinationClass;
+			if (resolvedDestClass == null && destination != null) {
+				resolvedDestClass = (IClass<destination>) this.reflection.getClass(destination.getClass());
+			}
+			String dstName = resolvedDestClass != null ? resolvedDestClass.getSimpleName() : "null";
+			String mapperSource = "mapper:" + srcName + "->" + dstName;
 			scope.fireStart(mapperSource);
-		}
 
-		try {
-			if (destinationClass == null)
-				destinationClass = (IClass<destination>) this.reflection.getClass(destination.getClass());
-
-			// Cycle detection
-			if (source != null) {
-				Set<Object> visited = VISITED.get();
-				if (!visited.add(source)) {
-					if (this.configuration.failOnCycle()) {
-						throw new MapperException("Mapping cycle detected for object of type " + source.getClass().getSimpleName());
-					} else {
-						log.atWarn().log("Cycle detected for {}, returning null", source.getClass().getSimpleName());
-						return destination;
-					}
+			try {
+				CachedMappingConfiguration cachedConfig = null;
+				if (source != null && resolvedDestClass != null) {
+					cachedConfig = this.getCachedMappingConfiguration(
+							this.reflection.getClass(source.getClass()), resolvedDestClass);
 				}
-			}
-
-			IClass<?> sourceClass = this.reflection.getClass(source.getClass());
-			CachedMappingConfiguration cachedConfig = this.getCachedMappingConfiguration(sourceClass, destinationClass);
-			MappingConfiguration mappingConfig = cachedConfig.config();
-
-			log.atDebug().log("Mapping {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingConfig.mappingDirection());
-
-			destination result;
-			switch (mappingConfig.mappingDirection()) {
-				case REGULAR:
-					result = this.doMapping(mappingConfig.mappingDirection(), destinationClass, destination,
-							source, cachedConfig.destinationExecutors());
-					break;
-				case REVERSE:
-					result = this.doMapping(mappingConfig.mappingDirection(), destinationClass, destination,
-							source, cachedConfig.sourceExecutors());
-					break;
-				default:
-					result = this.doMapping(mappingConfig.mappingDirection(), destinationClass, destination,
-							source, cachedConfig.destinationExecutors());
-			}
-
-			if (isRoot) {
+				destination result = mapInternal(source, resolvedDestClass, destination, visited);
 				long durationNanos = System.nanoTime() - startNanos;
-				int rulesCount = mappingConfig.mappingDirection() == MappingDirection.REGULAR
-						? cachedConfig.destinationExecutors().size()
-						: cachedConfig.sourceExecutors().size();
-				this.metrics.recordMapping(durationNanos, rulesCount);
+				if (cachedConfig != null) {
+					int rulesCount = cachedConfig.config().mappingDirection() == MappingDirection.REGULAR
+							? cachedConfig.destinationExecutors().size()
+							: cachedConfig.sourceExecutors().size();
+					this.metrics.recordMapping(durationNanos, rulesCount);
+				}
 				notifyAfterMapping(source, result, durationNanos);
 				scope.fireEnd(mapperSource);
-			}
-			return result;
-
-		} catch (MapperException e) {
-			if (isRoot) {
+				return result;
+			} catch (MapperException e) {
 				this.metrics.recordFailure();
-				notifyMappingError(source, destinationClass, e);
+				notifyMappingError(source, resolvedDestClass, e);
 				scope.fireError(mapperSource, e);
-			}
-			throw new MapperException(e.getMessage(), e);
-		} finally {
-			if (isRoot) {
-				VISITED.remove();
-				if (scope != null) {
-					scope.close();
-				}
+				throw new MapperException(e.getMessage(), e);
 			}
 		}
 	}
 
 	@SuppressWarnings("unchecked")
+	private <destination> destination mapInternal(Object source, IClass<destination> destinationClass,
+			destination destination, Set<Object> visited) throws MapperException {
+		if (destinationClass == null)
+			destinationClass = (IClass<destination>) this.reflection.getClass(destination.getClass());
+
+		if (source != null && !visited.add(source)) {
+			if (this.configuration.failOnCycle()) {
+				throw new MapperException("Mapping cycle detected for object of type " + source.getClass().getSimpleName());
+			} else {
+				log.atWarn().log("Cycle detected for {}, returning null", source.getClass().getSimpleName());
+				return destination;
+			}
+		}
+
+		IClass<?> sourceClass = this.reflection.getClass(source.getClass());
+		CachedMappingConfiguration cachedConfig = this.getCachedMappingConfiguration(sourceClass, destinationClass);
+		MappingConfiguration mappingConfig = cachedConfig.config();
+
+		log.atDebug().log("Mapping {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingConfig.mappingDirection());
+
+		IMappingRecursion recursion = new IMappingRecursion() {
+			@Override
+			public <D> D map(Object src, IClass<D> destCls) throws MapperException {
+				return mapInternal(src, destCls, null, visited);
+			}
+		};
+
+		List<IMappingRuleExecutor> executors = mappingConfig.mappingDirection() == MappingDirection.REVERSE
+				? cachedConfig.sourceExecutors()
+				: cachedConfig.destinationExecutors();
+		return this.doMapping(mappingConfig.mappingDirection(), destinationClass, destination,
+				source, executors, recursion);
+	}
+
+	@SuppressWarnings("unchecked")
 	private <destination> destination doMapping(MappingDirection mappingDirection,
 			IClass<destination> destinationIClass, destination destObject, Object source,
-			List<IMappingRuleExecutor> executors) throws MapperException {
+			List<IMappingRuleExecutor> executors, IMappingRecursion recursion) throws MapperException {
 
 		// Record mapping: build via canonical constructor
 		if (destinationIClass.isRecord()) {
@@ -177,7 +168,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 
 		for (IMappingRuleExecutor executor : executors) {
 			try {
-				destObject = executor.doMapping(destinationIClass, destObject, source);
+				destObject = executor.doMapping(destinationIClass, destObject, source, recursion);
 			} catch (MapperException e) {
 				if (this.configuration.failOnError()) {
 					throw new MapperException("Unable to do mapping, aborting", e);

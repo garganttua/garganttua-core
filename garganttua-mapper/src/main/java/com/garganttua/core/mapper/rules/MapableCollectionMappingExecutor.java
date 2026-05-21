@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
@@ -65,10 +66,30 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 		this.collectionClass = reflection.getClass(Collection.class);
 	}
 
-	@SuppressWarnings({ "rawtypes"})
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException {
+		return doMappingInternal(destinationClass, destinationObject, sourceObject, bareRecursion());
+	}
+
+	private IMappingRecursion bareRecursion() {
+		return new IMappingRecursion() {
+			@Override
+			public <D> D map(Object src, IClass<D> destCls) throws MapperException {
+				return MapableCollectionMappingExecutor.this.mapper.map(src, destCls);
+			}
+		};
+	}
+
+	@Override
+	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
+		return doMappingInternal(destinationClass, destinationObject, sourceObject, recursion);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private <destination> destination doMappingInternal(IClass<destination> destinationClass, destination destinationObject,
+			Object sourceObject, IMappingRecursion recursion) throws MapperException {
 		log.atDebug().log("MapableCollection: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
 
 		if (destinationObject == null) {
@@ -92,7 +113,7 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 
 			IClass<?> genericType = getFieldGenericType(this.destinationField, 0);
 			for (Object item: sourceCollection) {
-				destination destinationItem = (destination) this.mapper.map(item, genericType);
+				destination destinationItem = (destination) recursion.map(item, genericType);
 				((Collection) destinationFieldObject).add(destinationItem);
 			}
 
