@@ -8,6 +8,8 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.annotations.IAnnotationIndex;
 
+import jakarta.annotation.Priority;
+
 /**
  * An {@link IAnnotationScanner} that reads compile-time generated annotation indices.
  *
@@ -30,6 +32,7 @@ import com.garganttua.core.reflection.annotations.IAnnotationIndex;
  *
  * @since 2.0.0-ALPHA02
  */
+@Priority(20)
 public class AOTAnnotationScanner implements IAnnotationScanner {
 
     private final IAnnotationIndex index;

@@ -22,6 +22,7 @@ The **garganttua-bootstrap** module provides application initialization and boot
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-injection`
+ - `com.garganttua.core:garganttua-reflection`
  - `javax.inject:javax.inject`
  - `jakarta.annotation:jakarta.annotation-api`
  - `com.garganttua.core:garganttua-reflections:test`

@@ -127,7 +127,12 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>com.garganttua.core.script.Main</mainClass>
                 </transformer>
-                <!-- <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <!-- Merge META-INF/services from every JAR (SPI providers like
+                     IReflectionProvider, IAnnotationScanner). Without this the
+                     fat JAR sees only the services file from the last shaded
+                     JAR and Bootstrap.builder().autoDetect(true).build() silently
+                     finds no provider. Critical for native-image too. -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
                 </transformer>
@@ -139,7 +144,7 @@
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/garganttua/generated-constructor-binders</resource>
-                </transformer> -->
+                </transformer>
               </transformers>
               <filters>
                 <filter>

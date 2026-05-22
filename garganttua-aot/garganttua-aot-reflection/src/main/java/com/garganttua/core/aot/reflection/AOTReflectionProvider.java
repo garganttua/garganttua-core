@@ -4,12 +4,15 @@ import com.garganttua.core.aot.commons.AOTRegistry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
+import jakarta.annotation.Priority;
+
 /**
  * AOT implementation of {@link IReflectionProvider}.
  *
  * <p>Resolves classes from the {@link AOTRegistry} singleton. Only supports
  * classes that have been registered by AOT-generated code.</p>
  */
+@Priority(20)
 public class AOTReflectionProvider implements IReflectionProvider {
 
     @Override

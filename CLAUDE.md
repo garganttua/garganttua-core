@@ -94,6 +94,24 @@ Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA02`) is a modular Ja
 
 **Dependency Tracking**: `Dependent` interface declares type dependencies for resolution ordering and circular dependency detection.
 
+### Bootstrap SPI (ServiceLoader cold start)
+
+`Bootstrap.builder().autoDetect(true).build()` is usable on a cold JVM with zero manual wiring as long as at least one `IReflectionProvider` JAR is on the classpath (typically `garganttua-runtime-reflection` for JVM mode or `garganttua-aot-reflection` for native).
+
+**How it works:**
+- Provider modules ship `META-INF/services/com.garganttua.core.reflection.IReflectionProvider` (and `...IAnnotationScanner`) descriptors. Currently shipped:
+  - `garganttua-runtime-reflection` → `RuntimeReflectionProvider` (`@Priority(10)`)
+  - `garganttua-aot-reflection` → `AOTReflectionProvider` (`@Priority(20)`)
+  - `garganttua-bindings/garganttua-reflections` → `ReflectionsAnnotationScanner` (`@Priority(10)`)
+  - `garganttua-aot-annotation-scanner` → `AOTAnnotationScanner` (`@Priority(20)`)
+- `Bootstrap`'s constructor invokes `ServiceLoader.load(...)` for both interfaces, sorts results by `jakarta.annotation.Priority` (higher wins, default 0 when absent), builds a `ReflectionBuilder`, and installs the result via `IClass.setReflection()`.
+- This is **only the cold-start fallback** — when a user explicitly calls `.provide(reflectionBuilder)`, the user's builder takes over the bootstrap's dep chain. Opt-out entirely with `bootstrap.disableSpiFallback()` (useful for tests).
+
+**Native-image notes:**
+- GraalVM auto-handles `ServiceLoader.load(X.class)` calls and includes `META-INF/services/*` natively.
+- Reading `@Priority` via `Class.getAnnotation()` requires the provider's annotations to be preserved — usually automatic with ServiceLoader detection, but verify in your `reflect-config.json` if priority falls back to 0 unexpectedly.
+- **Shade caveat (critical for fat JARs and native):** every shade-plugin config that produces an executable JAR MUST include `<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>`. Without it the META-INF/services files from each shaded JAR overwrite each other and the SPI silently sees no providers. Already enforced in `garganttua-script` and `garganttua-console`.
+
 ### Annotation Processor & Indexing
 
 `garganttua-annotation-processor` is a compile-time annotation processor (`IndexedAnnotationProcessor`) that generates index files in `META-INF/garganttua/index/` for fast annotation discovery at runtime (avoiding expensive classpath scanning). Annotations marked with `@Indexed` (from `garganttua-commons`) are automatically indexed. The processor also indexes standard JSR-330 annotations (`javax.inject.*`, `jakarta.inject.*`). Index entries use the format `C:fully.qualified.ClassName` for classes and `M:ClassName#methodName(ParamTypes)` for methods. The annotation processor is configured globally in the parent POM's `maven-compiler-plugin` alongside Lombok.

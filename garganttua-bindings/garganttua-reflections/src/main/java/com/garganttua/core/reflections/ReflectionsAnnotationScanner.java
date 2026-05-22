@@ -16,9 +16,11 @@ import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 
+import jakarta.annotation.Priority;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Priority(10)
 public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
 	@Override

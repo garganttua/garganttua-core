@@ -3,6 +3,9 @@ package com.garganttua.core.reflection.runtime;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
+import jakarta.annotation.Priority;
+
+@Priority(10)
 public class RuntimeReflectionProvider implements IReflectionProvider {
 
 	@Override
