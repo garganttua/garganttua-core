@@ -175,9 +175,14 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
             IInjectionChildContextFactory<? extends IInjectionContext> factory) {
         log.atTrace().log("Entering childContextFactory(factory={})", factory);
         Objects.requireNonNull(factory, "ChildContextFactory cannot be null");
-        this.manualChildContextFactories.put(factory.getClass().getName(), factory);
+        String key = factory.getClass().getName();
+        boolean alreadyRegistered = this.manualChildContextFactories.containsKey(key);
+        this.manualChildContextFactories.put(key, factory);
         log.atDebug().log("Added new child context factory: {}", factory);
-        if (this.built != null) {
+        // Only forward to the built context when this is a genuinely new factory
+        // class. Re-forwarding an already-registered class triggers the context's
+        // dedup WARN even though the call is a harmless no-op.
+        if (!alreadyRegistered && this.built != null) {
             this.built.registerChildContextFactory(factory);
             log.atDebug().log("Registered child context factory to built context: {}", factory);
         }
