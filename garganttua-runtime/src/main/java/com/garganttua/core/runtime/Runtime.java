@@ -81,7 +81,7 @@ public class Runtime<InputType, OutputType>
 
 		MDC.put("uuid", uuid.toString());
 
-		log.atInfo().log("Starting runtime execution");
+		log.atDebug().log("Starting runtime execution");
 		log.atTrace().log("Runtime input received");
 
 		IRuntimeContext<InputType, OutputType> runtimeContext = null;
@@ -141,7 +141,7 @@ public class Runtime<InputType, OutputType>
 					runtimeContext.onFlush();
 				}
 
-				log.atInfo()
+				log.atDebug()
 						.log("Runtime execution finished");
 
 				MDC.remove("uuid");
