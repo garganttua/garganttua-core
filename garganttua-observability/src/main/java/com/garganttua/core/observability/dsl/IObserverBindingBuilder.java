@@ -1,0 +1,68 @@
+package com.garganttua.core.observability.dsl;
+
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import com.garganttua.core.condition.dsl.IConditionBuilder;
+import com.garganttua.core.dsl.ILinkedBuilder;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.ObservableEvent;
+
+/**
+ * Linked sub-builder for one observer registration. Provides the filter DSL
+ * and an optional per-observer override of which observables to attach to.
+ *
+ * <p>Filter methods compose with AND when called multiple times on the same
+ * binding (e.g. {@code .onlyEvents(EndEvent.class).matchingSource("workflow:*")}
+ * delivers only EndEvents whose source starts with {@code workflow:}).
+ *
+ * <p>{@link #up()} returns to the parent {@link IObservabilityBuilder} so the
+ * caller can register further observers and finally call {@code build()}.
+ *
+ * @since 2.0.0-ALPHA02
+ */
+public interface IObserverBindingBuilder extends ILinkedBuilder<IObservabilityBuilder, Void> {
+
+    /**
+     * Attach a {@code garganttua-condition}-based filter. The framework hands
+     * an {@link EventHolderSupplierBuilder} to the lambda; the user composes a
+     * condition that consults the current event through that supplier.
+     *
+     * <p>The same condition DSL used by {@code RuntimeStepMethodBuilder.condition(...)}
+     * is reused here, so users only learn one filtering vocabulary.
+     *
+     * @param condition lambda that, given an event supplier, returns a condition builder
+     * @return this builder for chaining
+     */
+    IObserverBindingBuilder when(Function<EventHolderSupplierBuilder, IConditionBuilder> condition);
+
+    /**
+     * Attach a JDK {@link Predicate} filter. Escape hatch for trivial cases
+     * where the condition DSL would be overkill.
+     */
+    IObserverBindingBuilder where(Predicate<ObservableEvent> predicate);
+
+    /**
+     * Restrict delivery to one or more concrete event types.
+     */
+    @SuppressWarnings("unchecked")
+    IObserverBindingBuilder onlyEvents(Class<? extends ObservableEvent>... eventTypes);
+
+    /**
+     * Restrict delivery to events whose {@code source()} matches the given
+     * glob pattern. {@code *} is the only wildcard supported and matches any
+     * substring; everything else is literal. Examples:
+     * <ul>
+     *   <li>{@code "workflow:*"} matches {@code workflow:foo}, {@code workflow:bar}</li>
+     *   <li>{@code "*:critical:*"} matches {@code workflow:critical:bar}</li>
+     * </ul>
+     */
+    IObserverBindingBuilder matchingSource(String globPattern);
+
+    /**
+     * Override the parent's default observable set for this observer. Useful
+     * when one observer should only listen to a subset of the engines declared
+     * at the builder root.
+     */
+    IObserverBindingBuilder toObservable(IObservable<? extends ObservableEvent>... sources);
+}

@@ -223,6 +223,8 @@ The observability primitives live in **`garganttua-commons`** (package `com.garg
 
 **Cross-engine propagation:** when a `Workflow` calls a `Script` that calls a `Runtime` that runs a step, the same `executionId` flows through all layers via `ObservableContextHolder` stack semantics. A single observer attached at the workflow level sees the entire chain with consistent correlation. Verified by `CrossEngineObservabilityTest` in `garganttua-workflow`.
 
+**ObservabilityBuilder DSL** (`garganttua-observability/.../dsl/`): for wiring one observer to several observables in one expression, with per-subscription filters and a detachable handle. `ObservabilityBuilder.create().observe(workflow, mapper).observer(o).when(...)...up().build()` returns an `ObservabilityBinding` (AutoCloseable). Filters use the `garganttua-condition` DSL (same one as `RuntimeStepMethodBuilder.condition(...)`), via a framework-managed `EventHolderSupplier` that refreshes the current event before each `fullEvaluate()`. JDK `Predicate` is available as an escape hatch via `.where(...)`. Sugar methods: `.onlyEvents(StartEvent.class)`, `.matchingSource("workflow:*")`. Filter composition is AND.
+
 ### Reflection Abstraction (`IReflection` Facade)
 
 The reflection subsystem uses a pluggable provider architecture:

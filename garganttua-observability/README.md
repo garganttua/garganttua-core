@@ -37,6 +37,8 @@ The module deliberately offers **only the primitives** — aggregators, metrics 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-expression`
+ - `com.garganttua.core:garganttua-condition`
+ - `com.garganttua.core:garganttua-supply`
  - `com.garganttua.core:garganttua-runtime-reflection:test`
  - `ch.qos.logback:logback-classic:test`
 
@@ -107,6 +109,50 @@ Workflow wf = WorkflowBuilder.create()
 wf.addObserver(observer);
 WorkflowResult result = wf.execute(input);
 ```
+
+### Multi-observable DSL with filters
+
+For wiring one observer to several observables in one expression — with
+optional per-subscription filters — use the `ObservabilityBuilder` DSL.
+Filters compose with AND when called multiple times. `build()` returns an
+`AutoCloseable` binding that detaches every observer when closed.
+
+```java
+import static com.garganttua.core.condition.Conditions.*;
+import com.garganttua.core.observability.dsl.ObservabilityBuilder;
+
+try (var binding = ObservabilityBuilder.create()
+        .observe(workflow, mapper, runtime)            // default source set
+        .observer(loggingObserver)                     // attached to all three
+        .up()
+        .observer(alertObserver)
+            // garganttua-condition DSL — same vocabulary as RuntimeStepMethodBuilder.condition(...)
+            .when(events -> and(
+                custom(events, ObservableEvent::source,
+                    src -> src != null && src.startsWith("workflow:critical:")),
+                custom(events, e -> e instanceof EndEvent ee
+                    && ee.code() != null && ee.code() >= 400)))
+        .up()
+        .observer(errorReporter)
+            .onlyEvents(ErrorEvent.class)              // sugar
+            .matchingSource("workflow:*")              // glob — only * is special
+        .up()
+        .observer(timingObserver)
+            .where(e -> e instanceof EndEvent ee       // Predicate escape hatch
+                && ee.duration().toMillis() > 1000)
+            .toObservable(runtime)                     // narrow this observer to runtime only
+        .up()
+        .build()) {
+
+    workflow.execute(input);
+    // ... binding.count() registrations live until close()
+}   // binding.close() detaches every wrapper
+```
+
+The condition lambda receives an `EventHolderSupplierBuilder` named
+`events` by convention. The framework refreshes the holder with the current
+event before each `fullEvaluate()`, so user code reads the event through
+`custom(events, ...)` without dealing with the supplier mutation directly.
 
 ## Tips and best practices
 
