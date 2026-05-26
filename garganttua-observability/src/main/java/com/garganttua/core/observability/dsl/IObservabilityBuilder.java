@@ -50,4 +50,30 @@ public interface IObservabilityBuilder extends IBuilder<ObservabilityBinding> {
      * set, then return here via {@link IObserverBindingBuilder#up()}.
      */
     IObserverBindingBuilder observer(IObserver<ObservableEvent> observer);
+
+    /**
+     * Scan the given packages for classes annotated with
+     * {@link com.garganttua.core.observability.annotations.Observer} that
+     * implement {@code IObserver<ObservableEvent>}, instantiate them via
+     * their no-arg constructor, and register each one with the filters
+     * declared in the annotation ({@code events} → {@code onlyEvents},
+     * {@code sources} → {@code matchingAnySource}). With no package
+     * argument, scans the whole classpath via the globally-installed
+     * {@link com.garganttua.core.reflection.IAnnotationScanner}.
+     *
+     * <p>Returns the root builder (NOT a binding builder) so the caller can
+     * mix auto-detected observers with explicitly-registered ones:
+     * <pre>{@code
+     * ObservabilityBuilder.create()
+     *     .observe(workflow, mapper, runtime)
+     *     .autoDetect("com.myapp.observers")
+     *     .observer(adHocObserver).up()
+     *     .build();
+     * }</pre>
+     *
+     * @throws com.garganttua.core.dsl.DslException if a candidate class
+     *         cannot be instantiated or does not implement
+     *         {@code IObserver<ObservableEvent>}.
+     */
+    IObservabilityBuilder autoDetect(String... packages);
 }

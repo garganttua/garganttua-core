@@ -60,6 +60,15 @@ public interface IObserverBindingBuilder extends ILinkedBuilder<IObservabilityBu
     IObserverBindingBuilder matchingSource(String globPattern);
 
     /**
+     * Restrict delivery to events whose {@code source()} matches at least ONE
+     * of the given glob patterns (OR semantics across patterns; AND with any
+     * other filter already attached to this binding). Useful when an
+     * annotation or config supplies several patterns at once. An empty array
+     * is a no-op (no filter added).
+     */
+    IObserverBindingBuilder matchingAnySource(String... globPatterns);
+
+    /**
      * Override the parent's default observable set for this observer. Useful
      * when one observer should only listen to a subset of the engines declared
      * at the builder root.

@@ -92,6 +92,35 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
     }
 
     @Override
+    public IObserverBindingBuilder matchingAnySource(String... globPatterns) {
+        Objects.requireNonNull(globPatterns, "globPatterns");
+        if (globPatterns.length == 0) {
+            return this;
+        }
+        if (globPatterns.length == 1) {
+            return matchingSource(globPatterns[0]);
+        }
+        final java.util.regex.Pattern[] patterns =
+                new java.util.regex.Pattern[globPatterns.length];
+        for (int i = 0; i < globPatterns.length; i++) {
+            Objects.requireNonNull(globPatterns[i], "globPattern[" + i + "]");
+            patterns[i] = java.util.regex.Pattern.compile(globToRegex(globPatterns[i]));
+        }
+        return where(e -> {
+            String src = e.source();
+            if (src == null) {
+                return false;
+            }
+            for (java.util.regex.Pattern p : patterns) {
+                if (p.matcher(src).matches()) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public final IObserverBindingBuilder toObservable(IObservable<? extends ObservableEvent>... sources) {
         Objects.requireNonNull(sources, "sources");

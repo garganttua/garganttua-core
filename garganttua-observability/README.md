@@ -40,6 +40,7 @@ The module deliberately offers **only the primitives** — aggregators, metrics 
  - `com.garganttua.core:garganttua-condition`
  - `com.garganttua.core:garganttua-supply`
  - `com.garganttua.core:garganttua-runtime-reflection:test`
+ - `com.garganttua.core:garganttua-reflections:test`
 
 <!-- AUTO-GENERATED-END -->
 
