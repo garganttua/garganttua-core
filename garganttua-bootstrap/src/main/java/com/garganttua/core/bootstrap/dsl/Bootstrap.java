@@ -32,7 +32,6 @@ import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IBootstrapBuilderFactory;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -1193,19 +1192,6 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     }
 
     /**
-     * Finds a builder instance from the provided dependencies that matches the given class.
-     * This allows reusing user-configured builders instead of creating empty auto-detected ones.
-     */
-    private IBuilder<?> findProvidedDependencyBuilder(IClass<?> builderClass) {
-        Class<?> rawClass = (Class<?>) builderClass.getType();
-        return providedBuilders.stream()
-                .filter(b -> rawClass.isAssignableFrom(b.getClass()))
-                .findFirst()
-                .map(b -> (IBuilder<?>) b)
-                .orElse(null);
-    }
-
-    /**
      * Gets the set of configured packages.
      *
      * @return unmodifiable set of packages
@@ -1296,71 +1282,16 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         }
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
-        log.atTrace().log("Entering doAutoDetection() with dependency: {}", dependency.getClass().getSimpleName());
-
-        if (dependency instanceof IReflection reflection) {
-            IClass<com.garganttua.core.bootstrap.annotations.Bootstrap> boostrapAnnotationClass = reflection
-                    .getClass(com.garganttua.core.bootstrap.annotations.Bootstrap.class);
-                    IClass<IBuilder> builderInterfaceClass = reflection.getClass(IBuilder.class);
-
-            this.packages.stream()
-                    .flatMap(packageName -> reflection
-                            .getClassesWithAnnotation(packageName, boostrapAnnotationClass)
-                            .stream())
-                    .forEach(builderClass -> {
-                        try {
-                            if (builderInterfaceClass.isAssignableFrom(builderClass)) {
-                                // Skip if a manual builder of the same type already exists
-                                boolean alreadyManual = this.manualBuilders.values().stream()
-                                        .anyMatch(builderClass::isInstance);
-                                if (alreadyManual) {
-                                    log.atDebug().log("Skipping auto-detected builder {} — already provided manually",
-                                            builderClass.getSimpleName());
-                                    return;
-                                }
-
-                                // If a provided dependency matches this builder type,
-                                // register the PROVIDED instance instead of creating a new empty one.
-                                // This prevents e.g. an empty ReflectionBuilder (no scanner)
-                                // from replacing a user-configured one.
-                                IBuilder<?> providedBuilder = findProvidedDependencyBuilder(builderClass);
-                                if (providedBuilder != null) {
-                                    log.atDebug().log("Using provided dependency {} instead of auto-detecting new instance",
-                                            builderClass.getSimpleName());
-                                    this.autoDetectedBuilders.put(builderClass.getName() + "#" + (autoDetectedBuilderSeq++), providedBuilder);
-                                    propagatePackagesToBuilder(providedBuilder);
-                                    return;
-                                }
-
-                                IBuilder<?> builderInstance = (IBuilder<?>) reflection
-                                        .newInstance(builderClass);
-                                if (builderInstance instanceof IAutomaticBuilder) {
-                                    IAutomaticBuilder<?, ?> automaticBuilder = (IAutomaticBuilder<?, ?>) builderInstance;
-                                    automaticBuilder.autoDetect(true);
-                                    log.atDebug().log("Auto-detected builder {} with auto-detection enabled",
-                                            builderClass.getSimpleName());
-                                } else {
-                                    log.atDebug().log("Auto-detected builder {} (not automatic)",
-                                            builderClass.getSimpleName());
-                                }
-                                this.autoDetectedBuilders.put(builderClass.getName() + "#" + (autoDetectedBuilderSeq++), builderInstance);
-                                propagatePackagesToBuilder(builderInstance);
-                            } else {
-                                log.atWarn().log("Class {} has @Bootstrap annotation but does not implement IBuilder",
-                                        builderClass.getName());
-                            }
-                        } catch (Exception e) {
-                            throw new DslException("Failed to auto-detect builder: " + builderClass.getName(), e);
-                        }
-                    });
-        }
-        log.atDebug().log("Auto-detection with dependency {} completed for {} packages",
-                dependency.getClass().getSimpleName(), packages.size());
-        log.atTrace().log("Exiting doAutoDetection() with dependency");
-
+        // No-op. Bootstrap-discoverable builders are loaded purely via
+        // ServiceLoader (see {@link #loadBootstrapBuildersFromSpi()} called from
+        // {@link #doAutoDetection()}); the previous reflection-based scan of
+        // {@code @Bootstrap}-annotated classes was retired in 2026-05-26 to
+        // remove the chicken-and-egg between Bootstrap and IReflection, and to
+        // make the framework GraalVM-native-friendly.
+        log.atTrace().log("doAutoDetectionWithDependency({}) — no-op (SPI handles discovery)",
+                dependency.getClass().getSimpleName());
     }
 
     @Override
