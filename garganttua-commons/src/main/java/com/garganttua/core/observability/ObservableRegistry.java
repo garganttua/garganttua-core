@@ -17,21 +17,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Use {@link #hasObservers()} to short-circuit expensive event payload
  * construction when no observer is registered.
  *
- * @param <E> the event type managed by this registry
  * @since 2.0.0-ALPHA02
  */
-public class ObservableRegistry<E extends ObservableEvent> implements IObservable<E> {
+public class ObservableRegistry implements IObservable {
     private static final IDiagnostic log = Diagnostics.of(ObservableRegistry.class);
 
-	private final List<IObserver<E>> observers = new CopyOnWriteArrayList<>();
+	private final List<IObserver<ObservableEvent>> observers = new CopyOnWriteArrayList<>();
 
 	@Override
-	public void addObserver(IObserver<E> observer) {
+	public void addObserver(IObserver<ObservableEvent> observer) {
 		this.observers.add(Objects.requireNonNull(observer, "observer cannot be null"));
 	}
 
 	@Override
-	public void removeObserver(IObserver<E> observer) {
+	public void removeObserver(IObserver<ObservableEvent> observer) {
 		this.observers.remove(observer);
 	}
 
@@ -40,11 +39,11 @@ public class ObservableRegistry<E extends ObservableEvent> implements IObservabl
 	 * observer are caught and logged; processing continues with remaining
 	 * observers.
 	 */
-	public void fire(E event) {
+	public void fire(ObservableEvent event) {
 		if (event == null || this.observers.isEmpty()) {
 			return;
 		}
-		for (IObserver<E> observer : this.observers) {
+		for (IObserver<ObservableEvent> observer : this.observers) {
 			try {
 				observer.onEvent(event);
 			} catch (RuntimeException ex) {

@@ -39,7 +39,7 @@ import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.StatementBlock;
 import com.garganttua.core.supply.ISupplier;
 
-public class ScriptContext implements IScript, IObservable<ObservableEvent> {
+public class ScriptContext implements IScript, IObservable {
 
     private final IExpressionContext expressionContext;
     private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
@@ -52,7 +52,7 @@ public class ScriptContext implements IScript, IObservable<ObservableEvent> {
     private volatile boolean aborted = false;
     private final Map<String, Object> initialVariables = Collections.synchronizedMap(new HashMap<>());
     private final Map<String, IScript> includedScripts = new ConcurrentHashMap<>();
-    private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
+    private final ObservableRegistry observers = new ObservableRegistry();
 
     /**
      * Creates a new ScriptContext with expression context, runtimes builder factory, and bootstrap.

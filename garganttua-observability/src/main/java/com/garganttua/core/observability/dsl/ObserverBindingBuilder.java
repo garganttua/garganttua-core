@@ -35,7 +35,7 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
     private EventHolderSupplier holder;
 
     /** When non-null, overrides the parent builder's default observable set. */
-    private List<IObservable<ObservableEvent>> overrideSources;
+    private List<IObservable> overrideSources;
 
     ObserverBindingBuilder(IObserver<ObservableEvent> target, IObservabilityBuilder up) {
         this.target = Objects.requireNonNull(target, "observer");
@@ -121,13 +121,12 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public final IObserverBindingBuilder toObservable(IObservable<? extends ObservableEvent>... sources) {
+    public final IObserverBindingBuilder toObservable(IObservable... sources) {
         Objects.requireNonNull(sources, "sources");
-        List<IObservable<ObservableEvent>> list = new ArrayList<>(sources.length);
-        for (IObservable<? extends ObservableEvent> src : sources) {
+        List<IObservable> list = new ArrayList<>(sources.length);
+        for (IObservable src : sources) {
             Objects.requireNonNull(src, "source");
-            list.add((IObservable<ObservableEvent>) src);
+            list.add(src);
         }
         this.overrideSources = list;
         return this;
@@ -155,7 +154,7 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
         return this.target;
     }
 
-    List<IObservable<ObservableEvent>> overrideSources() {
+    List<IObservable> overrideSources() {
         return this.overrideSources;
     }
 

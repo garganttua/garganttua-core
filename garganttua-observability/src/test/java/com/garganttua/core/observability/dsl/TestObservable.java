@@ -9,9 +9,9 @@ import com.garganttua.core.observability.ObservableRegistry;
  * Minimal {@link IObservable} fixture used by the DSL tests. Exposes a {@code fire}
  * method to push events to all registered observers.
  */
-class TestObservable implements IObservable<ObservableEvent> {
+class TestObservable implements IObservable {
 
-    private final ObservableRegistry<ObservableEvent> registry = new ObservableRegistry<>();
+    private final ObservableRegistry registry = new ObservableRegistry();
     private final String name;
 
     TestObservable(String name) {

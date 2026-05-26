@@ -36,7 +36,7 @@ public final class ObservabilityBuilder
 
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
 
-    private final List<IObservable<ObservableEvent>> defaultSources = new ArrayList<>();
+    private final List<IObservable> defaultSources = new ArrayList<>();
     private final List<ObserverBindingBuilder> bindings = new ArrayList<>();
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
 
@@ -53,12 +53,11 @@ public final class ObservabilityBuilder
     // -- IObservabilityBuilder ------------------------------------------------
 
     @Override
-    @SuppressWarnings("unchecked")
-    public IObservabilityBuilder observe(IObservable<? extends ObservableEvent>... sources) {
+    public IObservabilityBuilder observe(IObservable... sources) {
         Objects.requireNonNull(sources, "sources");
-        for (IObservable<? extends ObservableEvent> src : sources) {
+        for (IObservable src : sources) {
             Objects.requireNonNull(src, "source");
-            this.defaultSources.add((IObservable<ObservableEvent>) src);
+            this.defaultSources.add(src);
         }
         return this;
     }
@@ -165,7 +164,7 @@ public final class ObservabilityBuilder
     protected ObservabilityBinding doBuild() throws DslException {
         List<Registration> registrations = new ArrayList<>();
         for (ObserverBindingBuilder b : this.bindings) {
-            List<IObservable<ObservableEvent>> sources = b.overrideSources();
+            List<IObservable> sources = b.overrideSources();
             if (sources == null) {
                 sources = this.defaultSources;
             }
@@ -176,7 +175,7 @@ public final class ObservabilityBuilder
                                 + " builder or .toObservable(...) on the binding.");
             }
             IObserver<ObservableEvent> wrapper = b.buildWrapper();
-            for (IObservable<ObservableEvent> src : sources) {
+            for (IObservable src : sources) {
                 src.addObserver(wrapper);
                 registrations.add(new Registration(src, wrapper));
             }

@@ -25,7 +25,7 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 
-public class Mapper implements IMapper, IObservable<ObservableEvent> {
+public class Mapper implements IMapper, IObservable {
     private static final IDiagnostic log = Diagnostics.of(Mapper.class);
 
 	protected final Map<MappingKey, CachedMappingConfiguration> mappingConfigurations = new ConcurrentHashMap<>();
@@ -35,7 +35,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 	private final MappingRules mappingRules;
 	private final List<IMappingListener> listeners = new CopyOnWriteArrayList<>();
 	private final MapperMetrics metrics = new MapperMetrics();
-	private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
+	private final ObservableRegistry observers = new ObservableRegistry();
 
 	public Mapper(IReflection reflection) {
 		this.reflection = Objects.requireNonNull(reflection, "IReflection implementation cannot be null");

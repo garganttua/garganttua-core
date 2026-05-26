@@ -96,7 +96,7 @@ import com.garganttua.core.supply.SupplyException;
  * @since 2.0.0-ALPHA01
  */
 public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBuiltRegistry>
-        implements IBoostrap, IObservable<ObservableEvent> {
+        implements IBoostrap, IObservable {
     private static final IDiagnostic log = Diagnostics.of(Bootstrap.class);
 
     private static final String DEFAULT_VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
@@ -138,7 +138,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private final List<IObservableBuilder<?, ?>> providedBuilders = new ArrayList<>();
     private final Set<IBuilder<?>> spiAutoLoadedBuilders =
             Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
-    private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
+    private final ObservableRegistry observers = new ObservableRegistry();
     private boolean reflectionBuilderProvided = false;
     private boolean spiFallbackEnabled = true;
 

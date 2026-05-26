@@ -45,7 +45,7 @@ public final class ObservabilityEmitter {
 	 * {@code localExecutionId}. The returned scope MUST be closed (preferably
 	 * via try-with-resources) so the holder stack is restored.
 	 */
-	public static Scope open(ObservableRegistry<ObservableEvent> localRegistry, UUID localExecutionId) {
+	public static Scope open(ObservableRegistry localRegistry, UUID localExecutionId) {
 		Session parent = ObservableContextHolder.current();
 		if (parent != null) {
 			return new Scope(parent.registry(), parent.executionId(), localRegistry, null, false);
@@ -76,15 +76,15 @@ public final class ObservabilityEmitter {
 	 */
 	public static final class Scope implements AutoCloseable {
 
-		private final ObservableRegistry<ObservableEvent> active;
+		private final ObservableRegistry active;
 		private final UUID executionId;
-		private final ObservableRegistry<ObservableEvent> local;
+		private final ObservableRegistry local;
 		private final Session previous;
 		private final boolean pushed;
 		private final Instant startedAt;
 
-		private Scope(ObservableRegistry<ObservableEvent> active, UUID executionId,
-				ObservableRegistry<ObservableEvent> local, Session previous, boolean pushed) {
+		private Scope(ObservableRegistry active, UUID executionId,
+				ObservableRegistry local, Session previous, boolean pushed) {
 			this.active = active;
 			this.executionId = executionId;
 			this.local = local;

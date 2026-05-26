@@ -16,7 +16,7 @@ class ObservableRegistryTest {
 
 	@Test
 	void addObserver_thenFire_dispatchesEvent() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		List<ObservableEvent> received = new ArrayList<>();
 		reg.addObserver(received::add);
 
@@ -29,7 +29,7 @@ class ObservableRegistryTest {
 
 	@Test
 	void removeObserver_stopsReceiving() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		List<ObservableEvent> received = new ArrayList<>();
 		IObserver<ObservableEvent> obs = received::add;
 		reg.addObserver(obs);
@@ -41,21 +41,21 @@ class ObservableRegistryTest {
 
 	@Test
 	void noObservers_hasObserversReturnsFalse() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		assertFalse(reg.hasObservers());
 		assertEquals(0, reg.size());
 	}
 
 	@Test
 	void emptyRegistry_fireIsNoop() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		reg.fire(new StartEvent(UUID.randomUUID(), Instant.now(), "test"));
 		// no exception
 	}
 
 	@Test
 	void observerThrowing_doesNotBreakOthers() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		List<ObservableEvent> survivor = new ArrayList<>();
 		reg.addObserver(e -> {
 			throw new RuntimeException("boom");
@@ -69,7 +69,7 @@ class ObservableRegistryTest {
 
 	@Test
 	void multipleObservers_allReceiveEvent() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		List<ObservableEvent> a = new CopyOnWriteArrayList<>();
 		List<ObservableEvent> b = new CopyOnWriteArrayList<>();
 		reg.addObserver(a::add);
@@ -83,7 +83,7 @@ class ObservableRegistryTest {
 
 	@Test
 	void hasObservers_trueAfterAdd_falseAfterRemove() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		IObserver<ObservableEvent> obs = e -> {};
 		reg.addObserver(obs);
 		assertTrue(reg.hasObservers());

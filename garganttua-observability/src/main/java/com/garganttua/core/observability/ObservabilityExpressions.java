@@ -51,7 +51,7 @@ public class ObservabilityExpressions {
 		if (session == null) {
 			return;
 		}
-		ObservableRegistry<ObservableEvent> registry = session.registry();
+		ObservableRegistry registry = session.registry();
 		if (registry == null || !registry.hasObservers()) {
 			return;
 		}

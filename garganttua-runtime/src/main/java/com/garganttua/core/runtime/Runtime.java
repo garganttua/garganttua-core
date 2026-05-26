@@ -21,7 +21,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 public class Runtime<InputType, OutputType>
-		implements IRuntime<InputType, OutputType>, IObservable<ObservableEvent> {
+		implements IRuntime<InputType, OutputType>, IObservable {
     private static final IDiagnostic log = Diagnostics.of(Runtime.class);
 
 	private final String name;
@@ -30,7 +30,7 @@ public class Runtime<InputType, OutputType>
 	private final Class<OutputType> outputType;
 	private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;
 	private final Map<String, ISupplier<?>> presetVariables;
-	private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
+	private final ObservableRegistry observers = new ObservableRegistry();
 
 	public Runtime(
 			String name,

@@ -47,7 +47,7 @@ import com.garganttua.core.workflow.renderer.WorkflowRenderer;
  *
  * @since 2.0.0-ALPHA01
  */
-public class Workflow implements IWorkflow, IObservable<ObservableEvent> {
+public class Workflow implements IWorkflow, IObservable {
     private static final IDiagnostic log = Diagnostics.of(Workflow.class);
 
     private final String name;
@@ -58,7 +58,7 @@ public class Workflow implements IWorkflow, IObservable<ObservableEvent> {
     private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
     private final boolean inlineAll;
     private final WorkflowTimingConfig timingConfig;
-    private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
+    private final ObservableRegistry observers = new ObservableRegistry();
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
     private final WorkflowRenderer renderer = new WorkflowRenderer();
 

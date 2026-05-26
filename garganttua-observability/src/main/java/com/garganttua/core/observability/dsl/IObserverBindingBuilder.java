@@ -73,5 +73,5 @@ public interface IObserverBindingBuilder extends ILinkedBuilder<IObservabilityBu
      * when one observer should only listen to a subset of the engines declared
      * at the builder root.
      */
-    IObserverBindingBuilder toObservable(IObservable<? extends ObservableEvent>... sources);
+    IObserverBindingBuilder toObservable(IObservable... sources);
 }

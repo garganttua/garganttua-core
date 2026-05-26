@@ -14,12 +14,12 @@ import org.junit.jupiter.api.Test;
 
 class ObservabilityExpressionsTest {
 
-	private ObservableRegistry<ObservableEvent> registry;
+	private ObservableRegistry registry;
 	private List<ObservableEvent> received;
 
 	@BeforeEach
 	void setup() {
-		registry = new ObservableRegistry<>();
+		registry = new ObservableRegistry();
 		received = new ArrayList<>();
 		registry.addObserver(received::add);
 		ObservableContextHolder.push(registry, UUID.randomUUID());

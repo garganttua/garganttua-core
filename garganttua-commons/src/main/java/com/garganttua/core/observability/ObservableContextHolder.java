@@ -39,7 +39,7 @@ public final class ObservableContextHolder {
 	 * session (or {@code null}). The caller must pass the returned value to
 	 * {@link #pop(Session)} in a {@code finally} block.
 	 */
-	public static Session push(ObservableRegistry<ObservableEvent> registry, UUID executionId) {
+	public static Session push(ObservableRegistry registry, UUID executionId) {
 		Session previous = CURRENT.get();
 		CURRENT.set(new Session(registry, executionId));
 		return previous;
@@ -68,6 +68,6 @@ public final class ObservableContextHolder {
 	 * A bound (registry, executionId) pair active for one logical execution on
 	 * the current thread.
 	 */
-	public record Session(ObservableRegistry<ObservableEvent> registry, UUID executionId) {
+	public record Session(ObservableRegistry registry, UUID executionId) {
 	}
 }

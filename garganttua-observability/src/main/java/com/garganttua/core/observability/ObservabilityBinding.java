@@ -25,7 +25,7 @@ public final class ObservabilityBinding implements AutoCloseable {
      * A single (source, wrapper) registration captured at build time so
      * {@link #close()} can detach in the same order.
      */
-    public record Registration(IObservable<ObservableEvent> source,
+    public record Registration(IObservable source,
             IObserver<ObservableEvent> wrapper) {
         public Registration {
             Objects.requireNonNull(source, "source");

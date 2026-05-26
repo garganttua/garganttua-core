@@ -50,7 +50,7 @@ public interface IObservabilityBuilder
      * @param sources one or more observables (no nulls)
      * @return this builder for chaining
      */
-    IObservabilityBuilder observe(IObservable<? extends ObservableEvent>... sources);
+    IObservabilityBuilder observe(IObservable... sources);
 
     /**
      * Registers a new observer subscription. The returned linked builder lets

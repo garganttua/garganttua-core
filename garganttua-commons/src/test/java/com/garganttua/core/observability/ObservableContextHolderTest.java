@@ -18,7 +18,7 @@ class ObservableContextHolderTest {
 
 	@Test
 	void push_onEmptyThread_returnsNull() {
-		ObservableRegistry<ObservableEvent> reg = new ObservableRegistry<>();
+		ObservableRegistry reg = new ObservableRegistry();
 		ObservableContextHolder.Session previous = ObservableContextHolder.push(reg, UUID.randomUUID());
 
 		assertNull(previous);
@@ -27,8 +27,8 @@ class ObservableContextHolderTest {
 
 	@Test
 	void nestedPush_pop_restoresOuter() {
-		ObservableRegistry<ObservableEvent> outer = new ObservableRegistry<>();
-		ObservableRegistry<ObservableEvent> inner = new ObservableRegistry<>();
+		ObservableRegistry outer = new ObservableRegistry();
+		ObservableRegistry inner = new ObservableRegistry();
 		UUID outerId = UUID.randomUUID();
 		UUID innerId = UUID.randomUUID();
 
@@ -51,7 +51,7 @@ class ObservableContextHolderTest {
 
 	@Test
 	void pop_withNull_clearsBinding() {
-		ObservableContextHolder.push(new ObservableRegistry<>(), UUID.randomUUID());
+		ObservableContextHolder.push(new ObservableRegistry(), UUID.randomUUID());
 		ObservableContextHolder.pop(null);
 		assertNull(ObservableContextHolder.current());
 	}
