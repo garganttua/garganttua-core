@@ -154,6 +154,51 @@ The condition lambda receives an `EventHolderSupplierBuilder` named
 event before each `fullEvaluate()`, so user code reads the event through
 `custom(events, ...)` without dealing with the supplier mutation directly.
 
+### Log observers (file / console)
+
+Two ready-to-use sinks ship in `com.garganttua.core.observability.log`. Both
+are pure JDK — no external dependency. Pair them with `IEventFormatter`:
+- `PlainTextEventFormatter` — human single-line, ideal for console / dev tail.
+- `JsonLineEventFormatter` — NDJSON, ingestible by Elasticsearch / Loki /
+  Filebeat / Splunk without transformation.
+
+```java
+import com.garganttua.core.observability.log.*;
+
+// Console — dev mode
+ConsoleLogObserver console = ConsoleLogObserver.builder()
+        .formatter(PlainTextEventFormatter.INSTANCE)
+        .build();
+
+// File — production mode, NDJSON for log shippers
+try (FileLogObserver file = FileLogObserver.builder()
+        .path(Path.of("/var/log/garganttua/events.ndjson"))
+        .formatter(JsonLineEventFormatter.INSTANCE)
+        .append(true)
+        .build();
+     var binding = ObservabilityBuilder.create()
+            .observe(workflow, mapper, runtime, scriptContext, bootstrap)
+            .observer(console).up()
+            .observer(file).up()
+            .build()) {
+
+    workflow.execute(input);
+}   // file flushed and closed; binding detaches both observers
+```
+
+**Custom sinks (Elasticsearch, Loki, custom HTTP, etc.)** belong in dedicated
+binding modules to keep this module dependency-free. Pattern: implement
+`IObserver<ObservableEvent>` (optionally `AutoCloseable`), reuse one of the
+ship-with formatters or write a custom `IEventFormatter`. Example layout for
+a future binding:
+
+```
+garganttua-bindings/
+  garganttua-observability-elasticsearch/
+    pom.xml (depends on observability + ES client)
+    src/main/java/.../ElasticsearchLogObserver.java
+```
+
 ## Tips and best practices
 
 - Keep observer logic fast and side-effect free — observers run on the caller thread.

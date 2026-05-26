@@ -225,6 +225,8 @@ The observability primitives live in **`garganttua-commons`** (package `com.garg
 
 **ObservabilityBuilder DSL** (`garganttua-observability/.../dsl/`): for wiring one observer to several observables in one expression, with per-subscription filters and a detachable handle. `ObservabilityBuilder.create().observe(workflow, mapper).observer(o).when(...)...up().build()` returns an `ObservabilityBinding` (AutoCloseable). Filters use the `garganttua-condition` DSL (same one as `RuntimeStepMethodBuilder.condition(...)`), via a framework-managed `EventHolderSupplier` that refreshes the current event before each `fullEvaluate()`. JDK `Predicate` is available as an escape hatch via `.where(...)`. Sugar methods: `.onlyEvents(StartEvent.class)`, `.matchingSource("workflow:*")`. Filter composition is AND.
 
+**Log observers** (`garganttua-observability/.../log/`): `ConsoleLogObserver` and `FileLogObserver` (AutoCloseable, sync writes, NDJSON-default, parent-dir auto-created) plus `IEventFormatter` with two implementations: `PlainTextEventFormatter` (human single-line) and `JsonLineEventFormatter` (NDJSON, no external dep — manual escape). External sinks (Elasticsearch, Loki, …) belong in dedicated binding modules; `garganttua-observability` stays dependency-free (only commons / expression / condition / supply).
+
 ### Reflection Abstraction (`IReflection` Facade)
 
 The reflection subsystem uses a pluggable provider architecture:
