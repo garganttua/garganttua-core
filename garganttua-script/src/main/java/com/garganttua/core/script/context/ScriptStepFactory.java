@@ -78,10 +78,56 @@ public class ScriptStepFactory {
     public Map<String, IRuntimeStep<?, Object[], Object>> compile(List<IScriptNode> statements) {
         Map<String, IRuntimeStep<?, Object[], Object>> steps = new LinkedHashMap<>();
         for (int i = 0; i < statements.size(); i++) {
-            String stepName = "step-" + i;
-            steps.put(stepName, compileNode(stepName, statements.get(i)));
+            String stepName = buildStepName(i, statements.get(i));
+            // Defend against duplicate descriptors (two `result <- ...` lines share
+            // the same variableName). Suffix with an index in that rare case.
+            String unique = stepName;
+            int dedup = 2;
+            while (steps.containsKey(unique)) {
+                unique = stepName + "#" + dedup++;
+            }
+            steps.put(unique, compileNode(unique, statements.get(i)));
         }
         return steps;
+    }
+
+    /**
+     * Build a meaningful, deterministic step name for observability labels and
+     * logs. Format: {@code step-<index>[-<descriptor>]}.
+     *
+     * <p>The descriptor is — in order of preference:
+     * <ul>
+     *   <li>the assigned variable name (e.g. {@code step-0-user} for
+     *       {@code user <- fetchUser()}), or the function name for a function
+     *       definition (both expose it via {@link IScriptNode#variableName()});</li>
+     *   <li>the literal {@code group} for an unnamed statement group;</li>
+     *   <li>omitted for a plain side-effect expression (just {@code step-<index>}).</li>
+     * </ul>
+     * Names are sanitized to keep only {@code [a-zA-Z0-9_.]}; everything else
+     * is collapsed to {@code _}. This keeps the observability source string
+     * safe for downstream tooling (Prometheus labels, JSON keys, etc.).
+     */
+    private static String buildStepName(int index, IScriptNode node) {
+        String descriptor = describe(node);
+        if (descriptor.isEmpty()) {
+            return "step-" + index;
+        }
+        return "step-" + index + "-" + sanitize(descriptor);
+    }
+
+    private static String describe(IScriptNode node) {
+        String var = node.variableName();
+        if (var != null && !var.isBlank()) {
+            return var;
+        }
+        if (node instanceof com.garganttua.core.script.nodes.StatementGroupNode) {
+            return "group";
+        }
+        return "";
+    }
+
+    private static String sanitize(String raw) {
+        return raw.replaceAll("[^a-zA-Z0-9_.]", "_");
     }
 
     private RuntimeStep<Object, Object[], Object> compileNode(String stepName, IScriptNode node) {
