@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private int autoDetectedBuilderSeq = 0;
     private final Map<IClass<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
     private final List<IObservableBuilder<?, ?>> providedBuilders = new ArrayList<>();
+    private final Set<IBuilder<?>> spiAutoLoadedBuilders =
+            Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private final ObservableRegistry<ObservableEvent> observers = new ObservableRegistry<>();
     private boolean reflectionBuilderProvided = false;
     private boolean spiFallbackEnabled = true;
@@ -375,16 +378,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         // builders receive it via provide(). Skipped if a reflection builder
         // was already provided explicitly or if the user opted out.
         //
-        // The builder is provide()'d only (not withBuilder()'d). It is
-        // findable for dependency resolution via the enriched
-        // collectObservableBuilders() (which now searches providedBuilders too)
-        // but is NOT lifecycle-managed by Phase 3 — its lifecycle is delegated
-        // to whichever top-level builder (e.g. ApiBuilder) consumes it.
+        // The builder is BOTH provide()'d (to satisfy Bootstrap's own
+        // require(IReflectionBuilder) contract) and withBuilder()'d (so it
+        // appears in getBuilders() for downstream builders' dependency
+        // resolution). It is tracked in spiAutoLoadedBuilders so Phase 3 will
+        // SKIP its onInit/onStart — its lifecycle belongs to whichever
+        // top-level builder (e.g. ApiBuilder) actually consumes the produced
+        // IReflection, not to Bootstrap.
         if (this.autoDetect.booleanValue() && this.spiFallbackEnabled && !this.reflectionBuilderProvided) {
             IReflectionBuilder spiBuilder = buildReflectionBuilderFromSpi();
             if (spiBuilder != null) {
                 log.atDebug().log("Registering SPI-bootstrapped IReflectionBuilder on this Bootstrap");
                 this.provide(spiBuilder);
+                this.withBuilder(spiBuilder);
+                this.spiAutoLoadedBuilders.add(spiBuilder);
             }
         }
 
@@ -406,15 +413,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private static final AtomicBoolean SPI_BUILDERS_LOGGED = new AtomicBoolean(false);
 
     private void loadBootstrapBuildersFromSpi() {
-        // Track classes already known to Bootstrap so we don't duplicate. We
-        // consider both manually-registered builders (withBuilder) and already-
-        // provided dependencies (provide), since either path makes the dep
-        // findable downstream.
         Set<String> registeredClasses = new HashSet<>();
         for (IBuilder<?> existing : this.manualBuilders.values()) {
-            registeredClasses.add(existing.getClass().getName());
-        }
-        for (IObservableBuilder<?, ?> existing : this.providedBuilders) {
             registeredClasses.add(existing.getClass().getName());
         }
 
@@ -430,18 +430,15 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                     log.atDebug().log("SPI: skipping {} — already registered explicitly", className);
                     continue;
                 }
-                if (!(builder instanceof IObservableBuilder<?, ?> observableBuilder)) {
-                    log.atDebug().log("SPI: skipping {} — not an IObservableBuilder, cannot serve as dep",
-                            className);
-                    continue;
-                }
                 log.atDebug().log("SPI: registering bootstrap builder {} via factory {}",
                         className, factory.getClass().getName());
-                // provide() only — Phase 3 lifecycle (onInit/onStart) is delegated
-                // to the top-level consumer (ApiBuilder, etc.) that owns these
-                // sub-contexts. Otherwise Bootstrap pre-inits them and the
-                // consumer's doInit double-inits → LifecycleException cascade.
-                this.provide(observableBuilder);
+                // withBuilder() so the builder is visible to downstream dep
+                // resolution AND has its own deps satisfied during Phase 1.
+                // Tracked in spiAutoLoadedBuilders so Phase 3 SKIPS onInit/
+                // onStart on its built result — the top-level consumer
+                // (ApiBuilder, etc.) owns the lifecycle of these sub-contexts.
+                this.withBuilder(builder);
+                this.spiAutoLoadedBuilders.add(builder);
                 registeredClasses.add(className);
                 added.add(builder.getClass().getSimpleName());
             } catch (Exception e) {
@@ -607,7 +604,14 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             // Initialize and start lifecycle objects immediately so downstream
             // builders can use them during their own build/auto-detection phase.
             // Some builders already init/start the object during build() — tolerate that.
-            if (built instanceof ILifecycle lifecycleObject) {
+            //
+            // SPI auto-loaded auxiliaries (e.g. InjectionContextBuilder /
+            // ExpressionContextBuilder registered via IBootstrapBuilderFactory)
+            // are skipped here: their lifecycle belongs to the top-level
+            // consumer that pulls them in via dep resolution. Initializing them
+            // here would cause that consumer's doInit() to double-init them and
+            // throw LifecycleException.
+            if (built instanceof ILifecycle lifecycleObject && !this.spiAutoLoadedBuilders.contains(builder)) {
                 try {
                     lifecycleObject.onInit();
                 } catch (LifecycleException e) {
@@ -813,7 +817,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
             // Initialize and start lifecycle objects immediately.
             // Some builders already init/start the object during build() — tolerate that.
-            if (rebuilt instanceof ILifecycle lifecycleObject) {
+            // SPI auto-loaded auxiliaries are skipped here (see same rationale in doBuildInternal).
+            if (rebuilt instanceof ILifecycle lifecycleObject && !this.spiAutoLoadedBuilders.contains(builder)) {
                 try {
                     lifecycleObject.onInit();
                 } catch (LifecycleException e) {
