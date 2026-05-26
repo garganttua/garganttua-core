@@ -3,14 +3,14 @@ package com.garganttua.core.expression.context;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.IContextualSupplier;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ExpressionNodeContext implements IExpressionNodeContext {
+    private static final IDiagnostic log = Diagnostics.of(ExpressionNodeContext.class);
 
     private List<Object> parameters;
 
@@ -26,8 +26,7 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
     @Override
     public boolean matches(IClass<?>[] parameterTypes) {
         if (parameterTypes.length != parameters().size()) {
-            log.atWarn()
-                    .log("Expression leaf is expecting " + parameterTypes.length + " parameters, but context contains "
+            log.warn("Expression leaf is expecting " + parameterTypes.length + " parameters, but context contains "
                             + parameters().size());
             return false;
         }
@@ -44,16 +43,14 @@ public class ExpressionNodeContext implements IExpressionNodeContext {
                 IClass<?> nodeType = node.getFinalSuppliedClass();
                 if (nodeType.getType() != Object.class
                         && !parameterTypes[i].isAssignableFrom(nodeType)) {
-                    log.atWarn()
-                            .log("Expression node is expecting parameter " + i + " of type "
+                    log.warn("Expression node is expecting parameter " + i + " of type "
                                     + parameterTypes[i].getSimpleName() + " but context provided "
                                     + nodeType.getSimpleName());
                     return false;
                 }
             } else {
                 if (!parameterTypes[i].isAssignableFrom(parameters().get(i).getClass())) {
-                    log.atWarn()
-                            .log("Expression node is expecting parameter " + i + " of type "
+                    log.warn("Expression node is expecting parameter " + i + " of type "
                                     + parameterTypes[i].getSimpleName() + " but context provided "
                                     + parameters().get(i).getClass().getSimpleName());
                     return false;

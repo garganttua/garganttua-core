@@ -3,9 +3,9 @@ package com.garganttua.core.mapper;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Represents the complete mapping configuration between two classes.
@@ -66,13 +66,13 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public record MappingConfiguration(
 		IClass<?> source,
 		IClass<?> destination,
 		List<MappingRule> sourceRules,
 		List<MappingRule> destinationRules,
 		MappingDirection mappingDirection) {
+    private static final IDiagnostic log = Diagnostics.of(MappingConfiguration.class);
 
 	@Override
 	public boolean equals(Object o) {

@@ -46,12 +46,6 @@
                   <scope>provided</scope>
             </dependency>
             <dependency>
-                  <groupId>ch.qos.logback</groupId>
-                  <artifactId>logback-classic</artifactId>
-                  <scope>test</scope>
-            </dependency>
-
-            <dependency>
                   <groupId>com.github.f4b6a3</groupId>
                   <artifactId>uuid-creator</artifactId>
                   <version>${uuid.creator.version}</version>

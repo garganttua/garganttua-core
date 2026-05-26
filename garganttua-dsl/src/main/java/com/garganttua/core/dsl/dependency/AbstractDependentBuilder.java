@@ -2,12 +2,12 @@ package com.garganttua.core.dsl.dependency;
 
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base abstract builder providing common dependency management functionality.
@@ -43,18 +43,18 @@ import lombok.extern.slf4j.Slf4j;
  * @param <T> the type of object this builder constructs
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
         implements IDependentBuilder<B, T> {
+    private static final IDiagnostic log = Diagnostics.of(AbstractDependentBuilder.class);
 
     protected final DependentBuilderSupport support;
     protected T built;
 
     protected AbstractDependentBuilder(
             Set<DependencySpec> dependencies) {
-        log.atTrace().log("Entering AbstractDependentBuilder constructor");
+        log.trace("Entering AbstractDependentBuilder constructor");
         this.support = new DependentBuilderSupport(dependencies);
-        log.atTrace().log("Exiting AbstractDependentBuilder constructor");
+        log.trace("Exiting AbstractDependentBuilder constructor");
     }
 
     @SuppressWarnings("unchecked")
@@ -76,11 +76,11 @@ public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
 
     @Override
     public T build() throws DslException {
-        log.atTrace().log("Entering build method");
+        log.trace("Entering build method");
 
         if (this.built != null) {
-            log.atDebug().log("Returning previously built instance: {}", this.built);
-            log.atTrace().log("Exiting build method (cached)");
+            log.debug("Returning previously built instance: {}", this.built);
+            log.trace("Exiting build method (cached)");
             return this.built;
         }
 
@@ -89,17 +89,17 @@ public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
             this.support.processPreBuildDependencies(this::doPreBuildWithDependency);
 
             // Phase 2: Build the target object
-            log.atDebug().log("Building the instance");
+            log.debug("Building the instance");
             this.built = this.doBuild();
-            log.atDebug().log("Built instance: {}", this.built);
+            log.debug("Built instance: {}", this.built);
 
             // Phase 3: Post-build with dependencies
             this.support.processPostBuildDependencies(this::doPostBuildWithDependency);
 
-            log.atTrace().log("Exiting build method");
+            log.trace("Exiting build method");
             return this.built;
         } catch (DslException e) {
-            log.atError().log("Critical error during build", e);
+            log.error("Critical error during build", e);
             throw e;
         }
     }

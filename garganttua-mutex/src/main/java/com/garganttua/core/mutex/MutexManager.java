@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MutexManager implements IMutexManager, IBootstrapSummaryContributor {
+    private static final IDiagnostic log = Diagnostics.of(MutexManager.class);
 
     private final ConcurrentHashMap<String, IMutex> mutexes = new ConcurrentHashMap<>();
     private final Map<IClass<? extends IMutex>, IMutexFactory> factories;
@@ -21,12 +21,12 @@ public class MutexManager implements IMutexManager, IBootstrapSummaryContributor
     public MutexManager(Map<IClass<? extends IMutex>, IMutexFactory> factories) {
         Objects.requireNonNull(factories, "Factories map cannot be null");
         this.factories = Collections.unmodifiableMap(new ConcurrentHashMap<>(factories));
-        log.atDebug().log("MutexManager created with {} registered factories", factories.size());
+        log.debug("MutexManager created with {} registered factories", factories.size());
     }
 
     public MutexManager() {
         this.factories = Collections.emptyMap();
-        log.atDebug().log("MutexManager created with default factory");
+        log.debug("MutexManager created with default factory");
     }
 
     @Override
@@ -36,7 +36,7 @@ public class MutexManager implements IMutexManager, IBootstrapSummaryContributor
         String key = name.toString();
 
         return mutexes.computeIfAbsent(key, k -> {
-            log.atDebug().log("Creating new mutex: {}", k);
+            log.debug("Creating new mutex: {}", k);
             return createMutex(name);
         });
     }
@@ -48,12 +48,12 @@ public class MutexManager implements IMutexManager, IBootstrapSummaryContributor
         IMutexFactory factory = factories.get(type);
 
         if (factory != null) {
-            log.atDebug().log("Using factory {} for mutex type {}",
+            log.debug("Using factory {} for mutex type {}",
                     factory.getClass().getSimpleName(), type.getSimpleName());
             return factory.createMutex(mutexName);
         }
 
-        log.atWarn().log("No factory found for mutex type {}, using default InterruptibleLeaseMutex",
+        log.warn("No factory found for mutex type {}, using default InterruptibleLeaseMutex",
                 type.getSimpleName());
         return new InterruptibleLeaseMutex(mutexName);
     }

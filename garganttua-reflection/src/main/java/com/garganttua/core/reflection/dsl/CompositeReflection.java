@@ -5,6 +5,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
@@ -17,8 +19,6 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Composite implementation of {@link IReflection} that delegates to prioritized
@@ -40,8 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  * {@link MethodDelegate}, and {@link TypeDelegate}.
  * </p>
  */
-@Slf4j
 class CompositeReflection implements IReflection {
+    private static final IDiagnostic log = Diagnostics.of(CompositeReflection.class);
 
     private final ProviderSelector providerSelector;
     private final ScannerAggregator scannerAggregator;
@@ -114,14 +114,14 @@ class CompositeReflection implements IReflection {
 
     @Override
     public <T> IObjectQuery<T> query(IClass<T> objectClass) throws ReflectionException {
-        log.atTrace().log("Creating query for class: {}", objectClass);
+        log.trace("Creating query for class: {}", objectClass);
         return ObjectQueryFactory.objectQuery(objectClass, providerSelector);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T> IObjectQuery<T> query(T object) throws ReflectionException {
-        log.atTrace().log("Creating query for object: {}", object);
+        log.trace("Creating query for object: {}", object);
         if (object == null) {
             throw new ReflectionException("object is null");
         }
@@ -131,7 +131,7 @@ class CompositeReflection implements IReflection {
 
     @Override
     public <T> IObjectQuery<T> query(IClass<T> objectClass, T object) throws ReflectionException {
-        log.atTrace().log("Creating query for class: {} with object: {}", objectClass, object);
+        log.trace("Creating query for class: {} with object: {}", objectClass, object);
         return ObjectQueryFactory.objectQuery(objectClass, providerSelector);
     }
 

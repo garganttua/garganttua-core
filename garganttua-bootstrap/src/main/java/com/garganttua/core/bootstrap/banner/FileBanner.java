@@ -1,5 +1,7 @@
 package com.garganttua.core.bootstrap.banner;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -11,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * A banner loaded from a file or classpath resource.
@@ -41,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class FileBanner implements IBanner {
+    private static final IDiagnostic log = Diagnostics.of(FileBanner.class);
 
     /**
      * Default banner file name to look for in classpath.
@@ -73,13 +73,13 @@ public class FileBanner implements IBanner {
     public static FileBanner fromClasspath(String resource, String version, String name) {
         try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource)) {
             if (is == null) {
-                log.atDebug().log("Banner resource not found: {}", resource);
+                log.debug("Banner resource not found: {}", resource);
                 return null;
             }
             List<String> lines = readLines(is);
             return new FileBanner(lines, version, name);
         } catch (IOException e) {
-            log.atWarn().log("Failed to read banner from classpath: {}", resource, e);
+            log.warn("Failed to read banner from classpath: {}", resource, e);
             return null;
         }
     }

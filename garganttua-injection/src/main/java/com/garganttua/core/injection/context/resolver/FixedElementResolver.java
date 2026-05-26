@@ -2,6 +2,8 @@ package com.garganttua.core.injection.context.resolver;
 
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
@@ -16,53 +18,52 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Resolver(annotations={Fixed.class})
 @NoArgsConstructor
 public class FixedElementResolver implements IElementResolver {
+    private static final IDiagnostic log = Diagnostics.of(FixedElementResolver.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
-        log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
+        log.trace("Entering resolve with elementType: {} and element: {}", elementType, element);
 
         Objects.requireNonNull(element, "Element cannot be null");
-        log.atDebug().log("Element is not null: {}", element);
+        log.debug("Element is not null: {}", element);
 
         Objects.requireNonNull(elementType, "ElementType cannot be null");
-        log.atDebug().log("ElementType is not null: {}", elementType);
+        log.debug("ElementType is not null: {}", elementType);
 
         if (Fields.isNotPrimitive(elementType)) {
-            log.atWarn().log("Cannot use @Fixed annotation on non-primitive element: {}", elementType.getSimpleName());
+            log.warn("Cannot use @Fixed annotation on non-primitive element: {}", elementType.getSimpleName());
             Resolved notResolved = Resolved.notResolved(elementType, element);
-            log.atTrace().log("Exiting resolve with Resolved: {}", notResolved);
+            log.trace("Exiting resolve with Resolved: {}", notResolved);
             return notResolved;
         }
 
         Fixed fixedAnnotation = element.getAnnotation(IClass.getClass(Fixed.class));
 
-        log.atDebug().log("Retrieved @Fixed annotation: {}", fixedAnnotation);
+        log.debug("Retrieved @Fixed annotation: {}", fixedAnnotation);
 
         Object fixedValue = getFixedValue(fixedAnnotation, elementType);
-        log.atDebug().log("Computed fixed value {} for elementType: {}", fixedValue, elementType.getSimpleName());
+        log.debug("Computed fixed value {} for elementType: {}", fixedValue, elementType.getSimpleName());
 
         ISupplierBuilder<?, ISupplier<?>> builder = new FixedSupplierBuilder(fixedValue, elementType);
-        log.atDebug().log("Created FixedSupplierBuilder for elementType: {}", elementType.getSimpleName());
+        log.debug("Created FixedSupplierBuilder for elementType: {}", elementType.getSimpleName());
 
         Resolved resolved = new Resolved(true, elementType, builder, IInjectableElementResolver.isNullable(element));
-        log.atTrace().log("Exiting resolve with Resolved: {}", resolved);
+        log.trace("Exiting resolve with Resolved: {}", resolved);
 
         return resolved;
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T getFixedValue(Fixed annotation, IClass<T> targetType) throws DiException {
-        log.atTrace().log("Entering getFixedValue with annotation: {} and targetType: {}", annotation, targetType);
+        log.trace("Entering getFixedValue with annotation: {} and targetType: {}", annotation, targetType);
 
         if (annotation == null || targetType == null) {
-            log.atDebug().log("Annotation or targetType is null, returning null");
+            log.debug("Annotation or targetType is null, returning null");
             return null;
         }
         Object value;
@@ -87,11 +88,11 @@ public class FixedElementResolver implements IElementResolver {
         } else if (typeName.equals("char") || typeName.equals(Character.class.getName())) {
             value = annotation.valueChar();
         } else {
-            log.atError().log("Unsupported type for @Fixed: {}", targetType.getName());
+            log.error("Unsupported type for @Fixed: {}", targetType.getName());
             throw new DiException("Unsupported type for @Fixed: " + targetType.getName());
         }
 
-        log.atTrace().log("Exiting getFixedValue with value: {}", value);
+        log.trace("Exiting getFixedValue with value: {}", value);
         return (T) value;
     }
 }

@@ -1,19 +1,19 @@
 package com.garganttua.core.injection.context.properties;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.context.dsl.IPropertySupplierBuilder;
 import com.garganttua.core.injection.context.dsl.PropertySupplierBuilder;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Properties {
+    private static final IDiagnostic log = Diagnostics.of(Properties.class);
 
     public static <Property> IPropertySupplierBuilder<Property> property(IClass<Property> type) {
-        log.atTrace().log("Entering property() with type={}", type);
+        log.trace("Entering property() with type={}", type);
         IPropertySupplierBuilder<Property> builder = new PropertySupplierBuilder<Property>(type);
-        log.atDebug().log("Created PropertySupplierBuilder for type={}", type.getSimpleName());
-        log.atTrace().log("Exiting property()");
+        log.debug("Created PropertySupplierBuilder for type={}", type.getSimpleName());
+        log.trace("Exiting property()");
         return builder;
     }
 

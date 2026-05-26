@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.aot.commons.IAOTClassBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -16,8 +18,6 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.annotations.Reflected;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Builder for constructing {@link AOTClass} descriptors.
@@ -29,9 +29,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @param <T> the type being described
  */
-@Slf4j
 public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilder<T>, IClass<T>>
         implements IAOTClassBuilder<T> {
+    private static final IDiagnostic log = Diagnostics.of(AOTClassBuilder.class);
 
     private final IClass<T> targetClass;
     private final List<AOTField> fieldList = new ArrayList<>();
@@ -60,7 +60,7 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
             IField field = targetClass.getDeclaredField(fieldName);
             return field(field);
         } catch (NoSuchFieldException e) {
-            log.atWarn().log("Field not found: {} in {}", fieldName, targetClass.getName());
+            log.warn("Field not found: {} in {}", fieldName, targetClass.getName());
         }
         return (IAOTClassBuilder<T>) this;
     }
@@ -114,7 +114,7 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
             IMethod method = targetClass.getDeclaredMethod(methodName, parameterTypes);
             return method(method);
         } catch (NoSuchMethodException e) {
-            log.atWarn().log("Method not found: {} in {}", methodName, targetClass.getName());
+            log.warn("Method not found: {} in {}", methodName, targetClass.getName());
         }
         return (IAOTClassBuilder<T>) this;
     }
@@ -199,7 +199,7 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
             IConstructor<T> ctor = targetClass.getDeclaredConstructor(parameterTypes);
             return constructor(ctor);
         } catch (NoSuchMethodException e) {
-            log.atWarn().log("Constructor not found in {}", targetClass.getName());
+            log.warn("Constructor not found in {}", targetClass.getName());
         }
         return (IAOTClassBuilder<T>) this;
     }
@@ -315,7 +315,7 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atDebug().log("Running AOT auto-detection for {}", targetClass.getName());
+        log.debug("Running AOT auto-detection for {}", targetClass.getName());
 
         // Read @Reflected annotation if present
         try {
@@ -328,16 +328,16 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
                 queryAllPublicMethods = reflected.queryAllPublicMethods();
                 allDeclaredFields = reflected.allDeclaredFields();
                 allDeclaredClasses = reflected.allDeclaredClasses();
-                log.atDebug().log("@Reflected annotation detected, flags applied");
+                log.debug("@Reflected annotation detected, flags applied");
             }
         } catch (ClassNotFoundException e) {
-            log.atWarn().log("Could not resolve Reflected annotation class", e);
+            log.warn("Could not resolve Reflected annotation class", e);
         }
     }
 
     @Override
     protected IClass<T> doBuild() throws DslException {
-        log.atDebug().log("Building AOTClass for {}", targetClass.getName());
+        log.debug("Building AOTClass for {}", targetClass.getName());
 
         // Apply global flags to add all members
         if (allDeclaredFields) {
@@ -416,7 +416,7 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
                 targetClass.isSynthetic()
         );
 
-        log.atDebug().log("AOTClass built for {} with {} fields, {} methods, {} constructors",
+        log.debug("AOTClass built for {} with {} fields, {} methods, {} constructors",
                 targetClass.getName(), fieldList.size(), methodList.size(), constructorList.size());
 
         return aotClass;

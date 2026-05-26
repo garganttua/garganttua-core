@@ -6,33 +6,34 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class AndCondition implements ICondition {
+    private static final IDiagnostic log = Diagnostics.of(AndCondition.class);
 
     private Set<ICondition> conditions;
 
     public AndCondition(Set<ICondition> conditions) {
-        log.atTrace().log("Entering AndCondition constructor with {} conditions", conditions != null ? conditions.size() : 0);
+        log.trace("Entering AndCondition constructor with {} conditions", conditions != null ? conditions.size() : 0);
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
-        log.atTrace().log("Exiting AndCondition constructor");
+        log.trace("Exiting AndCondition constructor");
     }
 
     @Override
     public ISupplier<Boolean> evaluate() throws ConditionException {
-        log.atTrace().log("Entering evaluate() for AndCondition with {} conditions", conditions.size());
+        log.trace("Entering evaluate() for AndCondition with {} conditions", conditions.size());
         return new ISupplier<Boolean>() {
             @Override
             public Optional<Boolean> supply() {
-                log.atDebug().log("Evaluating AND condition - all {} conditions must be true", conditions.size());
+                log.debug("Evaluating AND condition - all {} conditions must be true", conditions.size());
                 Boolean result = and(conditions);
-                log.atDebug().log("AND condition evaluation complete: {}", result);
+                log.debug("AND condition evaluation complete: {}", result);
                 return Optional.of(result);
             }
             @Override
@@ -66,7 +67,7 @@ public class AndCondition implements ICondition {
     @Expression(name = "and", description = "Logical AND of multiple conditions")
     public static Boolean and(Set<ICondition> conditions) {
         List<ISupplier<Boolean>> results = conditions.stream().map(c -> c.evaluate()).toList();
-        log.atDebug().log("Individual condition results: {}", results);
+        log.debug("Individual condition results: {}", results);
 
         Boolean result = true;
         for (ISupplier<Boolean> b : results) {

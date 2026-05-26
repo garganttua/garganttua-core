@@ -3,12 +3,12 @@ package com.garganttua.core.observability.dsl;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservableEvent;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Wraps a target {@link IObserver} with a per-subscription filter. Two filter
@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA02
  */
-@Slf4j
 final class FilteredObserver implements IObserver<ObservableEvent> {
+    private static final IDiagnostic log = Diagnostics.of(FilteredObserver.class);
 
     private final IObserver<ObservableEvent> target;
     private final ICondition condition;
@@ -53,7 +53,7 @@ final class FilteredObserver implements IObserver<ObservableEvent> {
                     return;
                 }
             } catch (RuntimeException e) {
-                log.atWarn().log("Predicate filter threw, dropping event {}: {}",
+                log.warn("Predicate filter threw, dropping event {}: {}",
                         event.getClass().getSimpleName(), e.getMessage());
                 return;
             }
@@ -66,7 +66,7 @@ final class FilteredObserver implements IObserver<ObservableEvent> {
                     return;
                 }
             } catch (ExpressionException e) {
-                log.atWarn().log("Condition filter threw, dropping event {}: {}",
+                log.warn("Condition filter threw, dropping event {}: {}",
                         event.getClass().getSimpleName(), e.getMessage());
                 return;
             }

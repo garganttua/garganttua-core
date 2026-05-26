@@ -6,22 +6,22 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationNode;
 import com.garganttua.core.configuration.node.ConfigurationNode;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public abstract class AbstractConfigurationFormat implements IConfigurationFormat {
+    private static final IDiagnostic log = Diagnostics.of(AbstractConfigurationFormat.class);
 
     protected abstract ObjectMapper createMapper();
 
     @Override
     public IConfigurationNode parse(InputStream input) throws ConfigurationException {
-        log.atDebug().log("Parsing configuration with format: {}", name());
+        log.debug("Parsing configuration with format: {}", name());
         try {
             ObjectMapper mapper = createMapper();
             JsonNode tree = mapper.readTree(input);

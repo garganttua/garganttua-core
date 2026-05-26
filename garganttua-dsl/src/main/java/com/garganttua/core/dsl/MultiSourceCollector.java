@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * A generic collector that aggregates items from multiple prioritized sources.
@@ -59,8 +59,8 @@ import lombok.extern.slf4j.Slf4j;
  * @param <V> the type of values in the collected maps
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class MultiSourceCollector<K, V> {
+    private static final IDiagnostic log = Diagnostics.of(MultiSourceCollector.class);
 
     private static final String ERROR_SOURCE_PREFIX = "Source '";
     private static final String ERROR_EMPTY_RESULT = "' returned empty result";
@@ -85,7 +85,7 @@ public class MultiSourceCollector<K, V> {
                 return supplier.supply()
                         .orElseThrow(() -> new SupplyException(ERROR_SOURCE_PREFIX + name + ERROR_EMPTY_RESULT));
             } catch (SupplyException e) {
-                log.atError().log(LOG_FAILED_RETRIEVE, name, e.getMessage());
+                log.error(LOG_FAILED_RETRIEVE, name, e.getMessage());
                 throw new IllegalStateException(ERROR_SOURCE_PREFIX + name + "' failed to supply items", e);
             }
         }
@@ -120,7 +120,7 @@ public class MultiSourceCollector<K, V> {
      * @throws IllegalArgumentException if a source with the same name already exists
      */
     public MultiSourceCollector<K, V> source(ISupplier<Map<K, V>> supplier, int priority, String name) {
-        log.atTrace().log("Entering source() with priority={}, name={}", priority, name);
+        log.trace("Entering source() with priority={}, name={}", priority, name);
 
         // Check for duplicate names
         if (sources.stream().anyMatch(s -> s.name.equals(name))) {
@@ -128,9 +128,9 @@ public class MultiSourceCollector<K, V> {
         }
 
         sources.add(new Source<>(supplier, priority, name));
-        log.atDebug().log("Registered source '{}' with priority {}", name, priority);
+        log.debug("Registered source '{}' with priority {}", name, priority);
 
-        log.atTrace().log("Exiting source()");
+        log.trace("Exiting source()");
         return this;
     }
 
@@ -145,11 +145,11 @@ public class MultiSourceCollector<K, V> {
      * @return a map containing all collected items with priority resolution
      */
     public Map<K, V> build() {
-        log.atTrace().log("Entering build()");
+        log.trace("Entering build()");
         List<Source<K, V>> sortedSources = sortSourcesByPriority(sources);
         Map<K, V> result = collectFromSources(sortedSources);
-        log.atDebug().log("Built final map with {} items from {} sources", result.size(), sources.size());
-        log.atTrace().log("Exiting build()");
+        log.debug("Built final map with {} items from {} sources", result.size(), sources.size());
+        log.trace("Exiting build()");
         return result;
     }
 
@@ -174,13 +174,13 @@ public class MultiSourceCollector<K, V> {
      * @throws IllegalArgumentException if any specified source name does not exist
      */
     public Map<K, V> buildWithSources(Set<String> includedSourceNames) {
-        log.atTrace().log("Entering buildWithSources() with {} source names", includedSourceNames.size());
+        log.trace("Entering buildWithSources() with {} source names", includedSourceNames.size());
         validateSourceNames(includedSourceNames);
         List<Source<K, V>> filteredSources = filterAndSortSources(includedSourceNames);
         Map<K, V> result = collectFromSources(filteredSources);
-        log.atDebug().log("Built filtered map with {} items from {} sources (excluded {} sources)",
+        log.debug("Built filtered map with {} items from {} sources (excluded {} sources)",
                 result.size(), filteredSources.size(), sources.size() - filteredSources.size());
-        log.atTrace().log("Exiting buildWithSources()");
+        log.trace("Exiting buildWithSources()");
         return result;
     }
 
@@ -207,14 +207,14 @@ public class MultiSourceCollector<K, V> {
      * @throws IllegalArgumentException if any specified source name does not exist
      */
     public Map<K, V> buildExcludingSourceItems(Set<String> excludedSourceNames) {
-        log.atTrace().log("Entering buildExcludingSourceItems() with {} excluded sources", excludedSourceNames.size());
+        log.trace("Entering buildExcludingSourceItems() with {} excluded sources", excludedSourceNames.size());
         validateSourceNames(excludedSourceNames);
         Set<K> excludedKeys = collectKeysFromSources(excludedSourceNames);
         List<Source<K, V>> includedSources = filterAndSortSourcesExcluding(excludedSourceNames);
         Map<K, V> result = collectFromSourcesExcludingKeys(includedSources, excludedKeys);
-        log.atDebug().log("Built filtered map with {} items (excluded {} keys from {} sources)",
+        log.debug("Built filtered map with {} items (excluded {} keys from {} sources)",
                 result.size(), excludedKeys.size(), excludedSourceNames.size());
-        log.atTrace().log("Exiting buildExcludingSourceItems()");
+        log.trace("Exiting buildExcludingSourceItems()");
         return result;
     }
 
@@ -284,7 +284,7 @@ public class MultiSourceCollector<K, V> {
     }
 
     private Map<K, V> collectFromSources(List<Source<K, V>> sourcesToCollect) {
-        log.atDebug().log("Processing {} sources in priority order", sourcesToCollect.size());
+        log.debug("Processing {} sources in priority order", sourcesToCollect.size());
         Map<K, V> result = new HashMap<>();
 
         for (Source<K, V> source : sourcesToCollect) {
@@ -293,7 +293,7 @@ public class MultiSourceCollector<K, V> {
             result.putAll(items);
             int addedCount = result.size() - beforeSize;
 
-            log.atDebug().log("Processed source '{}' (priority {}): {} items, {} new keys added",
+            log.debug("Processed source '{}' (priority {}): {} items, {} new keys added",
                     source.name, source.priority, items.size(), addedCount);
         }
 
@@ -310,12 +310,12 @@ public class MultiSourceCollector<K, V> {
             }
         }
 
-        log.atDebug().log("Found {} keys to exclude from {} sources", collectedKeys.size(), sourceNames.size());
+        log.debug("Found {} keys to exclude from {} sources", collectedKeys.size(), sourceNames.size());
         return collectedKeys;
     }
 
     private Map<K, V> collectFromSourcesExcludingKeys(List<Source<K, V>> sourcesToCollect, Set<K> keysToExclude) {
-        log.atDebug().log("Processing {} included sources", sourcesToCollect.size());
+        log.debug("Processing {} included sources", sourcesToCollect.size());
         Map<K, V> result = new HashMap<>();
 
         for (Source<K, V> source : sourcesToCollect) {
@@ -328,7 +328,7 @@ public class MultiSourceCollector<K, V> {
 
             int addedCount = result.size() - beforeSize;
 
-            log.atDebug().log("Processed source '{}' (priority {}): {} items, {} new keys added (filtered by excluded keys)",
+            log.debug("Processed source '{}' (priority {}): {} items, {} new keys added (filtered by excluded keys)",
                     source.name, source.priority, items.size(), addedCount);
         }
 

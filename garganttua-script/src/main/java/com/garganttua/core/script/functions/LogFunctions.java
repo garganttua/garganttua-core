@@ -1,8 +1,7 @@
 package com.garganttua.core.script.functions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.annotations.Expression;
 
 import jakarta.annotation.Nullable;
@@ -24,7 +23,8 @@ import jakarta.annotation.Nullable;
  */
 public class LogFunctions {
 
-    private static final Logger SCRIPT_LOGGER = LoggerFactory.getLogger("garganttua.script");
+    private static final IDiagnostic SCRIPT_LOGGER =
+            Diagnostics.getProvider().diagnosticFor(LogFunctions.class);
 
     private LogFunctions() {
     }

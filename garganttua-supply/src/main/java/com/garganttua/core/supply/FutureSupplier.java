@@ -8,9 +8,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Supplier that provides values asynchronously using CompletableFuture.
@@ -37,8 +37,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see ISupplier
  * @see CompletableFuture
  */
-@Slf4j
 public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
+    private static final IDiagnostic log = Diagnostics.of(FutureSupplier.class);
 
     private final CompletableFuture<Supplied> future;
     private final Long timeoutMillis;
@@ -63,41 +63,41 @@ public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
      * @param timeoutMillis the timeout in milliseconds, or null for no timeout
      */
     public FutureSupplier(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass, Long timeoutMillis) {
-        log.atTrace().log("Entering FutureSupplier constructor with timeout: {}", timeoutMillis);
+        log.trace("Entering FutureSupplier constructor with timeout: {}", timeoutMillis);
         this.future = Objects.requireNonNull(future, "Future cannot be null");
         this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
         this.suppliedType = suppliedClass.getType();
         this.timeoutMillis = timeoutMillis;
-        log.atTrace().log("Exiting FutureSupplier constructor");
+        log.trace("Exiting FutureSupplier constructor");
     }
 
     @Override
     public Optional<Supplied> supply() throws SupplyException {
-        log.atTrace().log("Entering supply method");
-        log.atDebug().log("Waiting for future completion with timeout: {}", timeoutMillis);
+        log.trace("Entering supply method");
+        log.debug("Waiting for future completion with timeout: {}", timeoutMillis);
 
         try {
             Supplied result;
             if (timeoutMillis != null) {
                 result = future.get(timeoutMillis, TimeUnit.MILLISECONDS);
-                log.atDebug().log("Future completed within timeout of {} ms", timeoutMillis);
+                log.debug("Future completed within timeout of {} ms", timeoutMillis);
             } else {
                 result = future.get();
-                log.atDebug().log("Future completed without timeout");
+                log.debug("Future completed without timeout");
             }
 
-            log.atTrace().log("Exiting supply method");
+            log.trace("Exiting supply method");
             return Optional.ofNullable(result);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.atError().log("Future was interrupted", e);
+            log.error("Future was interrupted", e);
             throw new SupplyException(e);
         } catch (ExecutionException e) {
-            log.atError().log("Future execution failed", e);
+            log.error("Future execution failed", e);
             throw new SupplyException(e);
         } catch (TimeoutException e) {
-            log.atError().log("Future timed out after {} ms", timeoutMillis, e);
+            log.error("Future timed out after {} ms", timeoutMillis, e);
             throw new SupplyException(new RuntimeException("Future timed out after " + timeoutMillis + " ms", e));
         }
     }

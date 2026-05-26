@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Expression decorator that handles immediate catch clauses ("catch and resume").
@@ -32,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  * @param <R> the result type
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
+    private static final IDiagnostic log = Diagnostics.of(CatchAwareExpression.class);
 
     /**
      * A single catch clause: matcher + handler expression + optional code.
@@ -136,7 +136,7 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
             } catch (Exception e) {
                 for (CatchHandler<R> handler : handlers) {
                     if (handler.matches(e) || (e.getCause() != null && handler.matches(e.getCause()))) {
-                        log.atDebug().log("Catch handler matched for {}, executing handler",
+                        log.debug("Catch handler matched for {}, executing handler",
                                 e.getClass().getSimpleName());
                         try {
                             if (savedCtx != null) {

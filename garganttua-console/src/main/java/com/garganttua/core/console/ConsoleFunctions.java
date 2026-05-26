@@ -11,13 +11,14 @@ import org.jline.reader.LineReader;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Expression functions for console commands.
@@ -25,8 +26,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>These functions replace the colon-prefixed commands (e.g., :help)
  * with regular expression calls (e.g., help()).</p>
  */
-@Slf4j
 public class ConsoleFunctions {
+    private static final IDiagnostic log = Diagnostics.of(ConsoleFunctions.class);
 
     private ConsoleFunctions() {
     }
@@ -46,7 +47,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "help", description = "Shows the console help message")
     public static String help() {
-        log.atTrace().log("help()");
+        log.trace("help()");
 
         StringBuilder sb = new StringBuilder();
         sb.append("Console Commands:\n");
@@ -95,7 +96,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "vars", description = "Lists all session variables")
     public static String vars() {
-        log.atTrace().log("vars()");
+        log.trace("vars()");
 
         ConsoleContext ctx = ConsoleExecutionContext.get();
         if (ctx == null) {
@@ -130,7 +131,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "clear", description = "Clears all session variables")
     public static String clear() {
-        log.atTrace().log("clear()");
+        log.trace("clear()");
 
         ConsoleContext ctx = ConsoleExecutionContext.get();
         if (ctx == null) {
@@ -150,7 +151,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "load", description = "Loads and executes a script file")
     public static int load(@Nullable String filename) {
-        log.atDebug().log("load({})", filename);
+        log.debug("load({})", filename);
 
         if (filename == null || filename.isBlank()) {
             throw new ExpressionException("load: filename cannot be null or blank");
@@ -197,7 +198,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "man", description = "Lists all expression functions (no args)")
     public static String manList() {
-        log.atTrace().log("man()");
+        log.trace("man()");
 
         ConsoleContext ctx = ConsoleExecutionContext.get();
         if (ctx == null) {
@@ -218,7 +219,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "man", description = "Shows documentation for a function by name")
     public static String manByName(@Nullable String functionName) {
-        log.atDebug().log("man({})", functionName);
+        log.debug("man({})", functionName);
 
         if (functionName == null || functionName.isBlank()) {
             return manList();
@@ -248,7 +249,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "man", description = "Shows documentation for a function by index")
     public static String manByIndex(int index) {
-        log.atDebug().log("man({})", index);
+        log.debug("man({})", index);
 
         ConsoleContext ctx = ConsoleExecutionContext.get();
         if (ctx == null) {
@@ -273,7 +274,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "syntax", description = "Shows the script syntax reference")
     public static String syntax() {
-        log.atTrace().log("syntax()");
+        log.trace("syntax()");
 
         StringBuilder sb = new StringBuilder();
         sb.append("Quick Syntax Reference:\n");
@@ -333,7 +334,7 @@ public class ConsoleFunctions {
      */
     @Expression(name = "exit", description = "Exits the console")
     public static String exit() {
-        log.atTrace().log("exit()");
+        log.trace("exit()");
 
         ConsoleContext ctx = ConsoleExecutionContext.get();
         if (ctx == null) {

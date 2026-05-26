@@ -33,8 +33,6 @@ This plugin adds the `Garganttua-Packages` attribute to your JAR's manifest, ena
  - `com.garganttua.core:garganttua-reflections:provided`
  - `com.garganttua.core:garganttua-runtime-reflection:provided`
  - `javax.inject:javax.inject`
- - `org.slf4j:slf4j-api:compile`
- - `org.slf4j:slf4j-simple:compile`
 
 <!-- AUTO-GENERATED-END -->
 

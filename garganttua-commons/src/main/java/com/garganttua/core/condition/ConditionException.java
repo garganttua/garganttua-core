@@ -1,8 +1,8 @@
 package com.garganttua.core.condition;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when a condition evaluation fails or encounters an error.
@@ -54,8 +54,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see ICondition
  * @see CoreException
  */
-@Slf4j
 public class ConditionException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(ConditionException.class);
 
     /**
      * Constructs a new ConditionException with the specified detail message.
@@ -64,7 +64,7 @@ public class ConditionException extends CoreException {
      */
     public ConditionException(String message) {
         super(CoreException.CONDITION_ERROR, message);
-        log.atTrace().log("Exiting ConditionException constructor");
+        log.trace("Exiting ConditionException constructor");
     }
 
 }

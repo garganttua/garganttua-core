@@ -3,6 +3,8 @@ package com.garganttua.core.mapper.rules;
 import java.util.Collection;
 import java.util.List;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
@@ -14,10 +16,8 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
+    private static final IDiagnostic log = Diagnostics.of(SimpleCollectionMappingExecutor.class);
 
 	private IReflection reflection;
 	private IField sourceField;
@@ -39,7 +39,7 @@ public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException {
-		log.atDebug().log("SimpleCollection: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
+		log.debug("SimpleCollection: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
 
 		if( destinationObject == null ) {
 			try {
@@ -57,7 +57,7 @@ public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
 			this.destinationFieldAccessor.setValue(destinationObject,
 					SingleFieldValue.of(sourceValue, (IClass<Object>) this.destinationField.getType()));
 		} catch (ReflectionException e) {
-			log.atError().log("Failed to set field value for {}: {}", this.destinationField.getName(), e.getMessage());
+			log.error("Failed to set field value for {}: {}", this.destinationField.getName(), e.getMessage());
 			throw new MapperException(e);
 		}
 

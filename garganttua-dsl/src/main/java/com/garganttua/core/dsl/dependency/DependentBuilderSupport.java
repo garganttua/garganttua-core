@@ -7,11 +7,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Support class providing common dependency management functionality for
@@ -106,8 +106,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IDependentBuilder
  * @see BuilderDependency
  */
-@Slf4j
 public class DependentBuilderSupport {
+    private static final IDiagnostic log = Diagnostics.of(DependentBuilderSupport.class);
 
     protected final Set<IBuilderDependency<?, ?>> useDependencies;
     protected final Set<IBuilderDependency<?, ?>> requireDependencies;
@@ -128,7 +128,7 @@ public class DependentBuilderSupport {
      * @throws NullPointerException if dependencySpecs is null
      */
     public DependentBuilderSupport(Set<DependencySpec> dependencySpecs) {
-        log.atTrace().log("Entering DependentBuilderSupport constructor with DependencySpec");
+        log.trace("Entering DependentBuilderSupport constructor with DependencySpec");
         Objects.requireNonNull(dependencySpecs, "Dependency specifications cannot be null");
 
         // Create all dependencies
@@ -149,11 +149,11 @@ public class DependentBuilderSupport {
                         (bd.isRequiredForAutoDetect() || bd.isRequiredForBuild()))
                 .collect(Collectors.toSet());
 
-        log.atDebug().log(
+        log.debug(
                 "DependentBuilderSupport initialized with {} total dependencies ({} use, {} require) from {} specs",
                 this.allDependencies.size(), this.useDependencies.size(), this.requireDependencies.size(),
                 dependencySpecs.size());
-        log.atTrace().log("Exiting DependentBuilderSupport constructor with DependencySpec");
+        log.trace("Exiting DependentBuilderSupport constructor with DependencySpec");
     }
 
     /**
@@ -165,7 +165,7 @@ public class DependentBuilderSupport {
      *                              dependencies list
      */
     public void provide(IObservableBuilder<?, ?> dependency) throws DslException {
-        log.atTrace().log("Entering provide() with dependency: {}", dependency);
+        log.trace("Entering provide() with dependency: {}", dependency);
         Objects.requireNonNull(dependency, "Dependency cannot be null");
 
         // Validate that the provided dependency is in the expected dependencies list
@@ -173,7 +173,7 @@ public class DependentBuilderSupport {
             String errorMsg = String.format(
                     "Provided dependency %s is not declared in the expected dependencies list",
                     dependency.getClass().getName());
-            log.atError().log(errorMsg);
+            log.error(errorMsg);
             throw new DslException(errorMsg);
         }
 
@@ -181,11 +181,11 @@ public class DependentBuilderSupport {
                 || provideToDependencySet(dependency, this.requireDependencies);
 
         if (!provided) {
-            log.atWarn().log("Provided dependency {} does not match any declared dependencies",
+            log.warn("Provided dependency {} does not match any declared dependencies",
                     dependency.getClass().getName());
         }
 
-        log.atTrace().log("Exiting provide()");
+        log.trace("Exiting provide()");
     }
 
     /**
@@ -228,7 +228,7 @@ public class DependentBuilderSupport {
 
         foundDep.ifPresent(d -> {
             ((BuilderDependency<?, ?>) d).handle(dependency);
-            log.atDebug().log("Dependency {} successfully provided", dependency.getClass().getName());
+            log.debug("Dependency {} successfully provided", dependency.getClass().getName());
         });
 
         return foundDep.isPresent();
@@ -240,12 +240,12 @@ public class DependentBuilderSupport {
      * @return the set of use dependency classes
      */
     public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
-        log.atTrace().log("Entering use()");
+        log.trace("Entering use()");
         Set<IClass<? extends IObservableBuilder<?, ?>>> result = useDependencies.stream()
                 .map(IBuilderDependency::getDependency)
                 .collect(Collectors.toSet());
-        log.atDebug().log("Returning {} use dependencies", result.size());
-        log.atTrace().log("Exiting use()");
+        log.debug("Returning {} use dependencies", result.size());
+        log.trace("Exiting use()");
         return result;
     }
 
@@ -255,12 +255,12 @@ public class DependentBuilderSupport {
      * @return the set of require dependency classes
      */
     public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
-        log.atTrace().log("Entering require()");
+        log.trace("Entering require()");
         Set<IClass<? extends IObservableBuilder<?, ?>>> result = requireDependencies.stream()
                 .map(IBuilderDependency::getDependency)
                 .collect(Collectors.toSet());
-        log.atDebug().log("Returning {} require dependencies", result.size());
-        log.atTrace().log("Exiting require()");
+        log.debug("Returning {} require dependencies", result.size());
+        log.trace("Exiting require()");
         return result;
     }
 
@@ -300,7 +300,7 @@ public class DependentBuilderSupport {
      * @throws DslException if validation fails for any dependency
      */
     public void processPreBuildDependencies(Consumer<Object> preBuildHandler) throws DslException {
-        log.atTrace().log("Processing pre-build dependencies");
+        log.trace("Processing pre-build dependencies");
 
         for (IBuilderDependency<?, ?> dep : allDependencies) {
             if (dep instanceof BuilderDependency<?, ?> bd && bd.isNeededForBuild()) {
@@ -318,7 +318,7 @@ public class DependentBuilderSupport {
             }
         }
 
-        log.atDebug().log("Pre-build dependency processing completed");
+        log.debug("Pre-build dependency processing completed");
     }
 
     /**
@@ -335,7 +335,7 @@ public class DependentBuilderSupport {
      * @throws DslException if validation fails for any dependency
      */
     public void processPostBuildDependencies(Consumer<Object> postBuildHandler) throws DslException {
-        log.atTrace().log("Processing post-build dependencies");
+        log.trace("Processing post-build dependencies");
 
         for (IBuilderDependency<?, ?> dep : allDependencies) {
             if (dep instanceof BuilderDependency<?, ?> bd && bd.isNeededForBuild()) {
@@ -353,7 +353,7 @@ public class DependentBuilderSupport {
             }
         }
 
-        log.atDebug().log("Post-build dependency processing completed");
+        log.debug("Post-build dependency processing completed");
     }
 
     /**
@@ -370,7 +370,7 @@ public class DependentBuilderSupport {
      * @throws DslException if validation fails for any dependency
      */
     public void processAutoDetectionWithDependencies(Consumer<Object> autoDetectHandler) throws DslException {
-        log.atTrace().log("Processing auto-detection with dependencies");
+        log.trace("Processing auto-detection with dependencies");
 
         for (IBuilderDependency<?, ?> dep : allDependencies) {
             if (dep instanceof BuilderDependency<?, ?> bd && bd.isNeededForAutoDetect()) {
@@ -388,7 +388,7 @@ public class DependentBuilderSupport {
             }
         }
 
-        log.atDebug().log("Auto-detection with dependencies completed");
+        log.debug("Auto-detection with dependencies completed");
     }
 
     /**

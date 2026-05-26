@@ -3,6 +3,8 @@ package com.garganttua.core.expression.dsl;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.annotations.Expression;
@@ -21,14 +23,13 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Reflected
 public class ExpressionNodeFactoryBuilder<S>
         extends
         AbstractMethodBinderBuilder<IExpressionNode<S, ISupplier<S>>, IExpressionMethodBinderBuilder<S>, IExpressionContextBuilder, IExpressionNodeFactory<S, ISupplier<S>>>
         implements IExpressionMethodBinderBuilder<S> {
+    private static final IDiagnostic log = Diagnostics.of(ExpressionNodeFactoryBuilder.class);
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier;
     @SuppressWarnings("unused")
@@ -41,7 +42,7 @@ public class ExpressionNodeFactoryBuilder<S>
             ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
             IClass<S> supplied) throws DslException {
         super(parent, methodOwnerSupplier, java.util.Set.of());
-        log.atTrace().log(
+        log.trace(
                 "Entering ExpressionMethodBinderBuilder constructor with methodOwnerSupplier={}, supplied={}",
                 methodOwnerSupplier, supplied);
         this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
@@ -49,11 +50,11 @@ public class ExpressionNodeFactoryBuilder<S>
         try {
             this.objectQuery = IClass.getReflection().query(this.methodOwnerSupplier.getSuppliedClass());
         } catch (ReflectionException e) {
-            log.atError().log("[MethodBinderBuilder] Error creating objectQuery for class {}",
+            log.error("[MethodBinderBuilder] Error creating objectQuery for class {}",
                     this.methodOwnerSupplier.getSuppliedClass(), e);
             throw new DslException(e.getMessage(), e);
         }
-        log.atTrace().log("Exiting ExpressionMethodBinderBuilder constructor");
+        log.trace("Exiting ExpressionMethodBinderBuilder constructor");
     }
 
     @Override
@@ -124,7 +125,7 @@ public class ExpressionNodeFactoryBuilder<S>
     public IExpressionMethodBinderBuilder<S> method(String methodName,
             IClass<IExpressionNode<S, ISupplier<S>>> returnType,
             IClass<?>... parameterTypes) throws DslException {
-        log.atWarn().log("method is not supported for ExpressionMethodBinderBuilder");
+        log.warn("method is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
@@ -132,7 +133,7 @@ public class ExpressionNodeFactoryBuilder<S>
     @Deprecated
     public IExpressionMethodBinderBuilder<S> method(ObjectAddress methodAddress,
             IClass<IExpressionNode<S, ISupplier<S>>> returnType, IClass<?>... parameterTypes) throws DslException {
-        log.atWarn().log("method is not supported for ExpressionMethodBinderBuilder");
+        log.warn("method is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
@@ -140,82 +141,80 @@ public class ExpressionNodeFactoryBuilder<S>
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(int i, Object parameter) throws DslException {
-        log.atWarn().log("withParam(int, Object) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(int, Object) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(int i, Object parameter, boolean nullAllowed)
             throws DslException {
-        log.atWarn().log("withParam(int, Object, boolean) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(int, Object, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(int i, ISupplierBuilder<?, ?> supplierBuilder)
             throws DslException {
-        log.atWarn().log("withParam(int, ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(int, ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(int i, ISupplierBuilder<?, ?> supplierBuilder,
             boolean nullAllowed) throws DslException {
-        log.atWarn()
-                .log("withParam(int, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(int, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(String parameterName, Object parameter) throws DslException {
-        log.atWarn().log("withParam(String, Object) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(String, Object) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(String parameterName, Object parameter, boolean nullAllowed)
             throws DslException {
-        log.atWarn().log("withParam(String, Object, boolean) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(String, Object, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(String parameterName, ISupplierBuilder<?, ?> supplierBuilder)
             throws DslException {
-        log.atWarn().log("withParam(String, ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(String, ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(String parameterName, ISupplierBuilder<?, ?> supplierBuilder,
             boolean nullAllowed) throws DslException {
-        log.atWarn()
-                .log("withParam(String, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(String, ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(Object parameter) throws DslException {
-        log.atWarn().log("withParam(Object) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(Object) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(Object parameter, boolean nullAllowed) throws DslException {
-        log.atWarn().log("withParam(Object, boolean) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(Object, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(ISupplierBuilder<?, ?> supplierBuilder) throws DslException {
-        log.atWarn().log("withParam(ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(ISupplierBuilder) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 
     @Override
     public IExpressionMethodBinderBuilder<S> withParam(ISupplierBuilder<?, ?> supplierBuilder, boolean nullAllowed)
             throws DslException {
-        log.atWarn().log("withParam(ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
+        log.warn("withParam(ISupplierBuilder, boolean) is not supported for ExpressionMethodBinderBuilder");
         return this;
     }
 

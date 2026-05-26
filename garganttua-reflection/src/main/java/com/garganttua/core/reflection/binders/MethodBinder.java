@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
@@ -17,12 +19,10 @@ import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MethodBinder<Returned>
         extends ExecutableBinder<Returned>
         implements IMethodBinder<Returned> {
+    private static final IDiagnostic log = Diagnostics.of(MethodBinder.class);
 
     private final ResolvedMethod method;
     private final ISupplier<?> objectSupplier;
@@ -33,12 +33,12 @@ public class MethodBinder<Returned>
             List<ISupplier<?>> parameterSuppliers,
             boolean collection) {
         super(parameterSuppliers);
-        log.atTrace().log("Creating MethodBinder: method={}, collection={}", method,
+        log.trace("Creating MethodBinder: method={}, collection={}", method,
                 collection);
         this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
         this.method = Objects.requireNonNull(method, "Method cannot be null");
         this.collection = collection;
-        log.atDebug().log("MethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
+        log.debug("MethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
     }
 
     public MethodBinder(ISupplier<?> objectSupplier,
@@ -54,7 +54,7 @@ public class MethodBinder<Returned>
             boolean collectionTarget,
             Object[] args) throws ReflectionException {
 
-        log.atTrace().log("Executing static method execute: owner={}, ownerType={}, method={}, collectionTarget={}",
+        log.trace("Executing static method execute: owner={}, ownerType={}, method={}, collectionTarget={}",
                 owner, ownerType, method, collectionTarget);
 
         if (!Methods.isStatic(method))
@@ -64,29 +64,29 @@ public class MethodBinder<Returned>
         Objects.requireNonNull(collectionTarget, "Collection target cannot be null");
 
         if (collectionTarget && owner instanceof Collection<?> col) {
-            log.atDebug().log("Executing method {} on collection with {} elements", method, col.size());
+            log.debug("Executing method {} on collection with {} elements", method, col.size());
             List<IMethodReturn<ReturnedType>> results = new ArrayList<>();
             for (Object element : col) {
                 results.add((IMethodReturn<ReturnedType>) new MethodInvoker<>(method).invoke(element, args));
             }
-            log.atDebug().log("Executed method {} on collection successfully", method);
+            log.debug("Executed method {} on collection successfully", method);
             return Optional
                     .of(MultipleMethodReturn.ofMethodReturns(results, method.getReturnType()));
         }
 
-        log.atDebug().log("Invoking method {} on owner of type {}", method, ownerType);
+        log.debug("Invoking method {} on owner of type {}", method, ownerType);
 
         IMethodReturn<ReturnedType> methodReturn = (IMethodReturn<ReturnedType>) new MethodInvoker<>(method)
                 .invoke(owner, args);
 
-        log.atDebug().log("Method {} executed successfully", method);
+        log.debug("Method {} executed successfully", method);
         return Optional.ofNullable(methodReturn);
 
     }
 
     @Override
     public Optional<IMethodReturn<Returned>> execute() throws ReflectionException {
-        log.atTrace().log("Executing MethodBinder for method {}", method);
+        log.trace("Executing MethodBinder for method {}", method);
         Object[] args = this.buildArguments();
         try {
             Optional<IMethodReturn<Returned>> result = execute(
@@ -95,17 +95,17 @@ public class MethodBinder<Returned>
                     this.method,
                     collection,
                     args);
-            log.atDebug().log("MethodBinder execution completed for method {}", method);
+            log.debug("MethodBinder execution completed for method {}", method);
             return result;
         } catch (SupplyException e) {
-            log.atError().log("Supply error executing method {}", method, e);
+            log.error("Supply error executing method {}", method, e);
             throw new ReflectionException(e);
         }
     }
 
     @Override
     public String getExecutableReference() {
-        log.atTrace().log("Getting executable reference for method {}", method);
+        log.trace("Getting executable reference for method {}", method);
         return Methods.prettyColored(this.method);
     }
 

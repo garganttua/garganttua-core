@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.mapper.annotations.MappingIgnore;
 import com.garganttua.core.mapper.annotations.ObjectMappingRule;
@@ -26,10 +28,8 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MappingRules {
+    private static final IDiagnostic log = Diagnostics.of(MappingRules.class);
 
 	private final IReflection reflection;
 
@@ -61,12 +61,12 @@ public class MappingRules {
 	 * ({@code source == void.class}). Ambiguity and duplicates throw at parse time.
 	 */
 	public List<MappingRule> parse(IClass<?> destinationClass, IClass<?> sourceClass) throws MapperException {
-		log.atDebug().log("Parsing mapping rules for {} (source={})",
+		log.debug("Parsing mapping rules for {} (source={})",
 				destinationClass.getSimpleName(),
 				sourceClass != null ? sourceClass.getSimpleName() : "<wildcard>");
 		List<MappingRule> mappingRules = new ArrayList<>();
 		List<MappingRule> result = this.recursiveParsing(destinationClass, sourceClass, mappingRules, "");
-		log.atDebug().log("Parsed {} rules for {}", result.size(), destinationClass.getSimpleName());
+		log.debug("Parsed {} rules for {}", result.size(), destinationClass.getSimpleName());
 		return result;
 	}
 
@@ -224,7 +224,7 @@ public class MappingRules {
 	}
 
 	public void validate(IClass<?> sourceClass, List<MappingRule> rules) throws MapperException {
-		log.atDebug().log("Validating {} rules for {}", rules.size(), sourceClass.getSimpleName());
+		log.debug("Validating {} rules for {}", rules.size(), sourceClass.getSimpleName());
 		try {
 			IObjectQuery<?> sourceQuery = this.reflection.query(sourceClass);
 			for (MappingRule rule : rules) {
@@ -285,7 +285,7 @@ public class MappingRules {
 
 	public IMappingRuleExecutor getRuleExecutor(IMapper mapper, MappingDirection mappingDirection,
 			MappingRule rule, IClass<?> sourceClass, IClass<?> destinationClass) throws MapperException {
-		log.atDebug().log("Resolving executor for {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingDirection);
+		log.debug("Resolving executor for {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingDirection);
 
 		List<Object> destinationField = null;
 		List<Object> sourceField = null;
@@ -362,7 +362,7 @@ public class MappingRules {
 				}
 			}
 
-			log.atWarn().log("No suitable executor found for rule: {}", rule);
+			log.warn("No suitable executor found for rule: {}", rule);
 
 		} catch (ReflectionException e) {
 			throw new MapperException(e);
@@ -371,7 +371,7 @@ public class MappingRules {
 	}
 
 	public List<MappingRule> generateConventionRules(IClass<?> source, IClass<?> destination) {
-		log.atDebug().log("Generating convention rules: {} -> {}", source.getSimpleName(), destination.getSimpleName());
+		log.debug("Generating convention rules: {} -> {}", source.getSimpleName(), destination.getSimpleName());
 		List<MappingRule> rules = new ArrayList<>();
 		IClass<MappingIgnore> mappingIgnoreClass;
 		try {
@@ -380,7 +380,7 @@ public class MappingRules {
 			mappingIgnoreClass = null;
 		}
 		generateConventionRulesRecursive(source, destination, rules, mappingIgnoreClass);
-		log.atDebug().log("Generated {} convention rules", rules.size());
+		log.debug("Generated {} convention rules", rules.size());
 		return rules;
 	}
 

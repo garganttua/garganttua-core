@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
@@ -19,10 +21,8 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MapableMapMappingExecutor implements IMappingRuleExecutor {
+    private static final IDiagnostic log = Diagnostics.of(MapableMapMappingExecutor.class);
 
 	private final IReflection reflection;
 	private final IMapper mapper;
@@ -75,7 +75,7 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private <destination> destination doMappingInternal(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject, IMappingRecursion recursion) throws MapperException {
-		log.atDebug().log("MapableMap: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
+		log.debug("MapableMap: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
 
 		if (destinationObject == null) {
 			try {
@@ -113,7 +113,7 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 			this.destinationFieldAccessor.setValue(destinationObject,
 					SingleFieldValue.of(destMap, (IClass<Object>) this.destinationField.getType()));
 		} catch (ReflectionException e) {
-			log.atError().log("Map mapping failed for {}: {}", this.sourceField.getName(), e.getMessage());
+			log.error("Map mapping failed for {}: {}", this.sourceField.getName(), e.getMessage());
 			throw new MapperException(e);
 		}
 

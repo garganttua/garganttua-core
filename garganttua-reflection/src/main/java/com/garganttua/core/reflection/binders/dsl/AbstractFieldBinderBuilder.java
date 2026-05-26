@@ -5,6 +5,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
@@ -24,13 +26,11 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder extends IFieldBinderBuilder<FieldType, OwnerType, Builder, Link>, Link>
         extends
         AbstractAutomaticLinkedDependentBuilder<Builder, Link, IFieldBinder<OwnerType, FieldType>>
         implements IFieldBinderBuilder<FieldType, OwnerType, Builder, Link> {
+    private static final IDiagnostic log = Diagnostics.of(AbstractFieldBinderBuilder.class);
 
     private IClass<OwnerType> ownerType;
     protected ObjectAddress address;

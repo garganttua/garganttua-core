@@ -3,6 +3,8 @@ package com.garganttua.core.reflection.methods;
 import java.util.Arrays;
 import java.util.List;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
@@ -11,10 +13,8 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MethodResolver {
+    private static final IDiagnostic log = Diagnostics.of(MethodResolver.class);
 
         // ========================================================================
         // Provider-based API (preferred)
@@ -23,7 +23,7 @@ public class MethodResolver {
         public static ResolvedMethod methodByName(IClass<?> ownerType, IReflectionProvider provider,
                         String methodName, IClass<?> returnType,
                         IClass<?>... parameterTypes) throws ReflectionException {
-                log.atTrace().log("[methodByName] Start: methodName={}, ownerType={}", methodName, ownerType);
+                log.trace("[methodByName] Start: methodName={}, ownerType={}", methodName, ownerType);
 
                 IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType, provider);
 
@@ -41,7 +41,7 @@ public class MethodResolver {
                                 .filter(m -> m.matches(ownerType, returnType, effectiveParams)).distinct().toList();
 
                 if (found.size() > 1) {
-                        log.atError().log(
+                        log.error(
                                         "[methodByName] Multiple methods found matching signature for method {} in ownertype {}",
                                         methodName, ownerType.getName());
                         throw new ReflectionException("Multiple overloads of method " + methodName + " in ownertype "
@@ -49,7 +49,7 @@ public class MethodResolver {
                                         + returnType + ", parameterTypes=" + Arrays.toString(parameterTypes) + ")");
                 }
                 if (found.isEmpty()) {
-                        log.atError().log(
+                        log.error(
                                         "[methodByName] No method found matching signature for method {} in ownertype {}",
                                         methodName, ownerType.getName());
                         throw new ReflectionException("No overload of method " + methodName + " in ownertype "
@@ -71,14 +71,14 @@ public class MethodResolver {
                                 .distinct().toList();
 
                 if (found.size() > 1) {
-                        log.atError().log(
+                        log.error(
                                         "[methodByName] Multiple methods found matching signature for method {} in ownertype {}",
                                         methodName, ownerType.getName());
                         throw new ReflectionException("Multiple overloads of method " + methodName + " in ownertype "
                                         + ownerType.getName());
                 }
                 if (found.isEmpty()) {
-                        log.atError().log(
+                        log.error(
                                         "[methodByName] No method found matching signature for method {} in ownertype {}",
                                         methodName, ownerType.getName());
                         throw new ReflectionException(
@@ -89,7 +89,7 @@ public class MethodResolver {
 
         public static ResolvedMethod methodByMethod(IClass<?> ownerType, IReflectionProvider provider,
                         IMethod method) throws ReflectionException {
-                log.atTrace().log("[methodByMethod] Start: method={}, ownerType={}", method.getName(), ownerType);
+                log.trace("[methodByMethod] Start: method={}, ownerType={}", method.getName(), ownerType);
 
                 IObjectQuery<?> query = ObjectQueryFactory.objectQuery(ownerType, provider);
 
@@ -117,7 +117,7 @@ public class MethodResolver {
         public static ResolvedMethod methodByAddress(IClass<?> ownerType, IReflectionProvider provider,
                         ObjectAddress methodAddress)
                         throws ReflectionException {
-                log.atTrace().log("[methodByAddress] Start: methodAddress={}, ownerType={}", methodAddress,
+                log.trace("[methodByAddress] Start: methodAddress={}, ownerType={}", methodAddress,
                                 ownerType);
                 return MethodResolver.methodByName(ownerType, provider, methodAddress.getLastElement());
         }

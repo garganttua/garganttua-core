@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.ContextualExpressionNode;
 import com.garganttua.core.expression.ExpressionException;
@@ -31,12 +33,10 @@ import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         extends ContextualMethodBinder<IExpressionNode<R, S>, IExpressionNodeContext>
         implements IExpressionNodeFactory<R, S> {
+    private static final IDiagnostic log = Diagnostics.of(ExpressionNodeFactory.class);
 
     // ========== Fields ==========
 
@@ -66,7 +66,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 resolveReflectMethod(methodOwnerSupplier.getSuppliedClass(), method),
                 List.of());
 
-        log.atTrace().log("Creating ExpressionNodeFactory: method={}", method.getName());
+        log.trace("Creating ExpressionNodeFactory: method={}", method.getName());
 
         this.methodOwnerSupplier = Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         this.method = Objects.requireNonNull(method, "Method cannot be null");
@@ -82,7 +82,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         validateParameterConfiguration();
 
-        log.atDebug().log("ExpressionNodeFactory created: method={}, parameterCount={}, genericReturn={}",
+        log.debug("ExpressionNodeFactory created: method={}, parameterCount={}, genericReturn={}",
                 method.getName(), parameterTypes.length, hasGenericReturnType);
     }
 
@@ -106,7 +106,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
         key.append(")");
         String keyString = key.toString();
-        log.atDebug().log("Generated factory key: {}", keyString);
+        log.debug("Generated factory key: {}", keyString);
         return keyString;
     }
 
@@ -121,10 +121,10 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             IExpressionNodeContext context,
             Object... otherContexts) throws SupplyException {
 
-        log.atTrace().log("Supplying expression node for contexts {} {}", context, otherContexts);
+        log.trace("Supplying expression node for contexts {} {}", context, otherContexts);
 
         if (!context.matches(this.parameterTypes)) {
-            log.atDebug().log("Context does not match parameter types, returning empty");
+            log.debug("Context does not match parameter types, returning empty");
             return Optional.empty();
         }
 
@@ -132,7 +132,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                 ? createContextualNode(context)
                 : createNonContextualNode(context);
 
-        log.atDebug().log("Expression node created: type={}",
+        log.debug("Expression node created: type={}",
                 expressionNode != null ? expressionNode.getClass().getSimpleName() : "null");
 
         IClass<IExpressionNode<R, S>> nodeClass = (IClass<IExpressionNode<R, S>>) (IClass<?>) IClass.getClass(IExpressionNode.class);
@@ -162,7 +162,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     // ========== Private Binding Methods ==========
 
     private IContextualSupplier<R, IExpressionContext> bindContextualNode(Object... parameters) {
-        log.atTrace().log("Binding contextual node with {} parameters", parameters.length);
+        log.trace("Binding contextual node with {} parameters", parameters.length);
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
@@ -175,7 +175,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
     }
 
     private ISupplier<R> bindNode(Object... parameters) throws DslException {
-        log.atTrace().log("Binding non-contextual node with {} parameters", parameters.length);
+        log.trace("Binding non-contextual node with {} parameters", parameters.length);
 
         List<ISupplier<?>> encapsulatedParams = encapsulateParameters(parameters);
 
@@ -206,11 +206,11 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
             if (isLazy) {
                 if (parameters[i] instanceof ISupplier<?> lazySupplier) {
                     supplier = new FixedSupplierBuilder<>(lazySupplier, (IClass) lazySupplier.getSuppliedClass()).build();
-                    log.atTrace().log("Encapsulating lazy parameter {} as ISupplier wrapper", i);
+                    log.trace("Encapsulating lazy parameter {} as ISupplier wrapper", i);
                 } else {
                     ISupplier<?> literalSupplier = createLiteralSupplier(parameters[i]);
                     supplier = new FixedSupplierBuilder<>(literalSupplier, (IClass) literalSupplier.getSuppliedClass()).build();
-                    log.atTrace().log("Encapsulating lazy parameter {} as literal ISupplier wrapper", i);
+                    log.trace("Encapsulating lazy parameter {} as literal ISupplier wrapper", i);
                 }
             } else if (!(parameters[i] instanceof ISupplier<?>)) {
                 supplier = new FixedSupplierBuilder<>(parameters[i], (IClass) IClass.getClass(parameters[i].getClass())).build();
@@ -255,7 +255,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
                     this.parameterTypes.length,
                     this.nullableParameters.size());
 
-            log.atError().log(errorMsg);
+            log.error(errorMsg);
             throw new ExpressionException(errorMsg);
         }
     }
@@ -266,7 +266,7 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         for (IClass<?> paramType : this.parameterTypes) {
             lazy.add(iSupplierClass.isAssignableFrom(paramType));
         }
-        log.atTrace().log("Detected lazy parameters for {}: {}", this.method.getName(), lazy);
+        log.trace("Detected lazy parameters for {}: {}", this.method.getName(), lazy);
         return lazy;
     }
 

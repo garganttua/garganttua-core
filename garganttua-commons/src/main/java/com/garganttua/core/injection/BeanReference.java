@@ -8,14 +8,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
 /** Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
-@Slf4j
 public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<IClass<? extends Annotation>> qualifiers) {
+    private static final IDiagnostic log = Diagnostics.of(BeanReference.class);
 
     /**
      * Returns the effective name of the bean.
@@ -28,14 +28,14 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
      * @return the effective bean name
      */
     public String effectiveName() {
-        log.atTrace().log("Entering effectiveName");
+        log.trace("Entering effectiveName");
         String result;
         if (name.isPresent()) {
             result = name.get();
         } else {
             result = type.getSimpleName();
         }
-        log.atTrace().log("Exiting effectiveName with result={}", result);
+        log.trace("Exiting effectiveName with result={}", result);
         return result;
     }
 

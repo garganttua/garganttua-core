@@ -8,9 +8,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Registry that holds all built runtimes and provides summary information.
@@ -23,8 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class RuntimesRegistry implements IBootstrapSummaryContributor, Map<String, IRuntime<?, ?>> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimesRegistry.class);
 
     private final Map<String, IRuntime<?, ?>> runtimes;
 
@@ -36,7 +36,7 @@ public class RuntimesRegistry implements IBootstrapSummaryContributor, Map<Strin
     public RuntimesRegistry(Map<String, IRuntime<?, ?>> runtimes) {
         Objects.requireNonNull(runtimes, "Runtimes map cannot be null");
         this.runtimes = Collections.unmodifiableMap(new LinkedHashMap<>(runtimes));
-        log.atDebug().log("RuntimesRegistry created with {} runtimes", runtimes.size());
+        log.debug("RuntimesRegistry created with {} runtimes", runtimes.size());
     }
 
     /**

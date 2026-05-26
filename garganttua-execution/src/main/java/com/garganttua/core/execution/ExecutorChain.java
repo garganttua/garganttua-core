@@ -1,14 +1,14 @@
 package com.garganttua.core.execution;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ExecutorChain<T> implements IExecutorChain<T> {
+    private static final IDiagnostic log = Diagnostics.of(ExecutorChain.class);
 
 	private final Queue<Entry<IExecutor<T>, IFallBackExecutor<T>>> executors;
 
@@ -17,24 +17,24 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 	private final boolean rethrow;
 
 	public ExecutorChain() {
-		log.atTrace().log("Entering default constructor ExecutorChain()");
+		log.trace("Entering default constructor ExecutorChain()");
 		this.executors = new LinkedList<>();
 		this.fallBackExecutors = new LinkedList<>();
 		this.rethrow = true;
-		log.atTrace().log("Exiting default constructor ExecutorChain()");
+		log.trace("Exiting default constructor ExecutorChain()");
 	}
 
 	public ExecutorChain(boolean rethrow) {
-		log.atTrace().log("Entering constructor ExecutorChain(boolean rethrow) with rethrow={}", rethrow);
+		log.trace("Entering constructor ExecutorChain(boolean rethrow) with rethrow={}", rethrow);
 		this.executors = new LinkedList<>();
 		this.fallBackExecutors = new LinkedList<>();
 		this.rethrow = rethrow;
-		log.atTrace().log("Exiting constructor ExecutorChain(boolean rethrow)");
+		log.trace("Exiting constructor ExecutorChain(boolean rethrow)");
 	}
 
 	@Override
 	public void addExecutor(IExecutor<T> executor) {
-		log.atTrace().log("Entering addExecutor(IExecutor) with executor={}", executor);
+		log.trace("Entering addExecutor(IExecutor) with executor={}", executor);
 		this.executors.add(new Entry<IExecutor<T>, IFallBackExecutor<T>>() {
 			@Override
 			public IExecutor<T> getKey() {
@@ -51,13 +51,13 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 				return arg0;
 			}
 		});
-		log.atDebug().log("Executor added without fallback: {}", executor);
-		log.atTrace().log("Exiting addExecutor(IExecutor)");
+		log.debug("Executor added without fallback: {}", executor);
+		log.trace("Exiting addExecutor(IExecutor)");
 	}
 
 	@Override
 	public void execute(T request) throws ExecutorException {
-		log.atTrace().log("Entering execute() with request={}", request);
+		log.trace("Entering execute() with request={}", request);
 
 		// Use iterative approach with trampoline pattern to avoid stack overflow
 		// on chains with thousands of executors
@@ -67,14 +67,14 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		while (true) {
 			Entry<IExecutor<T>, IFallBackExecutor<T>> executor = this.executors.poll();
 			if (executor == null) {
-				log.atDebug().log("No executor available to execute");
+				log.debug("No executor available to execute");
 				break;
 			}
 
-			log.atDebug().log("Executor polled: {}", executor.getKey());
+			log.debug("Executor polled: {}", executor.getKey());
 			if (executor.getValue() != null) {
 				((LinkedList<IFallBackExecutor<T>>) this.fallBackExecutors).addFirst(executor.getValue());
-				log.atDebug().log("Fallback executor added to front of queue: {}", executor.getValue());
+				log.debug("Fallback executor added to front of queue: {}", executor.getValue());
 			}
 
 			// Flag to track if the executor wants to continue to the next executor
@@ -107,51 +107,51 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 			};
 
 			try {
-				log.atDebug().log("Executing executor: {}", executor.getKey());
+				log.debug("Executing executor: {}", executor.getKey());
 				T reqToExecute = (T) currentRequest[0];
 				executor.getKey().execute(reqToExecute, nextProxy);
-				log.atDebug().log("Executor executed successfully: {}", executor.getKey());
+				log.debug("Executor executed successfully: {}", executor.getKey());
 
 				if (!shouldContinue.get()) {
 					// Executor didn't call next.execute(), stop the chain
-					log.atDebug().log("Executor did not continue chain, stopping");
+					log.debug("Executor did not continue chain, stopping");
 					break;
 				}
 			} catch (ExecutorException e) {
-				log.atWarn().log("Error during executor chain execution for executor: {}", executor.getKey(), e);
+				log.warn("Error during executor chain execution for executor: {}", executor.getKey(), e);
 				if (!this.fallBackExecutors.isEmpty()) {
-					log.atDebug().log("Executing fallback executors");
+					log.debug("Executing fallback executors");
 					T reqForFallback = (T) currentRequest[0];
 					this.executeFallBack(reqForFallback);
 				}
 				if (this.rethrow) {
-					log.atError().log("Rethrowing ExecutorException due to rethrow=true");
+					log.error("Rethrowing ExecutorException due to rethrow=true");
 					throw e;
 				}
 				break; // Stop the chain after exception
 			}
 		}
 
-		log.atTrace().log("Exiting execute()");
+		log.trace("Exiting execute()");
 	}
 
 	@Override
 	public void executeFallBack(T request) {
-		log.atTrace().log("Entering executeFallBack() with request={}", request);
+		log.trace("Entering executeFallBack() with request={}", request);
 		IFallBackExecutor<T> executor = this.fallBackExecutors.poll();
 		if (executor != null) {
-			log.atDebug().log("Executing fallback executor: {}", executor);
+			log.debug("Executing fallback executor: {}", executor);
 			executor.fallBack(request, this);
-			log.atDebug().log("Fallback executor executed successfully: {}", executor);
+			log.debug("Fallback executor executed successfully: {}", executor);
 		} else {
-			log.atDebug().log("No fallback executor available to execute");
+			log.debug("No fallback executor available to execute");
 		}
-		log.atTrace().log("Exiting executeFallBack()");
+		log.trace("Exiting executeFallBack()");
 	}
 
 	@Override
 	public void addExecutor(IExecutor<T> executor, IFallBackExecutor<T> fallBackExecutor) {
-		log.atTrace().log("Entering addExecutor(IExecutor, IFallBackExecutor) with executor={} and fallback={}",
+		log.trace("Entering addExecutor(IExecutor, IFallBackExecutor) with executor={} and fallback={}",
 				executor, fallBackExecutor);
 		this.executors.add(new Entry<IExecutor<T>, IFallBackExecutor<T>>() {
 			@Override
@@ -169,7 +169,7 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 				return arg0;
 			}
 		});
-		log.atDebug().log("Executor added with fallback: {} -> {}", executor, fallBackExecutor);
-		log.atTrace().log("Exiting addExecutor(IExecutor, IFallBackExecutor)");
+		log.debug("Executor added with fallback: {} -> {}", executor, fallBackExecutor);
+		log.trace("Exiting addExecutor(IExecutor, IFallBackExecutor)");
 	}
 }

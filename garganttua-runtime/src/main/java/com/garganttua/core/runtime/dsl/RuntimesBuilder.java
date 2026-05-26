@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import javax.inject.Named;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -45,13 +47,11 @@ import com.garganttua.core.runtime.resolver.VariableElementResolver;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Bootstrap
 @Reflected
 public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>
         implements IRuntimesBuilder {
+    private static final IDiagnostic log = Diagnostics.of(RuntimesBuilder.class);
 
     private final Set<String> packages = new HashSet<>();
 
@@ -80,19 +80,19 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         collector.source(new FixedSupplier<>(contextRuntimeBuilders, mapType), 1, SOURCE_CONTEXT);
         collector.source(new FixedSupplier<>(reflexionRuntimeBuilders, mapType), 2, SOURCE_REFLECTION);
 
-        log.atDebug().log("RuntimesBuilder initialized with phase-aware dependencies");
+        log.debug("RuntimesBuilder initialized with phase-aware dependencies");
     }
 
     @Override
     public IRuntimesBuilder withPackage(String packageName) {
-        log.atDebug().log("Adding package: {}", packageName);
+        log.debug("Adding package: {}", packageName);
         this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
         return this;
     }
 
     @Override
     public IRuntimesBuilder withPackages(String[] packageNames) {
-        log.atDebug().log("Adding {} packages", packageNames.length);
+        log.debug("Adding {} packages", packageNames.length);
         Objects.requireNonNull(packageNames, "Package names cannot be null");
         for (String pkg : packageNames) {
             this.withPackage(pkg);
@@ -106,38 +106,35 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
             IClass<InputType> inputType,
             IClass<OutputType> outputType) {
 
-        log.atTrace()
-                .log("Entering runtime({}, {}, {}) method", name, inputType.getSimpleName(),
+        log.trace("Entering runtime({}, {}, {}) method", name, inputType.getSimpleName(),
                         outputType.getSimpleName());
         Objects.requireNonNull(name, "Name cannot be null");
 
-        log.atTrace()
-                .log("Validated runtime input parameters", name);
+        log.trace("Validated runtime input parameters", name);
 
         IRuntimeBuilder<InputType, OutputType> runtimeBuilder;
         if (!this.manualRuntimeBuilders.containsKey(name)) {
             runtimeBuilder = new RuntimeBuilder<>(this, name, (Class<InputType>) inputType.getType(), (Class<OutputType>) outputType.getType());
             this.manualRuntimeBuilders.put(name, runtimeBuilder);
-            log.atDebug().log("Created new runtime builder {}", name);
+            log.debug("Created new runtime builder {}", name);
         } else {
             runtimeBuilder = (IRuntimeBuilder<InputType, OutputType>) this.manualRuntimeBuilders.get(name);
-            log.atDebug().log("Reusing existing runtime builder {}", name);
+            log.debug("Reusing existing runtime builder {}", name);
         }
-        log.atTrace()
-                .log("Exiting runtime() method");
+        log.trace("Exiting runtime() method");
 
         return runtimeBuilder;
     }
 
     @Override
     protected Map<String, IRuntime<?, ?>> doBuild() throws DslException {
-        log.atTrace().log("Entering doBuild() method");
-        log.atDebug().log("Building all runtimes");
+        log.trace("Entering doBuild() method");
+        log.debug("Building all runtimes");
 
         Map<String, IRuntime<?, ?>> runtimesMap = this.collector.build().entrySet().stream().collect(Collectors.toMap(
                 Entry::getKey,
                 e -> {
-                    log.atDebug().log("Building individual runtime");
+                    log.debug("Building individual runtime");
                     IRuntimeBuilder<?, ?> rb = e.getValue();
                     if (this.reflectionBuilderRef != null) {
                         rb.provide(this.reflectionBuilderRef);
@@ -148,51 +145,51 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         // Wrap in RuntimesRegistry to provide summary information
         RuntimesRegistry result = new RuntimesRegistry(runtimesMap);
 
-        log.atTrace().log("Exiting doBuild() method");
+        log.trace("Exiting doBuild() method");
         return result;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("Entering doAutoDetection() method");
+        log.trace("Entering doAutoDetection() method");
         // Base auto-detection without dependencies - nothing to do here
-        log.atTrace().log("Exiting doAutoDetection() method");
+        log.trace("Exiting doAutoDetection() method");
     }
 
     @Override
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
-        log.atTrace().log("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
+        log.trace("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
 
         if (dependency instanceof IInjectionContext context) {
             List<?> definitions = context.queryBeans(
                     new BeanReference<>(null, Optional.empty(), Optional.empty(), Set.of(IClass.getClass(RuntimeDefinition.class))));
-            log.atDebug().log("Auto-detecting runtimes from InjectionContext");
+            log.debug("Auto-detecting runtimes from InjectionContext");
             definitions.forEach(this::createAutoDetectedFromInjectionContextRuntime);
         }
-        log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
+        log.trace("Exiting doAutoDetectionWithDependency() method");
     }
 
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
-        log.atTrace().log("Entering doPreBuildWithDependency() with dependency: {}", dependency);
+        log.trace("Entering doPreBuildWithDependency() with dependency: {}", dependency);
         // Nothing to do in pre-build phase for InjectionContext dependency
-        log.atTrace().log("Exiting doPreBuildWithDependency() method");
+        log.trace("Exiting doPreBuildWithDependency() method");
     }
 
     @Override
     protected void doPostBuildWithDependency(Object dependency) {
-        log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
+        log.trace("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
         if (dependency instanceof IInjectionContext context) {
             registerBuiltObjectInContext(context, this.built);
         }
 
-        log.atTrace().log("Exiting doPostBuildWithDependency() method");
+        log.trace("Exiting doPostBuildWithDependency() method");
     }
 
     @SuppressWarnings("unchecked")
     private void registerBuiltObjectInContext(IInjectionContext context, Map<String, IRuntime<?, ?>> result) {
-        log.atDebug().log("Registering Map<String, IRuntime<?, ?>> as bean in InjectionContext");
+        log.debug("Registering Map<String, IRuntime<?, ?>> as bean in InjectionContext");
         String providerName = Predefined.BeanProviders.garganttua.toString();
 
         // Use addBean directly to avoid lifecycle check - the context may not be started yet
@@ -203,7 +200,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
                 Optional.of("Runtimes"),
                 Set.of());
         context.addBean(providerName, mapBeanRef, result);
-        log.atDebug().log(
+        log.debug(
                 "Map<String, IRuntime<?, ?>> successfully registered as bean with {} runtimes with 'runtimes' name",
                 result.size());
 
@@ -214,7 +211,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
                     Optional.of(e.getKey()),
                     Set.of(IClass.getClass(RuntimeDefinition.class)));
             context.addBean(providerName, beanRef, e.getValue());
-            log.atDebug().log(
+            log.debug(
                     "IRuntime<?, ?> successfully registered as bean with '" + e.getKey() + "' name");
         });
     }
@@ -229,8 +226,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         Class<?> input = runtimeDefinition.input();
         Class<?> output = runtimeDefinition.output();
 
-        log.atDebug()
-                .log("Creating auto-detected runtime builder {} input={}, output={}", runtimeName,
+        log.debug("Creating auto-detected runtime builder {} input={}, output={}", runtimeName,
                         input.getSimpleName(), output.getSimpleName());
 
         IRuntimeBuilder<?, ?> existingBuilder = this.manualRuntimeBuilders.remove(runtimeName);
@@ -251,13 +247,13 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
                     .provide(injectionContextBuilder);
         }
         this.contextRuntimeBuilders.put(runtimeName, existingBuilder);
-        log.atDebug().log("Auto-detected runtime {} registered", runtimeName);
+        log.debug("Auto-detected runtime {} registered", runtimeName);
     }
 
     public static IRuntimesBuilder builder() {
-        log.atTrace().log("Entering builder() with no parameters");
+        log.trace("Entering builder() with no parameters");
         IRuntimesBuilder result = new RuntimesBuilder();
-        log.atTrace().log("Exiting builder() with no parameters");
+        log.trace("Exiting builder() with no parameters");
         return result;
     }
 
@@ -274,7 +270,7 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
     }
 
     private IRuntimesBuilder setupInjectionContext(IInjectionContextBuilder context) {
-        log.atTrace().log("Entering setupInjectionContext() method");
+        log.trace("Entering setupInjectionContext() method");
 
         Objects.requireNonNull(context, "Context builder cannot be null");
 
@@ -287,13 +283,13 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
             context.resolvers().withResolver(IClass.getClass(Code.class), new CodeElementResolver());
             context.resolvers().withResolver(IClass.getClass(ExceptionMessage.class), new ExceptionMessageElementResolver());
 
-            log.atDebug().log("Context builder configured with resolvers");
+            log.debug("Context builder configured with resolvers");
         } else {
             context.withPackage("com.garganttua.core.runtime");
-            log.atDebug().log("Context builder configured with packages for auto-detection");
+            log.debug("Context builder configured with packages for auto-detection");
         }
 
-        log.atTrace().log("Exiting context() method");
+        log.trace("Exiting context() method");
         return this;
     }
 

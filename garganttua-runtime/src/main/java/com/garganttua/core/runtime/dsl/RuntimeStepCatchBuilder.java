@@ -2,6 +2,8 @@ package com.garganttua.core.runtime.dsl;
 
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
@@ -10,13 +12,11 @@ import com.garganttua.core.runtime.RuntimeStepCatch;
 import com.garganttua.core.runtime.annotations.Catch;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
                 AbstractAutomaticLinkedBuilder<IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepCatch>
                 implements IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStepCatchBuilder.class);
 
         private IClass<? extends Throwable> exception;
         private Integer code;
@@ -26,8 +26,7 @@ public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType,
                         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> link) {
                 super(link);
                 this.exception = IClass.getClass(Objects.requireNonNull(exception, "Exception cannot be null"));
-                log.atTrace()
-                                .log("Initialized RuntimeStepCatchBuilder");
+                log.trace("Initialized RuntimeStepCatchBuilder");
         }
 
         /**
@@ -43,34 +42,30 @@ public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType,
                 this(exception, link);
                 this.catchAnnotationForAutoDetection = Objects.requireNonNull(catchAnnotation,
                                 "Catch annotation cannot be null");
-                log.atTrace()
-                                .log("Initialized RuntimeStepCatchBuilder for auto-detection");
+                log.trace("Initialized RuntimeStepCatchBuilder for auto-detection");
         }
 
         @Override
         public IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> code(int i) {
                 this.code = Objects.requireNonNull(i, "Code cannot be null");
-                log.atDebug().log("Set exception code for RuntimeStepCatchBuilder");
+                log.debug("Set exception code for RuntimeStepCatchBuilder");
                 return this;
         }
 
         @Override
         protected IRuntimeStepCatch doBuild() throws DslException {
-                log.atTrace()
-                                .log("Building RuntimeStepCatch");
+                log.trace("Building RuntimeStepCatch");
                 IRuntimeStepCatch catchInstance = new RuntimeStepCatch(exception, code);
-                log.atDebug()
-                                .log("RuntimeStepCatch built successfully");
+                log.debug("RuntimeStepCatch built successfully");
                 return catchInstance;
         }
 
         @Override
         protected void doAutoDetection() throws DslException {
-                log.atTrace().log("Starting auto-detection for RuntimeStepCatchBuilder");
+                log.trace("Starting auto-detection for RuntimeStepCatchBuilder");
                 Objects.requireNonNull(this.catchAnnotationForAutoDetection, "Catch annotation cannot be null");
                 this.code = this.catchAnnotationForAutoDetection.code();
-                log.atDebug()
-                                .log("Auto-detected catch code from annotation");
+                log.debug("Auto-detected catch code from annotation");
         }
 
 }

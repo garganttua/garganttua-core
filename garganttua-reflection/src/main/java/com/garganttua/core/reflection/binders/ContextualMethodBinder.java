@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
@@ -15,12 +17,10 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         extends ContextualExecutableBinder<ReturnedType, OwnerContextType>
         implements IContextualMethodBinder<ReturnedType, OwnerContextType> {
+    private static final IDiagnostic log = Diagnostics.of(ContextualMethodBinder.class);
 
     private final ISupplier<?> objectSupplier;
     private final ResolvedMethod method;
@@ -32,11 +32,11 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
             boolean collection) {
         super(parameterSuppliers);
         this.method = Objects.requireNonNull(method, "Method cannot be null");
-        log.atTrace().log("Creating ContextualMethodBinder: method={}, returnedClass={}, collection={}", method,
+        log.trace("Creating ContextualMethodBinder: method={}, returnedClass={}, collection={}", method,
                 method.getReturnType(), collection);
         this.objectSupplier = Objects.requireNonNull(objectSupplier, "Object supplier cannot be null");
         this.collection = collection;
-        log.atDebug().log("ContextualMethodBinder created for method {} with {} parameters", method,
+        log.debug("ContextualMethodBinder created for method {} with {} parameters", method,
                 parameterSuppliers.size());
     }
 
@@ -57,7 +57,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
     @Override
     public Optional<IMethodReturn<ReturnedType>> execute(OwnerContextType ownerContext, Object... contexts)
             throws ReflectionException {
-        log.atTrace().log("Executing contextual method binder for method {}", method);
+        log.trace("Executing contextual method binder for method {}", method);
 
         Object[] mergedContexts = new Object[contexts.length + 1];
         mergedContexts[0] = ownerContext;
@@ -68,7 +68,7 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         try {
 
             Object owner = Supplier.contextualSupply(this.objectSupplier, ownerContext);
-            log.atDebug().log("Executing method {} on owner of type {}", method, objectSupplier.getSuppliedClass());
+            log.debug("Executing method {} on owner of type {}", method, objectSupplier.getSuppliedClass());
 
             Optional<IMethodReturn<ReturnedType>> result = MethodBinder.execute(
                     owner,
@@ -76,10 +76,10 @@ public class ContextualMethodBinder<ReturnedType, OwnerContextType>
                     method,
                     collection,
                     args);
-            log.atDebug().log("Successfully executed contextual method {}", method);
+            log.debug("Successfully executed contextual method {}", method);
             return result;
         } catch (SupplyException e) {
-            log.atError().log("Supply error executing contextual method {}", method, e);
+            log.error("Supply error executing contextual method {}", method, e);
             throw new ReflectionException(e);
         }
     }

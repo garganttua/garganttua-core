@@ -2,14 +2,14 @@ package com.garganttua.core.runtime;
 
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class RuntimeStepExecutionTools {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStepExecutionTools.class);
 
     static public void validateAndStoreReturnedValueInVariable(String runtimeName, String stepName,
             String variableName,
@@ -17,11 +17,11 @@ public class RuntimeStepExecutionTools {
             IRuntimeContext<?, ?> context, boolean nullable, String logLineHeader, String executableReference)
             throws ExecutorException {
 
-        log.atTrace().log("{}Validating returned value for variable '{}', nullable={}", logLineHeader, variableName,
+        log.trace("{}Validating returned value for variable '{}', nullable={}", logLineHeader, variableName,
                 nullable);
 
         if (returned == null && !nullable) {
-            log.atWarn().log("{}Returned value is null but variable '{}' is not nullable", logLineHeader, variableName);
+            log.warn("{}Returned value is null but variable '{}' is not nullable", logLineHeader, variableName);
             handleException(
                     runtimeName,
                     stepName,
@@ -36,7 +36,7 @@ public class RuntimeStepExecutionTools {
         }
 
         if (returned != null) {
-            log.atDebug().log("{}Storing returned value '{}' in variable '{}'", logLineHeader, returned, variableName);
+            log.debug("{}Storing returned value '{}' in variable '{}'", logLineHeader, returned, variableName);
             context.setVariable(variableName, returned);
         }
     }
@@ -52,25 +52,25 @@ public class RuntimeStepExecutionTools {
         int reportCode = IRuntime.GENERIC_RUNTIME_ERROR_CODE;
         boolean aborted = forceAbort;
 
-        log.atWarn().log("{}Handling exception: {} (forceAbort={})", logLineHeader, exception.getMessage(), forceAbort);
+        log.warn("{}Handling exception: {} (forceAbort={})", logLineHeader, exception.getMessage(), forceAbort);
 
         try {
 
             if (matchedCatch != null) {
                 reportCode = matchedCatch.code();
                 aborted = true;
-                log.atDebug().log("{}Matched catch found, setting report code={} and aborting", logLineHeader,
+                log.debug("{}Matched catch found, setting report code={} and aborting", logLineHeader,
                         reportCode);
                 throw new ExecutorException(logLineHeader + " Error during step execution", exception);
             }
 
             if (forceAbort) {
                 aborted = true;
-                log.atError().log("{}Force aborting due to exception", logLineHeader, exception);
+                log.error("{}Force aborting due to exception", logLineHeader, exception);
                 throw new ExecutorException(logLineHeader + " Error during step execution", exception);
             }
         } finally {
-            log.atDebug().log("{}Recording exception in context, aborted={}", logLineHeader, aborted);
+            log.debug("{}Recording exception in context, aborted={}", logLineHeader, aborted);
             context.recordException(new RuntimeExceptionRecord(
                     runtimeName,
                     stepName,
@@ -93,11 +93,11 @@ public class RuntimeStepExecutionTools {
 
         if (found.isPresent()) {
             reportException = found.get();
-            log.atTrace().log("[RuntimeStepExecutionTools.findExceptionForReport] Found exception for report: {}",
+            log.trace("[RuntimeStepExecutionTools.findExceptionForReport] Found exception for report: {}",
                     reportException);
         } else {
             reportException = exception.getCause() == null ? exception : exception.getCause();
-            log.atTrace().log("[RuntimeStepExecutionTools.findExceptionForReport] Using exception cause for report: {}",
+            log.trace("[RuntimeStepExecutionTools.findExceptionForReport] Using exception cause for report: {}",
                     reportException);
         }
         return reportException;
@@ -111,10 +111,10 @@ public class RuntimeStepExecutionTools {
             String executableReference)
             throws ExecutorException {
 
-        log.atTrace().log("{}Validating returned value for output, nullable={}", logLineHeader, nullable);
+        log.trace("{}Validating returned value for output, nullable={}", logLineHeader, nullable);
 
         if (returned == null && !nullable) {
-            log.atWarn().log("{}Returned value is null but output is not nullable", logLineHeader);
+            log.warn("{}Returned value is null but output is not nullable", logLineHeader);
             handleException(
                     runtimeName,
                     stepName,
@@ -127,7 +127,7 @@ public class RuntimeStepExecutionTools {
         }
 
         if (returned != null && !context.isOfOutputType(IClass.getClass(returned.getClass()))) {
-            log.atWarn().log("{}Returned value type '{}' is not compatible with output type '{}'", logLineHeader,
+            log.warn("{}Returned value type '{}' is not compatible with output type '{}'", logLineHeader,
                     returned.getClass().getSimpleName(), context.getOutputType().getSimpleName());
             handleException(
                     runtimeName,
@@ -143,7 +143,7 @@ public class RuntimeStepExecutionTools {
         }
 
         if (returned != null) {
-            log.atDebug().log("{}Setting returned value '{}' as output", logLineHeader, returned);
+            log.debug("{}Setting returned value '{}' as output", logLineHeader, returned);
             context.setOutput((OutputType) returned);
         }
     }

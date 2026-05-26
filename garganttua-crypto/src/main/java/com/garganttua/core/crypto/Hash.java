@@ -1,12 +1,12 @@
 package com.garganttua.core.crypto;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Hash implements IHash {
+    private static final IDiagnostic log = Diagnostics.of(Hash.class);
 
 	private final HashAlgorithm algorithm;
 
@@ -16,7 +16,7 @@ public class Hash implements IHash {
 
 	@Override
 	public byte[] hash(byte[] data) throws CryptoException {
-		log.atDebug().log("Hashing with algorithm={}", algorithm.getName());
+		log.debug("Hashing with algorithm={}", algorithm.getName());
 		try {
 			MessageDigest digest = MessageDigest.getInstance(algorithm.getName());
 			return digest.digest(data);

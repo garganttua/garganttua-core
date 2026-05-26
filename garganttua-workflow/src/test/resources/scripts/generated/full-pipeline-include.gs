@@ -1,5 +1,5 @@
 # Workflow: full-pipeline
-# Generated: 2026-05-26T15:47:40.987950442Z
+# Generated: 2026-05-26T16:07:14.562193200Z
 
 # Preset variables
 apiUrl <- "https://api.example.com/data"
@@ -9,7 +9,7 @@ targetFormat <- "json"
 # Stage: fetch
 url <- @apiUrl
 timeout <- @requestTimeout
-_fetch_api_fetcher_ref <- include("/tmp/junit12560336072106186254/fetch-api.gs")
+_fetch_api_fetcher_ref <- include("/tmp/junit6809664967801261574/fetch-api.gs")
 _fetch_api_fetcher_code <- execute_script(@_fetch_api_fetcher_ref, @url, @timeout)
 rawData <- script_variable(@_fetch_api_fetcher_ref, "apiResponse")
 httpCode <- script_variable(@_fetch_api_fetcher_ref, "httpStatus")
@@ -20,7 +20,7 @@ statusCode <- script_variable(@_fetch_api_fetcher_ref, "httpStatus")
 # Stage: validation
 data <- @rawData
 strict <- true
-_validation_data_validator_ref <- include("/tmp/junit12560336072106186254/validate-data.gs")
+_validation_data_validator_ref <- include("/tmp/junit6809664967801261574/validate-data.gs")
 _validation_data_validator_code <- execute_script(@_validation_data_validator_ref, @data, @strict)
 validated <- script_variable(@_validation_data_validator_ref, "validatedData")
 validationStatus <- script_variable(@_validation_data_validator_ref, "validationStatus")
@@ -30,7 +30,7 @@ status <- script_variable(@_validation_data_validator_ref, "validationStatus")
 # Stage: transform
 inputData <- @validated
 format <- @targetFormat
-_transform_data_transformer_ref <- include("/tmp/junit12560336072106186254/transform-data.gs")
+_transform_data_transformer_ref <- include("/tmp/junit6809664967801261574/transform-data.gs")
 _transform_data_transformer_code <- execute_script(@_transform_data_transformer_ref, @inputData, @format)
 result <- script_variable(@_transform_data_transformer_ref, "transformedData")
 outputFormat <- script_variable(@_transform_data_transformer_ref, "outputFormat")
@@ -39,7 +39,7 @@ transformed <- script_variable(@_transform_data_transformer_ref, "transformedDat
 
 # Stage: statistics
 values <- @transformed
-_statistics_stats_calculator_ref <- include("/tmp/junit12560336072106186254/calculate-stats.gs")
+_statistics_stats_calculator_ref <- include("/tmp/junit6809664967801261574/calculate-stats.gs")
 _statistics_stats_calculator_code <- execute_script(@_statistics_stats_calculator_ref, @values)
 count <- script_variable(@_statistics_stats_calculator_ref, "itemCount")
 sum <- script_variable(@_statistics_stats_calculator_ref, "total")
@@ -48,7 +48,7 @@ sum <- script_variable(@_statistics_stats_calculator_ref, "total")
 # Stage: finalize
 data <- @transformed
 metadata <- "pipeline-v1"
-_finalize_finalizer_ref <- include("/tmp/junit12560336072106186254/finalize-output.gs")
+_finalize_finalizer_ref <- include("/tmp/junit6809664967801261574/finalize-output.gs")
 _finalize_finalizer_code <- execute_script(@_finalize_finalizer_ref, @data, @metadata)
 result <- script_variable(@_finalize_finalizer_ref, "finalOutput")
 finalStatus <- script_variable(@_finalize_finalizer_ref, "finalStatus")

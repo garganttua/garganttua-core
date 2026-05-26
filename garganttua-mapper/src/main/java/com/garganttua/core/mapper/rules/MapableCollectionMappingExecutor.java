@@ -13,6 +13,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
@@ -26,10 +28,8 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
+    private static final IDiagnostic log = Diagnostics.of(MapableCollectionMappingExecutor.class);
 
 	private IReflection reflection;
 	private IMapper mapper;
@@ -90,7 +90,7 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private <destination> destination doMappingInternal(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject, IMappingRecursion recursion) throws MapperException {
-		log.atDebug().log("MapableCollection: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
+		log.debug("MapableCollection: {} -> {}", this.sourceField.getName(), this.destinationField.getName());
 
 		if (destinationObject == null) {
 			try {
@@ -120,7 +120,7 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 			this.destinationFieldAccessor.setValue(destinationObject,
 					SingleFieldValue.of(destinationFieldObject, (IClass<Object>) this.destinationField.getType()));
 		} catch (ReflectionException e) {
-			log.atError().log("Collection mapping failed for {}: {}", this.sourceField.getName(), e.getMessage());
+			log.error("Collection mapping failed for {}: {}", this.sourceField.getName(), e.getMessage());
 			throw new MapperException(e);
 		}
 

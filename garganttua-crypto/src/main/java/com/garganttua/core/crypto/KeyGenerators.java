@@ -1,5 +1,7 @@
 package com.garganttua.core.crypto;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -9,16 +11,14 @@ import java.security.spec.ECGenParameterSpec;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class KeyGenerators {
+    private static final IDiagnostic log = Diagnostics.of(KeyGenerators.class);
 
 	static SecretKey generateSymmetricKey(IKeyAlgorithm algorithm) {
 		if (algorithm instanceof KeyAlgorithm ka) {
 			return ka.generateSymmetricKey();
 		}
-		log.atDebug().log("Generating symmetric key for custom algorithm: {}, size: {}", algorithm.getName(), algorithm.getKeySize());
+		log.debug("Generating symmetric key for custom algorithm: {}, size: {}", algorithm.getName(), algorithm.getKeySize());
 		try {
 			KeyGenerator keyGen = KeyGenerator.getInstance(algorithm.getName());
 			keyGen.init(algorithm.getKeySize(), KeyRandoms.secureRandom());
@@ -32,7 +32,7 @@ class KeyGenerators {
 		if (algorithm instanceof KeyAlgorithm ka) {
 			return ka.generateAsymmetricKey();
 		}
-		log.atDebug().log("Generating asymmetric key for custom algorithm: {}, size: {}", algorithm.getName(), algorithm.getKeySize());
+		log.debug("Generating asymmetric key for custom algorithm: {}, size: {}", algorithm.getName(), algorithm.getKeySize());
 		try {
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm.getName());
 			if (algorithm.getName().equals("EC")) {

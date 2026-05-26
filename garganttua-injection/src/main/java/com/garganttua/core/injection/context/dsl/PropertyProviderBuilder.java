@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -13,41 +15,39 @@ import com.garganttua.core.injection.context.properties.PropertyProvider;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
+    private static final IDiagnostic log = Diagnostics.of(PropertyProviderBuilder.class);
 
     private List<IPropertyBuilder<?>> propertyBuilders = new ArrayList<>();
 
     public PropertyProviderBuilder(IInjectionContextBuilder link) {
         super(link);
-        log.atTrace().log("Entering PropertyProviderBuilder constructor with link={}", link);
-        log.atTrace().log("Exiting PropertyProviderBuilder constructor");
+        log.trace("Entering PropertyProviderBuilder constructor with link={}", link);
+        log.trace("Exiting PropertyProviderBuilder constructor");
     }
 
     @Override
     public <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType, String key,
                                                                 PropertyType property) throws DslException {
-        log.atTrace().log("Entering withProperty(propertyType={}, key={}, property={})", propertyType, key, property);
+        log.trace("Entering withProperty(propertyType={}, key={}, property={})", propertyType, key, property);
         this.propertyBuilders.add(new PropertyBuilder<>(key, property));
-        log.atDebug().log("Added property with key={} and type={}", key, propertyType.getSimpleName());
-        log.atTrace().log("Exiting withProperty");
+        log.debug("Added property with key={} and type={}", key, propertyType.getSimpleName());
+        log.trace("Exiting withProperty");
         return this;
     }
 
     @Override
     protected IPropertyProvider doBuild() throws DslException {
-        log.atTrace().log("Entering doBuild()");
+        log.trace("Entering doBuild()");
         Map<String, Object> properties = this.propertyBuilders.stream()
                 .map(p -> {
                     try {
-                        log.atDebug().log("Building property: {}", p);
+                        log.debug("Building property: {}", p);
                         return p.build();
                     } catch (DslException e) {
-                        log.atError().log("Error building property: {}", p);
+                        log.error("Error building property: {}", p);
                         throw new RuntimeException("Error building property: " + p, e);
                     }
                 })
@@ -56,14 +56,14 @@ public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPro
                         Map.Entry::getKey,
                         Map.Entry::getValue
                 ));
-        log.atDebug().log("Built PropertyProvider with {} properties", properties.size());
+        log.debug("Built PropertyProvider with {} properties", properties.size());
         IPropertyProvider provider = new PropertyProvider(properties);
-        log.atTrace().log("Exiting doBuild()");
+        log.trace("Exiting doBuild()");
         return provider;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("doAutoDetection() called, no auto detection implemented for PropertyProviderBuilder");
+        log.trace("doAutoDetection() called, no auto detection implemented for PropertyProviderBuilder");
     }
 }

@@ -1,7 +1,7 @@
 package com.garganttua.core.supply;
 
-import lombok.extern.slf4j.Slf4j;
-
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 /**
  * Utility class providing helper methods for working with object suppliers.
  *
@@ -40,8 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see ISupplier
  * @see IContextualSupplier
  */
-@Slf4j
 public class Supplier {
+    private static final IDiagnostic log = Diagnostics.of(Supplier.class);
 
     /**
      * Private constructor to prevent instantiation of this utility class.
@@ -76,17 +76,17 @@ public class Supplier {
      */
     @SuppressWarnings("unchecked")
     public static <Supplied> Supplied contextualSupply(ISupplier<Supplied> supplier, Object... contexts) throws SupplyException{
-        log.atTrace().log("Entering contextualSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
+        log.trace("Entering contextualSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
 
         if (supplier == null) {
-            log.atError().log("Supplier cannot be null");
+            log.error("Supplier cannot be null");
             throw new SupplyException("Supplier cannot be null");
         }
 
         Supplied obj = null;
 
         if (supplier instanceof IContextualSupplier<?, ?> contextualRaw) {
-            log.atDebug().log("Supplier is contextual, searching for matching context");
+            log.debug("Supplier is contextual, searching for matching context");
             IContextualSupplier<Supplied, Object> contextual = (IContextualSupplier<Supplied, Object>) contextualRaw;
 
             Object matchingContext = null;
@@ -94,27 +94,27 @@ public class Supplier {
                 for (Object ctx : contexts) {
                     if (ctx != null && contextual.getOwnerContextType().isInstance(ctx)) {
                         matchingContext = ctx;
-                        log.atDebug().log("Found matching context of type {}", ctx.getClass().getName());
+                        log.debug("Found matching context of type {}", ctx.getClass().getName());
                         break;
                     }
                 }
             }
 
             if (matchingContext == null && contextual.getOwnerContextType() != null) {
-                log.atError().log("No compatible context found for supplier expecting {}", contextual.getOwnerContextType().getName());
+                log.error("No compatible context found for supplier expecting {}", contextual.getOwnerContextType().getName());
                 throw new SupplyException(
                         "No compatible context found for supplier expecting " + contextual.getOwnerContextType().getName());
             }
 
             obj = contextual.supply(matchingContext, contexts).orElse(null);
-            log.atDebug().log("Contextual supply completed, result is {}", obj != null ? "present" : "null");
+            log.debug("Contextual supply completed, result is {}", obj != null ? "present" : "null");
         } else {
-            log.atDebug().log("Supplier is non-contextual, calling supply() directly");
+            log.debug("Supplier is non-contextual, calling supply() directly");
             obj = supplier.supply().orElse(null);
-            log.atDebug().log("Non-contextual supply completed, result is {}", obj != null ? "present" : "null");
+            log.debug("Non-contextual supply completed, result is {}", obj != null ? "present" : "null");
         }
 
-        log.atTrace().log("Exiting contextualSupply");
+        log.trace("Exiting contextualSupply");
         return obj;
     }
 
@@ -150,23 +150,22 @@ public class Supplier {
      *                        contextual supplier, or an error occurs during supply
      */
     public static Object contextualRecursiveSupply(ISupplier<?> supplier, Object... contexts) throws SupplyException {
-        log.atTrace().log("Entering contextualRecursiveSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
+        log.trace("Entering contextualRecursiveSupply with supplier={}, contexts count={}", supplier, contexts != null ? contexts.length : 0);
 
         Object result = contextualSupply(supplier, contexts);
 
         if (result == null) {
-            log.atDebug().log("Supplier returned null, ending recursion");
+            log.debug("Supplier returned null, ending recursion");
             return null;
         }
 
         if (result instanceof ISupplier<?>) {
-            log.atDebug().log("Result is a supplier, recursively resolving");
+            log.debug("Result is a supplier, recursively resolving");
             return contextualRecursiveSupply((ISupplier<?>) result, contexts);
         }
 
-        log.atTrace().log("Exiting contextualRecursiveSupply with non-supplier result");
+        log.trace("Exiting contextualRecursiveSupply with non-supplier result");
         return result;
     }
-
 
 }

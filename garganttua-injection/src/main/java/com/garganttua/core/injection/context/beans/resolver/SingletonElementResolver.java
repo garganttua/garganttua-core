@@ -4,6 +4,8 @@ import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
@@ -13,30 +15,28 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 //@Resolver(annotations={Singleton.class, Inject.class})
 public class SingletonElementResolver extends BeanElementResolver implements IElementResolver {
+    private static final IDiagnostic log = Diagnostics.of(SingletonElementResolver.class);
 
     public SingletonElementResolver(Set<IClass<? extends Annotation>> qualifiers) {
         super(qualifiers);
-        log.atTrace().log("Entering SingletonElementResolver constructor with qualifiers: {}", qualifiers);
-        log.atDebug().log("SingletonElementResolver initialized with qualifiers: {}", qualifiers);
-        log.atTrace().log("Exiting SingletonElementResolver constructor");
+        log.trace("Entering SingletonElementResolver constructor with qualifiers: {}", qualifiers);
+        log.debug("SingletonElementResolver initialized with qualifiers: {}", qualifiers);
+        log.trace("Exiting SingletonElementResolver constructor");
     }
 
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {
-        log.atTrace().log("Entering resolve for elementType: {} and element: {}", elementType, element);
+        log.trace("Entering resolve for elementType: {} and element: {}", elementType, element);
 
         Optional<ISupplierBuilder<?, ISupplier<?>>> builder = this.resolve(elementType, element,
                 BeanStrategy.singleton);
 
         if (builder.isPresent()) {
-            log.atDebug().log("Resolved singleton elementType {} with builder: {}", elementType, builder.get());
+            log.debug("Resolved singleton elementType {} with builder: {}", elementType, builder.get());
         } else {
-            log.atWarn().log("Could not resolve singleton elementType: {}", elementType);
+            log.warn("Could not resolve singleton elementType: {}", elementType);
         }
 
         Resolved resolved = new Resolved(
@@ -45,7 +45,7 @@ public class SingletonElementResolver extends BeanElementResolver implements IEl
                 builder.orElse(null),
                 IInjectableElementResolver.isNullable(element));
 
-        log.atTrace().log("Exiting resolve with resolved: {}", resolved);
+        log.trace("Exiting resolve with resolved: {}", resolved);
         return resolved;
     }
 }

@@ -8,32 +8,32 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.nativve.IReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ReflectionConfiguration implements IReflectionConfiguration{
+    private static final IDiagnostic log = Diagnostics.of(ReflectionConfiguration.class);
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
 	public static ReflectionConfiguration loadFromFile(File file) {
-		log.atTrace().log("Entering loadFromFile with file: {}", file);
+		log.trace("Entering loadFromFile with file: {}", file);
 		List<IReflectionConfigurationEntry> entries;
 		try {
-			log.atDebug().log("Loading reflection configuration from file: {}", file);
+			log.debug("Loading reflection configuration from file: {}", file);
 			entries = objectMapper.readValue(file,
 					objectMapper.getTypeFactory().constructCollectionType(List.class, ReflectConfigEntry.class));
-			log.atDebug().log("Loaded {} reflection configuration entries from file", entries.size());
+			log.debug("Loaded {} reflection configuration entries from file", entries.size());
 		} catch (IOException e) {
-			log.atWarn().log("Failed to load reflection configuration from file, initializing empty list: {}", file);
+			log.warn("Failed to load reflection configuration from file, initializing empty list: {}", file);
 			entries = new ArrayList<>();
 		}
 		ReflectionConfiguration config = new ReflectionConfiguration();
 		config.setEntries(entries);
-		log.atTrace().log("Exiting loadFromFile");
+		log.trace("Exiting loadFromFile");
 		return config;
 	}
 
@@ -45,56 +45,56 @@ public class ReflectionConfiguration implements IReflectionConfiguration{
 
 	@Override
 	public void setEntries(List<IReflectionConfigurationEntry> entries) {
-		log.atTrace().log("Setting entries with {} items", entries.size());
+		log.trace("Setting entries with {} items", entries.size());
 		this.entries = entries;
 	}
 
 	@Override
 	public void addEntry(IReflectionConfigurationEntry entry) {
-		log.atTrace().log("Entering addEntry for: {}", entry.getName());
+		log.trace("Entering addEntry for: {}", entry.getName());
 		removeEntry(entry);
 		entries.add(entry);
-		log.atDebug().log("Added reflection configuration entry: {}", entry.getName());
-		log.atTrace().log("Exiting addEntry");
+		log.debug("Added reflection configuration entry: {}", entry.getName());
+		log.trace("Exiting addEntry");
 	}
 
 	@Override
 	public void removeEntry(IReflectionConfigurationEntry entry) {
-		log.atTrace().log("Entering removeEntry for: {}", entry.getName());
+		log.trace("Entering removeEntry for: {}", entry.getName());
 		entries = entries.stream().filter(e -> !e.getName().equals(entry.getName())).collect(Collectors.toList());
-		log.atDebug().log("Removed reflection configuration entry: {}", entry.getName());
-		log.atTrace().log("Exiting removeEntry");
+		log.debug("Removed reflection configuration entry: {}", entry.getName());
+		log.trace("Exiting removeEntry");
 	}
 
 	@Override
 	public void updateEntry(IReflectionConfigurationEntry updatedEntry) {
-		log.atTrace().log("Entering updateEntry for: {}", updatedEntry.getName());
+		log.trace("Entering updateEntry for: {}", updatedEntry.getName());
 		for (int i = 0; i < entries.size(); i++) {
 			IReflectionConfigurationEntry entry = entries.get(i);
 			if (entry.getName().equals(updatedEntry.getName())) {
 				entries.set(i, updatedEntry);
-				log.atDebug().log("Updated reflection configuration entry: {}", updatedEntry.getName());
+				log.debug("Updated reflection configuration entry: {}", updatedEntry.getName());
 				break;
 			}
 		}
-		log.atTrace().log("Exiting updateEntry");
+		log.trace("Exiting updateEntry");
 	}
 
 	@Override
 	public void saveToFile(File file) throws IOException {
-		log.atTrace().log("Entering saveToFile with file: {}", file);
-		log.atDebug().log("Saving {} reflection configuration entries to file: {}", entries.size(), file);
+		log.trace("Entering saveToFile with file: {}", file);
+		log.debug("Saving {} reflection configuration entries to file: {}", entries.size(), file);
 		objectMapper.writeValue(file, this.entries);
-		log.atDebug().log("Reflection configuration saved successfully to file: {}", file);
-		log.atTrace().log("Exiting saveToFile");
+		log.debug("Reflection configuration saved successfully to file: {}", file);
+		log.trace("Exiting saveToFile");
 	}
 
 	@Override
 	public Optional<IReflectionConfigurationEntry> findEntryByType(IClass<?> type) {
-		log.atTrace().log("Entering findEntryByType for type: {}", type.getName());
+		log.trace("Entering findEntryByType for type: {}", type.getName());
 		Optional<IReflectionConfigurationEntry> result = entries.stream().filter(entry -> entry.getName().equals(type.getName())).findFirst();
-		log.atDebug().log("Found entry for type {}: {}", type.getName(), result.isPresent());
-		log.atTrace().log("Exiting findEntryByType");
+		log.debug("Found entry for type {}: {}", type.getName(), result.isPresent());
+		log.trace("Exiting findEntryByType");
 		return result;
 	}
 }

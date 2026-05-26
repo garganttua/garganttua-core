@@ -4,41 +4,41 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.condition.ConditionException;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.OrCondition;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class OrConditionBuilder implements IConditionBuilder {
+    private static final IDiagnostic log = Diagnostics.of(OrConditionBuilder.class);
 
     private IConditionBuilder[] conditions;
 
     public OrConditionBuilder(IConditionBuilder[] conditions) throws ConditionException{
-        log.atTrace().log("Entering OrConditionBuilder constructor with {} conditions", conditions != null ? conditions.length : 0);
+        log.trace("Entering OrConditionBuilder constructor with {} conditions", conditions != null ? conditions.length : 0);
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
         if( this.conditions.length < 1 ){
-            log.atError().log("No condition provided to OrConditionBuilder");
+            log.error("No condition provided to OrConditionBuilder");
             throw new ConditionException("No condition provided");
         }
-        log.atTrace().log("Exiting OrConditionBuilder constructor");
+        log.trace("Exiting OrConditionBuilder constructor");
     }
 
     @Override
     public ICondition build() throws DslException {
-        log.atTrace().log("Entering build() for OrConditionBuilder");
-        log.atDebug().log("Building OR condition from {} condition builders", conditions.length);
+        log.trace("Entering build() for OrConditionBuilder");
+        log.debug("Building OR condition from {} condition builders", conditions.length);
 
         ICondition condition = null;
         if (!isContextual())
             condition = new OrCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
-        log.atDebug().log("OR condition built successfully");
-        log.atTrace().log("Exiting build()");
+        log.debug("OR condition built successfully");
+        log.trace("Exiting build()");
         return condition;
     }
 

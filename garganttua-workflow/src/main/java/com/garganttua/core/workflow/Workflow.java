@@ -12,6 +12,8 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
@@ -27,8 +29,6 @@ import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
 import com.garganttua.core.workflow.generator.ScriptGenerationOptions;
 import com.garganttua.core.workflow.generator.ScriptGenerator;
 import com.garganttua.core.workflow.renderer.WorkflowRenderer;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Workflow implementation that executes a pre-generated script.
@@ -47,8 +47,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class Workflow implements IWorkflow, IObservable<ObservableEvent> {
+    private static final IDiagnostic log = Diagnostics.of(Workflow.class);
 
     private final String name;
     private final String generatedScript;

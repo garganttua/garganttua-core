@@ -1,7 +1,7 @@
 package com.garganttua.core;
 
-import lombok.extern.slf4j.Slf4j;
-
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 /**
  * Utility class providing constants and utilities for CoreException error codes.
  *
@@ -52,8 +52,8 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  * @see CoreException
  */
-@Slf4j
 public class CoreExceptionCodes {
+    private static final IDiagnostic log = Diagnostics.of(CoreExceptionCodes.class);
 
     /**
      * Private constructor to prevent instantiation of this utility class.
@@ -61,8 +61,8 @@ public class CoreExceptionCodes {
      * @throws UnsupportedOperationException if instantiation is attempted
      */
     private CoreExceptionCodes() {
-        log.atTrace().log("Entering CoreExceptionCodes constructor");
-        log.atError().log("Attempt to instantiate utility class CoreExceptionCodes");
+        log.trace("Entering CoreExceptionCodes constructor");
+        log.error("Attempt to instantiate utility class CoreExceptionCodes");
         throw new UnsupportedOperationException("CoreExceptionCodes is a utility class and cannot be instantiated");
     }
 

@@ -1,12 +1,13 @@
 package com.garganttua.core.expression.functions;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Type converter functions for expression language.
@@ -40,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class Expressions {
+    private static final IDiagnostic log = Diagnostics.of(Expressions.class);
 
     // ========== Primitive Type Converters ==========
 
@@ -72,10 +73,10 @@ public class Expressions {
      */
     @Expression(name = "int", description = "Parses a string to an Integer")
     public static int integer(@Nullable String value) {
-        log.atTrace().log("Converting '{}' to Integer", value);
+        log.trace("Converting '{}' to Integer", value);
         try {
             int result = java.lang.Integer.parseInt(value);
-            log.atDebug().log("Converted '{}' to Integer: {}", value, result);
+            log.debug("Converted '{}' to Integer: {}", value, result);
             return result;
         } catch (NumberFormatException e) {
             throw new ExpressionException("Cannot convert '" + value + "' to Integer: " + e.getMessage());
@@ -200,7 +201,7 @@ public class Expressions {
      */
     @Expression(name = "class", description = "Loads a class by fully qualified name or primitive type")
     public static IClass<?> Class(@Nullable String className) {
-        log.atTrace().log("Loading class: {}", className);
+        log.trace("Loading class: {}", className);
         if (className == null) {
             throw new ExpressionException("Class name cannot be null");
         }
@@ -208,45 +209,45 @@ public class Expressions {
         // Handle primitive types
         switch (className) {
             case "boolean":
-                log.atDebug().log("Returning primitive type: boolean.class");
+                log.debug("Returning primitive type: boolean.class");
                 return IClass.getClass(boolean.class);
             case "byte":
-                log.atDebug().log("Returning primitive type: byte.class");
+                log.debug("Returning primitive type: byte.class");
                 return IClass.getClass(byte.class);
             case "short":
-                log.atDebug().log("Returning primitive type: short.class");
+                log.debug("Returning primitive type: short.class");
                 return IClass.getClass(short.class);
             case "int":
-                log.atDebug().log("Returning primitive type: int.class");
+                log.debug("Returning primitive type: int.class");
                 return IClass.getClass(int.class);
             case "long":
-                log.atDebug().log("Returning primitive type: long.class");
+                log.debug("Returning primitive type: long.class");
                 return IClass.getClass(long.class);
             case "float":
-                log.atDebug().log("Returning primitive type: float.class");
+                log.debug("Returning primitive type: float.class");
                 return IClass.getClass(float.class);
             case "double":
-                log.atDebug().log("Returning primitive type: double.class");
+                log.debug("Returning primitive type: double.class");
                 return IClass.getClass(double.class);
             case "char":
-                log.atDebug().log("Returning primitive type: char.class");
+                log.debug("Returning primitive type: char.class");
                 return IClass.getClass(char.class);
             case "void":
-                log.atDebug().log("Returning primitive type: void.class");
+                log.debug("Returning primitive type: void.class");
                 return IClass.getClass(void.class);
         }
 
         // Handle regular classes
         try {
             IClass<?> clazz = IClass.forName(className);
-            log.atDebug().log("Loaded class: {}", className);
+            log.debug("Loaded class: {}", className);
             return clazz;
         } catch (ClassNotFoundException e) {
             // Try with java.lang. prefix for common classes (e.g., "String" -> "java.lang.String")
             if (!className.contains(".")) {
                 try {
                     IClass<?> clazz = IClass.forName("java.lang." + className);
-                    log.atDebug().log("Loaded class with java.lang prefix: {}", className);
+                    log.debug("Loaded class with java.lang prefix: {}", className);
                     return clazz;
                 } catch (ClassNotFoundException e2) {
                     // Fall through to original error

@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
@@ -29,12 +31,11 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
         extends AbstractAutomaticLinkedDependentBuilder<Builder, Link, Built>
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
+    private static final IDiagnostic log = Diagnostics.of(AbstractMethodBinderBuilder.class);
 
     @Setter
     private ISupplierBuilder<?, ?> supplier;
@@ -64,7 +65,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                         dependencies.stream(),
                         Stream.of(DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)))
                         .collect(Collectors.toUnmodifiableSet()));
-        log.atTrace().log("[MethodBinderBuilder] Creating with up={} and supplier={}", up, supplier);
+        log.trace("[MethodBinderBuilder] Creating with up={} and supplier={}", up, supplier);
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
         this.collection = collection;
     }
@@ -120,7 +121,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     @Override
     public Builder method(IMethod method) throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Storing method {} for deferred resolution", method.getName());
+        log.debug("[MethodBinderBuilder] Storing method {} for deferred resolution", method.getName());
 
         this.resolvedMethod = MethodResolver.methodByMethod(this.supplier.getSuppliedClass(), effectiveReflection(), method);
 
@@ -132,7 +133,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     @Override
     public Builder method(ObjectAddress methodAddress, IClass<ExecutionReturn> returnType, IClass<?>... parameterTypes)
             throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Storing method address={} with returnType={} for deferred resolution",
+        log.debug("[MethodBinderBuilder] Storing method address={} with returnType={} for deferred resolution",
                 methodAddress, returnType);
 
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
@@ -149,7 +150,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     @Override
     public Builder method(String methodName, IClass<ExecutionReturn> returnType, IClass<?>... parameterTypes)
             throws DslException {
-        log.atDebug().log("[MethodBinderBuilder] Storing method name={} with returnType={} for deferred resolution",
+        log.debug("[MethodBinderBuilder] Storing method name={} with returnType={} for deferred resolution",
                 methodName, returnType);
 
         this.resolvedMethod = MethodResolver.methodByName(this.supplier.getSuppliedClass(), effectiveReflection(), methodName, returnType,
@@ -177,7 +178,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     @Override
     public Builder withParam(int i, Object object, boolean acceptNullable) throws DslException {
-        log.atTrace().log("[MethodBinderBuilder] Binding parameter {} with value={} (acceptNullable={})", i, object,
+        log.trace("[MethodBinderBuilder] Binding parameter {} with value={} (acceptNullable={})", i, object,
                 acceptNullable);
 
         // Ensure method is set
@@ -202,7 +203,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         this.rawParamIndices.add(i);
         this.parameterNullableAllowed.set(i, acceptNullable);
 
-        log.atDebug().log("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
+        log.debug("[MethodBinderBuilder] Parameter {} bound successfully with type {} (acceptNullable={})", i,
                 object.getClass(), acceptNullable);
         return (Builder) this;
     }
@@ -210,7 +211,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     @Override
     public Builder withParam(int i, ISupplierBuilder<?, ? extends ISupplier<?>> object,
             boolean acceptNullable) throws DslException {
-        log.atTrace().log("[MethodBinderBuilder] Binding parameter {} with supplier of type {} (acceptNullable={})", i,
+        log.trace("[MethodBinderBuilder] Binding parameter {} with supplier of type {} (acceptNullable={})", i,
                 object == null ? "null" : object.getSuppliedClass(), acceptNullable);
 
         // Ensure method is set
@@ -235,7 +236,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         this.rawParamIndices.remove(i);
         this.parameterNullableAllowed.set(i, acceptNullable);
 
-        log.atDebug().log(
+        log.debug(
                 "[MethodBinderBuilder] Parameter {} bound successfully with supplier type {} (acceptNullable={})", i,
                 object.getSuppliedClass(), acceptNullable);
         return (Builder) this;
@@ -270,7 +271,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             }
         }
         if (foundIdx == null) {
-            log.atWarn().log("[MethodBinderBuilder] Parameter name '{}' not found for method {}", paramName,
+            log.warn("[MethodBinderBuilder] Parameter name '{}' not found for method {}", paramName,
                     getMethodName());
             throw new DslException(
                     "Parameter name " + paramName + " not found for method " + getMethodName());
@@ -299,7 +300,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
             }
         }
         if (foundIdx == null) {
-            log.atWarn().log("[MethodBinderBuilder] Parameter name '{}' not found for method {}", paramName,
+            log.warn("[MethodBinderBuilder] Parameter name '{}' not found for method {}", paramName,
                     getMethodName());
             throw new DslException(
                     "Parameter name " + paramName + " not found for method " + getMethodName());
@@ -326,7 +327,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
         int idx = findNextFreeParameterIndex();
         if (idx < 0) {
-            log.atWarn().log("[MethodBinderBuilder] No free parameter slot available for method {}", getMethodName());
+            log.warn("[MethodBinderBuilder] No free parameter slot available for method {}", getMethodName());
             throw new DslException("No free parameter slot available");
         }
         return withParam(idx, parameter, acceptNullable);
@@ -343,7 +344,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
         int idx = findNextFreeParameterIndex();
         if (idx < 0) {
-            log.atWarn().log("[MethodBinderBuilder] No free parameter slot available for method {}", getMethodName());
+            log.warn("[MethodBinderBuilder] No free parameter slot available for method {}", getMethodName());
             throw new DslException("No free parameter slot available");
         }
         return withParam(idx, supplier, acceptNullable);
@@ -384,7 +385,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
         for (int i = 0; i < resolvedParams.size(); i++) {
             ISupplierBuilder<?, ?> builder = resolvedParams.get(i);
             if (builder == null) {
-                log.atWarn().log("Parameter {} has no supplier configured for method {}", i,
+                log.warn("Parameter {} has no supplier configured for method {}", i,
                         getMethodName());
                 throw new DslException(
                         "Parameter " + i + " not configured for method " + getMethodName());
@@ -408,7 +409,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
                     Collections.nCopies(this.getParameterTypes().length, Boolean.FALSE));
         }
 
-        log.atDebug().log("[MethodBinderBuilder] Successfully resolved method {} with {} parameters",
+        log.debug("[MethodBinderBuilder] Successfully resolved method {} with {} parameters",
                 getMethodName(), this.getParameterTypes().length);
     }
 
@@ -416,7 +417,7 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
     protected Built doBuild() throws DslException {
         // Ensure reflection is available (either explicitly provided or via IClass global/thread-local)
         effectiveReflection();
-        log.atTrace().log("[MethodBinderBuilder] Building MethodBinder - resolving method and parameters");
+        log.trace("[MethodBinderBuilder] Building MethodBinder - resolving method and parameters");
 
         // Ensure method is set
         if (this.resolvedMethod == null) {

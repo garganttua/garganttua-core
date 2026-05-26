@@ -12,16 +12,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 
 import jakarta.annotation.Priority;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Priority(10)
 public class ReflectionsAnnotationScanner implements IAnnotationScanner {
+    private static final IDiagnostic log = Diagnostics.of(ReflectionsAnnotationScanner.class);
 
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
@@ -31,11 +32,11 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
-		log.atTrace().log("Entering getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
+		log.trace("Entering getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
 		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
-		log.atDebug().log("Scanning package '{}' for classes with annotation '{}'", packageName, annotation.getName());
+		log.debug("Scanning package '{}' for classes with annotation '{}'", packageName, annotation.getName());
 		Reflections reflections = new Reflections(packageName, Scanners.TypesAnnotated);
 		Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(rawAnnotation, true);
 
@@ -44,7 +45,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 			result.add(IClass.getClass(clazz));
 		}
 
-		log.atDebug().log("Found {} classes annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
+		log.debug("Found {} classes annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
 		return result;
 	}
 
@@ -56,11 +57,11 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<IMethod> getMethodsWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
-		log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
+		log.trace("Entering getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
 		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
-		log.atDebug().log("Scanning package '{}' for methods with annotation '{}'", packageName, annotation.getName());
+		log.debug("Scanning package '{}' for methods with annotation '{}'", packageName, annotation.getName());
 		Reflections reflections = new Reflections(packageName, Scanners.MethodsAnnotated);
 		Set<Method> annotatedMethods = reflections.getMethodsAnnotatedWith(rawAnnotation);
 
@@ -74,7 +75,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 			}
 		}
 
-		log.atDebug().log("Found {} methods annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
+		log.debug("Found {} methods annotated with '{}' in package {}", result.size(), annotation.getName(), packageName);
 		return result;
 	}
 }

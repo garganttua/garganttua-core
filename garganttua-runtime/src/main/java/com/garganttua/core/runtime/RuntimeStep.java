@@ -2,16 +2,16 @@ package com.garganttua.core.runtime;
 
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.execution.IExecutor;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.execution.IFallBackExecutor;
 import com.garganttua.core.observability.ObservabilityEmitter;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         implements IRuntimeStep<ExecutionReturn, InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStep.class);
 
     private final String stepName;
     private Class<ExecutionReturn> executionReturn;
@@ -23,7 +23,7 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
             IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> operationBinder,
             Optional<IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> fallbackBinder) {
 
-        log.atTrace().log("[RuntimeStep.<init>] Initializing RuntimeStep: runtime={}, step={}, executionReturn={}, hasFallback={}",
+        log.trace("[RuntimeStep.<init>] Initializing RuntimeStep: runtime={}, step={}, executionReturn={}, hasFallback={}",
                 runtimeName, stepName, executionReturn, fallbackBinder.isPresent());
 
         this.runtimeName = runtimeName;
@@ -32,19 +32,19 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         this.operationBinder = operationBinder;
         this.fallbackBinder = fallbackBinder;
 
-        log.atDebug().log("{}Initialized RuntimeStep with executionReturn={}, fallbackPresent={}",
+        log.debug("{}Initialized RuntimeStep with executionReturn={}, fallbackPresent={}",
                 logLineHeader(), executionReturn, fallbackBinder.isPresent());
     }
 
     @Override
     public String getStepName() {
-        log.atTrace().log("{}Returning step name: {}", logLineHeader(), stepName);
+        log.trace("{}Returning step name: {}", logLineHeader(), stepName);
         return stepName;
     }
 
     @Override
     public void defineExecutionStep(IExecutorChain<IRuntimeContext<InputType, OutputType>> chain) {
-        log.atDebug().log("{}Defining execution step in chain. Fallback present: {}", logLineHeader(), fallbackBinder.isPresent());
+        log.debug("{}Defining execution step in chain. Fallback present: {}", logLineHeader(), fallbackBinder.isPresent());
 
         String source = "runtime:" + runtimeName + ":step:" + stepName;
 
@@ -62,7 +62,7 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         };
 
         if (this.fallbackBinder.isPresent()) {
-            log.atDebug().log("{}Adding executor with fallback", logLineHeader());
+            log.debug("{}Adding executor with fallback", logLineHeader());
             String fbSource = source + ":fallback";
             IFallBackExecutor<IRuntimeContext<InputType, OutputType>> observedFallback = (ctx, next) -> {
                 try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
@@ -78,7 +78,7 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
             };
             chain.addExecutor(observedExecutor, observedFallback);
         } else {
-            log.atDebug().log("{}Adding executor without fallback", logLineHeader());
+            log.debug("{}Adding executor without fallback", logLineHeader());
             chain.addExecutor(observedExecutor);
         }
     }

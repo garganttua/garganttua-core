@@ -1,11 +1,11 @@
 package com.garganttua.core.observability;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Handle returned by {@code ObservabilityBuilder.build()} that owns a set of
@@ -18,8 +18,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA02
  */
-@Slf4j
 public final class ObservabilityBinding implements AutoCloseable {
+    private static final IDiagnostic log = Diagnostics.of(ObservabilityBinding.class);
 
     /**
      * A single (source, wrapper) registration captured at build time so
@@ -69,13 +69,13 @@ public final class ObservabilityBinding implements AutoCloseable {
             try {
                 r.source().removeObserver(r.wrapper());
             } catch (RuntimeException e) {
-                log.atWarn().log("Failed to detach observer from {}: {}",
+                log.warn("Failed to detach observer from {}: {}",
                         r.source().getClass().getSimpleName(), e.getMessage());
                 failures.add(e);
             }
         }
         if (!failures.isEmpty()) {
-            log.atDebug().log("{} observer detach(es) failed during close", failures.size());
+            log.debug("{} observer detach(es) failed during close", failures.size());
         }
     }
 }

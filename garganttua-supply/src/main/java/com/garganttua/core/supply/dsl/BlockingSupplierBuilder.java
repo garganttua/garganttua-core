@@ -4,13 +4,13 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.BlockingSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Builder for creating BlockingSupplier instances.
@@ -33,10 +33,10 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  * @see BlockingSupplier
  */
-@Slf4j
 @Reflected
 public class BlockingSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
+    private static final IDiagnostic log = Diagnostics.of(BlockingSupplierBuilder.class);
 
     private final BlockingQueue<Supplied> queue;
     private final IClass<Supplied> suppliedClass;
@@ -50,11 +50,11 @@ public class BlockingSupplierBuilder<Supplied>
      * @param suppliedClass the IClass of the supplied object
      */
     public BlockingSupplierBuilder(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
-        log.atTrace().log("Entering BlockingSupplierBuilder constructor");
+        log.trace("Entering BlockingSupplierBuilder constructor");
         this.queue = Objects.requireNonNull(queue, "Queue cannot be null");
         this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
         this.suppliedType = suppliedClass.getType();
-        log.atTrace().log("Exiting BlockingSupplierBuilder constructor");
+        log.trace("Exiting BlockingSupplierBuilder constructor");
     }
 
     /**
@@ -64,19 +64,19 @@ public class BlockingSupplierBuilder<Supplied>
      * @return this builder instance for method chaining
      */
     public BlockingSupplierBuilder<Supplied> withTimeout(Long timeoutMillis) {
-        log.atTrace().log("Entering withTimeout method with timeout: {}", timeoutMillis);
+        log.trace("Entering withTimeout method with timeout: {}", timeoutMillis);
         this.timeoutMillis = timeoutMillis;
-        log.atTrace().log("Exiting withTimeout method");
+        log.trace("Exiting withTimeout method");
         return this;
     }
 
     @Override
     public ISupplier<Supplied> build() throws DslException {
-        log.atTrace().log("Entering build method");
-        log.atDebug().log("Building BlockingSupplier with timeout: {}", timeoutMillis);
+        log.trace("Entering build method");
+        log.debug("Building BlockingSupplier with timeout: {}", timeoutMillis);
         ISupplier<Supplied> result = new BlockingSupplier<>(queue, suppliedClass, timeoutMillis);
-        log.atDebug().log("Build completed for BlockingSupplier");
-        log.atTrace().log("Exiting build method");
+        log.debug("Build completed for BlockingSupplier");
+        log.trace("Exiting build method");
         return result;
     }
 
@@ -104,10 +104,10 @@ public class BlockingSupplierBuilder<Supplied>
      * @return a new BlockingSupplierBuilder instance
      */
     public static <Supplied> BlockingSupplierBuilder<Supplied> of(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass) {
-        log.atTrace().log("Entering static of method");
-        log.atDebug().log("Creating BlockingSupplierBuilder");
+        log.trace("Entering static of method");
+        log.debug("Creating BlockingSupplierBuilder");
         BlockingSupplierBuilder<Supplied> result = new BlockingSupplierBuilder<>(queue, suppliedClass);
-        log.atTrace().log("Exiting static of method");
+        log.trace("Exiting static of method");
         return result;
     }
 }

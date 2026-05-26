@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IMethodReturn;
@@ -15,12 +17,10 @@ import com.garganttua.core.reflection.constructors.ResolvedConstructor;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ContextualConstructorBinder<Constructed>
         extends ContextualExecutableBinder<Constructed, Void>
         implements IContextualConstructorBinder<Constructed> {
+    private static final IDiagnostic log = Diagnostics.of(ContextualConstructorBinder.class);
 
     private final IClass<Constructed> objectClass;
     private final IConstructor<Constructed> constructor;
@@ -29,11 +29,11 @@ public class ContextualConstructorBinder<Constructed>
             IConstructor<Constructed> constructor,
             List<ISupplier<?>> parameterSuppliers) {
         super(parameterSuppliers);
-        log.atTrace().log("Creating ContextualConstructorBinder for class={}, constructor params={}",
+        log.trace("Creating ContextualConstructorBinder for class={}, constructor params={}",
                 objectClass.getName(), constructor.getParameterCount());
         this.objectClass = Objects.requireNonNull(objectClass, "Object class cannot be null");
         this.constructor = Objects.requireNonNull(constructor, "Constructor cannot be null");
-        log.atDebug().log("ContextualConstructorBinder created for class {} with {} parameters", objectClass.getName(),
+        log.debug("ContextualConstructorBinder created for class {} with {} parameters", objectClass.getName(),
                 parameterSuppliers.size());
     }
 
@@ -44,13 +44,13 @@ public class ContextualConstructorBinder<Constructed>
 
     @Override
     public Optional<IMethodReturn<Constructed>> execute(Void ownerContext, Object... contexts) throws ReflectionException {
-        log.atTrace().log("Executing contextual constructor for class {}", objectClass.getName());
+        log.trace("Executing contextual constructor for class {}", objectClass.getName());
         Object[] args = this.buildArguments(contexts);
-        log.atDebug().log("Invoking constructor for class {} with {} arguments", objectClass.getName(),
+        log.debug("Invoking constructor for class {} with {} arguments", objectClass.getName(),
                 args.length);
         ConstructorInvoker<Constructed> invoker = new ConstructorInvoker<>(new ResolvedConstructor<>(constructor));
         IMethodReturn<Constructed> result = invoker.newInstance(args);
-        log.atDebug().log("Successfully created instance of class {}", objectClass.getName());
+        log.debug("Successfully created instance of class {}", objectClass.getName());
         return Optional.of(result);
     }
 

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationNode;
@@ -14,10 +16,8 @@ import com.garganttua.core.configuration.IConfigurationSource;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class BuilderPopulator implements IConfigurationPopulator {
+    private static final IDiagnostic log = Diagnostics.of(BuilderPopulator.class);
 
     private final List<IConfigurationFormat> formats;
     private final MethodMapping methodMapping;
@@ -41,7 +41,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
         }
 
         for (var warning : context.getWarnings()) {
-            log.atWarn().log("{}", warning);
+            log.warn("{}", warning);
         }
 
         return builder;
@@ -56,7 +56,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
     @Override
     public <B extends IBuilder<?>> B populate(B builder, IConfigurationSource source, IConfigurationFormat format)
             throws ConfigurationException {
-        log.atDebug().log("Populating builder {} from {}", builder.getClass().getSimpleName(), source.getDescription());
+        log.debug("Populating builder {} from {}", builder.getClass().getSimpleName(), source.getDescription());
         var node = format.parse(source.getInputStream());
         return populate(builder, node);
     }
@@ -103,7 +103,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
                 handleValueNode(builder, method, node);
             } else {
                 // NULL node - skip
-                log.atDebug().log("Skipping null node at {}", context.getCurrentPath());
+                log.debug("Skipping null node at {}", context.getCurrentPath());
             }
         } catch (ConfigurationException e) {
             throw e;
@@ -226,7 +226,7 @@ public class BuilderPopulator implements IConfigurationPopulator {
             return;
         }
 
-        log.atWarn().log("Cannot map value '{}' to method {} with {} parameters",
+        log.warn("Cannot map value '{}' to method {} with {} parameters",
                 text, method.getName(), method.getParameterCount());
     }
 

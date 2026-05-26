@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IMethodReturn;
@@ -16,10 +18,8 @@ import com.garganttua.core.reflection.methods.MethodInvoker;
 import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class MethodDelegate {
+    private static final IDiagnostic log = Diagnostics.of(MethodDelegate.class);
 
     private final IReflectionProvider provider;
 
@@ -28,7 +28,7 @@ class MethodDelegate {
     }
 
     Optional<IMethod> findMethod(IClass<?> clazz, String methodName) {
-        log.atTrace().log("Finding method {} in class: {}", methodName, clazz.getName());
+        log.trace("Finding method {} in class: {}", methodName, clazz.getName());
         for (IMethod m : clazz.getDeclaredMethods()) {
             if (m.getName().equals(methodName)) {
                 return Optional.of(m);
@@ -41,7 +41,7 @@ class MethodDelegate {
     }
 
     List<IMethod> findMethods(IClass<?> clazz, String methodName) {
-        log.atTrace().log("Finding all methods named {} in class: {}", methodName, clazz.getName());
+        log.trace("Finding all methods named {} in class: {}", methodName, clazz.getName());
         List<IMethod> methods = new ArrayList<>();
         HashSet<String> seenSignatures = new HashSet<>();
 
@@ -67,7 +67,7 @@ class MethodDelegate {
     }
 
     Optional<IMethod> findMethodAnnotatedWith(IClass<?> clazz, IClass<? extends Annotation> annotation) {
-        log.atTrace().log("Finding method annotated with {} in class: {}", annotation.getName(), clazz.getName());
+        log.trace("Finding method annotated with {} in class: {}", annotation.getName(), clazz.getName());
         for (IMethod m : clazz.getDeclaredMethods()) {
             if (m.isAnnotationPresent(annotation)) {
                 return Optional.of(m);

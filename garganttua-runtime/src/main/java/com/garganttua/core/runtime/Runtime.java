@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.slf4j.MDC;
-
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.IInjectionContext;
@@ -20,11 +20,9 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Runtime<InputType, OutputType>
 		implements IRuntime<InputType, OutputType>, IObservable<ObservableEvent> {
+    private static final IDiagnostic log = Diagnostics.of(Runtime.class);
 
 	private final String name;
 	private final IInjectionContext injectionContext;
@@ -42,7 +40,7 @@ public class Runtime<InputType, OutputType>
 			Class<OutputType> outputType,
 			Map<String, ISupplier<?>> variables) {
 
-		log.atTrace().log(
+		log.trace(
 				"[Runtime.<init>] Initializing Runtime with name={}, inputType={}, outputType={}, steps={}, presetVariables={}",
 				name, inputType, outputType, steps, variables);
 
@@ -56,7 +54,7 @@ public class Runtime<InputType, OutputType>
 		this.presetVariables = Collections.synchronizedMap(
 				Map.copyOf(Objects.requireNonNull(variables, "Preset variables map cannot be null")));
 
-		log.atDebug().log("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
+		log.debug("[Runtime.<init>] Runtime initialized successfully with name={}", this.name);
 	}
 
 	@Override
@@ -79,10 +77,12 @@ public class Runtime<InputType, OutputType>
 	public Optional<IRuntimeResult<InputType, OutputType>> execute(UUID uuid, InputType input)
 			throws RuntimeException {
 
-		MDC.put("uuid", uuid.toString());
-
-		log.atDebug().log("Starting runtime execution");
-		log.atTrace().log("Runtime input received");
+		// Note: SLF4J MDC removed during diagnostic facade migration. The uuid
+		// flows through observability events (StartEvent.executionId etc.)
+		// instead. If log-prefix correlation is later needed, a per-thread
+		// scope value on IDiagnosticContext can be added.
+		log.debug("Starting runtime execution uuid={}", uuid);
+		log.trace("Runtime input received");
 
 		IRuntimeContext<InputType, OutputType> runtimeContext = null;
 		IRuntimeResult<InputType, OutputType> result = null;
@@ -93,7 +93,7 @@ public class Runtime<InputType, OutputType>
 			scope.fireStart(runtimeSource);
 
 			try {
-				log.atDebug().log("Creating runtime context");
+				log.debug("Creating runtime context");
 
 				runtimeContext = this.injectionContext
 						.newChildContext(IClass.getClass(IRuntimeContext.class), input, this.outputType,
@@ -101,24 +101,22 @@ public class Runtime<InputType, OutputType>
 
 				runtimeContext.onInit().onStart();
 
-				log.atDebug().log("Building executor chain");
+				log.debug("Building executor chain");
 
 				IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>(false);
 
 				this.steps.values().forEach(step -> {
-					log.atTrace().log("Registering step");
+					log.trace("Registering step");
 					step.defineExecutionStep(chain);
 				});
 
-				log.atDebug().log("Executing runtime chain");
+				log.debug("Executing runtime chain");
 
 				chain.execute(runtimeContext);
 
 			} catch (Exception e) {
 
-				log.atError()
-						.setCause(e)
-						.log("Fatal error during runtime execution");
+				log.error("Fatal error during runtime execution", e);
 
 				scope.fireError(runtimeSource, e);
 				throw new RuntimeException(e, Optional.ofNullable(runtimeContext));
@@ -126,8 +124,7 @@ public class Runtime<InputType, OutputType>
 			} finally {
 
 				if (runtimeContext != null) {
-					log.atDebug()
-							.log("Stopping runtime context");
+					log.debug("Stopping runtime context");
 
 					endCode = runtimeContext.getCode().orElse(null);
 
@@ -135,17 +132,12 @@ public class Runtime<InputType, OutputType>
 
 					result = runtimeContext.getResult();
 
-					log.atTrace()
-							.log("Runtime result collected");
+					log.trace("Runtime result collected");
 
 					runtimeContext.onFlush();
 				}
 
-				log.atDebug()
-						.log("Runtime execution finished");
-
-				MDC.remove("uuid");
-				MDC.clear();
+				log.debug("Runtime execution finished");
 			}
 
 			scope.fireEnd(runtimeSource, endCode);

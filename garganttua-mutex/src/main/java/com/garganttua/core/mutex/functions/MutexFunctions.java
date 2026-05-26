@@ -1,5 +1,7 @@
 package com.garganttua.core.mutex.functions;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.mutex.IMutex;
@@ -12,7 +14,6 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Expression functions for mutex-based synchronization.
@@ -45,8 +46,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutexManager
  * @see InterruptibleLeaseMutex
  */
-@Slf4j
 public final class MutexFunctions {
+    private static final IDiagnostic log = Diagnostics.of(MutexFunctions.class);
 
     private MutexFunctions() {
         // Utility class
@@ -71,7 +72,7 @@ public final class MutexFunctions {
     @Expression(name = "sync", description = "Synchronizes execution using a local JVM mutex")
     public static Object sync(@Nullable Object mutexName, @Nullable ISupplier<?> expression) {
         String nameStr = mutexName == null ? null : mutexName.toString();
-        log.atTrace().log("Entering sync(mutexName={}, expression={})", nameStr, expression);
+        log.trace("Entering sync(mutexName={}, expression={})", nameStr, expression);
 
         if (nameStr == null || nameStr.isBlank()) {
             throw new ExpressionException("sync: mutex name cannot be null or blank");
@@ -92,22 +93,22 @@ public final class MutexFunctions {
             MutexName name = new MutexName(IClass.getClass(InterruptibleLeaseMutex.class), nameStr);
             IMutex mutex = manager.mutex(name);
 
-            log.atDebug().log("Acquiring mutex: {}", name);
+            log.debug("Acquiring mutex: {}", name);
 
             // Execute expression inside mutex
             Object result = mutex.acquire(() -> {
-                log.atTrace().log("Mutex acquired, evaluating expression");
+                log.trace("Mutex acquired, evaluating expression");
                 return expression.supply().orElse(null);
             });
 
-            log.atDebug().log("Mutex released, result: {}", result);
+            log.debug("Mutex released, result: {}", result);
             return result;
 
         } catch (MutexException e) {
-            log.atError().log("sync: mutex operation failed for '{}'", nameStr, e);
+            log.error("sync: mutex operation failed for '{}'", nameStr, e);
             throw new ExpressionException("sync: mutex operation failed - " + e.getMessage());
         } catch (Exception e) {
-            log.atError().log("sync: expression evaluation failed", e);
+            log.error("sync: expression evaluation failed", e);
             throw new ExpressionException("sync: expression evaluation failed - " + e.getMessage());
         }
     }

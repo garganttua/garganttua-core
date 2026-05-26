@@ -1,8 +1,8 @@
 package com.garganttua.core.mutex;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when mutex operations fail.
@@ -53,8 +53,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutex
  * @see IMutexManager
  */
-@Slf4j
 public class MutexException extends CoreException{
+    private static final IDiagnostic log = Diagnostics.of(MutexException.class);
 
     /**
      * Constructs a new MutexException with the specified message.
@@ -63,7 +63,7 @@ public class MutexException extends CoreException{
      */
     public MutexException(String message) {
         super(MutexException.MUTEX_ERROR, message);
-        log.atTrace().log("MutexException created with message: {}", message);
+        log.trace("MutexException created with message: {}", message);
     }
 
     /**
@@ -79,7 +79,7 @@ public class MutexException extends CoreException{
      */
     public MutexException(String message, Throwable cause) {
         super(MutexException.MUTEX_ERROR, message, cause);
-        log.atTrace().log("MutexException created with message: {} and cause: {}", message, cause.getClass().getSimpleName());
+        log.trace("MutexException created with message: {} and cause: {}", message, cause.getClass().getSimpleName());
     }
 
     /**
@@ -94,7 +94,7 @@ public class MutexException extends CoreException{
      */
     public MutexException(Throwable cause) {
         super(MutexException.MUTEX_ERROR, cause);
-        log.atTrace().log("MutexException created from cause: {}", cause.getClass().getSimpleName());
+        log.trace("MutexException created from cause: {}", cause.getClass().getSimpleName());
     }
 
 }

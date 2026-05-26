@@ -5,21 +5,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IMethodReturn;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Methods {
+    private static final IDiagnostic log = Diagnostics.of(Methods.class);
 
         public static boolean isStatic(IMethod method) {
                 return Modifier.isStatic(method.getModifiers());
         }
 
         public static String prettyColored(IMethod m) {
-                log.atTrace().log("Creating pretty colored representation for method: {}", m);
+                log.trace("Creating pretty colored representation for method: {}", m);
                 return "\u001B[36m" + m.getDeclaringClass().getSimpleName() + "\u001B[0m"
                                 + "."
                                 + "\u001B[32m" + m.getName() + "\u001B[0m"
@@ -31,7 +31,7 @@ public class Methods {
         }
 
         public static String pretty(IMethod method) {
-                log.atTrace().log("Creating pretty representation for method: {}", method);
+                log.trace("Creating pretty representation for method: {}", method);
 
                 String pretty = method.getDeclaringClass().getSimpleName()
                                 + "."

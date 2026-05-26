@@ -2,13 +2,13 @@ package com.garganttua.core.reflection.dsl;
 
 import java.util.List;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class ProviderSelector implements IReflectionProvider {
+    private static final IDiagnostic log = Diagnostics.of(ProviderSelector.class);
 
     private final List<IReflectionProvider> providers;
 
@@ -44,7 +44,7 @@ class ProviderSelector implements IReflectionProvider {
             try {
                 return provider.forName(className);
             } catch (ClassNotFoundException e) {
-                log.atTrace().log("Provider {} could not find class {}", provider.getClass().getName(), className);
+                log.trace("Provider {} could not find class {}", provider.getClass().getName(), className);
             }
         }
         throw new ClassNotFoundException(className);
@@ -56,7 +56,7 @@ class ProviderSelector implements IReflectionProvider {
             try {
                 return provider.forName(className, initialize, loader);
             } catch (ClassNotFoundException e) {
-                log.atTrace().log("Provider {} could not find class {}", provider.getClass().getName(), className);
+                log.trace("Provider {} could not find class {}", provider.getClass().getName(), className);
             }
         }
         throw new ClassNotFoundException(className);

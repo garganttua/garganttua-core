@@ -35,7 +35,6 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
@@ -59,9 +58,6 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 
 //@Execution(ExecutionMode.CONCURRENT)
 @Disabled("Performances tests, too heavy for standard build")
@@ -174,8 +170,9 @@ public class PerformancesTest {
         }
 
         private void deactivateLogs() {
-                Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-                root.setLevel(Level.OFF);
+                // Migrated from logback — use IDiagnostic provider swap.
+                com.garganttua.core.diagnostic.Diagnostics.setProvider(
+                        com.garganttua.core.diagnostic.NoopDiagnosticProvider.INSTANCE);
         }
 
         private void finalizeReport(Instant start, Document document, Map<Instant, Double> cpuSamples,

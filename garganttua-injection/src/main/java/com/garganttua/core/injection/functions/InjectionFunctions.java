@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanReference;
@@ -17,7 +19,6 @@ import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.reflection.IClass;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Expression functions for interacting with the dependency injection context.
@@ -65,8 +66,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IInjectionContext
  * @see BeanReference
  */
-@Slf4j
 public final class InjectionFunctions {
+    private static final IDiagnostic log = Diagnostics.of(InjectionFunctions.class);
 
     private InjectionFunctions() {
         // Utility class
@@ -92,7 +93,7 @@ public final class InjectionFunctions {
      */
     @Expression(name = "getBean", description = "Gets a bean from the injection context by type")
     public static Object getBean(@Nullable Class<?> type) {
-        log.atTrace().log("Entering getBean(type={})", type);
+        log.trace("Entering getBean(type={})", type);
 
         if (type == null) {
             throw new ExpressionException("getBean: type cannot be null");
@@ -103,10 +104,10 @@ public final class InjectionFunctions {
             BeanReference<?> ref = new BeanReference<>(IClass.getClass(type), Optional.empty(), Optional.empty(), Set.of());
             Optional<?> bean = ctx.queryBean(ref);
             Object result = bean.orElse(null);
-            log.atDebug().log("getBean result: {}", result);
+            log.debug("getBean result: {}", result);
             return result;
         } catch (DiException e) {
-            log.atError().log("getBean failed for type {}", type, e);
+            log.error("getBean failed for type {}", type, e);
             throw new ExpressionException("getBean: failed to query bean - " + e.getMessage());
         }
     }
@@ -123,7 +124,7 @@ public final class InjectionFunctions {
     @Expression(name = "getBeanByRef", description = "Gets a bean by reference string (e.g., 'MyService#name' or 'provider::MyService!singleton')")
     public static Object getBeanByRef(@Nullable Object reference) {
         String refStr = reference == null ? null : reference.toString();
-        log.atTrace().log("Entering getBeanByRef(reference={})", refStr);
+        log.trace("Entering getBeanByRef(reference={})", refStr);
 
         if (refStr == null || refStr.isBlank()) {
             throw new ExpressionException("getBeanByRef: reference cannot be null or blank");
@@ -137,10 +138,10 @@ public final class InjectionFunctions {
 
             Optional<?> bean = ctx.queryBean(provider, beanRef);
             Object result = bean.orElse(null);
-            log.atDebug().log("getBeanByRef result: {}", result);
+            log.debug("getBeanByRef result: {}", result);
             return result;
         } catch (DiException e) {
-            log.atError().log("getBeanByRef failed for reference {}", refStr, e);
+            log.error("getBeanByRef failed for reference {}", refStr, e);
             throw new ExpressionException("getBeanByRef: failed to query bean - " + e.getMessage());
         }
     }
@@ -154,7 +155,7 @@ public final class InjectionFunctions {
      */
     @Expression(name = "getBeans", description = "Gets all beans of a specific type from the injection context")
     public static List<?> getBeans(@Nullable Class<?> type) {
-        log.atTrace().log("Entering getBeans(type={})", type);
+        log.trace("Entering getBeans(type={})", type);
 
         if (type == null) {
             throw new ExpressionException("getBeans: type cannot be null");
@@ -164,10 +165,10 @@ public final class InjectionFunctions {
             IInjectionContext ctx = getContext();
             BeanReference<?> ref = new BeanReference<>(IClass.getClass(type), Optional.empty(), Optional.empty(), Set.of());
             List<?> beans = ctx.queryBeans(ref);
-            log.atDebug().log("getBeans found {} beans of type {}", beans.size(), type);
+            log.debug("getBeans found {} beans of type {}", beans.size(), type);
             return beans;
         } catch (DiException e) {
-            log.atError().log("getBeans failed for type {}", type, e);
+            log.error("getBeans failed for type {}", type, e);
             throw new ExpressionException("getBeans: failed to query beans - " + e.getMessage());
         }
     }
@@ -181,7 +182,7 @@ public final class InjectionFunctions {
      */
     @Expression(name = "hasBean", description = "Checks if a bean exists in the injection context")
     public static boolean hasBean(@Nullable Object reference) {
-        log.atTrace().log("Entering hasBean(reference={})", reference);
+        log.trace("Entering hasBean(reference={})", reference);
 
         if (reference == null) {
             return false;
@@ -194,7 +195,7 @@ public final class InjectionFunctions {
                 return getBeanByRef(reference) != null;
             }
         } catch (ExpressionException e) {
-            log.atDebug().log("hasBean returned false due to: {}", e.getMessage());
+            log.debug("hasBean returned false due to: {}", e.getMessage());
             return false;
         }
     }
@@ -209,16 +210,16 @@ public final class InjectionFunctions {
      */
     @Expression(name = "beanProviderCount", description = "Returns the number of bean providers")
     public static int beanProviderCount() {
-        log.atTrace().log("Entering beanProviderCount()");
+        log.trace("Entering beanProviderCount()");
 
         try {
             IInjectionContext ctx = getContext();
             Set<IBeanProvider> providers = ctx.getBeanProviders();
             int count = providers.size();
-            log.atDebug().log("beanProviderCount: {}", count);
+            log.debug("beanProviderCount: {}", count);
             return count;
         } catch (DiException e) {
-            log.atError().log("beanProviderCount failed", e);
+            log.error("beanProviderCount failed", e);
             throw new ExpressionException("beanProviderCount: failed - " + e.getMessage());
         }
     }
@@ -232,7 +233,7 @@ public final class InjectionFunctions {
      */
     @Expression(name = "beanCount", description = "Returns the total number of beans in the injection context")
     public static int beanCount() {
-        log.atTrace().log("Entering beanCount()");
+        log.trace("Entering beanCount()");
 
         try {
             IInjectionContext ctx = getContext();
@@ -240,10 +241,10 @@ public final class InjectionFunctions {
             int count = ctx.getBeanProviders().stream()
                     .mapToInt(IBeanProvider::size)
                     .sum();
-            log.atDebug().log("beanCount: {}", count);
+            log.debug("beanCount: {}", count);
             return count;
         } catch (DiException e) {
-            log.atError().log("beanCount failed", e);
+            log.error("beanCount failed", e);
             throw new ExpressionException("beanCount: failed - " + e.getMessage());
         }
     }
@@ -259,7 +260,7 @@ public final class InjectionFunctions {
     @Expression(name = "beanCountInProvider", description = "Returns the number of beans in a specific provider")
     public static int beanCountInProvider(@Nullable Object providerName) {
         String name = providerName == null ? null : providerName.toString();
-        log.atTrace().log("Entering beanCountInProvider(providerName={})", name);
+        log.trace("Entering beanCountInProvider(providerName={})", name);
 
         if (name == null || name.isBlank()) {
             throw new ExpressionException("beanCountInProvider: provider name cannot be null or blank");
@@ -273,10 +274,10 @@ public final class InjectionFunctions {
                 throw new ExpressionException("beanCountInProvider: provider not found - " + name);
             }
             int count = provider.get().size();
-            log.atDebug().log("beanCountInProvider({}): {}", name, count);
+            log.debug("beanCountInProvider({}): {}", name, count);
             return count;
         } catch (DiException e) {
-            log.atError().log("beanCountInProvider failed for provider {}", name, e);
+            log.error("beanCountInProvider failed for provider {}", name, e);
             throw new ExpressionException("beanCountInProvider: failed - " + e.getMessage());
         }
     }
@@ -294,7 +295,7 @@ public final class InjectionFunctions {
     @Expression(name = "getProperty", description = "Gets a property value by key and type")
     public static Object getProperty(@Nullable Object key, @Nullable Class<?> type) {
         String keyStr = key == null ? null : key.toString();
-        log.atTrace().log("Entering getProperty(key={}, type={})", keyStr, type);
+        log.trace("Entering getProperty(key={}, type={})", keyStr, type);
 
         if (keyStr == null || keyStr.isBlank()) {
             throw new ExpressionException("getProperty: key cannot be null or blank");
@@ -307,10 +308,10 @@ public final class InjectionFunctions {
             IInjectionContext ctx = getContext();
             Optional<?> value = ctx.getProperty(keyStr, IClass.getClass(type));
             Object result = value.orElse(null);
-            log.atDebug().log("getProperty result: {}", result);
+            log.debug("getProperty result: {}", result);
             return result;
         } catch (DiException e) {
-            log.atError().log("getProperty failed for key {}", keyStr, e);
+            log.error("getProperty failed for key {}", keyStr, e);
             throw new ExpressionException("getProperty: failed - " + e.getMessage());
         }
     }
@@ -340,7 +341,7 @@ public final class InjectionFunctions {
     public static void setProperty(@Nullable Object providerName, @Nullable Object key, @Nullable Object value) {
         String provider = providerName == null ? null : providerName.toString();
         String keyStr = key == null ? null : key.toString();
-        log.atTrace().log("Entering setProperty(provider={}, key={}, value={})", provider, keyStr, value);
+        log.trace("Entering setProperty(provider={}, key={}, value={})", provider, keyStr, value);
 
         if (provider == null || provider.isBlank()) {
             throw new ExpressionException("setProperty: provider name cannot be null or blank");
@@ -355,9 +356,9 @@ public final class InjectionFunctions {
         try {
             IInjectionContext ctx = getContext();
             ctx.setProperty(provider, keyStr, value);
-            log.atDebug().log("setProperty: {}={} set in provider {}", keyStr, value, provider);
+            log.debug("setProperty: {}={} set in provider {}", keyStr, value, provider);
         } catch (DiException e) {
-            log.atError().log("setProperty failed for provider={}, key={}", provider, keyStr, e);
+            log.error("setProperty failed for provider={}, key={}", provider, keyStr, e);
             throw new ExpressionException("setProperty: failed - " + e.getMessage());
         }
     }
@@ -371,7 +372,7 @@ public final class InjectionFunctions {
     @Expression(name = "hasProperty", description = "Checks if a property exists")
     public static boolean hasProperty(@Nullable Object key) {
         String keyStr = key == null ? null : key.toString();
-        log.atTrace().log("Entering hasProperty(key={})", keyStr);
+        log.trace("Entering hasProperty(key={})", keyStr);
 
         if (keyStr == null || keyStr.isBlank()) {
             return false;
@@ -380,10 +381,10 @@ public final class InjectionFunctions {
         try {
             IInjectionContext ctx = getContext();
             boolean exists = ctx.getProperty(keyStr, IClass.getClass(Object.class)).isPresent();
-            log.atDebug().log("hasProperty({}): {}", keyStr, exists);
+            log.debug("hasProperty({}): {}", keyStr, exists);
             return exists;
         } catch (Exception e) {
-            log.atDebug().log("hasProperty returned false due to: {}", e.getMessage());
+            log.debug("hasProperty returned false due to: {}", e.getMessage());
             return false;
         }
     }
@@ -396,16 +397,16 @@ public final class InjectionFunctions {
      */
     @Expression(name = "propertyProviderCount", description = "Returns the number of property providers")
     public static int propertyProviderCount() {
-        log.atTrace().log("Entering propertyProviderCount()");
+        log.trace("Entering propertyProviderCount()");
 
         try {
             IInjectionContext ctx = getContext();
             Set<IPropertyProvider> providers = ctx.getPropertyProviders();
             int count = providers.size();
-            log.atDebug().log("propertyProviderCount: {}", count);
+            log.debug("propertyProviderCount: {}", count);
             return count;
         } catch (DiException e) {
-            log.atError().log("propertyProviderCount failed", e);
+            log.error("propertyProviderCount failed", e);
             throw new ExpressionException("propertyProviderCount: failed - " + e.getMessage());
         }
     }
@@ -419,7 +420,7 @@ public final class InjectionFunctions {
      */
     @Expression(name = "injectionInfo", description = "Returns summary information about the injection context")
     public static String injectionInfo() {
-        log.atTrace().log("Entering injectionInfo()");
+        log.trace("Entering injectionInfo()");
 
         try {
             IInjectionContext ctx = getContext();
@@ -450,10 +451,10 @@ public final class InjectionFunctions {
             }
 
             String info = sb.toString();
-            log.atDebug().log("injectionInfo:\n{}", info);
+            log.debug("injectionInfo:\n{}", info);
             return info;
         } catch (DiException e) {
-            log.atError().log("injectionInfo failed", e);
+            log.error("injectionInfo failed", e);
             throw new ExpressionException("injectionInfo: failed - " + e.getMessage());
         }
     }
@@ -471,7 +472,7 @@ public final class InjectionFunctions {
     @Expression(name = "addBean", description = "Adds a bean to a specific provider")
     public static void addBean(@Nullable Object providerName, @Nullable Class<?> type, @Nullable Object bean) {
         String provider = providerName == null ? null : providerName.toString();
-        log.atTrace().log("Entering addBean(provider={}, type={}, bean={})", provider, type, bean);
+        log.trace("Entering addBean(provider={}, type={}, bean={})", provider, type, bean);
 
         if (provider == null || provider.isBlank()) {
             throw new ExpressionException("addBean: provider name cannot be null or blank");
@@ -485,9 +486,9 @@ public final class InjectionFunctions {
             @SuppressWarnings("unchecked")
             BeanReference<Object> ref = new BeanReference<>((IClass<Object>) IClass.getClass(type), Optional.empty(), Optional.empty(), Set.of());
             ctx.addBean(provider, ref, bean);
-            log.atDebug().log("addBean: bean of type {} added to provider {}", type, provider);
+            log.debug("addBean: bean of type {} added to provider {}", type, provider);
         } catch (DiException e) {
-            log.atError().log("addBean failed for provider={}, type={}", provider, type, e);
+            log.error("addBean failed for provider={}, type={}", provider, type, e);
             throw new ExpressionException("addBean: failed - " + e.getMessage());
         }
     }
@@ -505,7 +506,7 @@ public final class InjectionFunctions {
     public static void addNamedBean(@Nullable Object providerName, @Nullable Class<?> type, @Nullable Object beanName, @Nullable Object bean) {
         String provider = providerName == null ? null : providerName.toString();
         String name = beanName == null ? null : beanName.toString();
-        log.atTrace().log("Entering addNamedBean(provider={}, type={}, name={}, bean={})", provider, type, name, bean);
+        log.trace("Entering addNamedBean(provider={}, type={}, name={}, bean={})", provider, type, name, bean);
 
         if (provider == null || provider.isBlank()) {
             throw new ExpressionException("addNamedBean: provider name cannot be null or blank");
@@ -522,9 +523,9 @@ public final class InjectionFunctions {
             @SuppressWarnings("unchecked")
             BeanReference<Object> ref = new BeanReference<>((IClass<Object>) IClass.getClass(type), Optional.empty(), Optional.of(name), Set.of());
             ctx.addBean(provider, ref, bean);
-            log.atDebug().log("addNamedBean: bean '{}' of type {} added to provider {}", name, type, provider);
+            log.debug("addNamedBean: bean '{}' of type {} added to provider {}", name, type, provider);
         } catch (DiException e) {
-            log.atError().log("addNamedBean failed for provider={}, type={}, name={}", provider, type, name, e);
+            log.error("addNamedBean failed for provider={}, type={}, name={}", provider, type, name, e);
             throw new ExpressionException("addNamedBean: failed - " + e.getMessage());
         }
     }
@@ -540,7 +541,7 @@ public final class InjectionFunctions {
     @Expression(name = "addSingleton", description = "Adds a singleton bean to a specific provider")
     public static void addSingleton(@Nullable Object providerName, @Nullable Class<?> type, @Nullable Object bean) {
         String provider = providerName == null ? null : providerName.toString();
-        log.atTrace().log("Entering addSingleton(provider={}, type={}, bean={})", provider, type, bean);
+        log.trace("Entering addSingleton(provider={}, type={}, bean={})", provider, type, bean);
 
         if (provider == null || provider.isBlank()) {
             throw new ExpressionException("addSingleton: provider name cannot be null or blank");
@@ -554,9 +555,9 @@ public final class InjectionFunctions {
             @SuppressWarnings("unchecked")
             BeanReference<Object> ref = new BeanReference<>((IClass<Object>) IClass.getClass(type), Optional.of(BeanStrategy.singleton), Optional.empty(), Set.of());
             ctx.addBean(provider, ref, bean);
-            log.atDebug().log("addSingleton: singleton bean of type {} added to provider {}", type, provider);
+            log.debug("addSingleton: singleton bean of type {} added to provider {}", type, provider);
         } catch (DiException e) {
-            log.atError().log("addSingleton failed for provider={}, type={}", provider, type, e);
+            log.error("addSingleton failed for provider={}, type={}", provider, type, e);
             throw new ExpressionException("addSingleton: failed - " + e.getMessage());
         }
     }

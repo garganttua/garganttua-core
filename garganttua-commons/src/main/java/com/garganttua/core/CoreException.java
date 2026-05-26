@@ -3,10 +3,11 @@ package com.garganttua.core;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base exception class for all Garganttua Core framework exceptions.
@@ -74,8 +75,8 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  * @see CoreExceptionCodes
  */
-@Slf4j
 public class CoreException extends RuntimeException {
+    private static final IDiagnostic log = Diagnostics.of(CoreException.class);
 
     /**
      * Error code for unknown or unclassified errors.
@@ -183,7 +184,6 @@ public class CoreException extends RuntimeException {
      * </p>
      */
     public static final int NATIVE_ERROR = 10;
-
 
     public static final int MUTEX_ERROR = 11;
 
@@ -320,7 +320,7 @@ public class CoreException extends RuntimeException {
      * @throws CoreException always throws either the found CoreException or a new wrapped one
      */
     public static void processException(Throwable e) throws CoreException {
-        log.atWarn().log("Error ", e);
+        log.warn("Error ", e);
         Optional<CoreException> coreException = CoreException.findFirstInException(e);
         if (coreException.isPresent()) {
             throw coreException.get();

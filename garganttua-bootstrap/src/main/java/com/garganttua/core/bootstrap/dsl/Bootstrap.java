@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.banner.BannerMode;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.FileBanner;
@@ -60,8 +62,6 @@ import jakarta.annotation.Priority;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Builder for bootstrapping Garganttua applications.
  *
@@ -95,9 +95,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBuiltRegistry>
         implements IBoostrap, IObservable<ObservableEvent> {
+    private static final IDiagnostic log = Diagnostics.of(Bootstrap.class);
 
     private static final String DEFAULT_VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
     private static final String SOURCE_MANUAL = "manual";
@@ -185,7 +185,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @return a new BootstrapBuilder
      */
     public static IBoostrap builder() {
-        log.atTrace().log("Creating new Bootstrap instance");
+        log.trace("Creating new Bootstrap instance");
         return new Bootstrap();
     }
 
@@ -199,7 +199,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         builderCollector.source(mapSupplier(manualBuilders), 0, SOURCE_MANUAL);
         builderCollector.source(mapSupplier(autoDetectedBuilders), 1, SOURCE_AUTO_DETECTED);
 
-        log.atDebug().log("Bootstrap initialized");
+        log.debug("Bootstrap initialized");
     }
 
     /**
@@ -235,35 +235,35 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 // so the global facade is now configured for subsequent IClass.getClass()
                 // calls in this Bootstrap's constructor.
             } catch (DslException e) {
-                log.atWarn().log("SPI-built ReflectionBuilder failed to build: {}", e.getMessage());
+                log.warn("SPI-built ReflectionBuilder failed to build: {}", e.getMessage());
             }
         }
     }
 
     @Override
     public IBoostrap withBanner(IBanner banner) {
-        log.atTrace().log("Setting custom banner");
+        log.trace("Setting custom banner");
         this.banner = banner;
         return this;
     }
 
     @Override
     public IBoostrap withBannerMode(BannerMode mode) {
-        log.atTrace().log("Setting banner mode: {}", mode);
+        log.trace("Setting banner mode: {}", mode);
         this.bannerMode = Objects.requireNonNull(mode, "Banner mode cannot be null");
         return this;
     }
 
     @Override
     public IBoostrap withApplicationName(String name) {
-        log.atTrace().log("Setting application name: {}", name);
+        log.trace("Setting application name: {}", name);
         this.applicationName = name != null ? name : "Garganttua";
         return this;
     }
 
     @Override
     public IBoostrap withApplicationVersion(String version) {
-        log.atTrace().log("Setting application version: {}", version);
+        log.trace("Setting application version: {}", version);
         this.applicationVersion = version != null ? version : DEFAULT_VERSION;
         return this;
     }
@@ -290,7 +290,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 bannerToPrint.print(new PrintStream(baos, true, StandardCharsets.UTF_8));
                 String bannerText = baos.toString(StandardCharsets.UTF_8);
                 for (String line : bannerText.split("\n")) {
-                    log.atInfo().log(line);
+                    log.info(line);
                 }
                 break;
             case OFF:
@@ -316,7 +316,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 applicationVersion,
                 applicationName);
         if (fileBanner != null) {
-            log.atDebug().log("Using banner from classpath: {}", FileBanner.DEFAULT_BANNER_LOCATION);
+            log.debug("Using banner from classpath: {}", FileBanner.DEFAULT_BANNER_LOCATION);
             return fileBanner;
         }
 
@@ -326,7 +326,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
     @Override
     public IBoostrap withPackage(String packageName) {
-        log.atTrace().log("Adding package: {}", packageName);
+        log.trace("Adding package: {}", packageName);
         Objects.requireNonNull(packageName, "Package name cannot be null");
         this.packages.add(packageName);
 
@@ -334,18 +334,18 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         propagatePackageToBuilders(packageName, manualBuilders);
         propagatePackageToBuilders(packageName, autoDetectedBuilders);
 
-        log.atDebug().log("Package added: {}", packageName);
+        log.debug("Package added: {}", packageName);
         return this;
     }
 
     @Override
     public IBoostrap withPackages(String[] packageNames) {
-        log.atTrace().log("Adding {} packages", packageNames != null ? packageNames.length : 0);
+        log.trace("Adding {} packages", packageNames != null ? packageNames.length : 0);
         Objects.requireNonNull(packageNames, "Package names array cannot be null");
         for (String pkg : packageNames) {
             this.withPackage(pkg);
         }
-        log.atDebug().log("All packages added");
+        log.debug("All packages added");
         return this;
     }
 
@@ -378,25 +378,25 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
     @Override
     public IBoostrap withBuilder(IBuilder<?> builder) {
-        log.atTrace().log("Adding builder: {}", builder != null ? builder.getClass().getSimpleName() : "null");
+        log.trace("Adding builder: {}", builder != null ? builder.getClass().getSimpleName() : "null");
         Objects.requireNonNull(builder, "Builder cannot be null");
         this.manualBuilders.put(builder.getClass().getName() + "#" + (manualBuilderSeq++), builder);
 
         propagatePackagesToBuilder(builder);
 
-        log.atDebug().log("Builder added: {}", builder.getClass().getSimpleName());
+        log.debug("Builder added: {}", builder.getClass().getSimpleName());
         return this;
     }
 
     @Override
     public String[] getPackages() {
-        log.atTrace().log("Getting packages, count: {}", packages.size());
+        log.trace("Getting packages, count: {}", packages.size());
         return packages.toArray(new String[0]);
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("Entering doAutoDetection()");
+        log.trace("Entering doAutoDetection()");
 
         // SPI fallback (Phase 2): even when the global IClass.reflection was
         // installed at constructor time, we still need to feed the bootstrap's
@@ -414,7 +414,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         if (this.autoDetect.booleanValue() && this.spiFallbackEnabled && !this.reflectionBuilderProvided) {
             IReflectionBuilder spiBuilder = buildReflectionBuilderFromSpi();
             if (spiBuilder != null) {
-                log.atDebug().log("Registering SPI-bootstrapped IReflectionBuilder on this Bootstrap");
+                log.debug("Registering SPI-bootstrapped IReflectionBuilder on this Bootstrap");
                 this.provide(spiBuilder);
                 this.withBuilder(spiBuilder);
                 this.spiAutoLoadedBuilders.add(spiBuilder);
@@ -431,8 +431,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             loadBootstrapBuildersFromSpi();
         }
 
-        log.atDebug().log("Auto-detection completed for {} packages", packages.size());
-        log.atTrace().log("Exiting doAutoDetection()");
+        log.debug("Auto-detection completed for {} packages", packages.size());
+        log.trace("Exiting doAutoDetection()");
     }
 
     /** Tracks whether the SPI builders summary has been emitted at INFO. */
@@ -453,10 +453,10 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 }
                 String className = builder.getClass().getName();
                 if (registeredClasses.contains(className)) {
-                    log.atDebug().log("SPI: skipping {} — already registered explicitly", className);
+                    log.debug("SPI: skipping {} — already registered explicitly", className);
                     continue;
                 }
-                log.atDebug().log("SPI: registering bootstrap builder {} via factory {}",
+                log.debug("SPI: registering bootstrap builder {} via factory {}",
                         className, factory.getClass().getName());
                 // withBuilder() so the builder is visible to downstream dep
                 // resolution AND has its own deps satisfied during Phase 1.
@@ -468,7 +468,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 registeredClasses.add(className);
                 added.add(builder.getClass().getSimpleName());
             } catch (Exception e) {
-                log.atWarn().log("SPI factory {} failed to create builder: {}",
+                log.warn("SPI factory {} failed to create builder: {}",
                         factory.getClass().getName(), e.getMessage());
             }
         }
@@ -476,9 +476,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         if (!added.isEmpty()) {
             String summary = "SPI bootstrap: builders=" + added;
             if (SPI_BUILDERS_LOGGED.compareAndSet(false, true)) {
-                log.atInfo().log(summary);
+                log.info(summary);
             } else {
-                log.atDebug().log(summary);
+                log.debug(summary);
             }
         }
     }
@@ -498,14 +498,14 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private static final AtomicBoolean SPI_SUMMARY_LOGGED = new AtomicBoolean(false);
 
     private static IReflectionBuilder buildReflectionBuilderFromSpi() {
-        log.atTrace().log("Attempting SPI bootstrap of IReflectionBuilder");
+        log.trace("Attempting SPI bootstrap of IReflectionBuilder");
         IReflectionBuilder rb = ReflectionBuilder.builder();
         List<String> providerLabels = new ArrayList<>();
         List<String> scannerLabels = new ArrayList<>();
 
         for (IReflectionProvider provider : sortedByPriority(ServiceLoader.load(IReflectionProvider.class))) {
             int priority = readPriority(provider);
-            log.atDebug().log("SPI: registering reflection provider {} with priority {}",
+            log.debug("SPI: registering reflection provider {} with priority {}",
                     provider.getClass().getName(), priority);
             rb.withProvider(provider, priority);
             providerLabels.add(provider.getClass().getSimpleName() + "@" + priority);
@@ -513,14 +513,14 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
         for (IAnnotationScanner scanner : sortedByPriority(ServiceLoader.load(IAnnotationScanner.class))) {
             int priority = readPriority(scanner);
-            log.atDebug().log("SPI: registering annotation scanner {} with priority {}",
+            log.debug("SPI: registering annotation scanner {} with priority {}",
                     scanner.getClass().getName(), priority);
             rb.withScanner(scanner, priority);
             scannerLabels.add(scanner.getClass().getSimpleName() + "@" + priority);
         }
 
         if (providerLabels.isEmpty() && scannerLabels.isEmpty()) {
-            log.atDebug().log("SPI bootstrap found no IReflectionProvider/IAnnotationScanner on the classpath");
+            log.debug("SPI bootstrap found no IReflectionProvider/IAnnotationScanner on the classpath");
             return null;
         }
 
@@ -531,9 +531,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         String summary = String.format("SPI bootstrap: providers=%s, scanners=%s",
                 providerLabels, scannerLabels);
         if (SPI_SUMMARY_LOGGED.compareAndSet(false, true)) {
-            log.atInfo().log(summary);
+            log.info(summary);
         } else {
-            log.atDebug().log(summary);
+            log.debug(summary);
         }
         return rb;
     }
@@ -554,7 +554,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
     @Override
     protected IBuiltRegistry doBuild() throws DslException {
-        log.atTrace().log("Entering doBuild()");
+        log.trace("Entering doBuild()");
         Instant startTime = Instant.now();
 
         try (ObservabilityEmitter.Scope outer = ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
@@ -577,7 +577,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         List<IBuilder<?>> allBuilders = getBuilders();
 
         if (allBuilders.isEmpty()) {
-            log.atWarn().log("No builders registered, returning null");
+            log.warn("No builders registered, returning null");
             return null;
         }
 
@@ -597,7 +597,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
         // Phase 2: Sort builders by dependency order (topological sort)
         List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
-        log.atDebug().log("Builders sorted by dependency order: {}",
+        log.debug("Builders sorted by dependency order: {}",
                 sortedBuilders.stream()
                         .map(b -> b.getClass().getSimpleName())
                         .toList());
@@ -641,12 +641,12 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 try {
                     lifecycleObject.onInit();
                 } catch (LifecycleException e) {
-                    log.atDebug().log("Lifecycle already initialized: {}", built.getClass().getSimpleName());
+                    log.debug("Lifecycle already initialized: {}", built.getClass().getSimpleName());
                 }
                 try {
                     lifecycleObject.onStart();
                 } catch (LifecycleException e) {
-                    log.atDebug().log("Lifecycle already started: {}", built.getClass().getSimpleName());
+                    log.debug("Lifecycle already started: {}", built.getClass().getSimpleName());
                 }
             }
 
@@ -658,7 +658,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         // Print summary
         printSummary(builtObjects, startupTime);
 
-        log.atTrace().log("Exiting doBuild()");
+        log.trace("Exiting doBuild()");
 
         return new BuiltRegistry(builtObjectsRegistry);
     }
@@ -668,7 +668,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private void printPhase(int phaseNumber, String phaseName, String details) {
         if (bannerMode == BannerMode.OFF) {
-            log.atDebug().log("Phase {}: {} ({})", phaseNumber, phaseName, details);
+            log.debug("Phase {}: {} ({})", phaseNumber, phaseName, details);
             return;
         }
 
@@ -687,7 +687,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private void printBuilderStart(String builderName) {
         if (bannerMode == BannerMode.OFF) {
-            log.atDebug().log("Building: {}", builderName);
+            log.debug("Building: {}", builderName);
             return;
         }
 
@@ -703,7 +703,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private void printBuilderComplete(String builderName) {
         if (bannerMode == BannerMode.OFF) {
-            log.atDebug().log("Built: {}", builderName);
+            log.debug("Built: {}", builderName);
             return;
         }
 
@@ -722,7 +722,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private void printLifecycleAction(String action, String componentName) {
         if (bannerMode == BannerMode.OFF) {
-            log.atDebug().log("{}: {}", action, componentName);
+            log.debug("{}: {}", action, componentName);
             return;
         }
 
@@ -760,7 +760,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             String summaryText = baos.toString(StandardCharsets.UTF_8);
             for (String line : summaryText.split("\n")) {
                 if (!line.isBlank()) {
-                    log.atInfo().log(line);
+                    log.info(line);
                 }
             }
         }
@@ -786,25 +786,25 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     @Override
     public IBuiltRegistry rebuild() throws DslException {
-        log.atTrace().log("Entering rebuild()");
+        log.trace("Entering rebuild()");
 
         if (this.built == null) {
-            log.atError().log("Cannot rebuild before initial build()");
+            log.error("Cannot rebuild before initial build()");
             throw new DslException("Cannot rebuild before initial build() has been called");
         }
 
         // Phase 1: Stop lifecycle objects (reverse order)
-        log.atDebug().log("Phase 1: Stopping lifecycle objects in reverse order");
+        log.debug("Phase 1: Stopping lifecycle objects in reverse order");
         List<Object> builtObjectsList = new ArrayList<>(builtObjectsRegistry.values());
         java.util.Collections.reverse(builtObjectsList);
         for (Object obj : builtObjectsList) {
             if (obj instanceof ILifecycle lifecycleObject) {
                 try {
-                    log.atDebug().log("Stopping lifecycle object: {}", obj.getClass().getSimpleName());
+                    log.debug("Stopping lifecycle object: {}", obj.getClass().getSimpleName());
                     lifecycleObject.onStop();
-                    log.atDebug().log("Stopped: {}", obj.getClass().getSimpleName());
+                    log.debug("Stopped: {}", obj.getClass().getSimpleName());
                 } catch (LifecycleException e) {
-                    log.atWarn().log("Failed to stop lifecycle object: {} - continuing with rebuild",
+                    log.warn("Failed to stop lifecycle object: {} - continuing with rebuild",
                             obj.getClass().getSimpleName(), e);
                 }
             }
@@ -812,33 +812,33 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
         // Phase 2: Re-run auto-detection for new @Bootstrap builders
         if (this.autoDetect.booleanValue()) {
-            log.atDebug().log("Phase 2: Re-running auto-detection for new builders");
+            log.debug("Phase 2: Re-running auto-detection for new builders");
             this.doAutoDetection();
-            log.atDebug().log("Auto-detection completed during rebuild");
+            log.debug("Auto-detection completed during rebuild");
         }
 
         // Phase 3: Rebuild each builder in dependency order
-        log.atDebug().log("Phase 3: Rebuilding {} builders in dependency order", getBuilders().size());
+        log.debug("Phase 3: Rebuilding {} builders in dependency order", getBuilders().size());
         List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
         List<Object> newBuiltObjects = new ArrayList<>();
 
         for (IBuilder<?> builder : sortedBuilders) {
-            log.atDebug().log("Rebuilding: {}", builder.getClass().getSimpleName());
+            log.debug("Rebuilding: {}", builder.getClass().getSimpleName());
             Object rebuilt;
 
             if (builder instanceof IRebuildableBuilder<?, ?> rebuildable) {
                 rebuilt = rebuildable.rebuild();
-                log.atDebug().log("Used rebuild() for builder: {}", builder.getClass().getSimpleName());
+                log.debug("Used rebuild() for builder: {}", builder.getClass().getSimpleName());
             } else {
                 // For non-rebuildable builders, just call build() which returns cached instance
                 rebuilt = builder.build();
-                log.atDebug().log("Used build() (cached) for builder: {}", builder.getClass().getSimpleName());
+                log.debug("Used build() (cached) for builder: {}", builder.getClass().getSimpleName());
             }
 
             if (rebuilt != null) {
                 builtObjectsRegistry.put(IClass.getClass(rebuilt.getClass()), rebuilt);
                 newBuiltObjects.add(rebuilt);
-                log.atDebug().log("Registered rebuilt object of type: {}", rebuilt.getClass().getName());
+                log.debug("Registered rebuilt object of type: {}", rebuilt.getClass().getName());
             }
 
             // Initialize and start lifecycle objects immediately.
@@ -848,22 +848,22 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 try {
                     lifecycleObject.onInit();
                 } catch (LifecycleException e) {
-                    log.atDebug().log("Lifecycle already initialized during rebuild: {}", rebuilt.getClass().getSimpleName());
+                    log.debug("Lifecycle already initialized during rebuild: {}", rebuilt.getClass().getSimpleName());
                 }
                 try {
                     lifecycleObject.onStart();
                 } catch (LifecycleException e) {
-                    log.atDebug().log("Lifecycle already started during rebuild: {}", rebuilt.getClass().getSimpleName());
+                    log.debug("Lifecycle already started during rebuild: {}", rebuilt.getClass().getSimpleName());
                 }
-                log.atDebug().log("Ready: {}", rebuilt.getClass().getSimpleName());
+                log.debug("Ready: {}", rebuilt.getClass().getSimpleName());
             }
 
-            log.atDebug().log("Successfully rebuilt: {}", builder.getClass().getSimpleName());
+            log.debug("Successfully rebuilt: {}", builder.getClass().getSimpleName());
         }
 
         this.built = new BuiltRegistry(builtObjectsRegistry);
-        log.atDebug().log("Rebuild completed successfully with {} objects", builtObjectsRegistry.size());
-        log.atTrace().log("Exiting rebuild()");
+        log.debug("Rebuild completed successfully with {} objects", builtObjectsRegistry.size());
+        log.trace("Exiting rebuild()");
 
         return this.built;
     }
@@ -878,7 +878,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @throws DslException if there is a circular dependency
      */
     private List<IBuilder<?>> sortBuildersByDependencies() throws DslException {
-        log.atTrace().log("Entering sortBuildersByDependencies()");
+        log.trace("Entering sortBuildersByDependencies()");
 
         Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph = new HashMap<>();
         Map<IBuilder<?>, Integer> inDegree = new HashMap<>();
@@ -888,7 +888,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         List<IBuilder<?>> sortedBuilders = performTopologicalSort(dependencyGraph, inDegree);
         validateNoCyclicDependencies(sortedBuilders);
 
-        log.atTrace().log("Exiting sortBuildersByDependencies()");
+        log.trace("Exiting sortBuildersByDependencies()");
         return sortedBuilders;
     }
 
@@ -965,7 +965,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         for (IBuilder<?> builder : getBuilders()) {
             if (inDegree.get(builder) == 0) {
                 queue.add(builder);
-                log.atDebug().log("Builder {} has no dependencies, will be built first",
+                log.debug("Builder {} has no dependencies, will be built first",
                         builder.getClass().getSimpleName());
             }
         }
@@ -986,7 +986,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             inDegree.put(dependent, newInDegree);
             if (newInDegree == 0) {
                 queue.add(dependent);
-                log.atDebug().log("Builder {} dependencies satisfied, adding to build queue",
+                log.debug("Builder {} dependencies satisfied, adding to build queue",
                         dependent.getClass().getSimpleName());
             }
         }
@@ -1026,10 +1026,10 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @throws DslException if dependency resolution fails
      */
     private void resolveDependencies() throws DslException {
-        log.atTrace().log("Entering resolveDependencies()");
+        log.trace("Entering resolveDependencies()");
 
         List<IObservableBuilder<?, ?>> observableBuilders = collectObservableBuilders();
-        log.atDebug().log("Found {} observable builders", observableBuilders.size());
+        log.debug("Found {} observable builders", observableBuilders.size());
 
         for (IBuilder<?> builder : getBuilders()) {
             if (builder instanceof IDependentBuilder) {
@@ -1037,7 +1037,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             }
         }
 
-        log.atTrace().log("Exiting resolveDependencies()");
+        log.trace("Exiting resolveDependencies()");
     }
 
     /**
@@ -1082,7 +1082,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         Set<IClass<? extends IObservableBuilder<?, ?>>> requiredDeps = dependentBuilder.require();
         Set<IClass<? extends IObservableBuilder<?, ?>>> usedDeps = dependentBuilder.use();
 
-        log.atDebug().log("Builder {} requires {} dependencies and uses {} dependencies",
+        log.debug("Builder {} requires {} dependencies and uses {} dependencies",
                 dependentBuilder.getClass().getSimpleName(), requiredDeps.size(), usedDeps.size());
 
         provideRequiredDependencies(dependentBuilder, observableBuilders, requiredDeps);
@@ -1109,7 +1109,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                         + " for builder: " + dependentBuilder.getClass().getSimpleName());
             }
             dependentBuilder.provide(dependency);
-            log.atDebug().log("Provided required dependency {} to {}",
+            log.debug("Provided required dependency {} to {}",
                     depClass.getSimpleName(), dependentBuilder.getClass().getSimpleName());
         }
     }
@@ -1131,10 +1131,10 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             IObservableBuilder<?, ?> dependency = findBuilderByClass(observableBuilders, depClass);
             if (dependency != null) {
                 dependentBuilder.provide(dependency);
-                log.atDebug().log("Provided optional dependency {} to {}",
+                log.debug("Provided optional dependency {} to {}",
                         depClass.getSimpleName(), dependentBuilder.getClass().getSimpleName());
             } else {
-                log.atDebug().log("Optional dependency {} not available for {}",
+                log.debug("Optional dependency {} not available for {}",
                         depClass.getSimpleName(), dependentBuilder.getClass().getSimpleName());
             }
         }
@@ -1171,7 +1171,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 if (builder instanceof IPackageableBuilder) {
                     IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
                     packageableBuilder.withPackage(packageName);
-                    log.atDebug().log("Package '{}' propagated to builder: {}",
+                    log.debug("Package '{}' propagated to builder: {}",
                             packageName, builder.getClass().getSimpleName());
                 }
             }
@@ -1186,7 +1186,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                     packageableBuilder.withPackage(packageName);
                 }
             }
-            log.atDebug().log("Propagated {} packages to builder: {}",
+            log.debug("Propagated {} packages to builder: {}",
                     this.packages.size(), builder.getClass().getSimpleName());
         }
     }
@@ -1290,7 +1290,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         // {@code @Bootstrap}-annotated classes was retired in 2026-05-26 to
         // remove the chicken-and-egg between Bootstrap and IReflection, and to
         // make the framework GraalVM-native-friendly.
-        log.atTrace().log("doAutoDetectionWithDependency({}) — no-op (SPI handles discovery)",
+        log.trace("doAutoDetectionWithDependency({}) — no-op (SPI handles discovery)",
                 dependency.getClass().getSimpleName());
     }
 

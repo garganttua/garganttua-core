@@ -4,41 +4,41 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.condition.ConditionException;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.XorCondition;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class XorConditionBuilder implements IConditionBuilder {
+    private static final IDiagnostic log = Diagnostics.of(XorConditionBuilder.class);
 
     private IConditionBuilder[] conditions;
 
     public XorConditionBuilder(IConditionBuilder[] conditions) throws ConditionException {
-        log.atTrace().log("Entering XorConditionBuilder constructor with {} conditions", conditions != null ? conditions.length : 0);
+        log.trace("Entering XorConditionBuilder constructor with {} conditions", conditions != null ? conditions.length : 0);
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
         if (this.conditions.length < 1) {
-            log.atError().log("No condition provided to XorConditionBuilder");
+            log.error("No condition provided to XorConditionBuilder");
             throw new ConditionException("No condition provided");
         }
-        log.atTrace().log("Exiting XorConditionBuilder constructor");
+        log.trace("Exiting XorConditionBuilder constructor");
     }
 
     @Override
     public ICondition build() throws DslException {
-        log.atTrace().log("Entering build() for XorConditionBuilder");
-        log.atDebug().log("Building XOR condition from {} condition builders", conditions.length);
+        log.trace("Entering build() for XorConditionBuilder");
+        log.debug("Building XOR condition from {} condition builders", conditions.length);
 
         ICondition condition = null;
         if (!isContextual())
             condition = new XorCondition(Arrays.stream(this.conditions).map(b -> b.build()).collect(Collectors.toSet()));
 
-        log.atDebug().log("XOR condition built successfully");
-        log.atTrace().log("Exiting build()");
+        log.debug("XOR condition built successfully");
+        log.trace("Exiting build()");
         return condition;
     }
 

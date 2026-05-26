@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.configuration.annotations.ConfigIgnore;
 import com.garganttua.core.configuration.annotations.ConfigProperty;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class MethodMapping {
+    private static final IDiagnostic log = Diagnostics.of(MethodMapping.class);
 
     private final MethodMappingStrategy strategy;
 
@@ -68,7 +68,7 @@ public class MethodMapping {
             }
         }
 
-        log.atDebug().log("No method found for config key '{}' on {}", configKey, builderClass.getSimpleName());
+        log.debug("No method found for config key '{}' on {}", configKey, builderClass.getSimpleName());
         return Optional.empty();
     }
 

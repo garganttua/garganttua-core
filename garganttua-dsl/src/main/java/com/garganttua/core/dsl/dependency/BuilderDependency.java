@@ -6,12 +6,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of builder dependency tracking and lifecycle management.
@@ -105,9 +105,9 @@ import lombok.extern.slf4j.Slf4j;
  * @param <Built> the type of object built by the dependency
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built>, Built>
         implements IBuilderDependency<Builder, Built> {
+    private static final IDiagnostic log = Diagnostics.of(BuilderDependency.class);
 
     private static final String LOG_PRESENT = "present";
     private static final String LOG_ABSENT = "absent";
@@ -126,12 +126,12 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      */
     @SuppressWarnings("unchecked")
     public BuilderDependency(IClass<? extends IObservableBuilder<?, ?>> dependencyClass, DependencySpec spec) {
-        log.atTrace().log("Creating phase-aware BuilderDependency for class: {} with phase: {}",
+        log.trace("Creating phase-aware BuilderDependency for class: {} with phase: {}",
             dependencyClass, spec.phase());
         this.dependencyClass = (IClass<Builder>) Objects.requireNonNull(dependencyClass,
             "Dependency class cannot be null");
         this.spec = Objects.requireNonNull(spec, "Dependency spec cannot be null");
-        log.atDebug().log("BuilderDependency created for: {}, phase: {}, isReady: {}, isEmpty: {}",
+        log.debug("BuilderDependency created for: {}, phase: {}, isReady: {}, isEmpty: {}",
             this.dependencyClass.getName(), spec.phase(), isReady(), isEmpty());
     }
 
@@ -143,23 +143,23 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
      */
     @SuppressWarnings("unchecked")
     void handle(IObservableBuilder<?, ?> observableBuilder) {
-        log.atTrace().log("Handling observableBuilder provision: {}", observableBuilder);
+        log.trace("Handling observableBuilder provision: {}", observableBuilder);
         if (!dependencyClass.isAssignableFrom(observableBuilder.getClass())) {
-            log.atWarn().log("Dependency type mismatch: expected {}, got {}",
+            log.warn("Dependency type mismatch: expected {}, got {}",
                 dependencyClass.getName(), observableBuilder.getClass().getName());
             return;
         }
 
         this.builder = (Builder) observableBuilder;
-        log.atDebug().log("Dependency builder stored: {}", dependencyClass.getName());
+        log.debug("Dependency builder stored: {}", dependencyClass.getName());
         tryResolve();
     }
 
     @Override
     public void handle(Built observable) {
-        log.atTrace().log("Handling built object notification: {}", observable);
+        log.trace("Handling built object notification: {}", observable);
         this.builtObject = Objects.requireNonNull(observable, "Built object cannot be null");
-        log.atDebug().log("Dependency marked with built object: {}, isReady: {}", observable, isReady());
+        log.debug("Dependency marked with built object: {}, isReady: {}", observable, isReady());
     }
 
     /**
@@ -182,9 +182,9 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         if (builder != null && builtObject == null) {
             try {
                 this.builtObject = this.builder.build();
-                log.atDebug().log("Dependency lazily resolved: {} -> {}", dependencyClass.getName(), builtObject);
+                log.debug("Dependency lazily resolved: {} -> {}", dependencyClass.getName(), builtObject);
             } catch (DslException e) {
-                log.atTrace().log("Dependency {} not yet buildable: {}", dependencyClass.getName(), e.getMessage());
+                log.trace("Dependency {} not yet buildable: {}", dependencyClass.getName(), e.getMessage());
             }
         }
     }
@@ -193,7 +193,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     public boolean isReady() {
         tryResolve();
         boolean ready = builder != null && builtObject != null;
-        log.atTrace().log("Checking if dependency is ready: {} (builder: {}, builtObject: {})",
+        log.trace("Checking if dependency is ready: {} (builder: {}, builtObject: {})",
             ready,
             builder != null ? LOG_PRESENT : LOG_ABSENT,
             builtObject != null ? LOG_PRESENT : LOG_ABSENT);
@@ -214,7 +214,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     @Override
     public boolean isEmpty() {
         boolean empty = builder == null && builtObject == null;
-        log.atTrace().log("Checking if dependency is empty: {} (builder: {}, builtObject: {})",
+        log.trace("Checking if dependency is empty: {} (builder: {}, builtObject: {})",
             empty,
             builder != null ? LOG_PRESENT : LOG_ABSENT,
             builtObject != null ? LOG_PRESENT : LOG_ABSENT);
@@ -223,16 +223,16 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
 
     @Override
     public IClass<Builder> getDependency() {
-        log.atTrace().log("Getting dependency class: {}", dependencyClass);
+        log.trace("Getting dependency class: {}", dependencyClass);
         return dependencyClass;
     }
 
     @Override
     public Built get() {
         tryResolve();
-        log.atTrace().log("Getting built object: {}", builtObject);
+        log.trace("Getting built object: {}", builtObject);
         if (!isReady()) {
-            log.atWarn().log("Attempting to get built object from non-ready dependency - builder: {}, builtObject: {}",
+            log.warn("Attempting to get built object from non-ready dependency - builder: {}, builtObject: {}",
                 builder != null ? LOG_PRESENT : LOG_ABSENT,
                 builtObject != null ? LOG_PRESENT : LOG_ABSENT);
             throw new IllegalStateException("Dependency is not ready: " + dependencyClass.getName());
@@ -242,9 +242,9 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
 
     @Override
     public Builder builder() {
-        log.atTrace().log("Getting builder: {}", builder);
+        log.trace("Getting builder: {}", builder);
         if (builder == null) {
-            log.atWarn().log("Attempting to get null builder");
+            log.warn("Attempting to get null builder");
             throw new IllegalStateException("Builder not yet provided for: " + dependencyClass.getName());
         }
         return builder;
@@ -252,38 +252,38 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
 
     @Override
     public void ifReady(Consumer<Built> consumer) {
-        log.atTrace().log("Executing ifReady with consumer");
+        log.trace("Executing ifReady with consumer");
         if (isReady()) {
-            log.atDebug().log("Dependency is ready, executing consumer");
+            log.debug("Dependency is ready, executing consumer");
             consumer.accept(builtObject);
         } else {
-            log.atDebug().log("Dependency not ready, skipping consumer");
+            log.debug("Dependency not ready, skipping consumer");
         }
     }
 
     @Override
     public void ifReadyOrElse(Consumer<Built> consumer, Runnable fallbackAction) {
-        log.atTrace().log("Executing ifReadyOrElse");
+        log.trace("Executing ifReadyOrElse");
         if (isReady()) {
-            log.atDebug().log("Dependency is ready, executing consumer");
+            log.debug("Dependency is ready, executing consumer");
             consumer.accept(builtObject);
         } else {
-            log.atDebug().log("Dependency not ready, executing fallback action");
+            log.debug("Dependency not ready, executing fallback action");
             fallbackAction.run();
         }
     }
 
     @Override
     public void ifReadyOrElseThrow(Consumer<Built> consumer) {
-        log.atTrace().log("Executing ifReadyOrElseThrow");
+        log.trace("Executing ifReadyOrElseThrow");
         if (!isReady()) {
-            log.atError().log("Dependency not ready, throwing exception - builder: {}, builtObject: {}",
+            log.error("Dependency not ready, throwing exception - builder: {}, builtObject: {}",
                 builder != null ? LOG_PRESENT : LOG_ABSENT,
                 builtObject != null ? LOG_PRESENT : LOG_ABSENT);
             throw new IllegalStateException("Dependency is not ready: " + dependencyClass.getName());
         }
         
-        log.atDebug().log("Dependency is ready, executing consumer");
+        log.debug("Dependency is ready, executing consumer");
         consumer.accept(builtObject);
     }
 
@@ -291,21 +291,21 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     public <X extends Throwable> void ifReadyOrElseThrow(
             Consumer<Built> consumer,
             Supplier<? extends X> exceptionSupplier) throws X {
-        log.atTrace().log("Executing ifReadyOrElseThrow with custom exception");
+        log.trace("Executing ifReadyOrElseThrow with custom exception");
         if (!isReady()) {
-            log.atError().log("Dependency not ready, throwing custom exception - builder: {}, builtObject: {}",
+            log.error("Dependency not ready, throwing custom exception - builder: {}, builtObject: {}",
                 builder != null ? LOG_PRESENT : LOG_ABSENT,
                 builtObject != null ? LOG_PRESENT : LOG_ABSENT);
             throw exceptionSupplier.get();
         }
         
-        log.atDebug().log("Dependency is ready, executing consumer");
+        log.debug("Dependency is ready, executing consumer");
         consumer.accept(builtObject);
     }
 
     @Override
     public void synchronizePackagesFromContext(Consumer<Set<String>> packageConsumer) {
-        log.atTrace().log("Synchronizing packages from context");
+        log.trace("Synchronizing packages from context");
         // Read packages from the stored builder if it is packageable,
         // since the local packages set is not populated via provide().
         if (builder instanceof IPackageableBuilder<?, ?> packageable) {
@@ -313,12 +313,12 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
             if (builderPackages != null && builderPackages.length > 0) {
                 Set<String> pkgSet = Set.of(builderPackages);
                 packageConsumer.accept(pkgSet);
-                log.atDebug().log("Packages synchronized from builder: {}", pkgSet.size());
+                log.debug("Packages synchronized from builder: {}", pkgSet.size());
                 return;
             }
         }
         packageConsumer.accept(packages);
-        log.atDebug().log("Packages synchronized (local): {}", packages.size());
+        log.debug("Packages synchronized (local): {}", packages.size());
     }
 
     /**
@@ -404,7 +404,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "Dependency %s was provided via provide() but has not been built. " +
                 "Optional dependencies (use) must be built before they can be used.",
                 dependencyClass.getName());
-            log.atError().log(errorMsg);
+            log.error(errorMsg);
             throw new DslException(errorMsg);
         }
     }
@@ -424,7 +424,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "Required dependency %s for phase %s was not provided. " +
                 "Required dependencies must be provided via provide() and built.",
                 dependencyClass.getName(), phase);
-            log.atError().log(errorMsg);
+            log.error(errorMsg);
             throw new DslException(errorMsg);
         }
 
@@ -434,7 +434,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "Required dependency %s for phase %s was provided but not built. " +
                 "The dependency builder must be built before use.",
                 dependencyClass.getName(), phase);
-            log.atError().log(errorMsg);
+            log.error(errorMsg);
             throw new DslException(errorMsg);
         }
     }

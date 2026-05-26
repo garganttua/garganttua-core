@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -28,10 +30,8 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.utils.CopyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
+    private static final IDiagnostic log = Diagnostics.of(BeanProvider.class);
 
 	private List<IBeanFactory<?>> beanFactories;
 	private final Object copyMutex = new Object();
@@ -60,19 +60,19 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	}
 
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, IInjectableElementResolverBuilder resolverBuilder, boolean mutable) {
-		log.atTrace().log("Entering BeanProvider constructor with beanFactories: {}", beanFactories);
+		log.trace("Entering BeanProvider constructor with beanFactories: {}", beanFactories);
 		this.mutable = mutable;
 		this.resolverBuilder = resolverBuilder;
 		this.beanFactories = Collections
 				.synchronizedList(Objects.requireNonNull(beanFactories, "Bean factories cannot be null"));
-		log.atDebug().log("BeanProvider initialized with {} bean factories", beanFactories.size());
-		log.atTrace().log("Exiting BeanProvider constructor");
+		log.debug("BeanProvider initialized with {} bean factories", beanFactories.size());
+		log.trace("Exiting BeanProvider constructor");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> get(IClass<T> type) throws DiException {
-		log.atTrace().log("Entering getBean with type: {}", type);
+		log.trace("Entering getBean with type: {}", type);
 		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
@@ -82,48 +82,48 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		if (factoryOpt.isPresent()) {
 			try {
 				Optional<T> result = (Optional<T>) factoryOpt.get().supply();
-				log.atDebug().log("Bean found for type {}: {}", type, result.orElse(null));
+				log.debug("Bean found for type {}: {}", type, result.orElse(null));
 				return result;
 			} catch (SupplyException e) {
-				log.atError().log("Failed to supply bean for type {}: {}", type, e.getMessage());
+				log.error("Failed to supply bean for type {}: {}", type, e.getMessage());
 				throw new DiException(e);
 			}
 		}
 
-		log.atWarn().log("No bean found for type {}", type);
+		log.warn("No bean found for type {}", type);
 		return Optional.empty();
 	}
 
 	@Override
 	public <T> Optional<T> get(String name, IClass<T> type) throws DiException {
-		log.atTrace().log("getBean by name '{}' and type {} is not implemented", name, type);
+		log.trace("getBean by name '{}' and type {} is not implemented", name, type);
 		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 		throw new UnsupportedOperationException("Unimplemented method 'getBean'");
 	}
 
 	@Override
 	public boolean isMutable() {
-		log.atTrace().log("Checking if BeanProvider is mutable: returning false");
+		log.trace("Checking if BeanProvider is mutable: returning false");
 		return this.mutable;
 	}
 
 	@Override
 	public <T> List<T> get(IClass<T> interfasse, boolean includePrototypes) {
-		log.atTrace().log("Getting beans implementing interface: {}", interfasse);
+		log.trace("Getting beans implementing interface: {}", interfasse);
 		List<T> result = this.beanFactories.stream()
 				.filter(factory -> interfasse.isAssignableFrom(factory.getSuppliedClass()))
 				.map(factory -> {
 					try {
 						return factory.supply().orElse(null);
 					} catch (Exception e) {
-						log.atError().log("Failed to supply bean from factory {}: {}", factory, e.getMessage());
+						log.error("Failed to supply bean from factory {}: {}", factory, e.getMessage());
 						return null;
 					}
 				})
 				.filter(Objects::nonNull)
 				.map(interfasse::cast)
 				.collect(Collectors.toList());
-		log.atDebug().log("Beans implementing interface {} found: {}", interfasse, result.size());
+		log.debug("Beans implementing interface {} found: {}", interfasse, result.size());
 		return result;
 	}
 
@@ -134,49 +134,49 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	protected ILifecycle doInit() throws LifecycleException {
-		log.atTrace().log("Initializing BeanProvider");
+		log.trace("Initializing BeanProvider");
 		try {
 			this.doDependencyCycleDetection();
 		} catch (DiException e) {
-			log.atError().log("Dependency cycle detected during init: {}", e.getMessage());
+			log.error("Dependency cycle detected during init: {}", e.getMessage());
 			throw new LifecycleException(e);
 		}
-		log.atTrace().log("BeanProvider initialized");
+		log.trace("BeanProvider initialized");
 		return this;
 	}
 
 	private void doDependencyCycleDetection() throws DiException {
-		log.atTrace().log("Performing dependency cycle detection");
+		log.trace("Performing dependency cycle detection");
 		DependencyGraph graph = new DependencyGraph();
 		this.beanFactories.forEach(builder -> builder.dependencies()
 				.forEach(dep -> graph.addDependency(builder.getSuppliedClass(), dep)));
 		new DependencyCycleDetector().detectCycles(graph);
-		log.atDebug().log("Dependency cycle detection completed");
+		log.debug("Dependency cycle detection completed");
 	}
 
 	@Override
 	protected ILifecycle doStart() throws LifecycleException {
-		log.atTrace().log("Starting BeanProvider");
+		log.trace("Starting BeanProvider");
 		return this;
 	}
 
 	@Override
 	protected ILifecycle doFlush() throws LifecycleException {
-		log.atDebug().log("Flushing BeanProvider: clearing bean factories");
+		log.debug("Flushing BeanProvider: clearing bean factories");
 		this.beanFactories.clear();
 		return this;
 	}
 
 	@Override
 	protected ILifecycle doStop() throws LifecycleException {
-		log.atTrace().log("Stopping BeanProvider");
+		log.trace("Stopping BeanProvider");
 		return this;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> query(BeanReference<T> query) throws DiException {
-		log.atTrace().log("Querying single bean with query: {}", query);
+		log.trace("Querying single bean with query: {}", query);
 		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 
 		Optional<IBeanFactory<?>> factoryOpt = this.beanFactories.stream()
@@ -186,22 +186,22 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 		if (factoryOpt.isPresent()) {
 			try {
 				Optional<T> result = (Optional<T>) factoryOpt.get().supply();
-				log.atDebug().log("Bean found for query {}: {}", query, result.orElse(null));
+				log.debug("Bean found for query {}: {}", query, result.orElse(null));
 				return result;
 			} catch (SupplyException e) {
-				log.atError().log("Failed to supply bean for query {}: {}", query, e.getMessage());
+				log.error("Failed to supply bean for query {}: {}", query, e.getMessage());
 				throw new DiException(e);
 			}
 		}
 
-		log.atWarn().log("No bean found for definition {}", query);
+		log.warn("No bean found for definition {}", query);
 		return Optional.empty();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> List<T> queries(BeanReference<T> query) throws DiException {
-		log.atTrace().log("Querying multiple beans with query: {}", query);
+		log.trace("Querying multiple beans with query: {}", query);
 		wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
 
 		List<T> result = (List<T>) this.beanFactories.stream()
@@ -210,33 +210,33 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 				.map(Optional::get)
 				.toList();
 
-		log.atDebug().log("Beans found for query {}: {}", query, result.size());
+		log.debug("Beans found for query {}: {}", query, result.size());
 		return result;
 	}
 
 	@Override
 	public IBeanProvider copy() throws CopyException {
-		log.atTrace().log("Copying BeanProvider");
+		log.trace("Copying BeanProvider");
 		synchronized (this.copyMutex) {
 			List<IBeanFactory<?>> copiedFactories = new ArrayList<>(this.beanFactories);
 			BeanProvider copy = new BeanProvider(copiedFactories);
-			log.atDebug().log("BeanProvider copy created with {} factories", copiedFactories.size());
+			log.debug("BeanProvider copy created with {} factories", copiedFactories.size());
 			return copy;
 		}
 	}
 
 	@Override
 	public int size() {
-		log.atTrace().log("Returning BeanProvider size: {}", this.beanFactories.size());
+		log.trace("Returning BeanProvider size: {}", this.beanFactories.size());
 		return this.beanFactories.size();
 	}
 
 	@Override
 	public Set<IReflectionConfigurationEntryBuilder> reflectionUsage() {
-		log.atTrace().log("Building reflection usage from {} bean factories", this.beanFactories.size());
+		log.trace("Building reflection usage from {} bean factories", this.beanFactories.size());
 		Set<IReflectionConfigurationEntryBuilder> result = this.beanFactories.stream().map(f -> f.nativeEntry())
 				.collect(Collectors.toSet());
-		log.atDebug().log("Reflection usage built with {} entries", result.size());
+		log.debug("Reflection usage built with {} entries", result.size());
 		return result;
 	}
 

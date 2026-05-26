@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.execution.ExecutorException;
@@ -19,12 +21,10 @@ import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         implements
         IRuntimeStepMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStepMethodBinder.class);
 
     private final Set<IRuntimeStepCatch> catches;
     private final List<IRuntimeStepPipe> pipes;
@@ -56,7 +56,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
             Optional<ICondition> condition, Boolean abortOnUncatchedException, Boolean nullable,
             String expressionReference) {
 
-        log.atTrace().log(
+        log.trace(
                 "[RuntimeStepMethodBinder.<init>] Initializing method binder: runtime={}, step={}, expression={}, variablePresent={}, isOutput={}, nullable={}",
                 runtimeName, stepName, expressionReference, variable.isPresent(), isOutput, nullable);
 
@@ -74,7 +74,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         this.nullable = Objects.requireNonNull(nullable, "nullable cannot be null");
         this.expressionReference = Objects.requireNonNull(expressionReference, "expressionReference cannot be null");
 
-        log.atDebug().log("{}Method binder initialized. Catches count={}, pipes count={}",
+        log.debug("{}Method binder initialized. Catches count={}, pipes count={}",
                 logLineHeader(), this.catches.size(), this.pipes.size());
     }
 
@@ -96,7 +96,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     @Override
     public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... contexts) throws ReflectionException {
-        log.atDebug().log("{}Evaluating expression via execute()", logLineHeader());
+        log.debug("{}Evaluating expression via execute()", logLineHeader());
         return RuntimeExpressionContext.callIn(ownerContext, () -> {
             try {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
@@ -115,7 +115,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
 
     @Override
     public void setCode(IRuntimeContext<?, ?> c) {
-        log.atTrace().log("{}Setting code {} on context", logLineHeader(), code);
+        log.trace("{}Setting code {} on context", logLineHeader(), code);
         c.setCode(code);
     }
 
@@ -137,10 +137,10 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     public void execute(IRuntimeContext<InputType, OutputType> context,
             IExecutorChain<IRuntimeContext<InputType, OutputType>> next) throws ExecutorException {
 
-        log.atDebug().log("{}Starting method execution", logLineHeader());
+        log.debug("{}Starting method execution", logLineHeader());
 
         if (!condition.map(ICondition::evaluate).orElse(new FixedSupplier<Boolean>(true, IClass.getClass(Boolean.class))).supply().get()) {
-            log.atTrace().log("{}Condition not met, skipping step", logLineHeader());
+            log.trace("{}Condition not met, skipping step", logLineHeader());
             next.execute(context);
             return;
         }
@@ -149,18 +149,18 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         ExecutionReturned returned = null;
 
         try {
-            log.atDebug().log("{}Evaluating expression", logLineHeader());
+            log.debug("{}Evaluating expression", logLineHeader());
             returned = RuntimeExpressionContext.callIn(context, () -> {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
                 Optional<ExecutionReturned> result = supplier.supply();
                 ExecutionReturned r = result.orElse(null);
-                log.atTrace().log("{}Returned value={}", logLineHeader(), r);
+                log.trace("{}Returned value={}", logLineHeader(), r);
                 return evaluatePipes(context, r);
             });
             processExecutionReturn(context, variable, returned);
         } catch (CatchAwareExpression.CatchResultException cre) {
             // Catch handler matched and executed — extract result, stop chain
-            log.atDebug().log("{}Catch handler matched, stopping chain", logLineHeader());
+            log.debug("{}Catch handler matched, stopping chain", logLineHeader());
             returned = (ExecutionReturned) cre.getResult();
             // Use the handler's variable name if present, otherwise fall back to step's variable
             Optional<String> catchVar = cre.getVariableName() != null
@@ -168,19 +168,19 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
             processExecutionReturn(context, catchVar, returned);
             return; // Don't call next.execute() — chain stops
         } catch (Exception e) {
-            log.atWarn().log("{}Exception during expression evaluation: {}", logLineHeader(), e.getMessage(), e);
+            log.warn("{}Exception during expression evaluation: {}", logLineHeader(), e.getMessage(), e);
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             IRuntimeStepCatch matchedCatch = findMatchingCatch(cause);
             boolean forceAbort = matchedCatch == null && this.abortOnUncatchedException || matchedCatch != null;
             RuntimeStepExecutionTools.handleException(this.runtimeName, this.stepName, context, cause,
                     forceAbort, this.expressionReference, matchedCatch, logLineHeader());
             if (!forceAbort) {
-                log.atDebug().log("{}Processing return despite exception (non-aborting)", logLineHeader());
+                log.debug("{}Processing return despite exception (non-aborting)", logLineHeader());
                 processExecutionReturn(context, variable, returned);
             }
         }
 
-        log.atTrace().log("{}Executing next in chain", logLineHeader());
+        log.trace("{}Executing next in chain", logLineHeader());
         next.execute(context);
     }
 
@@ -188,13 +188,13 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
             ExecutionReturned returned) {
 
         if (isOutput()) {
-            log.atDebug().log("{}Validating method output", logLineHeader());
+            log.debug("{}Validating method output", logLineHeader());
             RuntimeStepExecutionTools.validateReturnedForOutput(this.runtimeName, this.stepName,
                     returned, context, nullable(), logLineHeader(), this.expressionReference);
         }
 
         if (variable.isPresent()) {
-            log.atDebug().log("{}Storing returned value in variable '{}'", logLineHeader(), variable.get());
+            log.debug("{}Storing returned value in variable '{}'", logLineHeader(), variable.get());
             RuntimeStepExecutionTools.validateAndStoreReturnedValueInVariable(this.runtimeName,
                     this.stepName, variable.get(), returned, context, nullable(), logLineHeader(),
                     this.expressionReference);
@@ -221,12 +221,12 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
                     Object condResult = pipe.condition().get().evaluate().supply().orElse(null);
                     matches = condResult instanceof Boolean b && b;
                 } catch (Exception e) {
-                    log.atWarn().log("{}Pipe condition evaluation failed: {}", logLineHeader(), e.getMessage());
+                    log.warn("{}Pipe condition evaluation failed: {}", logLineHeader(), e.getMessage());
                     continue;
                 }
             }
             if (matches) {
-                log.atDebug().log("{}Pipe matched, executing handler", logLineHeader());
+                log.debug("{}Pipe matched, executing handler", logLineHeader());
                 try {
                     Object handlerResult = pipe.handler().evaluate().supply().orElse(null);
                     pipe.code().ifPresent(context::setCode);
@@ -237,7 +237,7 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
                     });
                     return (ExecutionReturned) handlerResult;
                 } catch (Exception e) {
-                    log.atWarn().log("{}Pipe handler execution failed: {}", logLineHeader(), e.getMessage());
+                    log.warn("{}Pipe handler execution failed: {}", logLineHeader(), e.getMessage());
                     return currentResult;
                 }
             }
@@ -249,12 +249,12 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         for (IRuntimeStepCatch stepCatch : this.catches) {
             Optional<? extends Throwable> cause = CoreException.findFirstInException(exception, stepCatch.exception());
             if (cause.isPresent()) {
-                log.atDebug().log("{}Matching catch found for exception: {}", logLineHeader(),
+                log.debug("{}Matching catch found for exception: {}", logLineHeader(),
                         cause.get().getClass().getSimpleName());
                 return stepCatch;
             }
         }
-        log.atTrace().log("{}No matching catch found", logLineHeader());
+        log.trace("{}No matching catch found", logLineHeader());
         return null;
     }
 

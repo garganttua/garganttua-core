@@ -4,11 +4,11 @@ import org.github.siahsang.redutils.RedUtilsLock;
 import org.github.siahsang.redutils.RedUtilsLockImpl;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexStrategy;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Redis-based distributed mutex implementation using red-utils library.
@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class RedisMutex implements IMutex {
+    private static final IDiagnostic log = Diagnostics.of(RedisMutex.class);
 
     private final RedUtilsLock redUtilsLock;
     private final String lockName;
@@ -34,7 +34,7 @@ public class RedisMutex implements IMutex {
     public RedisMutex(String lockName) {
         this.lockName = lockName;
         this.redUtilsLock = new RedUtilsLockImpl();
-        log.atDebug().log("Created RedisMutex with default config for lock: {}", lockName);
+        log.debug("Created RedisMutex with default config for lock: {}", lockName);
     }
 
     /**
@@ -46,7 +46,7 @@ public class RedisMutex implements IMutex {
     public RedisMutex(String lockName, RedUtilsConfig config) {
         this.lockName = lockName;
         this.redUtilsLock = new RedUtilsLockImpl(config);
-        log.atDebug().log("Created RedisMutex with custom config for lock: {}", lockName);
+        log.debug("Created RedisMutex with custom config for lock: {}", lockName);
     }
 
     /**
@@ -58,25 +58,25 @@ public class RedisMutex implements IMutex {
     public RedisMutex(String lockName, RedUtilsLock redUtilsLock) {
         this.lockName = lockName;
         this.redUtilsLock = redUtilsLock;
-        log.atDebug().log("Created RedisMutex with custom RedUtilsLock for lock: {}", lockName);
+        log.debug("Created RedisMutex with custom RedUtilsLock for lock: {}", lockName);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <R> R acquire(ThrowingFunction<R> function) throws MutexException {
-        log.atTrace().log("Attempting to acquire lock: {}", lockName);
+        log.trace("Attempting to acquire lock: {}", lockName);
 
         final R[] resultHolder = (R[]) new Object[1];
 
         try {
             redUtilsLock.acquire(lockName, () -> {
-                log.atDebug().log("Lock acquired: {}", lockName);
+                log.debug("Lock acquired: {}", lockName);
                 try {
                     R result = function.execute();
-                    log.atDebug().log("Function executed successfully in lock: {}", lockName);
+                    log.debug("Function executed successfully in lock: {}", lockName);
                     resultHolder[0] = result;
                 } catch (Exception e) {
-                    log.atError().log("Function execution failed in lock: {}", lockName, e);
+                    log.error("Function execution failed in lock: {}", lockName, e);
                     throw new MutexException("Mutex function execution failed", e);
                 }
             });
@@ -89,13 +89,13 @@ public class RedisMutex implements IMutex {
         } catch (Exception e) {
             throw new MutexException("Failed to acquire or execute within mutex: " + lockName, e);
         } finally {
-            log.atTrace().log("Lock released: {}", lockName);
+            log.trace("Lock released: {}", lockName);
         }
     }
 
     @Override
     public <R> R acquire(ThrowingFunction<R> function, MutexStrategy strategy) throws MutexException {
-        log.atTrace().log("Attempting to acquire lock with strategy: {}", lockName);
+        log.trace("Attempting to acquire lock with strategy: {}", lockName);
 
         if (strategy == null) {
             return acquire(function);
@@ -116,17 +116,17 @@ public class RedisMutex implements IMutex {
      */
     @SuppressWarnings("unchecked")
     private <R> R tryAcquireWithStrategy(ThrowingFunction<R> function) throws MutexException {
-        log.atTrace().log("Trying to acquire lock immediately: {}", lockName);
+        log.trace("Trying to acquire lock immediately: {}", lockName);
         final R[] resultHolder = (R[]) new Object[1];
         try {
             boolean acquired = redUtilsLock.tryAcquire(lockName, () -> {
-                log.atDebug().log("Lock acquired (try mode): {}", lockName);
+                log.debug("Lock acquired (try mode): {}", lockName);
                 try {
                     R result = function.execute();
-                    log.atDebug().log("Function executed successfully in lock (try mode): {}", lockName);
+                    log.debug("Function executed successfully in lock (try mode): {}", lockName);
                     resultHolder[0] = result;
                 } catch (MutexException e) {
-                    log.atError().log("Function execution failed in lock (try mode): {}", lockName, e);
+                    log.error("Function execution failed in lock (try mode): {}", lockName, e);
                     throw new MutexException("Mutex function execution failed", e);
                 }
             });
@@ -160,7 +160,7 @@ public class RedisMutex implements IMutex {
             try {
                 if (attempt > 0) {
                     long retryDelayMillis = strategy.retryIntervalUnit().toMillis(strategy.retryInterval());
-                    log.atDebug().log("Retry attempt {} for lock: {} after {} ms",
+                    log.debug("Retry attempt {} for lock: {} after {} ms",
                             attempt, lockName, retryDelayMillis);
                     Thread.sleep(retryDelayMillis);
                 }
@@ -169,7 +169,7 @@ public class RedisMutex implements IMutex {
 
             } catch (MutexException e) {
                 lastException = e;
-                log.atWarn().log("Attempt {} failed for lock: {}", attempt + 1, lockName, e);
+                log.warn("Attempt {} failed for lock: {}", attempt + 1, lockName, e);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new MutexException("Interrupted while waiting to retry lock acquisition: " + lockName, e);

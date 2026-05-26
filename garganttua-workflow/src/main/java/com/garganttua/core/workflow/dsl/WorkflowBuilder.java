@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractDependentBuilder;
@@ -28,15 +30,13 @@ import com.garganttua.core.workflow.generator.ScriptGenerator;
 import com.garganttua.core.workflow.renderer.WorkflowRenderer;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Builder for constructing {@link IWorkflow} instances with fluent API.
  */
-@Slf4j
 @Reflected
 public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, IWorkflow>
         implements IWorkflowBuilder {
+    private static final IDiagnostic log = Diagnostics.of(WorkflowBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD),
@@ -55,7 +55,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     private WorkflowBuilder() {
         super(DEPENDENCIES);
-        log.atTrace().log("WorkflowBuilder created");
+        log.trace("WorkflowBuilder created");
     }
 
     public static IWorkflowBuilder create() {
@@ -102,7 +102,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     @Override
     protected IWorkflow doBuild() throws DslException {
-        log.atTrace().log("Building workflow '{}'", name);
+        log.trace("Building workflow '{}'", name);
 
         if (stages.isEmpty()) {
             throw new DslException("Workflow must have at least one stage");
@@ -120,7 +120,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         ScriptGenerationOptions generationOptions = ScriptGenerationOptions.withTiming(timingConfig);
         try {
             generatedScript = scriptGenerator.generate(name, stages, presetVariables, inlineAll, generationOptions);
-            log.atDebug().log("Generated workflow script for '{}':\n{}", name, generatedScript);
+            log.debug("Generated workflow script for '{}':\n{}", name, generatedScript);
         } catch (WorkflowException e) {
             throw new DslException("Failed to generate workflow script", e);
         }
@@ -135,7 +135,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
                 inlineAll,
                 timingConfig);
 
-        log.atDebug().log("Workflow '{}' built with {} stages", name, stages.size());
+        log.debug("Workflow '{}' built with {} stages", name, stages.size());
         return workflow;
     }
 

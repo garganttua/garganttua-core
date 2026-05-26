@@ -5,17 +5,18 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @NoArgsConstructor
 public class ReflectConfigEntry implements IReflectionConfigurationEntry {
+    private static final IDiagnostic log = Diagnostics.of(ReflectConfigEntry.class);
 
     private String name;
     private boolean queryAllDeclaredConstructors = false;
@@ -35,7 +36,7 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
     private List<Method> methods;
 
     public ReflectConfigEntry(String name) {
-        log.atTrace().log("Creating ReflectConfigEntry for: {}", name);
+        log.trace("Creating ReflectConfigEntry for: {}", name);
         this.name = name;
     }
 
@@ -56,7 +57,7 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
 
     @JsonIgnore
     public IClass<?> getEntryClass() throws ClassNotFoundException {
-        log.atTrace().log("Getting entry class for: {}", this.name);
+        log.trace("Getting entry class for: {}", this.name);
         return defaultProvider().getClass(Class.forName(this.name));
     }
 

@@ -1,5 +1,7 @@
 package com.garganttua.core.runtime;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -7,9 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public record RuntimeResult<InputType, OutputType>(
         UUID uuid,
         InputType input,
@@ -21,57 +20,58 @@ public record RuntimeResult<InputType, OutputType>(
         Integer code,
         Set<RuntimeExceptionRecord> recordedExceptions,
         Map<String, Object> variables) implements IRuntimeResult<InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeResult.class);
 
     @Override
     public boolean hasAborted(){
-        log.atTrace().log("[RuntimeResult.hasAborted] Checking if runtime has aborted for uuid={}", uuid);
+        log.trace("[RuntimeResult.hasAborted] Checking if runtime has aborted for uuid={}", uuid);
         boolean aborted = this.getAbortingException().isPresent();
-        log.atDebug().log("[RuntimeResult.hasAborted] Result for uuid={}: {}", uuid, aborted);
+        log.debug("[RuntimeResult.hasAborted] Result for uuid={}: {}", uuid, aborted);
         return aborted;
     }
 
     @Override
     public Optional<RuntimeExceptionRecord> getAbortingException() {
-        log.atTrace().log("[RuntimeResult.getAbortingException] Searching for aborting exception for uuid={}", uuid);
+        log.trace("[RuntimeResult.getAbortingException] Searching for aborting exception for uuid={}", uuid);
         Optional<RuntimeExceptionRecord> result = this.recordedExceptions.stream().filter(e -> e.hasAborted()).findFirst();
-        log.atDebug().log("[RuntimeResult.getAbortingException] Found aborting exception for uuid={}: {}", uuid, result.isPresent());
+        log.debug("[RuntimeResult.getAbortingException] Found aborting exception for uuid={}: {}", uuid, result.isPresent());
         return result;
     }
 
     @Override
     public Set<RuntimeExceptionRecord> getExceptions() {
-        log.atTrace().log("[RuntimeResult.getExceptions] Retrieving all exceptions for uuid={}", uuid);
-        log.atDebug().log("[RuntimeResult.getExceptions] Total exceptions for uuid={}: {}", uuid, this.recordedExceptions.size());
+        log.trace("[RuntimeResult.getExceptions] Retrieving all exceptions for uuid={}", uuid);
+        log.debug("[RuntimeResult.getExceptions] Total exceptions for uuid={}: {}", uuid, this.recordedExceptions.size());
         return this.recordedExceptions;
     }
 
     @Override
     public Duration duration() {
-        log.atTrace().log("[RuntimeResult.duration] Calculating duration for uuid={}", uuid);
+        log.trace("[RuntimeResult.duration] Calculating duration for uuid={}", uuid);
         Duration result = Duration.between(start, stop);
-        log.atDebug().log("[RuntimeResult.duration] Duration for uuid={}: {}", uuid, result);
+        log.debug("[RuntimeResult.duration] Duration for uuid={}: {}", uuid, result);
         return result;
     }
 
     @Override
     public Duration durationInMillis() {
-        log.atTrace().log("[RuntimeResult.durationInMillis] Calculating duration in millis for uuid={}", uuid);
+        log.trace("[RuntimeResult.durationInMillis] Calculating duration in millis for uuid={}", uuid);
         return Duration.ofMillis(durationMillis());
     }
 
     @Override
     public long durationMillis() {
-        log.atTrace().log("[RuntimeResult.durationMillis] Calculating duration millis for uuid={}", uuid);
+        log.trace("[RuntimeResult.durationMillis] Calculating duration millis for uuid={}", uuid);
         long millis = Duration.between(start, stop).toMillis();
-        log.atDebug().log("[RuntimeResult.durationMillis] Duration millis for uuid={}: {}", uuid, millis);
+        log.debug("[RuntimeResult.durationMillis] Duration millis for uuid={}: {}", uuid, millis);
         return millis;
     }
 
     @Override
     public long durationInNanos() {
-        log.atTrace().log("[RuntimeResult.durationInNanos] Calculating duration in nanos for uuid={}", uuid);
+        log.trace("[RuntimeResult.durationInNanos] Calculating duration in nanos for uuid={}", uuid);
         long nanos = stopNano - startNano;
-        log.atDebug().log("[RuntimeResult.durationInNanos] Duration nanos for uuid={}: {}", uuid, nanos);
+        log.debug("[RuntimeResult.durationInNanos] Duration nanos for uuid={}: {}", uuid, nanos);
         return nanos;
     }
 
@@ -81,12 +81,12 @@ public record RuntimeResult<InputType, OutputType>(
 
     @Override
     public String prettyDuration() {
-        log.atTrace().log("[RuntimeResult.prettyDuration] Formatting pretty duration for uuid={}", uuid);
+        log.trace("[RuntimeResult.prettyDuration] Formatting pretty duration for uuid={}", uuid);
         return prettyDurationColor(duration());
     }
 
     public static String prettyDurationColor(Duration duration) {
-        log.atTrace().log("[RuntimeResult.prettyDurationColor] Formatting duration with color: {}", duration);
+        log.trace("[RuntimeResult.prettyDurationColor] Formatting duration with color: {}", duration);
         String h = "\u001B[36m";
         String m = "\u001B[35m";
         String s = "\u001B[34m";
@@ -105,12 +105,12 @@ public record RuntimeResult<InputType, OutputType>(
     // =======================================
 
     public String prettyDurationPlain() {
-        log.atTrace().log("[RuntimeResult.prettyDurationPlain] Formatting plain pretty duration for uuid={}", uuid);
+        log.trace("[RuntimeResult.prettyDurationPlain] Formatting plain pretty duration for uuid={}", uuid);
         return prettyDurationPlain(duration());
     }
 
     public static String prettyDurationPlain(Duration duration) {
-        log.atTrace().log("[RuntimeResult.prettyDurationPlain] Formatting duration without color: {}", duration);
+        log.trace("[RuntimeResult.prettyDurationPlain] Formatting duration without color: {}", duration);
         return String.format("%dh %dm %ds %dms",
                 duration.toHours(),
                 duration.toMinutesPart(),
@@ -123,7 +123,7 @@ public record RuntimeResult<InputType, OutputType>(
     // =======================================
 
     public static String prettyNanoColor(long nanos) {
-        log.atTrace().log("[RuntimeResult.prettyNanoColor] Formatting nanos with color: {}", nanos);
+        log.trace("[RuntimeResult.prettyNanoColor] Formatting nanos with color: {}", nanos);
         String nsColor = "\u001B[36m";
         String usColor = "\u001B[35m";
         String msColor = "\u001B[32m";
@@ -145,7 +145,7 @@ public record RuntimeResult<InputType, OutputType>(
 
     @Override
     public String prettyDurationInNanos() {
-        log.atTrace().log("[RuntimeResult.prettyDurationInNanos] Formatting pretty duration in nanos for uuid={}", uuid);
+        log.trace("[RuntimeResult.prettyDurationInNanos] Formatting pretty duration in nanos for uuid={}", uuid);
         return prettyNanoColor(durationInNanos());
     }
 
@@ -154,7 +154,7 @@ public record RuntimeResult<InputType, OutputType>(
     // =======================================
 
     public static String prettyNano(long nanos) {
-        log.atTrace().log("[RuntimeResult.prettyNano] Formatting nanos without color: {}", nanos);
+        log.trace("[RuntimeResult.prettyNano] Formatting nanos without color: {}", nanos);
         if (nanos < 1_000) {
             return String.format("%d ns", nanos);
         } else if (nanos < 1_000_000) {
@@ -168,7 +168,7 @@ public record RuntimeResult<InputType, OutputType>(
     }
 
     public String prettyDurationInNanosPlain() {
-        log.atTrace().log("[RuntimeResult.prettyDurationInNanosPlain] Formatting plain pretty duration in nanos for uuid={}", uuid);
+        log.trace("[RuntimeResult.prettyDurationInNanosPlain] Formatting plain pretty duration in nanos for uuid={}", uuid);
         return prettyNano(durationInNanos());
     }
 }

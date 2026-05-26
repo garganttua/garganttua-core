@@ -2,13 +2,13 @@ package com.garganttua.core.lifecycle;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionUser;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
+    private static final IDiagnostic log = Diagnostics.of(AbstractLifecycle.class);
 
     protected final AtomicBoolean initialized = new AtomicBoolean(false);
     protected final AtomicBoolean started = new AtomicBoolean(false);
@@ -27,15 +27,15 @@ public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
 
     protected <T extends Exception> void wrapLifecycle(RunnableWithException runnable, IClass<T> exceptionType)
             throws T {
-        log.atTrace().log("Entering wrapLifecycle with exceptionType={}", exceptionType.getSimpleName());
+        log.trace("Entering wrapLifecycle with exceptionType={}", exceptionType.getSimpleName());
         try {
             runnable.run();
-            log.atDebug().log("Lifecycle wrapped execution successful");
+            log.debug("Lifecycle wrapped execution successful");
         } catch (LifecycleException e) {
-            log.atError().log("LifecycleException caught in wrapLifecycle", e);
+            log.error("LifecycleException caught in wrapLifecycle", e);
             throw reflection().newInstance(exceptionType, e);
         }
-        log.atTrace().log("Exiting wrapLifecycle");
+        log.trace("Exiting wrapLifecycle");
     }
 
     @FunctionalInterface
@@ -68,218 +68,218 @@ public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
 
     @Override
     public ILifecycle onInit() throws LifecycleException {
-        log.atTrace().log("Entering onInit()");
+        log.trace("Entering onInit()");
         synchronized (this.lifecycleMutex) {
             ensureNotInitialized();
-            log.atDebug().log("Initializing lifecycle");
+            log.debug("Initializing lifecycle");
             doInit();
             initialized.set(true);
             stopped.set(false);
-            log.atDebug().log("Lifecycle initialized successfully");
+            log.debug("Lifecycle initialized successfully");
         }
-        log.atTrace().log("Exiting onInit()");
+        log.trace("Exiting onInit()");
         return this;
     }
 
     @Override
     public ILifecycle onStart() throws LifecycleException {
-        log.atTrace().log("Entering onStart()");
+        log.trace("Entering onStart()");
         synchronized (this.lifecycleMutex) {
             ensureInitialized();
             ensureNotStarted();
-            log.atDebug().log("Starting lifecycle");
+            log.debug("Starting lifecycle");
             doStart();
             started.set(true);
-            log.atDebug().log("Lifecycle started successfully");
+            log.debug("Lifecycle started successfully");
         }
-        log.atTrace().log("Exiting onStart()");
+        log.trace("Exiting onStart()");
         return this;
     }
 
     @Override
     public ILifecycle onFlush() throws LifecycleException {
-        log.atTrace().log("Entering onFlush()");
+        log.trace("Entering onFlush()");
         synchronized (this.lifecycleMutex) {
             ensureStopped();
-            log.atDebug().log("Flushing lifecycle");
+            log.debug("Flushing lifecycle");
             doFlush();
             flushed.set(true);
-            log.atDebug().log("Lifecycle flushed successfully");
+            log.debug("Lifecycle flushed successfully");
         }
-        log.atTrace().log("Exiting onFlush()");
+        log.trace("Exiting onFlush()");
         return this;
     }
 
     @Override
     public ILifecycle onStop() throws LifecycleException {
-        log.atTrace().log("Entering onStop()");
+        log.trace("Entering onStop()");
         synchronized (this.lifecycleMutex) {
             ensureInitialized();
             if (!started.get()) {
-                log.atDebug().log("Lifecycle not started, skipping onStop");
+                log.debug("Lifecycle not started, skipping onStop");
                 return this;
             }
-            log.atDebug().log("Stopping lifecycle");
+            log.debug("Stopping lifecycle");
             doStop();
             started.set(false);
             stopped.set(true);
-            log.atDebug().log("Lifecycle stopped successfully");
+            log.debug("Lifecycle stopped successfully");
         }
-        log.atTrace().log("Exiting onStop()");
+        log.trace("Exiting onStop()");
         return this;
     }
 
     @Override
     public ILifecycle onReload() throws LifecycleException {
-        log.atTrace().log("Entering onReload()");
+        log.trace("Entering onReload()");
         synchronized (this.lifecycleMutex) {
             if (!initialized.get() && !started.get()) {
-                log.atError().log("Cannot reload: lifecycle not initialized or started");
+                log.error("Cannot reload: lifecycle not initialized or started");
                 throw new LifecycleException("Lifecycle not initialized or started");
             }
 
-            log.atDebug().log("Reloading lifecycle: stopping");
+            log.debug("Reloading lifecycle: stopping");
             this.onStop();
-            log.atDebug().log("Reloading lifecycle: flushing");
+            log.debug("Reloading lifecycle: flushing");
             this.onFlush();
             initialized.set(false);
-            log.atDebug().log("Reloading lifecycle: re-initializing");
+            log.debug("Reloading lifecycle: re-initializing");
             this.onInit();
-            log.atDebug().log("Reloading lifecycle: starting");
+            log.debug("Reloading lifecycle: starting");
             this.onStart();
-            log.atDebug().log("Lifecycle reloaded successfully");
+            log.debug("Lifecycle reloaded successfully");
         }
-        log.atTrace().log("Exiting onReload()");
+        log.trace("Exiting onReload()");
         return this;
     }
 
     protected void ensureInitializedAndStarted() throws LifecycleException {
-        log.atTrace().log("Entering ensureInitializedAndStarted()");
+        log.trace("Entering ensureInitializedAndStarted()");
         synchronized (this.lifecycleMutex) {
             if (!initialized.get()) {
-                log.atError().log("Lifecycle not initialized");
+                log.error("Lifecycle not initialized");
                 throw new LifecycleException("Lifecycle not initialized");
             }
             if (!started.get()) {
-                log.atError().log("Lifecycle not started");
+                log.error("Lifecycle not started");
                 throw new LifecycleException("Lifecycle not started");
             }
         }
-        log.atTrace().log("Exiting ensureInitializedAndStarted()");
+        log.trace("Exiting ensureInitializedAndStarted()");
     }
 
     protected void ensureInitialized() throws LifecycleException {
-        log.atTrace().log("Entering ensureInitialized()");
+        log.trace("Entering ensureInitialized()");
         synchronized (this.lifecycleMutex) {
             if (!initialized.get()) {
-                log.atError().log("Lifecycle not initialized");
+                log.error("Lifecycle not initialized");
                 throw new LifecycleException("Lifecycle not initialized");
             }
         }
-        log.atTrace().log("Exiting ensureInitialized()");
+        log.trace("Exiting ensureInitialized()");
     }
 
     protected void ensureNotInitialized() throws LifecycleException {
-        log.atTrace().log("Entering ensureNotInitialized()");
+        log.trace("Entering ensureNotInitialized()");
         synchronized (this.lifecycleMutex) {
             if (initialized.get()) {
-                log.atError().log("Lifecycle already initialized");
+                log.error("Lifecycle already initialized");
                 throw new LifecycleException("Lifecycle already initialized");
             }
         }
-        log.atTrace().log("Exiting ensureNotInitialized()");
+        log.trace("Exiting ensureNotInitialized()");
     }
 
     protected void ensureStarted() throws LifecycleException {
-        log.atTrace().log("Entering ensureStarted()");
+        log.trace("Entering ensureStarted()");
         synchronized (this.lifecycleMutex) {
             if (!started.get()) {
-                log.atError().log("Lifecycle not started");
+                log.error("Lifecycle not started");
                 throw new LifecycleException("Lifecycle not started");
             }
         }
-        log.atTrace().log("Exiting ensureStarted()");
+        log.trace("Exiting ensureStarted()");
     }
 
     protected void ensureNotStarted() throws LifecycleException {
-        log.atTrace().log("Entering ensureNotStarted()");
+        log.trace("Entering ensureNotStarted()");
         synchronized (this.lifecycleMutex) {
             if (started.get()) {
-                log.atError().log("Lifecycle already started");
+                log.error("Lifecycle already started");
                 throw new LifecycleException("Lifecycle already started");
             }
         }
-        log.atTrace().log("Exiting ensureNotStarted()");
+        log.trace("Exiting ensureNotStarted()");
     }
 
     protected void ensureNotStopped() throws LifecycleException {
-        log.atTrace().log("Entering ensureNotStopped()");
+        log.trace("Entering ensureNotStopped()");
         synchronized (this.lifecycleMutex) {
             if (stopped.get()) {
-                log.atError().log("Lifecycle already stopped");
+                log.error("Lifecycle already stopped");
                 throw new LifecycleException("Lifecycle already stopped");
             }
         }
-        log.atTrace().log("Exiting ensureNotStopped()");
+        log.trace("Exiting ensureNotStopped()");
     }
 
     protected void ensureFlushed() throws LifecycleException {
-        log.atTrace().log("Entering ensureFlushed()");
+        log.trace("Entering ensureFlushed()");
         synchronized (this.lifecycleMutex) {
             if (!flushed.get()) {
-                log.atError().log("Lifecycle not flushed");
+                log.error("Lifecycle not flushed");
                 throw new LifecycleException("Lifecycle not flushed");
             }
         }
-        log.atTrace().log("Exiting ensureFlushed()");
+        log.trace("Exiting ensureFlushed()");
     }
 
     protected void ensureStopped() throws LifecycleException {
-        log.atTrace().log("Entering ensureStopped()");
+        log.trace("Entering ensureStopped()");
         synchronized (this.lifecycleMutex) {
             if (!stopped.get()) {
-                log.atError().log("Lifecycle not stopped");
+                log.error("Lifecycle not stopped");
                 throw new LifecycleException("Lifecycle not stopped");
             }
         }
-        log.atTrace().log("Exiting ensureStopped()");
+        log.trace("Exiting ensureStopped()");
     }
 
     protected void ensureNotFlushed() throws LifecycleException {
-        log.atTrace().log("Entering ensureNotFlushed()");
+        log.trace("Entering ensureNotFlushed()");
         synchronized (this.lifecycleMutex) {
             if (flushed.get()) {
-                log.atError().log("Lifecycle already flushed");
+                log.error("Lifecycle already flushed");
                 throw new LifecycleException("Lifecycle flushed");
             }
         }
-        log.atTrace().log("Exiting ensureNotFlushed()");
+        log.trace("Exiting ensureNotFlushed()");
     }
 
     public boolean isInitialized() {
         synchronized (this.lifecycleMutex) {
-            log.atDebug().log("Checking isInitialized(): {}", initialized.get());
+            log.debug("Checking isInitialized(): {}", initialized.get());
             return initialized.get();
         }
     }
 
     public boolean isStarted() {
         synchronized (this.lifecycleMutex) {
-            log.atDebug().log("Checking isStarted(): {}", started.get());
+            log.debug("Checking isStarted(): {}", started.get());
             return started.get();
         }
     }
 
     public boolean isFlushed() {
         synchronized (this.lifecycleMutex) {
-            log.atDebug().log("Checking isFlushed(): {}", flushed.get());
+            log.debug("Checking isFlushed(): {}", flushed.get());
             return flushed.get();
         }
     }
 
     public boolean isStopped() {
         synchronized (this.lifecycleMutex) {
-            log.atDebug().log("Checking isStopped(): {}", stopped.get());
+            log.debug("Checking isStopped(): {}", stopped.get());
             return stopped.get();
         }
     }

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
@@ -18,10 +20,8 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflectionProvider;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflectionConfigurationEntryBuilder, IReflectionConfigurationEntry> implements IReflectionConfigurationEntryBuilder {
+    private static final IDiagnostic log = Diagnostics.of(ReflectConfigEntryBuilder.class);
 
 	private final IReflectionConfigurationEntry entry;
 	private IClass<?> type;
@@ -48,22 +48,22 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 	private static final IClass<Reflected> REFLECTED_CLASS = wrapClass(Reflected.class);
 
 	public ReflectConfigEntryBuilder(IClass<?> type) {
-		log.atTrace().log("Creating ReflectConfigEntryBuilder for type: {}", type.getName());
+		log.trace("Creating ReflectConfigEntryBuilder for type: {}", type.getName());
 		this.type = Objects.requireNonNull(type, "Type cannot be null");
 		this.entry = new ReflectConfigEntry(type.getName());
 		this.entry.setFields(new ArrayList<>());
 		this.entry.setMethods(new ArrayList<>());
-		log.atDebug().log("Initialized ReflectConfigEntryBuilder for: {}", type.getName());
+		log.debug("Initialized ReflectConfigEntryBuilder for: {}", type.getName());
 	}
 
 	public ReflectConfigEntryBuilder(IReflectionConfigurationEntry entry) throws DslException {
-		log.atTrace().log("Creating ReflectConfigEntryBuilder from existing entry: {}", entry.getName());
+		log.trace("Creating ReflectConfigEntryBuilder from existing entry: {}", entry.getName());
 		this.entry = entry;
 		try {
 			this.type = entry.getEntryClass();
-			log.atDebug().log("Loaded entry class: {}", this.type.getName());
+			log.debug("Loaded entry class: {}", this.type.getName());
 		} catch (ClassNotFoundException e) {
-			log.atError().log("Failed to load entry class: {}", entry.getName());
+			log.error("Failed to load entry class: {}", entry.getName());
 			throw new DslException(e);
 		}
 	}
@@ -114,12 +114,12 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	@Override
 	public IReflectionConfigurationEntryBuilder field(String fieldName) {
-		log.atTrace().log("Adding field: {}", fieldName);
+		log.trace("Adding field: {}", fieldName);
 		if (entry.getFields().stream().noneMatch(field -> field.getName().equals(fieldName))) {
 			ReflectConfigEntry.Field field = new ReflectConfigEntry.Field();
 			field.setName(fieldName);
 			entry.getFields().add(field);
-			log.atDebug().log("Added field to reflection config: {}", fieldName);
+			log.debug("Added field to reflection config: {}", fieldName);
 		}
 		return this;
 	}
@@ -131,7 +131,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	@Override
 	public IReflectionConfigurationEntryBuilder method(String methodName, IClass<?>... parameterTypes) {
-		log.atTrace().log("Adding method: {} with {} parameters", methodName, parameterTypes.length);
+		log.trace("Adding method: {} with {} parameters", methodName, parameterTypes.length);
 		List<String> paramNames = Arrays.stream(parameterTypes).map(IClass::getName).collect(Collectors.toList());
 
 		if (entry.getMethods().stream()
@@ -140,7 +140,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 			method.setName(methodName);
 			method.setParameterTypes(paramNames);
 			entry.getMethods().add(method);
-			log.atDebug().log("Added method to reflection config: {}", methodName);
+			log.debug("Added method to reflection config: {}", methodName);
 		}
 		return this;
 	}
@@ -152,7 +152,7 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	@Override
 	public IReflectionConfigurationEntryBuilder constructor(String constructorName, IClass<?>... parameterTypes) {
-		log.atTrace().log("Adding constructor with {} parameters", parameterTypes.length);
+		log.trace("Adding constructor with {} parameters", parameterTypes.length);
 		return method("<init>", parameterTypes);
 	}
 
@@ -163,32 +163,32 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	@Override
 	public IReflectionConfigurationEntryBuilder fieldsAnnotatedWith(IClass<? extends Annotation> annotation) {
-		log.atTrace().log("Adding fields annotated with: {}", annotation.getName());
+		log.trace("Adding fields annotated with: {}", annotation.getName());
 		try {
 			for (IField field : this.entry.getEntryClass().getDeclaredFields()) {
 				if (field.isAnnotationPresent(annotation)) {
 					field(field.getName());
 				}
 			}
-			log.atDebug().log("Added all fields annotated with: {}", annotation.getName());
+			log.debug("Added all fields annotated with: {}", annotation.getName());
 		} catch (SecurityException | ClassNotFoundException e) {
-			log.atWarn().log("Error processing fields annotated with {}: {}", annotation.getName(), e.getMessage());
+			log.warn("Error processing fields annotated with {}: {}", annotation.getName(), e.getMessage());
 		}
 		return this;
 	}
 
 	@Override
 	public IReflectionConfigurationEntryBuilder methodsAnnotatedWith(IClass<? extends Annotation> annotation) {
-		log.atTrace().log("Adding methods annotated with: {}", annotation.getName());
+		log.trace("Adding methods annotated with: {}", annotation.getName());
 		try {
 			for (IMethod method : this.entry.getEntryClass().getDeclaredMethods()) {
 				if (method.isAnnotationPresent(annotation)) {
 					method(method);
 				}
 			}
-			log.atDebug().log("Added all methods annotated with: {}", annotation.getName());
+			log.debug("Added all methods annotated with: {}", annotation.getName());
 		} catch (SecurityException | ClassNotFoundException e) {
-			log.atWarn().log("Error processing methods annotated with {}: {}", annotation.getName(), e.getMessage());
+			log.warn("Error processing methods annotated with {}: {}", annotation.getName(), e.getMessage());
 		}
 		return this;
 	}
@@ -263,49 +263,49 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	@Override
 	protected IReflectionConfigurationEntry doBuild() throws DslException {
-		log.atTrace().log("Building reflection configuration entry for: {}", entry.getName());
-		log.atDebug().log("Reflection configuration entry built for: {}", entry.getName());
+		log.trace("Building reflection configuration entry for: {}", entry.getName());
+		log.debug("Reflection configuration entry built for: {}", entry.getName());
 		return entry;
 	}
 
 	@Override
 	protected void doAutoDetection() throws DslException {
-		log.atTrace().log("Starting auto-detection for type: {}", this.type.getName());
+		log.trace("Starting auto-detection for type: {}", this.type.getName());
 		Reflected r = this.type.getAnnotation(REFLECTED_CLASS);
 		if (r != null && r.allDeclaredClasses()) {
-			log.atDebug().log("Enabling allDeclaredClasses for: {}", this.type.getName());
+			log.debug("Enabling allDeclaredClasses for: {}", this.type.getName());
 			this.entry.setAllDeclaredClasses(true);
 		}
 		if (r != null && r.allDeclaredFields()) {
-			log.atDebug().log("Enabling allDeclaredFields for: {}", this.type.getName());
+			log.debug("Enabling allDeclaredFields for: {}", this.type.getName());
 			this.entry.setAllDeclaredFields(true);
 		}
 		if (r != null && r.allPublicClasses()) {
-			log.atDebug().log("Enabling allPublicClasses for: {}", this.type.getName());
+			log.debug("Enabling allPublicClasses for: {}", this.type.getName());
 			this.entry.setAllPublicClasses(true);
 		}
 		if (r != null && r.queryAllDeclaredConstructors()) {
-			log.atDebug().log("Enabling queryAllDeclaredConstructors for: {}", this.type.getName());
+			log.debug("Enabling queryAllDeclaredConstructors for: {}", this.type.getName());
 			this.entry.setQueryAllDeclaredConstructors(true);
 		}
 		if (r != null && r.queryAllDeclaredMethods()) {
-			log.atDebug().log("Enabling queryAllDeclaredMethods for: {}", this.type.getName());
+			log.debug("Enabling queryAllDeclaredMethods for: {}", this.type.getName());
 			this.entry.setQueryAllDeclaredMethods(true);
 		}
 		if (r != null && r.queryAllPublicConstructors()) {
-			log.atDebug().log("Enabling queryAllPublicConstructors for: {}", this.type.getName());
+			log.debug("Enabling queryAllPublicConstructors for: {}", this.type.getName());
 			this.entry.setQueryAllPublicConstructors(true);
 		}
 		if (r != null && r.queryAllPublicMethods()) {
-			log.atDebug().log("Enabling queryAllPublicMethods for: {}", this.type.getName());
+			log.debug("Enabling queryAllPublicMethods for: {}", this.type.getName());
 			this.entry.setQueryAllPublicMethods(false);
 		}
 
-		log.atDebug().log("Detecting @Reflected annotated fields, constructors, and methods for: {}", this.type.getName());
+		log.debug("Detecting @Reflected annotated fields, constructors, and methods for: {}", this.type.getName());
 		Arrays.stream(this.type.getDeclaredFields()).filter(f -> f.getAnnotation(REFLECTED_CLASS)!=null).forEach(this::field);
 		Arrays.stream(this.type.getDeclaredConstructors()).filter(c -> c.getAnnotation(REFLECTED_CLASS)!=null).forEach(this::constructor);
 		Arrays.stream(this.type.getDeclaredMethods()).filter(m -> m.getAnnotation(REFLECTED_CLASS)!=null).forEach(this::method);
-		log.atTrace().log("Completed auto-detection for type: {}", this.type.getName());
+		log.trace("Completed auto-detection for type: {}", this.type.getName());
 	}
 
 }

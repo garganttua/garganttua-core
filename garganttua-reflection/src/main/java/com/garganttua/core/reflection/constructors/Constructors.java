@@ -4,21 +4,21 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.TypeUtils;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Constructors {
+    private static final IDiagnostic log = Diagnostics.of(Constructors.class);
 
     private Constructors() {
         /* This utility class should not be instantiated */
     }
 
     public static String prettyColored(IConstructor<?> c) {
-        log.atTrace().log("Creating pretty colored representation for constructor: {}", c);
+        log.trace("Creating pretty colored representation for constructor: {}", c);
         String className = "\u001B[36m" + c.getDeclaringClass().getSimpleName() + "\u001B[0m";
         String params = Arrays.stream(c.getParameters())
                 .map(p -> "\u001B[33m" + p.getType().getSimpleName() + "\u001B[0m " +
@@ -29,7 +29,7 @@ public class Constructors {
     }
 
     public static String pretty(IConstructor<?> c) {
-        log.atTrace().log("Creating pretty representation for constructor: {}", c);
+        log.trace("Creating pretty representation for constructor: {}", c);
         return c.getDeclaringClass().getSimpleName()
                 + "("
                 + Arrays.stream(c.getParameterTypes())

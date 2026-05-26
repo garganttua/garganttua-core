@@ -1,8 +1,8 @@
 package com.garganttua.core.dsl;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when errors occur during DSL builder operations.
@@ -39,8 +39,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see CoreException
  * @see IBuilder
  */
-@Slf4j
 public class DslException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(DslException.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -51,7 +51,7 @@ public class DslException extends CoreException {
      */
     public DslException(String message) {
         super(CoreException.DSL_ERROR, message);
-        log.atTrace().log("Exiting DslException constructor");
+        log.trace("Exiting DslException constructor");
     }
 
     /**
@@ -62,7 +62,7 @@ public class DslException extends CoreException {
      */
     public DslException(String message, Exception cause) {
         super(CoreException.DSL_ERROR, message, cause);
-        log.atTrace().log("Exiting DslException constructor");
+        log.trace("Exiting DslException constructor");
     }
 
     /**
@@ -72,7 +72,7 @@ public class DslException extends CoreException {
      */
     public DslException(Exception e) {
         super(e);
-        log.atTrace().log("Exiting DslException constructor");
+        log.trace("Exiting DslException constructor");
     }
 
 }

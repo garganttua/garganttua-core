@@ -14,6 +14,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -22,8 +24,6 @@ import com.garganttua.core.injection.context.dsl.IPropertyProviderBuilder;
 import com.garganttua.core.injection.context.properties.PropertyProvider;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Property provider builder that loads properties from {@code .properties} files.
@@ -59,11 +59,11 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA02
  */
-@Slf4j
 @Reflected
 public class PropertiesFileProviderBuilder
         extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
+    private static final IDiagnostic log = Diagnostics.of(PropertiesFileProviderBuilder.class);
 
     private static final String DEFAULT_CLASSPATH_RESOURCE = "application.properties";
 
@@ -95,7 +95,7 @@ public class PropertiesFileProviderBuilder
     public PropertiesFileProviderBuilder classpathResource(String resourcePath) {
         Objects.requireNonNull(resourcePath, "Resource path cannot be null");
         this.sources.add(new PropertySource(PropertySourceType.CLASSPATH, resourcePath));
-        log.atDebug().log("Added classpath resource: {}", resourcePath);
+        log.debug("Added classpath resource: {}", resourcePath);
         return this;
     }
 
@@ -108,7 +108,7 @@ public class PropertiesFileProviderBuilder
     public PropertiesFileProviderBuilder file(String filePath) {
         Objects.requireNonNull(filePath, "File path cannot be null");
         this.sources.add(new PropertySource(PropertySourceType.FILE, filePath));
-        log.atDebug().log("Added file source: {}", filePath);
+        log.debug("Added file source: {}", filePath);
         return this;
     }
 
@@ -133,7 +133,7 @@ public class PropertiesFileProviderBuilder
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atDebug().log("Auto-detecting {} on classpath", DEFAULT_CLASSPATH_RESOURCE);
+        log.debug("Auto-detecting {} on classpath", DEFAULT_CLASSPATH_RESOURCE);
         this.sources.add(0, new PropertySource(PropertySourceType.CLASSPATH, DEFAULT_CLASSPATH_RESOURCE));
     }
 
@@ -145,10 +145,10 @@ public class PropertiesFileProviderBuilder
             try {
                 Map<String, String> loaded = loadSource(source);
                 allProperties.putAll(loaded);
-                log.atDebug().log("Loaded {} properties from {} [{}]",
+                log.debug("Loaded {} properties from {} [{}]",
                         loaded.size(), source.type, source.path);
             } catch (IOException e) {
-                log.atWarn().log("Failed to load properties from {} [{}]: {}",
+                log.warn("Failed to load properties from {} [{}]: {}",
                         source.type, source.path, e.getMessage());
             }
         }
@@ -156,7 +156,7 @@ public class PropertiesFileProviderBuilder
         // Resolve ${VAR:default} placeholders in property values
         resolvePlaceholders(allProperties);
 
-        log.atDebug().log("Built PropertiesFileProvider with {} total properties", allProperties.size());
+        log.debug("Built PropertiesFileProvider with {} total properties", allProperties.size());
         return new PropertyProvider(allProperties);
     }
 
@@ -179,7 +179,7 @@ public class PropertiesFileProviderBuilder
                 String resolved = resolvePlaceholdersInValue(strValue, properties);
                 if (!resolved.equals(strValue)) {
                     entry.setValue(resolved);
-                    log.atTrace().log("Resolved placeholder in '{}': {} -> {}", entry.getKey(), strValue, resolved);
+                    log.trace("Resolved placeholder in '{}': {} -> {}", entry.getKey(), strValue, resolved);
                 }
             }
         }
@@ -208,7 +208,7 @@ public class PropertiesFileProviderBuilder
             }
             if (resolved == null) {
                 resolved = matcher.group(0); // keep original ${...} if unresolved
-                log.atWarn().log("Unresolved placeholder: {}", matcher.group(0));
+                log.warn("Unresolved placeholder: {}", matcher.group(0));
             }
             matcher.appendReplacement(result, Matcher.quoteReplacement(resolved));
         }
@@ -235,7 +235,7 @@ public class PropertiesFileProviderBuilder
         Enumeration<URL> resources = classLoader.getResources(resourcePath);
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
-            log.atTrace().log("Loading properties from classpath URL: {}", url);
+            log.trace("Loading properties from classpath URL: {}", url);
             try (InputStream is = url.openStream()) {
                 java.util.Properties props = new java.util.Properties();
                 props.load(is);
@@ -267,7 +267,7 @@ public class PropertiesFileProviderBuilder
     private Map<String, String> loadFromFile(String filePath) throws IOException {
         File file = new File(filePath);
         if (!file.exists()) {
-            log.atWarn().log("Properties file not found: {}", filePath);
+            log.warn("Properties file not found: {}", filePath);
             return Map.of();
         }
 

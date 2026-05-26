@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -17,13 +19,11 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Bootstrap
 @Reflected
 public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuilder, IReflection>
         implements IReflectionBuilder {
+    private static final IDiagnostic log = Diagnostics.of(ReflectionBuilder.class);
 
     private static final int DEFAULT_PRIORITY = 10;
 
@@ -47,7 +47,7 @@ public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuild
 
     @Override
     public IReflectionBuilder withProvider(IReflectionProvider provider, int priority) {
-        log.atDebug().log("Adding reflection provider {} with priority {}", provider.getClass().getName(), priority);
+        log.debug("Adding reflection provider {} with priority {}", provider.getClass().getName(), priority);
         this.providers.add(new PrioritizedProvider(
                 Objects.requireNonNull(provider, "Provider cannot be null"), priority));
         return this;
@@ -55,7 +55,7 @@ public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuild
 
     @Override
     public IReflectionBuilder withScanner(IAnnotationScanner scanner, int priority) {
-        log.atDebug().log("Adding annotation scanner {} with priority {}", scanner.getClass().getName(), priority);
+        log.debug("Adding annotation scanner {} with priority {}", scanner.getClass().getName(), priority);
         this.scanners.add(new PrioritizedScanner(
                 Objects.requireNonNull(scanner, "Scanner cannot be null"), priority));
         return this;
@@ -73,12 +73,12 @@ public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuild
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atDebug().log("ReflectionBuilder auto-detection (no-op for now)");
+        log.debug("ReflectionBuilder auto-detection (no-op for now)");
     }
 
     @Override
     protected IReflection doBuild() throws DslException {
-        log.atDebug().log("Building IReflection with {} providers and {} scanners",
+        log.debug("Building IReflection with {} providers and {} scanners",
                 providers.size(), scanners.size());
 
         List<IReflectionProvider> sortedProviders = providers.stream()
@@ -93,7 +93,7 @@ public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuild
 
         IReflection reflection = new CompositeReflection(sortedProviders, sortedScanners);
         IClass.setReflection(reflection);
-        log.atDebug().log("IReflection built successfully");
+        log.debug("IReflection built successfully");
 
         this.observers.forEach(o -> o.handle(reflection));
 

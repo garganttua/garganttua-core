@@ -2,6 +2,8 @@ package com.garganttua.core.mapper.rules;
 
 import java.util.List;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
@@ -15,10 +17,8 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
+    private static final IDiagnostic log = Diagnostics.of(SimpleMapableFieldMappingExecutor.class);
 
 	private IReflection reflection;
 	private IField sourceFieldLeaf;
@@ -63,7 +63,7 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 	@SuppressWarnings("unchecked")
 	private <destination> destination doMappingInternal(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject, IMappingRecursion recursion) throws MapperException {
-		log.atDebug().log("Mapable: {} ({}) -> {} ({})", this.sourceFieldLeaf.getName(), this.sourceFieldLeaf.getType().getSimpleName(), this.destinationFieldLeaf.getName(), this.destinationFieldLeaf.getType().getSimpleName());
+		log.debug("Mapable: {} ({}) -> {} ({})", this.sourceFieldLeaf.getName(), this.sourceFieldLeaf.getType().getSimpleName(), this.destinationFieldLeaf.getName(), this.destinationFieldLeaf.getType().getSimpleName());
 
 		if( destinationObject == null ) {
 			try {
@@ -82,7 +82,7 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 			}
 
 		} catch (ReflectionException e) {
-			log.atError().log("Mapping failed for {} -> {}: {}", this.sourceFieldLeaf.getName(), this.destinationFieldLeaf.getName(), e.getMessage());
+			log.error("Mapping failed for {} -> {}: {}", this.sourceFieldLeaf.getName(), this.destinationFieldLeaf.getName(), e.getMessage());
 			throw new MapperException(e);
 		}
 

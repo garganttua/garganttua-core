@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.expression.IExpression;
@@ -16,11 +18,9 @@ import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType> implements
         IRuntimeStepFallbackBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStepFallbackBinder.class);
 
     private final String runtimeName;
     private final String stepName;
@@ -36,7 +36,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
             Optional<String> variable, Boolean isOutput, List<IRuntimeStepOnException> onExceptions, Boolean nullable,
             String expressionReference) {
 
-        log.atTrace().log(
+        log.trace(
                 "[RuntimeStepFallbackBinder.<init>] Initializing fallback: runtime={}, step={}, expression={}, variablePresent={}, isOutput={}, nullable={}",
                 runtimeName, stepName, expressionReference, variable.isPresent(), isOutput, nullable);
 
@@ -49,7 +49,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
         this.expressionReference = Objects.requireNonNull(expressionReference, "expressionReference cannot be null");
 
-        log.atDebug().log("{}Fallback binder initialized. OnExceptions count={}", logLineHeader(),
+        log.debug("{}Fallback binder initialized. OnExceptions count={}", logLineHeader(),
                 this.onExceptions.size());
     }
 
@@ -71,7 +71,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     @Override
     public Optional<IMethodReturn<ExecutionReturned>> execute(IRuntimeContext<InputType, OutputType> ownerContext,
             Object... contexts) throws ReflectionException {
-        log.atDebug().log("{}Evaluating fallback expression via execute()", logLineHeader());
+        log.debug("{}Evaluating fallback expression via execute()", logLineHeader());
         return RuntimeExpressionContext.callIn(ownerContext, () -> {
             try {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
@@ -108,14 +108,14 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     public void fallBack(IRuntimeContext<InputType, OutputType> context,
             IExecutorChain<IRuntimeContext<InputType, OutputType>> nextExecutor) {
 
-        log.atDebug().log("{}Executing fallback logic", logLineHeader());
+        log.debug("{}Executing fallback logic", logLineHeader());
 
         Optional<String> variable = variable();
         ExecutionReturned returned = null;
         Optional<RuntimeExceptionRecord> abortingException = context.findAbortingExceptionReport();
 
         if (abortingException.isEmpty()) {
-            log.atWarn().log("{}Fallback executed but no aborting exception found!", logLineHeader());
+            log.warn("{}Fallback executed but no aborting exception found!", logLineHeader());
             RuntimeStepExecutionTools.handleException(this.runtimeName, this.stepName, context,
                     new ExecutorException(
                             logLineHeader() + "Fallback method is executed but no aborting exception found!"),
@@ -126,21 +126,21 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         }
 
         if (this.findMatchingOnException(abortingException.get()).isEmpty()) {
-            log.atTrace().log("{}No matching onException found, executing next fallback in chain", logLineHeader());
+            log.trace("{}No matching onException found, executing next fallback in chain", logLineHeader());
             nextExecutor.executeFallBack(context);
             return;
         }
 
         try {
-            log.atDebug().log("{}Evaluating fallback expression", logLineHeader());
+            log.debug("{}Evaluating fallback expression", logLineHeader());
             returned = RuntimeExpressionContext.callIn(context, () -> {
                 ISupplier<ExecutionReturned> supplier = expression.evaluate();
                 Optional<ExecutionReturned> result = supplier.supply();
                 return result.orElse(null);
             });
-            log.atTrace().log("{}Fallback returned value={}", logLineHeader(), returned);
+            log.trace("{}Fallback returned value={}", logLineHeader(), returned);
         } catch (Exception e) {
-            log.atWarn().log("{}Exception occurred during fallback execution: {}", logLineHeader(), e.getMessage(), e);
+            log.warn("{}Exception occurred during fallback execution: {}", logLineHeader(), e.getMessage(), e);
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             RuntimeStepExecutionTools.handleException(this.runtimeName, this.stepName, context, cause,
                     false,
@@ -148,7 +148,7 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         }
 
         if (isOutput()) {
-            log.atDebug().log("{}Validating fallback as output", logLineHeader());
+            log.debug("{}Validating fallback as output", logLineHeader());
             RuntimeStepExecutionTools.validateReturnedForOutput(this.runtimeName, this.stepName,
                     returned,
                     context, nullable(), logLineHeader(), this.expressionReference);
@@ -156,13 +156,13 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
         }
 
         if (variable.isPresent()) {
-            log.atDebug().log("{}Storing fallback returned value in variable '{}'", logLineHeader(), variable.get());
+            log.debug("{}Storing fallback returned value in variable '{}'", logLineHeader(), variable.get());
             RuntimeStepExecutionTools.validateAndStoreReturnedValueInVariable(this.runtimeName,
                     this.stepName, variable.get(), returned, context, nullable(), logLineHeader(),
                     this.expressionReference);
         }
 
-        log.atDebug().log("{}Executing next fallback in chain", logLineHeader());
+        log.debug("{}Executing next fallback in chain", logLineHeader());
         nextExecutor.executeFallBack(context);
     }
 

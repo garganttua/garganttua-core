@@ -3,6 +3,8 @@ package com.garganttua.core.dsl.dependency;
 import java.util.Objects;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
@@ -10,8 +12,6 @@ import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract builder combining automatic detection, linked navigation, and dependency management.
@@ -55,10 +55,10 @@ import lombok.extern.slf4j.Slf4j;
  * @see ILinkedBuilder
  * @see IDependentBuilder
  */
-@Slf4j
 public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder<T>, L, T>
         extends AbstractAutomaticBuilder<B, T>
         implements IAutomaticLinkedBuilder<B, L, T>, IDependentBuilder<B, T> {
+    private static final IDiagnostic log = Diagnostics.of(AbstractAutomaticLinkedDependentBuilder.class);
 
     private L link;
     protected final DependentBuilderSupport support;
@@ -67,30 +67,30 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
             L link,
             Set<DependencySpec> dependencies) {
         super();
-        log.atTrace().log("Entering AbstractAutomaticLinkedDependentBuilder constructor");
+        log.trace("Entering AbstractAutomaticLinkedDependentBuilder constructor");
         this.link = Objects.requireNonNull(link, "Link cannot be null");
         this.support = new DependentBuilderSupport(dependencies);
         this.autoDetect = false;
-        log.atDebug().log("AbstractAutomaticLinkedDependentBuilder initialized with link, {} dependencies",
+        log.debug("AbstractAutomaticLinkedDependentBuilder initialized with link, {} dependencies",
             dependencies.size());
-        log.atTrace().log("Exiting AbstractAutomaticLinkedDependentBuilder constructor");
+        log.trace("Exiting AbstractAutomaticLinkedDependentBuilder constructor");
     }
 
     @Override
     public L up() {
-        log.atTrace().log("Entering up() method");
-        log.atDebug().log("Returning link: {}", this.link);
-        log.atTrace().log("Exiting up() method");
+        log.trace("Entering up() method");
+        log.debug("Returning link: {}", this.link);
+        log.trace("Exiting up() method");
         return this.link;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public B setUp(L link) {
-        log.atTrace().log("Entering setUp() with link: {}", link);
+        log.trace("Entering setUp() with link: {}", link);
         this.link = Objects.requireNonNull(link, "Link cannot be null");
-        log.atDebug().log("Link updated to: {}", this.link);
-        log.atTrace().log("Exiting setUp()");
+        log.debug("Link updated to: {}", this.link);
+        log.trace("Exiting setUp()");
         return (B) this;
     }
 
@@ -113,42 +113,42 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
 
     @Override
     public T build() throws DslException {
-        log.atTrace().log("Entering build method");
+        log.trace("Entering build method");
 
         if (this.built != null) {
-            log.atDebug().log("Returning previously built instance: {}", this.built);
-            log.atTrace().log("Exiting build method (cached)");
+            log.debug("Returning previously built instance: {}", this.built);
+            log.trace("Exiting build method (cached)");
             return this.built;
         }
 
         try {
             // Phase 1: Auto-detection
             if (this.autoDetect.booleanValue()) {
-                log.atDebug().log("Auto-detection is enabled, performing auto-detection");
+                log.debug("Auto-detection is enabled, performing auto-detection");
                 this.doAutoDetection();
-                log.atDebug().log("Base auto-detection completed");
+                log.debug("Base auto-detection completed");
 
                 // Auto-detection with dependencies
                 this.support.processAutoDetectionWithDependencies(this::doAutoDetectionWithDependency);
             } else {
-                log.atDebug().log("Auto-detection is disabled, skipping auto-detection");
+                log.debug("Auto-detection is disabled, skipping auto-detection");
             }
 
             // Phase 2: Pre-build with dependencies
             this.support.processPreBuildDependencies(this::doPreBuildWithDependency);
 
             // Phase 3: Build the target object
-            log.atDebug().log("Building the instance");
+            log.debug("Building the instance");
             this.built = this.doBuild();
-            log.atDebug().log("Built instance: {}", this.built);
+            log.debug("Built instance: {}", this.built);
 
             // Phase 4: Post-build with dependencies
             this.support.processPostBuildDependencies(this::doPostBuildWithDependency);
 
-            log.atTrace().log("Exiting build method");
+            log.trace("Exiting build method");
             return this.built;
         } catch (DslException e) {
-            log.atError().log("Critical error during build", e);
+            log.error("Critical error during build", e);
             throw e;
         }
     }

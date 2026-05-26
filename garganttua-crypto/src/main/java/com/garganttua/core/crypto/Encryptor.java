@@ -1,5 +1,7 @@
 package com.garganttua.core.crypto;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -11,15 +13,13 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class Encryptor {
+    private static final IDiagnostic log = Diagnostics.of(Encryptor.class);
 
 	private static final int GCM_TAG_LENGTH_BITS = 128;
 
 	static byte[] encrypt(java.security.Key key, String cipherName, EncryptionMode mode, int ivSize, byte[] data) throws CryptoException {
-		log.atDebug().log("Encrypting with cipher={}, mode={}, ivSize={}", cipherName, mode, ivSize);
+		log.debug("Encrypting with cipher={}, mode={}, ivSize={}", cipherName, mode, ivSize);
 		try {
 			Cipher cipher = Cipher.getInstance(cipherName);
 			if (ivSize > 0) {
@@ -42,7 +42,7 @@ class Encryptor {
 	}
 
 	static byte[] decrypt(java.security.Key key, String cipherName, EncryptionMode mode, int ivSize, byte[] data) throws CryptoException {
-		log.atDebug().log("Decrypting with cipher={}, mode={}, ivSize={}", cipherName, mode, ivSize);
+		log.debug("Decrypting with cipher={}, mode={}, ivSize={}", cipherName, mode, ivSize);
 		try {
 			Cipher cipher = Cipher.getInstance(cipherName);
 			if (ivSize > 0) {

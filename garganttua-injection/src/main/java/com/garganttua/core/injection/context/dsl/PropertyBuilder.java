@@ -3,32 +3,32 @@ package com.garganttua.core.injection.context.dsl;
 import java.util.Map;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class PropertyBuilder<PropertyType> implements IPropertyBuilder<PropertyType> {
+    private static final IDiagnostic log = Diagnostics.of(PropertyBuilder.class);
 
     private final String key;
     private final PropertyType property;
 
     public PropertyBuilder(String key, PropertyType property) {
-        log.atTrace().log("Entering PropertyBuilder constructor with key={} and property={}", key, property);
+        log.trace("Entering PropertyBuilder constructor with key={} and property={}", key, property);
         this.key = Objects.requireNonNull(key, "Key cannot be null");
         this.property = Objects.requireNonNull(property, "Property cannot be null");
-        log.atDebug().log("PropertyBuilder created with key={} and property={}", this.key, this.property);
-        log.atTrace().log("Exiting PropertyBuilder constructor");
+        log.debug("PropertyBuilder created with key={} and property={}", this.key, this.property);
+        log.trace("Exiting PropertyBuilder constructor");
     }
 
     @Override
     public Map.Entry<String, PropertyType> build() throws DslException {
-        log.atTrace().log("Entering build() for key={}", this.key);
+        log.trace("Entering build() for key={}", this.key);
         Entry entry = new Entry(this.key, this.property);
-        log.atDebug().log("Built Property Entry: {}", entry);
-        log.atTrace().log("Exiting build()");
+        log.debug("Built Property Entry: {}", entry);
+        log.trace("Exiting build()");
         return entry;
     }
 
@@ -38,40 +38,40 @@ public class PropertyBuilder<PropertyType> implements IPropertyBuilder<PropertyT
         private PropertyType value;
 
         public Entry(String key, PropertyType value) {
-            log.atTrace().log("Entering Entry constructor with key={} and value={}", key, value);
+            log.trace("Entering Entry constructor with key={} and value={}", key, value);
             this.key = key;
             this.value = value;
-            log.atDebug().log("Entry created with key={} and value={}", this.key, this.value);
-            log.atTrace().log("Exiting Entry constructor");
+            log.debug("Entry created with key={} and value={}", this.key, this.value);
+            log.trace("Exiting Entry constructor");
         }
 
         @Override
         public String getKey() {
-            log.atTrace().log("getKey() called, returning key={}", key);
+            log.trace("getKey() called, returning key={}", key);
             return key;
         }
 
         @Override
         public PropertyType getValue() {
-            log.atTrace().log("getValue() called, returning value={}", value);
+            log.trace("getValue() called, returning value={}", value);
             return value;
         }
 
         @Override
         public PropertyType setValue(PropertyType value) {
-            log.atTrace().log("setValue() called with value={}", value);
+            log.trace("setValue() called with value={}", value);
             Objects.requireNonNull(value, "Property value cannot be null");
             PropertyType old = this.value;
             this.value = value;
-            log.atDebug().log("Value updated from {} to {}", old, this.value);
-            log.atTrace().log("Exiting setValue() with old value={}", old);
+            log.debug("Value updated from {} to {}", old, this.value);
+            log.trace("Exiting setValue() with old value={}", old);
             return old;
         }
 
         @Override
         public String toString() {
             String str = key + "=" + value;
-            log.atTrace().log("toString() called, returning {}", str);
+            log.trace("toString() called, returning {}", str);
             return str;
         }
     }

@@ -4,10 +4,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Lightweight runtime that executes steps within an existing {@link IRuntimeContext}.
@@ -23,8 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  * @param <OutputType> the output type of the enclosing runtime
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class SubRuntime<InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(SubRuntime.class);
 
     private final String name;
     private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;
@@ -42,12 +42,12 @@ public class SubRuntime<InputType, OutputType> {
      * @throws RuntimeException if execution fails
      */
     public void execute(IRuntimeContext<InputType, OutputType> context) {
-        log.atDebug().log("[SubRuntime {}] Executing {} steps in parent context", name, steps.size());
+        log.debug("[SubRuntime {}] Executing {} steps in parent context", name, steps.size());
 
         IExecutorChain<IRuntimeContext<InputType, OutputType>> chain = new ExecutorChain<>(true);
         steps.values().forEach(step -> step.defineExecutionStep(chain));
         chain.execute(context);
 
-        log.atDebug().log("[SubRuntime {}] Execution complete", name);
+        log.debug("[SubRuntime {}] Execution complete", name);
     }
 }

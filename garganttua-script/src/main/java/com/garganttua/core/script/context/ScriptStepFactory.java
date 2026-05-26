@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.context.IScriptFunction;
@@ -38,8 +40,6 @@ import com.garganttua.core.script.nodes.StatementGroupNode;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Compiles {@link IScriptNode} AST nodes into {@link RuntimeStep} instances.
  *
@@ -64,8 +64,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class ScriptStepFactory {
+    private static final IDiagnostic log = Diagnostics.of(ScriptStepFactory.class);
 
     private static final String RUNTIME_NAME = "script";
 
@@ -453,7 +453,7 @@ public class ScriptStepFactory {
             try {
                 result.add((IClass<? extends Throwable>) (IClass<?>) IClass.forName(name));
             } catch (ClassNotFoundException e) {
-                log.atDebug().log("Exception type '{}' not found as class, skipping", name);
+                log.debug("Exception type '{}' not found as class, skipping", name);
             }
         }
         return result;

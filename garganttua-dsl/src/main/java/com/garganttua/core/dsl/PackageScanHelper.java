@@ -4,12 +4,12 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Scans for @Scan annotations and adds discovered packages to packageable builders.
@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class PackageScanHelper {
+    private static final IDiagnostic log = Diagnostics.of(PackageScanHelper.class);
 
     private final IReflection reflection;
     private IClass<? extends Annotation> scanAnnotationClass;
@@ -41,25 +41,25 @@ public class PackageScanHelper {
      */
     public void scanAndAddPackages(IBuilder<?> builder, String[] basePackages) throws DslException {
         if (builder == null || basePackages == null || basePackages.length == 0) {
-            log.atDebug().log("No scanning needed: builder or basePackages is null/empty");
+            log.debug("No scanning needed: builder or basePackages is null/empty");
             return;
         }
 
         if (!(builder instanceof IPackageableBuilder)) {
-            log.atDebug().log("Builder {} does not implement IPackageableBuilder, skipping scan",
+            log.debug("Builder {} does not implement IPackageableBuilder, skipping scan",
                     builder.getClass().getSimpleName());
             return;
         }
 
         IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
-        log.atTrace().log("Scanning for @Scan annotations in {} packages", basePackages.length);
+        log.trace("Scanning for @Scan annotations in {} packages", basePackages.length);
 
         for (String basePackage : basePackages) {
             try {
                 List<IClass<?>> annotatedClasses = this.reflection.getClassesWithAnnotation(
                         basePackage, this.scanAnnotationClass);
 
-                log.atDebug().log("Found {} classes with @Scan annotation in package {}",
+                log.debug("Found {} classes with @Scan annotation in package {}",
                         annotatedClasses.size(), basePackage);
 
                 for (IClass<?> clazz : annotatedClasses) {
@@ -67,17 +67,17 @@ public class PackageScanHelper {
                     if (scanAnnotation != null) {
                         String scanPackage = scanAnnotation.scan();
                         packageableBuilder.withPackage(scanPackage);
-                        log.atDebug().log("Added scan package '{}' from @Scan on class {} to builder {}",
+                        log.debug("Added scan package '{}' from @Scan on class {} to builder {}",
                                 scanPackage, clazz.getSimpleName(), builder.getClass().getSimpleName());
                     }
                 }
             } catch (Exception e) {
-                log.atWarn().log("Failed to scan package {} for @Scan annotations: {}",
+                log.warn("Failed to scan package {} for @Scan annotations: {}",
                         basePackage, e.getMessage());
             }
         }
 
-        log.atTrace().log("Completed scanning for @Scan annotations");
+        log.trace("Completed scanning for @Scan annotations");
     }
 
     /**
@@ -93,24 +93,24 @@ public class PackageScanHelper {
         Objects.requireNonNull(scanner, "IAnnotationScanner cannot be null");
 
         if (builder == null || basePackages == null || basePackages.length == 0) {
-            log.atDebug().log("No scanning needed: builder or basePackages is null/empty");
+            log.debug("No scanning needed: builder or basePackages is null/empty");
             return;
         }
 
         if (!(builder instanceof IPackageableBuilder)) {
-            log.atDebug().log("Builder {} does not implement IPackageableBuilder, skipping scan",
+            log.debug("Builder {} does not implement IPackageableBuilder, skipping scan",
                     builder.getClass().getSimpleName());
             return;
         }
 
         IPackageableBuilder<?, ?> packageableBuilder = (IPackageableBuilder<?, ?>) builder;
-        log.atTrace().log("Scanning for @Scan annotations in {} packages", basePackages.length);
+        log.trace("Scanning for @Scan annotations in {} packages", basePackages.length);
 
         for (String basePackage : basePackages) {
             try {
                 List<IClass<?>> annotatedClasses = scanner.getClassesWithAnnotation(basePackage, this.scanAnnotationClass);
 
-                log.atDebug().log("Found {} classes with @Scan annotation in package {}",
+                log.debug("Found {} classes with @Scan annotation in package {}",
                         annotatedClasses.size(), basePackage);
 
                 for (IClass<?> clazz : annotatedClasses) {
@@ -118,16 +118,16 @@ public class PackageScanHelper {
                     if (scanAnnotation != null) {
                         String scanPackage = scanAnnotation.scan();
                         packageableBuilder.withPackage(scanPackage);
-                        log.atDebug().log("Added scan package '{}' from @Scan on class {} to builder {}",
+                        log.debug("Added scan package '{}' from @Scan on class {} to builder {}",
                                 scanPackage, clazz.getSimpleName(), builder.getClass().getSimpleName());
                     }
                 }
             } catch (Exception e) {
-                log.atWarn().log("Failed to scan package {} for @Scan annotations: {}",
+                log.warn("Failed to scan package {} for @Scan annotations: {}",
                         basePackage, e.getMessage());
             }
         }
 
-        log.atTrace().log("Completed scanning for @Scan annotations");
+        log.trace("Completed scanning for @Scan annotations");
     }
 }

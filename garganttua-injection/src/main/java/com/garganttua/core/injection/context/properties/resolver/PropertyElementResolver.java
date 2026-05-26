@@ -3,6 +3,8 @@ package com.garganttua.core.injection.context.properties.resolver;
 import java.lang.annotation.Annotation;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
@@ -17,59 +19,58 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Resolver(annotations={Property.class})
 @NoArgsConstructor
 public class PropertyElementResolver implements IElementResolver {
+    private static final IDiagnostic log = Diagnostics.of(PropertyElementResolver.class);
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {
-        log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
+        log.trace("Entering resolve with elementType: {} and element: {}", elementType, element);
 
         Objects.requireNonNull(element, "Element cannot be null");
-        log.atDebug().log("Element is not null: {}", element);
+        log.debug("Element is not null: {}", element);
 
         Objects.requireNonNull(elementType, "ElementType cannot be null");
-        log.atDebug().log("ElementType is not null: {}", elementType);
+        log.debug("ElementType is not null: {}", elementType);
 
         String provider = null;
 
         Property property = element.getAnnotation(IClass.getClass(Property.class));
-        log.atDebug().log("Retrieved @Property annotation: {}", property);
+        log.debug("Retrieved @Property annotation: {}", property);
 
         String key = property.value();
-        log.atDebug().log("Property key: {}", key);
+        log.debug("Property key: {}", key);
 
         for (Annotation annotation : element.getAnnotations()) {
             if (annotation.annotationType().equals(Provider.class)) {
                 Provider prov = (Provider) annotation;
                 if (prov.value() != null && !prov.value().isBlank()) {
                     provider = prov.value();
-                    log.atDebug().log("Found provider annotation with value: {}", provider);
+                    log.debug("Found provider annotation with value: {}", provider);
                 } else {
-                    log.atDebug().log("Provider annotation value is null or blank");
+                    log.debug("Provider annotation value is null or blank");
                 }
             } else {
-                log.atTrace().log("Skipping unrelated annotation: {}", annotation.annotationType().getSimpleName());
+                log.trace("Skipping unrelated annotation: {}", annotation.annotationType().getSimpleName());
             }
         }
 
         IPropertySupplierBuilder<?> propertySupplierBuilder = Properties.property(elementType);
-        log.atDebug().log("Created IPropertySupplierBuilder for elementType: {}", elementType.getSimpleName());
+        log.debug("Created IPropertySupplierBuilder for elementType: {}", elementType.getSimpleName());
 
         if (provider != null && !provider.isEmpty()) {
             propertySupplierBuilder.provider(provider);
-            log.atDebug().log("Set provider '{}' on propertySupplierBuilder", provider);
+            log.debug("Set provider '{}' on propertySupplierBuilder", provider);
         }
 
         propertySupplierBuilder.key(key);
-        log.atDebug().log("Set key '{}' on propertySupplierBuilder", key);
+        log.debug("Set key '{}' on propertySupplierBuilder", key);
 
         ISupplierBuilder<?, ISupplier<?>> result = (ISupplierBuilder) propertySupplierBuilder;
-        log.atTrace().log("Exiting resolve with Resolved for elementType: {}", elementType.getSimpleName());
+        log.trace("Exiting resolve with Resolved for elementType: {}", elementType.getSimpleName());
 
         return new Resolved(true, elementType, result, IInjectableElementResolver.isNullable(element));
     }

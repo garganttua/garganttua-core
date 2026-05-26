@@ -1,10 +1,10 @@
 package com.garganttua.core.observability;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Thread-safe registry of observers with built-in exception isolation.
@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
  * @param <E> the event type managed by this registry
  * @since 2.0.0-ALPHA02
  */
-@Slf4j
 public class ObservableRegistry<E extends ObservableEvent> implements IObservable<E> {
+    private static final IDiagnostic log = Diagnostics.of(ObservableRegistry.class);
 
 	private final List<IObserver<E>> observers = new CopyOnWriteArrayList<>();
 
@@ -48,7 +48,7 @@ public class ObservableRegistry<E extends ObservableEvent> implements IObservabl
 			try {
 				observer.onEvent(event);
 			} catch (RuntimeException ex) {
-				log.atWarn().log("Observer {} failed on event {}: {}",
+				log.warn("Observer {} failed on event {}: {}",
 						observer.getClass().getName(), event, ex.getMessage());
 			}
 		}

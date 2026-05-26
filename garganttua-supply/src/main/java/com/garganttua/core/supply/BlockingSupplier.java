@@ -6,9 +6,9 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Supplier that provides values from a blocking queue.
@@ -34,8 +34,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see ISupplier
  * @see BlockingQueue
  */
-@Slf4j
 public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
+    private static final IDiagnostic log = Diagnostics.of(BlockingSupplier.class);
 
     private final BlockingQueue<Supplied> queue;
     private final Long timeoutMillis;
@@ -59,38 +59,38 @@ public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
      * @param timeoutMillis the timeout in milliseconds, or null for indefinite wait
      */
     public BlockingSupplier(BlockingQueue<Supplied> queue, IClass<Supplied> suppliedClass, Long timeoutMillis) {
-        log.atTrace().log("Entering BlockingSupplier constructor with timeout: {}", timeoutMillis);
+        log.trace("Entering BlockingSupplier constructor with timeout: {}", timeoutMillis);
         this.queue = Objects.requireNonNull(queue, "Queue cannot be null");
         this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
         this.timeoutMillis = timeoutMillis;
-        log.atTrace().log("Exiting BlockingSupplier constructor");
+        log.trace("Exiting BlockingSupplier constructor");
     }
 
     @Override
     public Optional<Supplied> supply() throws SupplyException {
-        log.atTrace().log("Entering supply method");
-        log.atDebug().log("Polling queue with timeout: {}", timeoutMillis);
+        log.trace("Entering supply method");
+        log.debug("Polling queue with timeout: {}", timeoutMillis);
 
         try {
             Supplied result;
             if (timeoutMillis != null) {
                 result = queue.poll(timeoutMillis, TimeUnit.MILLISECONDS);
                 if (result == null) {
-                    log.atWarn().log("Queue poll timed out after {} ms", timeoutMillis);
+                    log.warn("Queue poll timed out after {} ms", timeoutMillis);
                 } else {
-                    log.atDebug().log("Queue poll completed within timeout of {} ms", timeoutMillis);
+                    log.debug("Queue poll completed within timeout of {} ms", timeoutMillis);
                 }
             } else {
                 result = queue.take();
-                log.atDebug().log("Queue take completed");
+                log.debug("Queue take completed");
             }
 
-            log.atTrace().log("Exiting supply method");
+            log.trace("Exiting supply method");
             return Optional.ofNullable(result);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.atError().log("Queue operation was interrupted", e);
+            log.error("Queue operation was interrupted", e);
             throw new SupplyException(e);
         }
     }

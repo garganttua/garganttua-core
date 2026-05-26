@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
@@ -26,18 +28,17 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @NoArgsConstructor
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
+    private static final IDiagnostic log = Diagnostics.of(ExpressionContext.class);
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();
     private final Map<String, IClass<?>> variableTypes = new ConcurrentHashMap<>();
     private volatile boolean dynamicFunctionsEnabled = false;
 
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
-        log.atTrace().log("Entering ExpressionContext constructor");
+        log.trace("Entering ExpressionContext constructor");
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");
 
         // Populate ConcurrentHashMap with merge function to handle duplicates
@@ -47,24 +48,24 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             this.nodeFactories.putIfAbsent(ef.key(), ef);
         }
 
-        log.atDebug().log("ExpressionContext initialized with {} unique node factories (from {} total provided)",
+        log.debug("ExpressionContext initialized with {} unique node factories (from {} total provided)",
                 this.nodeFactories.size(), nodeFactories.size());
-        log.atTrace().log("Exiting ExpressionContext constructor");
+        log.trace("Exiting ExpressionContext constructor");
     }
 
     @Override
     public void register(String key, IExpressionNodeFactory<?, ? extends ISupplier<?>> factory) {
-        log.atDebug().log("Registering expression factory with key: {}", key);
+        log.debug("Registering expression factory with key: {}", key);
         Objects.requireNonNull(key, "Key cannot be null");
         Objects.requireNonNull(factory, "Factory cannot be null");
         this.nodeFactories.put(key, factory);
-        log.atDebug().log("Expression factory registered: {}", key);
+        log.debug("Expression factory registered: {}", key);
     }
 
     @Override
     public void enableDynamicFunctions() {
         this.dynamicFunctionsEnabled = true;
-        log.atDebug().log("Dynamic function resolution enabled");
+        log.debug("Dynamic function resolution enabled");
     }
 
     @Override
@@ -72,13 +73,13 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
         Objects.requireNonNull(name, "Variable name cannot be null");
         Objects.requireNonNull(type, "Variable type cannot be null");
         this.variableTypes.put(name, type);
-        log.atDebug().log("Registered variable type: @{} -> {}", name, type.getName());
+        log.debug("Registered variable type: @{} -> {}", name, type.getName());
     }
 
     @Override
     public IExpression<?, ? extends ISupplier<?>> expression(String expressionString) {
-        log.atTrace().log("Entering expression(expressionString={})", expressionString);
-        log.atDebug().log("Parsing expression: {}", expressionString);
+        log.trace("Entering expression(expressionString={})", expressionString);
+        log.debug("Parsing expression: {}", expressionString);
 
         Objects.requireNonNull(expressionString, "Expression string cannot be null");
 
@@ -87,57 +88,57 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             ExpressionLexer lexer = new ExpressionLexer(CharStreams.fromString(expressionString));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             ExpressionParser parser = new ExpressionParser(tokens);
-            log.atDebug().log("ANTLR4 lexer and parser created");
+            log.debug("ANTLR4 lexer and parser created");
 
             // Parse the expression starting from root rule
             ExpressionParser.RootContext rootContext = parser.root();
-            log.atDebug().log("Expression parsed by ANTLR4");
+            log.debug("Expression parsed by ANTLR4");
 
             // Visit and build the expression tree
             ExpressionVisitor visitor = new ExpressionVisitor(this.nodeFactories, this.variableTypes, this.dynamicFunctionsEnabled);
             IExpressionNode<?, ? extends ISupplier<?>> rootNode = visitor.visit(rootContext);
 
             if (rootNode == null) {
-                log.atError().log("Failed to parse expression: {}", expressionString);
+                log.error("Failed to parse expression: {}", expressionString);
                 throw new ExpressionException("Failed to parse expression: " + expressionString);
             }
 
-            log.atDebug().log("Expression parsed successfully: {}", expressionString);
-            log.atTrace().log("Exiting expression");
+            log.debug("Expression parsed successfully: {}", expressionString);
+            log.trace("Exiting expression");
             return new Expression<>(rootNode);
 
         } catch (Exception e) {
             String errorMsg = "Error parsing expression '" + expressionString + "': " + e.getMessage();
-            log.atError().log(errorMsg, e);
+            log.error(errorMsg, e);
             throw new ExpressionException(e);
         }
     }
 
     @Override
     public String man(String key) {
-        log.atTrace().log("Entering man(key={})", key);
-        log.atDebug().log("Looking up manual for expression node: {}", key);
+        log.trace("Entering man(key={})", key);
+        log.debug("Looking up manual for expression node: {}", key);
 
         Objects.requireNonNull(key, "Key cannot be null");
 
         IExpressionNodeFactory<?, ? extends ISupplier<?>> factory = this.nodeFactories.get(key);
 
         if (factory == null) {
-            log.atWarn().log("No expression node factory found for key: {}", key);
+            log.warn("No expression node factory found for key: {}", key);
             return null;
         }
 
         String manual = factory.man();
-        log.atDebug().log("Manual retrieved for key: {}", key);
-        log.atTrace().log("Exiting man");
+        log.debug("Manual retrieved for key: {}", key);
+        log.trace("Exiting man");
 
         return manual;
     }
 
     @Override
     public String man() {
-        log.atTrace().log("Entering listFactories()");
-        log.atDebug().log("Generating list of {} expression node factories", this.nodeFactories.size());
+        log.trace("Entering listFactories()");
+        log.debug("Generating list of {} expression node factories", this.nodeFactories.size());
 
         StringBuilder list = new StringBuilder();
 
@@ -169,19 +170,19 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
         list.append("\n");
         list.append("Use man(\"key\") or man(index) to get detailed documentation for a specific function.\n");
 
-        log.atDebug().log("Factory list generated");
-        log.atTrace().log("Exiting listFactories");
+        log.debug("Factory list generated");
+        log.trace("Exiting listFactories");
 
         return list.toString();
     }
 
     @Override
     public String man(int index) {
-        log.atTrace().log("Entering man(index={})", index);
-        log.atDebug().log("Looking up manual for expression node at index: {}", index);
+        log.trace("Entering man(index={})", index);
+        log.debug("Looking up manual for expression node at index: {}", index);
 
         if (index < 1) {
-            log.atWarn().log("Invalid index: {}. Index must be >= 1", index);
+            log.warn("Invalid index: {}. Index must be >= 1", index);
             return null;
         }
 
@@ -193,7 +194,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
         // Check if index is in bounds (1-based index)
         if (index > sortedFactories.size()) {
-            log.atWarn().log("Index {} out of bounds. Total factories: {}", index, sortedFactories.size());
+            log.warn("Index {} out of bounds. Total factories: {}", index, sortedFactories.size());
             return null;
         }
 
@@ -201,8 +202,8 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
         Map.Entry<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> entry = sortedFactories.get(index - 1);
 
         String manual = entry.getValue().man();
-        log.atDebug().log("Manual retrieved for index {} (key: {})", index, entry.getKey());
-        log.atTrace().log("Exiting man");
+        log.debug("Manual retrieved for index {} (key: {})", index, entry.getKey());
+        log.trace("Exiting man");
 
         return manual;
     }
@@ -227,31 +228,31 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitRoot(ExpressionParser.RootContext ctx) {
-            log.atTrace().log("Visiting root node");
+            log.trace("Visiting root node");
             return visit(ctx.expression());
         }
 
         @Override
         public IExpressionNode<?, ? extends ISupplier<?>> visitExpression(ExpressionParser.ExpressionContext ctx) {
-            log.atTrace().log("Visiting expression node");
+            log.trace("Visiting expression node");
             if (ctx.functionCall() != null) {
-                log.atDebug().log("Expression is a function call");
+                log.debug("Expression is a function call");
                 return visit(ctx.functionCall());
             } else if (ctx.literal() != null) {
-                log.atDebug().log("Expression is a literal");
+                log.debug("Expression is a literal");
                 return visit(ctx.literal());
             } else if (ctx.variableReference() != null) {
-                log.atDebug().log("Expression is a variable reference");
+                log.debug("Expression is a variable reference");
                 return visit(ctx.variableReference());
             } else if (ctx.type() != null) {
-                log.atDebug().log("Expression is a type");
+                log.debug("Expression is a type");
                 return visit(ctx.type());
             } else if (ctx.IDENTIFIER() != null) {
                 // Handle standalone identifier as a string literal
-                log.atDebug().log("Expression is an identifier: {}", ctx.IDENTIFIER().getText());
+                log.debug("Expression is an identifier: {}", ctx.IDENTIFIER().getText());
                 return createNode("string", ctx.IDENTIFIER().getText());
             }
-            log.atError().log("Unknown expression type in context: {}", ctx.getText());
+            log.error("Unknown expression type in context: {}", ctx.getText());
             throw new ExpressionException("Unknown expression type");
         }
 
@@ -267,16 +268,16 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                 // Eager evaluation: .varName - evaluate stored expression immediately
                 varName = ctx.IDENTIFIER().getText();
                 eagerEval = true;
-                log.atDebug().log("Visiting eager variable reference: .{}", varName);
+                log.debug("Visiting eager variable reference: .{}", varName);
             } else if (ctx.IDENTIFIER() != null) {
                 varName = ctx.IDENTIFIER().getText();
                 eagerEval = false;
-                log.atDebug().log("Visiting variable reference: @{}", varName);
+                log.debug("Visiting variable reference: @{}", varName);
             } else if (ctx.INT_LITERAL() != null) {
                 // Argument index - prefix with "$" to distinguish from variables
                 varName = "$" + ctx.INT_LITERAL().getText();
                 eagerEval = false;
-                log.atDebug().log("Visiting argument reference: @{}", ctx.INT_LITERAL().getText());
+                log.debug("Visiting argument reference: @{}", ctx.INT_LITERAL().getText());
             } else {
                 throw new ExpressionException("Invalid variable reference: " + ctx.getText());
             }
@@ -286,7 +287,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             // Look up registered type for this variable, default to Object.class
             final IClass<?> resolvedIClass = variableTypes.getOrDefault(varName, IClass.getClass(Object.class));
             if (resolvedIClass.getType() != Object.class) {
-                log.atDebug().log("Using registered type {} for variable {}", resolvedIClass.getName(), nodeName);
+                log.debug("Using registered type {} for variable {}", resolvedIClass.getName(), nodeName);
             }
 
             @SuppressWarnings({ "rawtypes" })
@@ -305,12 +306,12 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                             Object value = resolved.get();
                             // If value is a supplier (stored expression), evaluate it
                             if (value instanceof ISupplier<?> supplier) {
-                                log.atTrace().log("Eager evaluating supplier for .{}", varName);
+                                log.trace("Eager evaluating supplier for .{}", varName);
                                 return supplier.supply().map(r -> (Object) r);
                             }
                             // If value is an IExpression, evaluate it
                             if (value instanceof IExpression<?, ?> expr) {
-                                log.atTrace().log("Eager evaluating expression for .{}", varName);
+                                log.trace("Eager evaluating expression for .{}", varName);
                                 ISupplier<?> supplier = expr.evaluate();
                                 return supplier.supply().map(r -> (Object) r);
                             }
@@ -350,7 +351,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
             // Case: functionName(args) - classic function call
             String functionName = ctx.IDENTIFIER().getText();
-            log.atTrace().log("Visiting function call: {}", functionName);
+            log.trace("Visiting function call: {}", functionName);
 
             // Special handling for 'for' loop expression
             if ("for".equals(functionName)) {
@@ -360,14 +361,14 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             List<Object> arguments = new ArrayList<>();
 
             if (ctx.arguments() != null) {
-                log.atDebug().log("Processing {} arguments for function {}", ctx.arguments().expression().size(),
+                log.debug("Processing {} arguments for function {}", ctx.arguments().expression().size(),
                         functionName);
                 for (ExpressionParser.ExpressionContext argCtx : ctx.arguments().expression()) {
                     IExpressionNode<?, ? extends ISupplier<?>> argNode = visit(argCtx);
                     arguments.add(argNode);
                 }
             } else {
-                log.atDebug().log("No arguments for function {}", functionName);
+                log.debug("No arguments for function {}", functionName);
             }
 
             // Build function key with parameter types (IExpressionNode instances)
@@ -385,7 +386,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                     // Fallback: create a DynamicFunctionNode that resolves the function
                     // from runtime variables (supports user-defined script functions).
                     // Only if no registered factory exists with this name (avoids masking type mismatches).
-                    log.atDebug().log("No registered factory for '{}', creating dynamic function node", functionName);
+                    log.debug("No registered factory for '{}', creating dynamic function node", functionName);
                     List<IExpressionNode<?, ? extends ISupplier<?>>> argNodes = new ArrayList<>();
                     for (Object arg : arguments) {
                         argNodes.add((IExpressionNode<?, ? extends ISupplier<?>>) arg);
@@ -395,7 +396,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                 throw new ExpressionException("Unknown function: " + functionKey);
             }
 
-            log.atDebug().log("Creating node for function: {}", functionKey);
+            log.debug("Creating node for function: {}", functionKey);
             // Create expression node context with IExpressionNode instances
             ExpressionNodeContext context = new ExpressionNodeContext(arguments);
             return factory.supply(context)
@@ -429,7 +430,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
         private IExpressionNode<?, ? extends ISupplier<?>> visitMethodCall(ExpressionParser.FunctionCallContext ctx) {
             String methodName = ctx.IDENTIFIER().getText();
-            log.atTrace().log("Visiting method call: {}", methodName);
+            log.trace("Visiting method call: {}", methodName);
 
             List<Object> arguments = new ArrayList<>();
             if (ctx.arguments() != null) {
@@ -454,7 +455,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
          */
         private IExpressionNode<?, ? extends ISupplier<?>> visitConstructorCall(
                 ExpressionParser.FunctionCallContext ctx) {
-            log.atTrace().log("Visiting constructor call");
+            log.trace("Visiting constructor call");
 
             List<Object> arguments = new ArrayList<>();
             if (ctx.arguments() != null) {
@@ -657,7 +658,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                 }
 
                 if (compatible) {
-                    log.atDebug().log("Found compatible factory for direct params: {} for {}({})",
+                    log.debug("Found compatible factory for direct params: {} for {}({})",
                             key, functionName, java.util.Arrays.toString(argTypes));
                     return entry.getValue();
                 }
@@ -687,7 +688,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
             }
             keyBuilder.append(")");
             String key = keyBuilder.toString();
-            log.atDebug().log("Built key: {}", key);
+            log.debug("Built key: {}", key);
             return key;
         }
 
@@ -712,7 +713,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
 
             keyBuilder.append(")");
             String key = keyBuilder.toString();
-            log.atDebug().log("Built node key: {}", key);
+            log.debug("Built node key: {}", key);
             return key;
         }
 
@@ -781,7 +782,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                 if (compatible && score > bestScore) {
                     bestScore = score;
                     bestMatch = entry.getValue();
-                    log.atDebug().log("Found compatible factory via type matching: {} (score={}) for {}({})",
+                    log.debug("Found compatible factory via type matching: {} (score={}) for {}({})",
                             key, score, functionName, java.util.Arrays.toString(argTypes));
                 }
             }
@@ -819,7 +820,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
                         try {
                             yield Class.forName("java.util." + simpleName);
                         } catch (ClassNotFoundException e2) {
-                            log.atTrace().log("Could not resolve type name: {}", simpleName);
+                            log.trace("Could not resolve type name: {}", simpleName);
                             yield null;
                         }
                     }

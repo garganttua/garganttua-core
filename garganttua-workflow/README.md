@@ -43,7 +43,6 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
  - `com.garganttua.core:garganttua-observability`
  - `com.garganttua.core:garganttua-runtime-reflection:test`
  - `com.garganttua.core:garganttua-reflections:test`
- - `ch.qos.logback:logback-classic:test`
 
 <!-- AUTO-GENERATED-END -->
 

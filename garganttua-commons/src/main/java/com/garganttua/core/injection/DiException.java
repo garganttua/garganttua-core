@@ -1,8 +1,8 @@
 package com.garganttua.core.injection;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when dependency injection operations fail.
@@ -51,8 +51,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IInjectionContext
  * @see IBeanFactory
  */
-@Slf4j
 public class DiException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(DiException.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -64,7 +64,7 @@ public class DiException extends CoreException {
      */
     public DiException(String message, Exception cause) {
         super(CoreException.INJECTION_ERROR, message, cause);
-        log.atTrace().log("Exiting DiException constructor");
+        log.trace("Exiting DiException constructor");
     }
 
     /**
@@ -75,7 +75,7 @@ public class DiException extends CoreException {
      */
     public DiException(String message, Throwable cause) {
         super(CoreException.INJECTION_ERROR, message, cause);
-        log.atTrace().log("Exiting DiException constructor");
+        log.trace("Exiting DiException constructor");
     }
 
     /**
@@ -89,7 +89,7 @@ public class DiException extends CoreException {
      */
      public DiException(Exception cause) {
         super(CoreException.INJECTION_ERROR, cause);
-        log.atTrace().log("Exiting DiException constructor");
+        log.trace("Exiting DiException constructor");
     }
 
     /**
@@ -99,7 +99,7 @@ public class DiException extends CoreException {
      */
     public DiException(String msg) {
         super(CoreException.INJECTION_ERROR, msg);
-        log.atTrace().log("Exiting DiException constructor");
+        log.trace("Exiting DiException constructor");
     }
 
 }

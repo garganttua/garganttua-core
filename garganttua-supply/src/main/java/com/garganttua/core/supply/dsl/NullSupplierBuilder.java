@@ -2,34 +2,34 @@ package com.garganttua.core.supply.dsl;
 
 import java.lang.reflect.Type;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.NullSupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class NullSupplierBuilder<SuppliedType>
         implements ISupplierBuilder<SuppliedType, ISupplier<SuppliedType>> {
+    private static final IDiagnostic log = Diagnostics.of(NullSupplierBuilder.class);
 
     private IClass<SuppliedType> suppliedClass;
 
     public NullSupplierBuilder(IClass<SuppliedType> suppliedClass) {
-        log.atTrace().log("Entering NullSupplierBuilder constructor with suppliedClass: {}", suppliedClass);
+        log.trace("Entering NullSupplierBuilder constructor with suppliedClass: {}", suppliedClass);
         this.suppliedClass = suppliedClass;
-        log.atTrace().log("Exiting NullSupplierBuilder constructor");
+        log.trace("Exiting NullSupplierBuilder constructor");
     }
 
     @Override
     public ISupplier<SuppliedType> build() throws DslException {
-        log.atTrace().log("Entering build method");
-        log.atDebug().log("Building NullSupplier for type: {}", this.suppliedClass.getSimpleName());
+        log.trace("Entering build method");
+        log.debug("Building NullSupplier for type: {}", this.suppliedClass.getSimpleName());
         ISupplier<SuppliedType> result = new NullSupplier<>(this.suppliedClass);
-        log.atDebug().log("Build completed for NullSupplier of type {}", this.suppliedClass.getSimpleName());
-        log.atTrace().log("Exiting build method");
+        log.debug("Build completed for NullSupplier of type {}", this.suppliedClass.getSimpleName());
+        log.trace("Exiting build method");
         return result;
     }
 
@@ -49,10 +49,10 @@ public class NullSupplierBuilder<SuppliedType>
     }
 
     public static <SuppliedType> NullSupplierBuilder<SuppliedType> of(IClass<SuppliedType> suppliedClass){
-        log.atTrace().log("Entering static of method");
-        log.atDebug().log("Creating NullSupplierBuilder for type: {}", suppliedClass.getSimpleName());
+        log.trace("Entering static of method");
+        log.debug("Creating NullSupplierBuilder for type: {}", suppliedClass.getSimpleName());
         NullSupplierBuilder<SuppliedType> result = new NullSupplierBuilder<>(suppliedClass);
-        log.atTrace().log("Exiting static of method");
+        log.trace("Exiting static of method");
         return result;
     }
 

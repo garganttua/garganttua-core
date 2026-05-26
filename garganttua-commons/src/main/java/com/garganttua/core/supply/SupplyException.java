@@ -1,8 +1,8 @@
 package com.garganttua.core.supply;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when errors occur during object supply operations.
@@ -40,8 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see ISupplier
  * @see IContextualSupplier
  */
-@Slf4j
 public class SupplyException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(SupplyException.class);
 
     /**
      * Constructs a new supply exception wrapping another exception.
@@ -50,7 +50,7 @@ public class SupplyException extends CoreException {
      */
     public SupplyException(Exception e) {
         super(CoreException.SUPPLY_ERROR, e);
-        log.atTrace().log("Exiting SupplyException constructor");
+        log.trace("Exiting SupplyException constructor");
     }
 
     /**
@@ -60,7 +60,7 @@ public class SupplyException extends CoreException {
      */
     public SupplyException(String message) {
         super(CoreException.SUPPLY_ERROR, message);
-        log.atTrace().log("Exiting SupplyException constructor");
+        log.trace("Exiting SupplyException constructor");
     }
 
     /**
@@ -71,7 +71,7 @@ public class SupplyException extends CoreException {
      */
     public SupplyException(String message, Throwable cause) {
         super(CoreException.SUPPLY_ERROR, message, cause);
-        log.atTrace().log("Exiting SupplyException constructor");
+        log.trace("Exiting SupplyException constructor");
     }
 
 }

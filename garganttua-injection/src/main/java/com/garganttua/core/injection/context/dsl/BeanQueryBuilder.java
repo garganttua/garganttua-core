@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
@@ -17,12 +19,11 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @NoArgsConstructor
 @Reflected
 public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
+    private static final IDiagnostic log = Diagnostics.of(BeanQueryBuilder.class);
 
     private IClass<Bean> type;
     private String provider;
@@ -32,15 +33,15 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
 
     @Override
     public IBeanQuery<Bean> build() throws DslException {
-        log.atTrace().log("Entering build() method");
+        log.trace("Entering build() method");
 
         Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
         if (this.qualifier != null) {
             qualifiers.add(this.qualifier);
-            log.atDebug().log("Qualifier added: {}", this.qualifier.getSimpleName());
+            log.debug("Qualifier added: {}", this.qualifier.getSimpleName());
         }
 
-        log.atDebug().log("Building BeanQuery for type: {}, provider: {}, strategy: {}, qualifier: {}, name: {}",
+        log.debug("Building BeanQuery for type: {}, provider: {}, strategy: {}, qualifier: {}, name: {}",
                 getTypeSimpleName(), provider, strategy, qualifier, name);
 
         IBeanQuery<Bean> query;
@@ -52,14 +53,14 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
                             Optional.ofNullable(this.strategy),
                             Optional.ofNullable(this.name),
                             qualifiers));
-            log.atDebug().log("BeanQuery successfully built for type: {}", getTypeSimpleName());
+            log.debug("BeanQuery successfully built for type: {}", getTypeSimpleName());
         } catch (Exception e) {
-            log.atError().log("Failed to build BeanQuery for type: {}. Error: {}", getTypeSimpleName(),
+            log.error("Failed to build BeanQuery for type: {}. Error: {}", getTypeSimpleName(),
                     e.getMessage());
             throw new DslException("Error building BeanQuery", e);
         }
 
-        log.atTrace().log("Exiting build() method");
+        log.trace("Exiting build() method");
         return query;
     }
 
@@ -69,46 +70,46 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
 
     @Override
     public IBeanQueryBuilder<Bean> type(IClass<Bean> type) {
-        log.atTrace().log("Entering type() method with parameter: {}", type);
+        log.trace("Entering type() method with parameter: {}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
-        log.atDebug().log("Type set to: {}", getTypeSimpleName());
-        log.atTrace().log("Exiting type() method");
+        log.debug("Type set to: {}", getTypeSimpleName());
+        log.trace("Exiting type() method");
         return this;
     }
 
     @Override
     public IBeanQueryBuilder<Bean> name(String name) {
-        log.atTrace().log("Entering name() method with parameter: {}", name);
+        log.trace("Entering name() method with parameter: {}", name);
         this.name = Objects.requireNonNull(name, "Name cannot be null");
-        log.atDebug().log("Name set to: {}", this.name);
-        log.atTrace().log("Exiting name() method");
+        log.debug("Name set to: {}", this.name);
+        log.trace("Exiting name() method");
         return this;
     }
 
     @Override
     public IBeanQueryBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) throws DiException {
-        log.atTrace().log("Entering qualifier() method with parameter: {}", qualifier);
+        log.trace("Entering qualifier() method with parameter: {}", qualifier);
         this.qualifier = Objects.requireNonNull(qualifier, "Qualifier cannot be null");
-        log.atDebug().log("Qualifier set to: {}", this.qualifier.getSimpleName());
-        log.atTrace().log("Exiting qualifier() method");
+        log.debug("Qualifier set to: {}", this.qualifier.getSimpleName());
+        log.trace("Exiting qualifier() method");
         return this;
     }
 
     @Override
     public IBeanQueryBuilder<Bean> strategy(BeanStrategy strategy) {
-        log.atTrace().log("Entering strategy() method with parameter: {}", strategy);
+        log.trace("Entering strategy() method with parameter: {}", strategy);
         this.strategy = Objects.requireNonNull(strategy, "Strategy cannot be null");
-        log.atDebug().log("Strategy set to: {}", this.strategy);
-        log.atTrace().log("Exiting strategy() method");
+        log.debug("Strategy set to: {}", this.strategy);
+        log.trace("Exiting strategy() method");
         return this;
     }
 
     @Override
     public IBeanQueryBuilder<Bean> provider(String provider) {
-        log.atTrace().log("Entering provider() method with parameter: {}", provider);
+        log.trace("Entering provider() method with parameter: {}", provider);
         this.provider = Objects.requireNonNull(provider, "Provider cannot be null");
-        log.atDebug().log("Provider set to: {}", this.provider);
-        log.atTrace().log("Exiting provider() method");
+        log.debug("Provider set to: {}", this.provider);
+        log.trace("Exiting provider() method");
         return this;
     }
 }

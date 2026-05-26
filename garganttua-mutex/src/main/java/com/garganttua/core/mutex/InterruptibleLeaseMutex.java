@@ -8,9 +8,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.observability.ObservabilityEmitter;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Mutex implementation using Java's {@link ReentrantLock} for thread-safe
@@ -75,8 +75,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutex
  * @see MutexStrategy
  */
-@Slf4j
 public class InterruptibleLeaseMutex implements IMutex {
+    private static final IDiagnostic log = Diagnostics.of(InterruptibleLeaseMutex.class);
 
     private static final String MUTEX_RELEASED_MSG = "Mutex released: {}";
 
@@ -98,40 +98,40 @@ public class InterruptibleLeaseMutex implements IMutex {
             thread.setName("mutex-lease-enforcer-" + name);
             return thread;
         });
-        log.atTrace().log("InterruptibleLeaseMutex created: {}", name);
+        log.trace("InterruptibleLeaseMutex created: {}", name);
     }
 
     @Override
     public <R> R acquire(ThrowingFunction<R> function) throws MutexException {
-        log.atDebug().log("Acquiring mutex (simple): {}", name);
+        log.debug("Acquiring mutex (simple): {}", name);
         String source = "mutex:" + name;
         try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.joinCurrent()) {
             scope.fireStart(source);
             lock.lock();
             try {
-                log.atTrace().log("Mutex acquired: {}", name);
+                log.trace("Mutex acquired: {}", name);
                 R result = function.execute();
                 scope.fireEnd(source);
                 return result;
             } catch (MutexException e) {
-                log.atWarn().log("Mutex execution failed for {}: {}", name, e.getMessage());
+                log.warn("Mutex execution failed for {}: {}", name, e.getMessage());
                 scope.fireError(source, e);
                 throw e;
             } catch (Exception e) {
-                log.atError().log("Unexpected exception in mutex {}: {}", name, e.getMessage(), e);
+                log.error("Unexpected exception in mutex {}: {}", name, e.getMessage(), e);
                 MutexException me = new MutexException("Unexpected exception during mutex execution", e);
                 scope.fireError(source, me);
                 throw me;
             } finally {
                 lock.unlock();
-                log.atTrace().log(MUTEX_RELEASED_MSG, name);
+                log.trace(MUTEX_RELEASED_MSG, name);
             }
         }
     }
 
     @Override
     public <R> R acquire(ThrowingFunction<R> function, MutexStrategy strategy) throws MutexException {
-        log.atDebug().log("Acquiring mutex (strategy): {} with strategy: waitTime={}{}, retries={}, leaseTime={}{}",
+        log.debug("Acquiring mutex (strategy): {} with strategy: waitTime={}{}, retries={}, leaseTime={}{}",
                 name,
                 strategy.waitTime(),
                 strategy.waitTimeUnit(),
@@ -157,7 +157,7 @@ public class InterruptibleLeaseMutex implements IMutex {
                     scope.fireError(source, me);
                     throw me;
                 } catch (MutexException e) {
-                    log.atWarn().log("Mutex execution failed for {}: {}", name, e.getMessage());
+                    log.warn("Mutex execution failed for {}: {}", name, e.getMessage());
                     scope.fireError(source, e);
                     throw e;
                 } catch (Exception e) {
@@ -186,7 +186,7 @@ public class InterruptibleLeaseMutex implements IMutex {
 
     private <R> R executeWithLockAndLease(ThrowingFunction<R> function, MutexStrategy strategy,
             int attempt, int maxAttempts) throws MutexException {
-        log.atTrace().log("Mutex acquired on attempt {}/{}: {}", attempt, maxAttempts, name);
+        log.trace("Mutex acquired on attempt {}/{}: {}", attempt, maxAttempts, name);
 
         if (strategy.leaseTime() <= 0) {
             // No lease time enforcement, execute directly
@@ -194,7 +194,7 @@ public class InterruptibleLeaseMutex implements IMutex {
                 return function.execute();
             } finally {
                 lock.unlock();
-                log.atTrace().log(MUTEX_RELEASED_MSG, name);
+                log.trace(MUTEX_RELEASED_MSG, name);
             }
         }
 
@@ -218,7 +218,7 @@ public class InterruptibleLeaseMutex implements IMutex {
 
         try {
             R result = future.get(strategy.leaseTime(), strategy.leaseTimeUnit());
-            log.atTrace().log("Mutex execution completed within lease time: {}", name);
+            log.trace("Mutex execution completed within lease time: {}", name);
             return result;
         } catch (TimeoutException e) {
             leaseExpired[0] = true;
@@ -226,14 +226,14 @@ public class InterruptibleLeaseMutex implements IMutex {
             // Interrupt the executing thread immediately
             Thread execThread = executionThread[0];
             if (execThread != null) {
-                log.atWarn().log("Interrupting execution thread for mutex {} due to lease expiration", name);
+                log.warn("Interrupting execution thread for mutex {} due to lease expiration", name);
                 execThread.interrupt();
             }
 
             // Cancel the future with interrupt flag
             future.cancel(true);
 
-            log.atError().log("Mutex lease time exceeded for {}: {}{}. Thread interrupted and lock released.",
+            log.error("Mutex lease time exceeded for {}: {}{}. Thread interrupted and lock released.",
                     name, strategy.leaseTime(), strategy.leaseTimeUnit());
             throw new MutexException("Mutex lease time exceeded: " + strategy.leaseTime() +
                     " " + strategy.leaseTimeUnit() + ". Execution thread was interrupted.");
@@ -242,7 +242,7 @@ public class InterruptibleLeaseMutex implements IMutex {
             if (cause instanceof MutexException mutexEx) {
                 throw mutexEx;
             }
-            log.atError().log("Mutex execution failed: {}", name, cause);
+            log.error("Mutex execution failed: {}", name, cause);
             throw new MutexException("Mutex execution failed", cause);
         } catch (InterruptedException e) {
             future.cancel(true);
@@ -251,31 +251,31 @@ public class InterruptibleLeaseMutex implements IMutex {
         } finally {
             // Ensure lock is always released exactly once
             lock.unlock();
-            log.atTrace().log(MUTEX_RELEASED_MSG, name);
+            log.trace(MUTEX_RELEASED_MSG, name);
         }
     }
 
     private void handleFailedAttempt(int attempt, int maxAttempts, MutexStrategy strategy) throws InterruptedException {
-        log.atDebug().log("Failed to acquire mutex on attempt {}/{}: {}", attempt, maxAttempts, name);
+        log.debug("Failed to acquire mutex on attempt {}/{}: {}", attempt, maxAttempts, name);
         if (attempt < maxAttempts) {
             Thread.sleep(strategy.retryIntervalUnit().toMillis(strategy.retryInterval()));
-            log.atTrace().log("Retrying mutex acquisition: {}", name);
+            log.trace("Retrying mutex acquisition: {}", name);
         }
     }
 
     private MutexException handleInterruption(InterruptedException e) {
         Thread.currentThread().interrupt();
-        log.atWarn().log("Mutex acquisition interrupted for {}: {}", name, e.getMessage());
+        log.warn("Mutex acquisition interrupted for {}: {}", name, e.getMessage());
         return new MutexException("Mutex acquisition interrupted", e);
     }
 
     private MutexException handleUnexpectedException(Exception e) {
-        log.atError().log("Unexpected exception in mutex {}: {}", name, e.getMessage(), e);
+        log.error("Unexpected exception in mutex {}: {}", name, e.getMessage(), e);
         return new MutexException("Unexpected exception during mutex execution", e);
     }
 
     private MutexException createExhaustedException(int maxAttempts) {
-        log.atError().log("Failed to acquire mutex {} after {} attempts", name, maxAttempts);
+        log.error("Failed to acquire mutex {} after {} attempts", name, maxAttempts);
         return new MutexException("Failed to acquire mutex '" + name + "' after " + maxAttempts + " attempts");
     }
 

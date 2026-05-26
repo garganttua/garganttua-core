@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationPopulator;
 import com.garganttua.core.configuration.format.JsonConfigurationFormat;
@@ -23,12 +25,10 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<IConfigurationBuilder, IConfigurationPopulator>
         implements IConfigurationBuilder {
+    private static final IDiagnostic log = Diagnostics.of(ConfigurationBuilder.class);
 
     private final List<IConfigurationFormat> formats = new ArrayList<>();
     private final List<ConfigurationSourceBuilder> sourceBuilders = new ArrayList<>();
@@ -38,8 +38,8 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
 
     public ConfigurationBuilder() {
         super(Set.of(DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BOTH)));
-        log.atTrace().log("Entering ConfigurationBuilder constructor");
-        log.atTrace().log("Exiting ConfigurationBuilder constructor");
+        log.trace("Entering ConfigurationBuilder constructor");
+        log.trace("Exiting ConfigurationBuilder constructor");
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
         if (dependency instanceof IReflection r) {
-            log.atDebug().log("Received IReflection dependency");
+            log.debug("Received IReflection dependency");
             this.reflection = r;
         }
     }
@@ -73,14 +73,14 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
 
     @Override
     public IConfigurationBuilder withFormat(IConfigurationFormat format) {
-        log.atDebug().log("Adding format: {}", format.name());
+        log.debug("Adding format: {}", format.name());
         this.formats.add(format);
         return this;
     }
 
     @Override
     public IConfigurationBuilder withMappingStrategy(String strategy) {
-        log.atDebug().log("Setting mapping strategy: {}", strategy);
+        log.debug("Setting mapping strategy: {}", strategy);
         this.strategy = MethodMappingStrategy.fromString(strategy);
         return this;
     }
@@ -93,13 +93,13 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atDebug().log("Auto-detecting configuration formats");
+        log.debug("Auto-detecting configuration formats");
         registerDefaultFormats();
     }
 
     @Override
     protected IConfigurationPopulator doBuild() throws DslException {
-        log.atDebug().log("Building ConfigurationPopulator with {} formats", this.formats.size());
+        log.debug("Building ConfigurationPopulator with {} formats", this.formats.size());
 
         if (this.formats.isEmpty()) {
             registerDefaultFormats();
@@ -118,12 +118,12 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
 
     private void registerFormatIfAbsent(IConfigurationFormat format) {
         if (!format.isAvailable()) {
-            log.atDebug().log("Format {} not available, skipping", format.name());
+            log.debug("Format {} not available, skipping", format.name());
             return;
         }
         var exists = this.formats.stream().anyMatch(f -> f.name().equals(format.name()));
         if (!exists) {
-            log.atDebug().log("Registering format: {}", format.name());
+            log.debug("Registering format: {}", format.name());
             this.formats.add(format);
         }
     }

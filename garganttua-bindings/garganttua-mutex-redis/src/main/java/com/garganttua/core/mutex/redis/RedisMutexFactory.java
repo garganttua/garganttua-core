@@ -6,13 +6,13 @@ import javax.inject.Named;
 
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.IMutexFactory;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexStrategy;
 import com.garganttua.core.mutex.annotations.MutexFactory;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Factory implementation for creating {@link RedisMutex} instances.
@@ -81,10 +81,10 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutexFactory
  * @see MutexStrategy
  */
-@Slf4j
 @MutexFactory(type = RedisMutex.class)
 @Named("RedisMutexFactory")
 public class RedisMutexFactory implements IMutexFactory {
+    private static final IDiagnostic log = Diagnostics.of(RedisMutexFactory.class);
 
     private final RedUtilsConfig redisConfig;
 
@@ -93,7 +93,7 @@ public class RedisMutexFactory implements IMutexFactory {
      */
     public RedisMutexFactory() {
         this.redisConfig = null;
-        log.atDebug().log("Created RedisMutexFactory with default configuration");
+        log.debug("Created RedisMutexFactory with default configuration");
     }
 
     /**
@@ -103,7 +103,7 @@ public class RedisMutexFactory implements IMutexFactory {
      */
     public RedisMutexFactory(RedUtilsConfig redisConfig) {
         this.redisConfig = Objects.requireNonNull(redisConfig, "Redis configuration cannot be null");
-        log.atDebug().log("Created RedisMutexFactory with custom configuration");
+        log.debug("Created RedisMutexFactory with custom configuration");
     }
 
     /**
@@ -125,7 +125,7 @@ public class RedisMutexFactory implements IMutexFactory {
     public IMutex createMutex(String name) throws MutexException {
         validateName(name);
 
-        log.atDebug().log("Creating RedisMutex with name: {}", name);
+        log.debug("Creating RedisMutex with name: {}", name);
 
         try {
             if (redisConfig != null) {
@@ -134,7 +134,7 @@ public class RedisMutexFactory implements IMutexFactory {
                 return new RedisMutex(name);
             }
         } catch (Exception e) {
-            log.atError().log("Failed to create Redis mutex '{}': {}", name, e.getMessage(), e);
+            log.error("Failed to create Redis mutex '{}': {}", name, e.getMessage(), e);
             throw new MutexException("Failed to create Redis mutex '" + name + "'", e);
         }
     }
@@ -168,7 +168,7 @@ public class RedisMutexFactory implements IMutexFactory {
         validateName(name);
         Objects.requireNonNull(defaultStrategy, "Default strategy cannot be null");
 
-        log.atDebug().log("Creating RedisMutex with name: {} and strategy: " +
+        log.debug("Creating RedisMutex with name: {} and strategy: " +
                 "waitTime={}{}, retries={}, leaseTime={}{}",
                 name,
                 defaultStrategy.waitTime(),
@@ -177,7 +177,7 @@ public class RedisMutexFactory implements IMutexFactory {
                 defaultStrategy.leaseTime(),
                 defaultStrategy.leaseTimeUnit());
 
-        log.atWarn().log("Note: RedisMutex does not currently store default strategies. " +
+        log.warn("Note: RedisMutex does not currently store default strategies. " +
                 "Strategy must be passed explicitly to acquire() method.");
 
         // For now, create a simple mutex

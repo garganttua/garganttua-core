@@ -1,5 +1,7 @@
 package com.garganttua.core.mutex.redis.functions;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.mutex.IMutex;
@@ -12,7 +14,6 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Expression functions for Redis-based distributed mutex synchronization.
@@ -52,8 +53,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutexManager
  * @see RedisMutex
  */
-@Slf4j
 public final class RedisMutexFunctions {
+    private static final IDiagnostic log = Diagnostics.of(RedisMutexFunctions.class);
 
     private RedisMutexFunctions() {
         // Utility class
@@ -78,7 +79,7 @@ public final class RedisMutexFunctions {
      */
     @Expression(name = "syncRedis", description = "Synchronizes execution using a distributed Redis mutex")
     public static Object syncRedis(@Nullable String mutexName, @Nullable ISupplier<?> expression) {
-        log.atTrace().log("Entering syncRedis(mutexName={}, expression={})", mutexName, expression);
+        log.trace("Entering syncRedis(mutexName={}, expression={})", mutexName, expression);
 
         if (mutexName == null || mutexName.isBlank()) {
             throw new ExpressionException("syncRedis: mutex name cannot be null or blank");
@@ -100,22 +101,22 @@ public final class RedisMutexFunctions {
             MutexName name = new MutexName(IClass.getClass(RedisMutex.class), mutexName);
             IMutex mutex = manager.mutex(name);
 
-            log.atDebug().log("Acquiring Redis mutex: {}", name);
+            log.debug("Acquiring Redis mutex: {}", name);
 
             // Execute expression inside mutex
             Object result = mutex.acquire(() -> {
-                log.atTrace().log("Redis mutex acquired, evaluating expression");
+                log.trace("Redis mutex acquired, evaluating expression");
                 return expression.supply().orElse(null);
             });
 
-            log.atDebug().log("Redis mutex released, result: {}", result);
+            log.debug("Redis mutex released, result: {}", result);
             return result;
 
         } catch (MutexException e) {
-            log.atError().log("syncRedis: mutex operation failed for '{}'", mutexName, e);
+            log.error("syncRedis: mutex operation failed for '{}'", mutexName, e);
             throw new ExpressionException("syncRedis: mutex operation failed - " + e.getMessage());
         } catch (Exception e) {
-            log.atError().log("syncRedis: expression evaluation failed", e);
+            log.error("syncRedis: expression evaluation failed", e);
             throw new ExpressionException("syncRedis: expression evaluation failed - " + e.getMessage());
         }
     }

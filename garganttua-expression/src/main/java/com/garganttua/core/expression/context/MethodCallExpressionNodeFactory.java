@@ -3,12 +3,13 @@ package com.garganttua.core.expression.context;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
@@ -27,10 +28,9 @@ import com.garganttua.core.supply.NullSupplier;
 import com.garganttua.core.supply.SupplyException;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implements IExpressionNodeFactory<R, S> {
+    private static final IDiagnostic log = Diagnostics.of(MethodCallExpressionNodeFactory.class);
 
     private ResolvedMethod resolved;
     private ExpressionNodeFactory<R, S> factory;
@@ -72,7 +72,7 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
         // When the owner type is Object (e.g. from a generic method like cast()),
         // defer method resolution to runtime when the actual type is known
         if (ownerIClass.getType() == Object.class) {
-            log.atDebug().log("Deferring method resolution for {}() - owner type is Object", methodName);
+            log.debug("Deferring method resolution for {}() - owner type is Object", methodName);
             this.deferred = true;
             this.deferredMethodName = methodName;
             this.deferredParameterTypes = parameterTypes;

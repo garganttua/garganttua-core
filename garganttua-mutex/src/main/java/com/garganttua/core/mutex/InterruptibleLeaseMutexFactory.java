@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import javax.inject.Named;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mutex.annotations.MutexFactory;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Factory implementation for creating {@link InterruptibleLeaseMutex} instances.
@@ -80,10 +80,10 @@ import lombok.extern.slf4j.Slf4j;
  * @see IMutexFactory
  * @see MutexStrategy
  */
-@Slf4j
 @MutexFactory(type = InterruptibleLeaseMutex.class)
 @Named("InterruptibleLeaseMutexFactory")
 public class InterruptibleLeaseMutexFactory implements IMutexFactory {
+    private static final IDiagnostic log = Diagnostics.of(InterruptibleLeaseMutexFactory.class);
 
     /**
      * Creates a new {@link InterruptibleLeaseMutex} with the specified name.
@@ -105,12 +105,12 @@ public class InterruptibleLeaseMutexFactory implements IMutexFactory {
     public IMutex createMutex(String name) throws MutexException {
         validateName(name);
 
-        log.atDebug().log("Creating InterruptibleLeaseMutex with name: {}", name);
+        log.debug("Creating InterruptibleLeaseMutex with name: {}", name);
 
         try {
             return new InterruptibleLeaseMutex(name);
         } catch (Exception e) {
-            log.atError().log("Failed to create mutex '{}': {}", name, e.getMessage(), e);
+            log.error("Failed to create mutex '{}': {}", name, e.getMessage(), e);
             throw new MutexException("Failed to create mutex '" + name + "'", e);
         }
     }
@@ -144,7 +144,7 @@ public class InterruptibleLeaseMutexFactory implements IMutexFactory {
         validateName(name);
         Objects.requireNonNull(defaultStrategy, "Default strategy cannot be null");
 
-        log.atDebug().log("Creating InterruptibleLeaseMutex with name: {} and strategy: " +
+        log.debug("Creating InterruptibleLeaseMutex with name: {} and strategy: " +
                 "waitTime={}{}, retries={}, leaseTime={}{}",
                 name,
                 defaultStrategy.waitTime(),
@@ -153,7 +153,7 @@ public class InterruptibleLeaseMutexFactory implements IMutexFactory {
                 defaultStrategy.leaseTime(),
                 defaultStrategy.leaseTimeUnit());
 
-        log.atWarn().log("Note: InterruptibleLeaseMutex does not currently store default strategies. " +
+        log.warn("Note: InterruptibleLeaseMutex does not currently store default strategies. " +
                 "Strategy must be passed explicitly to acquire() method.");
 
         // For now, create a simple mutex

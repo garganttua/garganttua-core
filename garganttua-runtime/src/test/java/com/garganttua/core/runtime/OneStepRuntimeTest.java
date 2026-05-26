@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
@@ -26,14 +28,12 @@ import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.runtime.runtimes.onestep.DummyRuntimeProcessOutputStep;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class OneStepRuntimeTest {
+    private static final IDiagnostic log = Diagnostics.of(OneStepRuntimeTest.class);
 
     @BeforeEach
     void logTestStart(TestInfo testInfo) {
-        log.atInfo().log("Executing test method: {}", testInfo.getTestMethod().get().getName());
+        log.info("Executing test method: {}", testInfo.getTestMethod().get().getName());
     }
 
     private static IReflectionBuilder reflectionBuilder;

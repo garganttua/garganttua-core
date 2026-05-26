@@ -4,13 +4,13 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.FutureSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Builder for creating FutureSupplier instances.
@@ -33,10 +33,10 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  * @see FutureSupplier
  */
-@Slf4j
 @Reflected
 public class FutureSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
+    private static final IDiagnostic log = Diagnostics.of(FutureSupplierBuilder.class);
 
     private final CompletableFuture<Supplied> future;
     private final IClass<Supplied> suppliedClass;
@@ -49,10 +49,10 @@ public class FutureSupplierBuilder<Supplied>
      * @param suppliedClass the IClass of the supplied object
      */
     public FutureSupplierBuilder(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
-        log.atTrace().log("Entering FutureSupplierBuilder constructor");
+        log.trace("Entering FutureSupplierBuilder constructor");
         this.future = Objects.requireNonNull(future, "Future cannot be null");
         this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
-        log.atTrace().log("Exiting FutureSupplierBuilder constructor");
+        log.trace("Exiting FutureSupplierBuilder constructor");
     }
 
     /**
@@ -62,19 +62,19 @@ public class FutureSupplierBuilder<Supplied>
      * @return this builder instance for method chaining
      */
     public FutureSupplierBuilder<Supplied> withTimeout(Long timeoutMillis) {
-        log.atTrace().log("Entering withTimeout method with timeout: {}", timeoutMillis);
+        log.trace("Entering withTimeout method with timeout: {}", timeoutMillis);
         this.timeoutMillis = timeoutMillis;
-        log.atTrace().log("Exiting withTimeout method");
+        log.trace("Exiting withTimeout method");
         return this;
     }
 
     @Override
     public ISupplier<Supplied> build() throws DslException {
-        log.atTrace().log("Entering build method");
-        log.atDebug().log("Building FutureSupplier with timeout: {}", timeoutMillis);
+        log.trace("Entering build method");
+        log.debug("Building FutureSupplier with timeout: {}", timeoutMillis);
         ISupplier<Supplied> result = new FutureSupplier<>(future, suppliedClass, timeoutMillis);
-        log.atDebug().log("Build completed for FutureSupplier");
-        log.atTrace().log("Exiting build method");
+        log.debug("Build completed for FutureSupplier");
+        log.trace("Exiting build method");
         return result;
     }
 
@@ -102,10 +102,10 @@ public class FutureSupplierBuilder<Supplied>
      * @return a new FutureSupplierBuilder instance
      */
     public static <Supplied> FutureSupplierBuilder<Supplied> of(CompletableFuture<Supplied> future, IClass<Supplied> suppliedClass) {
-        log.atTrace().log("Entering static of method");
-        log.atDebug().log("Creating FutureSupplierBuilder");
+        log.trace("Entering static of method");
+        log.debug("Creating FutureSupplierBuilder");
         FutureSupplierBuilder<Supplied> result = new FutureSupplierBuilder<>(future, suppliedClass);
-        log.atTrace().log("Exiting static of method");
+        log.trace("Exiting static of method");
         return result;
     }
 }

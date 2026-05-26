@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.reflection.IClass;
@@ -13,45 +15,43 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 AbstractMethodArgInjectBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>
                 implements IBeanPostConstructMethodBinderBuilder<Bean> {
+    private static final IDiagnostic log = Diagnostics.of(BeanPostConstructMethodBinderBuilder.class);
 
         protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,
                         ISupplierBuilder<Bean, IBeanFactory<Bean>> supplier) throws DslException {
                 super(up, supplier);
-                log.atTrace().log(
+                log.trace(
                                 "Entering BeanPostConstructMethodBinderBuilder constructor with up: {}, supplier: {}, no resolver",
                                 up, supplier);
-                log.atDebug().log("BeanPostConstructMethodBinderBuilder initialized without resolver for beanClass: {}",
+                log.debug("BeanPostConstructMethodBinderBuilder initialized without resolver for beanClass: {}",
                                 up.getSuppliedClass());
-                log.atTrace().log("Exiting BeanPostConstructMethodBinderBuilder constructor");
+                log.trace("Exiting BeanPostConstructMethodBinderBuilder constructor");
         }
 
         @Override
         public IMethodBinder<Void> build(ISupplierBuilder<Bean, ISupplier<Bean>> supplierBuilder)
                         throws DslException {
-                log.atTrace().log("Entering build() for beanClass: {}", supplierBuilder.getSuppliedClass());
-                log.atDebug().log("Creating method binder");
+                log.trace("Entering build() for beanClass: {}", supplierBuilder.getSuppliedClass());
+                log.debug("Creating method binder");
                 this.setSupplier(supplierBuilder);
                 IMethodBinder<Void> binder = this.doBuild();
-                log.atDebug().log("Method binder successfully built for beanClass: {}",
+                log.debug("Method binder successfully built for beanClass: {}",
                                 supplierBuilder.getSuppliedClass());
-                log.atTrace().log("Exiting build()");
+                log.trace("Exiting build()");
                 return binder;
         }
 
         @Override
         public Set<IClass<?>> dependencies() {
-                log.atTrace().log("Entering getDependencies()");
-                log.atDebug().log("Getting parameter types for post-construct method");
+                log.trace("Entering getDependencies()");
+                log.debug("Getting parameter types for post-construct method");
                 Set<IClass<?>> dependencies = new HashSet<>(Arrays.asList(this.getParameterTypes()));
-                log.atDebug().log("Dependencies for BeanPostConstructMethodBinderBuilder: {}", dependencies);
-                log.atTrace().log("Exiting getDependencies()");
+                log.debug("Dependencies for BeanPostConstructMethodBinderBuilder: {}", dependencies);
+                log.trace("Exiting getDependencies()");
                 return dependencies;
         }
 }

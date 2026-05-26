@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -26,14 +28,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>
         extends
         AbstractAutomaticLinkedDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>
         implements IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStepBuilder.class);
 
     private String stepName;
     private String runtimeName;
@@ -56,48 +56,48 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         this.executionReturn = Objects.requireNonNull(executionReturn, "Execution return type cannot be null");
         this.supplier = Objects.requireNonNull(supplier, "Supplier builder cannot be null");
 
-        log.atTrace().log("{} Initialized RuntimeStepBuilder", logLineHeader());
-        log.atDebug().log("{} Supplier type: {}", logLineHeader(), supplier.getSuppliedClass());
+        log.trace("{} Initialized RuntimeStepBuilder", logLineHeader());
+        log.debug("{} Supplier type: {}", logLineHeader(), supplier.getSuppliedClass());
     }
 
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> method()
             throws DslException {
-        log.atTrace().log("{} Entering method() method", logLineHeader());
+        log.trace("{} Entering method() method", logLineHeader());
         if (this.methodBuilder == null) {
             this.methodBuilder = new RuntimeStepMethodBuilder<>(runtimeName, stepName, this, supplier);
-            log.atDebug().log("{} Method builder created", logLineHeader());
+            log.debug("{} Method builder created", logLineHeader());
         } else {
-            log.atDebug().log("{} Reusing existing method builder", logLineHeader());
+            log.debug("{} Reusing existing method builder", logLineHeader());
         }
-        log.atTrace().log("{} Exiting method() method", logLineHeader());
+        log.trace("{} Exiting method() method", logLineHeader());
         return this.methodBuilder;
     }
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallBack()
             throws DslException {
-        log.atTrace().log("{} Entering fallBack() method", logLineHeader());
+        log.trace("{} Entering fallBack() method", logLineHeader());
         if (this.fallbackBuilder == null) {
             this.fallbackBuilder = new RuntimeStepFallbackBuilder<>(runtimeName, stepName, this, supplier);
-            log.atDebug().log("{} Fallback builder created", logLineHeader());
+            log.debug("{} Fallback builder created", logLineHeader());
         } else {
-            log.atDebug().log("{} Reusing existing fallback builder", logLineHeader());
+            log.debug("{} Reusing existing fallback builder", logLineHeader());
         }
-        log.atTrace().log("{} Exiting fallBack() method", logLineHeader());
+        log.trace("{} Exiting fallBack() method", logLineHeader());
         return this.fallbackBuilder;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("{} Starting auto-detection", logLineHeader());
+        log.trace("{} Starting auto-detection", logLineHeader());
         detectOperationMethod();
         detectFallback();
-        log.atTrace().log("{} Finished auto-detection", logLineHeader());
+        log.trace("{} Finished auto-detection", logLineHeader());
     }
 
     private void detectFallback() {
-        log.atTrace().log("{} Detecting fallback method", logLineHeader());
+        log.trace("{} Detecting fallback method", logLineHeader());
         IMethod fallbackMethod = findMethodAnnotatedWith(supplier.getSuppliedClass(), FallBack.class);
         if (fallbackMethod != null) {
             try {
@@ -115,22 +115,22 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
                     this.fallbackBuilder.variable(variable.name());
                 }
 
-                log.atDebug().log("{} Detected fallback method [{}]", logLineHeader(), fallbackMethod.getName());
+                log.debug("{} Detected fallback method [{}]", logLineHeader(), fallbackMethod.getName());
             } catch (DslException e) {
-                log.atWarn().log("{} Exception while handling fallback method [{}]", logLineHeader(),
+                log.warn("{} Exception while handling fallback method [{}]", logLineHeader(),
                         fallbackMethod.getName());
             }
         } else {
-            log.atWarn().log("{} No fallback method detected", logLineHeader());
+            log.warn("{} No fallback method detected", logLineHeader());
         }
     }
 
     @SuppressWarnings("unchecked")
     private IMethod detectOperationMethod() throws DslException {
-        log.atTrace().log("{} Detecting operation method", logLineHeader());
+        log.trace("{} Detecting operation method", logLineHeader());
         IMethod method = findMethodAnnotatedWith(supplier.getSuppliedClass(), Operation.class);
         if (method == null) {
-            log.atError().log("{} No @Operation method found in class {}", logLineHeader(),
+            log.error("{} No @Operation method found in class {}", logLineHeader(),
                     supplier.getSuppliedClass().getSimpleName());
             throw new DslException("Class " + supplier.getSuppliedClass().getSimpleName() +
                     " does not declare any @Operation method");
@@ -141,7 +141,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         this.methodBuilder.autoDetect(true);
         this.methodBuilder.method(method);
 
-        log.atDebug().log("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
+        log.debug("{} Detected operation method [{}] returning [{}]", logLineHeader(), method.getName(),
                 executionReturn.getSimpleName());
         return method;
     }
@@ -149,7 +149,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     protected IRuntimeStep<ExecutionReturn, InputType, OutputType> doBuild() throws DslException {
-        log.atTrace().log("{} Entering doBuild() method", logLineHeader());
+        log.trace("{} Entering doBuild() method", logLineHeader());
 
         // Propagate IReflectionBuilder to method and fallback builders before building
         if (this.reflectionBuilderRef != null) {
@@ -164,17 +164,17 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> fallback = null;
         if (this.fallbackBuilder != null) {
             fallback = this.fallbackBuilder.build();
-            log.atDebug().log("{} Built fallback method", logLineHeader());
+            log.debug("{} Built fallback method", logLineHeader());
         } else {
-            log.atDebug().log("{} No fallback to build", logLineHeader());
+            log.debug("{} No fallback to build", logLineHeader());
         }
 
-        log.atDebug().log("{} Building RuntimeStep", logLineHeader());
+        log.debug("{} Building RuntimeStep", logLineHeader());
         IRuntimeStep<ExecutionReturn, InputType, OutputType> step = new RuntimeStep(runtimeName, stepName,
                 executionReturn, this.methodBuilder.build(),
                 Optional.ofNullable(fallback));
 
-        log.atTrace().log("{} Exiting doBuild() method", logLineHeader());
+        log.trace("{} Exiting doBuild() method", logLineHeader());
         return step;
     }
 

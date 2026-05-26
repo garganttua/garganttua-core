@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IFieldValue;
@@ -17,10 +19,8 @@ import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class FieldDelegate {
+    private static final IDiagnostic log = Diagnostics.of(FieldDelegate.class);
 
     private final IReflectionProvider provider;
 
@@ -29,7 +29,7 @@ class FieldDelegate {
     }
 
     Optional<IField> findField(IClass<?> clazz, String fieldName) {
-        log.atTrace().log("Finding field {} in class: {}", fieldName, clazz.getName());
+        log.trace("Finding field {} in class: {}", fieldName, clazz.getName());
         for (IField f : clazz.getDeclaredFields()) {
             if (f.getName().equals(fieldName)) {
                 return Optional.of(f);
@@ -42,7 +42,7 @@ class FieldDelegate {
     }
 
     Optional<IField> findFieldAnnotatedWith(IClass<?> clazz, IClass<? extends Annotation> annotation) {
-        log.atTrace().log("Finding field annotated with {} in class: {}", annotation.getName(), clazz.getName());
+        log.trace("Finding field annotated with {} in class: {}", annotation.getName(), clazz.getName());
         for (IField f : clazz.getDeclaredFields()) {
             if (f.isAnnotationPresent(annotation)) {
                 return Optional.of(f);
@@ -62,7 +62,7 @@ class FieldDelegate {
 
     List<String> findFieldAddressesWithAnnotation(IClass<?> clazz, IClass<? extends Annotation> annotation,
             boolean linked) {
-        log.atTrace().log("Finding field addresses with annotation {} in class: {}", annotation.getName(), clazz.getName());
+        log.trace("Finding field addresses with annotation {} in class: {}", annotation.getName(), clazz.getName());
         List<String> addresses = new ArrayList<>();
         findFieldAddressesRecursively(addresses, clazz, annotation, linked);
         return addresses;

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowScript;
@@ -16,11 +18,10 @@ import com.garganttua.core.workflow.header.ScriptHeaderParser;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Reflected
 public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
+    private static final IDiagnostic log = Diagnostics.of(WorkflowScriptBuilder.class);
 
     private static final ScriptHeaderParser HEADER_PARSER = new ScriptHeaderParser();
 
@@ -120,13 +121,13 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
             String content = temp.loadContent();
             if (content != null) {
                 HEADER_PARSER.parse(content).ifPresent(header -> {
-                    log.atDebug().log("Parsed #@workflow header from script '{}': {} inputs, {} outputs",
+                    log.debug("Parsed #@workflow header from script '{}': {} inputs, {} outputs",
                             name, header.inputs().size(), header.outputs().size());
                     mergeHeader(header, mergedInputs, mergedOutputs);
                 });
             }
         } catch (WorkflowException e) {
-            log.atDebug().log("Could not load script content for header parsing: {}", e.getMessage());
+            log.debug("Could not load script content for header parsing: {}", e.getMessage());
         }
 
         return WorkflowScript.builder()

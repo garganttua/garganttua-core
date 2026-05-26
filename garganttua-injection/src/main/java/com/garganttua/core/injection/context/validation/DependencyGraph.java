@@ -6,33 +6,33 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class DependencyGraph {
+    private static final IDiagnostic log = Diagnostics.of(DependencyGraph.class);
 
     private final Map<IClass<?>, Set<IClass<?>>> adjacencyList = new LinkedHashMap<>();
 
     public void addDependency(IClass<?> bean, IClass<?> dependency) {
-        log.atTrace().log("Entering addDependency(bean={}, dependency={})", bean, dependency);
+        log.trace("Entering addDependency(bean={}, dependency={})", bean, dependency);
         adjacencyList.computeIfAbsent(bean, k -> new LinkedHashSet<>()).add(dependency);
-        log.atDebug().log("Added dependency {} to bean {}", dependency.getSimpleName(), bean.getSimpleName());
-        log.atTrace().log("Exiting addDependency");
+        log.debug("Added dependency {} to bean {}", dependency.getSimpleName(), bean.getSimpleName());
+        log.trace("Exiting addDependency");
     }
 
     public Set<IClass<?>> getDependencies(IClass<?> bean) {
-        log.atTrace().log("Entering getDependencies(bean={})", bean);
+        log.trace("Entering getDependencies(bean={})", bean);
         Set<IClass<?>> dependencies = adjacencyList.getOrDefault(bean, Set.of());
-        log.atTrace().log("Exiting getDependencies with {} dependencies", dependencies.size());
+        log.trace("Exiting getDependencies with {} dependencies", dependencies.size());
         return dependencies;
     }
 
     public Set<IClass<?>> getAllBeans() {
-        log.atTrace().log("Entering getAllBeans()");
+        log.trace("Entering getAllBeans()");
         Set<IClass<?>> beans = adjacencyList.keySet();
-        log.atTrace().log("Exiting getAllBeans with {} beans", beans.size());
+        log.trace("Exiting getAllBeans with {} beans", beans.size());
         return beans;
     }
 

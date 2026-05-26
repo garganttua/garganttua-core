@@ -4,6 +4,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
 import com.garganttua.core.expression.context.IExpressionVariableResolver;
 import com.garganttua.core.expression.context.IScriptFunction;
@@ -11,10 +13,8 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class DynamicFunctionNode implements IExpressionNode<Object, ISupplier<Object>> {
+    private static final IDiagnostic log = Diagnostics.of(DynamicFunctionNode.class);
 
     private final String functionName;
     private final List<IExpressionNode<?, ? extends ISupplier<?>>> argumentNodes;
@@ -59,7 +59,7 @@ public class DynamicFunctionNode implements IExpressionNode<Object, ISupplier<Ob
                     args[i] = argSupplier.supply().orElse(null);
                 }
 
-                log.atTrace().log("Invoking dynamic function '{}' with {} args", functionName, args.length);
+                log.trace("Invoking dynamic function '{}' with {} args", functionName, args.length);
                 Object result = scriptFunc.invoke(args);
                 return Optional.ofNullable(result);
             }

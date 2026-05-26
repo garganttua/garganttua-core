@@ -43,8 +43,6 @@ The **garganttua-script** module provides a scripting language engine for compos
  - `com.garganttua.core:garganttua-bootstrap`
  - `com.garganttua.core:garganttua-reflections:provided`
  - `org.antlr:antlr4-runtime:4.13.0`
- - `org.slf4j:slf4j-api:2.0.17:compile`
- - `ch.qos.logback:logback-classic:compile`
  - `com.garganttua.core:garganttua-condition`
  - `com.garganttua.core:garganttua-mutex`
 

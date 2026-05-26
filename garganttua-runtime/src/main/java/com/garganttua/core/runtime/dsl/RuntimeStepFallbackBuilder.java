@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -23,13 +25,12 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Reflected
 public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
         implements IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeStepFallbackBuilder.class);
 
     private String storeReturnInVariable = null;
     private Boolean output = false;
@@ -46,28 +47,28 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         super(up, supplier);
         this.stepName = Objects.requireNonNull(stepName, "Step name cannot be null");
         this.runtimeName = Objects.requireNonNull(runtimeName, "Runtime name cannot be null");
-        log.atTrace().log("{} Initialized RuntimeStepFallbackBuilder", logLineHeader());
+        log.trace("{} Initialized RuntimeStepFallbackBuilder", logLineHeader());
     }
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(
             String variableName) {
         this.storeReturnInVariable = Objects.requireNonNull(variableName, "Variable name cannot be null");
-        log.atDebug().log("{} Variable set for fallback", logLineHeader());
+        log.debug("{} Variable set for fallback", logLineHeader());
         return this;
     }
 
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         this.output = Objects.requireNonNull(output, "Output cannot be null");
-        log.atDebug().log("{} Output flag set for fallback", logLineHeader());
+        log.debug("{} Output flag set for fallback", logLineHeader());
         return this;
     }
 
     @Override
     public IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> build()
             throws DslException {
-        log.atTrace().log("{} Entering build() method", logLineHeader());
+        log.trace("{} Entering build() method", logLineHeader());
         IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>> binder = (IContextualMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>>) super.build();
         MethodBinderExpression<ExecutionReturn, IRuntimeContext<InputType, OutputType>> expression = new MethodBinderExpression<>(binder);
         RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType> fallbackBinder = new RuntimeStepFallbackBinder<ExecutionReturn, InputType, OutputType>(
@@ -75,9 +76,8 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
                 this.stepName, expression, Optional.ofNullable(this.storeReturnInVariable), this.output,
                 this.onExceptions.stream().map(b -> b.build()).collect(Collectors.toList()), this.nullable,
                 binder.getExecutableReference());
-        log.atDebug()
-                .log("{} RuntimeStepFallbackBinder built successfully", logLineHeader());
-        log.atTrace().log("{} Exiting build() method", logLineHeader());
+        log.debug("{} RuntimeStepFallbackBinder built successfully", logLineHeader());
+        log.trace("{} Exiting build() method", logLineHeader());
         return fallbackBinder;
     }
 
@@ -89,8 +89,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
                 this, this.runtimeName, rawException);
         this.onExceptions.add(onException);
-        log.atDebug()
-                .log("{} Added onException handler", logLineHeader());
+        log.debug("{} Added onException handler", logLineHeader());
         return onException;
     }
 
@@ -100,14 +99,13 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
                 this, this.runtimeName, Objects.requireNonNull(exception, "Exception cannot be null"),
                 Objects.requireNonNull(oneException, "On exception annotation cannot be null"));
         this.onExceptions.add(onException);
-        log.atDebug()
-                .log("{} Added onException handler with annotation", logLineHeader());
+        log.debug("{} Added onException handler with annotation", logLineHeader());
         return onException;
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("{} Starting auto-detection for fallback builder", logLineHeader());
+        log.trace("{} Starting auto-detection for fallback builder", logLineHeader());
         super.doAutoDetection();
 
         IMethod method = this.method();
@@ -115,14 +113,14 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         detectVariable(method);
         detectOnExceptions(method);
         detectNullable(method);
-        log.atTrace().log("{} Finished auto-detection for fallback builder", logLineHeader());
+        log.trace("{} Finished auto-detection for fallback builder", logLineHeader());
     }
 
     private void detectNullable(IMethod method) {
         Nullable nullable = method.getAnnotation(IClass.getClass(Nullable.class));
         if (nullable != null) {
             this.nullable = true;
-            log.atDebug().log("{} Nullable detected for fallback", logLineHeader());
+            log.debug("{} Nullable detected for fallback", logLineHeader());
         }
     }
 
@@ -130,8 +128,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         OnException[] onExceptionAnnotations = method.getAnnotationsByType(IClass.getClass(OnException.class));
         for (OnException onExceptionAnnotation : onExceptionAnnotations) {
             onException(onExceptionAnnotation.exception(), onExceptionAnnotation).autoDetect(true);
-            log.atDebug()
-                    .log("{} Auto-detected onException", logLineHeader());
+            log.debug("{} Auto-detected onException", logLineHeader());
         }
     }
 
@@ -139,15 +136,14 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         Variable variable = operationMethod.getAnnotation(IClass.getClass(Variable.class));
         if (variable != null) {
             this.variable(variable.name());
-            log.atDebug()
-                    .log("{} Auto-detected variable for fallback", logLineHeader());
+            log.debug("{} Auto-detected variable for fallback", logLineHeader());
         }
     }
 
     private void detectOutput(IMethod operationMethod) {
         if (operationMethod.getAnnotation(IClass.getClass(Output.class)) != null) {
             this.output(true);
-            log.atDebug().log("{} Auto-detected output for fallback", logLineHeader());
+            log.debug("{} Auto-detected output for fallback", logLineHeader());
         }
     }
 
@@ -155,7 +151,7 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
             boolean nullable) {
         this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
-        log.atDebug().log("{} Nullable flag set manually", logLineHeader());
+        log.debug("{} Nullable flag set manually", logLineHeader());
         return this;
     }
 

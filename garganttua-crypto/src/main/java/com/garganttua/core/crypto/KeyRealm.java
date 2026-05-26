@@ -1,5 +1,7 @@
 package com.garganttua.core.crypto;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.security.KeyPair;
 import java.util.Date;
 import java.util.Objects;
@@ -7,10 +9,9 @@ import java.util.Objects;
 import javax.crypto.SecretKey;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class KeyRealm implements IKeyRealm {
+    private static final IDiagnostic log = Diagnostics.of(KeyRealm.class);
 
 	@Getter
 	protected String name;
@@ -44,7 +45,7 @@ public class KeyRealm implements IKeyRealm {
 
 	KeyRealm(String name, IKeyAlgorithm keyAlgorithm, Date expiration, int initializationVectorSize,
 			EncryptionMode encryptionMode, EncryptionPaddingMode paddingMode, SignatureAlgorithm signatureAlgorithm) {
-		log.atDebug().log("Creating KeyRealm name={}, algorithm={}, ivSize={}, mode={}", name, keyAlgorithm, initializationVectorSize, encryptionMode);
+		log.debug("Creating KeyRealm name={}, algorithm={}, ivSize={}, mode={}", name, keyAlgorithm, initializationVectorSize, encryptionMode);
 		this.name = name;
 		this.keyAlgorithm = keyAlgorithm;
 		this.expiration = expiration;
@@ -56,7 +57,7 @@ public class KeyRealm implements IKeyRealm {
 			this.type = keyAlgorithm.getType();
 			this.createKeys();
 		}
-		log.atDebug().log("KeyRealm initialized name={}, type={}", this.name, this.type);
+		log.debug("KeyRealm initialized name={}, type={}", this.name, this.type);
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class KeyRealm implements IKeyRealm {
 		this.encryptionKey = encryptionKey;
 		this.decryptionKey = decryptionKey;
 		this.revoked = revoked;
-		log.atDebug().log("KeyRealm reconstructed name={}, type={}, revoked={}",
+		log.debug("KeyRealm reconstructed name={}, type={}, revoked={}",
 				this.name, this.type, this.revoked);
 	}
 
@@ -204,7 +205,7 @@ public class KeyRealm implements IKeyRealm {
 	@Override
 	public void revoke() {
 		this.revoked = true;
-		log.atWarn().log("Key realm {} has been revoked", this.name);
+		log.warn("Key realm {} has been revoked", this.name);
 	}
 
 	@Override
@@ -217,7 +218,7 @@ public class KeyRealm implements IKeyRealm {
 		var rotated = new KeyRealm(this.name, this.keyAlgorithm, this.expiration, this.ivSize,
 				this.encryptionMode, this.paddingMode, this.signatureAlgorithm);
 		rotated.version = this.version + 1;
-		log.atDebug().log("Key realm {} rotated to version {}", this.name, rotated.version);
+		log.debug("Key realm {} rotated to version {}", this.name, rotated.version);
 		return rotated;
 	}
 

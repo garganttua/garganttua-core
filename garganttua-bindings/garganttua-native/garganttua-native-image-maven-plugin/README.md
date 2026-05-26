@@ -45,8 +45,6 @@ When building native images with GraalVM, all reflection and resource metadata m
  - `com.garganttua.core:garganttua-reflection`
  - `com.garganttua.core:garganttua-runtime-reflection`
  - `com.garganttua.core:garganttua-reflections`
- - `org.slf4j:slf4j-api:compile`
- - `org.slf4j:slf4j-simple:compile`
 
 <!-- AUTO-GENERATED-END -->
 

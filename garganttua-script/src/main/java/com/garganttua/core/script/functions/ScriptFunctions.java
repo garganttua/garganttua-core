@@ -7,6 +7,8 @@ import java.net.URLClassLoader;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.dsl.IBoostrap;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.MutexException;
@@ -23,10 +25,9 @@ import com.garganttua.core.script.context.ScriptExecutionContext;
 import com.garganttua.core.script.loader.JarManifestReader;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class ScriptFunctions {
+    private static final IDiagnostic log = Diagnostics.of(ScriptFunctions.class);
 
     private ScriptFunctions() {
     }
@@ -74,7 +75,7 @@ public class ScriptFunctions {
 
     @Expression(name = "cast", description = "Casts a value to the specified type")
     public static <T> T cast(@Nullable IClass<T> type, @Nullable Object value) {
-        log.atDebug().log("cast({}, {})", type, value);
+        log.debug("cast({}, {})", type, value);
         if (type == null) {
             throw new ExpressionException("cast: type cannot be null");
         }
@@ -176,7 +177,7 @@ public class ScriptFunctions {
 
     @Expression(name = "include", description = "Includes a JAR or a script file (.gs). Supports classpath: prefix for classpath resources.")
     public static String include(@Nullable String path) {
-        log.atDebug().log("include({})", path);
+        log.debug("include({})", path);
         if (path == null || path.isBlank()) {
             throw new ExpressionException("include: path cannot be null or blank");
         }
@@ -208,7 +209,7 @@ public class ScriptFunctions {
 
     @Expression(name = "call", description = "Calls an included script by name")
     public static int call(@Nullable String name) {
-        log.atDebug().log("call({})", name);
+        log.debug("call({})", name);
         if (name == null || name.isBlank()) {
             throw new ExpressionException("call: script name cannot be null or blank");
         }
@@ -253,7 +254,7 @@ public class ScriptFunctions {
      */
     @Expression(name = "time", description = "Measures execution time of an expression in milliseconds")
     public static long time(@Nullable ISupplier<?> expression) {
-        log.atDebug().log("time(ISupplier)");
+        log.debug("time(ISupplier)");
 
         if (expression == null) {
             return 0L;
@@ -266,12 +267,12 @@ public class ScriptFunctions {
         } catch (Exception e) {
             // Still return elapsed time even on failure
             long elapsed = System.currentTimeMillis() - startTime;
-            log.atDebug().log("time: expression failed after {}ms: {}", elapsed, e.getMessage());
+            log.debug("time: expression failed after {}ms: {}", elapsed, e.getMessage());
             throw new ExpressionException("time: expression execution failed: " + e.getMessage());
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
-        log.atDebug().log("time: execution completed in {}ms", elapsed);
+        log.debug("time: execution completed in {}ms", elapsed);
         return elapsed;
     }
 
@@ -299,7 +300,7 @@ public class ScriptFunctions {
      */
     @Expression(name = "timeWithResult", description = "Measures execution time and returns [timeMs, result]")
     public static Object[] timeWithResult(@Nullable ISupplier<?> expression) {
-        log.atDebug().log("timeWithResult(ISupplier)");
+        log.debug("timeWithResult(ISupplier)");
 
         if (expression == null) {
             return new Object[] { 0L, null };
@@ -316,7 +317,7 @@ public class ScriptFunctions {
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
-        log.atDebug().log("timeWithResult: execution completed in {}ms", elapsed);
+        log.debug("timeWithResult: execution completed in {}ms", elapsed);
         return new Object[] { elapsed, result };
     }
 
@@ -388,7 +389,7 @@ public class ScriptFunctions {
      */
     @Expression(name = "retry", description = "Retries a supplier expression with delay between attempts")
     public static Object retry(int maxAttempts, long delayMs, @Nullable ISupplier<?> expression) {
-        log.atDebug().log("retry({}, {}ms, ISupplier)", maxAttempts, delayMs);
+        log.debug("retry({}, {}ms, ISupplier)", maxAttempts, delayMs);
 
         if (maxAttempts < 1) {
             throw new ExpressionException("retry: maxAttempts must be >= 1, got: " + maxAttempts);
@@ -405,17 +406,17 @@ public class ScriptFunctions {
         Throwable lastException = null;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                log.atTrace().log("retry: attempt {}/{}", attempt, maxAttempts);
+                log.trace("retry: attempt {}/{}", attempt, maxAttempts);
                 Object result = expression.supply().orElse(null);
-                log.atDebug().log("retry: succeeded on attempt {}", attempt);
+                log.debug("retry: succeeded on attempt {}", attempt);
                 return result;
             } catch (Exception e) {
                 lastException = e;
-                log.atDebug().log("retry: attempt {}/{} failed: {}", attempt, maxAttempts, e.getMessage());
+                log.debug("retry: attempt {}/{} failed: {}", attempt, maxAttempts, e.getMessage());
 
                 if (attempt < maxAttempts && delayMs > 0) {
                     try {
-                        log.atTrace().log("retry: waiting {}ms before next attempt", delayMs);
+                        log.trace("retry: waiting {}ms before next attempt", delayMs);
                         Thread.sleep(delayMs);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
@@ -450,7 +451,7 @@ public class ScriptFunctions {
     @Expression(name = "retryWithBackoff", description = "Retries with exponential backoff (delay doubles after each failure)")
     public static Object retryWithBackoff(int maxAttempts, long initialDelayMs, long maxDelayMs,
             @Nullable ISupplier<?> expression) {
-        log.atDebug().log("retryWithBackoff({}, {}ms initial, {}ms max, ISupplier)",
+        log.debug("retryWithBackoff({}, {}ms initial, {}ms max, ISupplier)",
                 maxAttempts, initialDelayMs, maxDelayMs);
 
         if (maxAttempts < 1) {
@@ -473,17 +474,17 @@ public class ScriptFunctions {
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                log.atTrace().log("retryWithBackoff: attempt {}/{}", attempt, maxAttempts);
+                log.trace("retryWithBackoff: attempt {}/{}", attempt, maxAttempts);
                 Object result = expression.supply().orElse(null);
-                log.atDebug().log("retryWithBackoff: succeeded on attempt {}", attempt);
+                log.debug("retryWithBackoff: succeeded on attempt {}", attempt);
                 return result;
             } catch (Exception e) {
                 lastException = e;
-                log.atDebug().log("retryWithBackoff: attempt {}/{} failed: {}", attempt, maxAttempts, e.getMessage());
+                log.debug("retryWithBackoff: attempt {}/{} failed: {}", attempt, maxAttempts, e.getMessage());
 
                 if (attempt < maxAttempts && currentDelay > 0) {
                     try {
-                        log.atTrace().log("retryWithBackoff: waiting {}ms before next attempt", currentDelay);
+                        log.trace("retryWithBackoff: waiting {}ms before next attempt", currentDelay);
                         Thread.sleep(currentDelay);
                         currentDelay = Math.min(currentDelay * 2, maxDelayMs);
                     } catch (InterruptedException ie) {
@@ -540,7 +541,7 @@ public class ScriptFunctions {
             long timeoutMs,
             @Nullable ISupplier<?> expression) {
 
-        log.atDebug().log("synchronized('{}', mutex, '{}', {}ms, ISupplier)",
+        log.debug("synchronized('{}', mutex, '{}', {}ms, ISupplier)",
                 mutexName, mode, timeoutMs);
 
         // Validate parameters
@@ -596,7 +597,7 @@ public class ScriptFunctions {
             @Nullable IMutex mutex,
             @Nullable ISupplier<?> expression) {
 
-        log.atDebug().log("sync('{}', mutex, ISupplier)", mutexName);
+        log.debug("sync('{}', mutex, ISupplier)", mutexName);
 
         if (mutexName == null || mutexName.isBlank()) {
             throw new ExpressionException("sync: mutexName cannot be null or blank");
@@ -677,30 +678,30 @@ public class ScriptFunctions {
             // Read packages from JAR manifest
             List<String> packages = JarManifestReader.getPackages(jarUrl);
             if (packages.isEmpty()) {
-                log.atWarn().log("No Garganttua-Packages attribute in JAR manifest: {}", path);
-                log.atDebug().log("JAR loaded onto classpath but no packages to scan: {}", path);
+                log.warn("No Garganttua-Packages attribute in JAR manifest: {}", path);
+                log.debug("JAR loaded onto classpath but no packages to scan: {}", path);
                 return;
             }
 
             // Get bootstrap and add packages
             IBoostrap bootstrap = ctx.getBootstrap();
             if (bootstrap == null) {
-                log.atWarn().log("No bootstrap configured for ScriptContext, cannot rebuild after JAR include: {}", path);
-                log.atDebug().log("JAR loaded onto classpath, packages declared: {} (rebuild skipped)", packages);
+                log.warn("No bootstrap configured for ScriptContext, cannot rebuild after JAR include: {}", path);
+                log.debug("JAR loaded onto classpath, packages declared: {} (rebuild skipped)", packages);
                 return;
             }
 
             // Add packages and rebuild
             for (String pkg : packages) {
                 bootstrap.withPackage(pkg);
-                log.atDebug().log("Added package to bootstrap: {}", pkg);
+                log.debug("Added package to bootstrap: {}", pkg);
             }
 
             try {
                 bootstrap.rebuild();
-                log.atDebug().log("JAR loaded with {} packages, components rebuilt: {}", packages.size(), path);
+                log.debug("JAR loaded with {} packages, components rebuilt: {}", packages.size(), path);
             } catch (DslException e) {
-                log.atError().log("Failed to rebuild after loading JAR: {}", path, e);
+                log.error("Failed to rebuild after loading JAR: {}", path, e);
                 throw new ExpressionException("include: failed to rebuild after loading JAR: " + path + " - " + e.getMessage());
             }
         } catch (ExpressionException e) {
@@ -724,7 +725,7 @@ public class ScriptFunctions {
             String name = scriptFile.getName().replaceFirst("\\.gs$", "");
             ctx.registerIncludedScript(name, subScript);
 
-            log.atDebug().log("Script included as '{}' from {}", name, path);
+            log.debug("Script included as '{}' from {}", name, path);
             return name;
         } catch (ScriptException e) {
             throw new ExpressionException("include: failed to load script: " + path + " - " + e.getMessage());
@@ -746,7 +747,7 @@ public class ScriptFunctions {
                 name = name.replaceFirst("\\.gs$", "");
                 ctx.registerIncludedScript(name, subScript);
 
-                log.atDebug().log("Script included as '{}' from classpath:{}", name, resource);
+                log.debug("Script included as '{}' from classpath:{}", name, resource);
                 return name;
             }
         } catch (ExpressionException e) {
@@ -770,7 +771,7 @@ public class ScriptFunctions {
     // ========== Execute Script Functions ==========
 
     private static int executeScriptImpl(Object name, Object... args) {
-        log.atDebug().log("execute_script({}, {} args)", name, args != null ? args.length : 0);
+        log.debug("execute_script({}, {} args)", name, args != null ? args.length : 0);
         if (name == null) {
             throw new ExpressionException("execute_script: script name cannot be null");
         }
@@ -861,7 +862,7 @@ public class ScriptFunctions {
 
     @Expression(name = "script_variable", description = "Retrieves a variable from an included script after execution")
     public static Object scriptVariable(@Nullable Object scriptName, @Nullable String varName) {
-        log.atDebug().log("script_variable({}, {})", scriptName, varName);
+        log.debug("script_variable({}, {})", scriptName, varName);
         if (scriptName == null) {
             throw new ExpressionException("script_variable: script name cannot be null");
         }

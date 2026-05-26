@@ -3,6 +3,8 @@ package com.garganttua.core.runtime.dsl;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.INativeBuilder;
@@ -33,8 +35,6 @@ import com.garganttua.core.runtime.resolver.InputElementResolver;
 import com.garganttua.core.runtime.resolver.VariableElementResolver;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Native image configuration builder for the garganttua-runtime module.
  *
@@ -51,25 +51,25 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 @ReflectedBuilder
 @Reflected
 public class RuntimeNativeConfigurationBuilder
         extends AbstractAutomaticBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter>
         implements INativeBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeNativeConfigurationBuilder.class);
 
     private final Set<String> packages = new HashSet<>();
 
     @Override
     public RuntimeNativeConfigurationBuilder withPackages(String[] packageNames) {
-        log.atTrace().log("Adding {} packages to runtime native configuration", packageNames.length);
+        log.trace("Adding {} packages to runtime native configuration", packageNames.length);
         this.packages.addAll(Set.of(packageNames));
         return this;
     }
 
     @Override
     public RuntimeNativeConfigurationBuilder withPackage(String packageName) {
-        log.atTrace().log("Adding package to runtime native configuration: {}", packageName);
+        log.trace("Adding package to runtime native configuration: {}", packageName);
         this.packages.add(packageName);
         return this;
     }
@@ -81,7 +81,7 @@ public class RuntimeNativeConfigurationBuilder
 
     @Override
     protected IReflectionUsageReporter doBuild() throws DslException {
-        log.atTrace().log("Building runtime native configuration");
+        log.trace("Building runtime native configuration");
 
         Set<IReflectionConfigurationEntryBuilder> entries = new HashSet<>();
 
@@ -224,7 +224,7 @@ public class RuntimeNativeConfigurationBuilder
                 .queryAllDeclaredMethods(true)
                 .allDeclaredFields(true));
 
-        log.atDebug().log("Runtime native configuration built with {} entries", entries.size());
+        log.debug("Runtime native configuration built with {} entries", entries.size());
 
         final Set<IReflectionConfigurationEntryBuilder> finalEntries = entries;
         return () -> finalEntries;
@@ -232,6 +232,6 @@ public class RuntimeNativeConfigurationBuilder
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.atTrace().log("Auto-detection not required for runtime native configuration");
+        log.trace("Auto-detection not required for runtime native configuration");
     }
 }

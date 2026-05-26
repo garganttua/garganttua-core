@@ -3,6 +3,8 @@ package com.garganttua.core.reflection.fields;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IObjectQuery;
@@ -11,10 +13,8 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class FieldResolver {
+    private static final IDiagnostic log = Diagnostics.of(FieldResolver.class);
 
         // ========================================================================
         // Provider-based API (preferred)
@@ -27,7 +27,7 @@ public class FieldResolver {
 
         public static ResolvedField fieldByFieldName(IClass<?> ownerType, IReflectionProvider provider,
                         String fieldName, IClass<?> fieldType) throws ReflectionException {
-                log.atDebug().log("[fieldByFieldName] Resolving: fieldName={}, fieldType={}, ownerType={}",
+                log.debug("[fieldByFieldName] Resolving: fieldName={}, fieldType={}, ownerType={}",
                                 fieldName, fieldType, ownerType);
 
                 Objects.requireNonNull(fieldName, "Field name cannot be null");
@@ -38,7 +38,7 @@ public class FieldResolver {
 
                 ObjectAddress address = query.address(fieldName);
                 if (address == null) {
-                        log.atWarn().log("[fieldByFieldName] Field {} not found in ownerType {}", fieldName,
+                        log.warn("[fieldByFieldName] Field {} not found in ownerType {}", fieldName,
                                         ownerType.getName());
                         throw new ReflectionException(
                                         "Field " + fieldName + " not found in entity " + ownerType.getName());
@@ -54,7 +54,7 @@ public class FieldResolver {
 
         public static ResolvedField fieldByField(IClass<?> ownerType, IReflectionProvider provider,
                         IField field, IClass<?> fieldType) throws ReflectionException {
-                log.atDebug().log("[fieldByField] Resolving: field={}, fieldType={}, ownerType={}", field, fieldType,
+                log.debug("[fieldByField] Resolving: field={}, fieldType={}, ownerType={}", field, fieldType,
                                 ownerType);
 
                 Objects.requireNonNull(field, "Field cannot be null");
@@ -65,7 +65,7 @@ public class FieldResolver {
                         ResolvedField resolved = fieldByFieldName(ownerType, provider, field.getName(), fieldType);
 
                         if (!resolved.matches(field)) {
-                                log.atError().log(
+                                log.error(
                                                 "[fieldByField] Field {} in ownerType {} does not match the provided Field object",
                                                 field.getName(), ownerType.getName());
                                 throw new ReflectionException(
@@ -73,12 +73,12 @@ public class FieldResolver {
                                                                 + " does not match the provided Field object");
                         }
 
-                        log.atDebug().log("[fieldByField] Successfully resolved field {} in ownerType {}",
+                        log.debug("[fieldByField] Successfully resolved field {} in ownerType {}",
                                         field.getName(), ownerType.getName());
                         return resolved;
 
                 } catch (SecurityException | ReflectionException e) {
-                        log.atError().log("[fieldByField] Error resolving field {} in ownerType {}", field.getName(),
+                        log.error("[fieldByField] Error resolving field {} in ownerType {}", field.getName(),
                                         ownerType.getName(), e);
                         throw new ReflectionException(e.getMessage(), e);
                 }
@@ -91,7 +91,7 @@ public class FieldResolver {
 
         public static ResolvedField fieldByAddress(IClass<?> ownerType, IReflectionProvider provider,
                         ObjectAddress fieldAddress, IClass<?> fieldType) throws ReflectionException {
-                log.atDebug().log("[fieldByAddress] Resolving: fieldAddress={}, fieldType={}, ownerType={}",
+                log.debug("[fieldByAddress] Resolving: fieldAddress={}, fieldType={}, ownerType={}",
                                 fieldAddress, fieldType, ownerType);
 
                 Objects.requireNonNull(fieldAddress, "Field address cannot be null");
@@ -110,7 +110,7 @@ public class FieldResolver {
                         IClass<?> ownerType, IClass<?> fieldType) throws ReflectionException {
                 try {
                         List<Object> struct = query.find(address);
-                        log.atTrace().log("[resolveAndValidate] Object query returned structure: {}", struct);
+                        log.trace("[resolveAndValidate] Object query returned structure: {}", struct);
 
                         Object leaf = struct.getLast();
                         if (!(leaf instanceof IField field)) {
@@ -124,11 +124,11 @@ public class FieldResolver {
                                                                 + " is not of type " + fieldType.getName());
                         }
 
-                        log.atDebug().log("[resolveAndValidate] Successfully resolved field {} in entity {}",
+                        log.debug("[resolveAndValidate] Successfully resolved field {} in entity {}",
                                         field.getName(), ownerType.getName());
                         return new ResolvedField(address, struct);
                 } catch (ReflectionException e) {
-                        log.atError().log("[resolveAndValidate] Error resolving field {} in entity {}",
+                        log.error("[resolveAndValidate] Error resolving field {} in entity {}",
                                         address, ownerType.getName(), e);
                         throw new ReflectionException(e.getMessage(), e);
                 }

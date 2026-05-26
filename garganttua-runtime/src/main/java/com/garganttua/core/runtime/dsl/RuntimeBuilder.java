@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import javax.inject.Named;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
@@ -41,14 +43,12 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class RuntimeBuilder<InputType, OutputType>
                 extends
                 AbstractAutomaticLinkedDependentBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>
                 implements IRuntimeBuilder<InputType, OutputType> {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeBuilder.class);
 
         private String name;
         private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> steps = new OrderedMapBuilder<>();
@@ -76,10 +76,10 @@ public class RuntimeBuilder<InputType, OutputType>
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
 
-                log.atTrace().log("{} Initialized RuntimeBuilder constructor with phase-aware dependencies",
+                log.trace("{} Initialized RuntimeBuilder constructor with phase-aware dependencies",
                                 logLineHeader());
-                log.atDebug().log("{} Input type: {}, Output type: {}", logLineHeader(), inputType, outputType);
-                log.atDebug().log("{} RuntimeBuilder initialized", logLineHeader());
+                log.debug("{} Input type: {}, Output type: {}", logLineHeader(), inputType, outputType);
+                log.debug("{} RuntimeBuilder initialized", logLineHeader());
         }
 
         protected RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
@@ -88,8 +88,8 @@ public class RuntimeBuilder<InputType, OutputType>
                 this.objectForAutoDetection = Objects.requireNonNull(objectForAutoDetection,
                                 "objectForAutoDetection cannot be null");
 
-                log.atDebug().log("{} RuntimeBuilder initialized for auto-detection", logLineHeader());
-                log.atTrace().log("{} Object for auto-detection class: {}", logLineHeader(),
+                log.debug("{} RuntimeBuilder initialized for auto-detection", logLineHeader());
+                log.trace("{} Object for auto-detection class: {}", logLineHeader(),
                                 objectForAutoDetection.getClass().getName());
         }
 
@@ -107,7 +107,7 @@ public class RuntimeBuilder<InputType, OutputType>
                                 this, name, stepName, (Class<ExecutionReturn>) returnType.getType(), objectSupplier);
 
                 this.steps.put(stepName, stepBuilder);
-                log.atDebug().log("{} Added step [{}]", logLineHeader(), stepName);
+                log.debug("{} Added step [{}]", logLineHeader(), stepName);
                 return stepBuilder;
         }
 
@@ -127,7 +127,7 @@ public class RuntimeBuilder<InputType, OutputType>
                                 this, name, stepName, (Class<ExecutionReturn>) returnType.getType(), objectSupplier);
 
                 this.steps.putAt(stepName, stepBuilder, position);
-                log.atDebug().log("{} Added step [{}] at position {}", logLineHeader(), stepName, position);
+                log.debug("{} Added step [{}] at position {}", logLineHeader(), stepName, position);
                 return stepBuilder;
         }
 
@@ -136,15 +136,15 @@ public class RuntimeBuilder<InputType, OutputType>
                 Objects.requireNonNull(name, "Step name cannot be null");
                 Objects.requireNonNull(step, "Step cannot be null");
                 this.prebuiltSteps.put(name, step);
-                log.atDebug().log("{} Added pre-built step [{}]", logLineHeader(), name);
+                log.debug("{} Added pre-built step [{}]", logLineHeader(), name);
                 return this;
         }
 
         @Override
         protected IRuntime<InputType, OutputType> doBuild() throws DslException {
 
-                log.atTrace().log("{} Entering doBuild method", logLineHeader());
-                log.atDebug().log("{} Building Runtime with {} step(s)", logLineHeader(), steps.size());
+                log.trace("{} Entering doBuild method", logLineHeader());
+                log.debug("{} Building Runtime with {} step(s)", logLineHeader(), steps.size());
 
                 // Propagate IReflectionBuilder to step builders before building
                 if (this.reflectionBuilderRef != null) {
@@ -161,7 +161,7 @@ public class RuntimeBuilder<InputType, OutputType>
                 Map<String, ISupplier<?>> variables = this.presetVariables.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build()));
 
-                log.atDebug().log("{} Preset variables: {}", logLineHeader(), variables.keySet());
+                log.debug("{} Preset variables: {}", logLineHeader(), variables.keySet());
 
                 return new Runtime<>(name, builtSteps, this.injectionContext, this.inputType, this.outputType, variables);
         }
@@ -170,12 +170,12 @@ public class RuntimeBuilder<InputType, OutputType>
         protected void doAutoDetection() {
                 Objects.requireNonNull(this.objectForAutoDetection, "objectForAutoDetection cannot be null");
 
-                log.atTrace().log("{} Entering doAutoDetection method", logLineHeader());
-                log.atDebug().log("{} Performing auto-detection of steps and variables", logLineHeader());
+                log.trace("{} Entering doAutoDetection method", logLineHeader());
+                log.debug("{} Performing auto-detection of steps and variables", logLineHeader());
 
                 this.collectSteps();
                 this.collectPresetVariables();
-                log.atTrace().log("{} Exiting doAutoDetection method", logLineHeader());
+                log.trace("{} Exiting doAutoDetection method", logLineHeader());
         }
 
         private String logLineHeader() {
@@ -184,13 +184,13 @@ public class RuntimeBuilder<InputType, OutputType>
 
         @SuppressWarnings("unchecked")
         private void collectPresetVariables() {
-                log.atTrace().log("{} Entering collectPresetVariables method", logLineHeader());
+                log.trace("{} Entering collectPresetVariables method", logLineHeader());
                 ParameterizedType mapType = getVariablesMapType();
                 String address = findFieldAddressAnnotatedWithAndCheckType(
                                 IClass.getClass(this.objectForAutoDetection.getClass()), Variables.class, (Class<?>) mapType.getRawType());
 
                 if (address == null) {
-                        log.atWarn().log("{} No preset variables found", logLineHeader());
+                        log.warn("{} No preset variables found", logLineHeader());
                         return;
                 }
 
@@ -206,20 +206,20 @@ public class RuntimeBuilder<InputType, OutputType>
 
                 variables.entrySet().forEach(e -> this.variable(e.getKey(), e.getValue()));
 
-                log.atDebug().log("{} Collected preset variables: {}", logLineHeader(), variables.keySet());
-                log.atDebug().log("{} Collected {} preset variable(s)", logLineHeader(), variables.size());
+                log.debug("{} Collected preset variables: {}", logLineHeader(), variables.keySet());
+                log.debug("{} Collected {} preset variable(s)", logLineHeader(), variables.size());
         }
 
         @SuppressWarnings("unchecked")
         private void collectSteps() {
-                log.atTrace().log("{} Entering collectSteps method", logLineHeader());
+                log.trace("{} Entering collectSteps method", logLineHeader());
                 ParameterizedType listType = getStepsListType();
 
                 String address = findFieldAddressAnnotatedWithAndCheckType(
                                 IClass.getClass(this.objectForAutoDetection.getClass()), Steps.class, (Class<?>) listType.getRawType());
 
                 if (address == null) {
-                        log.atError().log("{} No field annotated with @Steps found", logLineHeader());
+                        log.error("{} No field annotated with @Steps found", logLineHeader());
                         throw new DslException(logLineHeader() + "No field annotated with @Steps found");
                 }
 
@@ -240,7 +240,7 @@ public class RuntimeBuilder<InputType, OutputType>
                                 stepName = stepNamedAnnotation.value();
                         }
 
-                        log.atDebug().log("{} Creating auto-detected step [{}]", logLineHeader(), stepName);
+                        log.debug("{} Creating auto-detected step [{}]", logLineHeader(), stepName);
 
                         ISupplierBuilder<Object, IBeanSupplier<Object>> supplierBuilder = bean(IClass.getClass(c));
                         RuntimeStepBuilder<?, ?, InputType, OutputType> stepBuilder = new RuntimeStepBuilder<>(this, name,
@@ -255,9 +255,9 @@ public class RuntimeBuilder<InputType, OutputType>
                         }
                         this.steps.put(stepName, stepBuilder);
 
-                        log.atDebug().log("{} Auto-detected step [{}] registered", logLineHeader(), stepName);
+                        log.debug("{} Auto-detected step [{}] registered", logLineHeader(), stepName);
                 });
-                log.atTrace().log("{} Exiting collectSteps method", logLineHeader());
+                log.trace("{} Exiting collectSteps method", logLineHeader());
         }
 
         private ParameterizedType getVariablesMapType() {
@@ -292,19 +292,19 @@ public class RuntimeBuilder<InputType, OutputType>
         @Override
         public IRuntimeBuilder<InputType, OutputType> variable(String name,
                         ISupplierBuilder<?, ? extends ISupplier<?>> value) {
-                log.atTrace().log("{} Entering variable registration for [{}]", logLineHeader(), name);
+                log.trace("{} Entering variable registration for [{}]", logLineHeader(), name);
                 this.presetVariables.put(Objects.requireNonNull(name, "Variable name cannot be null"),
                                 Objects.requireNonNull(value, "Value supplier builder cannot be null"));
-                log.atDebug().log("{} Variable [{}] registered", logLineHeader(), name);
+                log.debug("{} Variable [{}] registered", logLineHeader(), name);
                 return this;
         }
 
         @Override
         public IRuntimeBuilder<InputType, OutputType> variable(String name, Object value) {
-                log.atTrace().log("{} Entering variable registration for [{}]", logLineHeader(), name);
+                log.trace("{} Entering variable registration for [{}]", logLineHeader(), name);
                 this.presetVariables.put(Objects.requireNonNull(name, "Variable name cannot be null"),
                                 of(Objects.requireNonNull(value, "Value  cannot be null")));
-                log.atDebug().log("{} Variable [{}] registered", logLineHeader(), name);
+                log.debug("{} Variable [{}] registered", logLineHeader(), name);
                 return this;
         }
 

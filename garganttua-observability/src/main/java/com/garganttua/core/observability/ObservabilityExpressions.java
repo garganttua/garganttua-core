@@ -5,11 +5,12 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.observability.ObservableContextHolder.Session;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Script-side instrumentation hook.
@@ -31,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA02
  */
-@Slf4j
 public class ObservabilityExpressions {
+    private static final IDiagnostic log = Diagnostics.of(ObservabilityExpressions.class);
 
 	private static final ConcurrentMap<Key, Instant> STARTS = new ConcurrentHashMap<>();
 
@@ -69,7 +70,7 @@ public class ObservabilityExpressions {
 				Duration duration = computeDuration(key, now);
 				registry.fire(new ErrorEvent(session.executionId(), now, source, duration, null));
 			}
-			default -> log.atWarn().log("Unknown observe() event type: {}", eventType);
+			default -> log.warn("Unknown observe() event type: {}", eventType);
 		}
 	}
 

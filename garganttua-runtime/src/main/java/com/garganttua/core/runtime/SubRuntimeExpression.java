@@ -7,13 +7,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Expression that executes a {@link SubRuntime} within the current runtime context.
@@ -32,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class SubRuntimeExpression implements IExpression<Object, ISupplier<Object>> {
+    private static final IDiagnostic log = Diagnostics.of(SubRuntimeExpression.class);
 
     private final SubRuntime<Object[], Object> subRuntime;
     private final Set<String> scopedVariableNames;

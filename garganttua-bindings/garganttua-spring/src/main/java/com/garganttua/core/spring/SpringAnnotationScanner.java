@@ -10,16 +10,16 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflection.runtime.RuntimeMethod;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class SpringAnnotationScanner implements IAnnotationScanner {
+    private static final IDiagnostic log = Diagnostics.of(SpringAnnotationScanner.class);
 
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
@@ -29,7 +29,7 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
     @SuppressWarnings("null")
     @Override
     public List<IClass<?>> getClassesWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
-        log.atTrace().log("Entering getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
+        log.trace("Entering getClassesWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
         Class<? extends Annotation> rawAnnotation = unwrapAnnotation(annotation);
 
@@ -42,13 +42,13 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
             try {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
                 result.add(RuntimeClass.ofUnchecked(clazz));
-                log.atDebug().log("Found class with annotation {}: {}", annotation.getName(), clazz.getName());
+                log.debug("Found class with annotation {}: {}", annotation.getName(), clazz.getName());
             } catch (ClassNotFoundException e) {
-                log.atWarn().log("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
+                log.warn("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
             }
         });
 
-        log.atTrace().log("Exiting getClassesWithAnnotation(), found {} classes", result.size());
+        log.trace("Exiting getClassesWithAnnotation(), found {} classes", result.size());
         return result;
     }
 
@@ -60,7 +60,7 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
     @SuppressWarnings("null")
     @Override
     public List<IMethod> getMethodsWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
-        log.atTrace().log("Entering getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
+        log.trace("Entering getMethodsWithAnnotation(package={}, annotation={})", packageName, annotation.getName());
 
         Class<? extends Annotation> rawAnnotation = unwrapAnnotation(annotation);
 
@@ -75,16 +75,16 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
                 for (Method method : clazz.getDeclaredMethods()) {
                     if (method.isAnnotationPresent(rawAnnotation)) {
                         result.add(RuntimeMethod.of(method));
-                        log.atDebug().log("Found method with annotation {}: {}.{}",
+                        log.debug("Found method with annotation {}: {}.{}",
                                 annotation.getName(), clazz.getName(), method.getName());
                     }
                 }
             } catch (ClassNotFoundException e) {
-                log.atWarn().log("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
+                log.warn("Class not found for bean definition: {}", beanDefinition.getBeanClassName(), e);
             }
         });
 
-        log.atTrace().log("Exiting getMethodsWithAnnotation(), found {} methods", result.size());
+        log.trace("Exiting getMethodsWithAnnotation(), found {} methods", result.size());
         return result;
     }
 

@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
@@ -33,13 +35,12 @@ import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Reflected
 public class BeanProviderBuilder
 		extends AbstractAutomaticLinkedDependentBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
 		implements IBeanProviderBuilder {
+    private static final IDiagnostic log = Diagnostics.of(BeanProviderBuilder.class);
 
 	private static final String SOURCE_MANUAL = "manual";
 	private static final String SOURCE_AUTO_DETECTED = "auto-detected";
@@ -59,32 +60,32 @@ public class BeanProviderBuilder
 		super(link, Set.of(
 				new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build(),
 				DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
-		log.atTrace().log("Entering BeanProviderBuilder constructor with link: {}", link);
-		log.atTrace().log("BeanProviderBuilder initialized with link: {}", link);
+		log.trace("Entering BeanProviderBuilder constructor with link: {}", link);
+		log.trace("BeanProviderBuilder initialized with link: {}", link);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <BeanType> IBeanFactoryBuilder<BeanType> withBean(IClass<BeanType> beanType) throws DslException {
-		log.atTrace().log("Entering withBean() method with beanType: {}", beanType.getSimpleName());
-		log.atDebug().log("Registering bean type: {}", beanType.getSimpleName());
+		log.trace("Entering withBean() method with beanType: {}", beanType.getSimpleName());
+		log.debug("Registering bean type: {}", beanType.getSimpleName());
 		String key = beanType.getName();
 		IBeanFactoryBuilder<BeanType> builder = (IBeanFactoryBuilder<BeanType>) this.manualBeanFactoryBuilders
 				.computeIfAbsent(key,
 						k -> {
-							log.atTrace().log("Creating new BeanFactoryBuilder for type: {}", beanType.getSimpleName());
+							log.trace("Creating new BeanFactoryBuilder for type: {}", beanType.getSimpleName());
 							return new BeanFactoryBuilder<>(beanType);
 						});
-		log.atTrace().log("Exiting withBean() method for beanType: {}", beanType.getSimpleName());
+		log.trace("Exiting withBean() method for beanType: {}", beanType.getSimpleName());
 		return builder;
 	}
 
 	@Override
 	protected IBeanProvider doBuild() throws DslException {
-		log.atTrace().log("Entering doBuild() method");
+		log.trace("Entering doBuild() method");
 
 		Map<String, IBeanFactoryBuilder<?>> allBuilders = this.computeBeanFactoryBuilders();
-		log.atDebug().log("Building IBeanProvider with {} factories", allBuilders.size());
+		log.debug("Building IBeanProvider with {} factories", allBuilders.size());
 
 		// Propagate IReflectionBuilder to all bean factory builders before building
 		if (this.reflectionBuilderRef != null) {
@@ -96,22 +97,22 @@ public class BeanProviderBuilder
 			provider = new BeanProvider(allBuilders.values().stream()
 					.map(IBeanFactoryBuilder::build)
 					.collect(Collectors.toList()), Optional.ofNullable(this.resolverBuilder), true);
-			log.atDebug().log("IBeanProvider successfully built with {} beans", provider.size());
+			log.debug("IBeanProvider successfully built with {} beans", provider.size());
 		} catch (Exception e) {
-			log.atError().log("Failed to build IBeanProvider. Error: {}", e.getMessage(), e);
+			log.error("Failed to build IBeanProvider. Error: {}", e.getMessage(), e);
 			throw new DslException("Error building IBeanProvider", e);
 		}
 
-		log.atTrace().log("Exiting doBuild() method");
+		log.trace("Exiting doBuild() method");
 		return provider;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void doAutoDetection() throws DslException {
-		log.atTrace().log("Entering doAutoDetection() method");
+		log.trace("Entering doAutoDetection() method");
 		if (this.reflection == null) {
-			log.atWarn().log("IReflection not set, skipping auto-detection");
+			log.warn("IReflection not set, skipping auto-detection");
 			return;
 		}
 
@@ -119,20 +120,20 @@ public class BeanProviderBuilder
 		IClass<? extends Annotation> prototypeAnnotation = (IClass<? extends Annotation>) reflection.getClass(Prototype.class);
 
 		this.packages.parallelStream().forEach(pkg -> {
-			log.atDebug().log("Auto-detecting beans in package: {}", pkg);
+			log.debug("Auto-detecting beans in package: {}", pkg);
 
 			// 1. Singleton
 			reflection.getClassesWithAnnotation(pkg, singletonAnnotation)
 					.forEach(singletonClass -> {
 						try {
-							log.atTrace().log("Detected @Singleton class: {}", singletonClass.getSimpleName());
+							log.trace("Detected @Singleton class: {}", singletonClass.getSimpleName());
 							synchronized (this.autoDetectedBeanFactoryBuilders) {
 								this.autoDetectedBeanFactoryBuilders.put(singletonClass.getName(),
 										this.createBeanFactory(qualifierAnnotations, singletonClass)
 												.strategy(BeanStrategy.singleton));
 							}
 						} catch (DslException e) {
-							log.atError().log("Failed to create singleton bean factory for {}",
+							log.error("Failed to create singleton bean factory for {}",
 									singletonClass.getSimpleName(), e);
 						}
 					});
@@ -141,14 +142,14 @@ public class BeanProviderBuilder
 			reflection.getClassesWithAnnotation(pkg, prototypeAnnotation)
 					.forEach(prototypeClass -> {
 						try {
-							log.atTrace().log("Detected @Prototype class: {}", prototypeClass.getSimpleName());
+							log.trace("Detected @Prototype class: {}", prototypeClass.getSimpleName());
 							synchronized (this.autoDetectedBeanFactoryBuilders) {
 								this.autoDetectedBeanFactoryBuilders.put(prototypeClass.getName(),
 										this.createBeanFactory(qualifierAnnotations, prototypeClass)
 												.strategy(BeanStrategy.prototype));
 							}
 						} catch (DslException e) {
-							log.atError().log("Failed to create prototype bean factory for {}",
+							log.error("Failed to create prototype bean factory for {}",
 									prototypeClass.getSimpleName(), e);
 						}
 					});
@@ -158,7 +159,7 @@ public class BeanProviderBuilder
 				reflection.getClassesWithAnnotation(pkg, qualifierAnnotation)
 						.forEach(qualifiedClass -> {
 							try {
-								log.atTrace().log("Detected @Qualifier class: {} with qualifier {}",
+								log.trace("Detected @Qualifier class: {} with qualifier {}",
 										qualifiedClass.getSimpleName(), qualifierAnnotation.getSimpleName());
 								synchronized (this.autoDetectedBeanFactoryBuilders) {
 									this.autoDetectedBeanFactoryBuilders.put(qualifiedClass.getName(),
@@ -166,18 +167,18 @@ public class BeanProviderBuilder
 													.strategy(BeanStrategy.singleton));
 								}
 							} catch (DslException e) {
-								log.atError().log("Failed to create bean factory for qualifier class {}",
+								log.error("Failed to create bean factory for qualifier class {}",
 										qualifiedClass.getSimpleName(), e);
 							}
 						});
 			});
 		});
-		log.atTrace().log("Exiting doAutoDetection() method");
+		log.trace("Exiting doAutoDetection() method");
 	}
 
 	private IBeanFactoryBuilder<?> createBeanFactory(Set<IClass<? extends Annotation>> qualifierAnnotations,
 			IClass<?> beanClass) throws DslException {
-		log.atTrace().log("Entering createBeanFactory() for class: {}", beanClass.getSimpleName());
+		log.trace("Entering createBeanFactory() for class: {}", beanClass.getSimpleName());
 
 		Set<IClass<? extends Annotation>> classQualifiers = qualifierAnnotations.stream()
 				.filter(qualifier -> beanClass.isAnnotationPresent(qualifier))
@@ -195,31 +196,31 @@ public class BeanProviderBuilder
 		Named namedAnnotation = beanClass.getAnnotation(namedClass);
 		if (namedAnnotation != null && !namedAnnotation.value().isBlank()) {
 			builder.name(namedAnnotation.value());
-			log.atDebug().log("Bean class {} has @Named annotation with value: {}", beanClass.getSimpleName(),
+			log.debug("Bean class {} has @Named annotation with value: {}", beanClass.getSimpleName(),
 					namedAnnotation.value());
 		}
 
-		log.atTrace().log("Created BeanFactoryBuilder for class: {} with qualifiers: {}", beanClass.getSimpleName(),
+		log.trace("Created BeanFactoryBuilder for class: {} with qualifiers: {}", beanClass.getSimpleName(),
 				classQualifiers);
-		log.atTrace().log("Exiting createBeanFactory() for class: {}", beanClass.getSimpleName());
+		log.trace("Exiting createBeanFactory() for class: {}", beanClass.getSimpleName());
 		return builder;
 	}
 
 	@Override
 	public IBeanProviderBuilder withPackage(String packageName) {
-		log.atTrace().log("Entering withPackage() method with package: {}", packageName);
-		log.atDebug().log("Adding package for auto-detection: {}", packageName);
+		log.trace("Entering withPackage() method with package: {}", packageName);
+		log.debug("Adding package for auto-detection: {}", packageName);
 		this.packages.add(packageName);
-		log.atTrace().log("Exiting withPackage() method for package: {}", packageName);
+		log.trace("Exiting withPackage() method for package: {}", packageName);
 		return this;
 	}
 
 	@Override
 	public IBeanProviderBuilder withPackages(String[] packageNames) {
-		log.atTrace().log("Entering withPackages() method with packages: {}", Arrays.toString(packageNames));
-		log.atDebug().log("Adding multiple packages for auto-detection: {}", Arrays.toString(packageNames));
+		log.trace("Entering withPackages() method with packages: {}", Arrays.toString(packageNames));
+		log.debug("Adding multiple packages for auto-detection: {}", Arrays.toString(packageNames));
 		this.packages.addAll(Arrays.asList(packageNames));
-		log.atTrace().log("Exiting withPackages() method with packages: {}", Arrays.toString(packageNames));
+		log.trace("Exiting withPackages() method with packages: {}", Arrays.toString(packageNames));
 		return this;
 	}
 

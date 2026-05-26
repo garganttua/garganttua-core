@@ -1,8 +1,8 @@
 package com.garganttua.core.lifecycle;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when an error occurs during lifecycle operations.
@@ -56,8 +56,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public class LifecycleException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(LifecycleException.class);
 
     /**
      * Creates a new LifecycleException with a descriptive message.
@@ -66,7 +66,7 @@ public class LifecycleException extends CoreException {
      */
     public LifecycleException(String string) {
         super(CoreException.LIFECYCLE_ERROR, string);
-        log.atTrace().log("Exiting LifecycleException constructor");
+        log.trace("Exiting LifecycleException constructor");
     }
 
     /**
@@ -76,7 +76,7 @@ public class LifecycleException extends CoreException {
      */
     public LifecycleException(Exception e) {
         super(CoreException.LIFECYCLE_ERROR, e);
-        log.atTrace().log("Exiting LifecycleException constructor");
+        log.trace("Exiting LifecycleException constructor");
     }
 
 }

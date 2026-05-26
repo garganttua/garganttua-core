@@ -1,8 +1,8 @@
 package com.garganttua.core.reflection;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when errors occur during reflection operations.
@@ -41,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see CoreException
  * @see IObjectQuery
  */
-@Slf4j
 public class ReflectionException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(ReflectionException.class);
 
 	/**
 	 * Constructs a new reflection exception with the specified message.
@@ -51,7 +51,7 @@ public class ReflectionException extends CoreException {
 	 */
 	public ReflectionException(String string) {
 		super(CoreException.REFLECTION_ERROR, string);
-		log.atTrace().log("Exiting ReflectionException constructor");
+		log.trace("Exiting ReflectionException constructor");
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class ReflectionException extends CoreException {
 	 */
 	public ReflectionException(String string, Throwable e) {
 		super(CoreException.REFLECTION_ERROR, string, e);
-		log.atTrace().log("Exiting ReflectionException constructor");
+		log.trace("Exiting ReflectionException constructor");
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class ReflectionException extends CoreException {
 	 */
 	public ReflectionException(Throwable e) {
 		super(e);
-		log.atTrace().log("Exiting ReflectionException constructor");
+		log.trace("Exiting ReflectionException constructor");
 	}
 
 	private static final long serialVersionUID = 2732095843634378815L;

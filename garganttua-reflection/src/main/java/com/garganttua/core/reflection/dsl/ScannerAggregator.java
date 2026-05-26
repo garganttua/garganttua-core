@@ -6,14 +6,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Function;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 class ScannerAggregator implements IAnnotationScanner {
+    private static final IDiagnostic log = Diagnostics.of(ScannerAggregator.class);
 
     private final List<IAnnotationScanner> scanners;
 
@@ -42,7 +42,7 @@ class ScannerAggregator implements IAnnotationScanner {
     }
 
     private <T> List<T> aggregate(Function<IAnnotationScanner, List<T>> extractor) {
-        log.atTrace().log("Aggregating scanner results across {} scanners", scanners.size());
+        log.trace("Aggregating scanner results across {} scanners", scanners.size());
         LinkedHashSet<T> result = new LinkedHashSet<>();
         for (IAnnotationScanner scanner : scanners) {
             result.addAll(extractor.apply(scanner));

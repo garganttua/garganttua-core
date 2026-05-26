@@ -1,8 +1,8 @@
 package com.garganttua.core.utils;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when an error occurs during a copy operation.
@@ -50,8 +50,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see Copyable
  * @see CoreException
  */
-@Slf4j
 public class CopyException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(CopyException.class);
 
     /**
      * Constructs a new CopyException with the specified detail message.
@@ -60,7 +60,7 @@ public class CopyException extends CoreException {
      */
     public CopyException(String string) {
         super(CoreException.COPY_ERROR, string);
-        log.atTrace().log("Exiting CopyException constructor");
+        log.trace("Exiting CopyException constructor");
     }
 
     /**
@@ -70,7 +70,7 @@ public class CopyException extends CoreException {
      */
     public CopyException(Exception e) {
         super(CoreException.COPY_ERROR, e);
-        log.atTrace().log("Exiting CopyException constructor");
+        log.trace("Exiting CopyException constructor");
     }
 
 }

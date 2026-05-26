@@ -1,5 +1,7 @@
 package com.garganttua.core.crypto;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -14,10 +16,9 @@ import java.util.Objects;
 import javax.crypto.spec.SecretKeySpec;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class Key implements IKey {
+    private static final IDiagnostic log = Diagnostics.of(Key.class);
 
 	@Getter
 	private final KeyType type;
@@ -55,7 +56,7 @@ public class Key implements IKey {
 		this.signatureAlgorithm = signatureAlgorithm;
 		this.rawKey = Base64.getEncoder().encode(rawKey);
 		this.ivSize = ivSize;
-		log.atDebug().log("Key created with type={}, algorithm={}", this.type, this.algorithm);
+		log.debug("Key created with type={}, algorithm={}", this.type, this.algorithm);
 	}
 
 	/**

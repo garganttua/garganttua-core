@@ -3,9 +3,9 @@ package com.garganttua.core.runtime;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.CoreException;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception thrown when a critical error occurs during runtime workflow execution.
@@ -46,8 +46,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see IRuntimeContext
  * @see CoreException
  */
-@Slf4j
 public class RuntimeException extends CoreException {
+    private static final IDiagnostic log = Diagnostics.of(RuntimeException.class);
 
     /**
      * Optional reference to the runtime context where this exception occurred.
@@ -61,7 +61,7 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(String message) {
         super(CoreException.RUNTIME_ERROR, message);
-        log.atTrace().log("Exiting RuntimeException constructor");
+        log.trace("Exiting RuntimeException constructor");
     }
 
     /**
@@ -71,7 +71,7 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(Exception e) {
         super(CoreException.RUNTIME_ERROR, e);
-        log.atTrace().log("Exiting RuntimeException constructor");
+        log.trace("Exiting RuntimeException constructor");
     }
 
     /**
@@ -82,7 +82,7 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(String string, Throwable e) {
         super(CoreException.RUNTIME_ERROR, string, e);
-        log.atTrace().log("Exiting RuntimeException constructor");
+        log.trace("Exiting RuntimeException constructor");
     }
 
     /**
@@ -100,9 +100,9 @@ public class RuntimeException extends CoreException {
      */
     public RuntimeException(Exception e, Optional<IRuntimeContext<?,?>> context) {
         this(e);
-        log.atTrace().log("Setting context");
+        log.trace("Setting context");
         this.context = Objects.requireNonNull(context, "Context cannot be null");
-        log.atTrace().log("Exiting RuntimeException constructor");
+        log.trace("Exiting RuntimeException constructor");
     }
 
 }

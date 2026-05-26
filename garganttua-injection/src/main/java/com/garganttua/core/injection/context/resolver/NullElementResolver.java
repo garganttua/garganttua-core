@@ -2,6 +2,8 @@ package com.garganttua.core.injection.context.resolver;
 
 import java.util.Objects;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
@@ -14,32 +16,31 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Resolver(annotations={Null.class})
 @NoArgsConstructor
 public class NullElementResolver implements IElementResolver {
+    private static final IDiagnostic log = Diagnostics.of(NullElementResolver.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {
-        log.atTrace().log("Entering resolve with elementType: {} and element: {}", elementType, element);
+        log.trace("Entering resolve with elementType: {} and element: {}", elementType, element);
 
         Objects.requireNonNull(element, "Element cannot be null");
-        log.atDebug().log("Element is not null: {}", element);
+        log.debug("Element is not null: {}", element);
 
         Objects.requireNonNull(elementType, "ElementType cannot be null");
-        log.atDebug().log("ElementType is not null: {}", elementType);
+        log.debug("ElementType is not null: {}", elementType);
 
         ISupplierBuilder<?, ISupplier<?>> builder = new NullSupplierBuilder(elementType);
-        log.atDebug().log("Created NullSupplierBuilder for elementType: {}", elementType.getSimpleName());
+        log.debug("Created NullSupplierBuilder for elementType: {}", elementType.getSimpleName());
 
         boolean nullable = IInjectableElementResolver.isNullable(element);
-        log.atDebug().log("Element {} nullable: {}", element, nullable);
+        log.debug("Element {} nullable: {}", element, nullable);
 
         Resolved resolved = new Resolved(true, elementType, builder, nullable);
-        log.atTrace().log("Exiting resolve with Resolved: {}", resolved);
+        log.trace("Exiting resolve with Resolved: {}", resolved);
 
         return resolved;
     }

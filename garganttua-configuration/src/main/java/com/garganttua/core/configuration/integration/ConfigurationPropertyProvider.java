@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.configuration.IConfigurationNode;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -13,10 +15,8 @@ import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ConfigurationPropertyProvider implements IPropertyProvider {
+    private static final IDiagnostic log = Diagnostics.of(ConfigurationPropertyProvider.class);
 
     private final Map<String, String> properties;
     private LifecycleStatus status = LifecycleStatus.NEW;
@@ -24,7 +24,7 @@ public class ConfigurationPropertyProvider implements IPropertyProvider {
     public ConfigurationPropertyProvider(IConfigurationNode root) {
         this.properties = new LinkedHashMap<>();
         flatten(root, "");
-        log.atDebug().log("Flattened configuration tree into {} properties", this.properties.size());
+        log.debug("Flattened configuration tree into {} properties", this.properties.size());
     }
 
     private ConfigurationPropertyProvider(Map<String, String> properties) {

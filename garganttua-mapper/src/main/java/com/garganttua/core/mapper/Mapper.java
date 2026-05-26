@@ -12,6 +12,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.annotations.MappingIgnore;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
@@ -23,10 +25,8 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Mapper implements IMapper, IObservable<ObservableEvent> {
+    private static final IDiagnostic log = Diagnostics.of(Mapper.class);
 
 	protected final Map<MappingKey, CachedMappingConfiguration> mappingConfigurations = new ConcurrentHashMap<>();
 
@@ -131,7 +131,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 			if (this.configuration.failOnCycle()) {
 				throw new MapperException("Mapping cycle detected for object of type " + source.getClass().getSimpleName());
 			} else {
-				log.atWarn().log("Cycle detected for {}, returning null", source.getClass().getSimpleName());
+				log.warn("Cycle detected for {}, returning null", source.getClass().getSimpleName());
 				return destination;
 			}
 		}
@@ -140,7 +140,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 		CachedMappingConfiguration cachedConfig = this.getCachedMappingConfiguration(sourceClass, destinationClass);
 		MappingConfiguration mappingConfig = cachedConfig.config();
 
-		log.atDebug().log("Mapping {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingConfig.mappingDirection());
+		log.debug("Mapping {} -> {} ({})", sourceClass.getSimpleName(), destinationClass.getSimpleName(), mappingConfig.mappingDirection());
 
 		IMappingRecursion recursion = new IMappingRecursion() {
 			@Override
@@ -173,7 +173,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 				if (this.configuration.failOnError()) {
 					throw new MapperException("Unable to do mapping, aborting", e);
 				} else {
-					log.atWarn().log("Mapping rule failed, ignoring: {}", e.getMessage());
+					log.warn("Mapping rule failed, ignoring: {}", e.getMessage());
 				}
 			}
 		}
@@ -278,7 +278,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 
 	private CachedMappingConfiguration createCachedMappingConfiguration(IClass<?> source, IClass<?> destination)
 			throws MapperException {
-		log.atDebug().log("Creating mapping config: {} -> {}", source.getSimpleName(), destination.getSimpleName());
+		log.debug("Creating mapping config: {} -> {}", source.getSimpleName(), destination.getSimpleName());
 
 		List<MappingRule> destinationRules = this.mappingRules.parse(destination, source);
 		List<MappingRule> sourceRules = this.mappingRules.parse(source, destination);
@@ -316,7 +316,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 			if (this.configuration.failOnError()) {
 				throw new MapperException("Unable to validate mapping, aborting", e);
 			} else {
-				log.atWarn().log("Validation failed, ignoring: {}", e.getMessage());
+				log.warn("Validation failed, ignoring: {}", e.getMessage());
 			}
 		}
 
@@ -418,7 +418,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 				if (this.configuration.failOnError()) {
 					throw e;
 				} else {
-					log.atWarn().log("Skipping rule during precomputation: {}", e.getMessage());
+					log.warn("Skipping rule during precomputation: {}", e.getMessage());
 				}
 			}
 		}
@@ -483,7 +483,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 			try {
 				listener.onBeforeMapping(source, destClass);
 			} catch (Exception e) {
-				log.atWarn().log("Listener onBeforeMapping failed: {}", e.getMessage());
+				log.warn("Listener onBeforeMapping failed: {}", e.getMessage());
 			}
 		}
 	}
@@ -493,7 +493,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 			try {
 				listener.onAfterMapping(source, dest, durationNanos);
 			} catch (Exception e) {
-				log.atWarn().log("Listener onAfterMapping failed: {}", e.getMessage());
+				log.warn("Listener onAfterMapping failed: {}", e.getMessage());
 			}
 		}
 	}
@@ -503,7 +503,7 @@ public class Mapper implements IMapper, IObservable<ObservableEvent> {
 			try {
 				listener.onMappingError(source, destClass, error);
 			} catch (Exception e) {
-				log.atWarn().log("Listener onMappingError failed: {}", e.getMessage());
+				log.warn("Listener onMappingError failed: {}", e.getMessage());
 			}
 		}
 	}

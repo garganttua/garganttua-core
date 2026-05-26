@@ -1,12 +1,13 @@
 package com.garganttua.core.reflection;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Immutable symbolic address for navigating object graphs through field paths.
@@ -40,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2.0.0-ALPHA01
  * @see IObjectQuery
  */
-@Slf4j
 public class ObjectAddress implements Cloneable {
+    private static final IDiagnostic log = Diagnostics.of(ObjectAddress.class);
 
     /**
      * Indicator for accessing map keys in an address path.
@@ -72,18 +73,18 @@ public class ObjectAddress implements Cloneable {
      * @throws IllegalArgumentException if the address is invalid
      */
     public ObjectAddress(String address, boolean detectLoops) throws ReflectionException {
-        log.atTrace().log("Entering ObjectAddress constructor with address='{}', detectLoops={}", address, detectLoops);
+        log.trace("Entering ObjectAddress constructor with address='{}', detectLoops={}", address, detectLoops);
         this.detectLoops = detectLoops;
         if (address == null || address.startsWith(".") || address.endsWith(".") || address.isEmpty()) {
-            log.atError().log("Invalid address: '{}'", address);
+            log.error("Invalid address: '{}'", address);
             throw new IllegalArgumentException("Address cannot start or end with a dot, or be empty");
         }
         this.fields = address.split("\\.");
-        log.atDebug().log("Parsed fields: {}", Arrays.toString(fields));
+        log.debug("Parsed fields: {}", Arrays.toString(fields));
         if (this.detectLoops) {
             detectLoop(this.fields);
         }
-        log.atTrace().log("Exiting ObjectAddress constructor");
+        log.trace("Exiting ObjectAddress constructor");
     }
 
     /**

@@ -1,10 +1,10 @@
 package com.garganttua.core.bootstrap;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides version information for Garganttua Core.
@@ -17,8 +17,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 public final class GarganttuaVersion {
+    private static final IDiagnostic log = Diagnostics.of(GarganttuaVersion.class);
 
     private static final String PROPERTIES_FILE = "garganttua-version.properties";
     private static final String UNKNOWN = "UNKNOWN";
@@ -45,12 +45,12 @@ public final class GarganttuaVersion {
         try (InputStream is = GarganttuaVersion.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
             if (is != null) {
                 PROPERTIES.load(is);
-                log.atDebug().log("Loaded Garganttua version properties: {}", PROPERTIES);
+                log.debug("Loaded Garganttua version properties: {}", PROPERTIES);
             } else {
-                log.atWarn().log("Garganttua version properties file not found: {}", PROPERTIES_FILE);
+                log.warn("Garganttua version properties file not found: {}", PROPERTIES_FILE);
             }
         } catch (IOException e) {
-            log.atWarn().log("Failed to load Garganttua version properties", e);
+            log.warn("Failed to load Garganttua version properties", e);
         }
 
         loaded = true;

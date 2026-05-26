@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
@@ -16,11 +18,9 @@ import com.garganttua.core.injection.context.beans.ContextualBeanSupplier;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Reflected
 public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
+    private static final IDiagnostic log = Diagnostics.of(BeanSupplierBuilder.class);
 
     private String name = null;
     private String provider = null;
@@ -30,65 +30,65 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     private boolean useStaticContext = true;
 
     public BeanSupplierBuilder(IClass<Bean> type) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with type: {}", type);
+        log.trace("Entering BeanSupplierBuilder constructor with type: {}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
-        log.atDebug().log("Type set to: {}", this.type.getSimpleName());
-        log.atTrace().log("Exiting BeanSupplierBuilder constructor");
+        log.debug("Type set to: {}", this.type.getSimpleName());
+        log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
     public BeanSupplierBuilder(Optional<String> provider, BeanReference<Bean> query) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with Optional provider: {} and query: {}",
+        log.trace("Entering BeanSupplierBuilder constructor with Optional provider: {} and query: {}",
                 provider, query);
         Objects.requireNonNull(query, "Query cannot be null");
-        log.atDebug().log("Query provided: {}", query);
+        log.debug("Query provided: {}", query);
 
         if (provider != null && provider.isPresent()) {
             initFromQuery(query);
             this.provider = provider.get();
-            log.atDebug().log("Provider set from Optional: {}", this.provider);
+            log.debug("Provider set from Optional: {}", this.provider);
         } else {
             initFromQuery(query);
         }
-        log.atTrace().log("Exiting BeanSupplierBuilder constructor");
+        log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
     public BeanSupplierBuilder(BeanReference<Bean> query) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with query: {}", query);
+        log.trace("Entering BeanSupplierBuilder constructor with query: {}", query);
         Objects.requireNonNull(query, "query cannot be null");
         initFromQuery(query);
-        log.atTrace().log("Exiting BeanSupplierBuilder constructor");
+        log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
     public BeanSupplierBuilder(String provider, BeanReference<Bean> query) {
-        log.atTrace().log("Entering BeanSupplierBuilder constructor with provider: {} and query: {}", provider,
+        log.trace("Entering BeanSupplierBuilder constructor with provider: {} and query: {}", provider,
                 query);
         Objects.requireNonNull(provider, "Provider cannot be null");
         Objects.requireNonNull(query, "query cannot be null");
 
         initFromQuery(query);
         this.provider = provider;
-        log.atDebug().log("Provider set to: {}", this.provider);
-        log.atTrace().log("Exiting BeanSupplierBuilder constructor");
+        log.debug("Provider set to: {}", this.provider);
+        log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
     private void initFromQuery(BeanReference<Bean> query) {
-        log.atTrace().log("Initializing BeanSupplierBuilder from query: {}", query);
+        log.trace("Initializing BeanSupplierBuilder from query: {}", query);
         this.type = query.type();
         this.name = query.name().orElse(null);
         this.strategy = query.strategy().orElse(BeanStrategy.singleton);
         if (!query.qualifiers().isEmpty()) {
             this.qualifier = query.qualifiers().iterator().next();
-            log.atDebug().log("Qualifier set from query: {}", this.qualifier.getSimpleName());
+            log.debug("Qualifier set from query: {}", this.qualifier.getSimpleName());
         }
-        log.atDebug().log("Initialization from query complete. Type: {}, Name: {}, Strategy: {}, Qualifier: {}",
+        log.debug("Initialization from query complete. Type: {}, Name: {}, Strategy: {}, Qualifier: {}",
                 this.type.getSimpleName(), this.name, this.strategy, this.qualifier);
-        log.atTrace().log("Exiting initFromQuery method");
+        log.trace("Exiting initFromQuery method");
     }
 
     @Override
     public Type getSuppliedType() {
-        log.atTrace().log("Entering getSuppliedType() method");
-        log.atTrace().log("Exiting getSuppliedType() method with type: {}", this.type);
+        log.trace("Entering getSuppliedType() method");
+        log.trace("Exiting getSuppliedType() method with type: {}", this.type);
         return type.getType();
     }
 
@@ -99,16 +99,16 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
 
     @Override
     public IBeanSupplier<Bean> build() throws DslException {
-        log.atTrace().log("Entering build() method");
+        log.trace("Entering build() method");
         if (type == null) {
-            log.atError().log("Bean type must be provided before build()");
+            log.error("Bean type must be provided before build()");
             throw new DslException("Bean type must be provided");
         }
 
         Set<IClass<? extends Annotation>> qualifiers = new HashSet<>();
         if (this.qualifier != null) {
             qualifiers.add(this.qualifier);
-            log.atDebug().log("Added qualifier to build: {}", this.qualifier.getSimpleName());
+            log.debug("Added qualifier to build: {}", this.qualifier.getSimpleName());
         }
 
         IBeanSupplier<Bean> supplier = null;
@@ -122,59 +122,59 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
                 new BeanReference<>(this.type, Optional.ofNullable(this.strategy),
                         Optional.ofNullable(this.name), qualifiers));
 
-        log.atDebug().log("BeanSupplier built successfully for type: {}, provider: {}, name: {}",
+        log.debug("BeanSupplier built successfully for type: {}, provider: {}, name: {}",
                 this.type.getSimpleName(), this.provider, this.name);
-        log.atTrace().log("Exiting build() method");
+        log.trace("Exiting build() method");
         return supplier;
     }
 
     @Override
     public IBeanSupplierBuilder<Bean> name(String name) {
-        log.atTrace().log("Entering name() method with name: {}", name);
+        log.trace("Entering name() method with name: {}", name);
         this.name = Objects.requireNonNull(name, "Bean name cannot be null");
-        log.atDebug().log("Name set to: {}", this.name);
-        log.atTrace().log("Exiting name() method");
+        log.debug("Name set to: {}", this.name);
+        log.trace("Exiting name() method");
         return this;
     }
 
     @Override
     public IBeanSupplierBuilder<Bean> provider(String provider) {
-        log.atTrace().log("Entering provider() method with provider: {}", provider);
+        log.trace("Entering provider() method with provider: {}", provider);
         this.provider = Objects.requireNonNull(provider, "Bean provider cannot be null");
-        log.atDebug().log("Provider set to: {}", this.provider);
-        log.atTrace().log("Exiting provider() method");
+        log.debug("Provider set to: {}", this.provider);
+        log.trace("Exiting provider() method");
         return this;
     }
 
     @Override
     public IBeanSupplierBuilder<Bean> strategy(BeanStrategy strategy) {
-        log.atTrace().log("Entering strategy() method with strategy: {}", strategy);
+        log.trace("Entering strategy() method with strategy: {}", strategy);
         this.strategy = Objects.requireNonNull(strategy, "Strategy cannot be null");
-        log.atDebug().log("Strategy set to: {}", this.strategy);
-        log.atTrace().log("Exiting strategy() method");
+        log.debug("Strategy set to: {}", this.strategy);
+        log.trace("Exiting strategy() method");
         return this;
     }
 
     @Override
     public IBeanSupplierBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) {
-        log.atTrace().log("Entering qualifier() method with qualifier: {}", qualifier);
+        log.trace("Entering qualifier() method with qualifier: {}", qualifier);
         this.qualifier = Objects.requireNonNull(qualifier, "Qualifier cannot be null");
-        log.atDebug().log("Qualifier set to: {}", this.qualifier.getSimpleName());
-        log.atTrace().log("Exiting qualifier() method");
+        log.debug("Qualifier set to: {}", this.qualifier.getSimpleName());
+        log.trace("Exiting qualifier() method");
         return this;
     }
 
     @Override
     public Set<IClass<?>> dependencies() {
-        log.atTrace().log("Entering getDependencies() method");
-        log.atTrace().log("Exiting getDependencies() method with empty set");
+        log.trace("Entering getDependencies() method");
+        log.trace("Exiting getDependencies() method with empty set");
         return Set.of();
     }
 
     @Override
     public boolean isContextual() {
-        log.atTrace().log("Entering isContextual() method");
-        log.atTrace().log("Exiting isContextual() method with result: {}", !this.useStaticContext);
+        log.trace("Entering isContextual() method");
+        log.trace("Exiting isContextual() method with result: {}", !this.useStaticContext);
         return !this.useStaticContext;
     }
 

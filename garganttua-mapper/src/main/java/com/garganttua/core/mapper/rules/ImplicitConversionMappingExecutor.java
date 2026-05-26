@@ -3,6 +3,8 @@ package com.garganttua.core.mapper.rules;
 import java.util.List;
 import java.util.function.Function;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
@@ -14,10 +16,8 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ImplicitConversionMappingExecutor implements IMappingRuleExecutor {
+    private static final IDiagnostic log = Diagnostics.of(ImplicitConversionMappingExecutor.class);
 
 	private final IReflection reflection;
 	private final IField sourceField;
@@ -41,7 +41,7 @@ public class ImplicitConversionMappingExecutor implements IMappingRuleExecutor {
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException {
-		log.atDebug().log("ImplicitConversion: {} ({}) -> {} ({})", this.sourceField.getName(),
+		log.debug("ImplicitConversion: {} ({}) -> {} ({})", this.sourceField.getName(),
 				this.sourceField.getType().getSimpleName(), this.destinationField.getName(),
 				this.destinationField.getType().getSimpleName());
 
@@ -59,11 +59,11 @@ public class ImplicitConversionMappingExecutor implements IMappingRuleExecutor {
 			this.destinationFieldAccessor.setValue(destinationObject,
 					SingleFieldValue.of(convertedValue, (IClass<Object>) this.destinationField.getType()));
 		} catch (ReflectionException e) {
-			log.atError().log("Implicit conversion failed {} -> {}: {}", this.sourceField.getName(),
+			log.error("Implicit conversion failed {} -> {}: {}", this.sourceField.getName(),
 					this.destinationField.getName(), e.getMessage());
 			throw new MapperException(e);
 		} catch (Exception e) {
-			log.atError().log("Conversion error {} -> {}: {}", this.sourceField.getName(),
+			log.error("Conversion error {} -> {}: {}", this.sourceField.getName(),
 					this.destinationField.getName(), e.getMessage());
 			throw new MapperException("Implicit conversion failed: " + e.getMessage(),
 					e instanceof Exception ex ? ex : new RuntimeException(e));

@@ -2,12 +2,13 @@ package com.garganttua.core.reflection.constructors;
 
 import java.lang.reflect.Modifier;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.reflection.IConstructor;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ConstructorAccessManager implements AutoCloseable {
+    private static final IDiagnostic log = Diagnostics.of(ConstructorAccessManager.class);
+
 	private final IConstructor<?> constructor;
 	private final boolean originalAccessibility;
 
@@ -16,17 +17,17 @@ public class ConstructorAccessManager implements AutoCloseable {
 	}
 
 	public ConstructorAccessManager(IConstructor<?> constructor, boolean force) {
-		log.atTrace().log("Creating ConstructorAccessManager for constructor={}, force={}", constructor, force);
+		log.trace("Creating ConstructorAccessManager for constructor={}, force={}", constructor, force);
 		this.constructor = constructor;
 		this.originalAccessibility = Modifier.isPublic(constructor.getModifiers())
 				&& Modifier.isPublic(constructor.getDeclaringClass().getModifiers());
 		this.constructor.setAccessible(true);
-		log.atDebug().log("Set constructor {} accessible, original accessibility={}, force={}", constructor.getName(), originalAccessibility, force);
+		log.debug("Set constructor {} accessible, original accessibility={}, force={}", constructor.getName(), originalAccessibility, force);
 	}
 
 	@Override
 	public void close() {
-		log.atTrace().log("Closing ConstructorAccessManager, restoring accessibility={} for constructor={}", originalAccessibility, constructor.getName());
+		log.trace("Closing ConstructorAccessManager, restoring accessibility={} for constructor={}", originalAccessibility, constructor.getName());
 		this.constructor.setAccessible(originalAccessibility);
 	}
 }

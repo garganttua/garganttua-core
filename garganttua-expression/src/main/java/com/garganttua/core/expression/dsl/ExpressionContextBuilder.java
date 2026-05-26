@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
@@ -42,7 +44,6 @@ import com.garganttua.core.reflection.annotations.Reflected;
 import java.lang.reflect.Modifier;
 
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Builder for constructing ExpressionContext instances with fluent API.
@@ -67,12 +68,12 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 2.0.0-ALPHA01
  */
-@Slf4j
 @Bootstrap
 @Reflected
 public class ExpressionContextBuilder
         extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
+    private static final IDiagnostic log = Diagnostics.of(ExpressionContextBuilder.class);
 
     private static final String SOURCE_EXPLICIT = "explicit";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
@@ -95,13 +96,13 @@ public class ExpressionContextBuilder
 
     protected ExpressionContextBuilder() {
         super(Set.of(DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class))));
-        log.atTrace().log("Entering ExpressionBuilder constructor");
+        log.trace("Entering ExpressionBuilder constructor");
 
         this.nodeCollector = new MultiSourceCollector<>();
         nodeCollector.source(nodeSetSupplier(explicitNodes), 0, SOURCE_EXPLICIT);
         nodeCollector.source(nodeSetSupplier(autoDetectedNodes), 1, SOURCE_AUTO_DETECTED);
 
-        log.atTrace().log("Exiting ExpressionBuilder constructor");
+        log.trace("Exiting ExpressionBuilder constructor");
     }
 
     @SuppressWarnings("unchecked")
@@ -131,41 +132,41 @@ public class ExpressionContextBuilder
      * @return a new ExpressionBuilder instance
      */
     public static ExpressionContextBuilder builder() {
-        log.atTrace().log("Creating new ExpressionBuilder");
+        log.trace("Creating new ExpressionBuilder");
         return new ExpressionContextBuilder();
     }
 
     @Override
     public IExpressionContextBuilder observer(IBuilderObserver<IExpressionContextBuilder, IExpressionContext> observer) {
-        log.atTrace().log("Entering observer(observer={})", observer);
+        log.trace("Entering observer(observer={})", observer);
         Objects.requireNonNull(observer, "Observer cannot be null");
 
         this.observers.add(observer);
-        log.atDebug().log("Added observer: {}", observer);
+        log.debug("Added observer: {}", observer);
 
         // If context is already built, notify the observer immediately
         if (this.built != null) {
             observer.handle(this.built);
-            log.atDebug().log("Context already built, immediately notified observer: {}", observer);
+            log.debug("Context already built, immediately notified observer: {}", observer);
         }
 
-        log.atTrace().log("Exiting observer");
+        log.trace("Exiting observer");
         return this;
     }
 
     private void notifyObservers(IExpressionContext built) {
-        log.atTrace().log("Entering notifyObserver(built={})", built);
+        log.trace("Entering notifyObserver(built={})", built);
         this.observers.parallelStream().forEach(observer -> {
             observer.handle(built);
-            log.atDebug().log("Notified observer: {}", observer);
+            log.debug("Notified observer: {}", observer);
         });
-        log.atTrace().log("Exiting notifyObserver");
+        log.trace("Exiting notifyObserver");
     }
 
     @Override
     public <T> IExpressionMethodBinderBuilder<T> expression(
             ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier, IClass<T> supplied) {
-        log.atDebug().log("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
+        log.debug("Creating ExpressionMethodBinderBuilder for methodOwnerSupplier={}, supplied={}",
                 methodOwnerSupplier, supplied);
         Objects.requireNonNull(methodOwnerSupplier, "Method owner supplier cannot be null");
         Objects.requireNonNull(supplied, "Supplied type cannot be null");
@@ -177,14 +178,14 @@ public class ExpressionContextBuilder
 
     @Override
     public IExpressionContextBuilder withPackage(String packageName) {
-        log.atDebug().log("Adding package: {}", packageName);
+        log.debug("Adding package: {}", packageName);
         this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
         return this;
     }
 
     @Override
     public IExpressionContextBuilder withPackages(String[] packageNames) {
-        log.atDebug().log("Adding {} packages", packageNames.length);
+        log.debug("Adding {} packages", packageNames.length);
         Objects.requireNonNull(packageNames, "Package names cannot be null");
         for (String pkg : packageNames) {
             this.withPackage(pkg);
@@ -274,12 +275,12 @@ public class ExpressionContextBuilder
             }
         }
 
-        log.atDebug().log(
+        log.debug(
                 "Found {} total methods with @Expression, {} unique after deduplication ({} duplicates removed)",
                 expressions.size(), uniqueMethods.size(), duplicateCount);
 
         if (uniqueMethods.isEmpty() && !this.packages.isEmpty()) {
-            log.atWarn().log(
+            log.warn(
                     "No @Expression methods found in packages {} — "
                     + "check that IClass.getReflection() has a scanner configured "
                     + "(e.g., ReflectionsAnnotationScanner). "
@@ -305,24 +306,24 @@ public class ExpressionContextBuilder
 
     @Override
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
-        log.atTrace().log("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
+        log.trace("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
         // No dependency-based auto-detection needed
-        log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
+        log.trace("Exiting doAutoDetectionWithDependency() method");
     }
 
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
-        log.atTrace().log("Entering doPreBuildWithDependency() with dependency: {}", dependency);
+        log.trace("Entering doPreBuildWithDependency() with dependency: {}", dependency);
         // Nothing to do in pre-build phase
-        log.atTrace().log("Exiting doPreBuildWithDependency() method");
+        log.trace("Exiting doPreBuildWithDependency() method");
     }
 
     @Override
     protected void doPostBuildWithDependency(Object dependency) {
-        log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
+        log.trace("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
         if (dependency instanceof IInjectionContext context) {
-            log.atDebug().log("Registering IExpressionContext as bean in InjectionContext");
+            log.debug("Registering IExpressionContext as bean in InjectionContext");
             BeanReference<IExpressionContext> beanRef = new BeanReference<>(
                     IClass.getClass(IExpressionContext.class),
                     Optional.of(BeanStrategy.singleton),
@@ -331,10 +332,10 @@ public class ExpressionContextBuilder
             // Use addBean directly to avoid lifecycle check - the context may not be started yet
             // during Bootstrap's build phase
             context.addBean(Predefined.BeanProviders.garganttua.toString(), beanRef, this.built);
-            log.atDebug().log("IExpressionContext successfully registered as bean");
+            log.debug("IExpressionContext successfully registered as bean");
         }
 
-        log.atTrace().log("Exiting doPostBuildWithDependency() method");
+        log.trace("Exiting doPostBuildWithDependency() method");
     }
 
     /**
@@ -344,7 +345,7 @@ public class ExpressionContextBuilder
      * expression methods.
      */
     private void synchronizePackagesFromContext() {
-        log.atTrace().log("Entering synchronizePackagesFromContext()");
+        log.trace("Entering synchronizePackagesFromContext()");
 
         support.getUseDependencies().stream()
                 .filter(dep -> dep.getDependency().represents(IInjectionContextBuilder.class))
@@ -354,11 +355,11 @@ public class ExpressionContextBuilder
                     this.packages.addAll(contextPackages);
                     int addedCount = this.packages.size() - beforeSize;
                     if (addedCount > 0) {
-                        log.atDebug().log("Synchronized {} new packages from InjectionContextBuilder", addedCount);
+                        log.debug("Synchronized {} new packages from InjectionContextBuilder", addedCount);
                     }
                 }));
 
-        log.atTrace().log("Exiting synchronizePackagesFromContext()");
+        log.trace("Exiting synchronizePackagesFromContext()");
     }
 
     /**

@@ -5,33 +5,33 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class XorCondition implements ICondition {
+    private static final IDiagnostic log = Diagnostics.of(XorCondition.class);
 
     private Set<ICondition> conditions;
 
     public XorCondition(Set<ICondition> conditions) {
-        log.atTrace().log("Entering XorCondition constructor with {} conditions",
+        log.trace("Entering XorCondition constructor with {} conditions",
                 conditions != null ? conditions.size() : 0);
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
-        log.atTrace().log("Exiting XorCondition constructor");
+        log.trace("Exiting XorCondition constructor");
     }
 
     @Override
     public ISupplier<Boolean> evaluate() throws ConditionException {
-        log.atTrace().log("Entering evaluate() for XorCondition with {} conditions", conditions.size());
+        log.trace("Entering evaluate() for XorCondition with {} conditions", conditions.size());
         return new ISupplier<Boolean>() {
             @Override
             public Optional<Boolean> supply() {
-                log.atDebug().log("Evaluating XOR condition - odd number of conditions must be true");
+                log.debug("Evaluating XOR condition - odd number of conditions must be true");
                 Boolean result = or(conditions);
-                log.atDebug().log("XOR condition evaluation complete: {}", result);
+                log.debug("XOR condition evaluation complete: {}", result);
                 return Optional.of(result);
             }
             @Override
@@ -48,7 +48,7 @@ public class XorCondition implements ICondition {
 
         for (ICondition condition : conditions) {
             boolean conditionResult = condition.fullEvaluate();
-            log.atDebug().log("Condition {} result: {}", conditionIndex++, conditionResult);
+            log.debug("Condition {} result: {}", conditionIndex++, conditionResult);
             if (conditionResult) {
                 result = !result;
             }
