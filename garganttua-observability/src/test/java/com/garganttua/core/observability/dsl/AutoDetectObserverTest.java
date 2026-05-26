@@ -15,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.injection.context.InjectionContext;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.observability.EndEvent;
 import com.garganttua.core.observability.ErrorEvent;
 import com.garganttua.core.observability.IObserver;
@@ -71,9 +73,19 @@ class AutoDetectObserverTest {
         TestObservable workflow = new TestObservable("workflow");
         TestObservable mapper = new TestObservable("mapper");
 
+        // @Observer scan now requires an IInjectionContext on the path —
+        // observers can be resolved as beans (and fall back to reflection
+        // when the bean lookup misses).
+        IInjectionContextBuilder injCtxBuilder = InjectionContext.builder()
+                .autoDetect(false)
+                .provide(ReflectionBuilder.builder()
+                        .withProvider(new RuntimeReflectionProvider(), 0)
+                        .withScanner(new ReflectionsAnnotationScanner(), 0));
+
         try (ObservabilityBinding binding = ObservabilityBuilder.create()
                 .withPackage(AutoDetectObserverTest.class.getPackageName())
                 .autoDetect(true)
+                .provide(injCtxBuilder)
                 .build()) {
 
             binding.attachSource(workflow);

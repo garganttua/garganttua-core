@@ -3,6 +3,7 @@ package com.garganttua.core.observability.dsl;
 import com.garganttua.core.dsl.IAutomaticBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
@@ -50,6 +51,7 @@ import com.garganttua.core.observability.ObservableEvent;
 public interface IObservabilityBuilder
         extends IAutomaticBuilder<IObservabilityBuilder, ObservabilityBinding>,
                 IObservableBuilder<IObservabilityBuilder, ObservabilityBinding>,
+                IDependentBuilder<IObservabilityBuilder, ObservabilityBinding>,
                 IPackageableBuilder<IObservabilityBuilder, ObservabilityBinding> {
 
     /**

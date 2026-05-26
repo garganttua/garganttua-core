@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,10 @@ import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.StartEvent;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 /**
  * Black-box tests for {@code ObservabilityBuilder} / {@code ObservabilityBinding}
@@ -36,6 +41,14 @@ import com.garganttua.core.observability.StartEvent;
  */
 @DisplayName("Observability DSL Builder Tests")
 class ObservabilityBuilderTest {
+
+    @BeforeAll
+    static void wireReflection() throws DslException {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider(), 0)
+                .withScanner(new ReflectionsAnnotationScanner(), 0)
+                .build());
+    }
 
     private static StartEvent start(String source) {
         return new StartEvent(UUID.randomUUID(), Instant.now(), source);
