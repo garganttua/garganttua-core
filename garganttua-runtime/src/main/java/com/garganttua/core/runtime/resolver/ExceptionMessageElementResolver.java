@@ -16,11 +16,11 @@ import com.garganttua.core.runtime.annotations.ExceptionMessage;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.NoArgsConstructor;
-
 @Resolver(annotations={ExceptionMessage.class})
-@NoArgsConstructor
 public class ExceptionMessageElementResolver implements IElementResolver {
+    public ExceptionMessageElementResolver() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(ExceptionMessageElementResolver.class);
 
     @Override

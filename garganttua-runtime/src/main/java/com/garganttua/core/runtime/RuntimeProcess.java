@@ -6,12 +6,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import lombok.Getter;
-
 public class RuntimeProcess {
     private static final IDiagnostic log = Diagnostics.of(RuntimeProcess.class);
 
-    @Getter
     private final Map<String, Map<String, String>> stages;
 
     public RuntimeProcess(Map<String, Map<String, String>> stages) {

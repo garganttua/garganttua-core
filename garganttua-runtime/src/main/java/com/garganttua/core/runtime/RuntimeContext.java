@@ -37,14 +37,11 @@ import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.CopyException;
 
-import lombok.Getter;
-
 public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         implements IRuntimeContext<InputType, OutputType> {
     private static final IDiagnostic log = Diagnostics.of(RuntimeContext.class);
 
     private final InputType input;
-    @Getter
     private final IClass<?> outputType;
     private OutputType output;
     private final Map<String, ISupplier<?>> presetVariables = Collections.synchronizedMap(new HashMap<>());
@@ -219,6 +216,11 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         log.trace("[RuntimeContext.setOutput] Setting output={}", output);
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
         this.output = output;
+    }
+
+    @Override
+    public IClass<?> getOutputType() {
+        return this.outputType;
     }
 
     @Override

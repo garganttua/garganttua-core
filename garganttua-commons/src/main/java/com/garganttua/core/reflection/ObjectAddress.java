@@ -7,8 +7,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import lombok.Getter;
-
 /**
  * Immutable symbolic address for navigating object graphs through field paths.
  *
@@ -59,7 +57,6 @@ public class ObjectAddress implements Cloneable {
      */
     public final static String ELEMENT_SEPARATOR = ".";
 
-    @Getter
     private final String[] fields;
 
     private final boolean detectLoops;

@@ -11,11 +11,11 @@ import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
-import lombok.NoArgsConstructor;
-
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-@NoArgsConstructor
 public class ReflectConfigEntry implements IReflectionConfigurationEntry {
+    public ReflectConfigEntry() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(ReflectConfigEntry.class);
 
     private String name;

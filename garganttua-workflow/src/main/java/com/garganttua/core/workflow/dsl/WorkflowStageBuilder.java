@@ -13,12 +13,9 @@ import com.garganttua.core.workflow.WorkflowScript.ScriptSource;
 import com.garganttua.core.workflow.WorkflowStage;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.Setter;
-
 @Reflected
 public class WorkflowStageBuilder implements IWorkflowStageBuilder {
 
-    @Setter
     private IWorkflowBuilder up;
 
     private final String name;
@@ -30,6 +27,11 @@ public class WorkflowStageBuilder implements IWorkflowStageBuilder {
 
     public WorkflowStageBuilder(String name) {
         this.name = name;
+    }
+
+    @Override
+    public void setUp(IWorkflowBuilder up) {
+        this.up = up;
     }
 
     @Override

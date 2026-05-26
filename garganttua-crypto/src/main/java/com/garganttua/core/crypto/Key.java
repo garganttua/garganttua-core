@@ -15,12 +15,9 @@ import java.util.Objects;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import lombok.Getter;
-
 public class Key implements IKey {
     private static final IDiagnostic log = Diagnostics.of(Key.class);
 
-	@Getter
 	private final KeyType type;
 
 	private final IKeyAlgorithm algorithm;
@@ -29,13 +26,10 @@ public class Key implements IKey {
 
 	private final int ivSize;
 
-	@Getter
 	private final EncryptionMode encryptionMode;
 
-	@Getter
 	private final EncryptionPaddingMode encryptionPaddingMode;
 
-	@Getter
 	private final SignatureAlgorithm signatureAlgorithm;
 
 	/**
@@ -190,6 +184,26 @@ public class Key implements IKey {
 	@Override
 	public IKeyAlgorithm getAlgorithm() {
 		return this.algorithm;
+	}
+
+	@Override
+	public KeyType getType() {
+		return this.type;
+	}
+
+	@Override
+	public EncryptionMode getEncryptionMode() {
+		return this.encryptionMode;
+	}
+
+	@Override
+	public EncryptionPaddingMode getEncryptionPaddingMode() {
+		return this.encryptionPaddingMode;
+	}
+
+	@Override
+	public SignatureAlgorithm getSignatureAlgorithm() {
+		return this.signatureAlgorithm;
 	}
 
 	@Override

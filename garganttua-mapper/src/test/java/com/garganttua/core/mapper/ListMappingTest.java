@@ -15,9 +15,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-
 public class ListMappingTest {
 
 	private static IReflection reflection;
@@ -35,29 +32,35 @@ public class ListMappingTest {
 		IClass.setReflection(null);
 	}
 
-	@NoArgsConstructor
 	public static class Source {
 		public List<SourceList> sourceList = new ArrayList<ListMappingTest.SourceList>();
 
+	
+	    public Source() { }
 	}
 	
-	@AllArgsConstructor
-	@NoArgsConstructor
 	public static class SourceList {
 		public int sourceField;
+	
+	    public SourceList() { }
+
+	    public SourceList(int sourceField) { this.sourceField = sourceField; }
 	}
 	
-	@NoArgsConstructor
 	public static class Dest {
 		@FieldMappingRule(sourceFieldAddress = "sourceList")
 		public List<DestList> destList = new ArrayList<ListMappingTest.DestList>(); 
+	
+	    public Dest() { }
 	}
 	
-	@AllArgsConstructor
-	@NoArgsConstructor
 	public static class DestList {
 		@FieldMappingRule(sourceFieldAddress = "sourceField")
 		public int destField;
+	
+	    public DestList() { }
+
+	    public DestList(int destField) { this.destField = destField; }
 	}
 	
 	@Test

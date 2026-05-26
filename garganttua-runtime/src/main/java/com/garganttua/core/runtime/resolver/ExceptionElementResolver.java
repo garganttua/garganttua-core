@@ -13,11 +13,11 @@ import com.garganttua.core.reflection.IAnnotatedElement;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.NoArgsConstructor;
-
 @Resolver(annotations={com.garganttua.core.runtime.annotations.Exception.class})
-@NoArgsConstructor
 public class ExceptionElementResolver implements IElementResolver {
+    public ExceptionElementResolver() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(ExceptionElementResolver.class);
 
     @SuppressWarnings("unchecked")

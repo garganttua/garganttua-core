@@ -1,11 +1,15 @@
 package com.garganttua.core.observability.dsl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
@@ -20,17 +24,21 @@ import com.garganttua.core.reflection.ReflectionException;
 /**
  * Root entry point of the observability DSL. Use {@link #create()} to obtain
  * a fresh builder, declare the observable sources via {@link #observe},
- * register observers (optionally filtered) via {@link #observer}, then call
- * {@link #build()} to materialize an {@link ObservabilityBinding}.
+ * register observers (optionally filtered) via {@link #observer}, optionally
+ * enable {@link #autoDetect(boolean)} scoped by {@link #withPackage(String)},
+ * then call {@link #build()} to materialize an {@link ObservabilityBinding}.
  *
  * @since 2.0.0-ALPHA02
  */
-public final class ObservabilityBuilder implements IObservabilityBuilder {
+public final class ObservabilityBuilder
+        extends AbstractAutomaticBuilder<IObservabilityBuilder, ObservabilityBinding>
+        implements IObservabilityBuilder {
 
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
 
     private final List<IObservable<ObservableEvent>> defaultSources = new ArrayList<>();
     private final List<ObserverBindingBuilder> bindings = new ArrayList<>();
+    private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
 
     private ObservabilityBuilder() {
     }
@@ -42,9 +50,11 @@ public final class ObservabilityBuilder implements IObservabilityBuilder {
         return new ObservabilityBuilder();
     }
 
+    // -- IObservabilityBuilder ------------------------------------------------
+
     @Override
     @SuppressWarnings("unchecked")
-    public final IObservabilityBuilder observe(IObservable<? extends ObservableEvent>... sources) {
+    public IObservabilityBuilder observe(IObservable<? extends ObservableEvent>... sources) {
         Objects.requireNonNull(sources, "sources");
         for (IObservable<? extends ObservableEvent> src : sources) {
             Objects.requireNonNull(src, "source");
@@ -61,18 +71,60 @@ public final class ObservabilityBuilder implements IObservabilityBuilder {
         return binding;
     }
 
+    // -- IPackageableBuilder --------------------------------------------------
+
+    @Override
+    public IObservabilityBuilder withPackage(String packageName) {
+        Objects.requireNonNull(packageName, "package name");
+        this.packages.add(packageName);
+        return this;
+    }
+
+    @Override
+    public IObservabilityBuilder withPackages(String[] packageNames) {
+        Objects.requireNonNull(packageNames, "package names");
+        for (String pkg : packageNames) {
+            this.withPackage(pkg);
+        }
+        return this;
+    }
+
+    @Override
+    public String[] getPackages() {
+        return this.packages.toArray(new String[0]);
+    }
+
+    @Override
+    protected String[] getPackagesForScanning() {
+        return this.packages.toArray(new String[0]);
+    }
+
+    @Override
+    protected IReflection getReflection() {
+        try {
+            return IClass.getReflection();
+        } catch (IllegalStateException e) {
+            return null;
+        }
+    }
+
+    // -- AbstractAutomaticBuilder hooks --------------------------------------
+
     @Override
     @SuppressWarnings("unchecked")
-    public IObservabilityBuilder autoDetect(String... packages) {
-        IReflection reflection = IClass.getReflection();
-        IClass<Observer> annotation = IClass.getClass(Observer.class);
+    protected void doAutoDetection() throws DslException {
+        IReflection reflection = getReflection();
+        if (reflection == null) {
+            log.warn("autoDetect(true) requested but no IReflection is installed — @Observer scan skipped");
+            return;
+        }
 
+        IClass<Observer> annotation = IClass.getClass(Observer.class);
         List<IClass<?>> candidates = new ArrayList<>();
-        if (packages == null || packages.length == 0) {
+        if (this.packages.isEmpty()) {
             candidates.addAll(reflection.getClassesWithAnnotation(annotation));
         } else {
-            for (String pkg : packages) {
-                Objects.requireNonNull(pkg, "package name");
+            for (String pkg : this.packages) {
                 candidates.addAll(reflection.getClassesWithAnnotation(pkg, annotation));
             }
         }
@@ -107,11 +159,10 @@ public final class ObservabilityBuilder implements IObservabilityBuilder {
             log.debug("@Observer auto-registered: {} (events={}, sources={})",
                     klass.getSimpleName(), meta.events().length, meta.sources().length);
         }
-        return this;
     }
 
     @Override
-    public ObservabilityBinding build() throws DslException {
+    protected ObservabilityBinding doBuild() throws DslException {
         List<Registration> registrations = new ArrayList<>();
         for (ObserverBindingBuilder b : this.bindings) {
             List<IObservable<ObservableEvent>> sources = b.overrideSources();

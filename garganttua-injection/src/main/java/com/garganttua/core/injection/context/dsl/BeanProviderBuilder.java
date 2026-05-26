@@ -34,8 +34,6 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.Setter;
-
 @Reflected
 public class BeanProviderBuilder
 		extends AbstractAutomaticLinkedDependentBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
@@ -49,9 +47,7 @@ public class BeanProviderBuilder
 	private Map<String, IBeanFactoryBuilder<?>> autoDetectedBeanFactoryBuilders = new HashMap<>();
 	private Set<String> packages = new HashSet<>();
 
-	@Setter
 	private Set<IClass<? extends Annotation>> qualifierAnnotations;
-	@Setter
 	private IReflection reflection;
 	private IInjectableElementResolverBuilder resolverBuilder;
 	private IObservableBuilder<?, ?> reflectionBuilderRef;
@@ -263,6 +259,14 @@ public class BeanProviderBuilder
 
 	@Override
 	protected void doPostBuildWithDependency(Object dependency) {
+	}
+
+	public void setReflection(IReflection reflection) {
+		this.reflection = reflection;
+	}
+
+	public void setQualifierAnnotations(Set<IClass<? extends Annotation>> qualifierAnnotations) {
+		this.qualifierAnnotations = qualifierAnnotations;
 	}
 
 	@Override

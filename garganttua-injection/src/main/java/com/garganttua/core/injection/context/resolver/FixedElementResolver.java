@@ -17,11 +17,11 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.NoArgsConstructor;
-
 @Resolver(annotations={Fixed.class})
-@NoArgsConstructor
 public class FixedElementResolver implements IElementResolver {
+    public FixedElementResolver() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(FixedElementResolver.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

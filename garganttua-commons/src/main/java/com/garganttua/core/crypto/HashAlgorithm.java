@@ -1,7 +1,5 @@
 package com.garganttua.core.crypto;
 
-import lombok.Getter;
-
 public enum HashAlgorithm {
 
 	@Deprecated(forRemoval = true)
@@ -16,11 +14,14 @@ public enum HashAlgorithm {
 	SHA3_384("SHA3-384"),
 	SHA3_512("SHA3-512");
 
-	@Getter
 	private final String name;
 
 	HashAlgorithm(String name) {
 		this.name = name;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	@Override

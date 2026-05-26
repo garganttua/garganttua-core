@@ -15,16 +15,12 @@ import com.garganttua.core.dsl.AbstractLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.Getter;
-
 @Reflected
 public class ConfigurationSourceBuilder extends AbstractLinkedBuilder<IConfigurationBuilder, Void>
         implements IConfigurationSourceBuilder {
     private static final IDiagnostic log = Diagnostics.of(ConfigurationSourceBuilder.class);
 
-    @Getter
     private IConfigurationSource source;
-    @Getter
     private IConfigurationFormat format;
 
     public ConfigurationSourceBuilder(IConfigurationBuilder link) {

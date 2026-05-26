@@ -18,11 +18,11 @@ import com.garganttua.core.injection.context.beans.BeanQuery;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor
 @Reflected
 public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
+    public BeanQueryBuilder() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(BeanQueryBuilder.class);
 
     private IClass<Bean> type;

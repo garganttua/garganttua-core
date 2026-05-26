@@ -9,9 +9,8 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IExecutable;
 import com.garganttua.core.reflection.IParameter;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import lombok.NonNull;
-
 /**
  * Manages resolution of injectable elements such as constructor parameters, method parameters, and fields.
  *
@@ -98,7 +97,7 @@ public interface IInjectableElementResolver {
      *
      * <p>
      * An element is considered nullable if it has a {@code @Nullable} annotation
-     * and is not nullable if it has a {@code @NonNull} annotation. If neither
+     * and is not nullable if it has a {@code @Nonnull} annotation. If neither
      * annotation is present, the element is considered not nullable by default.
      * </p>
      *
@@ -108,7 +107,7 @@ public interface IInjectableElementResolver {
     public static boolean isNullable(IAnnotatedElement annotatedElement) {
         if (annotatedElement.getAnnotation(IClass.getClass(Nullable.class)) != null)
             return true;
-        if (annotatedElement.getAnnotation(IClass.getClass(NonNull.class)) != null)
+        if (annotatedElement.getAnnotation(IClass.getClass(Nonnull.class)) != null)
             return false;
         return false;
     }
@@ -123,7 +122,7 @@ public interface IInjectableElementResolver {
         for (Annotation a : annotations) {
             if (a.annotationType().equals(Nullable.class))
                 return true;
-            if (a.annotationType().equals(NonNull.class))
+            if (a.annotationType().equals(Nonnull.class))
                 return false;
         }
         return false;

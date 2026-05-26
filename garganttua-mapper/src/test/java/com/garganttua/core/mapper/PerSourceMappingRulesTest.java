@@ -17,8 +17,6 @@ import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 import java.util.List;
 
-import lombok.Data;
-
 public class PerSourceMappingRulesTest {
 
 	private static IReflection reflection;
@@ -38,19 +36,70 @@ public class PerSourceMappingRulesTest {
 
 	// --- Fixtures ---------------------------------------------------------
 
-	@Data
 	public static class EntityA {
 		private String firstName;
 		private String email;
+	
+	    public EntityA() { }
+
+	    public String getFirstName() { return this.firstName; }
+
+	    public String getEmail() { return this.email; }
+
+	    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+	    public void setEmail(String email) { this.email = email; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof EntityA that)) return false;
+	        return java.util.Objects.equals(this.firstName, that.firstName) && java.util.Objects.equals(this.email, that.email);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.firstName, this.email);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "EntityA{" + "firstName=" + this.firstName + ", " + "email=" + this.email + "}";
+	    }
 	}
 
-	@Data
 	public static class EntityB {
 		private String prenom;
 		private String courriel;
+	
+	    public EntityB() { }
+
+	    public String getPrenom() { return this.prenom; }
+
+	    public String getCourriel() { return this.courriel; }
+
+	    public void setPrenom(String prenom) { this.prenom = prenom; }
+
+	    public void setCourriel(String courriel) { this.courriel = courriel; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof EntityB that)) return false;
+	        return java.util.Objects.equals(this.prenom, that.prenom) && java.util.Objects.equals(this.courriel, that.courriel);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.prenom, this.courriel);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "EntityB{" + "prenom=" + this.prenom + ", " + "courriel=" + this.courriel + "}";
+	    }
 	}
 
-	@Data
 	public static class MultiSourceDto {
 		@FieldMappingRule(source = EntityA.class, sourceFieldAddress = "firstName")
 		@FieldMappingRule(source = EntityB.class, sourceFieldAddress = "prenom")
@@ -59,45 +108,183 @@ public class PerSourceMappingRulesTest {
 		@FieldMappingRule(source = EntityA.class, sourceFieldAddress = "email")
 		@FieldMappingRule(source = EntityB.class, sourceFieldAddress = "courriel")
 		private String contact;
+	
+	    public MultiSourceDto() { }
+
+	    public String getName() { return this.name; }
+
+	    public String getContact() { return this.contact; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setContact(String contact) { this.contact = contact; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MultiSourceDto that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.contact, that.contact);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.contact);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MultiSourceDto{" + "name=" + this.name + ", " + "contact=" + this.contact + "}";
+	    }
 	}
 
-	@Data
 	public static class WildcardOverrideDto {
 		@FieldMappingRule(sourceFieldAddress = "firstName")
 		@FieldMappingRule(source = EntityB.class, sourceFieldAddress = "prenom")
 		private String name;
+	
+	    public WildcardOverrideDto() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof WildcardOverrideDto that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "WildcardOverrideDto{" + "name=" + this.name + "}";
+	    }
 	}
 
-	@Data
 	public static class AbstractEntity {
 		protected String name;
+	
+	    public AbstractEntity() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof AbstractEntity that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "AbstractEntity{" + "name=" + this.name + "}";
+	    }
 	}
 
-	@Data
 	public static class ConcreteEntity extends AbstractEntity {
 		private String extra;
+	
+	    public ConcreteEntity() { }
+
+	    public String getExtra() { return this.extra; }
+
+	    public void setExtra(String extra) { this.extra = extra; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof ConcreteEntity that)) return false;
+	        return java.util.Objects.equals(this.extra, that.extra);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.extra);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "ConcreteEntity{" + "extra=" + this.extra + "}";
+	    }
 	}
 
-	@Data
 	public static class HierarchicalDto {
 		@FieldMappingRule(source = AbstractEntity.class, sourceFieldAddress = "name")
 		private String label;
+	
+	    public HierarchicalDto() { }
+
+	    public String getLabel() { return this.label; }
+
+	    public void setLabel(String label) { this.label = label; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof HierarchicalDto that)) return false;
+	        return java.util.Objects.equals(this.label, that.label);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.label);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "HierarchicalDto{" + "label=" + this.label + "}";
+	    }
 	}
 
-	@Data
 	public static class Base {
 		protected String value;
+	
+	    public Base() { }
+
+	    public String getValue() { return this.value; }
+
+	    public void setValue(String value) { this.value = value; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof Base that)) return false;
+	        return java.util.Objects.equals(this.value, that.value);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.value);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "Base{" + "value=" + this.value + "}";
+	    }
 	}
 
-	@Data
 	public static class Middle extends Base {
+	
+	    public Middle() { }
 	}
 
-	@Data
 	public static class Leaf extends Middle {
+	
+	    public Leaf() { }
 	}
 
-	@Data
 	public static class MostSpecificDto {
 		@FieldMappingRule(source = Base.class, sourceFieldAddress = "value", fromSourceMethod = "fromBase")
 		@FieldMappingRule(source = Middle.class, sourceFieldAddress = "value", fromSourceMethod = "fromMiddle")
@@ -112,34 +299,145 @@ public class PerSourceMappingRulesTest {
 		private String fromMiddle(String v) {
 			return "middle:" + v;
 		}
+	
+	    public MostSpecificDto() { }
+
+	    public String getLabel() { return this.label; }
+
+	    public void setLabel(String label) { this.label = label; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MostSpecificDto that)) return false;
+	        return java.util.Objects.equals(this.label, that.label);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.label);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MostSpecificDto{" + "label=" + this.label + "}";
+	    }
 	}
 
 	public interface InterfaceA { }
 	public interface InterfaceB { }
 
-	@Data
 	public static class AmbiguousEntity implements InterfaceA, InterfaceB {
 		private String name;
+	
+	    public AmbiguousEntity() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof AmbiguousEntity that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "AmbiguousEntity{" + "name=" + this.name + "}";
+	    }
 	}
 
-	@Data
 	public static class AmbiguousDto {
 		@FieldMappingRule(source = InterfaceA.class, sourceFieldAddress = "name")
 		@FieldMappingRule(source = InterfaceB.class, sourceFieldAddress = "name")
 		private String label;
+	
+	    public AmbiguousDto() { }
+
+	    public String getLabel() { return this.label; }
+
+	    public void setLabel(String label) { this.label = label; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof AmbiguousDto that)) return false;
+	        return java.util.Objects.equals(this.label, that.label);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.label);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "AmbiguousDto{" + "label=" + this.label + "}";
+	    }
 	}
 
-	@Data
 	public static class DuplicateExactDto {
 		@FieldMappingRule(source = EntityA.class, sourceFieldAddress = "firstName")
 		@FieldMappingRule(source = EntityA.class, sourceFieldAddress = "email")
 		private String label;
+	
+	    public DuplicateExactDto() { }
+
+	    public String getLabel() { return this.label; }
+
+	    public void setLabel(String label) { this.label = label; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof DuplicateExactDto that)) return false;
+	        return java.util.Objects.equals(this.label, that.label);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.label);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "DuplicateExactDto{" + "label=" + this.label + "}";
+	    }
 	}
 
-	@Data
 	public static class TypedOnlyDto {
 		@FieldMappingRule(source = EntityA.class, sourceFieldAddress = "firstName")
 		private String label;
+	
+	    public TypedOnlyDto() { }
+
+	    public String getLabel() { return this.label; }
+
+	    public void setLabel(String label) { this.label = label; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof TypedOnlyDto that)) return false;
+	        return java.util.Objects.equals(this.label, that.label);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.label);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "TypedOnlyDto{" + "label=" + this.label + "}";
+	    }
 	}
 
 	@ObjectMappingRule(source = EntityA.class,
@@ -148,7 +446,6 @@ public class PerSourceMappingRulesTest {
 	@ObjectMappingRule(source = EntityB.class,
 			fromSourceMethod = "fromEntityB",
 			toSourceMethod = "toEntityB")
-	@Data
 	public static class ObjectMultiSourceDto {
 		private String label;
 
@@ -169,6 +466,29 @@ public class PerSourceMappingRulesTest {
 		@SuppressWarnings("unused")
 		private void toEntityB(EntityB src) {
 		}
+	
+	    public ObjectMultiSourceDto() { }
+
+	    public String getLabel() { return this.label; }
+
+	    public void setLabel(String label) { this.label = label; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof ObjectMultiSourceDto that)) return false;
+	        return java.util.Objects.equals(this.label, that.label);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.label);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "ObjectMultiSourceDto{" + "label=" + this.label + "}";
+	    }
 	}
 
 	// --- Tests ------------------------------------------------------------

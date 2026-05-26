@@ -15,8 +15,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Data;
-
 class MapMappingTest {
 
 	private static IReflection reflection;
@@ -34,14 +32,58 @@ class MapMappingTest {
 		IClass.setReflection(null);
 	}
 
-	@Data
 	static class MapSourceSame {
 		private Map<String, Integer> data;
+	
+	    public MapSourceSame() { }
+
+	    public Map<String, Integer> getData() { return this.data; }
+
+	    public void setData(Map<String, Integer> data) { this.data = data; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MapSourceSame that)) return false;
+	        return java.util.Objects.equals(this.data, that.data);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.data);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MapSourceSame{" + "data=" + this.data + "}";
+	    }
 	}
 
-	@Data
 	static class MapDestSame {
 		private Map<String, Integer> data;
+	
+	    public MapDestSame() { }
+
+	    public Map<String, Integer> getData() { return this.data; }
+
+	    public void setData(Map<String, Integer> data) { this.data = data; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MapDestSame that)) return false;
+	        return java.util.Objects.equals(this.data, that.data);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.data);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MapDestSame{" + "data=" + this.data + "}";
+	    }
 	}
 
 	@Test
@@ -62,25 +104,113 @@ class MapMappingTest {
 		assertEquals(2, dest.getData().get("b"));
 	}
 
-	@Data
 	static class ValueA {
 		private String name;
+	
+	    public ValueA() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof ValueA that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "ValueA{" + "name=" + this.name + "}";
+	    }
 	}
 
-	@Data
 	static class ValueB {
 		private String name;
+	
+	    public ValueB() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof ValueB that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "ValueB{" + "name=" + this.name + "}";
+	    }
 	}
 
-	@Data
 	static class MapSourceMappable {
 		private Map<String, ValueA> items;
+	
+	    public MapSourceMappable() { }
+
+	    public Map<String, ValueA> getItems() { return this.items; }
+
+	    public void setItems(Map<String, ValueA> items) { this.items = items; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MapSourceMappable that)) return false;
+	        return java.util.Objects.equals(this.items, that.items);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.items);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MapSourceMappable{" + "items=" + this.items + "}";
+	    }
 	}
 
-	@Data
 	static class MapDestMappable {
 		@FieldMappingRule(sourceFieldAddress = "items")
 		private Map<String, ValueB> items;
+	
+	    public MapDestMappable() { }
+
+	    public Map<String, ValueB> getItems() { return this.items; }
+
+	    public void setItems(Map<String, ValueB> items) { this.items = items; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MapDestMappable that)) return false;
+	        return java.util.Objects.equals(this.items, that.items);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.items);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MapDestMappable{" + "items=" + this.items + "}";
+	    }
 	}
 
 	@Test

@@ -1,7 +1,5 @@
 package com.garganttua.core.crypto;
 
-import lombok.Getter;
-
 public enum SignatureAlgorithm {
 	SHA1("SHA1"),
 	SHA224("SHA224"),
@@ -41,11 +39,14 @@ public enum SignatureAlgorithm {
 	ED25519("Ed25519"),
 	ED448("Ed448");
 
-	@Getter
 	private final String name;
 
 	SignatureAlgorithm(String name) {
 		this.name = name;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	@Override

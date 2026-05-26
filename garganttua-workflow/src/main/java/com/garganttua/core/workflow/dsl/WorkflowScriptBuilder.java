@@ -17,15 +17,12 @@ import com.garganttua.core.workflow.header.ScriptHeader.HeaderOutput;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.Setter;
-
 @Reflected
 public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
     private static final IDiagnostic log = Diagnostics.of(WorkflowScriptBuilder.class);
 
     private static final ScriptHeaderParser HEADER_PARSER = new ScriptHeaderParser();
 
-    @Setter
     private IWorkflowStageBuilder up;
 
     private final ScriptSource source;
@@ -41,6 +38,11 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
 
     public WorkflowScriptBuilder(ScriptSource source) {
         this.source = source;
+    }
+
+    @Override
+    public void setUp(IWorkflowStageBuilder up) {
+        this.up = up;
     }
 
     @Override

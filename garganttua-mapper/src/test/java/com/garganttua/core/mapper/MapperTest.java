@@ -19,29 +19,28 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Getter;
-import lombok.Setter;
-
 class OtherGenericEntity extends GenericEntity {
-	@Getter
-	@Setter
 	long longField;
+
+	public long getLongField() { return this.longField; }
+	public void setLongField(long longField) { this.longField = longField; }
 }
 
 class GenericEntityWithObjectMapping extends GenericEntity {
-	@Getter
-	@Setter
 	long longField;
+
+	public long getLongField() { return this.longField; }
+	public void setLongField(long longField) { this.longField = longField; }
 }
 
 class GenericEntityFromTwoDtos extends GenericEntity {
-	@Getter
-	@Setter
 	long longField;
-
-	@Getter
-	@Setter
 	long otherField;
+
+	public long getLongField() { return this.longField; }
+	public void setLongField(long longField) { this.longField = longField; }
+	public long getOtherField() { return this.otherField; }
+	public void setOtherField(long otherField) { this.otherField = otherField; }
 }
 
 class OtherGenericDto extends GenericDto {
@@ -177,7 +176,6 @@ public class MapperTest {
 		GenericEntity entity = new GenericEntity();
 		entity.setUuid("uuid");
 		entity.setId("id");
-
 
 		List<Future<?>> futures = new ArrayList<>();
 		for (int i = 0; i < threadCount; i++) {

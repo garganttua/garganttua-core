@@ -53,7 +53,6 @@ Garganttua Core is built on three core principles:
 
 ### Dependencies
  - `org.junit.jupiter:junit-jupiter-engine:test`
- - `org.projectlombok:lombok:provided`
 
 <!-- AUTO-GENERATED-END -->
 
@@ -102,6 +101,26 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 | \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

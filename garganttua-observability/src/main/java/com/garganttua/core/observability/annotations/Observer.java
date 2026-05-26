@@ -42,7 +42,8 @@ import com.garganttua.core.reflection.annotations.Reflected;
  * <pre>{@code
  * ObservabilityBuilder.create()
  *     .observe(workflow, mapper, runtime)
- *     .autoDetect("com.myapp.observers")
+ *     .withPackage("com.myapp.observers")
+ *     .autoDetect(true)
  *     .build();
  * }</pre>
  *

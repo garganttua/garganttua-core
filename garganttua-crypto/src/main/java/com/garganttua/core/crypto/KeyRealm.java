@@ -8,12 +8,9 @@ import java.util.Objects;
 
 import javax.crypto.SecretKey;
 
-import lombok.Getter;
-
 public class KeyRealm implements IKeyRealm {
     private static final IDiagnostic log = Diagnostics.of(KeyRealm.class);
 
-	@Getter
 	protected String name;
 
 	protected int ivSize;
@@ -24,23 +21,18 @@ public class KeyRealm implements IKeyRealm {
 
 	protected SignatureAlgorithm signatureAlgorithm;
 
-	@Getter
 	protected IKeyAlgorithm keyAlgorithm;
 
-	@Getter
 	protected KeyAlgorithmType type;
 
 	protected Key encryptionKey;
 
 	protected Key decryptionKey;
 
-	@Getter
 	protected Date expiration;
 
-	@Getter
 	protected boolean revoked;
 
-	@Getter
 	protected int version = 1;
 
 	KeyRealm(String name, IKeyAlgorithm keyAlgorithm, Date expiration, int initializationVectorSize,
@@ -211,6 +203,31 @@ public class KeyRealm implements IKeyRealm {
 	@Override
 	public boolean isExpired() {
 		return this.expiration != null && new Date().after(this.expiration);
+	}
+
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	@Override
+	public IKeyAlgorithm getKeyAlgorithm() {
+		return this.keyAlgorithm;
+	}
+
+	@Override
+	public boolean isRevoked() {
+		return this.revoked;
+	}
+
+	@Override
+	public Date getExpiration() {
+		return this.expiration;
+	}
+
+	@Override
+	public int getVersion() {
+		return this.version;
 	}
 
 	@Override

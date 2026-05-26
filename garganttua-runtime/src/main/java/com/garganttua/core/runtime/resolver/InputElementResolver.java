@@ -14,11 +14,11 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.annotations.Input;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.NoArgsConstructor;
-
 @Resolver(annotations={Input.class})
-@NoArgsConstructor
 public class InputElementResolver implements IElementResolver {
+    public InputElementResolver() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(InputElementResolver.class);
 
     @Override

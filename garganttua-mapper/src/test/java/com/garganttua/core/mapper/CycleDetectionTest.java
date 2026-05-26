@@ -12,8 +12,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Data;
-
 class CycleDetectionTest {
 
 	private static IReflection reflection;
@@ -31,34 +29,138 @@ class CycleDetectionTest {
 		IClass.setReflection(null);
 	}
 
-	@Data
 	static class CycleA {
 		@FieldMappingRule(sourceFieldAddress = "name")
 		private String name;
 
 		@FieldMappingRule(sourceFieldAddress = "ref")
 		private CycleB ref;
+	
+	    public CycleA() { }
+
+	    public String getName() { return this.name; }
+
+	    public CycleB getRef() { return this.ref; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setRef(CycleB ref) { this.ref = ref; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof CycleA that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.ref, that.ref);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.ref);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "CycleA{" + "name=" + this.name + ", " + "ref=" + this.ref + "}";
+	    }
 	}
 
-	@Data
 	static class CycleB {
 		@FieldMappingRule(sourceFieldAddress = "name")
 		private String name;
 
 		@FieldMappingRule(sourceFieldAddress = "ref")
 		private CycleA ref;
+	
+	    public CycleB() { }
+
+	    public String getName() { return this.name; }
+
+	    public CycleA getRef() { return this.ref; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setRef(CycleA ref) { this.ref = ref; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof CycleB that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.ref, that.ref);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.ref);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "CycleB{" + "name=" + this.name + ", " + "ref=" + this.ref + "}";
+	    }
 	}
 
-	@Data
 	static class CycleSourceA {
 		private String name;
 		private CycleSourceB ref;
+	
+	    public CycleSourceA() { }
+
+	    public String getName() { return this.name; }
+
+	    public CycleSourceB getRef() { return this.ref; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setRef(CycleSourceB ref) { this.ref = ref; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof CycleSourceA that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.ref, that.ref);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.ref);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "CycleSourceA{" + "name=" + this.name + ", " + "ref=" + this.ref + "}";
+	    }
 	}
 
-	@Data
 	static class CycleSourceB {
 		private String name;
 		private CycleSourceA ref;
+	
+	    public CycleSourceB() { }
+
+	    public String getName() { return this.name; }
+
+	    public CycleSourceA getRef() { return this.ref; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setRef(CycleSourceA ref) { this.ref = ref; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof CycleSourceB that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.ref, that.ref);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.ref);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "CycleSourceB{" + "name=" + this.name + ", " + "ref=" + this.ref + "}";
+	    }
 	}
 
 	@Test

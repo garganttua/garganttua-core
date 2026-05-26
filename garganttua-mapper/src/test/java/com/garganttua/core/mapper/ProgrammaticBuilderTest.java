@@ -13,8 +13,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Data;
-
 class ProgrammaticBuilderTest {
 
 	private static IReflection reflection;
@@ -32,16 +30,68 @@ class ProgrammaticBuilderTest {
 		IClass.setReflection(null);
 	}
 
-	@Data
 	static class BuilderSource {
 		private String name;
 		private int age;
+	
+	    public BuilderSource() { }
+
+	    public String getName() { return this.name; }
+
+	    public int getAge() { return this.age; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setAge(int age) { this.age = age; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof BuilderSource that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.age, that.age);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.age);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "BuilderSource{" + "name=" + this.name + ", " + "age=" + this.age + "}";
+	    }
 	}
 
-	@Data
 	static class BuilderDest {
 		private String fullName;
 		private int years;
+	
+	    public BuilderDest() { }
+
+	    public String getFullName() { return this.fullName; }
+
+	    public int getYears() { return this.years; }
+
+	    public void setFullName(String fullName) { this.fullName = fullName; }
+
+	    public void setYears(int years) { this.years = years; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof BuilderDest that)) return false;
+	        return java.util.Objects.equals(this.fullName, that.fullName) && java.util.Objects.equals(this.years, that.years);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.fullName, this.years);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "BuilderDest{" + "fullName=" + this.fullName + ", " + "years=" + this.years + "}";
+	    }
 	}
 
 	@Test

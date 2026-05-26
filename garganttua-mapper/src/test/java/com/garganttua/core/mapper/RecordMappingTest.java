@@ -11,8 +11,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Data;
-
 class RecordMappingTest {
 
 	private static IReflection reflection;
@@ -30,10 +28,36 @@ class RecordMappingTest {
 		IClass.setReflection(null);
 	}
 
-	@Data
 	static class PersonPojo {
 		private String name;
 		private int age;
+	
+	    public PersonPojo() { }
+
+	    public String getName() { return this.name; }
+
+	    public int getAge() { return this.age; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setAge(int age) { this.age = age; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof PersonPojo that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.age, that.age);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.age);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "PersonPojo{" + "name=" + this.name + ", " + "age=" + this.age + "}";
+	    }
 	}
 
 	record PersonRecord(String name, int age) {}
@@ -54,9 +78,31 @@ class RecordMappingTest {
 
 	record SimpleRecord(String value) {}
 
-	@Data
 	static class SimplePojo {
 		private String value;
+	
+	    public SimplePojo() { }
+
+	    public String getValue() { return this.value; }
+
+	    public void setValue(String value) { this.value = value; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof SimplePojo that)) return false;
+	        return java.util.Objects.equals(this.value, that.value);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.value);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "SimplePojo{" + "value=" + this.value + "}";
+	    }
 	}
 
 	@Test
@@ -73,10 +119,32 @@ class RecordMappingTest {
 
 	record DefaultsRecord(String name, int count, boolean active) {}
 
-	@Data
 	static class PartialPojo {
 		private String name;
 		// no 'count' or 'active'
+	
+	    public PartialPojo() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof PartialPojo that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "PartialPojo{" + "name=" + this.name + "}";
+	    }
 	}
 
 	@Test

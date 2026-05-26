@@ -30,15 +30,16 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.Setter;
-
 public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
         extends AbstractAutomaticLinkedDependentBuilder<Builder, Link, Built>
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
     private static final IDiagnostic log = Diagnostics.of(AbstractMethodBinderBuilder.class);
 
-    @Setter
     private ISupplierBuilder<?, ?> supplier;
+
+    protected void setSupplier(ISupplierBuilder<?, ?> supplier) {
+        this.supplier = supplier;
+    }
 
     // Parameter entries: either a raw Object or an ISupplierBuilder
     private List<Object> parameterEntries;

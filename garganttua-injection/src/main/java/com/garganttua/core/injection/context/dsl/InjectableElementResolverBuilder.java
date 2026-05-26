@@ -26,8 +26,6 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-import lombok.Setter;
-
 @Reflected
 public class InjectableElementResolverBuilder
         extends
@@ -44,7 +42,6 @@ public class InjectableElementResolverBuilder
 
     private Set<IBuilderObserver<IInjectableElementResolverBuilder, IInjectableElementResolver>> observers = new HashSet<>();
     private final Set<String> packages = new HashSet<>();
-    @Setter
     private IReflection reflection;
 
     @SuppressWarnings("unchecked")
@@ -65,6 +62,10 @@ public class InjectableElementResolverBuilder
                 return (IClass<Map<K, V>>) (IClass<?>) IClass.getClass(Map.class);
             }
         };
+    }
+
+    public void setReflection(IReflection reflection) {
+        this.reflection = reflection;
     }
 
     public InjectableElementResolverBuilder(IInjectionContextBuilder link) {

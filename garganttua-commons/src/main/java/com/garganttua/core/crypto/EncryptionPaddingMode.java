@@ -1,7 +1,5 @@
 package com.garganttua.core.crypto;
 
-import lombok.Getter;
-
 public enum EncryptionPaddingMode {
 
 	NO_PADDING("NoPadding"),
@@ -11,11 +9,14 @@ public enum EncryptionPaddingMode {
 	PKCS1_PADDING("PKCS1Padding"),
 	NONE("None");
 
-	@Getter
 	private final String padding;
 
 	EncryptionPaddingMode(String padding) {
 		this.padding = padding;
+	}
+
+	public String getPadding() {
+		return padding;
 	}
 
 }

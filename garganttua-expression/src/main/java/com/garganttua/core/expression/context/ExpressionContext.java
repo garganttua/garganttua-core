@@ -27,10 +27,10 @@ import com.garganttua.core.expression.antlr4.ExpressionParser;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
+    public ExpressionContext() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(ExpressionContext.class);
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();

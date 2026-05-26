@@ -13,8 +13,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Data;
-
 class MetricsTest {
 
 	private static IReflection reflection;
@@ -32,14 +30,58 @@ class MetricsTest {
 		IClass.setReflection(null);
 	}
 
-	@Data
 	static class MetricSource {
 		private String name;
+	
+	    public MetricSource() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MetricSource that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MetricSource{" + "name=" + this.name + "}";
+	    }
 	}
 
-	@Data
 	static class MetricDest {
 		private String name;
+	
+	    public MetricDest() { }
+
+	    public String getName() { return this.name; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof MetricDest that)) return false;
+	        return java.util.Objects.equals(this.name, that.name);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MetricDest{" + "name=" + this.name + "}";
+	    }
 	}
 
 	@Test

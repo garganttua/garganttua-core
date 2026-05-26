@@ -1,16 +1,11 @@
 package com.garganttua.core.crypto;
 
-import lombok.Getter;
-
 public class CustomKeyAlgorithm implements IKeyAlgorithm {
 
-	@Getter
 	private final String name;
 
-	@Getter
 	private final int keySize;
 
-	@Getter
 	private final KeyAlgorithmType type;
 
 	public CustomKeyAlgorithm(String name, int keySize, KeyAlgorithmType type) {
@@ -33,6 +28,21 @@ public class CustomKeyAlgorithm implements IKeyAlgorithm {
 			throw new IllegalArgumentException("Signature algorithm cannot be null");
 		}
 		return signatureAlgorithm.getName() + "with" + name;
+	}
+
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	@Override
+	public int getKeySize() {
+		return this.keySize;
+	}
+
+	@Override
+	public KeyAlgorithmType getType() {
+		return this.type;
 	}
 
 	@Override

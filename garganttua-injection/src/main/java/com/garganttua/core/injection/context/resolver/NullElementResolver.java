@@ -15,11 +15,11 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
-import lombok.NoArgsConstructor;
-
 @Resolver(annotations={Null.class})
-@NoArgsConstructor
 public class NullElementResolver implements IElementResolver {
+    public NullElementResolver() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(NullElementResolver.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

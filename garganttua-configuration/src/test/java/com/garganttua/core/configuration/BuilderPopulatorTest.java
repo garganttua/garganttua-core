@@ -14,8 +14,6 @@ import com.garganttua.core.configuration.source.StringConfigurationSource;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
 
-import lombok.Getter;
-
 class BuilderPopulatorTest {
 
     private BuilderPopulator populator;
@@ -29,7 +27,6 @@ class BuilderPopulatorTest {
     }
 
     // Simple test builder
-    @Getter
     public static class SimpleBuilder implements IBuilder<String> {
         private String name;
         private int port;
@@ -41,6 +38,12 @@ class BuilderPopulatorTest {
 
         @Override
         public String build() throws DslException { return this.name + ":" + this.port; }
+    
+        public String getName() { return this.name; }
+
+        public int getPort() { return this.port; }
+
+        public boolean isDebug() { return this.debug; }
     }
 
     @Test
@@ -87,7 +90,6 @@ class BuilderPopulatorTest {
     }
 
     // Builder with array support
-    @Getter
     public static class ArrayBuilder implements IBuilder<String> {
         private final java.util.List<String> tags = new java.util.ArrayList<>();
 
@@ -95,6 +97,8 @@ class BuilderPopulatorTest {
 
         @Override
         public String build() throws DslException { return String.join(",", this.tags); }
+    
+        public java.util.List<String> getTags() { return this.tags; }
     }
 
     @Test

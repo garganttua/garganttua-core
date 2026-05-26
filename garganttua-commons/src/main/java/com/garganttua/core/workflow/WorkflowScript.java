@@ -8,15 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.garganttua.core.workflow.chaining.CodeAction;
 
-import lombok.Builder;
-import lombok.Getter;
-
-@Getter
-@Builder
 public class WorkflowScript {
 
     private final String name;
@@ -26,15 +23,72 @@ public class WorkflowScript {
     private final String condition;
     private final String catchExpression;
     private final String catchDownstreamExpression;
+    private final Map<String, String> inputs;
+    private final Map<String, String> outputs;
+    private final Map<Integer, CodeAction> codeActions;
 
-    @Builder.Default
-    private final Map<String, String> inputs = Collections.emptyMap();
+    private WorkflowScript(Builder b) {
+        this.name = b.name;
+        this.description = b.description;
+        this.source = b.source;
+        this.inline = b.inline;
+        this.condition = b.condition;
+        this.catchExpression = b.catchExpression;
+        this.catchDownstreamExpression = b.catchDownstreamExpression;
+        this.inputs = b.inputs == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(b.inputs));
+        this.outputs = b.outputs == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(b.outputs));
+        this.codeActions = b.codeActions == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(b.codeActions));
+    }
 
-    @Builder.Default
-    private final Map<String, String> outputs = Collections.emptyMap();
+    public static Builder builder() {
+        return new Builder();
+    }
 
-    @Builder.Default
-    private final Map<Integer, CodeAction> codeActions = Collections.emptyMap();
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public ScriptSource getSource() {
+        return this.source;
+    }
+
+    public boolean isInline() {
+        return this.inline;
+    }
+
+    public String getCondition() {
+        return this.condition;
+    }
+
+    public String getCatchExpression() {
+        return this.catchExpression;
+    }
+
+    public String getCatchDownstreamExpression() {
+        return this.catchDownstreamExpression;
+    }
+
+    public Map<String, String> getInputs() {
+        return this.inputs;
+    }
+
+    public Map<String, String> getOutputs() {
+        return this.outputs;
+    }
+
+    public Map<Integer, CodeAction> getCodeActions() {
+        return this.codeActions;
+    }
 
     public boolean isFile() {
         return source.type() == ScriptSourceType.FILE
@@ -116,6 +170,82 @@ public class WorkflowScript {
 
         public static ScriptSource of(Reader reader) {
             return new ScriptSource(ScriptSourceType.READER, reader);
+        }
+    }
+
+    /**
+     * Fluent builder for {@link WorkflowScript}. Hand-written replacement for
+     * the former Lombok-generated {@code @Builder} — same public surface so
+     * existing call sites compile unchanged.
+     */
+    public static final class Builder {
+        private String name;
+        private String description;
+        private ScriptSource source;
+        private boolean inline;
+        private String condition;
+        private String catchExpression;
+        private String catchDownstreamExpression;
+        private Map<String, String> inputs;
+        private Map<String, String> outputs;
+        private Map<Integer, CodeAction> codeActions;
+
+        private Builder() {
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder source(ScriptSource source) {
+            this.source = source;
+            return this;
+        }
+
+        public Builder inline(boolean inline) {
+            this.inline = inline;
+            return this;
+        }
+
+        public Builder condition(String condition) {
+            this.condition = condition;
+            return this;
+        }
+
+        public Builder catchExpression(String catchExpression) {
+            this.catchExpression = catchExpression;
+            return this;
+        }
+
+        public Builder catchDownstreamExpression(String catchDownstreamExpression) {
+            this.catchDownstreamExpression = catchDownstreamExpression;
+            return this;
+        }
+
+        public Builder inputs(Map<String, String> inputs) {
+            this.inputs = inputs == null ? null : new LinkedHashMap<>(inputs);
+            return this;
+        }
+
+        public Builder outputs(Map<String, String> outputs) {
+            this.outputs = outputs == null ? null : new LinkedHashMap<>(outputs);
+            return this;
+        }
+
+        public Builder codeActions(Map<Integer, CodeAction> codeActions) {
+            this.codeActions = codeActions == null ? null : new LinkedHashMap<>(codeActions);
+            return this;
+        }
+
+        public WorkflowScript build() {
+            Objects.requireNonNull(this.source, "source must be set before build()");
+            return new WorkflowScript(this);
         }
     }
 }

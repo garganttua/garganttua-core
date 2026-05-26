@@ -10,8 +10,6 @@ import com.garganttua.core.injection.annotations.Provider;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
-
 @Singleton
 @Named("dummyBeanForTest")
 public class DummyBean {
@@ -23,15 +21,24 @@ public class DummyBean {
     @Provider("garganttua")
     @Named("emailService")
     @DummyBeanQualifier
-    @Getter
     @Nullable
     private DummyOtherBean otherBean;
 
-    @Getter
     private AnotherDummyBean anotherBean;
 
-    @Getter
     private String anotherValue;
+
+    public DummyOtherBean getOtherBean() {
+        return this.otherBean;
+    }
+
+    public AnotherDummyBean getAnotherBean() {
+        return this.anotherBean;
+    }
+
+    public String getAnotherValue() {
+        return this.anotherValue;
+    }
 
     public DummyBean() {
     }

@@ -16,11 +16,11 @@ import com.garganttua.core.runtime.annotations.Context;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.NoArgsConstructor;
-
 @Resolver(annotations={Context.class})
-@NoArgsConstructor
 public class ContextElementResolver implements IElementResolver {
+    public ContextElementResolver() {
+    }
+
     private static final IDiagnostic log = Diagnostics.of(ContextElementResolver.class);
 
     @Override

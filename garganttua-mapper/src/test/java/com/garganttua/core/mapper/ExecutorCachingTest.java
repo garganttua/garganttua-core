@@ -12,8 +12,6 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
-import lombok.Data;
-
 class ExecutorCachingTest {
 
 	private static IReflection reflection;
@@ -31,16 +29,68 @@ class ExecutorCachingTest {
 		IClass.setReflection(null);
 	}
 
-	@Data
 	static class CacheSource {
 		private String name;
 		private int value;
+	
+	    public CacheSource() { }
+
+	    public String getName() { return this.name; }
+
+	    public int getValue() { return this.value; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setValue(int value) { this.value = value; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof CacheSource that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.value, that.value);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.value);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "CacheSource{" + "name=" + this.name + ", " + "value=" + this.value + "}";
+	    }
 	}
 
-	@Data
 	static class CacheDest {
 		private String name;
 		private int value;
+	
+	    public CacheDest() { }
+
+	    public String getName() { return this.name; }
+
+	    public int getValue() { return this.value; }
+
+	    public void setName(String name) { this.name = name; }
+
+	    public void setValue(int value) { this.value = value; }
+
+	    @Override
+	    public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof CacheDest that)) return false;
+	        return java.util.Objects.equals(this.name, that.name) && java.util.Objects.equals(this.value, that.value);
+	    }
+
+	    @Override
+	    public int hashCode() {
+	        return java.util.Objects.hash(this.name, this.value);
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "CacheDest{" + "name=" + this.name + ", " + "value=" + this.value + "}";
+	    }
 	}
 
 	@Test

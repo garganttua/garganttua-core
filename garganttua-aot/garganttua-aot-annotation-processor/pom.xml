@@ -37,14 +37,8 @@
                         <arg>-proc:none</arg>
                     </compilerArgs>
                     <release>${java.version}</release>
-                    <!-- Override parent config: only use Lombok, not the annotation processor -->
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
+                    <!-- Override parent: this module has no annotation processors. -->
+                    <annotationProcessorPaths combine.self="override"/>
                 </configuration>
             </plugin>
         </plugins>

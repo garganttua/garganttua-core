@@ -36,7 +36,6 @@
     <java.version>21</java.version>
 
     <!-- Dependency Versions -->
-    <lombok.version>1.18.36</lombok.version>
     <junit.version>5.9.1</junit.version>
     <javatuples.version>1.2</javatuples.version>
     <reflections.version>0.10.2</reflections.version>
@@ -254,12 +253,6 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <scope>provided</scope>
-        <version>${lombok.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-engine</artifactId>
         <version>${junit.version}</version>
@@ -331,11 +324,6 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -352,11 +340,6 @@
           </compilerArgs>
           <release>${java.version}</release>
           <annotationProcessorPaths>
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-              <version>${lombok.version}</version>
-            </path>
             <path>
               <groupId>com.garganttua.core</groupId>
               <artifactId>garganttua-aot-annotation-processor</artifactId>

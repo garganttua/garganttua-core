@@ -16,8 +16,7 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
-
-import lombok.NonNull;
+import jakarta.annotation.Nonnull;
 
 /**
  * Test class for ExpressionContextBuilder.
@@ -27,12 +26,12 @@ import lombok.NonNull;
 class ExpressionContextBuilderTest {
 
     @Expression
-    public String string(@NonNull String message){
+    public String string(@Nonnull String message){
         return message;
     }
 
     @Expression
-    public String echo(@NonNull String message){
+    public String echo(@Nonnull String message){
         return message;
     }
 

@@ -3,19 +3,19 @@ package com.garganttua.core.configuration.populator;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-
 public class PopulationContext {
 
-    @Getter
     private final boolean strict;
     private final List<String> warnings = new ArrayList<>();
     private final List<String> errors = new ArrayList<>();
-    @Getter
     private String currentPath = "";
 
     public PopulationContext(boolean strict) {
         this.strict = strict;
+    }
+
+    public String getCurrentPath() {
+        return this.currentPath;
     }
 
     public void pushPath(String key) {
