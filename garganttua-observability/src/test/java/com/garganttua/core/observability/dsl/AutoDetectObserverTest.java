@@ -73,18 +73,20 @@ class AutoDetectObserverTest {
         TestObservable workflow = new TestObservable("workflow");
         TestObservable mapper = new TestObservable("mapper");
 
-        // @Observer scan now requires an IInjectionContext on the path —
-        // observers can be resolved as beans (and fall back to reflection
-        // when the bean lookup misses).
+        // @Observer scan now consumes an IReflection (AUTO_DETECT-phase dep)
+        // for the annotation scan, and the IInjectionContext (BUILD-phase
+        // dep) only for the post-build bean registration.
+        var reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider(), 0)
+                .withScanner(new ReflectionsAnnotationScanner(), 0);
         IInjectionContextBuilder injCtxBuilder = InjectionContext.builder()
                 .autoDetect(false)
-                .provide(ReflectionBuilder.builder()
-                        .withProvider(new RuntimeReflectionProvider(), 0)
-                        .withScanner(new ReflectionsAnnotationScanner(), 0));
+                .provide(reflectionBuilder);
 
         try (ObservabilityBinding binding = ObservabilityBuilder.create()
                 .withPackage(AutoDetectObserverTest.class.getPackageName())
                 .autoDetect(true)
+                .provide(reflectionBuilder)
                 .provide(injCtxBuilder)
                 .build()) {
 

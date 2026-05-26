@@ -19,11 +19,15 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
@@ -78,7 +82,11 @@ public final class ObservabilityBuilder
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
-            DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class)));
+            // Reflection feeds the @Observer scan during the auto-detect phase.
+            DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT),
+            // Injection context only needed in post-build to publish the
+            // binding as a singleton bean. Not consulted during autodetect.
+            DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD));
 
     private static final String SOURCE_MANUAL = "manual";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
@@ -191,12 +199,7 @@ public final class ObservabilityBuilder
     @Override
     @SuppressWarnings("unchecked")
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
-        if (!(dependency instanceof IInjectionContext context)) {
-            return;
-        }
-        IReflection reflection = getReflection();
-        if (reflection == null) {
-            log.warn("autoDetect(true) requested but no IReflection is installed — @Observer scan skipped");
+        if (!(dependency instanceof IReflection reflection)) {
             return;
         }
 
@@ -215,8 +218,12 @@ public final class ObservabilityBuilder
             if (meta == null) {
                 continue;
             }
-            Object instance = resolveObserverInstance(klass, reflection, context);
-            if (instance == null) {
+            Object instance;
+            try {
+                instance = reflection.newInstance(klass);
+            } catch (ReflectionException e) {
+                log.warn("@Observer class {} could not be instantiated (no-arg ctor required): {}",
+                        klass.getName(), e.getMessage());
                 continue;
             }
             if (!(instance instanceof IObserver<?>)) {
@@ -235,33 +242,6 @@ public final class ObservabilityBuilder
             this.autoDetectedBindings.put(klass.getName(), binding);
             log.debug("@Observer auto-registered: {} (events={}, sources={})",
                     klass.getSimpleName(), meta.events().length, meta.sources().length);
-        }
-    }
-
-    /**
-     * Prefer DI lookup, then fall back to direct {@code newInstance}. Returns
-     * {@code null} if neither path works (a warning is logged).
-     */
-    private Object resolveObserverInstance(IClass<?> klass, IReflection reflection,
-            IInjectionContext context) {
-        try {
-            @SuppressWarnings({ "rawtypes", "unchecked" })
-            BeanReference ref = new BeanReference(klass, Optional.empty(), Optional.empty(), Set.of());
-            @SuppressWarnings("unchecked")
-            Optional<Object> bean = context.queryBean(ref);
-            if (bean.isPresent()) {
-                return bean.get();
-            }
-        } catch (DiException e) {
-            log.debug("DI lookup for @Observer {} failed, falling back to reflection: {}",
-                    klass.getName(), e.getMessage());
-        }
-        try {
-            return reflection.newInstance(klass);
-        } catch (ReflectionException e) {
-            log.warn("@Observer class {} could not be instantiated (no-arg ctor required, no matching bean): {}",
-                    klass.getName(), e.getMessage());
-            return null;
         }
     }
 
@@ -327,6 +307,30 @@ public final class ObservabilityBuilder
 
     @Override
     protected void doPostBuildWithDependency(Object dependency) {
-        // No-op
+        if (dependency instanceof IInjectionContext context && this.built != null) {
+            registerBindingAsBean(context, this.built);
+        }
+    }
+
+    /**
+     * Publish the freshly-built {@link ObservabilityBinding} into the
+     * injection context so user-defined beans can {@code @Inject} it.
+     * Registered under the standard {@code "garganttua"} provider with the
+     * canonical name {@code "ObservabilityBinding"}. Failure is logged but
+     * never propagated — a broken DI registration must not abort the
+     * outer Bootstrap build.
+     */
+    private static void registerBindingAsBean(IInjectionContext context, ObservabilityBinding binding) {
+        BeanReference<ObservabilityBinding> ref = new BeanReference<>(
+                IClass.getClass(ObservabilityBinding.class),
+                Optional.of(BeanStrategy.singleton),
+                Optional.of("ObservabilityBinding"),
+                Set.of());
+        try {
+            context.addBean(Predefined.BeanProviders.garganttua.toString(), ref, binding);
+            log.debug("ObservabilityBinding registered as singleton bean in InjectionContext");
+        } catch (DiException e) {
+            log.warn("Failed to register ObservabilityBinding as bean: {}", e.getMessage());
+        }
     }
 }
