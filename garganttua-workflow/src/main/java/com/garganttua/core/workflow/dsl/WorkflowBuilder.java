@@ -19,6 +19,9 @@ import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.ObservabilityBinding;
+import com.garganttua.core.observability.dsl.IObservabilityBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.Workflow;
@@ -40,7 +43,8 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD),
-            DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class), DependencyPhase.BUILD));
+            DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class), DependencyPhase.BUILD),
+            DependencySpec.use(IClass.getClass(IObservabilityBuilder.class)));
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
     private final WorkflowRenderer renderer = new WorkflowRenderer();
@@ -50,6 +54,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private final List<WorkflowStage> stages = new ArrayList<>();
     private IExpressionContext expressionContext;
     private IInjectionContextBuilder injectionContextBuilder;
+    private IObservabilityBuilder observabilityBuilder;
     private boolean inlineAll = false;
     private WorkflowTimingConfig timingConfig = WorkflowTimingConfig.disabled();
 
@@ -136,6 +141,16 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
                 timingConfig);
 
         log.debug("Workflow '{}' built with {} stages", name, stages.size());
+
+        if (this.observabilityBuilder != null && workflow instanceof IObservable obs) {
+            ObservabilityBinding binding = this.observabilityBuilder.getBinding();
+            if (binding != null) {
+                binding.attachSource(obs);
+                log.trace("Workflow '{}' attached to ObservabilityBinding", name);
+            } else {
+                log.warn("Workflow '{}' has an IObservabilityBuilder dependency but its binding is null — observability builder not built yet?", name);
+            }
+        }
         return workflow;
     }
 
@@ -155,6 +170,9 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     public IWorkflowBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
         if (dependency instanceof IInjectionContextBuilder builder) {
             this.injectionContextBuilder = builder;
+        }
+        if (dependency instanceof IObservabilityBuilder obs) {
+            this.observabilityBuilder = obs;
         }
         return super.provide(dependency);
     }

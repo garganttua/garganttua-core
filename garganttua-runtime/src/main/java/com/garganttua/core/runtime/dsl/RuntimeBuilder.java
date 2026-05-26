@@ -28,6 +28,9 @@ import com.garganttua.core.dsl.OrderedMapBuilder;
 import com.garganttua.core.injection.IBeanSupplier;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.observability.ObservabilityBinding;
+import com.garganttua.core.observability.dsl.IObservabilityBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
@@ -59,6 +62,7 @@ public class RuntimeBuilder<InputType, OutputType>
         private Object objectForAutoDetection;
         private Map<String, ISupplierBuilder<?, ? extends ISupplier<?>>> presetVariables = new HashMap<>();
         private IObservableBuilder<?, ?> reflectionBuilderRef;
+        private IObservabilityBuilder observabilityBuilder;
 
         /*
          * This object is set only during prebuild
@@ -71,7 +75,8 @@ public class RuntimeBuilder<InputType, OutputType>
                                 Set.of(
                                                 new DependencySpecBuilder(IClass.getClass(IInjectionContextBuilder.class))
                                                                 .requireForBuild().build(),
-                                                DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
+                                                DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD),
+                                                DependencySpec.use(IClass.getClass(IObservabilityBuilder.class))));
                 this.name = Objects.requireNonNull(name, "Name cannot be null");
                 this.inputType = Objects.requireNonNull(inputType, "Input type cannot be null");
                 this.outputType = Objects.requireNonNull(outputType, "Output Type cannot be null");
@@ -163,7 +168,22 @@ public class RuntimeBuilder<InputType, OutputType>
 
                 log.debug("{} Preset variables: {}", logLineHeader(), variables.keySet());
 
-                return new Runtime<>(name, builtSteps, this.injectionContext, this.inputType, this.outputType, variables);
+                Runtime<InputType, OutputType> runtime = new Runtime<>(
+                                name, builtSteps, this.injectionContext, this.inputType, this.outputType, variables);
+
+                if (this.observabilityBuilder != null) {
+                        ObservabilityBinding binding = this.observabilityBuilder.getBinding();
+                        if (binding != null) {
+                                binding.attachSource((IObservable) runtime);
+                                log.trace("{} Runtime '{}' attached to ObservabilityBinding",
+                                                logLineHeader(), name);
+                        } else {
+                                log.warn("{} Runtime '{}' has an IObservabilityBuilder dependency but its binding is null",
+                                                logLineHeader(), name);
+                        }
+                }
+
+                return runtime;
         }
 
         @Override
@@ -285,6 +305,9 @@ public class RuntimeBuilder<InputType, OutputType>
                 }
                 if (dependency instanceof IReflectionBuilder) {
                         this.reflectionBuilderRef = dependency;
+                }
+                if (dependency instanceof IObservabilityBuilder obs) {
+                        this.observabilityBuilder = obs;
                 }
                 return super.provide(dependency);
         }

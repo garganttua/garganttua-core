@@ -25,27 +25,17 @@ import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.StartEvent;
-import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.dsl.ReflectionBuilder;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
- * Exercises the four use cases from the design plan plus the negative paths.
+ * Black-box tests for {@code ObservabilityBuilder} / {@code ObservabilityBinding}
+ * under the dependency-inversion wiring model: sources self-attach to the
+ * binding after build (here we drive that explicitly via
+ * {@link ObservabilityBinding#attachSource(com.garganttua.core.observability.IObservable)}).
+ *
+ * @since 2.0.0-ALPHA02
  */
 @DisplayName("Observability DSL Builder Tests")
 class ObservabilityBuilderTest {
-
-    static {
-        // The condition DSL uses IClass.getClass(...) internally — initialise a
-        // runtime reflection facade once for the whole suite.
-        try {
-            IClass.setReflection(ReflectionBuilder.builder()
-                    .withProvider(new RuntimeReflectionProvider(), 0)
-                    .build());
-        } catch (DslException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private static StartEvent start(String source) {
         return new StartEvent(UUID.randomUUID(), Instant.now(), source);
@@ -55,26 +45,28 @@ class ObservabilityBuilderTest {
         return new EndEvent(UUID.randomUUID(), Instant.now(), source, Duration.ZERO, code);
     }
 
-    private static ErrorEvent error(String source, Throwable cause) {
-        return new ErrorEvent(UUID.randomUUID(), Instant.now(), source, Duration.ZERO, cause);
+    private static ErrorEvent error(String source, Throwable t) {
+        return new ErrorEvent(UUID.randomUUID(), Instant.now(), source, Duration.ZERO, t);
     }
 
-    private static <E extends ObservableEvent> IObserver<ObservableEvent> collector(List<ObservableEvent> sink) {
+    private static IObserver<ObservableEvent> collector(List<ObservableEvent> sink) {
         return sink::add;
     }
 
     @Test
-    @DisplayName("Cas 1: simple wiring without filter — observer hears every event from every source")
+    @DisplayName("Cas 1: simple wiring without filter — observer hears every event from every attached source")
     void simpleWiring_noFilter() throws DslException {
         TestObservable workflow = new TestObservable("workflow");
         TestObservable mapper = new TestObservable("mapper");
         List<ObservableEvent> received = new ArrayList<>();
 
         try (ObservabilityBinding binding = ObservabilityBuilder.create()
-                .observe(workflow, mapper)
-                .observer(collector(received))
+                .subscribe(collector(received))
                 .up()
                 .build()) {
+
+            binding.attachSource(workflow);
+            binding.attachSource(mapper);
 
             workflow.fire(start("workflow:foo"));
             mapper.fire(end("mapper:bar->baz", 0));
@@ -91,14 +83,15 @@ class ObservabilityBuilderTest {
         List<ObservableEvent> received = new ArrayList<>();
 
         try (ObservabilityBinding binding = ObservabilityBuilder.create()
-                .observe(workflow)
-                .observer(collector(received))
+                .subscribe(collector(received))
                     .when(events -> and(
                             custom(events, ObservableEvent::source,
                                     src -> src != null && src.startsWith("workflow:critical:")),
                             custom(events, e -> e instanceof EndEvent ee && ee.code() != null && ee.code() >= 400)))
                 .up()
                 .build()) {
+
+            binding.attachSource(workflow);
 
             workflow.fire(end("workflow:routine:run", 0));        // wrong source AND code
             workflow.fire(end("workflow:critical:save", 200));     // wrong code
@@ -108,7 +101,6 @@ class ObservabilityBuilderTest {
             assertEquals(1, received.size(), "Only the 500-code critical EndEvent should pass");
             assertTrue(received.get(0) instanceof EndEvent);
             assertEquals(500, ((EndEvent) received.get(0)).code());
-            assertNotNull(binding);
         }
     }
 
@@ -119,11 +111,12 @@ class ObservabilityBuilderTest {
         AtomicInteger slowCount = new AtomicInteger();
 
         try (var binding = ObservabilityBuilder.create()
-                .observe(runtime)
-                .observer(e -> slowCount.incrementAndGet())
+                .subscribe(e -> slowCount.incrementAndGet())
                     .where(e -> e instanceof EndEvent ee && ee.duration().toMillis() > 1000)
                 .up()
                 .build()) {
+
+            binding.attachSource(runtime);
 
             // Fast — filtered out.
             runtime.fire(new EndEvent(UUID.randomUUID(), Instant.now(),
@@ -135,7 +128,6 @@ class ObservabilityBuilderTest {
             runtime.fire(start("runtime:abc"));
 
             assertEquals(1, slowCount.get(), "Only one slow end event should be counted");
-            assertNotNull(binding);
         }
     }
 
@@ -148,15 +140,17 @@ class ObservabilityBuilderTest {
         List<ObservableEvent> starts = new ArrayList<>();
 
         try (var binding = ObservabilityBuilder.create()
-                .observe(script, workflow)
-                .observer(collector(errors))
+                .subscribe(collector(errors))
                     .onlyEvents(ErrorEvent.class)
                     .matchingSource("workflow:*")
                 .up()
-                .observer(collector(starts))
+                .subscribe(collector(starts))
                     .onlyEvents(StartEvent.class)
                 .up()
                 .build()) {
+
+            binding.attachSource(script);
+            binding.attachSource(workflow);
 
             workflow.fire(start("workflow:a"));
             workflow.fire(error("workflow:a", new RuntimeException("boom")));
@@ -167,7 +161,6 @@ class ObservabilityBuilderTest {
             assertEquals("workflow:a", errors.get(0).source());
 
             assertEquals(2, starts.size(), "Both StartEvents should be in 'starts'");
-            assertNotNull(binding);
         }
     }
 
@@ -179,10 +172,12 @@ class ObservabilityBuilderTest {
         List<ObservableEvent> received = new ArrayList<>();
 
         ObservabilityBinding binding = ObservabilityBuilder.create()
-                .observe(workflow, mapper)
-                .observer(collector(received))
+                .subscribe(collector(received))
                 .up()
                 .build();
+
+        binding.attachSource(workflow);
+        binding.attachSource(mapper);
 
         assertEquals(1, workflow.observerCount());
         assertEquals(1, mapper.observerCount());
@@ -203,46 +198,35 @@ class ObservabilityBuilderTest {
     }
 
     @Test
-    @DisplayName("toObservable overrides the default source set for one binding")
-    void overrideSources() throws DslException {
-        TestObservable a = new TestObservable("a");
-        TestObservable b = new TestObservable("b");
-        List<ObservableEvent> onlyA = new ArrayList<>();
-        List<ObservableEvent> both = new ArrayList<>();
-
-        try (var binding = ObservabilityBuilder.create()
-                .observe(a, b)                         // default: both
-                .observer(collector(onlyA))
-                    .toObservable(a)                   // narrow to A
+    @DisplayName("attachSource after close() is a silent no-op")
+    void attachAfterClose_noop() throws DslException {
+        TestObservable workflow = new TestObservable("workflow");
+        ObservabilityBinding binding = ObservabilityBuilder.create()
+                .subscribe(ev -> {})
                 .up()
-                .observer(collector(both))             // inherits default (a + b)
-                .up()
-                .build()) {
-
-            a.fire(start("a:1"));
-            b.fire(start("b:1"));
-
-            assertEquals(1, onlyA.size(), "narrowed observer hears only a");
-            assertEquals(2, both.size(), "default observer hears both");
-            assertNotNull(binding);
-        }
+                .build();
+        binding.close();
+        binding.attachSource(workflow);
+        assertEquals(0, workflow.observerCount(), "post-close attach must not register anything");
     }
 
     @Test
-    @DisplayName("Observer with no sources (no .observe and no .toObservable) raises a clear error")
-    void noSources_throwsAtBuild() {
-        DslException e = assertThrows(DslException.class, () -> ObservabilityBuilder.create()
-                .observer(ev -> {})
-                .up()
-                .build());
-        assertTrue(e.getMessage().toLowerCase().contains("source"),
-                "Error message should mention the missing source: " + e.getMessage());
+    @DisplayName("Binding with zero observers tolerates attachSource() without error")
+    void emptyBinding_attachIsNoop() throws DslException {
+        TestObservable workflow = new TestObservable("workflow");
+        try (var binding = ObservabilityBuilder.create().build()) {
+            binding.attachSource(workflow);
+            assertEquals(0, workflow.observerCount());
+            assertEquals(0, binding.count());
+            assertEquals(0, binding.wrapperCount());
+        }
     }
 
     @Test
     @DisplayName("Null observer is rejected immediately")
     void nullObserver_throws() {
-        assertThrows(NullPointerException.class, () -> ObservabilityBuilder.create().observer(null));
+        assertThrows(NullPointerException.class,
+                () -> ObservabilityBuilder.create().subscribe(null));
     }
 
     @Test

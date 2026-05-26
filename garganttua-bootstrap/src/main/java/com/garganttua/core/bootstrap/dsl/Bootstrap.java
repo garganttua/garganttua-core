@@ -33,6 +33,8 @@ import com.garganttua.core.bootstrap.banner.FileBanner;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
+import com.garganttua.core.observability.ObservabilityBinding;
+import com.garganttua.core.observability.dsl.IObservabilityBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBootstrapBuilderFactory;
 import com.garganttua.core.dsl.IBuilder;
@@ -140,6 +142,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private final ObservableRegistry observers = new ObservableRegistry();
     private boolean reflectionBuilderProvided = false;
+    private IObservabilityBuilder observabilityBuilder;
     private boolean spiFallbackEnabled = true;
 
     @Override
@@ -211,7 +214,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      */
     private static Set<DependencySpec> buildDependencies() {
         ensureReflectionAvailable();
-        return Set.of(DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT));
+        return Set.of(
+                DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT),
+                DependencySpec.use(IClass.getClass(IObservabilityBuilder.class)));
     }
 
     /**
@@ -355,6 +360,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         this.providedBuilders.add(dependency);
         if (dependency instanceof IReflectionBuilder) {
             this.reflectionBuilderProvided = true;
+        }
+        if (dependency instanceof IObservabilityBuilder obs) {
+            this.observabilityBuilder = obs;
         }
         return (IBoostrap) super.provide(dependency);
     }
@@ -573,6 +581,17 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private IBuiltRegistry doBuildInternal(Instant startTime) throws DslException {
         // Print banner at the start of build
         printBanner();
+
+        // Self-attach to the user's ObservabilityBinding (if any). Bootstrap is
+        // itself an IObservable so its bootstrap:* events flow through the same
+        // binding as the engines it builds.
+        if (this.observabilityBuilder != null) {
+            ObservabilityBinding binding = this.observabilityBuilder.getBinding();
+            if (binding != null) {
+                binding.attachSource(this);
+                log.trace("Bootstrap attached to ObservabilityBinding");
+            }
+        }
 
         List<IBuilder<?>> allBuilders = getBuilders();
 

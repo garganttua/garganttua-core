@@ -5,12 +5,11 @@ import java.util.function.Predicate;
 
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
-import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.ObservableEvent;
 
 /**
  * Linked sub-builder for one observer registration. Provides the filter DSL
- * and an optional per-observer override of which observables to attach to.
+ * for restricting which events reach the wrapped target.
  *
  * <p>Filter methods compose with AND when called multiple times on the same
  * binding (e.g. {@code .onlyEvents(EndEvent.class).matchingSource("workflow:*")}
@@ -67,11 +66,4 @@ public interface IObserverBindingBuilder extends ILinkedBuilder<IObservabilityBu
      * is a no-op (no filter added).
      */
     IObserverBindingBuilder matchingAnySource(String... globPatterns);
-
-    /**
-     * Override the parent's default observable set for this observer. Useful
-     * when one observer should only listen to a subset of the engines declared
-     * at the builder root.
-     */
-    IObserverBindingBuilder toObservable(IObservable... sources);
 }

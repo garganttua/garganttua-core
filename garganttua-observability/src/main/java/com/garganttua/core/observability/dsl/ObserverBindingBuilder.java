@@ -1,7 +1,5 @@
 package com.garganttua.core.observability.dsl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -9,7 +7,6 @@ import java.util.function.Predicate;
 import com.garganttua.core.condition.Conditions;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservableEvent;
 
@@ -33,9 +30,6 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
 
     /** Shared between the user's condition and the framework's delivery loop. */
     private EventHolderSupplier holder;
-
-    /** When non-null, overrides the parent builder's default observable set. */
-    private List<IObservable> overrideSources;
 
     ObserverBindingBuilder(IObserver<ObservableEvent> target, IObservabilityBuilder up) {
         this.target = Objects.requireNonNull(target, "observer");
@@ -121,18 +115,6 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
     }
 
     @Override
-    public final IObserverBindingBuilder toObservable(IObservable... sources) {
-        Objects.requireNonNull(sources, "sources");
-        List<IObservable> list = new ArrayList<>(sources.length);
-        for (IObservable src : sources) {
-            Objects.requireNonNull(src, "source");
-            list.add(src);
-        }
-        this.overrideSources = list;
-        return this;
-    }
-
-    @Override
     public IObservabilityBuilder up() {
         return this.up;
     }
@@ -152,10 +134,6 @@ final class ObserverBindingBuilder implements IObserverBindingBuilder {
 
     IObserver<ObservableEvent> target() {
         return this.target;
-    }
-
-    List<IObservable> overrideSources() {
-        return this.overrideSources;
     }
 
     IObserver<ObservableEvent> buildWrapper() throws DslException {

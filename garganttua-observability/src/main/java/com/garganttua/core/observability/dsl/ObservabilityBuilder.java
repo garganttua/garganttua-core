@@ -11,10 +11,9 @@ import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.observability.IObservable;
+import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
-import com.garganttua.core.observability.ObservabilityBinding.Registration;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.annotations.Observer;
 import com.garganttua.core.reflection.IClass;
@@ -36,9 +35,10 @@ public final class ObservabilityBuilder
 
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
 
-    private final List<IObservable> defaultSources = new ArrayList<>();
     private final List<ObserverBindingBuilder> bindings = new ArrayList<>();
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
+    private final Set<IBuilderObserver<IObservabilityBuilder, ObservabilityBinding>> buildObservers = new HashSet<>();
+    private volatile ObservabilityBinding built;
 
     private ObservabilityBuilder() {
     }
@@ -53,21 +53,27 @@ public final class ObservabilityBuilder
     // -- IObservabilityBuilder ------------------------------------------------
 
     @Override
-    public IObservabilityBuilder observe(IObservable... sources) {
-        Objects.requireNonNull(sources, "sources");
-        for (IObservable src : sources) {
-            Objects.requireNonNull(src, "source");
-            this.defaultSources.add(src);
-        }
-        return this;
-    }
-
-    @Override
-    public IObserverBindingBuilder observer(IObserver<ObservableEvent> observer) {
+    public IObserverBindingBuilder subscribe(IObserver<ObservableEvent> observer) {
         Objects.requireNonNull(observer, "observer");
         ObserverBindingBuilder binding = new ObserverBindingBuilder(observer, this);
         this.bindings.add(binding);
         return binding;
+    }
+
+    @Override
+    public ObservabilityBinding getBinding() {
+        return this.built;
+    }
+
+    @Override
+    public IObservabilityBuilder observer(
+            IBuilderObserver<IObservabilityBuilder, ObservabilityBinding> observer) {
+        Objects.requireNonNull(observer, "build observer");
+        this.buildObservers.add(observer);
+        if (this.built != null) {
+            observer.handle(this.built);
+        }
+        return this;
     }
 
     // -- IPackageableBuilder --------------------------------------------------
@@ -147,7 +153,7 @@ public final class ObservabilityBuilder
                 continue;
             }
             IObserver<ObservableEvent> observer = (IObserver<ObservableEvent>) instance;
-            IObserverBindingBuilder binding = this.observer(observer);
+            IObserverBindingBuilder binding = this.subscribe(observer);
             if (meta.events().length > 0) {
                 binding.onlyEvents(meta.events());
             }
@@ -162,24 +168,19 @@ public final class ObservabilityBuilder
 
     @Override
     protected ObservabilityBinding doBuild() throws DslException {
-        List<Registration> registrations = new ArrayList<>();
+        List<IObserver<ObservableEvent>> wrappers = new ArrayList<>(this.bindings.size());
         for (ObserverBindingBuilder b : this.bindings) {
-            List<IObservable> sources = b.overrideSources();
-            if (sources == null) {
-                sources = this.defaultSources;
-            }
-            if (sources.isEmpty()) {
-                throw new DslException(
-                        "Observer " + b.target().getClass().getSimpleName()
-                                + " has no observable source — call .observe(...) on the root"
-                                + " builder or .toObservable(...) on the binding.");
-            }
-            IObserver<ObservableEvent> wrapper = b.buildWrapper();
-            for (IObservable src : sources) {
-                src.addObserver(wrapper);
-                registrations.add(new Registration(src, wrapper));
+            wrappers.add(b.buildWrapper());
+        }
+        ObservabilityBinding binding = new ObservabilityBinding(wrappers);
+        this.built = binding;
+        for (IBuilderObserver<IObservabilityBuilder, ObservabilityBinding> o : this.buildObservers) {
+            try {
+                o.handle(binding);
+            } catch (RuntimeException e) {
+                log.warn("Build observer threw: {}", e.getMessage());
             }
         }
-        return new ObservabilityBinding(registrations);
+        return binding;
     }
 }

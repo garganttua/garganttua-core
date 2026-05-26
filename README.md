@@ -299,6 +299,17 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 <!-- AUTO-GENERATED-ARCHITECTURE-STOP -->
 
 ## 📚 Module Categories

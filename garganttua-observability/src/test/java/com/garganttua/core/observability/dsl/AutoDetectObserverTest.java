@@ -72,10 +72,12 @@ class AutoDetectObserverTest {
         TestObservable mapper = new TestObservable("mapper");
 
         try (ObservabilityBinding binding = ObservabilityBuilder.create()
-                .observe(workflow, mapper)
                 .withPackage(AutoDetectObserverTest.class.getPackageName())
                 .autoDetect(true)
                 .build()) {
+
+            binding.attachSource(workflow);
+            binding.attachSource(mapper);
 
             workflow.fire(start("workflow:run"));            // EVERYTHING only
             workflow.fire(end("workflow:run", 0));            // EVERYTHING + WORKFLOW_END
