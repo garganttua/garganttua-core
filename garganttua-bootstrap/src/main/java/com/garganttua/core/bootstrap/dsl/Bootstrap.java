@@ -20,6 +20,7 @@ import java.util.Queue;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.garganttua.core.bootstrap.banner.BannerMode;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
@@ -29,6 +30,7 @@ import com.garganttua.core.bootstrap.banner.IBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticBuilder;
+import com.garganttua.core.dsl.IBootstrapBuilderFactory;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
@@ -377,11 +379,68 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             if (spiBuilder != null) {
                 log.atDebug().log("Registering SPI-bootstrapped IReflectionBuilder on this Bootstrap");
                 this.provide(spiBuilder);
+                // Also register as a managed builder so SPI-loaded child builders
+                // (InjectionContextBuilder, ExpressionContextBuilder, …) can find
+                // it during dependency resolution — provide() alone only
+                // satisfies Bootstrap's own require() contract.
+                this.withBuilder(spiBuilder);
             }
+        }
+
+        // SPI fallback for standard builders (InjectionContextBuilder,
+        // ExpressionContextBuilder, …). Each garganttua-core module that
+        // exposes a bootstrap-discoverable builder ships an
+        // IBootstrapBuilderFactory via META-INF/services. Loaded only when
+        // autoDetect is enabled and the SPI fallback is not opted out.
+        // Existing classes (already registered via withBuilder) are skipped.
+        if (this.autoDetect.booleanValue() && this.spiFallbackEnabled) {
+            loadBootstrapBuildersFromSpi();
         }
 
         log.atDebug().log("Auto-detection completed for {} packages", packages.size());
         log.atTrace().log("Exiting doAutoDetection()");
+    }
+
+    /** Tracks whether the SPI builders summary has been emitted at INFO. */
+    private static final AtomicBoolean SPI_BUILDERS_LOGGED = new AtomicBoolean(false);
+
+    private void loadBootstrapBuildersFromSpi() {
+        Set<String> registeredClasses = new HashSet<>();
+        for (IBuilder<?> existing : this.manualBuilders.values()) {
+            registeredClasses.add(existing.getClass().getName());
+        }
+
+        List<String> added = new ArrayList<>();
+        for (IBootstrapBuilderFactory factory : ServiceLoader.load(IBootstrapBuilderFactory.class)) {
+            try {
+                IBuilder<?> builder = factory.create();
+                if (builder == null) {
+                    continue;
+                }
+                String className = builder.getClass().getName();
+                if (registeredClasses.contains(className)) {
+                    log.atDebug().log("SPI: skipping {} — already registered explicitly", className);
+                    continue;
+                }
+                log.atDebug().log("SPI: registering bootstrap builder {} via factory {}",
+                        className, factory.getClass().getName());
+                this.withBuilder(builder);
+                registeredClasses.add(className);
+                added.add(builder.getClass().getSimpleName());
+            } catch (Exception e) {
+                log.atWarn().log("SPI factory {} failed to create builder: {}",
+                        factory.getClass().getName(), e.getMessage());
+            }
+        }
+
+        if (!added.isEmpty()) {
+            String summary = "SPI bootstrap: builders=" + added;
+            if (SPI_BUILDERS_LOGGED.compareAndSet(false, true)) {
+                log.atInfo().log(summary);
+            } else {
+                log.atDebug().log(summary);
+            }
+        }
     }
 
     /**
@@ -395,18 +454,21 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      *         {@code DependencySpec.require(IReflectionBuilder)} contract will
      *         take over and produce a clear "dependency not provided" error)
      */
+    /** Tracks whether the SPI summary line has already been emitted at INFO. */
+    private static final AtomicBoolean SPI_SUMMARY_LOGGED = new AtomicBoolean(false);
+
     private static IReflectionBuilder buildReflectionBuilderFromSpi() {
         log.atTrace().log("Attempting SPI bootstrap of IReflectionBuilder");
         IReflectionBuilder rb = ReflectionBuilder.builder();
-        int providerCount = 0;
-        int scannerCount = 0;
+        List<String> providerLabels = new ArrayList<>();
+        List<String> scannerLabels = new ArrayList<>();
 
         for (IReflectionProvider provider : sortedByPriority(ServiceLoader.load(IReflectionProvider.class))) {
             int priority = readPriority(provider);
             log.atDebug().log("SPI: registering reflection provider {} with priority {}",
                     provider.getClass().getName(), priority);
             rb.withProvider(provider, priority);
-            providerCount++;
+            providerLabels.add(provider.getClass().getSimpleName() + "@" + priority);
         }
 
         for (IAnnotationScanner scanner : sortedByPriority(ServiceLoader.load(IAnnotationScanner.class))) {
@@ -414,15 +476,25 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             log.atDebug().log("SPI: registering annotation scanner {} with priority {}",
                     scanner.getClass().getName(), priority);
             rb.withScanner(scanner, priority);
-            scannerCount++;
+            scannerLabels.add(scanner.getClass().getSimpleName() + "@" + priority);
         }
 
-        if (providerCount == 0 && scannerCount == 0) {
+        if (providerLabels.isEmpty() && scannerLabels.isEmpty()) {
             log.atDebug().log("SPI bootstrap found no IReflectionProvider/IAnnotationScanner on the classpath");
             return null;
         }
 
-        log.atInfo().log("SPI bootstrap: {} provider(s) + {} scanner(s) registered", providerCount, scannerCount);
+        // First invocation logs at INFO (visible by default); subsequent ones at
+        // DEBUG to avoid noisy duplicates when Bootstrap re-runs the loader from
+        // both the constructor (ensureReflectionAvailable) and the build phase
+        // (doAutoDetection).
+        String summary = String.format("SPI bootstrap: providers=%s, scanners=%s",
+                providerLabels, scannerLabels);
+        if (SPI_SUMMARY_LOGGED.compareAndSet(false, true)) {
+            log.atInfo().log(summary);
+        } else {
+            log.atDebug().log(summary);
+        }
         return rb;
     }
 

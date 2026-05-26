@@ -61,7 +61,7 @@ class BootstrapAutoDetectSpiTest {
 	}
 
 	@Test
-	@DisplayName("Explicit provide() of IReflectionBuilder skips SPI defaults")
+	@DisplayName("Explicit provide()+withBuilder() of IReflectionBuilder skips SPI defaults")
 	void explicitOverride_skipsSpi() throws DslException {
 		AtomicBoolean userBuilderUsed = new AtomicBoolean(false);
 		IReflectionBuilder userBuilder = ReflectionBuilder.builder()
@@ -71,7 +71,12 @@ class BootstrapAutoDetectSpiTest {
 
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.autoDetect(true);
+		// provide() satisfies Bootstrap's own require(IReflectionBuilder).
+		// withBuilder() makes it visible to SPI-loaded child builders
+		// (InjectionContextBuilder, ExpressionContextBuilder, …) during their
+		// own dependency resolution.
 		bootstrap.provide(userBuilder);
+		bootstrap.withBuilder(userBuilder);
 
 		assertDoesNotThrow(bootstrap::build);
 		assertTrue(userBuilderUsed.get(),

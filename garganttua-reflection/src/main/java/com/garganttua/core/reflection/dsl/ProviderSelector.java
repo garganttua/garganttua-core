@@ -22,7 +22,15 @@ class ProviderSelector implements IReflectionProvider {
                 return provider;
             }
         }
-        throw new UnsupportedOperationException("No IReflectionProvider supports type: " + type);
+        List<String> tried = providers.stream()
+                .map(p -> p.getClass().getSimpleName())
+                .toList();
+        throw new UnsupportedOperationException(
+                "No IReflectionProvider supports type: " + type
+                + ". Providers tried: " + tried
+                + ". Hint: if you only see an AOT provider, ensure 'garganttua-runtime-reflection' is on the"
+                + " runtime classpath (it is a 'runtime' scope transitive of 'garganttua-bootstrap'), or"
+                + " pre-register " + type.getName() + " in your AOTRegistry.");
     }
 
     @Override

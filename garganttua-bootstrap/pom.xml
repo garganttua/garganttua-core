@@ -48,10 +48,13 @@
                   <artifactId>garganttua-reflections</artifactId>
                   <scope>test</scope>
             </dependency>
+            <!-- Runtime fallback reflection provider, discovered via ServiceLoader by
+                 Bootstrap's SPI cold-start. Apps that target GraalVM native image with
+                 AOT-only reflection can <exclusion>-out this dep. -->
             <dependency>
                   <groupId>com.garganttua.core</groupId>
                   <artifactId>garganttua-runtime-reflection</artifactId>
-                  <scope>test</scope>
+                  <scope>runtime</scope>
             </dependency>
       </dependencies>
 

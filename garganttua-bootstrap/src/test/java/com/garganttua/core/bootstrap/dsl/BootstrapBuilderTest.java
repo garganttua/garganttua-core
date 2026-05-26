@@ -717,11 +717,14 @@ class BootstrapTest {
             bootstrap.withPackage("com.garganttua.core.bootstrap.dsl.test")
                     .withBuilder(nonPackageableBuilder);
 
-            // Bootstrap requires IReflectionBuilder dependency when auto-detect is enabled
+            // Bootstrap requires IReflectionBuilder dependency when auto-detect is enabled.
+            // SPI auto-loaded child builders (InjectionContextBuilder, ExpressionContextBuilder)
+            // also need it visible in the builder list, so we both provide() and withBuilder().
             IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                     .withProvider(new RuntimeReflectionProvider())
                     .withScanner(new TestAnnotationScanner());
             bootstrap.provide(reflectionBuilder);
+            bootstrap.withBuilder(reflectionBuilder);
 
             // When
             bootstrap.autoDetect(true);
