@@ -1,18 +1,23 @@
 package com.garganttua.core.observability.dsl;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
+import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.injection.BeanReference;
@@ -27,6 +32,8 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.annotations.Reflected;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.SupplyException;
 
 /**
  * Root entry point of the observability DSL. Use {@link #create()} to obtain
@@ -43,11 +50,22 @@ import com.garganttua.core.reflection.annotations.Reflected;
  * via the Bootstrap dep-resolution machinery, and self-attach their built
  * engine to the resulting {@link ObservabilityBinding}.
  *
- * <p>Declares a {@link DependencyPhase#BUILD BUILD}-phase optional dependency
- * on {@link IInjectionContextBuilder} — when present, {@link Observer @Observer}
- * classes are resolved as beans from the {@link IInjectionContext} (so they
- * can carry their own DI requirements). When absent, they are instantiated
- * via the global {@link IReflection} provider (no-arg ctor required).
+ * <p>Observer registrations are aggregated through a {@link MultiSourceCollector}
+ * with two prioritized sources:
+ * <ol>
+ *   <li>{@code "manual"} (priority 0) — observers passed to
+ *       {@link #subscribe(IObserver)} by user code. Highest priority.</li>
+ *   <li>{@code "auto-detected"} (priority 1) — observers discovered through the
+ *       {@link Observer @Observer} annotation scan during
+ *       {@link #doAutoDetectionWithDependency(Object)}.</li>
+ * </ol>
+ * If the same observer class appears in both sources, the manual entry wins.
+ *
+ * <p>Declares an optional dependency on {@link IInjectionContextBuilder} —
+ * when present, {@code @Observer} classes are resolved as beans from the
+ * {@link IInjectionContext} (so they can carry their own DI requirements).
+ * When the bean lookup misses, the class is instantiated via the global
+ * {@link IReflection} provider as a fallback.
  *
  * @since 2.0.0-ALPHA02
  */
@@ -62,7 +80,23 @@ public final class ObservabilityBuilder
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class)));
 
-    private final List<ObserverBindingBuilder> bindings = new ArrayList<>();
+    private static final String SOURCE_MANUAL = "manual";
+    private static final String SOURCE_AUTO_DETECTED = "auto-detected";
+
+    /**
+     * Manual entries use a monotonically increasing key — multiple
+     * {@code subscribe(...)} calls (including lambdas / method references
+     * that share a JVM-generated class) all survive as distinct bindings.
+     */
+    private final Map<String, ObserverBindingBuilder> manualBindings = new LinkedHashMap<>();
+    private final AtomicLong manualSeq = new AtomicLong();
+
+    /**
+     * Auto-detected entries are class-keyed so a re-run of
+     * {@link #doAutoDetectionWithDependency(Object)} is idempotent.
+     */
+    private final Map<String, ObserverBindingBuilder> autoDetectedBindings = new LinkedHashMap<>();
+
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
     private final Set<IBuilderObserver<IObservabilityBuilder, ObservabilityBinding>> buildObservers = new HashSet<>();
     private volatile ObservabilityBinding built;
@@ -84,7 +118,9 @@ public final class ObservabilityBuilder
     public IObserverBindingBuilder subscribe(IObserver<ObservableEvent> observer) {
         Objects.requireNonNull(observer, "observer");
         ObserverBindingBuilder binding = new ObserverBindingBuilder(observer, this);
-        this.bindings.add(binding);
+        String key = "m#" + this.manualSeq.getAndIncrement() + ":"
+                + observer.getClass().getName();
+        this.manualBindings.put(key, binding);
         return binding;
     }
 
@@ -189,14 +225,14 @@ public final class ObservabilityBuilder
                 continue;
             }
             IObserver<ObservableEvent> observer = (IObserver<ObservableEvent>) instance;
-            IObserverBindingBuilder binding = this.subscribe(observer);
+            ObserverBindingBuilder binding = new ObserverBindingBuilder(observer, this);
             if (meta.events().length > 0) {
                 binding.onlyEvents(meta.events());
             }
             if (meta.sources().length > 0) {
                 binding.matchingAnySource(meta.sources());
             }
-            binding.up();
+            this.autoDetectedBindings.put(klass.getName(), binding);
             log.debug("@Observer auto-registered: {} (events={}, sources={})",
                     klass.getSimpleName(), meta.events().length, meta.sources().length);
         }
@@ -231,8 +267,12 @@ public final class ObservabilityBuilder
 
     @Override
     protected ObservabilityBinding doBuild() throws DslException {
-        List<IObserver<ObservableEvent>> wrappers = new ArrayList<>(this.bindings.size());
-        for (ObserverBindingBuilder b : this.bindings) {
+        Map<String, ObserverBindingBuilder> aggregated = computeBindings();
+        log.debug("Building ObservabilityBinding from {} merged observer source(s)",
+                aggregated.size());
+
+        List<IObserver<ObservableEvent>> wrappers = new ArrayList<>(aggregated.size());
+        for (ObserverBindingBuilder b : aggregated.values()) {
             wrappers.add(b.buildWrapper());
         }
         ObservabilityBinding binding = new ObservabilityBinding(wrappers);
@@ -245,6 +285,39 @@ public final class ObservabilityBuilder
             }
         }
         return binding;
+    }
+
+    /**
+     * Aggregate the two observer sources through a {@link MultiSourceCollector}.
+     * Manual subscriptions take precedence over auto-detected ones when the
+     * same class shows up in both.
+     */
+    private Map<String, ObserverBindingBuilder> computeBindings() {
+        MultiSourceCollector<String, ObserverBindingBuilder> collector = new MultiSourceCollector<>();
+        collector.source(bindingSupplier(this.manualBindings), 0, SOURCE_MANUAL);
+        collector.source(bindingSupplier(this.autoDetectedBindings), 1, SOURCE_AUTO_DETECTED);
+        return collector.build();
+    }
+
+    private static ISupplier<Map<String, ObserverBindingBuilder>> bindingSupplier(
+            Map<String, ObserverBindingBuilder> snapshot) {
+        return new ISupplier<>() {
+            @Override
+            public Optional<Map<String, ObserverBindingBuilder>> supply() throws SupplyException {
+                return Optional.of(snapshot);
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return Map.class;
+            }
+
+            @Override
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            public IClass<Map<String, ObserverBindingBuilder>> getSuppliedClass() {
+                return (IClass) IClass.getClass(Map.class);
+            }
+        };
     }
 
     @Override
