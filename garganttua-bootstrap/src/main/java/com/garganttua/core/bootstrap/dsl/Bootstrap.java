@@ -1,6 +1,8 @@
 package com.garganttua.core.bootstrap.dsl;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -101,6 +103,31 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private static final String DEFAULT_VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
     private static final String SOURCE_MANUAL = "manual";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
+
+    /**
+     * UTF-8 console stream for printing banner art and progress glyphs (▶, ○, ✓, →).
+     * On JVMs where the default {@code System.out} charset is not UTF-8 (e.g.
+     * ANSI_X3.4-1968 on locale-less Linux containers), Unicode glyphs are
+     * replaced by '?' when written through {@code System.out}. This stream
+     * writes UTF-8 bytes directly to {@link FileDescriptor#out}, bypassing the
+     * default {@code PrintStream} encoding.
+     */
+    private static final PrintStream CONSOLE_OUT = createUtf8ConsoleStream();
+
+    private static PrintStream createUtf8ConsoleStream() {
+        try {
+            if (StandardCharsets.UTF_8.equals(System.out.charset())) {
+                return System.out;
+            }
+        } catch (Throwable ignored) {
+            // PrintStream.charset() is Java 18+; pre-21 fall through to wrap.
+        }
+        try {
+            return new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8);
+        } catch (Throwable e) {
+            return System.out;
+        }
+    }
 
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
     private final Map<String, IBuilder<?>> manualBuilders = Collections.synchronizedMap(new HashMap<>());
@@ -257,7 +284,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
         switch (bannerMode) {
             case CONSOLE:
-                bannerToPrint.print(System.out);
+                bannerToPrint.print(CONSOLE_OUT);
                 break;
             case LOG:
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -651,8 +678,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         String RESET = "\u001B[0m";
         String DIM = "\u001B[2m";
 
-        System.out.println();
-        System.out.println(CYAN + BOLD + "  ▶ Phase " + phaseNumber + ": " + phaseName + RESET +
+        CONSOLE_OUT.println();
+        CONSOLE_OUT.println(CYAN + BOLD + "  ▶ Phase " + phaseNumber + ": " + phaseName + RESET +
                 DIM + " (" + details + ")" + RESET);
     }
 
@@ -669,7 +696,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         String RESET = "\u001B[0m";
         String YELLOW = "\u001B[33m";
 
-        System.out.println(DIM + "     ○ " + RESET + YELLOW + builderName + RESET + DIM + " ..." + RESET);
+        CONSOLE_OUT.println(DIM + "     ○ " + RESET + YELLOW + builderName + RESET + DIM + " ..." + RESET);
     }
 
     /**
@@ -686,9 +713,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         String RESET = "\u001B[0m";
         String DIM = "\u001B[2m";
 
-        System.out.print("\u001B[1A"); // Move up one line
-        System.out.print("\u001B[2K"); // Clear line
-        System.out.println(GREEN + "     ✓ " + RESET + builderName + DIM + " ready" + RESET);
+        CONSOLE_OUT.print("\u001B[1A"); // Move up one line
+        CONSOLE_OUT.print("\u001B[2K"); // Clear line
+        CONSOLE_OUT.println(GREEN + "     ✓ " + RESET + builderName + DIM + " ready" + RESET);
     }
 
     /**
@@ -704,7 +731,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         String RESET = "\u001B[0m";
         String DIM = "\u001B[2m";
 
-        System.out.println(BLUE + "     → " + RESET + action + " " + DIM + componentName + RESET);
+        CONSOLE_OUT.println(BLUE + "     → " + RESET + action + " " + DIM + componentName + RESET);
     }
 
     /**
@@ -727,7 +754,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         }
 
         if (bannerMode == BannerMode.CONSOLE) {
-            summary.print(System.out);
+            summary.print(CONSOLE_OUT);
         } else if (bannerMode == BannerMode.LOG) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             summary.print(new PrintStream(baos, true, StandardCharsets.UTF_8));
