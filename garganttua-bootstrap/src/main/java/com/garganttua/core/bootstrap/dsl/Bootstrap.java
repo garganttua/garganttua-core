@@ -487,6 +487,16 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 // onStart on its built result — the top-level consumer
                 // (ApiBuilder, etc.) owns the lifecycle of these sub-contexts.
                 this.withBuilder(builder);
+                // Propagate Bootstrap.autoDetect to SPI-loaded builders that
+                // honour it (IAutomaticBuilder). Without this, e.g. an
+                // SPI-loaded InjectionContextBuilder stays in autoDetect=false
+                // mode and never scans @Qualifier annotations / @Singleton
+                // beans — silently breaking the auto-discovery contract users
+                // expect when they set bootstrap.autoDetect(true).
+                if (builder instanceof com.garganttua.core.dsl.IAutomaticBuilder<?, ?> autoBuilder
+                        && this.autoDetect.booleanValue()) {
+                    autoBuilder.autoDetect(true);
+                }
                 this.spiAutoLoadedBuilders.add(builder);
                 registeredClasses.add(className);
                 added.add(builder.getClass().getSimpleName());
