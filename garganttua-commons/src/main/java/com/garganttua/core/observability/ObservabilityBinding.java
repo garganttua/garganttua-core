@@ -1,10 +1,15 @@
 package com.garganttua.core.observability;
 
+import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @since 2.0.0-ALPHA02
  */
-public final class ObservabilityBinding implements AutoCloseable {
+public final class ObservabilityBinding implements AutoCloseable, IBootstrapSummaryContributor {
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBinding.class);
 
     /**
@@ -117,5 +122,26 @@ public final class ObservabilityBinding implements AutoCloseable {
         if (!failures.isEmpty()) {
             log.debug("{} observer detach(es) failed during close", failures.size());
         }
+    }
+
+    // -- IBootstrapSummaryContributor ---------------------------------------
+
+    @Override
+    public String getSummaryCategory() {
+        return "Observability";
+    }
+
+    @Override
+    public Map<String, String> getSummaryItems() {
+        Map<String, String> items = new LinkedHashMap<>();
+        items.put("Observers", String.valueOf(this.wrappers.size()));
+        items.put("Active subscriptions", String.valueOf(this.registrations.size()));
+        Set<String> distinctSources = new HashSet<>();
+        for (Registration r : this.registrations) {
+            distinctSources.add(r.source().getClass().getSimpleName());
+        }
+        items.put("Attached sources", String.valueOf(distinctSources.size()));
+        items.put("Status", this.closed.get() ? "closed" : "active");
+        return items;
     }
 }
