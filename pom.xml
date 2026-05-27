@@ -355,6 +355,26 @@
           <argLine>--enable-preview</argLine>
         </configuration>
       </plugin>
+      <!-- Inject coordinates into every JAR's MANIFEST.MF so the
+           Bootstrap module can discover which garganttua-* modules are on
+           the classpath and print their versions in the post-build
+           summary. Discovery: GarganttuaModules.discover() walks
+           ClassLoader.getResources("META-INF/MANIFEST.MF") and filters
+           Implementation-Vendor starting with "com.garganttua". -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Implementation-Title>${project.name}</Implementation-Title>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Implementation-Vendor>${project.groupId}</Implementation-Vendor>
+              <Garganttua-Module>${project.artifactId}</Garganttua-Module>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>

@@ -159,7 +159,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     /** When {@code true}, print an ASCII dep graph after Phase 2 (topo sort). */
     private boolean printDependencyGraph = false;
     private boolean spiFallbackEnabled = true;
-    /** Guards {@link #discoverSpiModules()} against re-loading the same modules. */
+    /** Guards {@link #load()} against re-loading the same modules. */
     private boolean spiModulesLoaded = false;
 
     @Override
@@ -422,10 +422,10 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     @Override
     protected void doAutoDetection() throws DslException {
         // SPI discovery is no longer auto-triggered from build() / Phase 1.
-        // Callers must invoke {@link #discoverSpiModules()} explicitly — see
+        // Callers must invoke {@link #load()} explicitly — see
         // its Javadoc for the rationale (lets users inspect / amend the
         // registered builders between SPI discovery and build).
-        log.trace("doAutoDetection() — no-op, SPI is now driven by discoverSpiModules()");
+        log.trace("doAutoDetection() — no-op, SPI is now driven by load()");
     }
 
     /**
@@ -451,7 +451,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      *         .autoDetect(true)
      *         .withPackage("com.myapp");
      *
-     * bootstrap.discoverSpiModules();
+     * bootstrap.load();
      * // ... inspect bootstrap.getBuilders(), add more via withBuilder(...), etc.
      * bootstrap.build();
      * }</pre>
@@ -459,13 +459,13 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @return this builder for method chaining
      * @throws DslException propagated from SPI factory construction failures
      */
-    public Bootstrap discoverSpiModules() throws DslException {
+    public Bootstrap load() throws DslException {
         if (this.spiModulesLoaded) {
-            log.trace("discoverSpiModules() called twice — no-op");
+            log.trace("load() called twice — no-op");
             return this;
         }
         if (!this.autoDetect.booleanValue() || !this.spiFallbackEnabled) {
-            log.debug("discoverSpiModules() skipped — autoDetect={}, spiFallback={}",
+            log.debug("load() skipped — autoDetect={}, spiFallback={}",
                     this.autoDetect.booleanValue(), this.spiFallbackEnabled);
             return this;
         }
@@ -940,6 +940,15 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 .startupTime(startupTime)
                 .buildersCount(getBuilders().size())
                 .builtObjectsCount(builtObjects.size());
+
+        // Inventory of garganttua-* modules detected on the classpath. Each
+        // module ships its coordinates in its JAR's MANIFEST.MF (injected by
+        // the parent POM's maven-jar-plugin config); GarganttuaModules walks
+        // the classpath at runtime to collect them.
+        for (com.garganttua.core.bootstrap.GarganttuaModules.ModuleInfo m :
+                com.garganttua.core.bootstrap.GarganttuaModules.discover()) {
+            summary.addItem("Modules", m.artifactId(), m.version(), "📦");
+        }
 
         // Collect summary contributions from built objects
         for (Object built : builtObjects) {
