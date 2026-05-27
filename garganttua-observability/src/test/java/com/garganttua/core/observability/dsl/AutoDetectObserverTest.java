@@ -73,22 +73,28 @@ class AutoDetectObserverTest {
         TestObservable workflow = new TestObservable("workflow");
         TestObservable mapper = new TestObservable("mapper");
 
-        // @Observer scan now consumes an IReflection (AUTO_DETECT-phase dep)
-        // for the annotation scan, and the IInjectionContext (BUILD-phase
-        // dep) only for the post-build bean registration.
+        // @Observer scan now consumes ONLY the IInjectionContext: the
+        // injection context's own autodetect registers any @Observer-qualified
+        // class as a bean (because @Observer is now @Qualifier-marked), and
+        // ObservabilityBuilder queries those beans during its doAutoDetection().
         var reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider(), 0)
                 .withScanner(new ReflectionsAnnotationScanner(), 0);
         IInjectionContextBuilder injCtxBuilder = InjectionContext.builder()
-                .autoDetect(false)
+                .autoDetect(true)
+                .withPackage(AutoDetectObserverTest.class.getPackageName())
                 .provide(reflectionBuilder);
 
-        try (ObservabilityBinding binding = ObservabilityBuilder.create()
-                .withPackage(AutoDetectObserverTest.class.getPackageName())
+        ObservabilityBuilder obsBuilder = (ObservabilityBuilder) ObservabilityBuilder.create()
                 .autoDetect(true)
-                .provide(reflectionBuilder)
-                .provide(injCtxBuilder)
-                .build()) {
+                .provide(injCtxBuilder);   // registers @Observer / @Observable qualifiers
+
+        // Bootstrap normally builds + starts the InjectionContext before
+        // running our autodetect. In a standalone test we have to do it
+        // ourselves — queryBeans() requires init+started lifecycle.
+        injCtxBuilder.build().onInit().onStart();
+
+        try (ObservabilityBinding binding = obsBuilder.build()) {
 
             binding.attachSource(workflow);
             binding.attachSource(mapper);

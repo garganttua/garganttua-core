@@ -19,7 +19,6 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.MultiSourceCollector;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
-import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
@@ -27,14 +26,12 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.annotations.Observer;
+import com.garganttua.core.observability.annotations.Observable;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.IReflection;
-import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
@@ -59,17 +56,19 @@ import com.garganttua.core.supply.SupplyException;
  * <ol>
  *   <li>{@code "manual"} (priority 0) — observers passed to
  *       {@link #subscribe(IObserver)} by user code. Highest priority.</li>
- *   <li>{@code "auto-detected"} (priority 1) — observers discovered through the
- *       {@link Observer @Observer} annotation scan during
- *       {@link #doAutoDetectionWithDependency(Object)}.</li>
+ *   <li>{@code "auto-detected"} (priority 1) — observers discovered by
+ *       querying the {@link IInjectionContext} for beans whose class carries
+ *       the {@link Observer @Observer} qualifier annotation.</li>
  * </ol>
- * If the same observer class appears in both sources, the manual entry wins.
  *
  * <p>Declares an optional dependency on {@link IInjectionContextBuilder} —
- * when present, {@code @Observer} classes are resolved as beans from the
- * {@link IInjectionContext} (so they can carry their own DI requirements).
- * When the bean lookup misses, the class is instantiated via the global
- * {@link IReflection} provider as a fallback.
+ * the context is used in two ways:
+ * <ul>
+ *   <li>During autodetect, to list beans annotated with {@code @Observer}.</li>
+ *   <li>At the end of {@link #doBuild()}, to publish the freshly-built
+ *       {@link ObservabilityBinding} as a singleton bean so other beans can
+ *       {@code @Inject} it.</li>
+ * </ul>
  *
  * @since 2.0.0-ALPHA02
  */
@@ -82,13 +81,12 @@ public final class ObservabilityBuilder
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
-            // Reflection feeds the @Observer scan during the auto-detect phase.
-            DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT),
-            // Injection context is declared so Bootstrap (1) orders us AFTER
-            // the InjectionContextBuilder and (2) auto-wires it via provide().
-            // We INTERCEPT the call in provide() below — see the comment
-            // there for why super.provide() must NOT be called for this dep.
-            DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD));
+            // Injection context is THE source of truth. Declared so Bootstrap
+            // (1) orders us AFTER InjectionContextBuilder and (2) auto-wires
+            // it via provide(). We INTERCEPT the call in provide() below —
+            // see the comment there for why super.provide() must NOT be
+            // called for this dep.
+            DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class)));
 
     private static final String SOURCE_MANUAL = "manual";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
@@ -161,6 +159,12 @@ public final class ObservabilityBuilder
             throws DslException {
         if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
             this.injectionContextBuilder = injCtxBuilder;
+            // Make @Observer and @Observable known qualifiers so the bean
+            // provider registers every annotated user class as a managed
+            // bean. Called here (Phase 1) which is well before the
+            // context's own build().
+            injCtxBuilder.withQualifier(IClass.getClass(Observer.class));
+            injCtxBuilder.withQualifier(IClass.getClass(Observable.class));
             return this;
         }
         return super.provide(dependency);
@@ -205,62 +209,58 @@ public final class ObservabilityBuilder
         return this.packages.toArray(new String[0]);
     }
 
-    @Override
-    protected IReflection getReflection() {
-        try {
-            return IClass.getReflection();
-        } catch (IllegalStateException e) {
-            return null;
-        }
-    }
-
     // -- AbstractAutomaticDependentBuilder hooks -----------------------------
 
     @Override
     protected void doAutoDetection() throws DslException {
-        // Intentional no-op: @Observer scanning happens in
-        // doAutoDetectionWithDependency(IInjectionContext) so observers can
-        // be resolved as managed beans. Without an IInjectionContext on the
-        // critical path, autoDetect simply does nothing here — users without
-        // DI register observers explicitly via subscribe(...).
+        // Bridge: the standard framework hook for autodetect-with-dependency
+        // never fires for us because our provide() override intercepts the
+        // IInjectionContextBuilder before super.provide() can route it
+        // through the dep machinery (which would eagerly build the context
+        // and break lifecycle ordering — see provide()). Instead, we call
+        // doAutoDetectionWithDependency manually here with the cached,
+        // already-init'd context the framework has produced.
+        if (this.injectionContextBuilder == null) {
+            log.debug("autoDetect skipped: no IInjectionContextBuilder provided");
+            return;
+        }
+        IInjectionContext context = this.injectionContextBuilder.build();
+        doAutoDetectionWithDependency(context);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
-        if (!(dependency instanceof IReflection reflection)) {
+        if (!(dependency instanceof IInjectionContext context)) {
+            return;
+        }
+        // Query beans carrying the @Observer qualifier. Both @Observer and
+        // @Observable are registered as qualifiers in provide(), so the bean
+        // provider has already turned every @Observer-annotated class into a
+        // managed bean.
+        BeanReference observerQuery = new BeanReference(
+                null, Optional.empty(), Optional.empty(),
+                Set.of(IClass.getClass(Observer.class)));
+        List<Object> beans;
+        try {
+            beans = context.queryBeans(observerQuery);
+        } catch (DiException e) {
+            log.warn("Failed to query @Observer beans from InjectionContext: {}", e.getMessage());
             return;
         }
 
-        IClass<Observer> annotation = IClass.getClass(Observer.class);
-        List<IClass<?>> candidates = new ArrayList<>();
-        if (this.packages.isEmpty()) {
-            candidates.addAll(reflection.getClassesWithAnnotation(annotation));
-        } else {
-            for (String pkg : this.packages) {
-                candidates.addAll(reflection.getClassesWithAnnotation(pkg, annotation));
+        for (Object bean : beans) {
+            if (!(bean instanceof IObserver<?>)) {
+                log.warn("@Observer bean {} does not implement IObserver — skipping",
+                        bean.getClass().getName());
+                continue;
             }
-        }
-
-        for (IClass<?> klass : candidates) {
-            Observer meta = klass.getAnnotation(annotation);
+            IClass<?> beanClass = IClass.getClass(bean.getClass());
+            Observer meta = beanClass.getAnnotation(IClass.getClass(Observer.class));
             if (meta == null) {
                 continue;
             }
-            Object instance;
-            try {
-                instance = reflection.newInstance(klass);
-            } catch (ReflectionException e) {
-                log.warn("@Observer class {} could not be instantiated (no-arg ctor required): {}",
-                        klass.getName(), e.getMessage());
-                continue;
-            }
-            if (!(instance instanceof IObserver<?>)) {
-                log.warn("@Observer class {} does not implement IObserver — skipping",
-                        klass.getName());
-                continue;
-            }
-            IObserver<ObservableEvent> observer = (IObserver<ObservableEvent>) instance;
+            IObserver<ObservableEvent> observer = (IObserver<ObservableEvent>) bean;
             ObserverBindingBuilder binding = new ObserverBindingBuilder(observer, this);
             if (meta.events().length > 0) {
                 binding.onlyEvents(meta.events());
@@ -268,9 +268,39 @@ public final class ObservabilityBuilder
             if (meta.sources().length > 0) {
                 binding.matchingAnySource(meta.sources());
             }
-            this.autoDetectedBindings.put(klass.getName(), binding);
-            log.debug("@Observer auto-registered: {} (events={}, sources={})",
-                    klass.getSimpleName(), meta.events().length, meta.sources().length);
+            this.autoDetectedBindings.put(beanClass.getName(), binding);
+            log.debug("@Observer bean auto-registered: {} (events={}, sources={})",
+                    beanClass.getSimpleName(), meta.events().length, meta.sources().length);
+        }
+    }
+
+    /**
+     * Query beans carrying the {@link Observable @Observable} qualifier and
+     * attach each one as a source on the freshly-built binding. Manual
+     * {@code binding.attachSource(...)} calls (typically from engine
+     * builders like WorkflowBuilder / RuntimeBuilder / Bootstrap) continue
+     * to work in parallel — the two paths are complementary, not exclusive.
+     */
+    @SuppressWarnings({ "rawtypes" })
+    private void attachAnnotatedObservables(IInjectionContext context, ObservabilityBinding binding) {
+        BeanReference observableQuery = new BeanReference(
+                null, Optional.empty(), Optional.empty(),
+                Set.of(IClass.getClass(Observable.class)));
+        List<Object> beans;
+        try {
+            beans = context.queryBeans(observableQuery);
+        } catch (DiException e) {
+            log.warn("Failed to query @Observable beans from InjectionContext: {}", e.getMessage());
+            return;
+        }
+        for (Object bean : beans) {
+            if (!(bean instanceof com.garganttua.core.observability.IObservable observable)) {
+                log.warn("@Observable bean {} does not implement IObservable — skipping",
+                        bean.getClass().getName());
+                continue;
+            }
+            binding.attachSource(observable);
+            log.debug("@Observable bean auto-attached as source: {}", bean.getClass().getSimpleName());
         }
     }
 
@@ -287,14 +317,17 @@ public final class ObservabilityBuilder
         ObservabilityBinding binding = new ObservabilityBinding(wrappers);
         this.built = binding;
 
-        // Publish the binding as a DI bean, if a context builder was provided.
-        // At Phase 3 of Bootstrap the injection context has been built AND
-        // its lifecycle is init/started, so this is safe.
+        // Publish the binding as a DI bean AND auto-attach every @Observable
+        // bean as a source, if a context builder was provided. At Phase 3 of
+        // Bootstrap the injection context has been built AND its lifecycle is
+        // init/started, so this is safe.
         if (this.injectionContextBuilder != null) {
             try {
-                registerBindingAsBean(this.injectionContextBuilder.build(), binding);
+                IInjectionContext context = this.injectionContextBuilder.build();
+                attachAnnotatedObservables(context, binding);
+                registerBindingAsBean(context, binding);
             } catch (DslException e) {
-                log.warn("Could not resolve IInjectionContext for bean registration: {}",
+                log.warn("Could not resolve IInjectionContext for bean registration / source attach: {}",
                         e.getMessage());
             }
         }
