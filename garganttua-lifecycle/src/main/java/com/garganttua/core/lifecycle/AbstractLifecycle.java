@@ -70,7 +70,14 @@ public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
     public ILifecycle onInit() throws LifecycleException {
         log.trace("Entering onInit()");
         synchronized (this.lifecycleMutex) {
-            ensureNotInitialized();
+            // Idempotent: silently no-op if already initialized. Multiple
+            // owners may legitimately try to init the same object (Bootstrap
+            // Phase 3 + a top-level consumer such as ApiBuilder) and we
+            // should not throw on the second call.
+            if (initialized.get()) {
+                log.trace("Lifecycle already initialized — no-op");
+                return this;
+            }
             log.debug("Initializing lifecycle");
             doInit();
             initialized.set(true);
@@ -86,7 +93,11 @@ public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
         log.trace("Entering onStart()");
         synchronized (this.lifecycleMutex) {
             ensureInitialized();
-            ensureNotStarted();
+            // Idempotent: see {@link #onInit()} for the rationale.
+            if (started.get()) {
+                log.trace("Lifecycle already started — no-op");
+                return this;
+            }
             log.debug("Starting lifecycle");
             doStart();
             started.set(true);

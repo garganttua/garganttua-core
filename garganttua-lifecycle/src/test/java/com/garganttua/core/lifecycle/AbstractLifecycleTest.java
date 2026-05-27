@@ -105,14 +105,18 @@ public class AbstractLifecycleTest {
     }
 
     @Test
-    void testInitTwiceThrows() throws LifecycleException {
+    void testInitTwiceIsIdempotent() throws LifecycleException {
+        // onInit is now idempotent at the AbstractLifecycle level — a
+        // second call against an already-initialized lifecycle is a silent
+        // no-op rather than throwing. Multiple orchestrators (Bootstrap +
+        // a top-level consumer) may legitimately init the same object.
         lifecycle.onInit();
-        assertThrows(LifecycleException.class, () -> lifecycle.onInit());
+        lifecycle.onInit();   // does not throw
     }
 
     @Test
-    void testStartTwiceThrows() throws LifecycleException {
+    void testStartTwiceIsIdempotent() throws LifecycleException {
         lifecycle.onInit().onStart();
-        assertThrows(LifecycleException.class, () -> lifecycle.onStart());
+        lifecycle.onStart();   // does not throw
     }
 }

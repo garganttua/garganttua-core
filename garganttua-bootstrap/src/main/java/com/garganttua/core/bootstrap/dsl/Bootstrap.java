@@ -786,25 +786,25 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             }
 
             // Initialize and start lifecycle objects immediately so downstream
-            // builders can use them during their own build/auto-detection phase.
-            // Some builders already init/start the object during build() — tolerate that.
-            //
-            // SPI auto-loaded auxiliaries (e.g. InjectionContextBuilder /
-            // ExpressionContextBuilder registered via IBootstrapBuilderFactory)
-            // are skipped here: their lifecycle belongs to the top-level
-            // consumer that pulls them in via dep resolution. Initializing them
-            // here would cause that consumer's doInit() to double-init them and
-            // throw LifecycleException.
-            if (built instanceof ILifecycle lifecycleObject && !this.spiAutoLoadedBuilders.contains(builder)) {
+            // builders can use them during their own build/auto-detection
+            // phase. onInit() and onStart() are now idempotent at the
+            // AbstractLifecycle level (silent no-op when already in the
+            // target state) so we can safely init every built object —
+            // including SPI auto-loaded ones — without fearing a double-init
+            // exception from a top-level consumer that owns the lifecycle
+            // and runs its own init later.
+            if (built instanceof ILifecycle lifecycleObject) {
                 try {
                     lifecycleObject.onInit();
                 } catch (LifecycleException e) {
-                    log.debug("Lifecycle already initialized: {}", built.getClass().getSimpleName());
+                    log.debug("onInit failed for {}: {}",
+                            built.getClass().getSimpleName(), e.getMessage());
                 }
                 try {
                     lifecycleObject.onStart();
                 } catch (LifecycleException e) {
-                    log.debug("Lifecycle already started: {}", built.getClass().getSimpleName());
+                    log.debug("onStart failed for {}: {}",
+                            built.getClass().getSimpleName(), e.getMessage());
                 }
             }
 
@@ -1006,19 +1006,21 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 log.debug("Registered rebuilt object of type: {}", rebuilt.getClass().getName());
             }
 
-            // Initialize and start lifecycle objects immediately.
-            // Some builders already init/start the object during build() — tolerate that.
-            // SPI auto-loaded auxiliaries are skipped here (see same rationale in doBuildInternal).
-            if (rebuilt instanceof ILifecycle lifecycleObject && !this.spiAutoLoadedBuilders.contains(builder)) {
+            // Initialize and start lifecycle objects immediately. onInit /
+            // onStart are idempotent at the AbstractLifecycle level — see
+            // doBuildInternal for the rationale.
+            if (rebuilt instanceof ILifecycle lifecycleObject) {
                 try {
                     lifecycleObject.onInit();
                 } catch (LifecycleException e) {
-                    log.debug("Lifecycle already initialized during rebuild: {}", rebuilt.getClass().getSimpleName());
+                    log.debug("onInit failed during rebuild for {}: {}",
+                            rebuilt.getClass().getSimpleName(), e.getMessage());
                 }
                 try {
                     lifecycleObject.onStart();
                 } catch (LifecycleException e) {
-                    log.debug("Lifecycle already started during rebuild: {}", rebuilt.getClass().getSimpleName());
+                    log.debug("onStart failed during rebuild for {}: {}",
+                            rebuilt.getClass().getSimpleName(), e.getMessage());
                 }
                 log.debug("Ready: {}", rebuilt.getClass().getSimpleName());
             }
