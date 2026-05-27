@@ -424,7 +424,10 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "Required dependency %s for phase %s was not provided. " +
                 "Required dependencies must be provided via provide() and built.",
                 dependencyClass.getName(), phase);
-            log.error(errorMsg);
+            // Logged at debug — caller may legitimately swallow this (e.g.
+            // BuilderDependency.tryResolve does). Top-level failures surface
+            // the DslException itself to the user.
+            log.debug(errorMsg);
             throw new DslException(errorMsg);
         }
 
@@ -434,7 +437,7 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "Required dependency %s for phase %s was provided but not built. " +
                 "The dependency builder must be built before use.",
                 dependencyClass.getName(), phase);
-            log.error(errorMsg);
+            log.debug(errorMsg);
             throw new DslException(errorMsg);
         }
     }

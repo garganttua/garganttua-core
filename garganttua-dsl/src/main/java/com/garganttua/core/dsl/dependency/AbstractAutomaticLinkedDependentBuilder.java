@@ -148,7 +148,7 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
             log.trace("Exiting build method");
             return this.built;
         } catch (DslException e) {
-            log.error("Critical error during build", e);
+            log.debug("Build failed, propagating to caller: {}", e.getMessage());
             throw e;
         }
     }

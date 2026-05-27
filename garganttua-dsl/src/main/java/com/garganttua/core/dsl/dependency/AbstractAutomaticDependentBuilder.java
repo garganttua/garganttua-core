@@ -123,7 +123,14 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
             log.trace("Exiting build method");
             return this.built;
         } catch (DslException e) {
-            log.error("Critical error during build", e);
+            // Logged at debug because this exception is propagated to the
+            // caller — which may legitimately retry (BuilderDependency.tryResolve
+            // catches and treats the build as "not yet ready") or fail. Top-
+            // level callers (ApiBuilder, user main, etc.) own the decision to
+            // surface the error to the user; the framework should not
+            // pre-emptively spam ERROR for what is often a transient state
+            // during Bootstrap's Phase 1 dependency resolution.
+            log.debug("Build failed, propagating to caller: {}", e.getMessage());
             throw e;
         }
     }

@@ -75,7 +75,9 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
             log.trace("Exiting build method");
             return this.built;
         } catch (DslException e) {
-            log.error("Critical error during build", e);
+            // Propagate; top-level callers decide the severity. See sibling
+            // builders for the same rationale.
+            log.debug("Build failed, propagating to caller: {}", e.getMessage());
             throw e;
         }
     }
@@ -135,7 +137,7 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
             this.built = this.doBuild();
             log.debug("Rebuilt instance: {}", this.built);
         } catch (DslException e) {
-            log.error("Critical error during rebuild", e);
+            log.debug("Rebuild failed, propagating to caller: {}", e.getMessage());
             throw e;
         }
 
