@@ -159,6 +159,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     /** When {@code true}, print an ASCII dep graph after Phase 2 (topo sort). */
     private boolean printDependencyGraph = false;
     private boolean spiFallbackEnabled = true;
+    /** Guards {@link #discoverSpiModules()} against re-loading the same modules. */
+    private boolean spiModulesLoaded = false;
 
     @Override
     public void addObserver(IObserver<ObservableEvent> observer) {
@@ -419,22 +421,61 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
     @Override
     protected void doAutoDetection() throws DslException {
-        log.trace("Entering doAutoDetection()");
+        // SPI discovery is no longer auto-triggered from build() / Phase 1.
+        // Callers must invoke {@link #discoverSpiModules()} explicitly — see
+        // its Javadoc for the rationale (lets users inspect / amend the
+        // registered builders between SPI discovery and build).
+        log.trace("doAutoDetection() — no-op, SPI is now driven by discoverSpiModules()");
+    }
+
+    /**
+     * Discover and register every framework module published through the
+     * {@link IBootstrapBuilderFactory} SPI — plus the {@link IReflectionBuilder}
+     * fallback when no reflection builder has been provided explicitly.
+     *
+     * <p>This method is the intermediate step between configuring the
+     * Bootstrap ({@link #autoDetect(boolean)}, {@link #withPackage(String)},
+     * {@link #provide(IObservableBuilder)}, …) and calling {@link #build()}.
+     * It lets callers inspect / amend the registered builders after SPI
+     * has populated them but before any dependency resolution runs.
+     *
+     * <p>Gated by {@link #autoDetect(boolean) autoDetect} being true and
+     * the SPI fallback not being disabled via {@link #disableSpiFallback()}.
+     * Idempotent — calling it twice is a no-op (a guard flag tracks whether
+     * SPI has already been swept). {@link #build()} no longer drives this
+     * step automatically.
+     *
+     * <p>Typical use:
+     * <pre>{@code
+     * Bootstrap bootstrap = new Bootstrap()
+     *         .autoDetect(true)
+     *         .withPackage("com.myapp");
+     *
+     * bootstrap.discoverSpiModules();
+     * // ... inspect bootstrap.getBuilders(), add more via withBuilder(...), etc.
+     * bootstrap.build();
+     * }</pre>
+     *
+     * @return this builder for method chaining
+     * @throws DslException propagated from SPI factory construction failures
+     */
+    public Bootstrap discoverSpiModules() throws DslException {
+        if (this.spiModulesLoaded) {
+            log.trace("discoverSpiModules() called twice — no-op");
+            return this;
+        }
+        if (!this.autoDetect.booleanValue() || !this.spiFallbackEnabled) {
+            log.debug("discoverSpiModules() skipped — autoDetect={}, spiFallback={}",
+                    this.autoDetect.booleanValue(), this.spiFallbackEnabled);
+            return this;
+        }
 
         // SPI fallback (Phase 2): even when the global IClass.reflection was
         // installed at constructor time, we still need to feed the bootstrap's
         // own dependency chain with an IReflectionBuilder so downstream
         // builders receive it via provide(). Skipped if a reflection builder
-        // was already provided explicitly or if the user opted out.
-        //
-        // The builder is BOTH provide()'d (to satisfy Bootstrap's own
-        // require(IReflectionBuilder) contract) and withBuilder()'d (so it
-        // appears in getBuilders() for downstream builders' dependency
-        // resolution). It is tracked in spiAutoLoadedBuilders so Phase 3 will
-        // SKIP its onInit/onStart — its lifecycle belongs to whichever
-        // top-level builder (e.g. ApiBuilder) actually consumes the produced
-        // IReflection, not to Bootstrap.
-        if (this.autoDetect.booleanValue() && this.spiFallbackEnabled && !this.reflectionBuilderProvided) {
+        // was already provided explicitly.
+        if (!this.reflectionBuilderProvided) {
             IReflectionBuilder spiBuilder = buildReflectionBuilderFromSpi();
             if (spiBuilder != null) {
                 log.debug("Registering SPI-bootstrapped IReflectionBuilder on this Bootstrap");
@@ -445,17 +486,14 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         }
 
         // SPI fallback for standard builders (InjectionContextBuilder,
-        // ExpressionContextBuilder, …). Each garganttua-core module that
-        // exposes a bootstrap-discoverable builder ships an
-        // IBootstrapBuilderFactory via META-INF/services. Loaded only when
-        // autoDetect is enabled and the SPI fallback is not opted out.
-        // Existing classes (already registered via withBuilder) are skipped.
-        if (this.autoDetect.booleanValue() && this.spiFallbackEnabled) {
-            loadBootstrapBuildersFromSpi();
-        }
+        // ExpressionContextBuilder, ObservabilityBuilder, WorkflowBuilder, …).
+        // Each garganttua-core module that exposes a bootstrap-discoverable
+        // builder ships an IBootstrapBuilderFactory via META-INF/services.
+        loadBootstrapBuildersFromSpi();
 
-        log.debug("Auto-detection completed for {} packages", packages.size());
-        log.trace("Exiting doAutoDetection()");
+        this.spiModulesLoaded = true;
+        log.debug("SPI module discovery complete");
+        return this;
     }
 
     /** Tracks whether the SPI builders summary has been emitted at INFO. */

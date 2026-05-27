@@ -42,10 +42,11 @@ class BootstrapAutoDetectSpiTest {
 	}
 
 	@Test
-	@DisplayName("autoDetect(true).build() without provide() loads providers via ServiceLoader")
-	void spiFallback_buildsReflectionFromClasspath() {
+	@DisplayName("discoverSpiModules() + build() loads providers via ServiceLoader")
+	void spiFallback_buildsReflectionFromClasspath() throws DslException {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.autoDetect(true);
+		bootstrap.discoverSpiModules();
 
 		assertDoesNotThrow(bootstrap::build,
 				"Bootstrap should self-bootstrap reflection via SPI when no IReflectionBuilder is provided");
@@ -72,6 +73,7 @@ class BootstrapAutoDetectSpiTest {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.autoDetect(true);
 		bootstrap.provide(userBuilder);
+		bootstrap.discoverSpiModules();
 
 		assertDoesNotThrow(bootstrap::build);
 		assertTrue(userBuilderUsed.get(),
@@ -84,6 +86,7 @@ class BootstrapAutoDetectSpiTest {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.autoDetect(true);
 		bootstrap.disableSpiFallback();
+		bootstrap.discoverSpiModules();   // no-op since SPI fallback is disabled
 
 		DslException ex = assertThrows(DslException.class, bootstrap::build,
 				"With SPI disabled and no manual provide, the existing require() contract must fail");
