@@ -84,6 +84,14 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
     }
 
     @Override
+    public IRuntimesBuilder observer(com.garganttua.core.dsl.IBuilderObserver<IRuntimesBuilder, Map<String, IRuntime<?, ?>>> observer) {
+        // IObservableBuilder contract — build-time callback. Not used by
+        // this builder today (no observable build-event fan-out), kept as
+        // a no-op for interface completeness.
+        return this;
+    }
+
+    @Override
     public IRuntimesBuilder withPackage(String packageName) {
         log.debug("Adding package: {}", packageName);
         this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));

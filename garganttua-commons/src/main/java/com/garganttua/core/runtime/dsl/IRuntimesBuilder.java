@@ -3,6 +3,7 @@ package com.garganttua.core.runtime.dsl;
 import java.util.Map;
 
 import com.garganttua.core.dsl.IAutomaticBuilder;
+import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
@@ -67,7 +68,10 @@ import com.garganttua.core.runtime.IRuntime;
  * @see com.garganttua.core.runtime.annotations.RuntimeDefinition
  */
 public interface IRuntimesBuilder
-                extends IAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>, IPackageableBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>, IDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>> {
+                extends IAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>,
+                        IObservableBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>,
+                        IPackageableBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>,
+                        IDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>> {
 
         /**
          * Creates a new runtime with the specified name and types.

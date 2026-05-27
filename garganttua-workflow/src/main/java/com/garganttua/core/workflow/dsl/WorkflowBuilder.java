@@ -8,12 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractDependentBuilder;
-import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
@@ -22,7 +22,7 @@ import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.dsl.IObservabilityBuilder;
-import com.garganttua.core.runtime.dsl.RuntimesBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.Workflow;
 import com.garganttua.core.workflow.WorkflowException;
@@ -35,15 +35,25 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Builder for constructing {@link IWorkflow} instances with fluent API.
+ *
+ * <p>SPI-discoverable via {@link WorkflowBuilderFactory} — Bootstrap auto-
+ * registers an instance when {@code autoDetect(true)} is set, ordering it
+ * after the runtimes / expression / injection context it depends on.
  */
+@Bootstrap
 @Reflected
 public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, IWorkflow>
         implements IWorkflowBuilder {
     private static final IDiagnostic log = Diagnostics.of(WorkflowBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
-            DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD),
-            DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class), DependencyPhase.BUILD),
+            DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class)),
+            DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class)),
+            // Runtimes are consumed BUILDER-side. Optional — direct
+            // (non-Bootstrap) usage of WorkflowBuilder works without an
+            // injected RuntimesBuilder: doBuild() falls back to a fresh
+            // RuntimesBuilder.builder() under the hood.
+            DependencySpec.useBuilder(IClass.getClass(IRuntimesBuilder.class)),
             DependencySpec.use(IClass.getClass(IObservabilityBuilder.class)));
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
@@ -54,6 +64,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private final List<WorkflowStage> stages = new ArrayList<>();
     private IExpressionContext expressionContext;
     private IInjectionContextBuilder injectionContextBuilder;
+    private IRuntimesBuilder runtimesBuilder;
     private IObservabilityBuilder observabilityBuilder;
     private boolean inlineAll = false;
     private WorkflowTimingConfig timingConfig = WorkflowTimingConfig.disabled();
@@ -130,13 +141,21 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("Failed to generate workflow script", e);
         }
 
+        // Pick the dep-injected RuntimesBuilder if Bootstrap provided one,
+        // otherwise fall back to spawning a fresh one per call (legacy
+        // behaviour preserved for direct WorkflowBuilder.create()....build()
+        // users that don't go through Bootstrap).
+        final IRuntimesBuilder rb = this.runtimesBuilder;
+        final IInjectionContextBuilder injCtx = this.injectionContextBuilder;
         Workflow workflow = new Workflow(
                 name,
                 generatedScript,
                 new ArrayList<>(stages),
                 new LinkedHashMap<>(presetVariables),
                 expressionContext,
-                () -> RuntimesBuilder.builder().provide(injectionContextBuilder),
+                () -> rb != null
+                        ? rb
+                        : com.garganttua.core.runtime.dsl.RuntimesBuilder.builder().provide(injCtx),
                 inlineAll,
                 timingConfig);
 
@@ -170,6 +189,9 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     public IWorkflowBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
         if (dependency instanceof IInjectionContextBuilder builder) {
             this.injectionContextBuilder = builder;
+        }
+        if (dependency instanceof IRuntimesBuilder runtimes) {
+            this.runtimesBuilder = runtimes;
         }
         if (dependency instanceof IObservabilityBuilder obs) {
             this.observabilityBuilder = obs;
