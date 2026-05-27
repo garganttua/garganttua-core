@@ -614,6 +614,23 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
             }
         }
 
+        // Phase 1.5: CONFIGURATION stage. Run BEFORE any builder.build() so
+        // every consumer's doConfigureWithDependencyBuilder hook gets a
+        // chance to declare configuration on an upstream builder (e.g.
+        // injCtxBuilder.withQualifier(...)) while every builder is still
+        // mutable. Each (consumer, dep, CONFIGURATION) tuple fires at most
+        // once per Bootstrap lifetime — idempotent across rebuild().
+        try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
+            phase.fireStart("bootstrap:phase:configure");
+            try {
+                runGlobalConfigurationPhase();
+                phase.fireEnd("bootstrap:phase:configure");
+            } catch (RuntimeException e) {
+                phase.fireError("bootstrap:phase:configure", e);
+                throw e;
+            }
+        }
+
         // Phase 2: Sort builders by dependency order (topological sort)
         List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
         log.debug("Builders sorted by dependency order: {}",
@@ -1057,6 +1074,28 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         }
 
         log.trace("Exiting resolveDependencies()");
+    }
+
+    /**
+     * Drive the {@link com.garganttua.core.dsl.dependency.DependencyStage#CONFIGURATION
+     * CONFIGURATION} stage globally: fire
+     * {@code doConfigureWithDependencyBuilder} on every dependent builder.
+     * Called once per Bootstrap lifetime — the per-dep idempotency tracking
+     * in {@code BuilderDependency} guarantees each (consumer, dep) tuple
+     * fires at most once even across {@code rebuild()}.
+     *
+     * <p>Named with a {@code Phase} suffix to avoid shadowing
+     * {@link IDependentBuilder#runConfigurationStage()} which Bootstrap
+     * itself inherits as a dependent builder.
+     */
+    private void runGlobalConfigurationPhase() throws DslException {
+        log.trace("Entering runGlobalConfigurationPhase()");
+        for (IBuilder<?> builder : getBuilders()) {
+            if (builder instanceof IDependentBuilder<?, ?> dep) {
+                dep.runConfigurationStage();
+            }
+        }
+        log.trace("Exiting runGlobalConfigurationPhase()");
     }
 
     /**

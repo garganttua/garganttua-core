@@ -150,6 +150,11 @@ public abstract class AbstractLinkedDependentBuilder<B extends IBuilder<T>, L, T
         // no-op by default
     }
 
+    @Override
+    public void runConfigurationStage() throws DslException {
+        this.support.processConfigurationDependencies(this::doConfigureWithDependencyBuilder);
+    }
+
     protected void doAutoDetectionWithDependencyBuilder(
             com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
         // no-op by default

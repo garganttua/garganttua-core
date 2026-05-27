@@ -72,4 +72,27 @@ public interface IDependentBuilder<Builder extends IBuilder<Built>, Built>
         return deps;
     }
 
+    /**
+     * Run the {@link DependencyStage#CONFIGURATION CONFIGURATION}-stage
+     * hooks declared by this builder. The orchestrator (typically
+     * Bootstrap) invokes this method globally — once per dependent —
+     * <strong>before</strong> any builder.build() runs, so that consumers
+     * may declare configuration on upstream builders before those upstreams
+     * build themselves.
+     *
+     * <p>Default implementation is a no-op for back-compat with non-Bootstrap
+     * callers and legacy concrete builders that haven't been migrated yet.
+     * The concrete dependent base classes override this to delegate to their
+     * internal {@code DependentBuilderSupport.processConfigurationDependencies}.
+     *
+     * <p>The implementation MUST be idempotent: orchestrators may call it
+     * once per Bootstrap lifetime including across {@code rebuild()}.
+     *
+     * @throws DslException if a required CONFIGURATION-stage dep cannot be
+     *                      resolved
+     */
+    default void runConfigurationStage() throws DslException {
+        // no-op by default
+    }
+
 }

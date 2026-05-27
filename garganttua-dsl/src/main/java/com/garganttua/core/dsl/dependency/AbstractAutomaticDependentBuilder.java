@@ -178,6 +178,18 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
     }
 
     /**
+     * Orchestrator entry-point for the {@link DependencyStage#CONFIGURATION
+     * CONFIGURATION} stage. Delegates to the internal
+     * {@link DependentBuilderSupport}, which iterates each declared
+     * CONFIGURATION-stage dep and fires {@link #doConfigureWithDependencyBuilder}
+     * exactly once per Bootstrap lifetime.
+     */
+    @Override
+    public void runConfigurationStage() throws DslException {
+        this.support.processConfigurationDependencies(this::doConfigureWithDependencyBuilder);
+    }
+
+    /**
      * Auto-detect-stage hook receiving the upstream BUILDER reference.
      */
     protected void doAutoDetectionWithDependencyBuilder(
