@@ -226,6 +226,39 @@ public record DependencySpec(
         return new DependencySpecBuilder(dependencyClass);
     }
 
+    /**
+     * Discover every {@link DependsOn} annotation on the given builder class
+     * (walking up the class hierarchy) and convert each to a
+     * {@link DependencySpec}. Returns an empty set when no annotations are
+     * present.
+     *
+     * <p>Walks superclasses so a base class can declare common deps; doesn't
+     * walk implemented interfaces (the JVM doesn't make
+     * {@code @Repeatable}-style annotations easy to read across interfaces
+     * anyway).
+     *
+     * <p>This is the main entry-point used by the abstract dependent-builder
+     * bases to merge declarative {@code @DependsOn} with the imperative
+     * {@code Set<DependencySpec>} passed to their super-constructor.
+     */
+    @SuppressWarnings("unchecked")
+    public static java.util.Set<DependencySpec> fromAnnotations(Class<?> builderClass) {
+        if (builderClass == null) {
+            return java.util.Set.of();
+        }
+        java.util.Set<DependencySpec> specs = new java.util.LinkedHashSet<>();
+        for (Class<?> c = builderClass; c != null && c != Object.class; c = c.getSuperclass()) {
+            for (DependsOn ann : c.getAnnotationsByType(DependsOn.class)) {
+                specs.add(new DependencySpec(
+                        IClass.getClass((Class<? extends IObservableBuilder<?, ?>>) ann.target()),
+                        ann.stage(),
+                        ann.kind(),
+                        ann.requirement()));
+            }
+        }
+        return specs;
+    }
+
     // ---------------------------------------------------------------------
     // Convenience predicates
     // ---------------------------------------------------------------------

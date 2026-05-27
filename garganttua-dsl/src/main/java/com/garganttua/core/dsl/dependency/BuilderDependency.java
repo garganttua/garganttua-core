@@ -552,11 +552,9 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "Required dependency %s for phase %s was not provided. " +
                 "Required dependencies must be provided via provide() and built.",
                 dependencyClass.getName(), phase);
-            // Logged at debug — caller may legitimately swallow this (e.g.
-            // BuilderDependency.tryResolve does). Top-level failures surface
-            // the DslException itself to the user.
             log.debug(errorMsg);
-            throw new DslException(errorMsg);
+            throw new DslException(errorMsg)
+                    .withStageFailure(stageFailure(phase, "not provided", null));
         }
 
         // If builder provided but not built, throw exception
@@ -566,7 +564,25 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 "The dependency builder must be built before use.",
                 dependencyClass.getName(), phase);
             log.debug(errorMsg);
-            throw new DslException(errorMsg);
+            throw new DslException(errorMsg)
+                    .withStageFailure(stageFailure(phase, "provided but not built", null));
         }
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private StageFailureContext stageFailure(String phaseLabel, String reason, Throwable cause) {
+        DependencyStage stage;
+        try {
+            stage = DependencyStage.valueOf(phaseLabel);
+        } catch (IllegalArgumentException notAStage) {
+            stage = this.spec.stage();
+        }
+        return new StageFailureContext(
+                null,
+                (IClass) this.dependencyClass,
+                stage,
+                this.spec.kind(),
+                reason,
+                cause);
     }
 }

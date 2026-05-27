@@ -69,7 +69,9 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
         super();
         log.trace("Entering AbstractAutomaticLinkedDependentBuilder constructor");
         this.link = Objects.requireNonNull(link, "Link cannot be null");
-        this.support = new DependentBuilderSupport(dependencies);
+        Set<DependencySpec> merged = new java.util.LinkedHashSet<>(dependencies);
+        merged.addAll(DependencySpec.fromAnnotations(this.getClass()));
+        this.support = new DependentBuilderSupport(merged);
         this.autoDetect = false;
         log.debug("AbstractAutomaticLinkedDependentBuilder initialized with link, {} dependencies",
             dependencies.size());

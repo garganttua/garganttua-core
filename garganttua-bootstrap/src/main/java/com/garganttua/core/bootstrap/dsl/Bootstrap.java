@@ -29,10 +29,14 @@ import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.bootstrap.banner.BannerMode;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
+import com.garganttua.core.bootstrap.banner.DependencyGraphRenderer;
+import com.garganttua.core.bootstrap.banner.StageTimings;
 import com.garganttua.core.bootstrap.banner.FileBanner;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
+import com.garganttua.core.bootstrap.dsl.IBootstrapStageListener;
+import com.garganttua.core.bootstrap.dsl.IBootstrapStageListener.Stage;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.dsl.IObservabilityBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -143,6 +147,17 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private final ObservableRegistry observers = new ObservableRegistry();
     private boolean reflectionBuilderProvided = false;
     private IObservabilityBuilder observabilityBuilder;
+    /** Per-stage timings for the most recent build / rebuild; used by the banner summary. */
+    private volatile StageTimings lastBuildTimings;
+    /**
+     * Listeners that observe high-level Bootstrap stages. Populated from
+     * {@link java.util.ServiceLoader} on first access and from manual
+     * {@link #withStageListener(IBootstrapStageListener)} calls.
+     */
+    private final List<IBootstrapStageListener> stageListeners = new ArrayList<>();
+    private boolean stageListenersLoadedFromSpi = false;
+    /** When {@code true}, print an ASCII dep graph after Phase 2 (topo sort). */
+    private boolean printDependencyGraph = false;
     private boolean spiFallbackEnabled = true;
 
     @Override
@@ -578,7 +593,78 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         }
     }
 
+    /**
+     * Toggle the ASCII dependency-graph dump printed to the banner after
+     * topological sort. Off by default — useful for cold-start debugging.
+     */
+    public Bootstrap printDependencyGraph(boolean enabled) {
+        this.printDependencyGraph = enabled;
+        return this;
+    }
+
+    /**
+     * Register a {@link IBootstrapStageListener} to be notified of high-level
+     * Bootstrap stages (REGISTRATION / RESOLVE / CONFIGURATION / BUILD).
+     * Listeners are also auto-discovered via {@link java.util.ServiceLoader}
+     * — manual registrations fire first.
+     */
+    public Bootstrap withStageListener(IBootstrapStageListener listener) {
+        if (listener != null) {
+            this.stageListeners.add(listener);
+        }
+        return this;
+    }
+
+    private void ensureStageListenersLoaded() {
+        if (this.stageListenersLoadedFromSpi) {
+            return;
+        }
+        this.stageListenersLoadedFromSpi = true;
+        try {
+            for (IBootstrapStageListener spi : ServiceLoader.load(IBootstrapStageListener.class)) {
+                this.stageListeners.add(spi);
+                log.debug("SPI: registered Bootstrap stage listener: {}", spi.getClass().getName());
+            }
+        } catch (Throwable t) {
+            log.warn("Failed to load Bootstrap stage listeners via SPI: {}", t.getMessage());
+        }
+    }
+
+    private void fireStageStart(Stage stage) {
+        ensureStageListenersLoaded();
+        for (IBootstrapStageListener l : this.stageListeners) {
+            try { l.onStageStart(stage); }
+            catch (RuntimeException e) {
+                log.warn("Stage listener {} failed at start of {}: {}",
+                        l.getClass().getName(), stage, e.getMessage());
+            }
+        }
+    }
+
+    private void fireStageEnd(Stage stage) {
+        for (IBootstrapStageListener l : this.stageListeners) {
+            try { l.onStageEnd(stage); }
+            catch (RuntimeException e) {
+                log.warn("Stage listener {} failed at end of {}: {}",
+                        l.getClass().getName(), stage, e.getMessage());
+            }
+        }
+    }
+
+    private void fireStageError(Stage stage, Throwable error) {
+        for (IBootstrapStageListener l : this.stageListeners) {
+            try { l.onStageError(stage, error); }
+            catch (RuntimeException e) {
+                log.warn("Stage listener {} failed at error of {}: {}",
+                        l.getClass().getName(), stage, e.getMessage());
+            }
+        }
+    }
+
     private IBuiltRegistry doBuildInternal(Instant startTime) throws DslException {
+        StageTimings timings = new StageTimings();
+        this.lastBuildTimings = timings;
+        ensureStageListenersLoaded();
         // Print banner at the start of build
         printBanner();
 
@@ -603,14 +689,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         printPhase(1, "Resolving dependencies", allBuilders.size() + " builders");
 
         // Phase 1: Resolve dependencies between builders
+        Instant resolveStart = Instant.now();
+        fireStageStart(Stage.RESOLVE);
         try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
             phase.fireStart("bootstrap:phase:resolve");
             try {
                 resolveDependencies();
                 phase.fireEnd("bootstrap:phase:resolve");
+                fireStageEnd(Stage.RESOLVE);
             } catch (RuntimeException e) {
                 phase.fireError("bootstrap:phase:resolve", e);
+                fireStageError(Stage.RESOLVE, e);
                 throw e;
+            } finally {
+                timings.record("resolve", Duration.between(resolveStart, Instant.now()));
             }
         }
 
@@ -620,14 +712,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         // injCtxBuilder.withQualifier(...)) while every builder is still
         // mutable. Each (consumer, dep, CONFIGURATION) tuple fires at most
         // once per Bootstrap lifetime — idempotent across rebuild().
+        Instant configureStart = Instant.now();
+        fireStageStart(Stage.CONFIGURATION);
         try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
             phase.fireStart("bootstrap:phase:configure");
             try {
                 runGlobalConfigurationPhase();
                 phase.fireEnd("bootstrap:phase:configure");
+                fireStageEnd(Stage.CONFIGURATION);
             } catch (RuntimeException e) {
                 phase.fireError("bootstrap:phase:configure", e);
+                fireStageError(Stage.CONFIGURATION, e);
                 throw e;
+            } finally {
+                timings.record("configure", Duration.between(configureStart, Instant.now()));
             }
         }
 
@@ -638,14 +736,26 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                         .map(b -> b.getClass().getSimpleName())
                         .toList());
 
+        if (this.printDependencyGraph) {
+            for (String line : DependencyGraphRenderer.render(sortedBuilders)) {
+                if (bannerMode == BannerMode.CONSOLE) {
+                    CONSOLE_OUT.println("  " + line);
+                } else {
+                    log.info(line);
+                }
+            }
+        }
+
         printPhase(2, "Building components", sortedBuilders.size() + " builders");
 
         // Phase 3: Build all builders in dependency order, initialize lifecycle immediately
+        fireStageStart(Stage.BUILD);
         List<Object> builtObjects = new ArrayList<>();
         for (IBuilder<?> builder : sortedBuilders) {
             printBuilderStart(builder.getClass().getSimpleName());
             String builderSource = "bootstrap:builder:" + builder.getClass().getSimpleName();
             Object built;
+            Instant buildStart = Instant.now();
             try (ObservabilityEmitter.Scope buildScope = ObservabilityEmitter.joinCurrent()) {
                 buildScope.fireStart(builderSource);
                 try {
@@ -654,6 +764,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 } catch (RuntimeException e) {
                     buildScope.fireError(builderSource, e);
                     throw e;
+                } finally {
+                    timings.record("build", Duration.between(buildStart, Instant.now()));
                 }
             }
             builtObjects.add(built);
@@ -688,6 +800,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
             printBuilderComplete(builder.getClass().getSimpleName());
         }
+        fireStageEnd(Stage.BUILD);
 
         Duration startupTime = Duration.between(startTime, Instant.now());
 
@@ -786,6 +899,12 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
                 String category = contributor.getSummaryCategory();
                 contributor.getSummaryItems().forEach((name, value) -> summary.addItem(category, name, value));
             }
+        }
+
+        // Per-stage timing breakdown for this build.
+        if (this.lastBuildTimings != null) {
+            this.lastBuildTimings.snapshot().forEach((stage, elapsed) ->
+                    summary.addItem("Stage timings", stage, StageTimings.format(elapsed)));
         }
 
         if (bannerMode == BannerMode.CONSOLE) {

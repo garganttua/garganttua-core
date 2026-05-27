@@ -45,6 +45,30 @@ public class DslException extends CoreException {
     private static final long serialVersionUID = 1L;
 
     /**
+     * Optional structured context attached when this exception was thrown
+     * from a builder-dependency stage. Null for plain failures.
+     */
+    private com.garganttua.core.dsl.dependency.StageFailureContext stageFailure;
+
+    /**
+     * Attach a {@link com.garganttua.core.dsl.dependency.StageFailureContext}
+     * to this exception for downstream diagnostics consumers (banner,
+     * tooling, observability listeners). Returns {@code this} for fluent
+     * chaining at the throw site.
+     */
+    public DslException withStageFailure(com.garganttua.core.dsl.dependency.StageFailureContext context) {
+        this.stageFailure = context;
+        return this;
+    }
+
+    /**
+     * @return the attached stage-failure context if any, otherwise empty.
+     */
+    public java.util.Optional<com.garganttua.core.dsl.dependency.StageFailureContext> stageFailure() {
+        return java.util.Optional.ofNullable(this.stageFailure);
+    }
+
+    /**
      * Constructs a new DSL exception with the specified message.
      *
      * @param message the detailed error message describing what went wrong

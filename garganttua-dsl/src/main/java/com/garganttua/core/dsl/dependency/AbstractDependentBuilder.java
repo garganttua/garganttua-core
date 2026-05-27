@@ -53,7 +53,9 @@ public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
     protected AbstractDependentBuilder(
             Set<DependencySpec> dependencies) {
         log.trace("Entering AbstractDependentBuilder constructor");
-        this.support = new DependentBuilderSupport(dependencies);
+        Set<DependencySpec> merged = new java.util.LinkedHashSet<>(dependencies);
+        merged.addAll(DependencySpec.fromAnnotations(this.getClass()));
+        this.support = new DependentBuilderSupport(merged);
         log.trace("Exiting AbstractDependentBuilder constructor");
     }
 
