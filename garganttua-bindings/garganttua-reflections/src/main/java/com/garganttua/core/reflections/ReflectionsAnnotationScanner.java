@@ -5,12 +5,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
+import org.reflections.util.ConfigurationBuilder;
 
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
@@ -23,6 +23,27 @@ import jakarta.annotation.Priority;
 @Priority(10)
 public class ReflectionsAnnotationScanner implements IAnnotationScanner {
     private static final IDiagnostic log = Diagnostics.of(ReflectionsAnnotationScanner.class);
+
+    /**
+     * Cache of {@link Reflections} instances keyed by package name. Scanning
+     * a package is expensive (50–200ms each) so we instantiate ONCE per
+     * package with both TypesAnnotated and MethodsAnnotated scanners
+     * pre-enabled, then answer every subsequent query against the cached
+     * metadata.
+     *
+     * <p>Without the cache, BeanProviderBuilder.doAutoDetection — which
+     * iterates over every registered qualifier × every scanned package —
+     * was triggering a fresh full-classpath scan per call. Easy
+     * O(qualifiers × packages) waste.
+     */
+    private final ConcurrentHashMap<String, Reflections> cache = new ConcurrentHashMap<>();
+
+    private Reflections reflectionsFor(String packageName) {
+        return this.cache.computeIfAbsent(packageName == null ? "" : packageName,
+                pkg -> new Reflections(new ConfigurationBuilder()
+                        .forPackage(pkg)
+                        .setScanners(Scanners.TypesAnnotated, Scanners.MethodsAnnotated)));
+    }
 
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
@@ -37,8 +58,8 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
 		log.debug("Scanning package '{}' for classes with annotation '{}'", packageName, annotation.getName());
-		Reflections reflections = new Reflections(packageName, Scanners.TypesAnnotated);
-		Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(rawAnnotation, true);
+		Set<Class<?>> annotatedClasses = reflectionsFor(packageName)
+		        .getTypesAnnotatedWith(rawAnnotation, true);
 
 		List<IClass<?>> result = new ArrayList<>(annotatedClasses.size());
 		for (Class<?> clazz : annotatedClasses) {
@@ -62,8 +83,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		Class<? extends Annotation> rawAnnotation = (Class<? extends Annotation>) annotation.getType();
 
 		log.debug("Scanning package '{}' for methods with annotation '{}'", packageName, annotation.getName());
-		Reflections reflections = new Reflections(packageName, Scanners.MethodsAnnotated);
-		Set<Method> annotatedMethods = reflections.getMethodsAnnotatedWith(rawAnnotation);
+		Set<Method> annotatedMethods = reflectionsFor(packageName).getMethodsAnnotatedWith(rawAnnotation);
 
 		List<IMethod> result = new ArrayList<>(annotatedMethods.size());
 		for (Method method : annotatedMethods) {
