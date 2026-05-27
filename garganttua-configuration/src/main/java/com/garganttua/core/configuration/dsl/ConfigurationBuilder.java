@@ -18,7 +18,6 @@ import com.garganttua.core.configuration.populator.MethodMappingStrategy;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
-import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -37,7 +36,9 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
     private IReflection reflection;
 
     public ConfigurationBuilder() {
-        super(Set.of(DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BOTH)));
+        super(Set.of(
+                DependencySpec.requireAutoDetect(IClass.getClass(IReflectionBuilder.class)),
+                DependencySpec.require(IClass.getClass(IReflectionBuilder.class))));
         log.trace("Entering ConfigurationBuilder constructor");
         log.trace("Exiting ConfigurationBuilder constructor");
     }

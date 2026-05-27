@@ -111,10 +111,19 @@ public class DependencySpecBuilder {
     }
 
     /**
-     * Builds the DependencySpec based on configured requirements.
+     * Builds a single-stage {@link DependencySpec}.
+     *
+     * <p>Configuring BOTH auto-detect AND build phases on the same fluent
+     * chain is no longer supported — declare two separate {@link DependencySpec}
+     * entries instead, one per stage. Use {@link DependencySpec#configureAndStage}
+     * for the common configuration-then-build pattern.
+     *
+     * <p>{@link DependencyKind} defaults to {@link DependencyKind#BUILT}
+     * (the legacy shape); use the new factory helpers on {@link DependencySpec}
+     * for {@link DependencyKind#BUILDER} declarations.
      *
      * @return the built DependencySpec
-     * @throws IllegalStateException if no phases were configured
+     * @throws IllegalStateException if no phase, or both phases, were configured
      */
     public DependencySpec build() {
         if (!autoDetectConfigured && !buildConfigured) {
@@ -123,39 +132,22 @@ public class DependencySpecBuilder {
                 "Use requireForAutoDetect(), useForAutoDetect(), requireForBuild(), or useForBuild()."
             );
         }
-
-        // Determine the phase
-        DependencyPhase phase;
         if (autoDetectConfigured && buildConfigured) {
-            phase = DependencyPhase.BOTH;
-        } else if (autoDetectConfigured) {
-            phase = DependencyPhase.AUTO_DETECT;
-        } else {
-            phase = DependencyPhase.BUILD;
+            throw new IllegalStateException(
+                "DependencySpecBuilder no longer supports the BOTH-phase shorthand. "
+                + "Declare two DependencySpec entries (one for AUTO_DETECT, one for BUILD) "
+                + "or use DependencySpec.configureAndStage(...) for the typical "
+                + "configuration-then-build pattern.");
         }
 
-        // Determine the requirement
-        DependencyRequirement requirement;
-        if (phase == DependencyPhase.BOTH) {
-            // Both phases configured - determine if requirements differ
-            if (requiredForAutoDetect && requiredForBuild) {
-                requirement = DependencyRequirement.REQUIRED;
-            } else if (requiredForAutoDetect && !requiredForBuild) {
-                requirement = DependencyRequirement.REQUIRED_FOR_AUTO_DETECT;
-            } else if (!requiredForAutoDetect && requiredForBuild) {
-                requirement = DependencyRequirement.REQUIRED_FOR_BUILD;
-            } else {
-                requirement = DependencyRequirement.OPTIONAL;
-            }
-        } else if (phase == DependencyPhase.AUTO_DETECT) {
-            requirement = requiredForAutoDetect ?
-                DependencyRequirement.REQUIRED : DependencyRequirement.OPTIONAL;
-        } else { // BUILD
-            requirement = requiredForBuild ?
-                DependencyRequirement.REQUIRED : DependencyRequirement.OPTIONAL;
-        }
+        DependencyStage stage = autoDetectConfigured
+                ? DependencyStage.AUTO_DETECT
+                : DependencyStage.BUILD;
+        DependencyRequirement requirement = (autoDetectConfigured ? requiredForAutoDetect : requiredForBuild)
+                ? DependencyRequirement.REQUIRED
+                : DependencyRequirement.OPTIONAL;
 
-        return new DependencySpec(dependencyBuilderClass, phase, requirement);
+        return new DependencySpec(dependencyBuilderClass, stage, DependencyKind.BUILT, requirement);
     }
 
     /**

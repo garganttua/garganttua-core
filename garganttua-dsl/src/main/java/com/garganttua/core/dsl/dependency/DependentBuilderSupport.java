@@ -177,12 +177,24 @@ public class DependentBuilderSupport {
             throw new DslException(errorMsg);
         }
 
-        boolean provided = provideToDependencySet(dependency, this.useDependencies)
-                || provideToDependencySet(dependency, this.requireDependencies);
-
-        if (!provided) {
+        // Hand the builder ref to EVERY matching BuilderDependency. A
+        // consumer may declare the same upstream class multiple times across
+        // different stages (e.g. CONFIGURATION + BUILD) — every one of those
+        // deps must receive the reference, otherwise the un-fed ones will
+        // throw "not provided" at validation time.
+        int matched = 0;
+        for (IBuilderDependency<?, ?> dep : this.allDependencies) {
+            if (dep.getDependency().isAssignableFrom(dependency.getClass())) {
+                ((BuilderDependency<?, ?>) dep).handle(dependency);
+                matched++;
+            }
+        }
+        if (matched == 0) {
             log.warn("Provided dependency {} does not match any declared dependencies",
                     dependency.getClass().getName());
+        } else {
+            log.debug("Dependency {} fed to {} declared spec(s)",
+                    dependency.getClass().getName(), matched);
         }
 
         log.trace("Exiting provide()");

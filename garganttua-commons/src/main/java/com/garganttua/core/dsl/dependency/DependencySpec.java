@@ -1,182 +1,356 @@
 package com.garganttua.core.dsl.dependency;
 
 import java.util.Objects;
+import java.util.Set;
 
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
 
 /**
- * Specification of a dependency with its lifecycle phase and requirement level.
+ * Specification of a dependency, declared by a builder that consumes another
+ * builder.
  *
- * <p>
- * {@code DependencySpec} combines a dependency class with the phase(s) during
- * which it is needed and whether it's required or optional in each phase.
- * This allows builders to declare fine-grained dependency requirements.
- * </p>
+ * <p>A {@code DependencySpec} pins down three orthogonal answers:
+ * <ul>
+ *   <li><strong>What</strong> — {@link #dependencyBuilderClass()} : the class
+ *       of the upstream builder.</li>
+ *   <li><strong>When</strong> — {@link #stage()} : the lifecycle stage of
+ *       the consumer at which the hook fires
+ *       ({@link DependencyStage#CONFIGURATION},
+ *       {@link DependencyStage#AUTO_DETECT} or
+ *       {@link DependencyStage#BUILD}).</li>
+ *   <li><strong>How</strong> — {@link #kind()} : the form in which the
+ *       dependency is delivered ({@link DependencyKind#BUILDER builder}
+ *       reference or {@link DependencyKind#BUILT built} object).</li>
+ * </ul>
+ * Plus {@link #requirement()} which controls strict vs optional resolution.
  *
- * <h2>Usage Examples</h2>
- * 
- * <pre>{@code
- * // Simple cases - same requirement in all phases
- * DependencySpec.use(IConfigBuilder.class, DependencyPhase.AUTO_DETECT)
- * DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD)
+ * <h2>Stage / Kind compatibility</h2>
+ * <ul>
+ *   <li>{@code CONFIGURATION + BUILDER} : valid. The dependency hasn't been
+ *       built yet at this stage so {@link DependencyKind#BUILT} is rejected.</li>
+ *   <li>{@code AUTO_DETECT + BUILDER}   : valid (rare).</li>
+ *   <li>{@code AUTO_DETECT + BUILT}     : valid — upstream must be built
+ *       first; topological ordering guarantees it.</li>
+ *   <li>{@code BUILD + BUILDER}         : valid.</li>
+ *   <li>{@code BUILD + BUILT}           : valid — the standard combo, also
+ *       the default for the legacy {@code use(class)} / {@code require(class)}
+ *       factories.</li>
+ * </ul>
  *
- * // Advanced - different requirements per phase
- * DependencySpec.of(IConfigBuilder.class)
- *     .requireForAutoDetect()
- *     .useForBuild()
- *
- * DependencySpec.of(IInjectionContextBuilder.class)
- *     .useForAutoDetect()
- *     .requireForBuild()
- * }</pre>
+ * <h2>Idempotency contract</h2>
+ * <p>Hooks fired at any stage <strong>must</strong> be idempotent. Bootstrap
+ * fires each {@code (consumer, dep, stage, kind)} tuple at most once per
+ * Bootstrap lifetime, including across {@code rebuild()}, but authors must
+ * still design hook side-effects to tolerate accidental double-invocation.
  *
  * @param dependencyBuilderClass the class of the dependency builder
- * @param phase           the lifecycle phase when this dependency is needed
- * @param requirement     the requirement level (optional/required per phase)
- * @since 2.0.0-ALPHA01
- * @see DependencyPhase
+ * @param stage                  when the hook fires
+ * @param kind                   what the hook receives
+ * @param requirement            strict (required) vs lenient (optional)
+ *                               resolution
+ * @since 2.0.0-ALPHA02
+ * @see DependencyStage
+ * @see DependencyKind
  * @see DependencyRequirement
- * @see IDependentBuilder
  */
 public record DependencySpec(
         IClass<? extends IObservableBuilder<?, ?>> dependencyBuilderClass,
-        DependencyPhase phase,
+        DependencyStage stage,
+        DependencyKind kind,
         DependencyRequirement requirement) {
 
     /**
-     * Constructs a new DependencySpec with validation.
-     *
-     * @param dependencyBuilderClass the class of the dependency builder
-     * @param phase           the lifecycle phase when this dependency is needed
-     * @param requirement     the requirement level
-     * @throws NullPointerException     if any parameter is null
-     * @throws IllegalArgumentException if phase-specific requirement doesn't match
-     *                                  phase
+     * Canonical constructor. Validates non-null inputs and rejects the
+     * impossible {@code CONFIGURATION + BUILT} pairing.
      */
     public DependencySpec {
         Objects.requireNonNull(dependencyBuilderClass, "Dependency builder class cannot be null");
-        Objects.requireNonNull(phase, "Dependency phase cannot be null");
+        Objects.requireNonNull(stage, "Dependency stage cannot be null");
+        Objects.requireNonNull(kind, "Dependency kind cannot be null");
         Objects.requireNonNull(requirement, "Dependency requirement cannot be null");
 
-        // Validate that phase-specific requirements are only used with BOTH phase
-        if ((requirement == DependencyRequirement.REQUIRED_FOR_AUTO_DETECT ||
-                requirement == DependencyRequirement.REQUIRED_FOR_BUILD) &&
-                phase != DependencyPhase.BOTH) {
+        if (stage == DependencyStage.CONFIGURATION && kind == DependencyKind.BUILT) {
             throw new IllegalArgumentException(
-                    "Phase-specific requirements (REQUIRED_FOR_AUTO_DETECT, REQUIRED_FOR_BUILD) " +
-                            "can only be used with DependencyPhase.BOTH, got: " + phase);
+                    "Invalid DependencySpec: CONFIGURATION stage cannot have kind BUILT — "
+                            + "no built object exists at configuration time. "
+                            + "Use kind BUILDER instead.");
+        }
+
+        // Phase-specific requirement values only made sense with the legacy
+        // BOTH phase; with the per-stage model they no longer apply.
+        if (requirement == DependencyRequirement.REQUIRED_FOR_AUTO_DETECT
+                || requirement == DependencyRequirement.REQUIRED_FOR_BUILD) {
+            throw new IllegalArgumentException(
+                    "Phase-specific requirements REQUIRED_FOR_AUTO_DETECT / REQUIRED_FOR_BUILD "
+                            + "are obsolete with the per-stage DependencySpec. "
+                            + "Declare two DependencySpec entries — one per stage — instead.");
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Factory helpers — single-stage construction
+    // ---------------------------------------------------------------------
+
     /**
-     * Creates an optional dependency specification.
-     *
-     * @param dependencyClass the class of the dependency builder
-     * @param phase           the lifecycle phase when this dependency is needed
-     * @return a new optional DependencySpec
+     * {@code CONFIGURATION + BUILDER + OPTIONAL}. The consumer receives the
+     * upstream builder during the global configuration phase and may apply
+     * configuration on it before any build runs.
+     */
+    public static DependencySpec configure(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.CONFIGURATION, DependencyKind.BUILDER,
+                DependencyRequirement.OPTIONAL);
+    }
+
+    /**
+     * {@code CONFIGURATION + BUILDER + REQUIRED}.
+     */
+    public static DependencySpec requireConfigure(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.CONFIGURATION, DependencyKind.BUILDER,
+                DependencyRequirement.REQUIRED);
+    }
+
+    /**
+     * {@code AUTO_DETECT + BUILT + OPTIONAL}.
+     */
+    public static DependencySpec autoDetect(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.AUTO_DETECT, DependencyKind.BUILT,
+                DependencyRequirement.OPTIONAL);
+    }
+
+    /**
+     * {@code AUTO_DETECT + BUILT + REQUIRED}.
+     */
+    public static DependencySpec requireAutoDetect(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.AUTO_DETECT, DependencyKind.BUILT,
+                DependencyRequirement.REQUIRED);
+    }
+
+    /**
+     * {@code AUTO_DETECT + BUILDER + OPTIONAL}.
+     */
+    public static DependencySpec autoDetectBuilder(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.AUTO_DETECT, DependencyKind.BUILDER,
+                DependencyRequirement.OPTIONAL);
+    }
+
+    /**
+     * {@code BUILD + BUILT + OPTIONAL}. The legacy default kept for
+     * backward compatibility — the most common dependency shape.
      */
     public static DependencySpec use(
-            IClass<? extends IObservableBuilder<?, ?>> dependencyClass,
-            DependencyPhase phase) {
-        return new DependencySpec(dependencyClass, phase, DependencyRequirement.OPTIONAL);
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.BUILD, DependencyKind.BUILT,
+                DependencyRequirement.OPTIONAL);
     }
 
     /**
-     * Creates a required dependency specification.
-     *
-     * @param dependencyClass the class of the dependency builder
-     * @param phase           the lifecycle phase when this dependency is needed
-     * @return a new required DependencySpec
+     * {@code BUILD + BUILT + REQUIRED}. Legacy default for required deps.
      */
     public static DependencySpec require(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.BUILD, DependencyKind.BUILT,
+                DependencyRequirement.REQUIRED);
+    }
+
+    /**
+     * {@code BUILD + BUILDER + OPTIONAL}.
+     */
+    public static DependencySpec useBuilder(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.BUILD, DependencyKind.BUILDER,
+                DependencyRequirement.OPTIONAL);
+    }
+
+    /**
+     * {@code BUILD + BUILDER + REQUIRED}.
+     */
+    public static DependencySpec requireBuilder(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+        return new DependencySpec(dependencyClass,
+                DependencyStage.BUILD, DependencyKind.BUILDER,
+                DependencyRequirement.REQUIRED);
+    }
+
+    // ---------------------------------------------------------------------
+    // Multi-stage helper — convenience for the common "config + build" combo
+    // ---------------------------------------------------------------------
+
+    /**
+     * Build a pair of {@link DependencySpec} entries — one for
+     * {@link DependencyStage#CONFIGURATION CONFIGURATION} (always
+     * {@link DependencyKind#BUILDER}) and one for the requested
+     * post-config stage (typically {@link DependencyStage#BUILD}).
+     *
+     * <p>Common pattern: the consumer needs to mutate the upstream's
+     * builder during configuration, then receive the built result later.
+     *
+     * <pre>{@code
+     * super(DependencySpec.configureAndStage(
+     *         IClass.getClass(IInjectionContextBuilder.class),
+     *         DependencyStage.BUILD, DependencyKind.BUILT,
+     *         DependencyRequirement.OPTIONAL));
+     * }</pre>
+     */
+    public static Set<DependencySpec> configureAndStage(
             IClass<? extends IObservableBuilder<?, ?>> dependencyClass,
-            DependencyPhase phase) {
-        return new DependencySpec(dependencyClass, phase, DependencyRequirement.REQUIRED);
+            DependencyStage postStage,
+            DependencyKind postKind,
+            DependencyRequirement requirement) {
+        return Set.of(
+                new DependencySpec(dependencyClass,
+                        DependencyStage.CONFIGURATION, DependencyKind.BUILDER,
+                        requirement),
+                new DependencySpec(dependencyClass, postStage, postKind, requirement));
     }
 
     /**
-     * Creates an optional dependency specification for both phases.
-     *
-     * @param dependencyClass the class of the dependency builder
-     * @return a new optional DependencySpec for both phases
+     * @return a {@link DependencySpecBuilder} for fluent fine-grained
+     *         configuration of a single {@link DependencySpec}.
      */
-    public static DependencySpec use(IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
-        return new DependencySpec(dependencyClass, DependencyPhase.BOTH, DependencyRequirement.OPTIONAL);
-    }
-
-    /**
-     * Creates a required dependency specification for both phases.
-     *
-     * @param dependencyClass the class of the dependency builder
-     * @return a new required DependencySpec for both phases
-     */
-    public static DependencySpec require(IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
-        return new DependencySpec(dependencyClass, DependencyPhase.BOTH, DependencyRequirement.REQUIRED);
-    }
-
-    /**
-     * Creates a builder for phase-specific dependency requirements.
-     *
-     * @param dependencyClass the class of the dependency builder
-     * @return a new DependencySpecBuilder for fine-grained configuration
-     */
-    public static DependencySpecBuilder of(IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
+    public static DependencySpecBuilder of(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass) {
         return new DependencySpecBuilder(dependencyClass);
     }
 
+    // ---------------------------------------------------------------------
+    // Convenience predicates
+    // ---------------------------------------------------------------------
+
+    public boolean isConfiguration() {
+        return this.stage == DependencyStage.CONFIGURATION;
+    }
+
+    public boolean isAutoDetect() {
+        return this.stage == DependencyStage.AUTO_DETECT;
+    }
+
+    public boolean isBuild() {
+        return this.stage == DependencyStage.BUILD;
+    }
+
+    public boolean isBuilderKind() {
+        return this.kind == DependencyKind.BUILDER;
+    }
+
+    public boolean isBuiltKind() {
+        return this.kind == DependencyKind.BUILT;
+    }
+
+    public boolean isRequired() {
+        return this.requirement == DependencyRequirement.REQUIRED;
+    }
+
+    public boolean isOptional() {
+        return this.requirement == DependencyRequirement.OPTIONAL;
+    }
+
+    // ---------------------------------------------------------------------
+    // Legacy compatibility surface — back-compat for callers still using
+    // the DependencyPhase vocabulary. Will be removed once all internal
+    // builders migrate to single-stage declarations.
+    // ---------------------------------------------------------------------
+
     /**
-     * Checks if this dependency is needed during auto-detection phase.
-     *
-     * @return {@code true} if needed during auto-detection
+     * @deprecated use {@link #stage()} + {@link #kind()} instead. This
+     *             accessor maps the new stage back to the legacy phase
+     *             enum for any code still reading it. CONFIGURATION maps
+     *             to the most appropriate legacy value (AUTO_DETECT for
+     *             builder-kind, BUILD otherwise).
      */
+    @Deprecated(forRemoval = true)
+    public DependencyPhase phase() {
+        return switch (this.stage) {
+            case CONFIGURATION -> DependencyPhase.AUTO_DETECT;
+            case AUTO_DETECT -> DependencyPhase.AUTO_DETECT;
+            case BUILD -> DependencyPhase.BUILD;
+        };
+    }
+
+    /** @deprecated use {@link #isConfiguration()} / {@link #isAutoDetect()}. */
+    @Deprecated(forRemoval = true)
     public boolean isNeededForAutoDetect() {
-        return phase.includesAutoDetect();
+        return this.stage == DependencyStage.CONFIGURATION
+                || this.stage == DependencyStage.AUTO_DETECT;
     }
 
-    /**
-     * Checks if this dependency is needed during build phase.
-     *
-     * @return {@code true} if needed during build
-     */
+    /** @deprecated use {@link #isBuild()}. */
+    @Deprecated(forRemoval = true)
     public boolean isNeededForBuild() {
-        return phase.includesBuild();
+        return this.stage == DependencyStage.BUILD;
     }
 
-    /**
-     * Checks if this dependency is required during auto-detection phase.
-     *
-     * @return {@code true} if required during auto-detection
-     */
+    /** @deprecated use {@link #isRequired()}. */
+    @Deprecated(forRemoval = true)
     public boolean isRequiredForAutoDetect() {
-        return requirement.isRequiredForAutoDetect(phase);
+        return this.isRequired() && this.isNeededForAutoDetect();
     }
 
-    /**
-     * Checks if this dependency is required during build phase.
-     *
-     * @return {@code true} if required during build
-     */
+    /** @deprecated use {@link #isRequired()}. */
+    @Deprecated(forRemoval = true)
     public boolean isRequiredForBuild() {
-        return requirement.isRequiredForBuild(phase);
+        return this.isRequired() && this.isNeededForBuild();
     }
 
-    /**
-     * Checks if this dependency is optional during auto-detection phase.
-     *
-     * @return {@code true} if optional during auto-detection
-     */
+    /** @deprecated use {@link #isOptional()}. */
+    @Deprecated(forRemoval = true)
     public boolean isOptionalForAutoDetect() {
-        return requirement.isOptionalForAutoDetect(phase);
+        return this.isOptional() && this.isNeededForAutoDetect();
+    }
+
+    /** @deprecated use {@link #isOptional()}. */
+    @Deprecated(forRemoval = true)
+    public boolean isOptionalForBuild() {
+        return this.isOptional() && this.isNeededForBuild();
     }
 
     /**
-     * Checks if this dependency is optional during build phase.
-     *
-     * @return {@code true} if optional during build
+     * @deprecated use the new single-stage factories ({@link #autoDetect},
+     *             {@link #use}, {@link #configure}…) or
+     *             {@link #configureAndStage} for the multi-stage case.
      */
-    public boolean isOptionalForBuild() {
-        return requirement.isOptionalForBuild(phase);
+    @Deprecated(forRemoval = true)
+    public static DependencySpec use(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass,
+            DependencyPhase phase) {
+        return new DependencySpec(dependencyClass, fromLegacy(phase), DependencyKind.BUILT,
+                DependencyRequirement.OPTIONAL);
     }
 
+    /** @deprecated see {@link #use(IClass, DependencyPhase)}. */
+    @Deprecated(forRemoval = true)
+    public static DependencySpec require(
+            IClass<? extends IObservableBuilder<?, ?>> dependencyClass,
+            DependencyPhase phase) {
+        return new DependencySpec(dependencyClass, fromLegacy(phase), DependencyKind.BUILT,
+                DependencyRequirement.REQUIRED);
+    }
+
+    /**
+     * Map a legacy {@link DependencyPhase} to a {@link DependencyStage}.
+     * {@code BOTH} is not representable as a single stage — callers
+     * relying on it must declare two {@link DependencySpec} entries.
+     */
+    private static DependencyStage fromLegacy(DependencyPhase phase) {
+        return switch (phase) {
+            case AUTO_DETECT -> DependencyStage.AUTO_DETECT;
+            case BUILD -> DependencyStage.BUILD;
+            case BOTH -> throw new IllegalArgumentException(
+                    "DependencyPhase.BOTH is no longer supported as a single DependencySpec "
+                            + "— declare two entries (one AUTO_DETECT, one BUILD) instead.");
+        };
+    }
 }

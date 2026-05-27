@@ -149,20 +149,22 @@ class DependentBuilderSupportTest {
         }
 
         @Test
-        @DisplayName("Should create support with phase-specific requirements")
+        @DisplayName("DependencySpecBuilder no longer accepts BOTH-phase configuration")
         void testPhaseSpecificRequirements() {
+            // The legacy "BOTH-phase" shorthand was retired alongside
+            // DependencyPhase.BOTH — declare two single-stage specs instead.
+            assertThrows(IllegalStateException.class, () ->
+                DependencySpec.of(IClass.getClass(DependencyBuilder.class))
+                    .requireForAutoDetect()
+                    .useForBuild()
+                    .build());
+
+            // The migration path: two separate specs.
             DependentBuilderSupport support = new DependentBuilderSupport(
                 Set.of(
-                    DependencySpec.of(IClass.getClass(DependencyBuilder.class))
-                        .requireForAutoDetect()
-                        .useForBuild()
-                        .build()
-                )
-            );
-
+                    DependencySpec.requireAutoDetect(IClass.getClass(DependencyBuilder.class)),
+                    DependencySpec.use(IClass.getClass(DependencyBuilder.class))));
             assertNotNull(support);
-            // Should be in require set because it's required in at least one phase
-            assertEquals(1, support.require().size());
         }
 
         @Test
@@ -341,16 +343,12 @@ class DependentBuilderSupportTest {
         }
 
         @Test
-        @DisplayName("Should handle phase-specific requirements correctly")
+        @DisplayName("Two single-stage specs replace the legacy phase-specific shape")
         void testPhaseSpecificRequirements() throws DslException {
             DependentBuilderSupport support = new DependentBuilderSupport(
                 Set.of(
-                    DependencySpec.of(IClass.getClass(DependencyBuilder.class))
-                        .requireForAutoDetect()
-                        .useForBuild()
-                        .build()
-                )
-            );
+                    DependencySpec.requireAutoDetect(IClass.getClass(DependencyBuilder.class)),
+                    DependencySpec.use(IClass.getClass(DependencyBuilder.class))));
 
             DependencyBuilder dependency = new DependencyBuilder();
             dependency.build();
@@ -360,18 +358,12 @@ class DependentBuilderSupportTest {
             AtomicBoolean buildProcessed = new AtomicBoolean(false);
 
             // Should process in AUTO_DETECT (required)
-            assertDoesNotThrow(() -> {
-                support.processAutoDetectionWithDependencies(dep -> {
-                    autoDetectProcessed.set(true);
-                });
-            });
+            assertDoesNotThrow(() ->
+                support.processAutoDetectionWithDependencies(dep -> autoDetectProcessed.set(true)));
 
             // Should process in BUILD (optional)
-            assertDoesNotThrow(() -> {
-                support.processPreBuildDependencies(dep -> {
-                    buildProcessed.set(true);
-                });
-            });
+            assertDoesNotThrow(() ->
+                support.processPreBuildDependencies(dep -> buildProcessed.set(true)));
 
             assertTrue(autoDetectProcessed.get());
             assertTrue(buildProcessed.get());
@@ -412,32 +404,13 @@ class DependentBuilderSupportTest {
         }
 
         @Test
-        @DisplayName("Should handle BOTH phase dependency")
-        void testBothPhaseDependency() throws DslException {
-            DependentBuilderSupport support = new DependentBuilderSupport(
-                Set.of(DependencySpec.require(IClass.getClass(DependencyBuilder.class), DependencyPhase.BOTH))
-            );
-
-            DependencyBuilder dependency = new DependencyBuilder();
-            dependency.build();
-            support.provide(dependency);
-
-            AtomicBoolean autoDetectProcessed = new AtomicBoolean(false);
-            AtomicBoolean buildProcessed = new AtomicBoolean(false);
-
-            // Should process in both phases
-            assertDoesNotThrow(() -> {
-                support.processAutoDetectionWithDependencies(dep -> {
-                    autoDetectProcessed.set(true);
-                });
-
-                support.processPreBuildDependencies(dep -> {
-                    buildProcessed.set(true);
-                });
-            });
-
-            assertTrue(autoDetectProcessed.get());
-            assertTrue(buildProcessed.get());
+        @DisplayName("DependencyPhase.BOTH is no longer accepted by the legacy factory")
+        void testBothPhaseDependency() {
+            // The legacy factory throws explicitly on BOTH to force migration
+            // to two single-stage specs.
+            assertThrows(IllegalArgumentException.class, () ->
+                DependencySpec.require(IClass.getClass(DependencyBuilder.class),
+                        DependencyPhase.BOTH));
         }
     }
 }
