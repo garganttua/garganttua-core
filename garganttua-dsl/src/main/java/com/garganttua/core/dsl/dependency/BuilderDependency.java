@@ -136,10 +136,18 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     }
 
     /**
-     * Handles the notification when the dependency builder provides its built object.
-     * This is called internally when a dependency is satisfied.
+     * Stores the builder reference for this dependency.
      *
-     * @param dependency the observable builder providing the dependency
+     * <p>This method ONLY captures the reference — it does <strong>not</strong>
+     * attempt to build the upstream builder. Build orchestration is the
+     * caller's job (Bootstrap walks builders in dependency order). The built
+     * value is fetched lazily later via {@link #tryResolve()}, called only
+     * by {@code processXxxDependencies} at the point where each hook fires
+     * — i.e. inside the dependent's own {@code build()}, by which time the
+     * upstream is guaranteed to have been built (and lifecycle-started by
+     * Bootstrap) on the canonical path.
+     *
+     * @param observableBuilder the observable builder providing the dependency
      */
     @SuppressWarnings("unchecked")
     void handle(IObservableBuilder<?, ?> observableBuilder) {
@@ -151,8 +159,8 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         }
 
         this.builder = (Builder) observableBuilder;
-        log.debug("Dependency builder stored: {}", dependencyClass.getName());
-        tryResolve();
+        log.debug("Dependency builder stored (build deferred to orchestrator): {}",
+                dependencyClass.getName());
     }
 
     @Override
