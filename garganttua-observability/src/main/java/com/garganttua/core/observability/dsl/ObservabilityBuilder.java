@@ -84,8 +84,10 @@ public final class ObservabilityBuilder
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             // Reflection feeds the @Observer scan during the auto-detect phase.
             DependencySpec.use(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT),
-            // Injection context only needed in post-build to publish the
-            // binding as a singleton bean. Not consulted during autodetect.
+            // Injection context is declared so Bootstrap (1) orders us AFTER
+            // the InjectionContextBuilder and (2) auto-wires it via provide().
+            // We INTERCEPT the call in provide() below — see the comment
+            // there for why super.provide() must NOT be called for this dep.
             DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD));
 
     private static final String SOURCE_MANUAL = "manual";
@@ -107,6 +109,8 @@ public final class ObservabilityBuilder
 
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
     private final Set<IBuilderObserver<IObservabilityBuilder, ObservabilityBinding>> buildObservers = new HashSet<>();
+    /** Captured at {@link #provide} time; consulted in {@link #doBuild} only. */
+    private IInjectionContextBuilder injectionContextBuilder;
     private volatile ObservabilityBinding built;
 
     private ObservabilityBuilder() {
@@ -135,6 +139,31 @@ public final class ObservabilityBuilder
     @Override
     public ObservabilityBinding getBinding() {
         return this.built;
+    }
+
+    /**
+     * Overridden to intercept the {@link IInjectionContextBuilder} dependency
+     * — we keep a reference to it, but we must <strong>not</strong> route it
+     * through {@link AbstractAutomaticDependentBuilder#provide}, which would
+     * eagerly trigger {@code injCtxBuilder.build()} during Phase 1 (via
+     * {@code BuilderDependency.tryResolve}). That early build publishes a
+     * not-yet-initialised {@code InjectionContext} into the framework, which
+     * breaks consumers downstream — e.g. {@code RuntimesBuilder.setupInjectionContext}
+     * calls {@code injCtxBuilder.childContextFactory(...)} which forwards
+     * to {@code built.registerChildContextFactory(...)}, requiring
+     * lifecycle init that hasn't run yet. We postpone our use of the context
+     * until {@link #doBuild()} (Phase 3), by which time Bootstrap has
+     * built AND started it.
+     */
+    @Override
+    public IObservabilityBuilder provide(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependency)
+            throws DslException {
+        if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
+            this.injectionContextBuilder = injCtxBuilder;
+            return this;
+        }
+        return super.provide(dependency);
     }
 
     @Override
@@ -257,6 +286,19 @@ public final class ObservabilityBuilder
         }
         ObservabilityBinding binding = new ObservabilityBinding(wrappers);
         this.built = binding;
+
+        // Publish the binding as a DI bean, if a context builder was provided.
+        // At Phase 3 of Bootstrap the injection context has been built AND
+        // its lifecycle is init/started, so this is safe.
+        if (this.injectionContextBuilder != null) {
+            try {
+                registerBindingAsBean(this.injectionContextBuilder.build(), binding);
+            } catch (DslException e) {
+                log.warn("Could not resolve IInjectionContext for bean registration: {}",
+                        e.getMessage());
+            }
+        }
+
         for (IBuilderObserver<IObservabilityBuilder, ObservabilityBinding> o : this.buildObservers) {
             try {
                 o.handle(binding);
@@ -307,9 +349,8 @@ public final class ObservabilityBuilder
 
     @Override
     protected void doPostBuildWithDependency(Object dependency) {
-        if (dependency instanceof IInjectionContext context && this.built != null) {
-            registerBindingAsBean(context, this.built);
-        }
+        // No-op — bean registration is performed inline in doBuild() using
+        // the IInjectionContextBuilder captured in provide().
     }
 
     /**
