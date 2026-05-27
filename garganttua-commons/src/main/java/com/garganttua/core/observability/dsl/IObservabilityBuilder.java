@@ -66,6 +66,19 @@ public interface IObservabilityBuilder
     IObserverBindingBuilder subscribe(IObserver<ObservableEvent> observer);
 
     /**
+     * Declares one or more {@link IObservable} sources that this builder
+     * must attach to its {@link ObservabilityBinding} during {@link #build()}.
+     *
+     * <p>This is the manual counterpart to {@code @Observable}-annotated
+     * beans (which the builder discovers automatically through the
+     * {@link com.garganttua.core.injection.IInjectionContext}). Both paths
+     * are complementary, and post-build {@link ObservabilityBinding#attachSource}
+     * calls (used by engine builders such as {@code WorkflowBuilder},
+     * {@code RuntimeBuilder}, {@code Bootstrap}) still work in parallel.
+     */
+    IObservabilityBuilder observe(IObservable... sources);
+
+    /**
      * @return the binding produced by this builder once {@link #build()} has
      *         been invoked; otherwise {@code null}. Engine builders that
      *         declare this builder as a dependency use this accessor to push

@@ -26,6 +26,7 @@ import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
@@ -105,6 +106,20 @@ public final class ObservabilityBuilder
      */
     private final Map<String, ObserverBindingBuilder> autoDetectedBindings = new LinkedHashMap<>();
 
+    /**
+     * Manually declared observable sources (via {@link #observe(IObservable...)}).
+     * Counter-keyed so multiple declarations don't collapse — same rationale
+     * as {@link #manualSeq} for observers.
+     */
+    private final Map<String, IObservable> manualObservables = new LinkedHashMap<>();
+    private final AtomicLong manualObservableSeq = new AtomicLong();
+
+    /**
+     * Observables auto-discovered as {@code @Observable}-annotated beans in
+     * the injection context. Class-keyed for idempotence.
+     */
+    private final Map<String, IObservable> autoDetectedObservables = new LinkedHashMap<>();
+
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
     private final Set<IBuilderObserver<IObservabilityBuilder, ObservabilityBinding>> buildObservers = new HashSet<>();
     /** Captured at {@link #provide} time; consulted in {@link #doBuild} only. */
@@ -132,6 +147,18 @@ public final class ObservabilityBuilder
                 + observer.getClass().getName();
         this.manualBindings.put(key, binding);
         return binding;
+    }
+
+    @Override
+    public IObservabilityBuilder observe(IObservable... sources) {
+        Objects.requireNonNull(sources, "sources");
+        for (IObservable src : sources) {
+            Objects.requireNonNull(src, "source");
+            String key = "m#" + this.manualObservableSeq.getAndIncrement() + ":"
+                    + src.getClass().getName();
+            this.manualObservables.put(key, src);
+        }
+        return this;
     }
 
     @Override
@@ -272,35 +299,28 @@ public final class ObservabilityBuilder
             log.debug("@Observer bean auto-registered: {} (events={}, sources={})",
                     beanClass.getSimpleName(), meta.events().length, meta.sources().length);
         }
-    }
 
-    /**
-     * Query beans carrying the {@link Observable @Observable} qualifier and
-     * attach each one as a source on the freshly-built binding. Manual
-     * {@code binding.attachSource(...)} calls (typically from engine
-     * builders like WorkflowBuilder / RuntimeBuilder / Bootstrap) continue
-     * to work in parallel — the two paths are complementary, not exclusive.
-     */
-    @SuppressWarnings({ "rawtypes" })
-    private void attachAnnotatedObservables(IInjectionContext context, ObservabilityBinding binding) {
+        // Second half: scan @Observable beans the same way and stash them.
+        // The actual binding.attachSource(...) happens in doBuild() — the
+        // binding doesn't exist yet here.
         BeanReference observableQuery = new BeanReference(
                 null, Optional.empty(), Optional.empty(),
                 Set.of(IClass.getClass(Observable.class)));
-        List<Object> beans;
+        List<Object> observableBeans;
         try {
-            beans = context.queryBeans(observableQuery);
+            observableBeans = context.queryBeans(observableQuery);
         } catch (DiException e) {
             log.warn("Failed to query @Observable beans from InjectionContext: {}", e.getMessage());
             return;
         }
-        for (Object bean : beans) {
-            if (!(bean instanceof com.garganttua.core.observability.IObservable observable)) {
+        for (Object bean : observableBeans) {
+            if (!(bean instanceof IObservable observable)) {
                 log.warn("@Observable bean {} does not implement IObservable — skipping",
                         bean.getClass().getName());
                 continue;
             }
-            binding.attachSource(observable);
-            log.debug("@Observable bean auto-attached as source: {}", bean.getClass().getSimpleName());
+            this.autoDetectedObservables.put(bean.getClass().getName(), observable);
+            log.debug("@Observable bean auto-detected as source: {}", bean.getClass().getSimpleName());
         }
     }
 
@@ -317,17 +337,21 @@ public final class ObservabilityBuilder
         ObservabilityBinding binding = new ObservabilityBinding(wrappers);
         this.built = binding;
 
-        // Publish the binding as a DI bean AND auto-attach every @Observable
-        // bean as a source, if a context builder was provided. At Phase 3 of
-        // Bootstrap the injection context has been built AND its lifecycle is
-        // init/started, so this is safe.
+        // Attach every declared/auto-detected source onto the fresh binding.
+        Map<String, IObservable> sources = computeObservables();
+        log.debug("Attaching {} merged source(s) to the binding", sources.size());
+        for (IObservable src : sources.values()) {
+            binding.attachSource(src);
+        }
+
+        // Publish the binding as a DI bean, if a context builder was provided.
+        // At Phase 3 of Bootstrap the injection context has been built AND
+        // its lifecycle is init/started, so this is safe.
         if (this.injectionContextBuilder != null) {
             try {
-                IInjectionContext context = this.injectionContextBuilder.build();
-                attachAnnotatedObservables(context, binding);
-                registerBindingAsBean(context, binding);
+                registerBindingAsBean(this.injectionContextBuilder.build(), binding);
             } catch (DslException e) {
-                log.warn("Could not resolve IInjectionContext for bean registration / source attach: {}",
+                log.warn("Could not resolve IInjectionContext for bean registration: {}",
                         e.getMessage());
             }
         }
@@ -354,6 +378,18 @@ public final class ObservabilityBuilder
         return collector.build();
     }
 
+    /**
+     * Same MultiSourceCollector pattern for {@link IObservable} sources:
+     * {@link #observe(IObservable...)} entries first, then {@code @Observable}
+     * beans auto-discovered during {@link #doAutoDetectionWithDependency}.
+     */
+    private Map<String, IObservable> computeObservables() {
+        MultiSourceCollector<String, IObservable> collector = new MultiSourceCollector<>();
+        collector.source(observableSupplier(this.manualObservables), 0, SOURCE_MANUAL);
+        collector.source(observableSupplier(this.autoDetectedObservables), 1, SOURCE_AUTO_DETECTED);
+        return collector.build();
+    }
+
     private static ISupplier<Map<String, ObserverBindingBuilder>> bindingSupplier(
             Map<String, ObserverBindingBuilder> snapshot) {
         return new ISupplier<>() {
@@ -370,6 +406,27 @@ public final class ObservabilityBuilder
             @Override
             @SuppressWarnings({ "unchecked", "rawtypes" })
             public IClass<Map<String, ObserverBindingBuilder>> getSuppliedClass() {
+                return (IClass) IClass.getClass(Map.class);
+            }
+        };
+    }
+
+    private static ISupplier<Map<String, IObservable>> observableSupplier(
+            Map<String, IObservable> snapshot) {
+        return new ISupplier<>() {
+            @Override
+            public Optional<Map<String, IObservable>> supply() throws SupplyException {
+                return Optional.of(snapshot);
+            }
+
+            @Override
+            public Type getSuppliedType() {
+                return Map.class;
+            }
+
+            @Override
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            public IClass<Map<String, IObservable>> getSuppliedClass() {
                 return (IClass) IClass.getClass(Map.class);
             }
         };

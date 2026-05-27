@@ -243,6 +243,36 @@ class ObservabilityBuilderTest {
     }
 
     @Test
+    @DisplayName("observe(sources) declares manual observables that are attached at build")
+    void manualObserveAttachesSources() throws DslException {
+        TestObservable workflow = new TestObservable("workflow");
+        TestObservable mapper = new TestObservable("mapper");
+        List<ObservableEvent> received = new ArrayList<>();
+
+        try (ObservabilityBinding binding = ObservabilityBuilder.create()
+                .observe(workflow, mapper)
+                .subscribe(collector(received))
+                .up()
+                .build()) {
+
+            workflow.fire(start("workflow:foo"));
+            mapper.fire(end("mapper:bar", 0));
+
+            assertEquals(2, received.size(),
+                    "Manually-observed sources must reach the subscribed observer");
+            assertEquals(2, binding.count(),
+                    "Binding should record 2 (source, wrapper) registrations");
+        }
+    }
+
+    @Test
+    @DisplayName("observe(null) is rejected")
+    void nullObserve_throws() {
+        assertThrows(NullPointerException.class,
+                () -> ObservabilityBuilder.create().observe((com.garganttua.core.observability.IObservable[]) null));
+    }
+
+    @Test
     @DisplayName("globToRegex translates star and escapes literals")
     void globRegex_basics() {
         assertTrue("workflow:foo".matches(ObserverBindingBuilder.globToRegex("workflow:*")));
