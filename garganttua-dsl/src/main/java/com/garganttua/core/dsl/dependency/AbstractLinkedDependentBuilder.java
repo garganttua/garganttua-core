@@ -142,4 +142,26 @@ public abstract class AbstractLinkedDependentBuilder<B extends IBuilder<T>, L, T
      * @param dependency the resolved dependency object
      */
     protected abstract void doPostBuildWithDependency(Object dependency);
+
+    // --- Builder-kind hooks (DependencyKind.BUILDER) ------------------------
+
+    protected void doConfigureWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
+        // no-op by default
+    }
+
+    protected void doAutoDetectionWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
+        // no-op by default
+    }
+
+    protected void doPreBuildWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
+        // no-op by default
+    }
+
+    protected void doPostBuildWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
+        // no-op by default
+    }
 }

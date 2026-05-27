@@ -1,5 +1,6 @@
 package com.garganttua.core.dsl.dependency;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -117,6 +118,28 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     private Builder builder;
     private Built builtObject;
     private final Set<String> packages = new HashSet<>();
+    /**
+     * Tracks which firing events have already happened for this dependency
+     * over the Bootstrap lifetime — used to enforce the idempotency contract.
+     * Bootstrap consults this set before invoking a hook so the same
+     * (consumer, dep, event) tuple never fires twice, even across
+     * {@code rebuild()}.
+     */
+    private final EnumSet<FiringEvent> fired = EnumSet.noneOf(FiringEvent.class);
+
+    /**
+     * Identifies an individual hook invocation for idempotency tracking.
+     * A single {@link DependencySpec} may yield up to four events depending
+     * on its stage (CONFIGURATION, AUTO_DETECT, PRE_BUILD, POST_BUILD); a
+     * stage-BUILD spec always fires PRE_BUILD then POST_BUILD which is why
+     * the BUILD stage maps to two distinct events.
+     */
+    public enum FiringEvent {
+        CONFIGURATION,
+        AUTO_DETECT,
+        PRE_BUILD,
+        POST_BUILD
+    }
 
     /**
      * Creates a new phase-aware builder dependency.
@@ -396,6 +419,103 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     public void requireNotEmpty() {
         if(this.isEmpty())
             throw new IllegalStateException("Dependency is empty");
+    }
+
+    // ----------------------------------------------------------------------
+    // Stage / Kind accessors (new vocabulary, mirror DependencySpec)
+    // ----------------------------------------------------------------------
+
+    public DependencyStage stage() {
+        return spec.stage();
+    }
+
+    public DependencyKind kind() {
+        return spec.kind();
+    }
+
+    public DependencySpec spec() {
+        return spec;
+    }
+
+    public boolean isRequired() {
+        return spec.isRequired();
+    }
+
+    public boolean isOptional() {
+        return spec.isOptional();
+    }
+
+    /** @return {@code true} when {@link #handle(IObservableBuilder)} has been called. */
+    public boolean hasBuilder() {
+        return this.builder != null;
+    }
+
+    /** @return {@code true} when {@link #handle(Object)} has been called. */
+    public boolean hasBuilt() {
+        return this.builtObject != null;
+    }
+
+    public boolean isConfigurationStage() {
+        return spec.stage() == DependencyStage.CONFIGURATION;
+    }
+
+    public boolean isAutoDetectStage() {
+        return spec.stage() == DependencyStage.AUTO_DETECT;
+    }
+
+    public boolean isBuildStage() {
+        return spec.stage() == DependencyStage.BUILD;
+    }
+
+    public boolean isBuilderKind() {
+        return spec.kind() == DependencyKind.BUILDER;
+    }
+
+    public boolean isBuiltKind() {
+        return spec.kind() == DependencyKind.BUILT;
+    }
+
+    // ----------------------------------------------------------------------
+    // Idempotency tracking — Bootstrap (or any orchestrator) calls
+    // tryMarkFired before invoking a hook. The Set tracks fired events for
+    // the lifetime of this BuilderDependency instance.
+    // ----------------------------------------------------------------------
+
+    /**
+     * Mark a firing event as having happened. Returns {@code true} if the
+     * event had not been recorded before (caller should fire the hook),
+     * {@code false} if it had already fired (caller must skip).
+     */
+    public boolean tryMarkFired(FiringEvent event) {
+        Objects.requireNonNull(event, "event");
+        return this.fired.add(event);
+    }
+
+    /**
+     * @return {@code true} if the given firing event has already happened.
+     */
+    public boolean hasFired(FiringEvent event) {
+        return this.fired.contains(event);
+    }
+
+    /**
+     * Reset the firing-event memory. The orchestrator may call this
+     * between a fresh build and a {@code rebuild()} to allow per-build
+     * hooks (PRE_BUILD / POST_BUILD / AUTO_DETECT) to fire again — note
+     * that CONFIGURATION is intentionally <strong>not</strong> reset by
+     * default, since it is meant to fire at most once per Bootstrap
+     * lifetime regardless of rebuilds.
+     */
+    public void resetFiringMemory(boolean keepConfiguration) {
+        if (keepConfiguration) {
+            boolean configured = this.fired.contains(FiringEvent.CONFIGURATION);
+            this.fired.clear();
+            if (configured) {
+                this.fired.add(FiringEvent.CONFIGURATION);
+            }
+        } else {
+            this.fired.clear();
+        }
     }
 
     /**

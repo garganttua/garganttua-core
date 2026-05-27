@@ -312,25 +312,51 @@ public class DependentBuilderSupport {
      * @throws DslException if validation fails for any dependency
      */
     public void processPreBuildDependencies(Consumer<Object> preBuildHandler) throws DslException {
-        log.trace("Processing pre-build dependencies");
+        log.trace("Processing pre-build dependencies (BUILT kind)");
 
         for (IBuilderDependency<?, ?> dep : allDependencies) {
-            if (dep instanceof BuilderDependency<?, ?> bd && bd.isNeededForBuild()) {
-                // Validate based on requirement level
-                if (bd.isRequiredForBuild()) {
-                    // Required: must be provided and built
-                    bd.validateRequiredDependency("BUILD");
-                } else if (bd.isOptionalForBuild()) {
-                    // Optional: if provided, must be built
-                    bd.validateUseDependency();
-                }
-
-                // Process if ready (both required and optional)
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) {
+                continue;
+            }
+            // Only BUILD-stage BUILT-kind deps fire here; CONFIGURATION /
+            // AUTO_DETECT / BUILDER-kind deps go through their dedicated
+            // iterators.
+            if (!bd.isBuildStage() || !bd.isBuiltKind()) {
+                continue;
+            }
+            if (bd.spec().isRequired()) {
+                bd.validateRequiredDependency("BUILD");
+            } else {
+                bd.validateUseDependency();
+            }
+            if (bd.tryMarkFired(BuilderDependency.FiringEvent.PRE_BUILD)) {
                 processIfReady(dep, preBuildHandler);
             }
         }
 
         log.debug("Pre-build dependency processing completed");
+    }
+
+    /**
+     * Iterate BUILD-stage BUILDER-kind dependencies and hand the
+     * <strong>builder</strong> reference to the supplied handler. Idempotent:
+     * each {@code (consumer, dep)} pair fires at most once per Bootstrap
+     * lifetime.
+     */
+    public void processPreBuildDependencyBuilders(
+            Consumer<IObservableBuilder<?, ?>> handler) throws DslException {
+        log.trace("Processing pre-build dependencies (BUILDER kind)");
+        for (IBuilderDependency<?, ?> dep : allDependencies) {
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) continue;
+            if (!bd.isBuildStage() || !bd.isBuilderKind()) continue;
+            if (bd.isRequired() && !bd.hasBuilder()) {
+                bd.validateRequiredDependency("BUILD");   // throws
+            }
+            if (bd.hasBuilder()
+                    && bd.tryMarkFired(BuilderDependency.FiringEvent.PRE_BUILD)) {
+                handler.accept(bd.builder());
+            }
+        }
     }
 
     /**
@@ -347,25 +373,41 @@ public class DependentBuilderSupport {
      * @throws DslException if validation fails for any dependency
      */
     public void processPostBuildDependencies(Consumer<Object> postBuildHandler) throws DslException {
-        log.trace("Processing post-build dependencies");
+        log.trace("Processing post-build dependencies (BUILT kind)");
 
         for (IBuilderDependency<?, ?> dep : allDependencies) {
-            if (dep instanceof BuilderDependency<?, ?> bd && bd.isNeededForBuild()) {
-                // Validate based on requirement level
-                if (bd.isRequiredForBuild()) {
-                    // Required: must be provided and built
-                    bd.validateRequiredDependency("BUILD");
-                } else if (bd.isOptionalForBuild()) {
-                    // Optional: if provided, must be built
-                    bd.validateUseDependency();
-                }
-
-                // Process if ready (both required and optional)
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) continue;
+            if (!bd.isBuildStage() || !bd.isBuiltKind()) continue;
+            if (bd.isRequired()) {
+                bd.validateRequiredDependency("BUILD");
+            } else {
+                bd.validateUseDependency();
+            }
+            if (bd.tryMarkFired(BuilderDependency.FiringEvent.POST_BUILD)) {
                 processIfReady(dep, postBuildHandler);
             }
         }
 
         log.debug("Post-build dependency processing completed");
+    }
+
+    /**
+     * BUILDER-kind variant of {@link #processPostBuildDependencies}.
+     */
+    public void processPostBuildDependencyBuilders(
+            Consumer<IObservableBuilder<?, ?>> handler) throws DslException {
+        log.trace("Processing post-build dependencies (BUILDER kind)");
+        for (IBuilderDependency<?, ?> dep : allDependencies) {
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) continue;
+            if (!bd.isBuildStage() || !bd.isBuilderKind()) continue;
+            if (bd.isRequired() && !bd.hasBuilder()) {
+                bd.validateRequiredDependency("BUILD");
+            }
+            if (bd.hasBuilder()
+                    && bd.tryMarkFired(BuilderDependency.FiringEvent.POST_BUILD)) {
+                handler.accept(bd.builder());
+            }
+        }
     }
 
     /**
@@ -382,25 +424,62 @@ public class DependentBuilderSupport {
      * @throws DslException if validation fails for any dependency
      */
     public void processAutoDetectionWithDependencies(Consumer<Object> autoDetectHandler) throws DslException {
-        log.trace("Processing auto-detection with dependencies");
+        log.trace("Processing auto-detection with dependencies (BUILT kind)");
 
         for (IBuilderDependency<?, ?> dep : allDependencies) {
-            if (dep instanceof BuilderDependency<?, ?> bd && bd.isNeededForAutoDetect()) {
-                // Validate based on requirement level
-                if (bd.isRequiredForAutoDetect()) {
-                    // Required: must be provided and built
-                    bd.validateRequiredDependency("AUTO_DETECT");
-                } else if (bd.isOptionalForAutoDetect()) {
-                    // Optional: if provided, must be built
-                    bd.validateUseDependency();
-                }
-
-                // Process if ready (both required and optional)
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) continue;
+            if (!bd.isAutoDetectStage() || !bd.isBuiltKind()) continue;
+            if (bd.isRequired()) {
+                bd.validateRequiredDependency("AUTO_DETECT");
+            } else {
+                bd.validateUseDependency();
+            }
+            if (bd.tryMarkFired(BuilderDependency.FiringEvent.AUTO_DETECT)) {
                 processIfReady(dep, autoDetectHandler);
             }
         }
 
         log.debug("Auto-detection with dependencies completed");
+    }
+
+    /**
+     * BUILDER-kind variant of {@link #processAutoDetectionWithDependencies}.
+     */
+    public void processAutoDetectionWithDependencyBuilders(
+            Consumer<IObservableBuilder<?, ?>> handler) throws DslException {
+        log.trace("Processing auto-detection with dependencies (BUILDER kind)");
+        for (IBuilderDependency<?, ?> dep : allDependencies) {
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) continue;
+            if (!bd.isAutoDetectStage() || !bd.isBuilderKind()) continue;
+            if (bd.isRequired() && !bd.hasBuilder()) {
+                bd.validateRequiredDependency("AUTO_DETECT");
+            }
+            if (bd.hasBuilder()
+                    && bd.tryMarkFired(BuilderDependency.FiringEvent.AUTO_DETECT)) {
+                handler.accept(bd.builder());
+            }
+        }
+    }
+
+    /**
+     * Iterate {@link DependencyStage#CONFIGURATION CONFIGURATION}-stage
+     * dependencies. Always {@link DependencyKind#BUILDER} since no built
+     * object exists at configuration time. Idempotent.
+     */
+    public void processConfigurationDependencies(
+            Consumer<IObservableBuilder<?, ?>> handler) throws DslException {
+        log.trace("Processing configuration-stage dependencies");
+        for (IBuilderDependency<?, ?> dep : allDependencies) {
+            if (!(dep instanceof BuilderDependency<?, ?> bd)) continue;
+            if (!bd.isConfigurationStage()) continue;
+            if (bd.isRequired() && !bd.hasBuilder()) {
+                bd.validateRequiredDependency("CONFIGURATION");
+            }
+            if (bd.hasBuilder()
+                    && bd.tryMarkFired(BuilderDependency.FiringEvent.CONFIGURATION)) {
+                handler.accept(bd.builder());
+            }
+        }
     }
 
     /**

@@ -128,4 +128,29 @@ public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
      * @param dependency the resolved dependency object
      */
     protected abstract void doPostBuildWithDependency(Object dependency);
+
+    // --- Builder-kind hooks (DependencyKind.BUILDER) ------------------------
+    // Default no-op variants that fire when a DependencySpec declares
+    // kind=BUILDER. Override to receive the upstream BUILDER instead of the
+    // built object.
+
+    protected void doConfigureWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
+        // no-op by default
+    }
+
+    protected void doAutoDetectionWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
+        // no-op by default
+    }
+
+    protected void doPreBuildWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
+        // no-op by default
+    }
+
+    protected void doPostBuildWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
+        // no-op by default
+    }
 }

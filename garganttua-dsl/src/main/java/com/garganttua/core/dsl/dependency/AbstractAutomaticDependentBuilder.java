@@ -159,4 +159,45 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
      * @param dependency the resolved dependency object
      */
     protected abstract void doPostBuildWithDependency(Object dependency);
+
+    // --- Builder-kind hooks (DependencyKind.BUILDER) ------------------------
+    // Fire when the consumer declared a DependencySpec with kind=BUILDER for
+    // the matching stage. Default no-op so existing concrete builders need
+    // no migration. Override to receive the upstream BUILDER reference
+    // (before/after its own build, depending on the stage).
+
+    /**
+     * Configure-stage hook receiving the upstream BUILDER reference. Fires
+     * during {@link DependencyStage#CONFIGURATION} on each declared
+     * {@link DependencyKind#BUILDER} dependency, before any builder build()
+     * has run. The hook MUST be idempotent.
+     */
+    protected void doConfigureWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
+        // no-op by default
+    }
+
+    /**
+     * Auto-detect-stage hook receiving the upstream BUILDER reference.
+     */
+    protected void doAutoDetectionWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
+        // no-op by default
+    }
+
+    /**
+     * Pre-build-stage hook receiving the upstream BUILDER reference.
+     */
+    protected void doPreBuildWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
+        // no-op by default
+    }
+
+    /**
+     * Post-build-stage hook receiving the upstream BUILDER reference.
+     */
+    protected void doPostBuildWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
+        // no-op by default
+    }
 }
