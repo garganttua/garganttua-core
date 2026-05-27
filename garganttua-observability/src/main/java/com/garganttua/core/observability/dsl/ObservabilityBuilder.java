@@ -94,11 +94,14 @@ public final class ObservabilityBuilder
     private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
-            // Injection context is THE source of truth. Declared so Bootstrap
-            // (1) orders us AFTER InjectionContextBuilder and (2) auto-wires
-            // it via provide(). We INTERCEPT the call in provide() below —
-            // see the comment there for why super.provide() must NOT be
-            // called for this dep.
+            // CONFIGURATION stage: receive the IInjectionContextBuilder BEFORE
+            // its build, register @Observer as a qualifier so the bean
+            // provider auto-discovers user-annotated observer classes.
+            DependencySpec.configure(IClass.getClass(IInjectionContextBuilder.class)),
+            // BUILD stage: receive the built IInjectionContext post-build to
+            // (1) query @Observer beans during our autodetect, and (2)
+            // publish the binding as a singleton bean for downstream
+            // consumers.
             DependencySpec.use(IClass.getClass(IInjectionContextBuilder.class)));
 
     private static final String SOURCE_MANUAL = "manual";
@@ -173,18 +176,11 @@ public final class ObservabilityBuilder
     }
 
     /**
-     * Overridden to intercept the {@link IInjectionContextBuilder} dependency
-     * — we keep a reference to it, but we must <strong>not</strong> route it
-     * through {@link AbstractAutomaticDependentBuilder#provide}, which would
-     * eagerly trigger {@code injCtxBuilder.build()} during Phase 1 (via
-     * {@code BuilderDependency.tryResolve}). That early build publishes a
-     * not-yet-initialised {@code InjectionContext} into the framework, which
-     * breaks consumers downstream — e.g. {@code RuntimesBuilder.setupInjectionContext}
-     * calls {@code injCtxBuilder.childContextFactory(...)} which forwards
-     * to {@code built.registerChildContextFactory(...)}, requiring
-     * lifecycle init that hasn't run yet. We postpone our use of the context
-     * until {@link #doBuild()} (Phase 3), by which time Bootstrap has
-     * built AND started it.
+     * Capture the {@link IInjectionContextBuilder} ref as soon as Bootstrap
+     * provides it (Phase 1). The actual configuration mutation
+     * ({@code withQualifier(@Observer)}) happens in
+     * {@link #doConfigureWithDependencyBuilder} during Bootstrap's
+     * Phase 1.5 CONFIGURATION stage.
      */
     @Override
     public IObservabilityBuilder provide(
@@ -192,13 +188,24 @@ public final class ObservabilityBuilder
             throws DslException {
         if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
             this.injectionContextBuilder = injCtxBuilder;
-            // Make @Observer a known qualifier so the bean provider registers
-            // every @Observer-annotated user class as a managed bean. Called
-            // here (Phase 1) which is well before the context's own build().
-            injCtxBuilder.withQualifier(IClass.getClass(Observer.class));
-            return this;
         }
         return super.provide(dependency);
+    }
+
+    /**
+     * CONFIGURATION-stage hook: register {@code @Observer} as a qualifier
+     * on the {@link IInjectionContextBuilder} BEFORE its build. Bootstrap
+     * fires this exactly once per Bootstrap lifetime, so the hook is
+     * safely idempotent without manual guarding.
+     */
+    @Override
+    protected void doConfigureWithDependencyBuilder(
+            com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder)
+            throws DslException {
+        if (dependencyBuilder instanceof IInjectionContextBuilder injCtxBuilder) {
+            injCtxBuilder.withQualifier(IClass.getClass(Observer.class));
+            log.debug("Registered @Observer as a qualifier on the InjectionContextBuilder");
+        }
     }
 
     @Override

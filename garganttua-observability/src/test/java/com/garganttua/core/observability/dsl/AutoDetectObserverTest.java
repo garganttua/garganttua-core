@@ -87,11 +87,15 @@ class AutoDetectObserverTest {
 
         ObservabilityBuilder obsBuilder = (ObservabilityBuilder) ObservabilityBuilder.create()
                 .autoDetect(true)
-                .provide(injCtxBuilder);   // registers @Observer / @Observable qualifiers
+                .provide(injCtxBuilder);
 
-        // Bootstrap normally builds + starts the InjectionContext before
-        // running our autodetect. In a standalone test we have to do it
-        // ourselves — queryBeans() requires init+started lifecycle.
+        // Without Bootstrap orchestrating, the CONFIGURATION stage must be
+        // fired manually so doConfigureWithDependencyBuilder runs (which is
+        // what declares @Observer as a qualifier on the InjectionContext).
+        obsBuilder.runConfigurationStage();
+
+        // Then build + start the InjectionContext — queryBeans() requires
+        // init+started lifecycle.
         injCtxBuilder.build().onInit().onStart();
 
         try (ObservabilityBinding binding = obsBuilder.build()) {
