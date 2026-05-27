@@ -31,7 +31,6 @@ import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.annotations.Observer;
-import com.garganttua.core.observability.annotations.Observable;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.supply.ISupplier;
@@ -61,6 +60,19 @@ import com.garganttua.core.supply.SupplyException;
  *       querying the {@link IInjectionContext} for beans whose class carries
  *       the {@link Observer @Observer} qualifier annotation.</li>
  * </ol>
+ *
+ * <p>Sources ({@link IObservable}) are <strong>not</strong> auto-detected
+ * from the injection context — the framework would otherwise try to
+ * instantiate them as managed beans, but the IObservable instances we
+ * actually care about are produced by the engine builders themselves
+ * (Workflow, Runtime, Bootstrap, …). Those builders depend on this builder
+ * and call {@link ObservabilityBinding#attachSource(IObservable)} on the
+ * binding via {@link #getBinding()} after their own {@code doBuild()}.
+ * Two extra paths let users plug in ad-hoc sources:
+ * <ul>
+ *   <li>{@link #observe(IObservable...)} — declared on the builder.</li>
+ *   <li>{@link ObservabilityBinding#attachSource(IObservable)} — post-build.</li>
+ * </ul>
  *
  * <p>Declares an optional dependency on {@link IInjectionContextBuilder} —
  * the context is used in two ways:
@@ -113,12 +125,6 @@ public final class ObservabilityBuilder
      */
     private final Map<String, IObservable> manualObservables = new LinkedHashMap<>();
     private final AtomicLong manualObservableSeq = new AtomicLong();
-
-    /**
-     * Observables auto-discovered as {@code @Observable}-annotated beans in
-     * the injection context. Class-keyed for idempotence.
-     */
-    private final Map<String, IObservable> autoDetectedObservables = new LinkedHashMap<>();
 
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
     private final Set<IBuilderObserver<IObservabilityBuilder, ObservabilityBinding>> buildObservers = new HashSet<>();
@@ -186,12 +192,10 @@ public final class ObservabilityBuilder
             throws DslException {
         if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
             this.injectionContextBuilder = injCtxBuilder;
-            // Make @Observer and @Observable known qualifiers so the bean
-            // provider registers every annotated user class as a managed
-            // bean. Called here (Phase 1) which is well before the
-            // context's own build().
+            // Make @Observer a known qualifier so the bean provider registers
+            // every @Observer-annotated user class as a managed bean. Called
+            // here (Phase 1) which is well before the context's own build().
             injCtxBuilder.withQualifier(IClass.getClass(Observer.class));
-            injCtxBuilder.withQualifier(IClass.getClass(Observable.class));
             return this;
         }
         return super.provide(dependency);
@@ -299,29 +303,14 @@ public final class ObservabilityBuilder
             log.debug("@Observer bean auto-registered: {} (events={}, sources={})",
                     beanClass.getSimpleName(), meta.events().length, meta.sources().length);
         }
-
-        // Second half: scan @Observable beans the same way and stash them.
-        // The actual binding.attachSource(...) happens in doBuild() — the
-        // binding doesn't exist yet here.
-        BeanReference observableQuery = new BeanReference(
-                null, Optional.empty(), Optional.empty(),
-                Set.of(IClass.getClass(Observable.class)));
-        List<Object> observableBeans;
-        try {
-            observableBeans = context.queryBeans(observableQuery);
-        } catch (DiException e) {
-            log.warn("Failed to query @Observable beans from InjectionContext: {}", e.getMessage());
-            return;
-        }
-        for (Object bean : observableBeans) {
-            if (!(bean instanceof IObservable observable)) {
-                log.warn("@Observable bean {} does not implement IObservable — skipping",
-                        bean.getClass().getName());
-                continue;
-            }
-            this.autoDetectedObservables.put(bean.getClass().getName(), observable);
-            log.debug("@Observable bean auto-detected as source: {}", bean.getClass().getSimpleName());
-        }
+        // NB: there is no @Observable auto-detection by design. The
+        // IObservable instances we care about are produced by the engine
+        // builders themselves (Workflow, Runtime, Mapper, ScriptContext,
+        // …) — not by the DI container. Those builders depend on
+        // IObservabilityBuilder and call binding.attachSource(...) directly
+        // on the binding they fetch via getBinding(). Users who want to
+        // expose an extra observable can either pass it to .observe(...)
+        // on this builder or call binding.attachSource(...) post-build.
     }
 
     @Override
@@ -337,10 +326,10 @@ public final class ObservabilityBuilder
         ObservabilityBinding binding = new ObservabilityBinding(wrappers);
         this.built = binding;
 
-        // Attach every declared/auto-detected source onto the fresh binding.
-        Map<String, IObservable> sources = computeObservables();
-        log.debug("Attaching {} merged source(s) to the binding", sources.size());
-        for (IObservable src : sources.values()) {
+        // Attach every manually-declared source. Engine builders that
+        // depend on this builder will attach their own IObservable
+        // instances post-build, directly through getBinding().
+        for (IObservable src : this.manualObservables.values()) {
             binding.attachSource(src);
         }
 
@@ -378,17 +367,6 @@ public final class ObservabilityBuilder
         return collector.build();
     }
 
-    /**
-     * Same MultiSourceCollector pattern for {@link IObservable} sources:
-     * {@link #observe(IObservable...)} entries first, then {@code @Observable}
-     * beans auto-discovered during {@link #doAutoDetectionWithDependency}.
-     */
-    private Map<String, IObservable> computeObservables() {
-        MultiSourceCollector<String, IObservable> collector = new MultiSourceCollector<>();
-        collector.source(observableSupplier(this.manualObservables), 0, SOURCE_MANUAL);
-        collector.source(observableSupplier(this.autoDetectedObservables), 1, SOURCE_AUTO_DETECTED);
-        return collector.build();
-    }
 
     private static ISupplier<Map<String, ObserverBindingBuilder>> bindingSupplier(
             Map<String, ObserverBindingBuilder> snapshot) {
@@ -406,27 +384,6 @@ public final class ObservabilityBuilder
             @Override
             @SuppressWarnings({ "unchecked", "rawtypes" })
             public IClass<Map<String, ObserverBindingBuilder>> getSuppliedClass() {
-                return (IClass) IClass.getClass(Map.class);
-            }
-        };
-    }
-
-    private static ISupplier<Map<String, IObservable>> observableSupplier(
-            Map<String, IObservable> snapshot) {
-        return new ISupplier<>() {
-            @Override
-            public Optional<Map<String, IObservable>> supply() throws SupplyException {
-                return Optional.of(snapshot);
-            }
-
-            @Override
-            public Type getSuppliedType() {
-                return Map.class;
-            }
-
-            @Override
-            @SuppressWarnings({ "unchecked", "rawtypes" })
-            public IClass<Map<String, IObservable>> getSuppliedClass() {
                 return (IClass) IClass.getClass(Map.class);
             }
         };
