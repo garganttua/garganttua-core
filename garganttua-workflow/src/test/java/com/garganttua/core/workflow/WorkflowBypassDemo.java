@@ -12,6 +12,8 @@ import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 
 class WorkflowBypassDemo {
@@ -20,6 +22,7 @@ class WorkflowBypassDemo {
 
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
+    private IRuntimesBuilder runtimesBuilder;
 
     @SuppressWarnings("unchecked")
     @BeforeAll
@@ -45,6 +48,8 @@ class WorkflowBypassDemo {
 
         injectionContextBuilder.build().onInit().onStart();
         expressionContextBuilder.build();
+
+        runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
     }
 
     @Test
@@ -52,6 +57,7 @@ class WorkflowBypassDemo {
         var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("Data Pipeline with Bypass")
                 .variable("apiUrl", "https://api.example.com")
 

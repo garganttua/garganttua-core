@@ -20,6 +20,8 @@ import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowInput;
 import com.garganttua.core.workflow.WorkflowResult;
@@ -53,6 +55,7 @@ class ScriptGeneratorModesTest {
 
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
+    private IRuntimesBuilder runtimesBuilder;
 
     @TempDir
     Path tempDir;
@@ -81,6 +84,8 @@ class ScriptGeneratorModesTest {
 
         injectionContextBuilder.build().onInit().onStart();
         expressionContextBuilder.build();
+
+        runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -98,6 +103,7 @@ class ScriptGeneratorModesTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("full-pipeline")
                 .variable("apiUrl", "https://api.example.com/data")
                 .variable("requestTimeout", 30000)
@@ -279,6 +285,7 @@ class ScriptGeneratorModesTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("full-pipeline")
                 .variable("apiUrl", "https://api.example.com/data")
                 .variable("requestTimeout", 30000)

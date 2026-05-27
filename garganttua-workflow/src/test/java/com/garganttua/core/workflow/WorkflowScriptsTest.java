@@ -20,6 +20,8 @@ import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 import com.garganttua.core.workflow.header.ScriptHeader;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
@@ -33,6 +35,7 @@ class WorkflowScriptsTest {
 
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
+    private IRuntimesBuilder runtimesBuilder;
     private ScriptHeaderParser headerParser;
 
     @TempDir
@@ -63,6 +66,7 @@ class WorkflowScriptsTest {
         injectionContextBuilder.build().onInit().onStart();
         expressionContextBuilder.build();
 
+        runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
         headerParser = new ScriptHeaderParser();
     }
 
@@ -185,6 +189,7 @@ class WorkflowScriptsTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("resource-scripts-workflow")
                 .stage("validate")
                     .script("validatedData <- @data\nvalidationStatus <- \"completed\"")
@@ -225,6 +230,7 @@ class WorkflowScriptsTest {
         var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("descriptor-with-descriptions")
                 .stage("validate")
                     .script(validateScript)
@@ -255,6 +261,7 @@ class WorkflowScriptsTest {
         var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("data-processing-pipeline")
                 .variable("apiUrl", "https://api.example.com")
                 .variable("timeout", 30000)

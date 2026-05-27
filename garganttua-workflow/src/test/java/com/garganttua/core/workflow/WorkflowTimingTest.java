@@ -23,6 +23,8 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 
 class WorkflowTimingTest {
@@ -30,6 +32,7 @@ class WorkflowTimingTest {
     private static IReflectionBuilder reflectionBuilder;
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
+    private IRuntimesBuilder runtimesBuilder;
 
     @SuppressWarnings("unchecked")
     @BeforeAll
@@ -54,6 +57,8 @@ class WorkflowTimingTest {
 
         injectionContextBuilder.build().onInit().onStart();
         expressionContextBuilder.build();
+
+        runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
     }
 
     @Test
@@ -61,6 +66,7 @@ class WorkflowTimingTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("untimed-workflow")
                 .stage("step")
                     .script("result <- \"x\"").name("doit").output("greeting", "result").up()
@@ -76,6 +82,7 @@ class WorkflowTimingTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("timed-workflow")
                 .stage("decode")
                     .script("result <- \"ok\"").name("d1").output("decoded", "result").up()
@@ -100,6 +107,7 @@ class WorkflowTimingTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("stages-only")
                 .stage("only")
                     .script("result <- \"ok\"").name("inner").output("o", "result").up()
@@ -118,6 +126,7 @@ class WorkflowTimingTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("partial")
                 .stage("hot")
                     .script("result <- \"ok\"").name("h").output("o", "result").up()
@@ -139,6 +148,7 @@ class WorkflowTimingTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("live-events")
                 .stage("alpha")
                     .script("result <- \"ok\"").name("step").output("out", "result").up()
@@ -182,6 +192,7 @@ class WorkflowTimingTest {
         IWorkflow workflow = WorkflowBuilder.create()
                 .provide(injectionContextBuilder)
                 .provide(expressionContextBuilder)
+                .provide(runtimesBuilder)
                 .name("silent")
                 .stage("stage")
                     .script("result <- \"ok\"").name("s").output("o", "result").up()

@@ -49,11 +49,10 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class)),
             DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class)),
-            // Runtimes are consumed BUILDER-side. Optional — direct
-            // (non-Bootstrap) usage of WorkflowBuilder works without an
-            // injected RuntimesBuilder: doBuild() falls back to a fresh
-            // RuntimesBuilder.builder() under the hood.
-            DependencySpec.useBuilder(IClass.getClass(IRuntimesBuilder.class)),
+            // Runtimes are consumed BUILDER-side and required. Direct usage
+            // (outside Bootstrap) must call .provide(rtBuilder) explicitly;
+            // Bootstrap auto-injects through dep resolution.
+            DependencySpec.requireBuilder(IClass.getClass(IRuntimesBuilder.class)),
             DependencySpec.use(IClass.getClass(IObservabilityBuilder.class)));
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
@@ -133,7 +132,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         }
 
         String generatedScript;
-        ScriptGenerationOptions generationOptions = ScriptGenerationOptions.withTiming(timingConfig);
+        ScriptGenerationOptions generationOptions = ScriptGenerationOptions.withTiming(this.timingConfig);
         try {
             generatedScript = scriptGenerator.generate(name, stages, presetVariables, inlineAll, generationOptions);
             log.debug("Generated workflow script for '{}':\n{}", name, generatedScript);
@@ -141,11 +140,15 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("Failed to generate workflow script", e);
         }
 
-        // Pick the dep-injected RuntimesBuilder if Bootstrap provided one,
-        // otherwise fall back to spawning a fresh one per call (legacy
-        // behaviour preserved for direct WorkflowBuilder.create()....build()
-        // users that don't go through Bootstrap).
-        final IRuntimesBuilder rb = this.runtimesBuilder;
+        // RuntimesBuilder is a hard dep (requireBuilder above): the user-
+        // provided `rb` exists to satisfy Bootstrap dependency wiring, but
+        // ScriptContext consumes a builder via .build() per compilation, and
+        // in include-mode the parent + every included script each spawn their
+        // own ScriptContext. They MUST each get an independent
+        // IRuntimesBuilder, otherwise repeated `runtime("script", ...)` calls
+        // on the shared builder collide and trigger infinite recursion when
+        // executing nested scripts. So the factory always returns a fresh
+        // builder configured with the same injection context.
         final IInjectionContextBuilder injCtx = this.injectionContextBuilder;
         Workflow workflow = new Workflow(
                 name,
@@ -153,11 +156,9 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
                 new ArrayList<>(stages),
                 new LinkedHashMap<>(presetVariables),
                 expressionContext,
-                () -> rb != null
-                        ? rb
-                        : com.garganttua.core.runtime.dsl.RuntimesBuilder.builder().provide(injCtx),
+                () -> com.garganttua.core.runtime.dsl.RuntimesBuilder.builder().provide(injCtx),
                 inlineAll,
-                timingConfig);
+                this.timingConfig);
 
         log.debug("Workflow '{}' built with {} stages", name, stages.size());
 
