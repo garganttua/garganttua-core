@@ -33,6 +33,7 @@ import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.IScriptingEnvironment;
 import com.garganttua.core.script.ScriptException;
+import com.garganttua.core.script.ScriptingEnvironment;
 import com.garganttua.core.script.annotations.IScriptDefinition;
 import com.garganttua.core.script.annotations.ScriptDefinition;
 import com.garganttua.core.script.context.ScriptContext;
@@ -204,7 +205,13 @@ public class ScriptsBuilder
     @Override
     protected IScriptingEnvironment doBuild() throws DslException {
         log.debug("Building IScriptingEnvironment with {} registered script(s)", this.registry.size());
-        return this::createScript;
+        final IInjectionContextBuilder injCtx = this.injectionContextBuilder;
+        // Fresh RuntimesBuilder per compile — see project_scriptcontext_fresh_runtimes_builder.
+        return new ScriptingEnvironment(
+                this.expressionContext,
+                () -> RuntimesBuilder.builder().provide(injCtx),
+                this.classLoaderManager,
+                this.registry);
     }
 
     @Override

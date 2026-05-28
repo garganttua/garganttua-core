@@ -30,6 +30,7 @@ import com.garganttua.core.script.IScriptingEnvironment;
 import com.garganttua.core.script.dsl.IScriptsBuilder;
 import com.garganttua.core.script.dsl.ScriptsBuilder;
 import com.garganttua.core.workflow.IWorkflow;
+import com.garganttua.core.workflow.WorkflowsRegistry;
 import com.garganttua.core.workflow.annotations.IWorkflowDefinition;
 import com.garganttua.core.workflow.annotations.WorkflowDefinition;
 
@@ -247,17 +248,21 @@ public class WorkflowsBuilder
 
     @Override
     protected Map<String, IWorkflow> doBuild() throws DslException {
+        Map<String, IWorkflow> result;
         if (this.workflowBuilders.isEmpty()) {
             log.debug("WorkflowsBuilder: no workflows declared, returning empty registry");
-            return Collections.emptyMap();
+            result = Collections.emptyMap();
+        } else {
+            result = new LinkedHashMap<>();
+            for (Map.Entry<String, WorkflowBuilder> e : this.workflowBuilders.entrySet()) {
+                log.debug("Building workflow '{}'", e.getKey());
+                result.put(e.getKey(), e.getValue().build());
+            }
+            log.debug("Built {} workflow(s)", result.size());
         }
-        Map<String, IWorkflow> result = new LinkedHashMap<>();
-        for (Map.Entry<String, WorkflowBuilder> e : this.workflowBuilders.entrySet()) {
-            log.debug("Building workflow '{}'", e.getKey());
-            result.put(e.getKey(), e.getValue().build());
-        }
-        log.debug("Built {} workflow(s)", result.size());
-        return result;
+        // Wrap so Bootstrap.printSummary surfaces "Workflow Engine" stats via
+        // IBootstrapSummaryContributor.
+        return new WorkflowsRegistry(result);
     }
 
     @SuppressWarnings("unchecked")
