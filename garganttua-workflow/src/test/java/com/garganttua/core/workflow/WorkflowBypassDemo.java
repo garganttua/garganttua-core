@@ -14,7 +14,9 @@ import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowsBuilder;
+import com.garganttua.core.script.dsl.IScriptsBuilder;
+import com.garganttua.core.script.dsl.ScriptsBuilder;
 
 class WorkflowBypassDemo {
 
@@ -23,6 +25,7 @@ class WorkflowBypassDemo {
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
     private IRuntimesBuilder runtimesBuilder;
+    private IScriptsBuilder scriptsBuilder;
 
     @SuppressWarnings("unchecked")
     @BeforeAll
@@ -50,15 +53,18 @@ class WorkflowBypassDemo {
         expressionContextBuilder.build();
 
         runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
+        scriptsBuilder = ScriptsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .provide(runtimesBuilder);
     }
 
     @Test
     void demonstrateBypassFlow() {
-        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
+        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("Data Pipeline with Bypass")
+                .provide(scriptsBuilder)
+                .workflow("Data Pipeline with Bypass")
                 .variable("apiUrl", "https://api.example.com")
 
                 // Stage 1: Fetch - produces rawData and metadata

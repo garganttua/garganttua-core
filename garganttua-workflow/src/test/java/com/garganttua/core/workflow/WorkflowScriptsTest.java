@@ -22,7 +22,9 @@ import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowsBuilder;
+import com.garganttua.core.script.dsl.IScriptsBuilder;
+import com.garganttua.core.script.dsl.ScriptsBuilder;
 import com.garganttua.core.workflow.header.ScriptHeader;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
 
@@ -36,6 +38,7 @@ class WorkflowScriptsTest {
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
     private IRuntimesBuilder runtimesBuilder;
+    private IScriptsBuilder scriptsBuilder;
     private ScriptHeaderParser headerParser;
 
     @TempDir
@@ -67,6 +70,10 @@ class WorkflowScriptsTest {
         expressionContextBuilder.build();
 
         runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
+        scriptsBuilder = ScriptsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .provide(runtimesBuilder);
         headerParser = new ScriptHeaderParser();
     }
 
@@ -186,11 +193,10 @@ class WorkflowScriptsTest {
     @Test
     void testWorkflowWithResourceScripts() throws Exception {
         // Use simple inline scripts that avoid complex syntax
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("resource-scripts-workflow")
+                .provide(scriptsBuilder)
+                .workflow("resource-scripts-workflow")
                 .stage("validate")
                     .script("validatedData <- @data\nvalidationStatus <- \"completed\"")
                         .name("data-validator")
@@ -227,11 +233,10 @@ class WorkflowScriptsTest {
     void testWorkflowDescriptorWithDescriptions() throws Exception {
         Path validateScript = copyResourceToTemp("scripts/validate-data.gs");
 
-        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
+        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("descriptor-with-descriptions")
+                .provide(scriptsBuilder)
+                .workflow("descriptor-with-descriptions")
                 .stage("validate")
                     .script(validateScript)
                         .name("validator")
@@ -258,11 +263,10 @@ class WorkflowScriptsTest {
 
     @Test
     void testMultiStageWorkflowWithDescriptions() throws Exception {
-        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
+        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("data-processing-pipeline")
+                .provide(scriptsBuilder)
+                .workflow("data-processing-pipeline")
                 .variable("apiUrl", "https://api.example.com")
                 .variable("timeout", 30000)
                 .stage("fetch")

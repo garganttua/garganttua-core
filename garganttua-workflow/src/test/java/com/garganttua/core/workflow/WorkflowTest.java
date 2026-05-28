@@ -20,7 +20,9 @@ import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowsBuilder;
+import com.garganttua.core.script.dsl.IScriptsBuilder;
+import com.garganttua.core.script.dsl.ScriptsBuilder;
 import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
 
 class WorkflowTest {
@@ -30,6 +32,7 @@ class WorkflowTest {
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
     private IRuntimesBuilder runtimesBuilder;
+    private IScriptsBuilder scriptsBuilder;
 
     @TempDir
     Path tempDir;
@@ -61,15 +64,18 @@ class WorkflowTest {
         expressionContextBuilder.build();
 
         runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
+        scriptsBuilder = ScriptsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .provide(runtimesBuilder);
     }
 
     @Test
     void testSimpleWorkflow() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("test-workflow")
+                .provide(scriptsBuilder)
+                .workflow("test-workflow")
                 .stage("stage1")
                     .script("result <- \"hello world\"")
                         .name("hello")
@@ -97,11 +103,10 @@ class WorkflowTest {
 
     @Test
     void testWorkflowWithInputPayload() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("input-workflow")
+                .provide(scriptsBuilder)
+                .workflow("input-workflow")
                 .stage("process")
                     .script("result <- @0")
                         .name("passthrough")
@@ -118,11 +123,10 @@ class WorkflowTest {
 
     @Test
     void testWorkflowWithParameters() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("param-workflow")
+                .provide(scriptsBuilder)
+                .workflow("param-workflow")
                 .variable("prefix", "Hello")
                 .stage("greet")
                     .script("result <- @prefix")
@@ -139,11 +143,10 @@ class WorkflowTest {
 
     @Test
     void testWorkflowMultipleStages() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("multi-stage-workflow")
+                .provide(scriptsBuilder)
+                .workflow("multi-stage-workflow")
                 .stage("stage1")
                     .script("value <- 10")
                         .name("init")
@@ -165,11 +168,10 @@ class WorkflowTest {
 
     @Test
     void testGetGeneratedScript() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("generated-script-test")
+                .provide(scriptsBuilder)
+                .workflow("generated-script-test")
                 .stage("test")
                     .script("x <- 42")
                         .name("answer")
@@ -190,11 +192,10 @@ class WorkflowTest {
         Path scriptPath = tempDir.resolve("test-script.gs");
         Files.writeString(scriptPath, "result <- \"from file\"");
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("file-workflow")
+                .provide(scriptsBuilder)
+                .workflow("file-workflow")
                 .stage("file-stage")
                     .script(scriptPath)
                         .name("file-script")
@@ -211,11 +212,10 @@ class WorkflowTest {
 
     @Test
     void testWorkflowResult() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("result-test")
+                .provide(scriptsBuilder)
+                .workflow("result-test")
                 .stage("compute")
                     .script("output <- \"final result\"")
                         .name("final")
@@ -236,8 +236,8 @@ class WorkflowTest {
     void testWorkflowWithoutContextsFails() {
         // Build without providing contexts should fail
         assertThrows(Exception.class, () -> {
-            WorkflowBuilder.create()
-                    .name("no-context")
+            WorkflowsBuilder.builder()
+                .workflow("no-context")
                     .stage("test")
                         .script("x <- 1")
                             .up()
@@ -249,10 +249,10 @@ class WorkflowTest {
     @Test
     void testEmptyWorkflowBuildFails() {
         assertThrows(Exception.class, () -> {
-            WorkflowBuilder.create()
+            WorkflowsBuilder.builder()
                     .provide(injectionContextBuilder)
                     .provide(expressionContextBuilder)
-                    .name("empty")
+                .workflow("empty")
                     .build();
         });
     }
@@ -283,11 +283,10 @@ class WorkflowTest {
             output <- @finalResult
             """;
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("data-processing-pipeline")
+                .provide(scriptsBuilder)
+                .workflow("data-processing-pipeline")
                 .variable("pipelineVersion", "1.0.0")
                 .variable("environment", "test")
                 .stage("validation")
@@ -367,11 +366,10 @@ class WorkflowTest {
             finalResult <- @0
             """);
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("data-processing-pipeline-with-include")
+                .provide(scriptsBuilder)
+                .workflow("data-processing-pipeline-with-include")
                 .variable("pipelineVersion", "1.0.0")
                 .variable("environment", "test")
                 .stage("validation")
@@ -515,11 +513,10 @@ class WorkflowTest {
         System.out.println("PROGRAMMATIC CHAINING CONFIGURATION");
         System.out.println("=".repeat(80));
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("chaining-demo")
+                .provide(scriptsBuilder)
+                .workflow("chaining-demo")
 
                 // Preset variables available to all scripts
                 .variable("apiUrl", "https://api.example.com")
@@ -604,11 +601,10 @@ class WorkflowTest {
     @Test
     void testWorkflowDescriptor() throws Exception {
         // Build workflow with various configurations
-        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowBuilder.create()
+        var workflowBuilder = (com.garganttua.core.workflow.dsl.WorkflowBuilder) WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("descriptor-test")
+                .provide(scriptsBuilder)
+                .workflow("descriptor-test")
                 .variable("config", "production")
                 .variable("maxRetries", 3)
                 .stage("fetch")
@@ -718,11 +714,10 @@ class WorkflowTest {
 
     @Test
     void testConditionalScriptExecution_ConditionTrue() throws Exception {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("cond-true-workflow")
+                .provide(scriptsBuilder)
+                .workflow("cond-true-workflow")
                 .variable("shouldRun", "yes")
                 .stage("conditional")
                     .script("result <- \"executed\"")
@@ -752,11 +747,10 @@ class WorkflowTest {
 
     @Test
     void testConditionalScriptExecution_ConditionFalse() throws Exception {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("cond-false-workflow")
+                .provide(scriptsBuilder)
+                .workflow("cond-false-workflow")
                 .variable("shouldRun", "no")
                 .stage("conditional")
                     .script("result <- \"executed\"")
@@ -785,11 +779,10 @@ class WorkflowTest {
 
     @Test
     void testConditionalStageExecution() throws Exception {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("cond-stage-workflow")
+                .provide(scriptsBuilder)
+                .workflow("cond-stage-workflow")
                 .variable("env", "dev")
                 .stage("deploy")
                     .when("equals(@env, \"prod\")")
@@ -836,11 +829,10 @@ class WorkflowTest {
         Path scriptPath = tempDir.resolve("inline-test.gs");
         Files.writeString(scriptPath, "fileResult <- \"from file\"");
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("inline-all-test")
+                .provide(scriptsBuilder)
+                .workflow("inline-all-test")
                 .inlineAll()  // Force all scripts to be inlined
                 .stage("test")
                     .script(scriptPath)
@@ -862,11 +854,10 @@ class WorkflowTest {
 
     @Test
     void testDescribeWorkflowOnBuiltWorkflow() throws Exception {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("describe-test")
+                .provide(scriptsBuilder)
+                .workflow("describe-test")
                 .variable("config", "production")
                 .variable("maxRetries", 3)
                 .stage("fetch")

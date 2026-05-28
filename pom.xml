@@ -168,6 +168,11 @@
       </dependency>
       <dependency>
         <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-classloader</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
         <artifactId>garganttua-script-maven-plugin</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -469,6 +474,7 @@
     <module>garganttua-expression</module>
     <module>garganttua-mutex</module>
     <module>garganttua-bootstrap</module>
+    <module>garganttua-classloader</module>
     <module>garganttua-script</module>
     <module>garganttua-console</module>
     <module>garganttua-configuration</module>

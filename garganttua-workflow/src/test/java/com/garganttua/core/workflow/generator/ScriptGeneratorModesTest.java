@@ -25,7 +25,9 @@ import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowInput;
 import com.garganttua.core.workflow.WorkflowResult;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowsBuilder;
+import com.garganttua.core.script.dsl.IScriptsBuilder;
+import com.garganttua.core.script.dsl.ScriptsBuilder;
 
 /**
  * Tests demonstrating the generated scripts in both inline and include modes,
@@ -56,6 +58,7 @@ class ScriptGeneratorModesTest {
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
     private IRuntimesBuilder runtimesBuilder;
+    private IScriptsBuilder scriptsBuilder;
 
     @TempDir
     Path tempDir;
@@ -86,6 +89,10 @@ class ScriptGeneratorModesTest {
         expressionContextBuilder.build();
 
         runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
+        scriptsBuilder = ScriptsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .provide(runtimesBuilder);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -100,11 +107,10 @@ class ScriptGeneratorModesTest {
         Path statsPath = copyResourceToTemp("scripts/calculate-stats.gs");
         Path finalizePath = copyResourceToTemp("scripts/finalize-output.gs");
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("full-pipeline")
+                .provide(scriptsBuilder)
+                .workflow("full-pipeline")
                 .variable("apiUrl", "https://api.example.com/data")
                 .variable("requestTimeout", 30000)
                 .variable("targetFormat", "json")
@@ -282,11 +288,10 @@ class ScriptGeneratorModesTest {
         Path statsPath = copyResourceToTemp("scripts/calculate-stats.gs");
         Path finalizePath = copyResourceToTemp("scripts/finalize-output.gs");
 
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("full-pipeline")
+                .provide(scriptsBuilder)
+                .workflow("full-pipeline")
                 .variable("apiUrl", "https://api.example.com/data")
                 .variable("requestTimeout", 30000)
                 .variable("targetFormat", "json")

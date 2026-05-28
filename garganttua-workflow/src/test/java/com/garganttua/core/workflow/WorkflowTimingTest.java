@@ -25,7 +25,9 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowsBuilder;
+import com.garganttua.core.script.dsl.IScriptsBuilder;
+import com.garganttua.core.script.dsl.ScriptsBuilder;
 
 class WorkflowTimingTest {
 
@@ -33,6 +35,7 @@ class WorkflowTimingTest {
     private IInjectionContextBuilder injectionContextBuilder;
     private IExpressionContextBuilder expressionContextBuilder;
     private IRuntimesBuilder runtimesBuilder;
+    private IScriptsBuilder scriptsBuilder;
 
     @SuppressWarnings("unchecked")
     @BeforeAll
@@ -59,15 +62,18 @@ class WorkflowTimingTest {
         expressionContextBuilder.build();
 
         runtimesBuilder = RuntimesBuilder.builder().provide(injectionContextBuilder);
+        scriptsBuilder = ScriptsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(expressionContextBuilder)
+                .provide(runtimesBuilder);
     }
 
     @Test
     void timingDisabled_byDefault_producesScriptWithoutObserveCalls() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("untimed-workflow")
+                .provide(scriptsBuilder)
+                .workflow("untimed-workflow")
                 .stage("step")
                     .script("result <- \"x\"").name("doit").output("greeting", "result").up()
                     .up()
@@ -79,11 +85,10 @@ class WorkflowTimingTest {
 
     @Test
     void timingEnabled_emitsStartAndEndForEachStage() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("timed-workflow")
+                .provide(scriptsBuilder)
+                .workflow("timed-workflow")
                 .stage("decode")
                     .script("result <- \"ok\"").name("d1").output("decoded", "result").up()
                     .up()
@@ -104,11 +109,10 @@ class WorkflowTimingTest {
 
     @Test
     void timingStagesOnly_omitsScriptMarkers() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("stages-only")
+                .provide(scriptsBuilder)
+                .workflow("stages-only")
                 .stage("only")
                     .script("result <- \"ok\"").name("inner").output("o", "result").up()
                     .up()
@@ -123,11 +127,10 @@ class WorkflowTimingTest {
 
     @Test
     void timingDisableStage_excludesNamedStage() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("partial")
+                .provide(scriptsBuilder)
+                .workflow("partial")
                 .stage("hot")
                     .script("result <- \"ok\"").name("h").output("o", "result").up()
                     .up()
@@ -145,11 +148,10 @@ class WorkflowTimingTest {
 
     @Test
     void timingEnabled_observerReceivesStartAndEndEvents() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("live-events")
+                .provide(scriptsBuilder)
+                .workflow("live-events")
                 .stage("alpha")
                     .script("result <- \"ok\"").name("step").output("out", "result").up()
                     .up()
@@ -189,11 +191,10 @@ class WorkflowTimingTest {
 
     @Test
     void timingDisabled_observerReceivesNoStageOrScriptEvents() {
-        IWorkflow workflow = WorkflowBuilder.create()
+        IWorkflow workflow = WorkflowsBuilder.builder()
                 .provide(injectionContextBuilder)
-                .provide(expressionContextBuilder)
-                .provide(runtimesBuilder)
-                .name("silent")
+                .provide(scriptsBuilder)
+                .workflow("silent")
                 .stage("stage")
                     .script("result <- \"ok\"").name("s").output("o", "result").up()
                     .up()

@@ -78,6 +78,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|    \|- [**garganttua-reflections**](./garganttua-bindings/garganttua-reflections/README.md) | Annotation scanner implementation based on org.reflections:reflections |
 | \|    \|- [**garganttua-spring**](./garganttua-bindings/garganttua-spring/README.md) | Spring framework integration for Garganttua Core modules. |
 | \|- [**garganttua-bootstrap**](./garganttua-bootstrap/README.md) | Bootstrap and application initialization framework. |
+| \|- [**garganttua-classloader**](./garganttua-classloader/README.md) | Bootstrap-discoverable JAR hot-loader that adds JARs to the thread context classloader and notifies registered rebuild hooks. Decouples runtime JAR loading from the Bootstrap module itself. |
 | \|- [**garganttua-commons**](./garganttua-commons/README.md) | Shared components, interfaces, annotations, and exceptions. |
 | \|- [**garganttua-condition**](./garganttua-condition/README.md) | DSL to define, combine, and evaluate runtime conditions. |
 | \|- [**garganttua-configuration**](./garganttua-configuration/README.md) | Multi-format configuration loading and builder population for Garganttua DSLs. |
@@ -101,6 +102,34 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 | \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

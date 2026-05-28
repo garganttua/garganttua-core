@@ -71,7 +71,7 @@ class BootstrapTest {
         @Test
         @DisplayName("Should add single package")
         void testAddSinglePackage() {
-            IBoostrap result = bootstrap.withPackage("com.example");
+            IBootstrap result = bootstrap.withPackage("com.example");
 
             assertNotNull(result);
             assertSame(bootstrap, result, "Should return same instance for method chaining");
@@ -149,7 +149,7 @@ class BootstrapTest {
         @Test
         @DisplayName("Should register single builder")
         void testRegisterSingleBuilder() {
-            IBoostrap result = bootstrap.withBuilder(mockBuilder1);
+            IBootstrap result = bootstrap.withBuilder(mockBuilder1);
 
             assertNotNull(result);
             assertSame(bootstrap, result, "Should return same instance for method chaining");
@@ -268,7 +268,7 @@ class BootstrapTest {
         @Test
         @DisplayName("Should allow method chaining")
         void testMethodChaining() {
-            IBoostrap result = bootstrap
+            IBootstrap result = bootstrap
                     .withPackage("com.example")
                     .withBuilder(new MockBuilder("test"))
                     .autoDetect(true);
@@ -284,7 +284,7 @@ class BootstrapTest {
         @Test
         @DisplayName("Should create instance via builder() factory method")
         void testFactoryMethod() {
-            IBoostrap instance = Bootstrap.builder();
+            IBootstrap instance = Bootstrap.builder();
 
             assertNotNull(instance);
             assertInstanceOf(Bootstrap.class, instance);
@@ -293,8 +293,8 @@ class BootstrapTest {
         @Test
         @DisplayName("Should create new instance each time")
         void testFactoryCreatesNewInstances() {
-            IBoostrap instance1 = Bootstrap.builder();
-            IBoostrap instance2 = Bootstrap.builder();
+            IBootstrap instance1 = Bootstrap.builder();
+            IBootstrap instance2 = Bootstrap.builder();
 
             assertNotSame(instance1, instance2,
                 "Factory should create new instances");
@@ -420,7 +420,7 @@ class BootstrapTest {
             MockBuilder builder1 = new MockBuilder("builder1");
             MockBuilder builder2 = new MockBuilder("builder2");
 
-            IBoostrap result = bootstrap
+            IBootstrap result = bootstrap
                     .withPackage("com.example.app")
                     .withPackage("com.example.services")
                     .withBuilder(builder1)

@@ -1,4 +1,4 @@
-package com.garganttua.core.script.loader;
+package com.garganttua.core.classloader;
 
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;

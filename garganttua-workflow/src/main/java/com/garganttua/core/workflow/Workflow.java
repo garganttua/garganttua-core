@@ -9,22 +9,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
-import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservableContextHolder;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
-import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.workflow.dsl.WorkflowDescriptor;
 import com.garganttua.core.workflow.generator.ScriptGenerationOptions;
 import com.garganttua.core.workflow.generator.ScriptGenerator;
@@ -54,8 +50,7 @@ public class Workflow implements IWorkflow, IObservable {
     private final String generatedScript;
     private final List<WorkflowStage> stages;
     private final Map<String, Object> presetVariables;
-    private final IExpressionContext expressionContext;
-    private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
+    private final com.garganttua.core.script.IScriptingEnvironment scriptingEnvironment;
     private final boolean inlineAll;
     private final WorkflowTimingConfig timingConfig;
     private final ObservableRegistry observers = new ObservableRegistry();
@@ -63,18 +58,25 @@ public class Workflow implements IWorkflow, IObservable {
     private final WorkflowRenderer renderer = new WorkflowRenderer();
 
     /**
-     * Creates a new Workflow with all required components.
+     * Creates a new Workflow.
+     *
+     * <p>The {@link com.garganttua.core.script.IScriptingEnvironment} is the
+     * single point of entry into the script layer — every stage execution
+     * spawns a fresh {@code IScript} via {@code env.newScript()}, which
+     * encapsulates the underlying expression context, runtimes-builder
+     * factory, and class-loader manager. Workflow no longer depends directly
+     * on the Expression or Runtime layers; the dependency graph is now
+     * {@code Workflow → Script → {Expression, Runtimes, ClassLoader}}.
      */
     public Workflow(String name, String generatedScript, List<WorkflowStage> stages,
-            Map<String, Object> presetVariables, IExpressionContext expressionContext,
-            Supplier<IRuntimesBuilder> runtimesBuilderFactory, boolean inlineAll,
-            WorkflowTimingConfig timingConfig) {
+            Map<String, Object> presetVariables,
+            com.garganttua.core.script.IScriptingEnvironment scriptingEnvironment,
+            boolean inlineAll, WorkflowTimingConfig timingConfig) {
         this.name = name;
         this.generatedScript = generatedScript;
         this.stages = List.copyOf(stages);
         this.presetVariables = Map.copyOf(presetVariables);
-        this.expressionContext = expressionContext;
-        this.runtimesBuilderFactory = runtimesBuilderFactory;
+        this.scriptingEnvironment = scriptingEnvironment;
         this.inlineAll = inlineAll;
         this.timingConfig = timingConfig != null ? timingConfig : WorkflowTimingConfig.disabled();
     }
@@ -146,8 +148,10 @@ public class Workflow implements IWorkflow, IObservable {
 
     private WorkflowResult executeScript(UUID uuid, Instant start, String scriptSource,
             WorkflowInput input, List<WorkflowStage> stagesToCollect) throws ScriptException {
-        // 1. Create and configure the ScriptContext
-        IScript script = new ScriptContext(expressionContext, runtimesBuilderFactory, null);
+        // 1. Spawn a fresh IScript via the scripting environment — wires
+        // expression context + fresh-per-call IRuntimesBuilder + class-loader
+        // manager internally.
+        IScript script = this.scriptingEnvironment.newScript();
         script.load(scriptSource);
 
         // 2. Inject preset variables (named)

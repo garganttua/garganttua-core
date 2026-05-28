@@ -8,21 +8,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
-import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.dsl.IObservabilityBuilder;
-import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.script.IScriptingEnvironment;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.Workflow;
 import com.garganttua.core.workflow.WorkflowException;
@@ -34,13 +31,11 @@ import com.garganttua.core.workflow.renderer.WorkflowRenderer;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
- * Builder for constructing {@link IWorkflow} instances with fluent API.
- *
- * <p>SPI-discoverable via {@link WorkflowBuilderFactory} — Bootstrap auto-
- * registers an instance when {@code autoDetect(true)} is set, ordering it
- * after the runtimes / expression / injection context it depends on.
+ * Builder for a single {@link IWorkflow}. Internal building block of
+ * {@link WorkflowsBuilder} — only reachable via
+ * {@link IWorkflowsBuilder#workflow(String)}. No longer Bootstrap-
+ * discoverable in its own right: the plural builder owns the SPI surface.
  */
-@Bootstrap
 @Reflected
 public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, IWorkflow>
         implements IWorkflowBuilder {
@@ -48,33 +43,50 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class)),
-            DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class)),
-            // Runtimes are consumed BUILDER-side and required. Direct usage
-            // (outside Bootstrap) must call .provide(rtBuilder) explicitly;
-            // Bootstrap auto-injects through dep resolution.
-            DependencySpec.requireBuilder(IClass.getClass(IRuntimesBuilder.class)),
             DependencySpec.use(IClass.getClass(IObservabilityBuilder.class)));
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
     private final WorkflowRenderer renderer = new WorkflowRenderer();
 
+    private final IWorkflowsBuilder parent;
     private String name = "unnamed-workflow";
     private final Map<String, Object> presetVariables = new LinkedHashMap<>();
     private final List<WorkflowStage> stages = new ArrayList<>();
-    private IExpressionContext expressionContext;
     private IInjectionContextBuilder injectionContextBuilder;
-    private IRuntimesBuilder runtimesBuilder;
     private IObservabilityBuilder observabilityBuilder;
+    private IScriptingEnvironment scriptingEnvironment;
     private boolean inlineAll = false;
     private WorkflowTimingConfig timingConfig = WorkflowTimingConfig.disabled();
 
-    private WorkflowBuilder() {
+    WorkflowBuilder(IWorkflowsBuilder parent) {
         super(DEPENDENCIES);
-        log.trace("WorkflowBuilder created");
+        this.parent = parent;
+        log.trace("WorkflowBuilder created (parent={})", parent != null ? "set" : "null");
     }
 
-    public static IWorkflowBuilder create() {
-        return new WorkflowBuilder();
+    static WorkflowBuilder createChild(IWorkflowsBuilder parent, String name) {
+        WorkflowBuilder b = new WorkflowBuilder(parent);
+        b.name = name;
+        return b;
+    }
+
+    @Override
+    public IWorkflowsBuilder up() {
+        if (this.parent == null) {
+            throw new IllegalStateException(
+                    "WorkflowBuilder has no parent — opened outside of WorkflowsBuilder.workflow()");
+        }
+        return this.parent;
+    }
+
+    /**
+     * Receive an already-built scripting environment. Used by
+     * {@link WorkflowsBuilder} to propagate the parent-resolved
+     * {@link IScriptingEnvironment} to children — bypasses the
+     * IObservableBuilder/provide chain for a non-builder value.
+     */
+    void acceptScriptingEnvironment(IScriptingEnvironment env) {
+        this.scriptingEnvironment = env;
     }
 
     @Override
@@ -127,8 +139,8 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("InjectionContextBuilder is required");
         }
 
-        if (expressionContext == null) {
-            throw new DslException("ExpressionContext is required");
+        if (scriptingEnvironment == null) {
+            throw new DslException("IScriptingEnvironment is required — workflow can't compile its script");
         }
 
         String generatedScript;
@@ -140,23 +152,12 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("Failed to generate workflow script", e);
         }
 
-        // RuntimesBuilder is a hard dep (requireBuilder above): the user-
-        // provided `rb` exists to satisfy Bootstrap dependency wiring, but
-        // ScriptContext consumes a builder via .build() per compilation, and
-        // in include-mode the parent + every included script each spawn their
-        // own ScriptContext. They MUST each get an independent
-        // IRuntimesBuilder, otherwise repeated `runtime("script", ...)` calls
-        // on the shared builder collide and trigger infinite recursion when
-        // executing nested scripts. So the factory always returns a fresh
-        // builder configured with the same injection context.
-        final IInjectionContextBuilder injCtx = this.injectionContextBuilder;
         Workflow workflow = new Workflow(
                 name,
                 generatedScript,
                 new ArrayList<>(stages),
                 new LinkedHashMap<>(presetVariables),
-                expressionContext,
-                () -> com.garganttua.core.runtime.dsl.RuntimesBuilder.builder().provide(injCtx),
+                this.scriptingEnvironment,
                 inlineAll,
                 this.timingConfig);
 
@@ -176,9 +177,8 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
 
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
-        if (dependency instanceof IExpressionContext ctx) {
-            this.expressionContext = ctx;
-        }
+        // IScriptingEnvironment is delivered via acceptScriptingEnvironment()
+        // by the parent WorkflowsBuilder; nothing pre-build dependency-side.
     }
 
     @Override
@@ -190,9 +190,6 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     public IWorkflowBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
         if (dependency instanceof IInjectionContextBuilder builder) {
             this.injectionContextBuilder = builder;
-        }
-        if (dependency instanceof IRuntimesBuilder runtimes) {
-            this.runtimesBuilder = runtimes;
         }
         if (dependency instanceof IObservabilityBuilder obs) {
             this.observabilityBuilder = obs;

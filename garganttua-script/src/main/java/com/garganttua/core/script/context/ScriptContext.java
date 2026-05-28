@@ -18,7 +18,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import com.garganttua.core.CoreException;
-import com.garganttua.core.bootstrap.dsl.IBoostrap;
+import com.garganttua.core.classloader.IClassLoaderManager;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
@@ -43,7 +43,7 @@ public class ScriptContext implements IScript, IObservable {
 
     private final IExpressionContext expressionContext;
     private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
-    private final IBoostrap bootstrap;
+    private final IClassLoaderManager classLoaderManager;
     private volatile String scriptSource;
     private volatile IRuntime<Object[], Object> runtime;
     private volatile Map<String, Object> lastVariables = Map.of();
@@ -55,20 +55,31 @@ public class ScriptContext implements IScript, IObservable {
     private final ObservableRegistry observers = new ObservableRegistry();
 
     /**
-     * Creates a new ScriptContext with expression context, runtimes builder factory, and bootstrap.
+     * Creates a new ScriptContext with expression context, runtimes builder
+     * factory, and a class-loader manager.
      *
-     * <p>The factory is called once per {@link #compile()} invocation, producing a fresh
-     * {@code IRuntimesBuilder} for each script (including child scripts from {@code include()}).
-     * This prevents builder state sharing between independent script compilations.</p>
+     * <p>The factory is called once per {@link #compile()} invocation,
+     * producing a fresh {@code IRuntimesBuilder} for each script (including
+     * child scripts from {@code include()}). This prevents builder state
+     * sharing between independent script compilations.</p>
      *
-     * @param expressionContext the expression context for evaluating expressions
-     * @param runtimesBuilderFactory factory that creates a new IRuntimesBuilder for each compilation
-     * @param bootstrap the bootstrap for rebuilding components after JAR loading (may be null)
+     * <p>The {@link IClassLoaderManager} handles hot-loading JARs via the
+     * {@code include("foo.jar")} script call. Pass {@code null} to disable JAR
+     * hot-loading (the {@code include} call then logs a warning and skips).
+     * The script layer no longer holds a reference to {@code Bootstrap} —
+     * rebuild on JAR load is the manager's responsibility (via its registered
+     * rebuild hooks).
+     *
+     * @param expressionContext      expression context for evaluating expressions
+     * @param runtimesBuilderFactory factory creating a fresh IRuntimesBuilder per compilation
+     * @param classLoaderManager     manager loading JARs at runtime, or {@code null}
      */
-    public ScriptContext(IExpressionContext expressionContext, Supplier<IRuntimesBuilder> runtimesBuilderFactory, IBoostrap bootstrap) {
+    public ScriptContext(IExpressionContext expressionContext,
+                         Supplier<IRuntimesBuilder> runtimesBuilderFactory,
+                         IClassLoaderManager classLoaderManager) {
         this.expressionContext = expressionContext;
         this.runtimesBuilderFactory = runtimesBuilderFactory;
-        this.bootstrap = bootstrap;
+        this.classLoaderManager = classLoaderManager;
         this.expressionContext.enableDynamicFunctions();
     }
 
@@ -313,7 +324,7 @@ public class ScriptContext implements IScript, IObservable {
     }
 
     public ScriptContext createChildScript() {
-        return new ScriptContext(this.expressionContext, this.runtimesBuilderFactory, this.bootstrap);
+        return new ScriptContext(this.expressionContext, this.runtimesBuilderFactory, this.classLoaderManager);
     }
 
     public void registerIncludedScript(String name, IScript script) {
@@ -343,11 +354,12 @@ public class ScriptContext implements IScript, IObservable {
     }
 
     /**
-     * Returns the bootstrap used by this script for rebuilding components.
+     * Returns the class-loader manager used by this script to hot-load JARs
+     * (via {@code include("foo.jar")}).
      *
-     * @return the bootstrap, or null if not configured
+     * @return the manager, or {@code null} if JAR hot-loading is disabled
      */
-    public IBoostrap getBootstrap() {
-        return this.bootstrap;
+    public IClassLoaderManager getClassLoaderManager() {
+        return this.classLoaderManager;
     }
 }

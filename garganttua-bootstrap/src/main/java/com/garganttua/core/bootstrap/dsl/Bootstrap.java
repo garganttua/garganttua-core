@@ -101,8 +101,8 @@ import com.garganttua.core.supply.SupplyException;
  *
  * @since 2.0.0-ALPHA01
  */
-public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBuiltRegistry>
-        implements IBoostrap, IObservable {
+public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBuiltRegistry>
+        implements IBootstrap, IObservable {
     private static final IDiagnostic log = Diagnostics.of(Bootstrap.class);
 
     private static final String DEFAULT_VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
@@ -141,6 +141,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     private int manualBuilderSeq = 0;
     private int autoDetectedBuilderSeq = 0;
     private final Map<IClass<?>, Object> builtObjectsRegistry = Collections.synchronizedMap(new HashMap<>());
+    /** Tracks {@link IClassLoaderManager} instances we've already wired a rebuild hook on, so a Bootstrap.rebuild() doesn't pile up duplicate hooks. */
+    private final java.util.Set<com.garganttua.core.classloader.IClassLoaderManager> classLoaderManagersWired = java.util.Collections.synchronizedSet(java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
     private final List<IObservableBuilder<?, ?>> providedBuilders = new ArrayList<>();
     private final Set<IBuilder<?>> spiAutoLoadedBuilders =
             Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
@@ -204,7 +206,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      *
      * @return a new BootstrapBuilder
      */
-    public static IBoostrap builder() {
+    public static IBootstrap builder() {
         log.trace("Creating new Bootstrap instance");
         return new Bootstrap();
     }
@@ -263,28 +265,28 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     }
 
     @Override
-    public IBoostrap withBanner(IBanner banner) {
+    public IBootstrap withBanner(IBanner banner) {
         log.trace("Setting custom banner");
         this.banner = banner;
         return this;
     }
 
     @Override
-    public IBoostrap withBannerMode(BannerMode mode) {
+    public IBootstrap withBannerMode(BannerMode mode) {
         log.trace("Setting banner mode: {}", mode);
         this.bannerMode = Objects.requireNonNull(mode, "Banner mode cannot be null");
         return this;
     }
 
     @Override
-    public IBoostrap withApplicationName(String name) {
+    public IBootstrap withApplicationName(String name) {
         log.trace("Setting application name: {}", name);
         this.applicationName = name != null ? name : "Garganttua";
         return this;
     }
 
     @Override
-    public IBoostrap withApplicationVersion(String version) {
+    public IBootstrap withApplicationVersion(String version) {
         log.trace("Setting application version: {}", version);
         this.applicationVersion = version != null ? version : DEFAULT_VERSION;
         return this;
@@ -347,7 +349,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     }
 
     @Override
-    public IBoostrap withPackage(String packageName) {
+    public IBootstrap withPackage(String packageName) {
         log.trace("Adding package: {}", packageName);
         Objects.requireNonNull(packageName, "Package name cannot be null");
         this.packages.add(packageName);
@@ -361,7 +363,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
     }
 
     @Override
-    public IBoostrap withPackages(String[] packageNames) {
+    public IBootstrap withPackages(String[] packageNames) {
         log.trace("Adding {} packages", packageNames != null ? packageNames.length : 0);
         Objects.requireNonNull(packageNames, "Package names array cannot be null");
         for (String pkg : packageNames) {
@@ -373,7 +375,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
 
     @SuppressWarnings("unchecked")
     @Override
-    public IBoostrap provide(IObservableBuilder<?, ?> dependency) throws DslException {
+    public IBootstrap provide(IObservableBuilder<?, ?> dependency) throws DslException {
         this.providedBuilders.add(dependency);
         if (dependency instanceof IReflectionBuilder) {
             this.reflectionBuilderProvided = true;
@@ -381,7 +383,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         if (dependency instanceof IObservabilityBuilder obs) {
             this.observabilityBuilder = obs;
         }
-        return (IBoostrap) super.provide(dependency);
+        return (IBootstrap) super.provide(dependency);
     }
 
     /**
@@ -396,13 +398,13 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * default reflection. Call this method to opt out — typically only useful
      * for tests that want to assert the absence of a fallback.
      */
-    public IBoostrap disableSpiFallback() {
+    public IBootstrap disableSpiFallback() {
         this.spiFallbackEnabled = false;
         return this;
     }
 
     @Override
-    public IBoostrap withBuilder(IBuilder<?> builder) {
+    public IBootstrap withBuilder(IBuilder<?> builder) {
         log.trace("Adding builder: {}", builder != null ? builder.getClass().getSimpleName() : "null");
         Objects.requireNonNull(builder, "Builder cannot be null");
         this.manualBuilders.put(builder.getClass().getName() + "#" + (manualBuilderSeq++), builder);
@@ -459,7 +461,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
      * @return this builder for method chaining
      * @throws DslException propagated from SPI factory construction failures
      */
-    public Bootstrap load() throws DslException {
+    @Override
+    public IBootstrap load() throws DslException {
         if (this.spiModulesLoaded) {
             log.trace("load() called twice — no-op");
             return this;
@@ -850,6 +853,13 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         }
         fireStageEnd(Stage.BUILD);
 
+        // Wire ourselves as an IClassLoaderRebuildHook on every freshly-built
+        // IClassLoaderManager so that a script's include("foo.jar") triggers
+        // withPackage(...) + rebuild() on this Bootstrap without callers having
+        // to plumb the link manually. Idempotent across rebuild() — see
+        // classLoaderManagersWired.
+        wireClassLoaderManagerHooks(builtObjects);
+
         Duration startupTime = Duration.between(startTime, Instant.now());
 
         // Print summary
@@ -858,6 +868,39 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBoostrap, IBui
         log.trace("Exiting doBuild()");
 
         return new BuiltRegistry(builtObjectsRegistry);
+    }
+
+    /**
+     * Wire this Bootstrap as a rebuild-hook on every freshly-built
+     * {@link com.garganttua.core.classloader.IClassLoaderManager}. The hook
+     * registers the JAR-declared packages on this Bootstrap and calls
+     * {@link #rebuild()} so freshly-loaded annotated classes are picked up.
+     *
+     * <p>Idempotent across multiple {@link #rebuild()} cycles via
+     * {@code classLoaderManagersWired} — a manager is wired at most once.
+     */
+    private void wireClassLoaderManagerHooks(List<Object> builtObjects) {
+        for (Object o : builtObjects) {
+            if (!(o instanceof com.garganttua.core.classloader.IClassLoaderManager mgr)) {
+                continue;
+            }
+            if (!this.classLoaderManagersWired.add(mgr)) {
+                log.debug("IClassLoaderManager {} already wired, skipping",
+                        mgr.getClass().getSimpleName());
+                continue;
+            }
+            mgr.addRebuildHook(packages -> {
+                synchronized (this.packages) {
+                    for (String pkg : packages) {
+                        this.packages.add(pkg);
+                    }
+                }
+                log.debug("ClassLoader rebuild hook fired with {} package(s); calling Bootstrap.rebuild()",
+                        packages.size());
+                this.rebuild();
+            });
+            log.debug("Registered Bootstrap as rebuild hook on {}", mgr.getClass().getSimpleName());
+        }
     }
 
     /**

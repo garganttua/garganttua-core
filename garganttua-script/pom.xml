@@ -40,6 +40,10 @@
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-classloader</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-reflections</artifactId>
       <scope>provided</scope>
     </dependency>

@@ -26,7 +26,7 @@ import com.garganttua.core.dsl.dependency.IDependentBuilder;
  *
  * @since 2.0.0-ALPHA01
  */
-public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry>, IPackageableBuilder<IBoostrap, IBuiltRegistry>, IDependentBuilder<IBoostrap, IBuiltRegistry> {
+public interface IBootstrap extends IRebuildableBuilder<IBootstrap, IBuiltRegistry>, IPackageableBuilder<IBootstrap, IBuiltRegistry>, IDependentBuilder<IBootstrap, IBuiltRegistry> {
 
     /**
      * Adds a builder to be managed by this bootstrap.
@@ -34,7 +34,7 @@ public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry
      * @param builder the builder to add
      * @return this bootstrap for method chaining
      */
-    IBoostrap withBuilder(IBuilder<?> builder);
+    IBootstrap withBuilder(IBuilder<?> builder);
 
     /**
      * Sets the banner to display at startup.
@@ -47,7 +47,7 @@ public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry
      * @param banner the banner to display
      * @return this bootstrap for method chaining
      */
-    IBoostrap withBanner(IBanner banner);
+    IBootstrap withBanner(IBanner banner);
 
     /**
      * Sets the banner display mode.
@@ -64,7 +64,7 @@ public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry
      * @param mode the banner display mode
      * @return this bootstrap for method chaining
      */
-    IBoostrap withBannerMode(BannerMode mode);
+    IBootstrap withBannerMode(BannerMode mode);
 
     /**
      * Sets the application name displayed in the banner.
@@ -72,7 +72,7 @@ public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry
      * @param name the application name
      * @return this bootstrap for method chaining
      */
-    IBoostrap withApplicationName(String name);
+    IBootstrap withApplicationName(String name);
 
     /**
      * Sets the application version displayed in the banner.
@@ -80,7 +80,7 @@ public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry
      * @param version the application version
      * @return this bootstrap for method chaining
      */
-    IBoostrap withApplicationVersion(String version);
+    IBootstrap withApplicationVersion(String version);
 
     /**
      * Rebuilds all managed builders, integrating any new packages or components.
@@ -100,5 +100,20 @@ public interface IBoostrap extends IRebuildableBuilder<IBoostrap, IBuiltRegistry
      */
     @Override
     IBuiltRegistry rebuild() throws DslException;
+
+    /**
+     * Discover and register every framework module published through the SPI
+     * (IBootstrapBuilderFactory) plus the IReflectionBuilder fallback when none
+     * was provided explicitly. Intermediate step between configuration and
+     * {@link #build()} that lets callers inspect or amend the registered
+     * builders before dependency resolution runs.
+     *
+     * <p>Gated by {@link #autoDetect(boolean)} being true and SPI fallback not
+     * being disabled. Idempotent — a second call is a no-op.
+     *
+     * @return this bootstrap for method chaining
+     * @throws DslException propagated from SPI factory construction failures
+     */
+    IBootstrap load() throws DslException;
 
 }

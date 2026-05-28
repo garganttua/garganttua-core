@@ -26,7 +26,7 @@ import org.jline.terminal.TerminalBuilder;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
-import com.garganttua.core.bootstrap.dsl.IBoostrap;
+import com.garganttua.core.bootstrap.dsl.IBootstrap;
 import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
@@ -124,7 +124,8 @@ public class ScriptConsole {
     private IExpressionContext expressionContext;
     private IInjectionContext injectionContext;
     private IInjectionContextBuilder injectionContextBuilder;
-    private IBoostrap bootstrap;
+    private IBootstrap bootstrap;
+    private com.garganttua.core.classloader.IClassLoaderManager classLoaderManager;
 
     private final boolean useAOT;
 
@@ -627,7 +628,7 @@ public class ScriptConsole {
         statementCount++;
 
         try {
-            ScriptContext script = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), bootstrap);
+            ScriptContext script = new ScriptContext(expressionContext, () -> RuntimesBuilder.builder().provide(injectionContextBuilder), classLoaderManager);
 
             // Inject session variables from previous statements
             for (Map.Entry<String, Object> entry : sessionVariables.entrySet()) {

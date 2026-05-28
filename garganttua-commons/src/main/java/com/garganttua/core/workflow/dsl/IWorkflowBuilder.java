@@ -42,6 +42,13 @@ import com.garganttua.core.workflow.WorkflowTimingConfig;
 public interface IWorkflowBuilder extends IDependentBuilder<IWorkflowBuilder, IWorkflow> {
 
     /**
+     * Navigate back to the {@link IWorkflowsBuilder} that opened this child.
+     * Throws if this builder was created outside of a {@code WorkflowsBuilder}
+     * context.
+     */
+    IWorkflowsBuilder up();
+
+    /**
      * Sets the workflow name.
      *
      * @param name the workflow name

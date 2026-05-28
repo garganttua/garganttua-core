@@ -46,16 +46,16 @@ class BootstrapPackageTest {
     }
 
     @Test
-    @DisplayName("Should implement IBoostrap interface")
-    void testImplementsIBoostrap() {
+    @DisplayName("Should implement IBootstrap interface")
+    void testImplementsIBootstrap() {
         Bootstrap bootstrap = new Bootstrap();
-        assertInstanceOf(IBoostrap.class, bootstrap);
+        assertInstanceOf(IBootstrap.class, bootstrap);
     }
 
     @Test
     @DisplayName("Should support fluent API pattern")
     void testFluentAPI() {
-        IBoostrap result = Bootstrap.builder()
+        IBootstrap result = Bootstrap.builder()
                 .withPackage("com.example")
                 .withPackage("com.test")
                 .withBuilder(new BootstrapTest.MockBuilder("test1"))
@@ -63,7 +63,7 @@ class BootstrapPackageTest {
                 .autoDetect(true);
 
         assertNotNull(result);
-        assertInstanceOf(IBoostrap.class, result);
+        assertInstanceOf(IBootstrap.class, result);
     }
 
     @Nested

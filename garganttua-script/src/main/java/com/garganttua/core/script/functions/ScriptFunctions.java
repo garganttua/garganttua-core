@@ -2,19 +2,16 @@ package com.garganttua.core.script.functions;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.core.classloader.ClassLoaderException;
+import com.garganttua.core.classloader.IClassLoaderManager;
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
-import com.garganttua.core.bootstrap.dsl.IBoostrap;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexStrategy;
 import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
@@ -22,7 +19,6 @@ import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.script.context.ScriptExecutionContext;
-import com.garganttua.core.script.loader.JarManifestReader;
 
 import jakarta.annotation.Nullable;
 
@@ -664,48 +660,16 @@ public class ScriptFunctions {
 
     private static void includeJar(ScriptContext ctx, String path) {
         try {
-            File jarFile = new File(path);
-            if (!jarFile.exists()) {
-                throw new ExpressionException("include: JAR file not found: " + path);
-            }
-
-            URL jarUrl = jarFile.toURI().toURL();
-            URLClassLoader classLoader = new URLClassLoader(
-                    new URL[] { jarUrl },
-                    Thread.currentThread().getContextClassLoader());
-            Thread.currentThread().setContextClassLoader(classLoader);
-
-            // Read packages from JAR manifest
-            List<String> packages = JarManifestReader.getPackages(jarUrl);
-            if (packages.isEmpty()) {
-                log.warn("No Garganttua-Packages attribute in JAR manifest: {}", path);
-                log.debug("JAR loaded onto classpath but no packages to scan: {}", path);
+            IClassLoaderManager mgr = ctx.getClassLoaderManager();
+            if (mgr == null) {
+                log.warn("No IClassLoaderManager configured for ScriptContext, "
+                        + "cannot hot-load JAR via include(): {}", path);
                 return;
             }
-
-            // Get bootstrap and add packages
-            IBoostrap bootstrap = ctx.getBootstrap();
-            if (bootstrap == null) {
-                log.warn("No bootstrap configured for ScriptContext, cannot rebuild after JAR include: {}", path);
-                log.debug("JAR loaded onto classpath, packages declared: {} (rebuild skipped)", packages);
-                return;
-            }
-
-            // Add packages and rebuild
-            for (String pkg : packages) {
-                bootstrap.withPackage(pkg);
-                log.debug("Added package to bootstrap: {}", pkg);
-            }
-
-            try {
-                bootstrap.rebuild();
-                log.debug("JAR loaded with {} packages, components rebuilt: {}", packages.size(), path);
-            } catch (DslException e) {
-                log.error("Failed to rebuild after loading JAR: {}", path, e);
-                throw new ExpressionException("include: failed to rebuild after loading JAR: " + path + " - " + e.getMessage());
-            }
-        } catch (ExpressionException e) {
-            throw e;
+            mgr.loadJar(java.nio.file.Path.of(path));
+            log.debug("JAR loaded via IClassLoaderManager: {}", path);
+        } catch (ClassLoaderException e) {
+            throw new ExpressionException("include: failed to load JAR: " + path + " - " + e.getMessage());
         } catch (Exception e) {
             throw new ExpressionException("include: failed to load JAR: " + path + " - " + e.getMessage());
         }
