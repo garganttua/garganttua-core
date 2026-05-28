@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 
 import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
@@ -40,9 +41,21 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 
     private Reflections reflectionsFor(String packageName) {
         return this.cache.computeIfAbsent(packageName == null ? "" : packageName,
-                pkg -> new Reflections(new ConfigurationBuilder()
-                        .forPackage(pkg)
-                        .setScanners(Scanners.TypesAnnotated, Scanners.MethodsAnnotated)));
+                pkg -> {
+                    ConfigurationBuilder cfg = new ConfigurationBuilder()
+                            .forPackage(pkg)
+                            .setScanners(Scanners.TypesAnnotated, Scanners.MethodsAnnotated);
+                    // Reflections' forPackage(pkg) only adds the classpath URLs that
+                    // contain pkg — it does NOT filter scanned class FQNs. The whole
+                    // URL (e.g. target/test-classes/) is then indexed, so siblings
+                    // outside pkg leak into every query. Apply an explicit prefix
+                    // filter so only classes whose FQN starts with pkg are kept.
+                    // Empty pkg means "global scan" — leave the filter off then.
+                    if (!pkg.isEmpty()) {
+                        cfg.filterInputsBy(new FilterBuilder().includePackage(pkg));
+                    }
+                    return new Reflections(cfg);
+                });
     }
 
 	@Override
