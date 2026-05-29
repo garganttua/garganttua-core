@@ -149,6 +149,19 @@ public class Mapper implements IMapper, IObservable {
 			}
 		}
 
+		// Atomic leaf types — String, primitive wrappers, JDK numerics, time
+		// types, etc. Field iteration on these is wrong (they have internal
+		// private fields like String.value that the module system blocks
+		// from reflection) and the right answer is always "pass the source
+		// through". Without this guard, an auto-convention pass over (String
+		// -> String) tries to iterate String.value byte[] and the framework
+		// crashes with InaccessibleObjectException on java.base.
+		if (source != null && isLeafType(source.getClass())) {
+			@SuppressWarnings("unchecked")
+			destination passthrough = (destination) source;
+			return passthrough;
+		}
+
 		IClass<?> sourceClass = this.reflection.getClass(source.getClass());
 		CachedMappingConfiguration cachedConfig = this.getCachedMappingConfiguration(sourceClass, destinationClass);
 		MappingConfiguration mappingConfig = cachedConfig.config();
@@ -525,6 +538,48 @@ public class Mapper implements IMapper, IObservable {
 		public MapperRuntimeException(String message, MapperException cause) {
 			super(message, cause);
 		}
+	}
+
+	/**
+	 * True if the given class is an atomic JDK leaf type that the mapper
+	 * should NOT recurse into via convention rules. These types are passed
+	 * through as-is (source value reused as destination). Includes
+	 * primitives & wrappers, String, JDK numeric / time / math types, and
+	 * common util types.
+	 */
+	private static boolean isLeafType(Class<?> type) {
+		if (type.isPrimitive()) return true;
+		if (type.isEnum()) return true;
+		String name = type.getName();
+		return switch (name) {
+			case "java.lang.String",
+			     "java.lang.Boolean",
+			     "java.lang.Byte",
+			     "java.lang.Short",
+			     "java.lang.Character",
+			     "java.lang.Integer",
+			     "java.lang.Long",
+			     "java.lang.Float",
+			     "java.lang.Double",
+			     "java.lang.Void",
+			     "java.lang.Class",
+			     "java.lang.Number",
+			     "java.math.BigDecimal",
+			     "java.math.BigInteger",
+			     "java.time.Instant",
+			     "java.time.LocalDate",
+			     "java.time.LocalDateTime",
+			     "java.time.LocalTime",
+			     "java.time.OffsetDateTime",
+			     "java.time.ZonedDateTime",
+			     "java.time.Duration",
+			     "java.time.Period",
+			     "java.util.Date",
+			     "java.util.UUID",
+			     "java.util.Locale",
+			     "java.util.TimeZone" -> true;
+			default -> false;
+		};
 	}
 
 }
