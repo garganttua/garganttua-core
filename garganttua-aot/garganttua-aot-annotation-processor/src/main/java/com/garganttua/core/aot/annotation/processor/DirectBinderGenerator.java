@@ -65,13 +65,18 @@ import javax.tools.StandardLocation;
  *
  * @since 2.0.0-ALPHA01
  */
-@SupportedAnnotationTypes("com.garganttua.core.reflection.annotations.Reflected")
+@SupportedAnnotationTypes("*")
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 @SupportedOptions("garganttua.direct.binders")
 public class DirectBinderGenerator extends AbstractProcessor {
 
     private static final String REFLECTED_ANNOTATION = "com.garganttua.core.reflection.annotations.Reflected";
+    private static final String INDEXED_ANNOTATION = "com.garganttua.core.reflection.annotations.Indexed";
     private static final String AOT_CLASSES_DIR = "META-INF/garganttua/aot/classes/";
+
+    /** Types already processed across all rounds — guards against double-generation
+     *  when a class is BOTH @Reflected AND has @Indexed-meta annotations. */
+    private final java.util.Set<String> processedTypes = new LinkedHashSet<>();
 
     private Messager messager;
     private boolean enabled;
@@ -149,6 +154,96 @@ public class DirectBinderGenerator extends AbstractProcessor {
                 processReflectedType(type, members);
             }
         }
+
+        // Pass 2: auto-promote classes carrying any @Indexed-meta annotation
+        // (class-level OR on any member). This closes the "index says yes,
+        // descriptor says no" inconsistency where a class is indexed by the
+        // scanner (via @Indexed-marked annotations like @ChildContext,
+        // @Expression, @MutexFactory, …) but has no AOTClass_* because it
+        // forgot to add @Reflected. The framework instantiates / introspects
+        // these classes at runtime; without a full descriptor they crash on
+        // missing constructors / methods in pure-AOT mode.
+        for (Element root : roundEnv.getRootElements()) {
+            if (root instanceof TypeElement type) {
+                autoPromoteIfIndexed(type);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * If {@code type} has any class-level or member-level annotation that is
+     * itself meta-annotated with {@code @Indexed}, and it hasn't been processed
+     * already (via explicit {@code @Reflected} or a prior round), generates a
+     * full descriptor with broad-coverage defaults
+     * ({@code queryAllDeclaredConstructors=true, queryAllDeclaredMethods=true}).
+     */
+    private void autoPromoteIfIndexed(TypeElement type) {
+        String fqn = type.getQualifiedName().toString();
+        if (processedTypes.contains(fqn)) {
+            return;
+        }
+        if (!hasIndexedMetaAnnotation(type)) {
+            return;
+        }
+        MemberInclusion.Flags flags = new MemberInclusion.Flags(
+                true,   // queryAllDeclaredConstructors — needed for @ChildContext etc.
+                false,  // queryAllPublicConstructors
+                true,   // queryAllDeclaredMethods    — needed for @Expression etc.
+                false,  // queryAllPublicMethods
+                false   // allDeclaredFields           — conservative, opt-in via @Reflected
+        );
+        try {
+            processTypeWithFlags(type, Set.of(), flags);
+        } catch (IOException e) {
+            messager.printMessage(Diagnostic.Kind.ERROR,
+                    "[garganttua-aot] Failed to auto-promote AOT class for " + fqn + ": " + e.getMessage(),
+                    type);
+        }
+    }
+
+    private boolean hasIndexedMetaAnnotation(TypeElement type) {
+        // Class-level
+        for (AnnotationMirror am : type.getAnnotationMirrors()) {
+            if (isIndexedMetaAnnotated(am)) {
+                return true;
+            }
+        }
+        // Member-level (methods, fields, constructors)
+        for (Element member : type.getEnclosedElements()) {
+            ElementKind kind = member.getKind();
+            if (kind == ElementKind.METHOD || kind == ElementKind.FIELD
+                    || kind == ElementKind.CONSTRUCTOR) {
+                for (AnnotationMirror am : member.getAnnotationMirrors()) {
+                    if (isIndexedMetaAnnotated(am)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** True if the annotation type itself bears {@code @Indexed}. */
+    private boolean isIndexedMetaAnnotated(AnnotationMirror am) {
+        Element annoElement = am.getAnnotationType().asElement();
+        if (!(annoElement instanceof TypeElement annoTypeElement)) {
+            return false;
+        }
+        // Don't auto-promote on the @Reflected marker itself — it's already
+        // handled by pass 1 with whatever flags the user explicitly chose.
+        String annoName = annoTypeElement.getQualifiedName().toString();
+        if (REFLECTED_ANNOTATION.equals(annoName)) {
+            return false;
+        }
+        for (AnnotationMirror meta : annoTypeElement.getAnnotationMirrors()) {
+            Element metaElement = meta.getAnnotationType().asElement();
+            if (metaElement instanceof TypeElement metaTypeElement
+                    && INDEXED_ANNOTATION.equals(metaTypeElement.getQualifiedName().toString())) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -159,59 +254,73 @@ public class DirectBinderGenerator extends AbstractProcessor {
     }
 
     private void processReflectedType(TypeElement typeElement, Set<Element> explicitMembers) {
-        String qualifiedName = typeElement.getQualifiedName().toString();
+        MemberInclusion.Flags flags = new MemberInclusion.Flags(
+                getAnnotationBooleanValue(typeElement, "queryAllDeclaredConstructors"),
+                getAnnotationBooleanValue(typeElement, "queryAllPublicConstructors"),
+                getAnnotationBooleanValue(typeElement, "queryAllDeclaredMethods"),
+                getAnnotationBooleanValue(typeElement, "queryAllPublicMethods"),
+                getAnnotationBooleanValue(typeElement, "allDeclaredFields"));
         try {
-            MemberInclusion.Flags flags = new MemberInclusion.Flags(
-                    getAnnotationBooleanValue(typeElement, "queryAllDeclaredConstructors"),
-                    getAnnotationBooleanValue(typeElement, "queryAllPublicConstructors"),
-                    getAnnotationBooleanValue(typeElement, "queryAllDeclaredMethods"),
-                    getAnnotationBooleanValue(typeElement, "queryAllPublicMethods"),
-                    getAnnotationBooleanValue(typeElement, "allDeclaredFields"));
-
-            List<VariableElement> fields = MemberInclusion.includedFields(typeElement, flags, explicitMembers);
-            List<ExecutableElement> methods = MemberInclusion.includedMethods(typeElement, flags, explicitMembers);
-            List<ExecutableElement> constructors = MemberInclusion.includedConstructors(typeElement, flags, explicitMembers);
-
-            warnOnRedundantMembers(explicitMembers, flags);
-
-            if (rejectPrivateMembers(fields, methods, constructors)) {
-                // One or more private members → errors already emitted, skip generation
-                return;
-            }
-
-            Map<ExecutableElement, String> methodNames = AOTNaming.methodDescriptorNames(typeElement, methods);
-            Map<ExecutableElement, String> constructorNames = AOTNaming.constructorDescriptorNames(typeElement, constructors);
-
-            // 1. Per-field descriptors
-            for (VariableElement field : fields) {
-                AOTFieldSourceGenerator gen = new AOTFieldSourceGenerator(typeElement, field);
-                writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
-            }
-            // 2. Per-method descriptors
-            for (ExecutableElement method : methods) {
-                AOTMethodSourceGenerator gen = new AOTMethodSourceGenerator(typeElement, method, methodNames.get(method));
-                writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
-            }
-            // 3. Per-constructor descriptors
-            for (ExecutableElement ctor : constructors) {
-                AOTConstructorSourceGenerator gen = new AOTConstructorSourceGenerator(typeElement, ctor, constructorNames.get(ctor));
-                writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
-            }
-            // 4. The class descriptor (refers to the above)
-            AOTClassSourceGenerator classGen = new AOTClassSourceGenerator(
-                    typeElement, fields, methods, methodNames, constructors, constructorNames);
-            writeSource(classGen.getGeneratedQualifiedName(), classGen.generate(), typeElement);
-
-            messager.printMessage(Diagnostic.Kind.NOTE,
-                    "[garganttua-aot] Generated AOT descriptor: " + classGen.getGeneratedQualifiedName());
-
-            writeListingEntry(qualifiedName, classGen.getGeneratedQualifiedName());
-            this.generatedDescriptorFqns.add(classGen.getGeneratedQualifiedName());
+            processTypeWithFlags(typeElement, explicitMembers, flags);
         } catch (IOException e) {
             messager.printMessage(Diagnostic.Kind.ERROR,
-                    "[garganttua-aot] Failed to generate AOT class for " + qualifiedName + ": " + e.getMessage(),
+                    "[garganttua-aot] Failed to generate AOT class for "
+                            + typeElement.getQualifiedName() + ": " + e.getMessage(),
                     typeElement);
         }
+    }
+
+    /**
+     * Shared body used by both the explicit {@code @Reflected} pass and the
+     * auto-promotion pass (Indexed-meta annotations). Idempotent across rounds
+     * via {@link #processedTypes}.
+     */
+    private void processTypeWithFlags(TypeElement typeElement, Set<Element> explicitMembers,
+            MemberInclusion.Flags flags) throws IOException {
+        String qualifiedName = typeElement.getQualifiedName().toString();
+        if (!processedTypes.add(qualifiedName)) {
+            return; // already generated in a previous round
+        }
+
+        List<VariableElement> fields = MemberInclusion.includedFields(typeElement, flags, explicitMembers);
+        List<ExecutableElement> methods = MemberInclusion.includedMethods(typeElement, flags, explicitMembers);
+        List<ExecutableElement> constructors = MemberInclusion.includedConstructors(typeElement, flags, explicitMembers);
+
+        warnOnRedundantMembers(explicitMembers, flags);
+
+        if (rejectPrivateMembers(fields, methods, constructors)) {
+            // One or more private members → errors already emitted, skip generation
+            return;
+        }
+
+        Map<ExecutableElement, String> methodNames = AOTNaming.methodDescriptorNames(typeElement, methods);
+        Map<ExecutableElement, String> constructorNames = AOTNaming.constructorDescriptorNames(typeElement, constructors);
+
+        // 1. Per-field descriptors
+        for (VariableElement field : fields) {
+            AOTFieldSourceGenerator gen = new AOTFieldSourceGenerator(typeElement, field);
+            writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
+        }
+        // 2. Per-method descriptors
+        for (ExecutableElement method : methods) {
+            AOTMethodSourceGenerator gen = new AOTMethodSourceGenerator(typeElement, method, methodNames.get(method));
+            writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
+        }
+        // 3. Per-constructor descriptors
+        for (ExecutableElement ctor : constructors) {
+            AOTConstructorSourceGenerator gen = new AOTConstructorSourceGenerator(typeElement, ctor, constructorNames.get(ctor));
+            writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
+        }
+        // 4. The class descriptor (refers to the above)
+        AOTClassSourceGenerator classGen = new AOTClassSourceGenerator(
+                typeElement, fields, methods, methodNames, constructors, constructorNames);
+        writeSource(classGen.getGeneratedQualifiedName(), classGen.generate(), typeElement);
+
+        messager.printMessage(Diagnostic.Kind.NOTE,
+                "[garganttua-aot] Generated AOT descriptor: " + classGen.getGeneratedQualifiedName());
+
+        writeListingEntry(qualifiedName, classGen.getGeneratedQualifiedName());
+        this.generatedDescriptorFqns.add(classGen.getGeneratedQualifiedName());
     }
 
     /**

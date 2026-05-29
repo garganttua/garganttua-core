@@ -310,6 +310,112 @@ class DirectBinderGeneratorTest {
                 () -> "expected a redundancy WARNING; got: " + diagSummary(r));
     }
 
+    // --- Auto-promotion: classes carrying @Indexed-meta annotations ---
+
+    @Test
+    void classLevelIndexedMetaAnnotationTriggersAutoPromotion(@TempDir Path tmp) throws IOException {
+        // @Indexed-meta annotation at the class level → AOTClass_* generated
+        // even without explicit @Reflected. This is the structural fix that
+        // ends the "framework class needs @Reflected too" reporting loop.
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Indexed;
+
+                @Indexed
+                @interface MyMarker {}
+
+                @MyMarker
+                public class AutoPromoted {
+                    public AutoPromoted() {}
+                    public void doIt() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.AutoPromoted", src);
+        assertCompiled(r);
+        assertTrue(Files.exists(r.outputDir.resolve("sample/AOTClass_AutoPromoted.java")),
+                () -> "expected AOTClass_AutoPromoted.java to be generated; diagnostics: " + diagSummary(r));
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_AutoPromoted.java"));
+        // queryAllDeclaredConstructors + queryAllDeclaredMethods defaults
+        assertFalse(aotClass.contains("new AOTConstructor[0]"),
+                () -> "expected at least one constructor; got: " + aotClass);
+        assertFalse(aotClass.contains("new AOTMethod[0]"),
+                () -> "expected at least one method; got: " + aotClass);
+    }
+
+    @Test
+    void methodLevelIndexedMetaAnnotationTriggersAutoPromotion(@TempDir Path tmp) throws IOException {
+        // @Indexed-meta annotation at the method level → AOTClass_* generated
+        // even without class-level @Reflected. Covers the @Expression /
+        // @Step / @Catch family of methods on framework utility classes.
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Indexed;
+                import java.lang.annotation.ElementType;
+                import java.lang.annotation.Target;
+
+                @Indexed
+                @Target(ElementType.METHOD)
+                @interface MyMethodMarker {}
+
+                public class Utils {
+                    @MyMethodMarker
+                    public static void marked() {}
+                    public static void unmarked() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Utils", src);
+        assertCompiled(r);
+        assertTrue(Files.exists(r.outputDir.resolve("sample/AOTClass_Utils.java")),
+                () -> "expected AOTClass_Utils.java to be generated; diagnostics: " + diagSummary(r));
+    }
+
+    @Test
+    void classWithNoIndexedAnnotationIsNotAutoPromoted(@TempDir Path tmp) throws IOException {
+        // Negative test: a regular class with no @Reflected and no indexed
+        // annotation must NOT get a descriptor.
+        String src = """
+                package sample;
+                public class Plain {
+                    public Plain() {}
+                    public void hello() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Plain", src);
+        assertCompiled(r);
+        assertFalse(Files.exists(r.outputDir.resolve("sample/AOTClass_Plain.java")),
+                "no AOTClass_* should be generated for a class without any indexed annotation");
+    }
+
+    @Test
+    void explicitReflectedTakesPrecedenceOverAutoPromote(@TempDir Path tmp) throws IOException {
+        // A class that is BOTH @Reflected AND has @Indexed-meta annotations
+        // must only be processed once (user's @Reflected flags win).
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Indexed;
+                import com.garganttua.core.reflection.annotations.Reflected;
+
+                @Indexed
+                @interface MyMarker {}
+
+                @Reflected
+                @MyMarker
+                public class Both {
+                    public Both() {}
+                    public void m() {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Both", src);
+        assertCompiled(r);
+        // Only one AOTClass file: @Reflected without query flags → empty arrays.
+        // (If both passes processed it, the auto-promote pass would have used
+        // queryAllDeclaredConstructors/Methods=true; presence of empty arrays
+        // proves only the @Reflected pass fired.)
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_Both.java"));
+        assertTrue(aotClass.contains("new AOTConstructor[0]"),
+                () -> "@Reflected without queryAll* must win — expected empty constructors; got: " + aotClass);
+    }
+
     @Test
     void noFlagsAndNoExplicitMembersProducesEmptyArrays(@TempDir Path tmp) throws IOException {
         String src = """
