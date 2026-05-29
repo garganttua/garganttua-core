@@ -289,6 +289,47 @@ public final class CoreInfrastructureSeed {
         registerClass(java.lang.Void.class);
         registerClass(java.util.Optional.class);
         registerClass(java.util.UUID.class);
+        // Primitive wrapper completion
+        registerClass(java.lang.Character.class);
+        registerClass(java.lang.Short.class);
+        registerClass(java.lang.Byte.class);
+        // JDK number — domain-model essentials
+        registerClass(java.math.BigDecimal.class);
+        registerClass(java.math.BigInteger.class);
+        // JDK time — user DTOs and entities pervasively use these
+        registerClass(java.time.Instant.class);
+        registerClass(java.time.LocalDate.class);
+        registerClass(java.time.LocalDateTime.class);
+        registerClass(java.time.LocalTime.class);
+        registerClass(java.time.OffsetDateTime.class);
+        registerClass(java.time.ZonedDateTime.class);
+        registerClass(java.time.Duration.class);
+        registerClass(java.time.Period.class);
+        // JDK util
+        registerClass(java.util.Date.class);
+        registerClass(java.util.Locale.class);
+        registerClass(java.util.TimeZone.class);
+        // JDK collection interface completion
+        registerInterface(java.util.Queue.class);
+        registerInterface(java.util.Deque.class);
+        registerInterface(java.util.SortedSet.class);
+        registerInterface(java.util.NavigableSet.class);
+        registerInterface(java.util.SortedMap.class);
+        registerInterface(java.util.NavigableMap.class);
+        // JDK collection implementations — user DTOs frequently declare these
+        // as concrete types (List<X> field with new ArrayList<>() default, etc.).
+        registerClass(java.util.ArrayList.class);
+        registerClass(java.util.LinkedList.class);
+        registerClass(java.util.HashMap.class);
+        registerClass(java.util.LinkedHashMap.class);
+        registerClass(java.util.TreeMap.class);
+        registerClass(java.util.HashSet.class);
+        registerClass(java.util.LinkedHashSet.class);
+        registerClass(java.util.TreeSet.class);
+        registerClass(java.util.ArrayDeque.class);
+        // JDK meta-annotation surface — IAnnotatedElement.getDeclaredAnnotationsByType
+        // walks @Repeatable to find container annotations.
+        registerClass(java.lang.annotation.Repeatable.class);
         // Discover higher-layer-framework seeds (garganttua-api, -events, …)
         // BEFORE the user-generated AOTClass_* descriptors load — those
         // descriptors may reference framework-public types whose descriptors
