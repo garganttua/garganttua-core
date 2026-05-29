@@ -45,6 +45,15 @@
                   <artifactId>garganttua-native-commons</artifactId>
                   <scope>provided</scope>
             </dependency>
+            <!-- Optional: ships RuntimeInfrastructureSeed discovered via the
+                 IAOTInfrastructureSeed SPI. Absence at runtime → seed is
+                 silently skipped, no overhead in runtime-only mode. -->
+            <dependency>
+                  <groupId>com.garganttua.core</groupId>
+                  <artifactId>garganttua-aot-commons</artifactId>
+                  <version>${project.version}</version>
+                  <optional>true</optional>
+            </dependency>
             <dependency>
                   <groupId>com.github.f4b6a3</groupId>
                   <artifactId>uuid-creator</artifactId>

@@ -60,6 +60,17 @@
             <artifactId>garganttua-injection</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- Optional: only pulled when the consumer's app ships an AOT pipeline.
+             ConfigurationInfrastructureSeed is discovered via ServiceLoader on
+             IAOTInfrastructureSeed — if aot-commons isn't on the runtime
+             classpath, the seed class fails to load and ServiceLoader skips
+             it gracefully. -->
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-aot-commons</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
 
     </dependencies>
 </project>

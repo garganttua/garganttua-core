@@ -39,6 +39,7 @@ The module deliberately offers **only the primitives** — aggregators, metrics 
  - `com.garganttua.core:garganttua-expression`
  - `com.garganttua.core:garganttua-condition`
  - `com.garganttua.core:garganttua-supply`
+ - `com.garganttua.core:garganttua-aot-commons:${project.version}`
  - `com.garganttua.core:garganttua-runtime-reflection:test`
  - `com.garganttua.core:garganttua-reflections:test`
 

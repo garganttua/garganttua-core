@@ -16,14 +16,96 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 import com.garganttua.core.aot.commons.AOTRegistry;
+import com.garganttua.core.aot.commons.IAOTInfrastructureSeed;
+import com.garganttua.core.aot.commons.IAOTRegistry;
+import com.garganttua.core.aot.commons.IAOTSeedContext;
 import com.garganttua.core.aot.commons.IAOTSelfRegistering;
+
+import jakarta.annotation.Priority;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
+import com.garganttua.core.crypto.IHash;
+import com.garganttua.core.crypto.IKey;
+import com.garganttua.core.crypto.IKeyAlgorithm;
+import com.garganttua.core.crypto.IKeyRealm;
+import com.garganttua.core.crypto.IKeyRealmBuilder;
+import com.garganttua.core.dsl.annotations.Scan;
+import com.garganttua.core.dsl.dependency.DependsOn;
+import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.injection.annotations.BeanProvider;
+import com.garganttua.core.injection.annotations.ChildContext;
+import com.garganttua.core.injection.annotations.Fixed;
+import com.garganttua.core.injection.annotations.Null;
+import com.garganttua.core.injection.annotations.Property;
+import com.garganttua.core.injection.annotations.PropertyProvider;
+import com.garganttua.core.injection.annotations.Prototype;
+import com.garganttua.core.injection.annotations.Provider;
+import com.garganttua.core.injection.annotations.Resolver;
+import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.mapper.annotations.FieldMappingRules;
+import com.garganttua.core.mapper.annotations.MappingIgnore;
+import com.garganttua.core.mapper.annotations.ObjectMappingRule;
+import com.garganttua.core.mapper.annotations.ObjectMappingRules;
+import com.garganttua.core.mutex.annotations.Mutex;
+import com.garganttua.core.mutex.annotations.MutexFactory;
+import com.garganttua.core.reflection.annotations.IAnnotationIndex;
+import com.garganttua.core.reflection.annotations.Indexed;
+import com.garganttua.core.reflection.annotations.Reflected;
+import com.garganttua.core.reflection.annotations.ReflectedBuilder;
+import com.garganttua.core.runtime.annotations.Catch;
+import com.garganttua.core.runtime.annotations.Code;
+import com.garganttua.core.runtime.annotations.Condition;
+import com.garganttua.core.runtime.annotations.Context;
+import com.garganttua.core.runtime.annotations.ExceptionMessage;
+import com.garganttua.core.runtime.annotations.FallBack;
+import com.garganttua.core.runtime.annotations.Input;
+import com.garganttua.core.runtime.annotations.OnException;
+import com.garganttua.core.runtime.annotations.Operation;
+import com.garganttua.core.runtime.annotations.Output;
+import com.garganttua.core.runtime.annotations.RuntimeDefinition;
+import com.garganttua.core.runtime.annotations.Step;
+import com.garganttua.core.runtime.annotations.Steps;
+import com.garganttua.core.runtime.annotations.Synchronized;
+import com.garganttua.core.runtime.annotations.Variable;
+import com.garganttua.core.runtime.annotations.Variables;
+import com.garganttua.core.script.annotations.ScriptDefinition;
+import com.garganttua.core.workflow.annotations.WorkflowDefinition;
+import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.injection.IBeanProvider;
+import com.garganttua.core.injection.IBeanQuery;
+import com.garganttua.core.injection.IBeanQueryBuilder;
+import com.garganttua.core.injection.IBeanSupplier;
+import com.garganttua.core.injection.IContextualBeanSupplier;
+import com.garganttua.core.injection.IElementResolver;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
+import com.garganttua.core.injection.IInjectionChildContextFactory;
+import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.IInjectionContextSupply;
+import com.garganttua.core.injection.IPropertyProvider;
+import com.garganttua.core.injection.IPropertySupplier;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.observability.dsl.IObservabilityBuilder;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
+import com.garganttua.core.runtime.IDomainRuntime;
+import com.garganttua.core.runtime.IEventRuntime;
+import com.garganttua.core.runtime.IRuntime;
+import com.garganttua.core.runtime.IRuntimeContext;
+import com.garganttua.core.runtime.IRuntimeExecutor;
+import com.garganttua.core.runtime.IRuntimeResult;
+import com.garganttua.core.runtime.IRuntimeStep;
+import com.garganttua.core.runtime.IRuntimeStepCatch;
+import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
+import com.garganttua.core.runtime.IRuntimeStepMethodBinder;
+import com.garganttua.core.runtime.IRuntimeStepOnException;
+import com.garganttua.core.runtime.IRuntimeStepPipe;
+import com.garganttua.core.runtime.IRuntimes;
 import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.script.dsl.IScriptsBuilder;
 import com.garganttua.core.workflow.dsl.IWorkflowsBuilder;
@@ -85,6 +167,110 @@ public final class CoreInfrastructureSeed {
         registerInterface(IWorkflowsBuilder.class);
         registerInterface(IConditionBuilder.class);
         registerInterface(IInjectableElementResolverBuilder.class);
+        // Full injection.* public surface — DI infrastructure interfaces
+        // routinely resolved by framework wiring at static-init time.
+        registerInterface(IBeanFactory.class);
+        registerInterface(IBeanProvider.class);
+        registerInterface(IBeanQuery.class);
+        registerInterface(IBeanQueryBuilder.class);
+        registerInterface(IBeanSupplier.class);
+        registerInterface(IContextualBeanSupplier.class);
+        registerInterface(IElementResolver.class);
+        registerInterface(IInjectableElementResolver.class);
+        registerInterface(IInjectionChildContextFactory.class);
+        registerInterface(IInjectionContext.class);
+        registerInterface(IInjectionContextSupply.class);
+        registerInterface(IPropertyProvider.class);
+        registerInterface(IPropertySupplier.class);
+        // Full runtime.* public surface — workflow-engine interfaces referenced
+        // by user @Reflected runtime definitions, fallback binders, etc.
+        registerInterface(IRuntime.class);
+        registerInterface(IRuntimes.class);
+        registerInterface(IRuntimeContext.class);
+        registerInterface(IRuntimeExecutor.class);
+        registerInterface(IRuntimeResult.class);
+        registerInterface(IRuntimeStep.class);
+        registerInterface(IRuntimeStepCatch.class);
+        registerInterface(IRuntimeStepFallbackBinder.class);
+        registerInterface(IRuntimeStepMethodBinder.class);
+        registerInterface(IRuntimeStepOnException.class);
+        registerInterface(IRuntimeStepPipe.class);
+        registerInterface(IDomainRuntime.class);
+        registerInterface(IEventRuntime.class);
+        // Crypto API surface (commons-level) — user code resolves IKey at
+        // static-init time for signing/encrypting fields, plus the sibling
+        // interfaces of the same realm.
+        registerInterface(IKey.class);
+        registerInterface(IHash.class);
+        registerInterface(IKeyAlgorithm.class);
+        registerInterface(IKeyRealm.class);
+        registerInterface(IKeyRealmBuilder.class);
+        // Framework-public annotation surface (commons) — user-side @Reflected
+        // descriptors reference these by class literal when materialising
+        // their declared-annotation arrays.
+        registerClass(Expression.class);
+        registerClass(Reflected.class);
+        registerClass(Indexed.class);
+        registerClass(ReflectedBuilder.class);
+        registerClass(BeanProvider.class);
+        registerClass(ChildContext.class);
+        registerClass(Fixed.class);
+        registerClass(Null.class);
+        registerClass(Property.class);
+        registerClass(PropertyProvider.class);
+        registerClass(Prototype.class);
+        registerClass(Provider.class);
+        registerClass(Resolver.class);
+        // Reflection-side helper interface, surfaces in some indexed-discovery
+        // paths.
+        registerInterface(IAnnotationIndex.class);
+        // Jakarta nullability markers — referenced by user @Reflected classes
+        // as parameter / field / method annotations.
+        registerClass(jakarta.annotation.Nullable.class);
+        registerClass(jakarta.annotation.Nonnull.class);
+        // JSR-330 (javax.inject) — DI annotation surface. The framework
+        // indexes these by default; user code uses them on constructors,
+        // fields, methods, and as meta-annotations for custom qualifiers.
+        registerClass(javax.inject.Inject.class);
+        registerClass(javax.inject.Named.class);
+        registerClass(javax.inject.Qualifier.class);
+        registerClass(javax.inject.Scope.class);
+        registerClass(javax.inject.Singleton.class);
+        registerInterface(javax.inject.Provider.class);
+        // Bootstrap / DSL / dependency annotations
+        registerClass(Bootstrap.class);
+        registerClass(Scan.class);
+        registerClass(DependsOn.class);
+        // Mapper annotations — user DTOs frequently carry these.
+        registerClass(FieldMappingRule.class);
+        registerClass(FieldMappingRules.class);
+        registerClass(MappingIgnore.class);
+        registerClass(ObjectMappingRule.class);
+        registerClass(ObjectMappingRules.class);
+        // Mutex annotations
+        registerClass(Mutex.class);
+        registerClass(MutexFactory.class);
+        // Runtime annotations — full workflow-engine annotation set.
+        registerClass(Catch.class);
+        registerClass(Code.class);
+        registerClass(Condition.class);
+        registerClass(Context.class);
+        registerClass(com.garganttua.core.runtime.annotations.Exception.class);
+        registerClass(ExceptionMessage.class);
+        registerClass(FallBack.class);
+        registerClass(Input.class);
+        registerClass(OnException.class);
+        registerClass(Operation.class);
+        registerClass(Output.class);
+        registerClass(RuntimeDefinition.class);
+        registerClass(Step.class);
+        registerClass(Steps.class);
+        registerClass(Synchronized.class);
+        registerClass(Variable.class);
+        registerClass(Variables.class);
+        // Script / Workflow definition markers
+        registerClass(ScriptDefinition.class);
+        registerClass(WorkflowDefinition.class);
         // JDK collection interfaces used by framework builder return types
         // (e.g. RuntimesBuilder produces a Map<String, IRuntime<?,?>>, etc.).
         registerInterface(java.util.Map.class);
@@ -103,10 +289,67 @@ public final class CoreInfrastructureSeed {
         registerClass(java.lang.Void.class);
         registerClass(java.util.Optional.class);
         registerClass(java.util.UUID.class);
+        // Discover higher-layer-framework seeds (garganttua-api, -events, …)
+        // BEFORE the user-generated AOTClass_* descriptors load — those
+        // descriptors may reference framework-public types whose descriptors
+        // come from these seeds.
+        runExtensionSeeds();
         // Force-load every AOTClass_* generated by the annotation processor so
         // their static initialisers self-register into AOTRegistry.
         loadGeneratedDescriptors();
         seeded = true;
+    }
+
+    /**
+     * Runs every {@link IAOTInfrastructureSeed} discovered via ServiceLoader,
+     * sorted by {@link Priority} (higher first, default 0). Exceptions in one
+     * seed don't prevent others from running — they're logged to stderr.
+     */
+    private static void runExtensionSeeds() {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+            cl = CoreInfrastructureSeed.class.getClassLoader();
+        }
+        IAOTSeedContext ctx = new SeedContext(AOTRegistry.getInstance());
+        try {
+            List<IAOTInfrastructureSeed> seeds = new ArrayList<>();
+            for (IAOTInfrastructureSeed seed : java.util.ServiceLoader.load(IAOTInfrastructureSeed.class, cl)) {
+                seeds.add(seed);
+            }
+            seeds.sort(Comparator.comparingInt(CoreInfrastructureSeed::readPriority).reversed());
+            for (IAOTInfrastructureSeed seed : seeds) {
+                try {
+                    seed.seed(ctx);
+                } catch (Throwable t) {
+                    System.err.println("[CoreInfrastructureSeed] Extension seed "
+                            + seed.getClass().getName() + " failed: " + t);
+                }
+            }
+        } catch (java.util.ServiceConfigurationError e) {
+            System.err.println("[CoreInfrastructureSeed] ServiceLoader for IAOTInfrastructureSeed failed: "
+                    + e.getMessage());
+        }
+    }
+
+    private static int readPriority(Object svc) {
+        Priority p = svc.getClass().getAnnotation(Priority.class);
+        return p == null ? 0 : p.value();
+    }
+
+    /**
+     * Adapts the static seed helpers in this class to the public
+     * {@link IAOTSeedContext} contract so extension seeds don't need to know
+     * about {@link AOTClass}.
+     */
+    private record SeedContext(IAOTRegistry registry) implements IAOTSeedContext {
+        @Override
+        public void registerClass(Class<?> type) {
+            CoreInfrastructureSeed.registerClass(type);
+        }
+        @Override
+        public void registerInterface(Class<?> type) {
+            CoreInfrastructureSeed.registerInterface(type);
+        }
     }
 
     /**

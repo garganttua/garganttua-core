@@ -43,6 +43,7 @@ The Runtime framework enables you to define **execution pipelines** where steps 
  - `com.garganttua.core:garganttua-runtime-reflection:test`
  - `com.garganttua.core:garganttua-reflections:test`
  - `com.garganttua.core:garganttua-native-commons:provided`
+ - `com.garganttua.core:garganttua-aot-commons:${project.version}`
  - `com.github.f4b6a3:uuid-creator:5.0.0`
  - `org.jfree:jfreechart:1.5.4:test`
  - `com.github.librepdf:openpdf:1.3.40:test`

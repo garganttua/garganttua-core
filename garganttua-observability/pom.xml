@@ -30,6 +30,15 @@
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-supply</artifactId>
         </dependency>
+        <!-- Optional: only pulled when consumer ships an AOT pipeline.
+             ObservabilityInfrastructureSeed is discovered via the
+             IAOTInfrastructureSeed SPI. -->
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-aot-commons</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-runtime-reflection</artifactId>
