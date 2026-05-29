@@ -7,6 +7,7 @@ import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.workflow.IWorkflow;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Builder for a registry of named {@link IWorkflow workflows}.
@@ -25,6 +26,7 @@ import com.garganttua.core.workflow.IWorkflow;
  *
  * @since 2.0.0-ALPHA02
  */
+@Reflected
 public interface IWorkflowsBuilder
         extends IAutomaticBuilder<IWorkflowsBuilder, Map<String, IWorkflow>>,
                 IObservableBuilder<IWorkflowsBuilder, Map<String, IWorkflow>>,

@@ -10,6 +10,7 @@ import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.nativve.INativeBuilder;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Builder interface for constructing dependency injection contexts using a fluent DSL.
@@ -47,6 +48,7 @@ import com.garganttua.core.reflection.IClass;
  * @see IPropertyProviderBuilder
  * @see IAutomaticBuilder
  */
+@Reflected
 public interface IInjectionContextBuilder extends INativeBuilder<IInjectionContextBuilder, IInjectionContext>,
         IObservableBuilder<IInjectionContextBuilder, IInjectionContext>,
         IDependentBuilder<IInjectionContextBuilder, IInjectionContext> {

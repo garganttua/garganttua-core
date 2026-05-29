@@ -8,7 +8,9 @@ import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
+@Reflected
 public interface IExpressionContextBuilder extends IAutomaticBuilder<IExpressionContextBuilder, IExpressionContext>, IPackageableBuilder<IExpressionContextBuilder, IExpressionContext>, IDependentBuilder<IExpressionContextBuilder, IExpressionContext>, IObservableBuilder<IExpressionContextBuilder, IExpressionContext> {
 
     /**

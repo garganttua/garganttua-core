@@ -73,7 +73,13 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
 
-    <!-- Direct Binder Generation: set to false to disable compile-time binder generation -->
+    <!-- Direct Binder Generation: AOT descriptors are produced consumer-side
+         (the framework can't generate descriptors for its own infrastructure
+         types because the resulting AOTClass_* sources depend on
+         garganttua-aot-commons which itself depends on garganttua-commons —
+         circular). Leave false in the framework build; downstream apps that
+         want AOT mode flip this in their own build alongside the
+         garganttua-aot-maven-plugin. -->
     <garganttua.direct.binders>false</garganttua.direct.binders>
   </properties>
   <dependencyManagement>

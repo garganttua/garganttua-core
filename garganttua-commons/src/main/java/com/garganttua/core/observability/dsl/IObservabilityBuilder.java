@@ -8,6 +8,7 @@ import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservabilityBinding;
 import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Root builder for declaring {@link IObserver}s with optional per-subscription
@@ -48,6 +49,7 @@ import com.garganttua.core.observability.ObservableEvent;
  *
  * @since 2.0.0-ALPHA02
  */
+@Reflected
 public interface IObservabilityBuilder
         extends IAutomaticBuilder<IObservabilityBuilder, ObservabilityBinding>,
                 IObservableBuilder<IObservabilityBuilder, ObservabilityBinding>,

@@ -4,7 +4,9 @@ import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.IReflectionProvider;
+import com.garganttua.core.reflection.annotations.Reflected;
 
+@Reflected
 public interface IReflectionBuilder extends IObservableBuilder<IReflectionBuilder, IReflection> {
 
     IReflectionBuilder withProvider(IReflectionProvider provider);

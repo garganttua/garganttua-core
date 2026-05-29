@@ -15,6 +15,16 @@ import jakarta.annotation.Priority;
 @Priority(20)
 public class AOTReflectionProvider implements IReflectionProvider {
 
+    static {
+        // Seed AOTRegistry with descriptors for the framework's public
+        // infrastructure interfaces — Bootstrap's static init resolves
+        // them via IClass.getClass(...) before user code runs, and the
+        // consumer-side annotation processor can't see types from JAR
+        // dependencies. Without this seed an AOT-only app crashes at
+        // `new Bootstrap()`.
+        CoreInfrastructureSeed.bootstrap();
+    }
+
     @Override
     public <T> IClass<T> getClass(Class<T> clazz) {
         return AOTRegistry.getInstance().<T>get(clazz.getName())

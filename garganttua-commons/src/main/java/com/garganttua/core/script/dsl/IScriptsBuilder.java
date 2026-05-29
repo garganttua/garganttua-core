@@ -5,6 +5,7 @@ import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.script.IScriptingEnvironment;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Bootstrap-discoverable builder that produces the script layer's public
@@ -26,6 +27,7 @@ import com.garganttua.core.script.IScriptingEnvironment;
  *
  * @since 2.0.0-ALPHA02
  */
+@Reflected
 public interface IScriptsBuilder
         extends IAutomaticBuilder<IScriptsBuilder, IScriptingEnvironment>,
                 IObservableBuilder<IScriptsBuilder, IScriptingEnvironment>,

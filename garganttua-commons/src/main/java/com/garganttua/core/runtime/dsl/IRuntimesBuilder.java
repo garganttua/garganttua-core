@@ -9,6 +9,7 @@ import com.garganttua.core.dsl.IPackageableBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntime;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Builder for creating multiple runtime instances programmatically.
@@ -67,6 +68,7 @@ import com.garganttua.core.runtime.IRuntime;
  * @see IRuntime
  * @see com.garganttua.core.runtime.annotations.RuntimeDefinition
  */
+@Reflected
 public interface IRuntimesBuilder
                 extends IAutomaticBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>,
                         IObservableBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>,

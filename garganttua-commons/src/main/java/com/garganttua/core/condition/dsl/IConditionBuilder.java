@@ -6,6 +6,7 @@ import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
  * Builder interface for constructing condition expressions using a fluent DSL.
@@ -126,6 +127,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
  * @see com.garganttua.core.dsl.IBuilder
  * @see com.garganttua.core.supply.ISupplier
  */
+@Reflected
 public interface IConditionBuilder extends ISupplierBuilder<ISupplier<Boolean>, ICondition> {
 
     @SuppressWarnings("unchecked")
