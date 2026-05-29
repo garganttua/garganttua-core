@@ -18,6 +18,8 @@ The **garganttua-script** module provides a scripting language engine for compos
 - **Synchronization** - Mutex-based synchronization for concurrent access control
 - **Time Measurement** - Measure execution time and convert time units
 - **Comments** - Single-line (`//`, `#`) and multi-line (`/* */`) comment support
+- **Bootstrap-discoverable** - `ScriptsBuilder` (`@Bootstrap`) auto-detects `@ScriptDefinition` beans, exposes an `IScriptingEnvironment` as a DI bean, and surfaces stats in the startup summary
+- **Thread-safe pre-compilation** - `IScriptingEnvironment.precompile(source, presetVars)` returns an `ICompiledScript` that can be `execute()`-d concurrently across threads without re-parsing or re-building the runtime
 
 ## Installation
 
@@ -176,9 +178,12 @@ result <- :processOrder(order) -> 200
 
 ### Core API
 
-### IScript
+### IScript (mutable, single-thread)
 
-The main interface for loading, compiling, and executing scripts:
+The main interface for loading, compiling, and executing scripts in a
+single-threaded fashion. Each `IScript` instance carries mutable state
+(last-output, last-exception, last-variables) so do NOT share an instance
+across concurrent calls.
 
 ```java
 IScript script = ...;
@@ -200,6 +205,60 @@ int exitCode = script.execute(args);
 
 // Retrieve variables after execution
 Optional<String> result = script.getVariable("result", String.class);
+```
+
+### IScriptingEnvironment (Bootstrap-injected factory)
+
+`ScriptsBuilder` produces an `IScriptingEnvironment` and exposes it as a DI
+bean. It encapsulates the dependencies every script needs (expression
+context, runtimes-builder factory, class-loader manager), so transient
+consumers (Workflow, REPL, CLI, tests) don't have to wire those by hand.
+
+```java
+@Inject
+private IScriptingEnvironment env;
+
+// Spawn a fresh, mutable IScript per call:
+IScript s = env.newScript();
+s.load(source); s.compile(); s.execute(args);
+
+// OR — pre-compile once and execute concurrently many times:
+ICompiledScript hot = env.precompile(source, Map.of("apiUrl", "https://..."));
+```
+
+### ICompiledScript (immutable, thread-safe)
+
+Returned by `IScriptingEnvironment.precompile`. Wraps an already-built
+`IRuntime`; every `execute()` call produces its own `IRuntimeContext` and
+returns a fresh, immutable `IScriptExecutionResult`. Safe to share across
+threads.
+
+```java
+ICompiledScript hot = env.precompile(source, Map.of());
+IScriptExecutionResult res = hot.execute("arg0", "arg1");
+res.code();                 // exit code
+res.variables();            // immutable variable snapshot
+res.output();               // Optional<Object>
+res.exception();            // Optional<Throwable>
+res.hasAborted();           // boolean
+```
+
+### @ScriptDefinition (declarative scripts auto-discovered)
+
+Annotate a class with `@ScriptDefinition(name = "...")` and implement
+`IScriptDefinition.source()` — `ScriptsBuilder.doAutoDetectionWithDependency`
+picks it up from the `IInjectionContext`, compiles it, and registers the
+resulting `IScript` as a DI bean qualified by name. Surfaced in the
+Bootstrap "Script Engine" summary section.
+
+```java
+@ScriptDefinition(name = "myHotPath")
+public class MyHotPathScript implements IScriptDefinition {
+    @Override
+    public String source() {
+        return "result <- :process(@0) -> 0";
+    }
+}
 ```
 
 ### Built-in Functions
@@ -310,10 +369,14 @@ result <- print("Hello from script")
 garganttua-script/
 ├── src/main/
 │   ├── java/com/garganttua/core/script/
-│   │   ├── context/           # ScriptContext, ScriptExecutionContext, ScriptRuntimeStep
+│   │   ├── context/           # ScriptContext, ScriptExecutionContext, CompiledScript, CompiledScriptExecutionResult
+│   │   ├── dsl/               # ScriptsBuilder (@Bootstrap), ScriptsBuilderFactory (SPI)
 │   │   ├── functions/         # Built-in functions (include, retry, sync, time, control flow, ...)
 │   │   ├── nodes/             # IScriptNode, StatementNode, StatementGroupNode, ScriptFunction, FunctionDefNode
+│   │   ├── ScriptingEnvironment.java   # IScriptingEnvironment impl + IBootstrapSummaryContributor
 │   │   └── Main.java          # CLI entry point
+│   ├── resources/META-INF/
+│   │   └── services/          # com.garganttua.core.dsl.IBootstrapBuilderFactory → ScriptsBuilderFactory
 │   └── resources/antlr4/
 │       └── Script.g4          # ANTLR4 grammar definition
 └── src/test/                  # Test suite
@@ -334,10 +397,40 @@ garganttua-script/
 
 ### garganttua-workflow
 - Workflow module generates script code from a fluent builder DSL
+- `WorkflowsBuilder` depends on `IScriptsBuilder` so its workflows always
+  receive a fully-wired `IScriptingEnvironment` — Workflow no longer pulls
+  directly on Expression and Runtime layers
 - Uses `include()`, `execute_script()`, `script_variable()` for inter-script communication
 - Supports inline (embedded) and include (file-based) script modes
+- `WorkflowBuilder.precompile(true)` delegates to
+  `IScriptingEnvironment.precompile(...)` for thread-safe hot-path execution
+
+### garganttua-classloader
+- `ScriptContext` takes an `IClassLoaderManager` (not an `IBootstrap`) for
+  JAR hot-loading via `include("foo.jar")`. The script module no longer
+  owns `JarManifestReader` — it lives in `garganttua-classloader`.
+- Bootstrap auto-wires itself as a rebuild hook on the manager, so
+  `include("plugin.jar")` triggers `Bootstrap.withPackage + rebuild`
+  transparently.
 
 ## Tips and best practices
+
+- **Prefer `precompile()` for hot paths** — REST request handlers, batch
+  loops, anything executed > 100×. Saves an ANTLR parse + a fresh
+  `IRuntime` build on every call. Thread-safe out of the box.
+- **Use `@ScriptDefinition` for static scripts** — anything you ship as
+  part of the framework binary. They get auto-detected, auto-compiled,
+  exposed as DI beans and listed in the startup summary.
+- **Reach for `IScript` only when you need mutable state** — variable
+  setters, last-output getters etc. don't exist on `ICompiledScript` by
+  design; if you find yourself wanting them, you probably want a fresh
+  `IScript` per call anyway.
+- **Don't share an `IScript` instance across threads** — last-* fields are
+  per-instance mutable state. Use `IScriptingEnvironment.newScript()` to
+  spawn one per call, or `precompile()` for the thread-safe path.
+- **Plugin JARs auto-discoverable** — declare `Garganttua-Packages` in your
+  plugin JAR's `MANIFEST.MF` and `include("plugin.jar")` will trigger
+  Bootstrap.rebuild automatically (via the classloader hook chain).
 
 ## License
 This module is distributed under the MIT License.

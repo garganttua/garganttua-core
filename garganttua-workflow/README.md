@@ -8,6 +8,10 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
 
 **Key Features:**
 - **Fluent Hierarchical Builder** - Intuitive DSL with `up()` navigation for parent-child relationships
+- **Bootstrap-discoverable plural builder** - `WorkflowsBuilder` (`@Bootstrap`) is the SPI surface; the singular `WorkflowBuilder` is package-private and only reachable via `workflows.workflow(name)`
+- **Declarative auto-detection** - `@WorkflowDefinition` + `IWorkflowDefinition.define(builder)` picked up from the injection context at startup
+- **Thread-safe pre-compilation** - `WorkflowBuilder.precompile(true)` freezes the generated script into an `ICompiledScript` reused across concurrent `execute()` calls
+- **Contributor pattern support** - External modules can push workflows into the builder via `DependencySpec.configureAndStage(IWorkflowsBuilder)` without `WorkflowsBuilder` knowing about them (see `WorkflowContributorPatternTest`)
 - **Dual Script Modes** - Include (runtime file loading) or Inline (embedded content) with auto-detection
 - **Conditional Execution** - `when()` on stages and scripts, using `if()` blocks with lazy evaluation
 - **Input/Output Mapping** - Named and positional variable references with expression support
@@ -18,6 +22,7 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
 - **Function Scope Isolation** - Inline scripts are wrapped in `(...)` groups to prevent name collisions between stages
 - **Script Headers** - Metadata format (`#@workflow ... #@end`) for documentation and introspection
 - **ASCII Visualization** - `describeWorkflow()` renders a workflow cartography
+- **Startup summary integration** - `WorkflowsRegistry` surfaces counts of registered + pre-compiled workflows in the Bootstrap banner
 
 ## Installation
 
@@ -71,13 +76,20 @@ expressionContextBuilder.build();
 
 ### Building a Workflow
 
-Workflows are constructed using a hierarchical fluent builder with `up()` navigation:
+Workflows are constructed via the plural `WorkflowsBuilder` — the singular
+`WorkflowBuilder` is package-private and only reachable through
+`workflows.workflow(name)`. The plural builder is itself
+Bootstrap-discoverable, so in a Bootstrap-driven application you never
+construct it by hand.
+
+#### Standalone usage (tests, scripts, demos)
 
 ```java
-IWorkflow workflow = WorkflowBuilder.create()
+IWorkflow workflow = WorkflowsBuilder.builder()
     .provide(injectionContextBuilder)     // Required: injection context
-    .provide(expressionContextBuilder)    // Required: expression context
-    .name("order-pipeline")
+    .provide(scriptsBuilder)              // Required: provides IScriptingEnvironment
+    .workflow("order-pipeline")
+    .precompile(true)                     // Optional: thread-safe hot-path
     .variable("apiUrl", "https://api.example.com")
     .variable("timeout", 30000)
     .stage("fetch")
@@ -113,10 +125,79 @@ IWorkflow workflow = WorkflowBuilder.create()
 ```
 
 **Key points:**
-- `.provide()` supplies the required contexts (injection + expression). Without them, the build fails.
-- `.variable(name, value)` declares variables accessible to all scripts via `@name`.
-- `.up()` navigates back to the parent builder (script -> stage -> workflow). This is the Hierarchical Builder pattern.
-- `.name()` on a script is used to name the generated internal variables (`_stageName_scriptName_code`, etc.).
+- `.provide()` supplies the injection context + `IScriptsBuilder`. The
+  scripts builder is the gateway to Expression + Runtime layers — Workflow
+  no longer pulls on them directly.
+- `.workflow(name)` opens a child `IWorkflowBuilder` (returns it for fluent
+  chaining; `.up()` brings you back).
+- `.precompile(true)` enables the thread-safe hot-path: the script is
+  parsed + the runtime built ONCE at `.build()` time, reused across every
+  `execute()`. Default is `false` (fresh script per call).
+- `.variable(name, value)` declares variables accessible to all scripts
+  via `@name`.
+- `.up()` navigates back to the parent builder
+  (script → stage → workflow → workflows). Hierarchical Builder pattern.
+- `.name()` on a script is used to name the generated internal variables
+  (`_stageName_scriptName_code`, etc.).
+
+#### Declarative — `@WorkflowDefinition` (auto-discovered)
+
+For workflows shipped with the framework binary, the declarative path skips
+the manual wiring entirely:
+
+```java
+@WorkflowDefinition(name = "order-pipeline")
+public class OrderPipeline implements IWorkflowDefinition {
+    @Override
+    public void define(Object workflowBuilder) {
+        IWorkflowBuilder b = (IWorkflowBuilder) workflowBuilder;
+        b.precompile(true)
+            .stage("fetch").script(...).up()
+            .stage("validate").script(...).up();
+    }
+}
+```
+
+`WorkflowsBuilder.doAutoDetectionWithDependency` queries the DI context for
+classes annotated `@WorkflowDefinition`, opens a child builder via
+`workflows.workflow(ann.name())`, and invokes `define(builder)`. The
+resulting workflow is exposed as a DI bean qualified by name and counted
+in the Bootstrap startup summary.
+
+#### Contributor pattern — module pushes workflows into the builder
+
+A Bootstrap-discoverable module M can contribute workflows to
+`WorkflowsBuilder` without `WorkflowsBuilder` knowing M exists. M declares
+`DependencySpec.configureAndStage(IWorkflowsBuilder, ...)` and pushes
+during the CONFIGURATION phase:
+
+```java
+@Bootstrap
+public class MyContributorBuilder extends AbstractAutomaticDependentBuilder<...> {
+    private static final Set<DependencySpec> DEPS = DependencySpec.configureAndStage(
+        IClass.getClass(IWorkflowsBuilder.class),
+        DependencyStage.BUILD, DependencyKind.BUILT,
+        DependencyRequirement.REQUIRED);
+
+    @Override
+    protected void doConfigureWithDependencyBuilder(IObservableBuilder<?,?> dep) {
+        if (dep instanceof IWorkflowsBuilder wb) {
+            wb.workflow("contributed").stage("greet").script(...).up().up();
+        }
+    }
+
+    @Override
+    protected void doPreBuildWithDependency(Object dep) {
+        if (dep instanceof WorkflowsRegistry reg) {
+            this.contributed = reg.get("contributed");
+        }
+    }
+}
+```
+
+The contribution flows in during CONFIGURATION (Phase 1.5), is built along
+with everything else, then the built registry is delivered to M
+pre-build. See `WorkflowContributorPatternTest` for the full E2E walk.
 
 ### Script Modes
 
@@ -580,7 +661,9 @@ if (result.isSuccess()) {
 garganttua-workflow/
 ├── src/main/java/com/garganttua/core/workflow/
 │   ├── dsl/                  # Fluent builders
-│   │   ├── WorkflowBuilder.java
+│   │   ├── WorkflowsBuilder.java     # plural — @Bootstrap, SPI surface
+│   │   ├── WorkflowsBuilderFactory.java  # SPI factory for IBootstrapBuilderFactory
+│   │   ├── WorkflowBuilder.java      # singular — package-private child opened via workflows.workflow(name)
 │   │   ├── WorkflowStageBuilder.java
 │   │   └── WorkflowScriptBuilder.java
 │   ├── generator/            # Script generation
@@ -589,9 +672,12 @@ garganttua-workflow/
 │   ├── header/               # Script header parsing
 │   │   ├── ScriptHeaderParser.java
 │   │   └── ScriptHeader.java
-│   └── Workflow.java         # Execution engine
+│   ├── WorkflowsRegistry.java        # Map<String,IWorkflow> + IBootstrapSummaryContributor
+│   └── Workflow.java         # Execution engine (precompiled + fresh paths)
+├── src/main/resources/META-INF/services/
+│   └── com.garganttua.core.dsl.IBootstrapBuilderFactory → WorkflowsBuilderFactory
 └── src/test/
-    ├── java/                 # Test suite
+    ├── java/                 # Test suite — includes WorkflowContributorPatternTest, WorkflowPrecompileTest
     └── resources/scripts/    # Test scripts (.gs)
 ```
 
@@ -599,16 +685,19 @@ garganttua-workflow/
 
 | Class | Purpose |
 |:--|:--|
-| `WorkflowBuilder` | Top-level fluent builder for workflow definition |
+| `WorkflowsBuilder` | Plural Bootstrap-discoverable builder; produces `WorkflowsRegistry` |
+| `WorkflowBuilder` | Singular child builder (package-private) opened via `workflows.workflow(name)` |
 | `WorkflowStageBuilder` | Builder for stages — supports `when()`, `wrap()`, `catch_()` |
 | `WorkflowScriptBuilder` | Builder for scripts — supports `when()`, `inline()`, `input()`, `output()`, `catch_()`, `onCode()` |
 | `ScriptGenerator` | Converts builder definitions into script source code. Uses `if()` blocks for conditional execution and `(...)` groups for inline script isolation |
 | `ScriptHeaderParser` | Parses `#@workflow ... #@end` metadata blocks |
-| `Workflow` | Executes pre-generated scripts using ScriptContext |
+| `Workflow` | Executes pre-generated scripts via `IScriptingEnvironment`; routes to precompiled or fresh path |
+| `WorkflowsRegistry` | Immutable `Map<String,IWorkflow>` + `IBootstrapSummaryContributor` (counts precompiled fraction) |
 | `WorkflowResult` | Execution result with variables, outputs, timing, and error info |
 | `WorkflowInput` | Execution input with payload and named parameters |
 | `WorkflowExecutionOptions` | Stage filtering (startFrom, stopAfter, skipStages) |
 | `CodeAction` | Exit code handling: CONTINUE, ABORT, SKIP_STAGE, RETRY |
+| `@WorkflowDefinition` / `IWorkflowDefinition` | Declarative auto-detection contract (commons-side) |
 
 ### Script Generation Rules
 
@@ -628,20 +717,57 @@ garganttua-workflow/
 
 ### garganttua-script
 - Workflows generate Garganttua Script code for execution
-- Uses `ScriptContext` for script loading, compilation, and execution
-- Leverages `include()`, `execute_script()`, `script_variable()` functions
-- Inline scripts are wrapped in `(...)` groups for function scope isolation
+- `WorkflowsBuilder.requireBuilder(IScriptsBuilder)` — every workflow gets a
+  fully-wired `IScriptingEnvironment` injected automatically
+- `WorkflowBuilder.precompile(true)` calls
+  `IScriptingEnvironment.precompile(generatedScript, presetVars)` once at
+  build time → thread-safe `ICompiledScript` reused across concurrent
+  `execute()`
+- Workflow no longer declares direct deps on Expression / Runtime — the
+  chain is `Workflow → Script → {Expression, Runtimes, ClassLoader}`
 
 ### garganttua-expression
 - Expressions in `when()` conditions, input mappings, catch clauses, and code actions
 - Auto-detection of expression functions via `@Expression` annotations
 - `if()` function with lazy `StatementBlock` evaluation for conditional execution
+- Reached transitively through the Scripts layer; not declared as a direct
+  dep by `WorkflowsBuilder` anymore
 
 ### garganttua-injection
-- Required dependency for the expression and runtime context initialization
-- Bean resolution for workflow components
+- `WorkflowsBuilder.require(IInjectionContextBuilder)` — for bean exposure
+  and `@WorkflowDefinition` auto-detection via bean query
+- The built `WorkflowsRegistry` is exposed as a DI bean
+  (`Map<String,IWorkflow>` named "Workflows" + each workflow named by its
+  registry key)
+
+### garganttua-bootstrap
+- `@Bootstrap` on `WorkflowsBuilder` + SPI factory
+  (`META-INF/services/com.garganttua.core.dsl.IBootstrapBuilderFactory`)
+  → auto-discovered by `bootstrap.load()`
+- `WorkflowsRegistry` implements `IBootstrapSummaryContributor` and shows
+  "Workflows registered", "Precompiled workflows", "Workflow names" in the
+  startup banner
 
 ## Tips and best practices
+
+- **Use `precompile(true)` for hot paths** — request handlers, batch jobs,
+  anything executed > 100×. Saves an ANTLR parse + a fresh runtime build
+  per call, thread-safe by design.
+- **Auto-detect with `@WorkflowDefinition`** when the workflow is part of
+  the framework binary — no manual wiring, registry-backed, summary-aware.
+- **Use the contributor pattern** when an external module needs to add
+  workflows to the framework's `WorkflowsBuilder` without `WorkflowsBuilder`
+  importing it (decoupling). See `WorkflowContributorPatternTest`.
+- **`workflowsBuilder.workflow(name)` is idempotent** — calling it twice
+  with the same name returns the same child builder so multiple
+  contributors can pile up stages on a shared workflow.
+- **Stage filtering disables precompile fallback** — when
+  `WorkflowExecutionOptions.hasFiltering()` is active, the generated source
+  changes per call and the cached `ICompiledScript` no longer matches; the
+  workflow transparently falls back to fresh-per-call. Don't precompile
+  workflows you intend to filter heavily.
+- **Avoid `WorkflowBuilder` directly** — it's package-private. The DSL
+  entry point is always `WorkflowsBuilder.builder()....workflow(name)`.
 
 ## License
 
