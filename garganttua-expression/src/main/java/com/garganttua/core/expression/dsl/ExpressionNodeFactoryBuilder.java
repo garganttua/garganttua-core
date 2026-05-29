@@ -77,13 +77,20 @@ public class ExpressionNodeFactoryBuilder<S>
         IMethod m = method();
         IClass<Expression> expressionClass = IClass.getClass(Expression.class);
         Expression nodeInfos = m.getAnnotation(expressionClass);
-        if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
-            this.withName(nodeInfos.name());
-        } else {
+        // Null-safe: builders set up via explicit .method(someMethod) on a
+        // method that is NOT @Expression-annotated end up here too — for them
+        // we just fall back to the method's own name and skip the rest.
+        if (nodeInfos != null) {
+            if (nodeInfos.name() != null && !nodeInfos.name().isBlank()) {
+                this.withName(nodeInfos.name());
+            } else {
+                this.name = m.getName();
+            }
+            if (nodeInfos.description() != null && !nodeInfos.description().isBlank()) {
+                this.withDescription(nodeInfos.description());
+            }
+        } else if (this.name == null || this.name.isBlank()) {
             this.name = m.getName();
-        }
-        if (nodeInfos.description() != null && !nodeInfos.description().isBlank()) {
-            this.withDescription(nodeInfos.description());
         }
         IClass<Nullable> nullableClass = IClass.getClass(Nullable.class);
         IParameter[] params = m.getParameters();
