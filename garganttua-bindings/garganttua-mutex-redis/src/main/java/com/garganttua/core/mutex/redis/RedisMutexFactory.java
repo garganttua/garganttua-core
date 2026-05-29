@@ -14,6 +14,7 @@ import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexStrategy;
 import com.garganttua.core.mutex.annotations.MutexFactory;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Factory implementation for creating {@link RedisMutex} instances.
  *
@@ -83,6 +84,7 @@ import com.garganttua.core.mutex.annotations.MutexFactory;
  */
 @MutexFactory(type = RedisMutex.class)
 @Named("RedisMutexFactory")
+@Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
 public class RedisMutexFactory implements IMutexFactory {
     private static final IDiagnostic log = Diagnostics.of(RedisMutexFactory.class);
 

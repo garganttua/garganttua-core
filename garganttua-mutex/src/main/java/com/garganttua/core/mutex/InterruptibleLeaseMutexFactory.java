@@ -8,6 +8,7 @@ import com.garganttua.core.diagnostic.Diagnostics;
 import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.mutex.annotations.MutexFactory;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Factory implementation for creating {@link InterruptibleLeaseMutex} instances.
  *
@@ -82,6 +83,7 @@ import com.garganttua.core.mutex.annotations.MutexFactory;
  */
 @MutexFactory(type = InterruptibleLeaseMutex.class)
 @Named("InterruptibleLeaseMutexFactory")
+@Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
 public class InterruptibleLeaseMutexFactory implements IMutexFactory {
     private static final IDiagnostic log = Diagnostics.of(InterruptibleLeaseMutexFactory.class);
 

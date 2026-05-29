@@ -11,6 +11,7 @@ import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.annotations.ChildContext;
 import com.garganttua.core.supply.ISupplier;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Factory for creating runtime child contexts.
  *
@@ -22,6 +23,7 @@ import com.garganttua.core.supply.ISupplier;
  * @since 2.0.0-ALPHA01
  */
 @ChildContext
+@Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
 public class RuntimeContextFactory implements IInjectionChildContextFactory<IRuntimeContext<?, ?>> {
     private static final IDiagnostic log = Diagnostics.of(RuntimeContextFactory.class);
 
