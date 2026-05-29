@@ -7,6 +7,8 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 
+import com.garganttua.core.reflection.annotations.Reflected;
+@Reflected(queryAllDeclaredMethods = true)
 public class GreaterOrEqualsCondition<T> implements ICondition {
 
     private final ISupplier<T> supplier1;

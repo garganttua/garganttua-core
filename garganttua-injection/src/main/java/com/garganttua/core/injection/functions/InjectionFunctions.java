@@ -20,6 +20,7 @@ import com.garganttua.core.reflection.IClass;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Expression functions for interacting with the dependency injection context.
  *
@@ -66,6 +67,7 @@ import jakarta.annotation.Nullable;
  * @see IInjectionContext
  * @see BeanReference
  */
+@Reflected(queryAllDeclaredMethods = true)
 public final class InjectionFunctions {
     private static final IDiagnostic log = Diagnostics.of(InjectionFunctions.class);
 

@@ -9,6 +9,7 @@ import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Type converter functions for expression language.
  *
@@ -41,6 +42,7 @@ import jakarta.annotation.Nullable;
  *
  * @since 2.0.0-ALPHA01
  */
+@Reflected(queryAllDeclaredMethods = true)
 public class Expressions {
     private static final IDiagnostic log = Diagnostics.of(Expressions.class);
 

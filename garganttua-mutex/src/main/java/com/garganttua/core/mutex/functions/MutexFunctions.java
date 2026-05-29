@@ -15,6 +15,7 @@ import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Expression functions for mutex-based synchronization.
  *
@@ -46,6 +47,7 @@ import jakarta.annotation.Nullable;
  * @see IMutexManager
  * @see InterruptibleLeaseMutex
  */
+@Reflected(queryAllDeclaredMethods = true)
 public final class MutexFunctions {
     private static final IDiagnostic log = Diagnostics.of(MutexFunctions.class);
 

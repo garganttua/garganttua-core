@@ -5,6 +5,7 @@ import com.garganttua.core.script.nodes.StatementBlock;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Control flow expression functions for the script language.
  *
@@ -16,6 +17,7 @@ import jakarta.annotation.Nullable;
  * <p>This function is used by the workflow {@code ScriptGenerator} for conditional
  * script execution, replacing the previous {@code noop() + pipe} pattern.
  */
+@Reflected(queryAllDeclaredMethods = true)
 public class ControlFlowFunctions {
 
     private ControlFlowFunctions() {

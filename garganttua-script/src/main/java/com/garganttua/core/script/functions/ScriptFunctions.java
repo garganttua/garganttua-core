@@ -22,6 +22,8 @@ import com.garganttua.core.script.context.ScriptExecutionContext;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
+@Reflected(queryAllDeclaredMethods = true)
 public class ScriptFunctions {
     private static final IDiagnostic log = Diagnostics.of(ScriptFunctions.class);
 

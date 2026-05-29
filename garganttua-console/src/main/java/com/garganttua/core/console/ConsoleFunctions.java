@@ -20,12 +20,14 @@ import com.garganttua.core.console.ConsoleExecutionContext.ConsoleContext;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Expression functions for console commands.
  *
  * <p>These functions replace the colon-prefixed commands (e.g., :help)
  * with regular expression calls (e.g., help()).</p>
  */
+@Reflected(queryAllDeclaredMethods = true)
 public class ConsoleFunctions {
     private static final IDiagnostic log = Diagnostics.of(ConsoleFunctions.class);
 

@@ -14,6 +14,8 @@ import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
+@Reflected(queryAllDeclaredMethods = true)
 public class AndCondition implements ICondition {
     private static final IDiagnostic log = Diagnostics.of(AndCondition.class);
 

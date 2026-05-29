@@ -17,6 +17,8 @@ import com.garganttua.core.injection.context.dsl.BeanSupplierBuilder;
 import com.garganttua.core.injection.context.dsl.IBeanSupplierBuilder;
 import com.garganttua.core.reflection.IClass;
 
+import com.garganttua.core.reflection.annotations.Reflected;
+@Reflected(queryAllDeclaredMethods = true)
 public class Beans {
     private static final IDiagnostic log = Diagnostics.of(Beans.class);
 

@@ -10,6 +10,8 @@ import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
+import com.garganttua.core.reflection.annotations.Reflected;
+@Reflected(queryAllDeclaredMethods = true)
 public class NotNullCondition implements ICondition {
     private static final IDiagnostic log = Diagnostics.of(NotNullCondition.class);
 

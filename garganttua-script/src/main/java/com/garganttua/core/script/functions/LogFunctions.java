@@ -6,6 +6,7 @@ import com.garganttua.core.expression.annotations.Expression;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Logging expression functions for Garganttua Script.
  *
@@ -21,6 +22,7 @@ import jakarta.annotation.Nullable;
  * log_error("Failed to connect")
  * </pre>
  */
+@Reflected(queryAllDeclaredMethods = true)
 public class LogFunctions {
 
     private static final IDiagnostic SCRIPT_LOGGER =

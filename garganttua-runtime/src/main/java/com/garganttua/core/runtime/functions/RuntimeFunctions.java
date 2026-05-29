@@ -5,6 +5,7 @@ import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.RuntimeExpressionContext;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Expression functions for accessing the runtime execution context.
  *
@@ -33,6 +34,7 @@ import com.garganttua.core.runtime.RuntimeExpressionContext;
  * @see IRuntimeContext
  * @see RuntimeExpressionContext
  */
+@Reflected(queryAllDeclaredMethods = true)
 public final class RuntimeFunctions {
 
     private RuntimeFunctions() {}

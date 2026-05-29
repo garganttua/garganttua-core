@@ -12,6 +12,7 @@ import com.garganttua.core.observability.ObservableContextHolder.Session;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Script-side instrumentation hook.
  * <p>
@@ -32,6 +33,7 @@ import jakarta.annotation.Nullable;
  *
  * @since 2.0.0-ALPHA02
  */
+@Reflected(queryAllDeclaredMethods = true)
 public class ObservabilityExpressions {
     private static final IDiagnostic log = Diagnostics.of(ObservabilityExpressions.class);
 

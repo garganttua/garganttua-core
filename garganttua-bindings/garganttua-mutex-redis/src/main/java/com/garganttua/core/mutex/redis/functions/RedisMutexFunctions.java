@@ -15,6 +15,7 @@ import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
 
+import com.garganttua.core.reflection.annotations.Reflected;
 /**
  * Expression functions for Redis-based distributed mutex synchronization.
  *
@@ -53,6 +54,7 @@ import jakarta.annotation.Nullable;
  * @see IMutexManager
  * @see RedisMutex
  */
+@Reflected(queryAllDeclaredMethods = true)
 public final class RedisMutexFunctions {
     private static final IDiagnostic log = Diagnostics.of(RedisMutexFunctions.class);
 
