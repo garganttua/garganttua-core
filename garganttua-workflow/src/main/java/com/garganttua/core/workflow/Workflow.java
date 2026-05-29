@@ -108,6 +108,11 @@ public class Workflow implements IWorkflow, IObservable {
     }
 
     @Override
+    public boolean isPrecompiled() {
+        return this.precompiled != null;
+    }
+
+    @Override
     public WorkflowResult execute() {
         return execute(WorkflowInput.empty(), WorkflowExecutionOptions.none());
     }

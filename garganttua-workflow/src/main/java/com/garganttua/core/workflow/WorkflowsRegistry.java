@@ -49,6 +49,10 @@ public class WorkflowsRegistry implements IBootstrapSummaryContributor, Map<Stri
     public Map<String, String> getSummaryItems() {
         Map<String, String> items = new LinkedHashMap<>();
         items.put("Workflows registered", String.valueOf(this.workflows.size()));
+        long precompiled = this.workflows.values().stream()
+                .filter(IWorkflow::isPrecompiled)
+                .count();
+        items.put("Precompiled workflows", String.valueOf(precompiled));
         if (!this.workflows.isEmpty()) {
             String names = String.join(", ", this.workflows.keySet());
             if (names.length() > 50) {

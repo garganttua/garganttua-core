@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
@@ -34,6 +35,10 @@ public class ScriptingEnvironment implements IScriptingEnvironment, IBootstrapSu
     private final Supplier<IRuntimesBuilder> runtimesBuilderFactory;
     private final IClassLoaderManager classLoaderManager;
     private final Map<String, IScript> registry;
+    /** Number of {@link ICompiledScript} produced via {@link #precompile}.
+     *  Long-lived runtimes baked at framework build time (auto-detected
+     *  scripts + WorkflowBuilder.precompile(true) workflows). */
+    private final AtomicInteger precompiledCount = new AtomicInteger();
 
     public ScriptingEnvironment(IExpressionContext expressionContext,
                                 Supplier<IRuntimesBuilder> runtimesBuilderFactory,
@@ -65,7 +70,17 @@ public class ScriptingEnvironment implements IScriptingEnvironment, IBootstrapSu
             }
         }
         ctx.compile();
-        return ctx.toCompiled();
+        ICompiledScript compiled = ctx.toCompiled();
+        this.precompiledCount.incrementAndGet();
+        return compiled;
+    }
+
+    /** @return total number of long-lived compiled scripts produced via
+     *          {@link #precompile(String, Map)} since this environment was
+     *          built. Surfaced in the Bootstrap summary as "Precompiled
+     *          scripts". */
+    public int getPrecompiledCount() {
+        return this.precompiledCount.get();
     }
 
     /** @return immutable view of the auto-detected named script registry. */
@@ -84,6 +99,7 @@ public class ScriptingEnvironment implements IScriptingEnvironment, IBootstrapSu
     public Map<String, String> getSummaryItems() {
         Map<String, String> items = new LinkedHashMap<>();
         items.put("Scripts registered", String.valueOf(this.registry.size()));
+        items.put("Precompiled scripts", String.valueOf(this.precompiledCount.get()));
         items.put("JAR hot-loading", this.classLoaderManager != null ? "enabled" : "disabled");
         if (!this.registry.isEmpty()) {
             String names = String.join(", ", this.registry.keySet());

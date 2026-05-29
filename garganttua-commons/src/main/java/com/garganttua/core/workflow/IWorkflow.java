@@ -75,4 +75,18 @@ public interface IWorkflow {
      * @return the workflow descriptor containing all configuration
      */
     WorkflowDescriptor getDescriptor();
+
+    /**
+     * @return {@code true} if this workflow was built with
+     *         {@code WorkflowBuilder.precompile(true)} — the underlying script
+     *         was parsed and its runtime built once at framework startup and
+     *         is reused across every {@link #execute(WorkflowInput)} call.
+     *         {@code false} if the workflow spawns a fresh script per call
+     *         (the legacy default).
+     *
+     * @since 2.0.0-ALPHA02
+     */
+    default boolean isPrecompiled() {
+        return false;
+    }
 }
