@@ -24,4 +24,23 @@ public interface IScriptingEnvironment {
      *         class-loader manager.
      */
     IScript newScript();
+
+    /**
+     * Parse + compile {@code source} once and return a thread-safe
+     * {@link ICompiledScript} that can be executed concurrently many times
+     * without re-parsing or re-building the underlying runtime.
+     *
+     * <p>Use this for hot-path scripts (per-request handlers, batch loops,
+     * pre-compiled workflows). For one-shot scripts or where you need to
+     * mutate variables between calls, use {@link #newScript()} instead.
+     *
+     * @param source         the .gs source code
+     * @param presetVariables variables baked into every execution (immutable
+     *                        once the compile completes); pass {@code null}
+     *                        or an empty map if none
+     * @return immutable handle ready to {@code execute(args)} repeatedly
+     * @throws ScriptException if parsing or runtime construction fails
+     */
+    ICompiledScript precompile(String source, java.util.Map<String, Object> presetVariables)
+            throws ScriptException;
 }

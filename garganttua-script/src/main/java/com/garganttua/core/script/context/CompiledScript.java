@@ -1,0 +1,84 @@
+package com.garganttua.core.script.context;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import com.garganttua.core.observability.ObservabilityEmitter;
+import com.garganttua.core.observability.ObservableRegistry;
+import com.garganttua.core.runtime.IRuntime;
+import com.garganttua.core.runtime.IRuntimeResult;
+import com.garganttua.core.script.ICompiledScript;
+import com.garganttua.core.script.IScriptExecutionResult;
+import com.garganttua.core.script.ScriptException;
+
+/**
+ * Thread-safe {@link ICompiledScript} backed by a single immutable
+ * {@link IRuntime}. Holds a reference to the {@link ScriptContext} that
+ * compiled the script — needed so functions like {@code include()} /
+ * {@code call()} keep working (they read the current context from
+ * {@link ScriptExecutionContext}).
+ *
+ * <p>Mutable state on the underlying {@link ScriptContext} is NEVER touched
+ * by this class: every {@link #execute(Object...)} call goes directly to
+ * {@code runtime.execute(args)} and wraps the result in a fresh
+ * {@link CompiledScriptExecutionResult}. The only shared mutable state is
+ * the {@code includedScripts} map on the captured ScriptContext, which is a
+ * {@code ConcurrentHashMap} — safe across concurrent callers.
+ *
+ * @since 2.0.0-ALPHA02
+ */
+final class CompiledScript implements ICompiledScript {
+
+    private final IRuntime<Object[], Object> runtime;
+    private final String source;
+    private final ScriptContext captured;
+    private final ObservableRegistry observers = new ObservableRegistry();
+
+    CompiledScript(IRuntime<Object[], Object> runtime, String source, ScriptContext captured) {
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
+        this.source = Objects.requireNonNull(source, "source");
+        this.captured = Objects.requireNonNull(captured, "captured ScriptContext");
+    }
+
+    @Override
+    public IScriptExecutionResult execute(Object... args) throws ScriptException {
+        try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
+            scope.fireStart("compiledscript:execute");
+            try {
+                IScriptExecutionResult result = ScriptExecutionContext.callIn(this.captured, () -> {
+                    Optional<IRuntimeResult<Object[], Object>> raw = this.runtime.execute(args);
+                    return wrap(raw);
+                });
+                scope.fireEnd("compiledscript:execute", result.code());
+                return result;
+            } catch (RuntimeException e) {
+                scope.fireError("compiledscript:execute", e);
+                throw e;
+            }
+        }
+    }
+
+    private static IScriptExecutionResult wrap(Optional<IRuntimeResult<Object[], Object>> raw) {
+        if (raw.isEmpty()) {
+            return new CompiledScriptExecutionResult(IRuntime.GENERIC_RUNTIME_SUCCESS_CODE,
+                    Map.of(), Optional.empty(), Optional.empty(), false);
+        }
+        IRuntimeResult<Object[], Object> r = raw.get();
+        Map<String, Object> vars = r.variables() != null
+                ? Collections.unmodifiableMap(new LinkedHashMap<>(r.variables()))
+                : Map.of();
+        int code = r.code() != null ? r.code() : IRuntime.GENERIC_RUNTIME_SUCCESS_CODE;
+        Optional<Object> output = Optional.ofNullable(r.output());
+        Optional<Throwable> ex = r.getAbortingException().map(rec -> (Throwable) rec.exception());
+        return new CompiledScriptExecutionResult(code, vars, output, ex, r.hasAborted());
+    }
+
+    @Override
+    public String getSource() {
+        return this.source;
+    }
+}

@@ -51,6 +51,10 @@ public class Workflow implements IWorkflow, IObservable {
     private final List<WorkflowStage> stages;
     private final Map<String, Object> presetVariables;
     private final com.garganttua.core.script.IScriptingEnvironment scriptingEnvironment;
+    /** Non-null when WorkflowBuilder.precompile(true) was set AND the
+     *  workflow uses no per-call filtering. Thread-safe — reused across
+     *  concurrent execute() calls. */
+    private final com.garganttua.core.script.ICompiledScript precompiled;
     private final boolean inlineAll;
     private final WorkflowTimingConfig timingConfig;
     private final ObservableRegistry observers = new ObservableRegistry();
@@ -71,12 +75,14 @@ public class Workflow implements IWorkflow, IObservable {
     public Workflow(String name, String generatedScript, List<WorkflowStage> stages,
             Map<String, Object> presetVariables,
             com.garganttua.core.script.IScriptingEnvironment scriptingEnvironment,
+            com.garganttua.core.script.ICompiledScript precompiled,
             boolean inlineAll, WorkflowTimingConfig timingConfig) {
         this.name = name;
         this.generatedScript = generatedScript;
         this.stages = List.copyOf(stages);
         this.presetVariables = Map.copyOf(presetVariables);
         this.scriptingEnvironment = scriptingEnvironment;
+        this.precompiled = precompiled;
         this.inlineAll = inlineAll;
         this.timingConfig = timingConfig != null ? timingConfig : WorkflowTimingConfig.disabled();
     }
@@ -132,6 +138,13 @@ public class Workflow implements IWorkflow, IObservable {
                 log.debug("Executing workflow '{}' with script:\n{}", name, scriptSource);
             }
 
+            // Cached path: only when precompile is on AND no per-call filtering
+            // has rewritten the source. Both conditions must hold for the
+            // pre-built ICompiledScript to match the script we want to run.
+            boolean useCached = this.precompiled != null && !options.hasFiltering();
+            if (useCached) {
+                return executePrecompiled(uuid, start, input, effectiveStages);
+            }
             return executeScript(uuid, start, scriptSource, input, effectiveStages);
 
         } catch (WorkflowException e) {
@@ -144,6 +157,53 @@ public class Workflow implements IWorkflow, IObservable {
             return WorkflowResult.failure(uuid, start, stop,
                     new WorkflowException("Script execution failed", e));
         }
+    }
+
+    /**
+     * Thread-safe execution path: reuses {@link #precompiled} across calls. No
+     * per-call ANTLR parse, no per-call IRuntime build. Multiple threads can
+     * call this method concurrently on the same Workflow instance.
+     */
+    private WorkflowResult executePrecompiled(UUID uuid, Instant start,
+            WorkflowInput input, List<WorkflowStage> stagesToCollect) throws ScriptException {
+        List<Object> args = new ArrayList<>();
+        if (input.payload() != null) {
+            args.add(input.payload());
+        }
+        for (var param : input.parameters().values()) {
+            args.add(param);
+        }
+
+        com.garganttua.core.script.IScriptExecutionResult res;
+        ObservableContextHolder.Session previous = ObservableContextHolder.push(observers, uuid);
+        try {
+            res = args.isEmpty()
+                    ? this.precompiled.execute()
+                    : this.precompiled.execute(args.toArray());
+        } finally {
+            ObservableContextHolder.pop(previous);
+        }
+
+        if (res.hasAborted()) {
+            Instant stop = Instant.now();
+            Throwable exception = res.exception().orElse(null);
+            String message = exception != null ? exception.getMessage() : "Script execution aborted";
+            log.error("Workflow '{}' (precompiled) aborted: {}", name, message, exception);
+            return WorkflowResult.failure(uuid, start, stop,
+                    new WorkflowException(message, exception));
+        }
+
+        Instant stop = Instant.now();
+        Map<String, Object> variables = filterToCollectedVariables(res.variables(), stagesToCollect);
+        Map<String, Object> stageOutputs = collectStageOutputsFromMap(res.variables(), stagesToCollect);
+        return WorkflowResult.success(
+                uuid,
+                res.output().orElse(null),
+                res.code(),
+                variables,
+                stageOutputs,
+                start,
+                stop);
     }
 
     private WorkflowResult executeScript(UUID uuid, Instant start, String scriptSource,
@@ -431,5 +491,63 @@ public class Workflow implements IWorkflow, IObservable {
             }
         }
         return stageOutputs;
+    }
+
+    /**
+     * Same as {@link #collectVariables(IScript, List)} but reads from a
+     * variables map (as returned by {@link com.garganttua.core.script.IScriptExecutionResult#variables()}).
+     * Used by the precompiled execution path.
+     */
+    private Map<String, Object> filterToCollectedVariables(Map<String, Object> source,
+            List<WorkflowStage> stagesToCollect) {
+        Map<String, Object> variables = new HashMap<>();
+        if (source == null || source.isEmpty()) {
+            return variables;
+        }
+        for (WorkflowStage stage : stagesToCollect) {
+            for (WorkflowScript ws : stage.scripts()) {
+                String scriptName = sanitizeIdentifier(ws.getName() != null ? ws.getName() : "script");
+                String resultVarName = "_" + stage.name() + "_" + scriptName + "_result";
+                String codeVarName = "_" + stage.name() + "_" + scriptName + "_code";
+                String refVarName = "_" + stage.name() + "_" + scriptName + "_ref";
+                copyIfPresent(source, variables, resultVarName);
+                copyIfPresent(source, variables, codeVarName);
+                copyIfPresent(source, variables, refVarName);
+                for (String outputVar : ws.getOutputs().keySet()) {
+                    copyIfPresent(source, variables, outputVar);
+                }
+            }
+        }
+        copyIfPresent(source, variables, "output");
+        copyIfPresent(source, variables, "code");
+        return variables;
+    }
+
+    /** Mirror of {@link #collectStageOutputs(IScript, List)} for the precompiled path. */
+    private Map<String, Object> collectStageOutputsFromMap(Map<String, Object> source,
+            List<WorkflowStage> stagesToCollect) {
+        Map<String, Object> stageOutputs = new HashMap<>();
+        if (source == null || source.isEmpty()) {
+            return stageOutputs;
+        }
+        for (WorkflowStage stage : stagesToCollect) {
+            for (WorkflowScript ws : stage.scripts()) {
+                for (var output : ws.getOutputs().entrySet()) {
+                    String key = stage.name() + "." + output.getKey();
+                    Object v = source.get(output.getKey());
+                    if (v != null) {
+                        stageOutputs.put(key, v);
+                    }
+                }
+            }
+        }
+        return stageOutputs;
+    }
+
+    private static void copyIfPresent(Map<String, Object> src, Map<String, Object> dst, String key) {
+        Object v = src.get(key);
+        if (v != null) {
+            dst.put(key, v);
+        }
     }
 }

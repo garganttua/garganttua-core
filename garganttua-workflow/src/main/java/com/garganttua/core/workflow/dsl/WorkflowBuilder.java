@@ -56,6 +56,7 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     private IObservabilityBuilder observabilityBuilder;
     private IScriptingEnvironment scriptingEnvironment;
     private boolean inlineAll = false;
+    private boolean precompile = false;
     private WorkflowTimingConfig timingConfig = WorkflowTimingConfig.disabled();
 
     WorkflowBuilder(IWorkflowsBuilder parent) {
@@ -108,6 +109,12 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
     }
 
     @Override
+    public IWorkflowBuilder precompile(boolean enabled) {
+        this.precompile = enabled;
+        return this;
+    }
+
+    @Override
     public IWorkflowBuilder timing(WorkflowTimingConfig config) {
         if (config == null) {
             throw new IllegalArgumentException("timing config cannot be null; use WorkflowTimingConfig.disabled()");
@@ -152,12 +159,23 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
             throw new DslException("Failed to generate workflow script", e);
         }
 
+        com.garganttua.core.script.ICompiledScript compiled = null;
+        if (this.precompile) {
+            try {
+                compiled = this.scriptingEnvironment.precompile(generatedScript, presetVariables);
+                log.debug("Workflow '{}' pre-compiled — fresh runtime spawned once at build", name);
+            } catch (com.garganttua.core.script.ScriptException e) {
+                throw new DslException("Failed to pre-compile workflow '" + name + "'", e);
+            }
+        }
+
         Workflow workflow = new Workflow(
                 name,
                 generatedScript,
                 new ArrayList<>(stages),
                 new LinkedHashMap<>(presetVariables),
                 this.scriptingEnvironment,
+                compiled,
                 inlineAll,
                 this.timingConfig);
 

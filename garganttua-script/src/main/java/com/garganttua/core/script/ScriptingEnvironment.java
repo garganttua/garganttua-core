@@ -50,6 +50,24 @@ public class ScriptingEnvironment implements IScriptingEnvironment, IBootstrapSu
         return new ScriptContext(this.expressionContext, this.runtimesBuilderFactory, this.classLoaderManager);
     }
 
+    @Override
+    public ICompiledScript precompile(String source, Map<String, Object> presetVariables)
+            throws ScriptException {
+        if (source == null || source.isBlank()) {
+            throw new ScriptException("Cannot precompile: source is null or blank");
+        }
+        ScriptContext ctx = new ScriptContext(this.expressionContext,
+                this.runtimesBuilderFactory, this.classLoaderManager);
+        ctx.load(source);
+        if (presetVariables != null) {
+            for (Map.Entry<String, Object> e : presetVariables.entrySet()) {
+                ctx.setVariable(e.getKey(), e.getValue());
+            }
+        }
+        ctx.compile();
+        return ctx.toCompiled();
+    }
+
     /** @return immutable view of the auto-detected named script registry. */
     public Map<String, IScript> getRegistry() {
         return this.registry;

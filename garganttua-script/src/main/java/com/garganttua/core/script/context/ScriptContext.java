@@ -362,4 +362,30 @@ public class ScriptContext implements IScript, IObservable {
     public IClassLoaderManager getClassLoaderManager() {
         return this.classLoaderManager;
     }
+
+    /**
+     * Freeze this {@link ScriptContext} into a thread-safe immutable handle
+     * that can be {@code execute()}-d concurrently from multiple threads. The
+     * returned {@link com.garganttua.core.script.ICompiledScript} wraps the
+     * already-built {@link IRuntime} and never touches this context's mutable
+     * last-* fields — every call produces its own
+     * {@link com.garganttua.core.script.IScriptExecutionResult}.
+     *
+     * <p>Must be called AFTER {@link #compile()} (or its convenience wrappers
+     * via {@code load() + compile()}).
+     *
+     * @throws com.garganttua.core.script.ScriptException if the script wasn't compiled yet
+     */
+    public com.garganttua.core.script.ICompiledScript toCompiled()
+            throws com.garganttua.core.script.ScriptException {
+        if (this.runtime == null) {
+            throw new com.garganttua.core.script.ScriptException(
+                    "Cannot freeze: script not compiled. Call compile() before toCompiled()");
+        }
+        if (this.scriptSource == null) {
+            throw new com.garganttua.core.script.ScriptException(
+                    "Cannot freeze: no source loaded");
+        }
+        return new CompiledScript(this.runtime, this.scriptSource, this);
+    }
 }

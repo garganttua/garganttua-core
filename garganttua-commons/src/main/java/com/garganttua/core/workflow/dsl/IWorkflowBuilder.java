@@ -75,6 +75,30 @@ public interface IWorkflowBuilder extends IDependentBuilder<IWorkflowBuilder, IW
     IWorkflowBuilder inlineAll();
 
     /**
+     * Pre-compile the generated workflow script at build time so each
+     * {@code execute()} call reuses the same thread-safe
+     * {@link com.garganttua.core.script.ICompiledScript} instead of
+     * re-parsing the script and re-building its runtime every time.
+     *
+     * <p>Significant speedup for workflows executed repeatedly (per-request
+     * handlers, batch loops). Safe under concurrent {@code execute()} calls —
+     * the underlying compiled handle is immutable and each call gets its own
+     * runtime context.
+     *
+     * <p>Workflows that use {@code WorkflowExecutionOptions} filtering keep
+     * spawning a fresh script per call regardless of this flag, because the
+     * generated source changes per invocation when filtering is active.
+     *
+     * <p>Default: {@code false} (legacy behaviour — fresh script per
+     * execution).
+     *
+     * @param enabled whether to pre-compile
+     * @return this builder for method chaining
+     * @since 2.0.0-ALPHA02
+     */
+    IWorkflowBuilder precompile(boolean enabled);
+
+    /**
      * Creates a new stage builder for the workflow.
      *
      * @param name the stage name
