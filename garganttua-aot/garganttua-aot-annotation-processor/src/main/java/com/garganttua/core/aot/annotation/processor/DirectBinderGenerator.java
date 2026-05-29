@@ -195,7 +195,9 @@ public class DirectBinderGenerator extends AbstractProcessor {
                 false   // allDeclaredFields           — conservative, opt-in via @Reflected
         );
         try {
-            processTypeWithFlags(type, Set.of(), flags);
+            // strict=false: auto-promote is implicit on the user's behalf,
+            // private members are silently filtered out.
+            processTypeWithFlags(type, Set.of(), flags, false);
         } catch (IOException e) {
             messager.printMessage(Diagnostic.Kind.ERROR,
                     "[garganttua-aot] Failed to auto-promote AOT class for " + fqn + ": " + e.getMessage(),
@@ -261,7 +263,9 @@ public class DirectBinderGenerator extends AbstractProcessor {
                 getAnnotationBooleanValue(typeElement, "queryAllPublicMethods"),
                 getAnnotationBooleanValue(typeElement, "allDeclaredFields"));
         try {
-            processTypeWithFlags(typeElement, explicitMembers, flags);
+            // strict=true: explicit @Reflected with a private member is a user
+            // intent we must enforce — emit an error.
+            processTypeWithFlags(typeElement, explicitMembers, flags, true);
         } catch (IOException e) {
             messager.printMessage(Diagnostic.Kind.ERROR,
                     "[garganttua-aot] Failed to generate AOT class for "
@@ -274,9 +278,14 @@ public class DirectBinderGenerator extends AbstractProcessor {
      * Shared body used by both the explicit {@code @Reflected} pass and the
      * auto-promotion pass (Indexed-meta annotations). Idempotent across rounds
      * via {@link #processedTypes}.
+     *
+     * @param strict when true, private members trigger an error (explicit
+     *               {@code @Reflected} path). When false, private members are
+     *               silently filtered out (auto-promote path — the user did
+     *               not opt-in to direct binders on this type).
      */
     private void processTypeWithFlags(TypeElement typeElement, Set<Element> explicitMembers,
-            MemberInclusion.Flags flags) throws IOException {
+            MemberInclusion.Flags flags, boolean strict) throws IOException {
         String qualifiedName = typeElement.getQualifiedName().toString();
         if (!processedTypes.add(qualifiedName)) {
             return; // already generated in a previous round
@@ -288,10 +297,40 @@ public class DirectBinderGenerator extends AbstractProcessor {
 
         warnOnRedundantMembers(explicitMembers, flags);
 
-        if (rejectPrivateMembers(fields, methods, constructors)) {
-            // One or more private members → errors already emitted, skip generation
-            return;
+        if (strict) {
+            // Strict path: a private member ONLY triggers an error if the
+            // user explicitly annotated it with @Reflected — a clear mistake.
+            // queryAll* flags inclusively pull privates too, but those are
+            // silently filtered, same as the auto-promote path. This matches
+            // the user's intent: "all public surface" is rarely meant to
+            // include private utility helpers.
+            List<Element> explicitPrivate = new ArrayList<>();
+            for (Element member : explicitMembers) {
+                if (member.getModifiers().contains(Modifier.PRIVATE)) {
+                    explicitPrivate.add(member);
+                }
+            }
+            if (!explicitPrivate.isEmpty()) {
+                for (Element offender : explicitPrivate) {
+                    messager.printMessage(Diagnostic.Kind.ERROR,
+                            "[garganttua-aot] AOT direct binders cannot access private members. "
+                                    + "Promote this member to package-private, or remove its @Reflected annotation.",
+                            offender);
+                }
+                return;
+            }
         }
+        // Filter privates silently — applies to both strict (from queryAll*)
+        // and lenient (auto-promote) paths.
+        fields = fields.stream()
+                .filter(f -> !f.getModifiers().contains(Modifier.PRIVATE))
+                .toList();
+        methods = methods.stream()
+                .filter(m -> !m.getModifiers().contains(Modifier.PRIVATE))
+                .toList();
+        constructors = constructors.stream()
+                .filter(c -> !c.getModifiers().contains(Modifier.PRIVATE))
+                .toList();
 
         Map<ExecutableElement, String> methodNames = AOTNaming.methodDescriptorNames(typeElement, methods);
         Map<ExecutableElement, String> constructorNames = AOTNaming.constructorDescriptorNames(typeElement, constructors);

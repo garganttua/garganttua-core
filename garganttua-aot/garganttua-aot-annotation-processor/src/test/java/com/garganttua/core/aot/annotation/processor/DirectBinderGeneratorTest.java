@@ -275,7 +275,14 @@ class DirectBinderGeneratorTest {
     }
 
     @Test
-    void privateMemberCapturedByFlagIsRejected(@TempDir Path tmp) {
+    void privateMemberCapturedByFlagIsSilentlyFiltered(@TempDir Path tmp) throws IOException {
+        // queryAll* / allDeclaredFields flags include all matching members,
+        // INCLUDING private ones at the AST level. But the processor silently
+        // drops private members from the final descriptor — only an explicit
+        // @Reflected on a private member is a hard error (clear user mistake).
+        // This is the lenient behaviour that allows framework "Functions"
+        // utility classes with private static helpers to be safely processed
+        // alongside their @Expression-annotated public methods.
         String src = """
                 package sample;
                 import com.garganttua.core.reflection.annotations.Reflected;
@@ -286,8 +293,14 @@ class DirectBinderGeneratorTest {
                 }
                 """;
         CompileResult r = compile(tmp, "sample.PrivateViaFlag", src);
-        assertTrue(hasError(r, "cannot access private members"),
-                () -> "expected a private-rejection ERROR; got: " + diagSummary(r));
+        assertCompiled(r);
+        assertFalse(hasError(r, "cannot access private members"),
+                () -> "private fields captured via queryAll* must be silently filtered, not rejected; got: " + diagSummary(r));
+        String aotClass = Files.readString(r.outputDir.resolve("sample/AOTClass_PrivateViaFlag.java"));
+        assertTrue(aotClass.contains("AOTField_PrivateViaFlag_visible"),
+                () -> "package-private field 'visible' must appear in descriptor: " + aotClass);
+        assertFalse(aotClass.contains("AOTField_PrivateViaFlag_secret"),
+                () -> "private field 'secret' must be silently filtered out: " + aotClass);
     }
 
     @Test

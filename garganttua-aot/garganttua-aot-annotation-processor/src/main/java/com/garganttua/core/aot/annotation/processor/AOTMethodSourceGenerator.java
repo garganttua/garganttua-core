@@ -69,20 +69,47 @@ final class AOTMethodSourceGenerator {
            .append(buildStringArray(exceptionTypeNames())).append(");\n");
         src.append("    }\n\n");
 
-        // invoke(Object, Object...)
+        // invoke(Object, Object...) — wraps the call in a try/catch that
+        // sneaky-throws checked exceptions. The signature of invoke does
+        // NOT declare them, so we use the generic-erasure trick to bypass
+        // javac's checked-exception verification at the call site without
+        // wrapping the original throwable (no RuntimeException(t) — the
+        // framework expects the original exception type).
         src.append("    @Override\n");
         src.append("    public Object invoke(Object obj, Object... args) {\n");
         String receiver = isStatic
                 ? enclosingSimpleName
                 : "((" + enclosingSimpleName + ") obj)";
         String call = receiver + "." + method.getSimpleName() + "(" + buildArgCasts(params) + ")";
-        if (isVoid) {
+        boolean hasChecked = !method.getThrownTypes().isEmpty();
+        if (hasChecked) {
+            src.append("        try {\n");
+            if (isVoid) {
+                src.append("            ").append(call).append(";\n");
+                src.append("            return null;\n");
+            } else {
+                src.append("            return ").append(call).append(";\n");
+            }
+            src.append("        } catch (RuntimeException | Error __e) {\n");
+            src.append("            throw __e;\n");
+            src.append("        } catch (Throwable __t) {\n");
+            src.append("            throw ").append(generatedSimpleName).append(".__sneakyThrow(__t);\n");
+            src.append("        }\n");
+        } else if (isVoid) {
             src.append("        ").append(call).append(";\n");
             src.append("        return null;\n");
         } else {
             src.append("        return ").append(call).append(";\n");
         }
         src.append("    }\n");
+
+        if (hasChecked) {
+            src.append("\n");
+            src.append("    @SuppressWarnings(\"unchecked\")\n");
+            src.append("    private static <E extends Throwable> RuntimeException __sneakyThrow(Throwable t) throws E {\n");
+            src.append("        throw (E) t;\n");
+            src.append("    }\n");
+        }
 
         src.append("}\n");
         return src.toString();

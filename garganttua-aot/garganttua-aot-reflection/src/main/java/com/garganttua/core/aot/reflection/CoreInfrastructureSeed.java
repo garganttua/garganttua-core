@@ -568,6 +568,36 @@ public final class CoreInfrastructureSeed {
         // some of these accessors. AOTClass treats them as non-null strings.
         String canonicalName = type.getCanonicalName() != null ? type.getCanonicalName() : type.getName();
         String packageName = type.getPackageName() != null ? type.getPackageName() : "";
+        // Synthesize the no-arg constructor descriptor when one exists. This
+        // covers the dominant "framework instantiates the type by reflection"
+        // pattern (factory classes annotated @ChildContext, @MutexFactory,
+        // etc. that the InjectionContextBuilder spins up via no-arg ctor).
+        // Without this, the shallow descriptor crashes on
+        // "Class X does not have constructor with no params". Reflection lookup
+        // works in JVM-AOT mode; native-image needs the ctor registered via
+        // reflect-config which the GarganttuaAotFeature handles for seeded
+        // types.
+        AOTConstructor<?>[] constructors = new AOTConstructor<?>[0];
+        try {
+            java.lang.reflect.Constructor<T> noArg = type.getDeclaredConstructor();
+            constructors = new AOTConstructor<?>[] {
+                    new AOTConstructor<>(
+                            type.getName(),
+                            new String[0],
+                            new String[0],
+                            noArg.getModifiers(),
+                            new Annotation[0],
+                            false,
+                            new String[0])
+            };
+        } catch (NoSuchMethodException ignored) {
+            // No no-arg ctor on this type — leave constructors empty. Callers
+            // that need other ctors should @Reflected the type for full
+            // descriptor generation.
+        } catch (Throwable ignored) {
+            // Interfaces, primitives, arrays, void.class — Class.getDeclaredConstructor
+            // throws various exceptions. Stay shallow.
+        }
         return new AOTClass<>(
                 type.getName(),
                 type.getSimpleName(),
@@ -578,7 +608,7 @@ public final class CoreInfrastructureSeed {
                 superNames,
                 new AOTField[0],
                 new AOTMethod[0],
-                new AOTConstructor<?>[0],
+                constructors,
                 new Annotation[0],
                 type.isInterface(),
                 type.isArray(),
