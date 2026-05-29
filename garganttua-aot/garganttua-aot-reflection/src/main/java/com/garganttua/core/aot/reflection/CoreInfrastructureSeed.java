@@ -598,6 +598,16 @@ public final class CoreInfrastructureSeed {
             // Interfaces, primitives, arrays, void.class — Class.getDeclaredConstructor
             // throws various exceptions. Stay shallow.
         }
+        // Populate the annotations array from the live class. Without this,
+        // framework wiring that introspects class-level annotations (e.g.
+        // InjectableElementResolverBuilder reading @Resolver) sees an empty
+        // array and treats annotated classes as if they weren't annotated.
+        Annotation[] annotations;
+        try {
+            annotations = type.getAnnotations();
+        } catch (Throwable ignored) {
+            annotations = new Annotation[0];
+        }
         return new AOTClass<>(
                 type.getName(),
                 type.getSimpleName(),
@@ -609,7 +619,7 @@ public final class CoreInfrastructureSeed {
                 new AOTField[0],
                 new AOTMethod[0],
                 constructors,
-                new Annotation[0],
+                annotations,
                 type.isInterface(),
                 type.isArray(),
                 type.isPrimitive(),
