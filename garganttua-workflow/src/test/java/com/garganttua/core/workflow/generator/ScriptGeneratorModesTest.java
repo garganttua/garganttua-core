@@ -51,7 +51,12 @@ import com.garganttua.core.script.dsl.ScriptsBuilder;
  */
 class ScriptGeneratorModesTest {
 
-    private static final Path GENERATED_DIR = Path.of("src/test/resources/scripts/generated");
+    // Test inspection output goes to target/ so it doesn't mutate the source
+    // tree on every test run. Writing to src/test/resources/... used to
+    // confuse IDE/maven file watchers into triggering partial rebuilds that
+    // sometimes produced an empty workflow jar in ~/.m2 — see
+    // "Corruption récurrente de garganttua-workflow-2.0.0-ALPHA02.jar" ticket.
+    private static final Path GENERATED_DIR = Path.of("target/generated-test-scripts");
 
     private static IReflectionBuilder reflectionBuilder;
 

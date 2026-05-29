@@ -346,7 +346,18 @@ public class AOTMethod implements IMethod {
     }
 
     static Class<?> resolveRawClass(String className) throws ClassNotFoundException {
-        return switch (className) {
+        // Strip nested "[]" suffixes so we resolve "byte[][]" as byte.class
+        // then wrap with arrayType() twice. AOT processor emits Java-style
+        // names ("byte[]", "java.lang.String[]") rather than JVM internals
+        // ("[B", "[Ljava.lang.String;") which Class.forName can't parse for
+        // primitive arrays.
+        int arrayDepth = 0;
+        String elementName = className;
+        while (elementName.endsWith("[]")) {
+            arrayDepth++;
+            elementName = elementName.substring(0, elementName.length() - 2);
+        }
+        Class<?> element = switch (elementName) {
             case "boolean" -> boolean.class;
             case "byte" -> byte.class;
             case "char" -> char.class;
@@ -356,8 +367,12 @@ public class AOTMethod implements IMethod {
             case "float" -> float.class;
             case "double" -> double.class;
             case "void" -> void.class;
-            default -> Class.forName(className);
+            default -> Class.forName(elementName);
         };
+        for (int i = 0; i < arrayDepth; i++) {
+            element = element.arrayType();
+        }
+        return element;
     }
 
     // --- Object overrides ---

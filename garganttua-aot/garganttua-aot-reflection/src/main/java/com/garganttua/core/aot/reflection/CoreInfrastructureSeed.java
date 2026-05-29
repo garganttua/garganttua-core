@@ -258,17 +258,37 @@ public final class CoreInfrastructureSeed {
         if (AOTRegistry.getInstance().contains(type.getName())) {
             return;
         }
+        AOTRegistry.getInstance().register(type.getName(), synthesizeWithFlag(type, forceInterfaceFlag));
+    }
+
+    /**
+     * Builds a minimal {@link AOTClass} descriptor for {@code type} using only
+     * class-metadata accessors (no reflection in the GraalVM sense). Public
+     * entry point used by {@code AOTReflectionProvider} to synthesize
+     * intrinsic-JVM-type descriptors on the fly (primitives, arrays, void)
+     * that the consumer-side annotation processor doesn't (and shouldn't)
+     * generate descriptors for.
+     */
+    public static <T> AOTClass<T> synthesize(Class<T> type) {
+        return synthesizeWithFlag(type, false);
+    }
+
+    private static <T> AOTClass<T> synthesizeWithFlag(Class<T> type, boolean forceInterfaceFlag) {
         Class<?>[] supers = type.getInterfaces();
         String[] superNames = new String[supers.length];
         for (int i = 0; i < supers.length; i++) {
             superNames[i] = supers[i].getName();
         }
         Class<?> superclass = type.getSuperclass();
-        AOTClass<T> descriptor = new AOTClass<>(
+        // Defensive: primitives / anonymous / local types can return null for
+        // some of these accessors. AOTClass treats them as non-null strings.
+        String canonicalName = type.getCanonicalName() != null ? type.getCanonicalName() : type.getName();
+        String packageName = type.getPackageName() != null ? type.getPackageName() : "";
+        return new AOTClass<>(
                 type.getName(),
                 type.getSimpleName(),
-                type.getCanonicalName(),
-                type.getPackageName(),
+                canonicalName,
+                packageName,
                 forceInterfaceFlag ? type.getModifiers() | Modifier.INTERFACE : type.getModifiers(),
                 superclass != null ? superclass.getName() : null,
                 superNames,
@@ -289,6 +309,5 @@ public final class CoreInfrastructureSeed {
                 type.isAnonymousClass(),
                 type.isSynthetic()
         );
-        AOTRegistry.getInstance().register(type.getName(), descriptor);
     }
 }

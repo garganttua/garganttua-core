@@ -628,7 +628,12 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         synchronized (this) {
             if (resolvedClass == null) {
                 try {
-                    resolvedClass = (Class<T>) Class.forName(name);
+                    // Array-aware: parses "byte[]" / "int[][]" / "java.lang.String[]"
+                    // forms that the AOT processor emits. Plain Class.forName
+                    // would NPE on these because Java-source array notation
+                    // isn't valid for Class.forName (it wants JVM internal
+                    // names like "[B" or descriptor "[Ljava.lang.String;").
+                    resolvedClass = (Class<T>) AOTMethod.resolveRawClass(name);
                 } catch (ClassNotFoundException e) {
                     throw new IllegalStateException("Cannot resolve class: " + name, e);
                 }

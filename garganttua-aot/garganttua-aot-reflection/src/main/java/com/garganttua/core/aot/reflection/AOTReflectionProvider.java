@@ -9,8 +9,13 @@ import jakarta.annotation.Priority;
 /**
  * AOT implementation of {@link IReflectionProvider}.
  *
- * <p>Resolves classes from the {@link AOTRegistry} singleton. Only supports
- * classes that have been registered by AOT-generated code.</p>
+ * <p>Resolves classes from the {@link AOTRegistry} singleton. Classes that
+ * are not in the registry but are <em>intrinsic</em> to the JVM (primitives,
+ * arrays, void) get a synthesized minimal descriptor on the fly via
+ * {@link CoreInfrastructureSeed#synthesize(Class)} — these types don't need
+ * compile-time AOT processing because {@code Class.getName()},
+ * {@code .getInterfaces()}, {@code .isArray()} etc. work without reflection
+ * metadata.</p>
  */
 @Priority(20)
 public class AOTReflectionProvider implements IReflectionProvider {
@@ -27,30 +32,64 @@ public class AOTReflectionProvider implements IReflectionProvider {
 
     @Override
     public <T> IClass<T> getClass(Class<T> clazz) {
-        return AOTRegistry.getInstance().<T>get(clazz.getName())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No AOT descriptor registered for: " + clazz.getName()));
+        java.util.Optional<IClass<T>> hit = AOTRegistry.getInstance().get(clazz.getName());
+        if (hit.isPresent()) {
+            return hit.get();
+        }
+        if (isIntrinsic(clazz)) {
+            IClass<T> synthesized = CoreInfrastructureSeed.synthesize(clazz);
+            AOTRegistry.getInstance().register(clazz.getName(), synthesized);
+            return synthesized;
+        }
+        throw new IllegalArgumentException(
+                "No AOT descriptor registered for: " + clazz.getName());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> IClass<T> forName(String className) throws ClassNotFoundException {
-        return (IClass<T>) AOTRegistry.getInstance().get(className)
-                .orElseThrow(() -> new ClassNotFoundException(
-                        "No AOT descriptor registered for: " + className));
+        return forNameImpl(className, true, Thread.currentThread().getContextClassLoader());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> IClass<T> forName(String className, boolean initialize, ClassLoader loader)
             throws ClassNotFoundException {
-        return (IClass<T>) AOTRegistry.getInstance().get(className)
-                .orElseThrow(() -> new ClassNotFoundException(
-                        "No AOT descriptor registered for: " + className));
+        return forNameImpl(className, initialize, loader);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> IClass<T> forNameImpl(String className, boolean initialize, ClassLoader loader)
+            throws ClassNotFoundException {
+        java.util.Optional<IClass<T>> hit = (java.util.Optional<IClass<T>>) (java.util.Optional<?>)
+                AOTRegistry.getInstance().get(className);
+        if (hit.isPresent()) {
+            return hit.get();
+        }
+        // Try resolving as an intrinsic JVM type (primitives, arrays, void).
+        Class<?> raw;
+        try {
+            raw = AOTMethod.resolveRawClass(className);
+        } catch (ClassNotFoundException e) {
+            throw new ClassNotFoundException(
+                    "No AOT descriptor registered for: " + className, e);
+        }
+        if (isIntrinsic(raw)) {
+            IClass<T> synthesized = (IClass<T>) CoreInfrastructureSeed.synthesize(raw);
+            AOTRegistry.getInstance().register(className, synthesized);
+            return synthesized;
+        }
+        throw new ClassNotFoundException("No AOT descriptor registered for: " + className);
     }
 
     @Override
     public boolean supports(Class<?> type) {
-        return AOTRegistry.getInstance().contains(type.getName());
+        return AOTRegistry.getInstance().contains(type.getName()) || isIntrinsic(type);
+    }
+
+    /** Primitives, arrays, and void don't need compile-time AOT processing —
+     *  the JVM exposes their metadata intrinsically. */
+    private static boolean isIntrinsic(Class<?> type) {
+        return type.isPrimitive() || type.isArray() || type == void.class;
     }
 }

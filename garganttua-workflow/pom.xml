@@ -13,6 +13,15 @@
 	<name>garganttua-workflow</name>
 	<description>Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation</description>
 
+	<properties>
+		<!-- Opt-in to the empty-jar safety net (declared in the parent pom).
+		     This module has suffered from periodic m2-cache corruption where
+		     a build that bypassed compile produced a 3 KB stub jar instead
+		     of the proper ~60 KB one. The verify-phase rule fails the build
+		     before install can replace a good jar with an empty one. -->
+		<enforce.jar.size.skip>false</enforce.jar.size.skip>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>

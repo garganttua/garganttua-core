@@ -73,6 +73,13 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
 
+    <!-- Anti-empty-jar safety net (see jar-must-not-be-empty in build/plugins).
+         Default: skipped everywhere. Jar-packaged modules that suffered from
+         empty-jar corruption (garganttua-workflow as of 2026-05-29) opt-IN by
+         overriding this to false. Pom / maven-plugin modules just inherit the
+         default and the rule is a no-op for them. -->
+    <enforce.jar.size.skip>true</enforce.jar.size.skip>
+
     <!-- Direct Binder Generation: AOT descriptors are produced consumer-side
          (the framework can't generate descriptors for its own infrastructure
          types because the resulting AOTClass_* sources depend on
@@ -458,6 +465,39 @@
               <arguments>
                 <argument>run_all.py</argument>
               </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Verify the jar produced is not the 3 KB stub (only META-INF +
+           directory entries, no .class files) before install can copy it
+           into ~/.m2. Triggered by an IDE-driven or watcher-triggered
+           partial build that bypasses compile and leaves us with an empty
+           jar — corrupts every downstream consumer until reinstalled.
+           Skips POM-packaged modules and the test-resource regeneration. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>jar-must-not-be-empty</id>
+            <phase>verify</phase>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <skip>${enforce.jar.size.skip}</skip>
+              <rules>
+                <requireFilesSize>
+                  <message>JAR ${project.build.finalName}.jar is suspiciously small (&lt; 5 KB). Refusing to install — likely a build that skipped compile. Check IDE Maven settings / file watchers.</message>
+                  <files>
+                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
+                  </files>
+                  <minsize>5000</minsize>
+                  <!-- maxsize defaults to 10000 — override to "no upper bound"
+                       (any positive value the rule will accept). -->
+                  <maxsize>2147483647</maxsize>
+                </requireFilesSize>
+              </rules>
             </configuration>
           </execution>
         </executions>

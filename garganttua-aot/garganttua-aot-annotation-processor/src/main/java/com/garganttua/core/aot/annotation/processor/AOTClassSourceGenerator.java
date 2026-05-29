@@ -107,7 +107,9 @@ public final class AOTClassSourceGenerator {
         src.append("        AOTRegistry.getInstance().register(\"").append(qualifiedName)
            .append("\", INSTANCE);\n");
         src.append("    }\n\n");
-        src.append("    private ").append(generatedSimpleName).append("() {\n");
+        // Constructor MUST be public — ServiceLoader.load(IAOTSelfRegistering.class)
+        // instantiates AOT descriptors via reflection and rejects non-public ctors.
+        src.append("    public ").append(generatedSimpleName).append("() {\n");
         src.append("        super(\n");
         src.append("            \"").append(qualifiedName).append("\",\n");
         src.append("            \"").append(simpleName).append("\",\n");
