@@ -329,17 +329,26 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
 
     @Override
     public IField[] getDeclaredFields() {
-        return fields.clone();
+        if (fields.length > 0) return fields.clone();
+        IField[] fallback = fallbackDeclaredFields();
+        return fallback != null ? fallback : fields.clone();
     }
 
     @Override
     public IMethod[] getDeclaredMethods() {
-        return methods.clone();
+        if (methods.length > 0) return methods.clone();
+        IMethod[] fallback = fallbackDeclaredMethods();
+        return fallback != null ? fallback : methods.clone();
     }
 
     @Override
     public IConstructor<?>[] getDeclaredConstructors() {
-        return constructors.clone();
+        // Shallow descriptors always have at least the synthesised no-arg
+        // ctor (when one exists on the live class). If we have more than one
+        // ctor here, trust it. Otherwise enrich from the live class.
+        if (constructors.length > 1) return constructors.clone();
+        IConstructor<?>[] fallback = fallbackDeclaredConstructors();
+        return fallback != null ? fallback : constructors.clone();
     }
 
     @Override
@@ -813,6 +822,51 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         try {
             return AOTConstructor.synthesizeFrom(live.getConstructor(raw));
         } catch (NoSuchMethodException ignored) {
+            return null;
+        }
+    }
+
+    private IMethod[] fallbackDeclaredMethods() {
+        Class<?> live = loadLiveClass();
+        if (live == null) return null;
+        try {
+            java.lang.reflect.Method[] raw = live.getDeclaredMethods();
+            IMethod[] out = new IMethod[raw.length];
+            for (int i = 0; i < raw.length; i++) {
+                out[i] = AOTMethod.synthesizeFrom(raw[i]);
+            }
+            return out;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private IField[] fallbackDeclaredFields() {
+        Class<?> live = loadLiveClass();
+        if (live == null) return null;
+        try {
+            java.lang.reflect.Field[] raw = live.getDeclaredFields();
+            IField[] out = new IField[raw.length];
+            for (int i = 0; i < raw.length; i++) {
+                out[i] = AOTField.synthesizeFrom(raw[i]);
+            }
+            return out;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private IConstructor<?>[] fallbackDeclaredConstructors() {
+        Class<?> live = loadLiveClass();
+        if (live == null) return null;
+        try {
+            java.lang.reflect.Constructor<?>[] raw = live.getDeclaredConstructors();
+            IConstructor<?>[] out = new IConstructor<?>[raw.length];
+            for (int i = 0; i < raw.length; i++) {
+                out[i] = AOTConstructor.synthesizeFrom(raw[i]);
+            }
+            return out;
+        } catch (Throwable ignored) {
             return null;
         }
     }
