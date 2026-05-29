@@ -57,5 +57,23 @@
 			<artifactId>garganttua-reflections</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Pure-AOT integration test deps. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-reflection</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-annotation-scanner</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-mapper</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>
