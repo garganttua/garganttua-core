@@ -40,6 +40,21 @@ public class AOTField implements IField {
         this.genericType = genericType;
     }
 
+    /**
+     * Synthesizes an {@code AOTField} from a runtime {@link Field}. Companion
+     * to {@link AOTMethod#synthesizeFrom(java.lang.reflect.Method)} for the
+     * lazy-fallback path in {@link AOTClass#getField} / {@code getDeclaredField}.
+     */
+    public static AOTField synthesizeFrom(Field field) {
+        return new AOTField(
+                field.getName(),
+                field.getDeclaringClass().getName(),
+                field.getType().getName(),
+                field.getModifiers(),
+                field.getAnnotations(),
+                field.getGenericType());
+    }
+
     // --- IMember ---
 
     @Override

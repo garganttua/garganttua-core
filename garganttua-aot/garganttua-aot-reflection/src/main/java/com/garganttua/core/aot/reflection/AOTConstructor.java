@@ -52,6 +52,39 @@ public class AOTConstructor<T> implements IConstructor<T> {
         this.exceptionTypeNames = exceptionTypeNames != null ? exceptionTypeNames.clone() : new String[0];
     }
 
+    /**
+     * Synthesizes an {@code AOTConstructor} from a runtime
+     * {@link java.lang.reflect.Constructor}. Companion to
+     * {@link AOTMethod#synthesizeFrom(java.lang.reflect.Method)} for the
+     * lazy-fallback path in {@link AOTClass#getConstructor} /
+     * {@code getDeclaredConstructor}.
+     */
+    public static AOTConstructor<?> synthesizeFrom(Constructor<?> ctor) {
+        Class<?>[] paramTypes = ctor.getParameterTypes();
+        String[] paramTypeNames = new String[paramTypes.length];
+        for (int i = 0; i < paramTypes.length; i++) {
+            paramTypeNames[i] = paramTypes[i].getName();
+        }
+        java.lang.reflect.Parameter[] params = ctor.getParameters();
+        String[] paramNames = new String[params.length];
+        for (int i = 0; i < params.length; i++) {
+            paramNames[i] = params[i].getName();
+        }
+        Class<?>[] exTypes = ctor.getExceptionTypes();
+        String[] exTypeNames = new String[exTypes.length];
+        for (int i = 0; i < exTypes.length; i++) {
+            exTypeNames[i] = exTypes[i].getName();
+        }
+        return new AOTConstructor<>(
+                ctor.getDeclaringClass().getName(),
+                paramTypeNames,
+                paramNames,
+                ctor.getModifiers(),
+                ctor.getAnnotations(),
+                ctor.isVarArgs(),
+                exTypeNames);
+    }
+
     // --- IMember ---
 
     @Override

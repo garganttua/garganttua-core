@@ -60,6 +60,46 @@ public class AOTMethod implements IMethod {
         this.exceptionTypeNames = exceptionTypeNames != null ? exceptionTypeNames.clone() : new String[0];
     }
 
+    /**
+     * Synthesizes an {@code AOTMethod} descriptor from a runtime
+     * {@link java.lang.reflect.Method}. Used by the lazy-fallback path in
+     * {@link AOTClass#getMethod} and friends when the precomputed descriptor
+     * misses but the actual class is reachable via {@code Class.forName(...)}.
+     *
+     * <p>The synthesised method carries the same metadata as a
+     * processor-generated one, so downstream code that introspects name,
+     * modifiers, parameter types, annotations, etc. sees no difference.</p>
+     */
+    public static AOTMethod synthesizeFrom(Method method) {
+        Class<?>[] paramTypes = method.getParameterTypes();
+        String[] paramTypeNames = new String[paramTypes.length];
+        for (int i = 0; i < paramTypes.length; i++) {
+            paramTypeNames[i] = paramTypes[i].getName();
+        }
+        java.lang.reflect.Parameter[] params = method.getParameters();
+        String[] paramNames = new String[params.length];
+        for (int i = 0; i < params.length; i++) {
+            paramNames[i] = params[i].getName();
+        }
+        Class<?>[] exTypes = method.getExceptionTypes();
+        String[] exTypeNames = new String[exTypes.length];
+        for (int i = 0; i < exTypes.length; i++) {
+            exTypeNames[i] = exTypes[i].getName();
+        }
+        return new AOTMethod(
+                method.getName(),
+                method.getDeclaringClass().getName(),
+                method.getReturnType().getName(),
+                paramTypeNames,
+                paramNames,
+                method.getModifiers(),
+                method.getAnnotations(),
+                method.isBridge(),
+                method.isDefault(),
+                method.isVarArgs(),
+                exTypeNames);
+    }
+
     // --- IMember ---
 
     @Override

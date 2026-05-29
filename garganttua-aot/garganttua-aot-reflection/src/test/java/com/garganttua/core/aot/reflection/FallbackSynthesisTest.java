@@ -23,7 +23,11 @@ class FallbackSynthesisTest {
 
     // Random user-land types that nobody seeded, nobody @Reflected'd.
     interface ISomeUnknownIface {}
-    static class SomeUnknownClass {}
+    public static class SomeUnknownClass {
+        public String greet(String who) { return "hi " + who; }
+        public static int staticThing() { return 42; }
+        public String publicField = "x";
+    }
     enum SomeUnknownEnum { A, B }
 
     @Test
@@ -86,4 +90,37 @@ class FallbackSynthesisTest {
 
     /** Marker used solely by the hybrid-mode test — never queried elsewhere. */
     static class NeverQueried {}
+
+    // --- Member-level lazy fallback ---
+
+    @Test
+    void getMethod_falls_back_to_live_class_when_descriptor_misses() throws Exception {
+        // Shallow descriptor (no methods array) — getMethod must still find
+        // the method by synthesising from the live Class<?>.
+        AOTReflectionProvider provider = new AOTReflectionProvider();
+        IClass<SomeUnknownClass> desc = provider.getClass(SomeUnknownClass.class);
+        com.garganttua.core.reflection.IMethod m = desc.getMethod("greet",
+                provider.getClass(String.class));
+        assertNotNull(m);
+        assertEquals("greet", m.getName());
+    }
+
+    @Test
+    void getDeclaredMethod_falls_back_to_live_class() throws Exception {
+        AOTReflectionProvider provider = new AOTReflectionProvider();
+        IClass<SomeUnknownClass> desc = provider.getClass(SomeUnknownClass.class);
+        com.garganttua.core.reflection.IMethod m = desc.getDeclaredMethod("staticThing");
+        assertNotNull(m);
+        assertEquals("staticThing", m.getName());
+    }
+
+    @Test
+    void getField_falls_back_to_live_class() throws Exception {
+        AOTReflectionProvider provider = new AOTReflectionProvider();
+        IClass<SomeUnknownClass> desc = provider.getClass(SomeUnknownClass.class);
+        com.garganttua.core.reflection.IField f = desc.getField("publicField");
+        assertNotNull(f);
+        assertEquals("publicField", f.getName());
+    }
+
 }
