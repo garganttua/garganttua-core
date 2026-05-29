@@ -9,24 +9,42 @@ import jakarta.annotation.Priority;
 /**
  * AOT implementation of {@link IReflectionProvider}.
  *
- * <p>Resolves classes from the {@link AOTRegistry} singleton. Classes that
- * are not in the registry but are <em>intrinsic</em> to the JVM (primitives,
- * arrays, void) get a synthesized minimal descriptor on the fly via
- * {@link CoreInfrastructureSeed#synthesize(Class)} — these types don't need
- * compile-time AOT processing because {@code Class.getName()},
- * {@code .getInterfaces()}, {@code .isArray()} etc. work without reflection
- * metadata.</p>
+ * <h2>Resolution strategy</h2>
+ * <ol>
+ *   <li><strong>Registry hit</strong> — the type was pre-registered by either
+ *       {@link CoreInfrastructureSeed}, an {@code IAOTInfrastructureSeed}
+ *       extension seed, or a generated {@code AOTClass_*} self-registration.
+ *       Full descriptor with member metadata is returned.</li>
+ *   <li><strong>Fallback synthesis</strong> — the type is not registered but
+ *       we have its {@code Class<?>} literal (or can {@code Class.forName} it).
+ *       A <em>type-identity</em> descriptor is synthesized on the fly via
+ *       {@link CoreInfrastructureSeed#synthesize(Class)} — name, modifiers,
+ *       superclass, interfaces, JVM flags — and cached in the registry. No
+ *       member metadata.</li>
+ * </ol>
+ *
+ * <p>The fallback eliminates the entire class of "missing AOT descriptor"
+ * cold-start failures for type-identity uses (parameter types, field types,
+ * return types resolved by other {@code AOTClass_*} descriptors). Member
+ * introspection ({@code getDeclaredMethods}, etc.) still requires either a
+ * full annotation-processor-generated descriptor or an explicit seed.</p>
+ *
+ * <h2>Hybrid mode</h2>
+ * <p>{@link #supports(Class)} returns true only for <em>actually registered</em>
+ * (or intrinsic) types. In hybrid mode (AOT @20 + runtime-reflection @10), the
+ * runtime provider keeps ownership of types AOT hasn't pre-registered — its
+ * full reflection is preferred over our shallow synthesis. The fallback only
+ * fires when AOT is the sole provider (pure-AOT / native-image consumers).</p>
  */
 @Priority(20)
 public class AOTReflectionProvider implements IReflectionProvider {
 
     static {
         // Seed AOTRegistry with descriptors for the framework's public
-        // infrastructure interfaces — Bootstrap's static init resolves
-        // them via IClass.getClass(...) before user code runs, and the
-        // consumer-side annotation processor can't see types from JAR
-        // dependencies. Without this seed an AOT-only app crashes at
-        // `new Bootstrap()`.
+        // infrastructure interfaces — provides FULL descriptors (where they
+        // matter for member introspection) ahead of any user code running.
+        // After this, getClass() and forName() will fall back to type-identity
+        // synthesis for anything not seeded.
         CoreInfrastructureSeed.bootstrap();
     }
 
@@ -36,23 +54,19 @@ public class AOTReflectionProvider implements IReflectionProvider {
         if (hit.isPresent()) {
             return hit.get();
         }
-        if (isIntrinsic(clazz)) {
-            IClass<T> synthesized = CoreInfrastructureSeed.synthesize(clazz);
-            AOTRegistry.getInstance().register(clazz.getName(), synthesized);
-            return synthesized;
-        }
-        throw new IllegalArgumentException(
-                "No AOT descriptor registered for: " + clazz.getName());
+        // Fallback: synthesize a type-identity descriptor from the class
+        // literal. Cached so subsequent lookups skip the synth.
+        IClass<T> synthesized = CoreInfrastructureSeed.synthesize(clazz);
+        AOTRegistry.getInstance().register(clazz.getName(), synthesized);
+        return synthesized;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> IClass<T> forName(String className) throws ClassNotFoundException {
         return forNameImpl(className, true, Thread.currentThread().getContextClassLoader());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> IClass<T> forName(String className, boolean initialize, ClassLoader loader)
             throws ClassNotFoundException {
         return forNameImpl(className, initialize, loader);
@@ -66,24 +80,33 @@ public class AOTReflectionProvider implements IReflectionProvider {
         if (hit.isPresent()) {
             return hit.get();
         }
-        // Try resolving as an intrinsic JVM type (primitives, arrays, void).
+        // First try intrinsic resolution (primitives, arrays, void) — handled
+        // by AOTMethod.resolveRawClass without touching the JVM classloader.
         Class<?> raw;
         try {
             raw = AOTMethod.resolveRawClass(className);
-        } catch (ClassNotFoundException e) {
-            throw new ClassNotFoundException(
-                    "No AOT descriptor registered for: " + className, e);
+        } catch (ClassNotFoundException intrinsicMiss) {
+            // Then try the JVM classloader. If the class is reachable, we
+            // synthesize a type-identity descriptor for it. Native-image
+            // reachability requires the class to already be in reflect-config;
+            // user @Reflected types are handled by the AOT Feature.
+            try {
+                raw = Class.forName(className, initialize, loader);
+            } catch (ClassNotFoundException notReachable) {
+                throw new ClassNotFoundException(
+                        "AOT provider could not resolve: " + className, notReachable);
+            }
         }
-        if (isIntrinsic(raw)) {
-            IClass<T> synthesized = (IClass<T>) CoreInfrastructureSeed.synthesize(raw);
-            AOTRegistry.getInstance().register(className, synthesized);
-            return synthesized;
-        }
-        throw new ClassNotFoundException("No AOT descriptor registered for: " + className);
+        IClass<T> synthesized = (IClass<T>) CoreInfrastructureSeed.synthesize(raw);
+        AOTRegistry.getInstance().register(className, synthesized);
+        return synthesized;
     }
 
     @Override
     public boolean supports(Class<?> type) {
+        // Hybrid-mode contract: only claim types AOT actually owns. The
+        // fallback in getClass/forName fires on direct invocation (pure-AOT
+        // mode) but does NOT make this provider claim universal ownership.
         return AOTRegistry.getInstance().contains(type.getName()) || isIntrinsic(type);
     }
 

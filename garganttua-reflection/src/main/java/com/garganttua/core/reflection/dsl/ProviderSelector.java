@@ -22,15 +22,19 @@ class ProviderSelector implements IReflectionProvider {
                 return provider;
             }
         }
-        List<String> tried = providers.stream()
-                .map(p -> p.getClass().getSimpleName())
-                .toList();
+        // No provider claims ownership via supports(). Last resort: hand the
+        // type to the highest-priority provider and let its getClass() decide.
+        // The AOT provider uses this path to engage its fallback synthesis
+        // (type-identity descriptor from the class literal). The runtime
+        // provider's supports() returns true universally so this branch only
+        // fires when AOT is the sole provider (pure-AOT / native-image).
+        if (!providers.isEmpty()) {
+            return providers.get(0);
+        }
         throw new UnsupportedOperationException(
-                "No IReflectionProvider supports type: " + type
-                + ". Providers tried: " + tried
-                + ". Hint: if you only see an AOT provider, ensure 'garganttua-runtime-reflection' is on the"
-                + " runtime classpath (it is a 'runtime' scope transitive of 'garganttua-bootstrap'), or"
-                + " pre-register " + type.getName() + " in your AOTRegistry.");
+                "No IReflectionProvider registered. Add a starter (garganttua-starter-aot,"
+                + " -runtime, -hybrid, or -native) to your classpath. Failed to resolve: "
+                + type);
     }
 
     @Override
