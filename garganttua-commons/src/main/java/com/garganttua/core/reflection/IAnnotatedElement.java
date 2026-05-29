@@ -211,10 +211,17 @@ public interface IAnnotatedElement extends IReflectionUser {
     default <T extends Annotation> T[] getDeclaredAnnotationsByType(IClass<T> annotationClass) {
         Objects.requireNonNull(annotationClass);
 
+        // annotationClass is an IClass<T>; .getClass() returns the Class of
+        // the IClass *wrapper* (RuntimeClass / AOTClass_*), NOT the actual
+        // annotation Class<T>. We want the underlying Type, so unwrap via
+        // .getType() and cast to Class<T> — the contract guarantees it for
+        // declared types like annotations.
+        Class<T> rawAnnotationClass = (Class<T>) annotationClass.getType();
+
         List<T> result = new ArrayList<>();
 
         for (Annotation annotation : getDeclaredAnnotations()) {
-            if (annotation.annotationType().equals(annotationClass.getClass())) {
+            if (annotation.annotationType().equals(rawAnnotationClass)) {
                 result.add(annotationClass.cast(annotation));
             }
         }
@@ -227,7 +234,9 @@ public interface IAnnotatedElement extends IReflectionUser {
             for (Annotation annotation : getDeclaredAnnotations()) {
                 if (annotation.annotationType().equals(containerType)) {
                     try {
-                        IMethod valueMethod = reflection().getClass(containerType.getClass()).getMethod("value");
+                        // containerType is itself a Class — do NOT call
+                        // containerType.getClass() (which returns Class<Class>).
+                        IMethod valueMethod = reflection().getClass(containerType).getMethod("value");
                         T[] values = (T[]) valueMethod.invoke(annotation);
                         Collections.addAll(result, values);
                     } catch (Exception e) {
@@ -237,7 +246,7 @@ public interface IAnnotatedElement extends IReflectionUser {
             }
         }
 
-        return result.toArray((T[]) Array.newInstance(annotationClass.getClass(), result.size()));
+        return result.toArray((T[]) Array.newInstance(rawAnnotationClass, result.size()));
     }
 
     /**
