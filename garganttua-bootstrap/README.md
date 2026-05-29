@@ -63,7 +63,7 @@ triggers `bootstrap.rebuild()`.
  - `javax.inject:javax.inject`
  - `jakarta.annotation:jakarta.annotation-api`
  - `com.garganttua.core:garganttua-reflections:test`
- - `com.garganttua.core:garganttua-runtime-reflection:runtime`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
 
 <!-- AUTO-GENERATED-END -->
 
