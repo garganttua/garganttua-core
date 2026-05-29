@@ -90,13 +90,6 @@ public class SpringAnnotationScanner implements IAnnotationScanner {
 
     @SuppressWarnings("unchecked")
     private static Class<? extends Annotation> unwrapAnnotation(IClass<? extends Annotation> annotation) {
-        if (annotation instanceof RuntimeClass<?> rc) {
-            return (Class<? extends Annotation>) rc.unwrap();
-        }
-        try {
-            return (Class<? extends Annotation>) Class.forName(annotation.getName());
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Cannot resolve annotation class: " + annotation.getName(), e);
-        }
+        return (Class<? extends Annotation>) RuntimeClass.unwrapClass(annotation);
     }
 }

@@ -521,8 +521,12 @@ public class RuntimeClass<T> implements IClass<T> {
 	// --- Utility ---
 
 	public static Class<?> unwrapClass(IClass<?> iclass) {
+		if (iclass == null) return null;
 		if (iclass instanceof RuntimeClass<?> rc) return rc.clazz;
-		throw new IllegalArgumentException("Cannot unwrap non-RuntimeClass IClass: " + iclass.getClass());
+		Type t = iclass.getType();
+		if (t instanceof Class<?> c) return c;
+		throw new IllegalArgumentException("Cannot unwrap IClass: " + iclass.getClass()
+				+ " — getType() returned non-Class Type: " + t);
 	}
 
 	public static Class<?>[] unwrapClasses(IClass<?>[] iclasses) {
