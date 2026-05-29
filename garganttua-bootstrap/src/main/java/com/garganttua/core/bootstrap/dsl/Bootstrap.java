@@ -816,7 +816,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
                     buildScope.fireError(builderSource, e);
                     throw e;
                 } finally {
-                    timings.record("build", Duration.between(buildStart, Instant.now()));
+                    Duration elapsed = Duration.between(buildStart, Instant.now());
+                    timings.record("build", elapsed);
+                    timings.record("build:" + builder.getClass().getSimpleName(), elapsed);
                 }
             }
             builtObjects.add(built);
@@ -1001,10 +1003,23 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
             }
         }
 
-        // Per-stage timing breakdown for this build.
+        // Per-stage timing breakdown for this build. Two sections:
+        //  - "Stage timings"      → phase totals (resolve, configure, build)
+        //  - "Per-builder timings" → per-builder breakdown sorted slowest-first,
+        //                            so the user sees the dominant builder(s) on top
         if (this.lastBuildTimings != null) {
-            this.lastBuildTimings.snapshot().forEach((stage, elapsed) ->
-                    summary.addItem("Stage timings", stage, StageTimings.format(elapsed)));
+            var snapshot = this.lastBuildTimings.snapshot();
+            // Totals (no ':' in the key)
+            snapshot.entrySet().stream()
+                    .filter(e -> !e.getKey().contains(":"))
+                    .forEach(e -> summary.addItem("Stage timings", e.getKey(),
+                            StageTimings.format(e.getValue())));
+            // Per-builder (key like "configure:WorkflowsBuilder" or "build:WorkflowsBuilder")
+            snapshot.entrySet().stream()
+                    .filter(e -> e.getKey().contains(":"))
+                    .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                    .forEach(e -> summary.addItem("Per-builder timings",
+                            e.getKey(), StageTimings.format(e.getValue())));
         }
 
         if (bannerMode == BannerMode.CONSOLE) {
@@ -1311,9 +1326,18 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
      */
     private void runGlobalConfigurationPhase() throws DslException {
         log.trace("Entering runGlobalConfigurationPhase()");
+        StageTimings timings = this.lastBuildTimings;
         for (IBuilder<?> builder : getBuilders()) {
             if (builder instanceof IDependentBuilder<?, ?> dep) {
-                dep.runConfigurationStage();
+                Instant t0 = Instant.now();
+                try {
+                    dep.runConfigurationStage();
+                } finally {
+                    if (timings != null) {
+                        timings.record("configure:" + builder.getClass().getSimpleName(),
+                                Duration.between(t0, Instant.now()));
+                    }
+                }
             }
         }
         log.trace("Exiting runGlobalConfigurationPhase()");
