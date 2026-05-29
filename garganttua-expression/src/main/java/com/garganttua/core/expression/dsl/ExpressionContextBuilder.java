@@ -78,17 +78,34 @@ public class ExpressionContextBuilder
     private static final String SOURCE_EXPLICIT = "explicit";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
 
-    /** Framework's own built-in expression functions package — always scanned so
-     *  literals (string, int, double, boolean, …) and core operators
-     *  (concatenate, increment, …) defined in {@code Expressions} are always
-     *  registered regardless of the consumer's package configuration. Without
-     *  this, an app that only declares its own packages would parse fine until
-     *  the first literal hits the parser, then crash with
-     *  "Function not found: string(String)". */
-    private static final String BUILTIN_FUNCTIONS_PACKAGE =
-            "com.garganttua.core.expression.functions";
+    /** Framework's own built-in expression / script / runtime / etc. function
+     *  packages — always scanned so the framework's built-in @Expression
+     *  methods (literal wrappers like {@code string}, script ops like
+     *  {@code include} and {@code script_variable}, runtime accessors,
+     *  conditions, …) are registered regardless of the consumer's package
+     *  configuration. Without these, a consumer that only declares its own
+     *  app packages parses fine until the first call to a framework built-in
+     *  function ({@code include("foo.gs")}, {@code string("x")}, …) crashes
+     *  with "Function not found" / "Undefined function".
+     *
+     *  Each package corresponds to one of the framework modules' Functions /
+     *  Expressions classes (see the @Reflected sweep that covers them all).
+     */
+    private static final Set<String> BUILTIN_FUNCTIONS_PACKAGES = Set.of(
+            "com.garganttua.core.expression.functions",
+            "com.garganttua.core.script.functions",
+            "com.garganttua.core.runtime.functions",
+            "com.garganttua.core.injection.functions",
+            "com.garganttua.core.injection.context.beans",
+            "com.garganttua.core.mutex.functions",
+            "com.garganttua.core.console",
+            "com.garganttua.core.observability",
+            "com.garganttua.core.condition",
+            // Redis binding — harmless if the binding module isn't on classpath
+            "com.garganttua.core.mutex.redis.functions"
+    );
 
-    private final Set<String> packages = new HashSet<>(Set.of(BUILTIN_FUNCTIONS_PACKAGE));
+    private final Set<String> packages = new HashSet<>(BUILTIN_FUNCTIONS_PACKAGES);
     private final Set<IExpressionMethodBinderBuilder<?>> explicitNodes = new HashSet<>();
     private final Set<IExpressionMethodBinderBuilder<?>> autoDetectedNodes = new HashSet<>();
     private final MultiSourceCollector<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeCollector;

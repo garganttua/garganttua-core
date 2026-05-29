@@ -92,7 +92,7 @@ class ExpressionContextBuilderTest {
         String[] packages = builder.getPackages();
         // Builder seeds the framework's built-in expression-functions package,
         // so withPackage(X) yields 2 entries (user's + built-in default).
-        assertEquals(2, packages.length);
+        assertEquals(1 + 10, packages.length);  // 1 user + 10 framework built-in defaults
         assertTrue(java.util.Arrays.asList(packages).contains("com.example.test"));
     }
 
@@ -112,7 +112,7 @@ class ExpressionContextBuilderTest {
         });
 
         String[] packages = builder.getPackages();
-        assertEquals(4, packages.length); // 3 user + 1 framework built-in default
+        assertEquals(3 + 10, packages.length); // 3 user + 10 framework built-in defaults
     }
 
     @Test
@@ -236,7 +236,7 @@ class ExpressionContextBuilderTest {
         });
 
         String[] packages = builder.getPackages();
-        assertEquals(3, packages.length); // 2 user + 1 framework built-in default
+        assertEquals(2 + 10, packages.length); // 2 user + 10 framework built-in defaults
     }
 
     @Test
