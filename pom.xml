@@ -244,6 +244,37 @@
         <artifactId>garganttua-aot-annotation-processor</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-aot-native-feature</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- Consumption starters — pick one. -->
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-starter-aot</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-starter-runtime</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-starter-hybrid</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-starter-native</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+      </dependency>
 
       <!-- External Dependencies -->
 
@@ -530,5 +561,6 @@
     <module>garganttua-workflow</module>
     <module>garganttua-runtime-reflection</module>
     <module>garganttua-aot</module>
+    <module>garganttua-starters</module>
   </modules>
 </project>

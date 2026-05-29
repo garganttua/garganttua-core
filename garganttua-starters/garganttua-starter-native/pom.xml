@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-starters</artifactId>
+        <version>2.0.0-ALPHA02</version>
+    </parent>
+
+    <artifactId>garganttua-starter-native</artifactId>
+    <packaging>pom</packaging>
+    <description>GraalVM native-image starter: pure AOT (same as garganttua-starter-aot) plus garganttua-aot-native-feature that registers every AOT descriptor with RuntimeReflection at native-image analysis time. Consumer still wires the native-maven-plugin in their pom (see this module README).</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-starter-aot</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-aot-native-feature</artifactId>
+        </dependency>
+    </dependencies>
+</project>

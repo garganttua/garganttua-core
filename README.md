@@ -69,6 +69,7 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|    \|- [**garganttua-aot-annotation-scanner**](./garganttua-aot/garganttua-aot-annotation-scanner/README.md) | Compile-time annotation scanner for AOT class descriptor generation. |
 | \|    \|- [**garganttua-aot-commons**](./garganttua-aot/garganttua-aot-commons/README.md) | Common interfaces and types for Garganttua AOT (Ahead-of-Time) compilation support. |
 | \|    \|- [**garganttua-aot-maven-plugin**](./garganttua-aot/garganttua-aot-maven-plugin/README.md) | Maven plugin for Garganttua AOT processing. |
+| \|    \|- [**garganttua-aot-native-feature**](./garganttua-aot/garganttua-aot-native-feature/README.md) | GraalVM native-image Feature that registers AOT descriptors with RuntimeReflection at analysis time, removing the need for a hand-written reflect-config.json on top of the consumer-side AOT pipeline. |
 | \|    \|- [**garganttua-aot-reflection**](./garganttua-aot/garganttua-aot-reflection/README.md) | AOT reflection descriptors and registry for Garganttua Core. |
 | \|- [**garganttua-bindings**](./garganttua-bindings/README.md) | Modules providing bindings to external libs and frameworks. |
 | \|    \|- [**garganttua-mutex-redis**](./garganttua-bindings/garganttua-mutex-redis/README.md) | Distributed mutex over redis. |
@@ -100,8 +101,17 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-script**](./garganttua-script/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
 | \|    \|- [**bin**](./garganttua-script/bin/README.md) | Scripting language engine with variables, control flow, and expression evaluation. |
 | \|- [**garganttua-script-maven-plugin**](./garganttua-script-maven-plugin/README.md) | Maven plugin to build JARs that can be included in Garganttua scripts (.gs files). Automatically adds Garganttua-Packages manifest attribute. |
+| \|- [**garganttua-starters**](./garganttua-starters/README.md) | Aggregator for the four consumption starters (aot / runtime / hybrid / native) that bundle the reflection providers + scanners a downstream application needs to pick a reflection mode by changing a single Maven coordinate. |
+| \|    \|- [**garganttua-starter-aot**](./garganttua-starters/garganttua-starter-aot/README.md) | Pure-AOT starter: pulls the AOT reflection provider + annotation scanner. Cold-start optimised, no runtime classpath scan, prep for native-image. |
+| \|    \|- [**garganttua-starter-hybrid**](./garganttua-starters/garganttua-starter-hybrid/README.md) | Hybrid starter (recommended default for dev): AOT prioritised at @Priority(20), runtime/reflections fallback at @Priority(10) for types the AOT processor didn't see. Belt and suspenders. |
+| \|    \|- [**garganttua-starter-native**](./garganttua-starters/garganttua-starter-native/README.md) | GraalVM native-image starter: pure AOT (same as garganttua-starter-aot) plus garganttua-aot-native-feature that registers every AOT descriptor with RuntimeReflection at native-image analysis time. Consumer still wires the native-maven-plugin in their pom (see this module README). |
+| \|    \|- [**garganttua-starter-runtime**](./garganttua-starters/garganttua-starter-runtime/README.md) | Runtime / legacy starter: JDK reflection + org.reflections-based classpath scanner. Quickest dev / debug loop, no AOT processor required. |
 | \|- [**garganttua-supply**](./garganttua-supply/README.md) | Object suppliers and contextual provisioning utilities. |
 | \|- [**garganttua-workflow**](./garganttua-workflow/README.md) | Workflow orchestration module - DSL builder for chaining scripts with dynamic script generation |
+
+
+
+
 
 
 

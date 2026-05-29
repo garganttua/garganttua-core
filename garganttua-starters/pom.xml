@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.garganttua</groupId>
+        <artifactId>garganttua-core</artifactId>
+        <version>2.0.0-ALPHA02</version>
+    </parent>
+
+    <groupId>com.garganttua.core</groupId>
+    <artifactId>garganttua-starters</artifactId>
+    <packaging>pom</packaging>
+    <description>Aggregator for the four consumption starters (aot / runtime / hybrid / native) that bundle the reflection providers + scanners a downstream application needs to pick a reflection mode by changing a single Maven coordinate.</description>
+
+    <modules>
+        <module>garganttua-starter-aot</module>
+        <module>garganttua-starter-runtime</module>
+        <module>garganttua-starter-hybrid</module>
+        <module>garganttua-starter-native</module>
+    </modules>
+</project>

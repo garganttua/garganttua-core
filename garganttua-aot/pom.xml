@@ -19,5 +19,6 @@
         <module>garganttua-aot-annotation-scanner</module>
         <module>garganttua-aot-annotation-processor</module>
         <module>garganttua-aot-maven-plugin</module>
+        <module>garganttua-aot-native-feature</module>
     </modules>
 </project>
