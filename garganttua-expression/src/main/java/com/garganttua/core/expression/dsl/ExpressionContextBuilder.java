@@ -220,6 +220,14 @@ public class ExpressionContextBuilder
                     .method(ecClass.getMethod("man", IClass.getClass(int.class))).withDescription("the description");
             this.expression(new FutureSupplierBuilder<>(futur, ecClass), stringClass)
                     .method(ecClass.getMethod("man", IClass.getClass(String.class))).withDescription("the description");
+            // Literal-wrap functions — registered explicitly because the parser
+            // depends on them for EVERY literal token. If the consumer's package
+            // configuration doesn't reach the framework's expression.functions
+            // package, auto-detection alone can miss them; the explicit
+            // registration here guarantees they are always present. autoDetect
+            // (true) makes the per-builder doAutoDetection read the @Expression
+            // annotation for name + description.
+            registerLiteralWrappers();
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
@@ -233,6 +241,42 @@ public class ExpressionContextBuilder
         this.notifyObservers(context);
 
         return context;
+    }
+
+    /**
+     * Explicitly registers every literal-wrap function from
+     * {@code com.garganttua.core.expression.functions.Expressions}. These are
+     * the workhorses the parser invokes for EVERY literal token (string, int,
+     * double, …) so without them the simplest script can't parse. Each is
+     * registered with {@code autoDetect(true)} so the per-builder
+     * doAutoDetection picks up the {@code @Expression} annotation's name and
+     * description.
+     */
+    private void registerLiteralWrappers() throws DslException, NoSuchMethodException, SecurityException {
+        IClass<com.garganttua.core.expression.functions.Expressions> exprCls =
+                IClass.getClass(com.garganttua.core.expression.functions.Expressions.class);
+        IClass<String> strCls = IClass.getClass(String.class);
+        IClass<Object> objCls = IClass.getClass(Object.class);
+        registerStaticBuiltin(exprCls, "string",        objCls, IClass.getClass(String.class));
+        registerStaticBuiltin(exprCls, "integer",       strCls, IClass.getClass(int.class));
+        registerStaticBuiltin(exprCls, "longnumber",    strCls, IClass.getClass(long.class));
+        registerStaticBuiltin(exprCls, "doublenumber",  strCls, IClass.getClass(double.class));
+        registerStaticBuiltin(exprCls, "floatnumber",   strCls, IClass.getClass(float.class));
+        registerStaticBuiltin(exprCls, "booleanValue",  strCls, IClass.getClass(boolean.class));
+        registerStaticBuiltin(exprCls, "byteValue",     strCls, IClass.getClass(byte.class));
+        registerStaticBuiltin(exprCls, "shortNumber",   strCls, IClass.getClass(short.class));
+        registerStaticBuiltin(exprCls, "character",     strCls, IClass.getClass(char.class));
+    }
+
+    private void registerStaticBuiltin(
+            IClass<com.garganttua.core.expression.functions.Expressions> ownerCls,
+            String methodName,
+            IClass<?> paramType,
+            IClass<?> returnType)
+            throws DslException, NoSuchMethodException, SecurityException {
+        this.expression(new NullSupplierBuilder<>(ownerCls), (IClass) returnType)
+                .method(ownerCls.getMethod(methodName, paramType))
+                .autoDetect(true);
     }
 
     /**
