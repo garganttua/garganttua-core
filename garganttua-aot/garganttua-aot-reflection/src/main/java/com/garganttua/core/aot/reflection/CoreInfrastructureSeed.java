@@ -58,6 +58,8 @@ public final class CoreInfrastructureSeed {
         if (seeded) {
             return;
         }
+        // Framework infrastructure builder interfaces — resolved at static-init
+        // time by the framework's own classes.
         registerInterface(IReflectionBuilder.class);
         registerInterface(IObservabilityBuilder.class);
         registerInterface(IInjectionContextBuilder.class);
@@ -67,43 +69,70 @@ public final class CoreInfrastructureSeed {
         registerInterface(IWorkflowsBuilder.class);
         registerInterface(IConditionBuilder.class);
         registerInterface(IInjectableElementResolverBuilder.class);
+        // JDK collection interfaces used by framework builder return types
+        // (e.g. RuntimesBuilder produces a Map<String, IRuntime<?,?>>, etc.).
+        registerInterface(java.util.Map.class);
+        registerInterface(java.util.List.class);
+        registerInterface(java.util.Set.class);
+        registerInterface(java.util.Collection.class);
+        registerInterface(java.lang.Iterable.class);
+        // JDK common types resolved as IClass at framework-level wiring.
+        registerClass(java.lang.String.class);
+        registerClass(java.lang.Object.class);
+        registerClass(java.lang.Integer.class);
+        registerClass(java.lang.Long.class);
+        registerClass(java.lang.Boolean.class);
+        registerClass(java.lang.Double.class);
+        registerClass(java.lang.Float.class);
+        registerClass(java.lang.Void.class);
+        registerClass(java.util.Optional.class);
+        registerClass(java.util.UUID.class);
         seeded = true;
     }
 
     private static <T> void registerInterface(Class<T> iface) {
-        if (AOTRegistry.getInstance().contains(iface.getName())) {
+        registerType(iface, true);
+    }
+
+    private static <T> void registerClass(Class<T> clazz) {
+        registerType(clazz, false);
+    }
+
+    private static <T> void registerType(Class<T> type, boolean forceInterfaceFlag) {
+        if (AOTRegistry.getInstance().contains(type.getName())) {
             return;
         }
-        Class<?>[] supers = iface.getInterfaces();
+        Class<?>[] supers = type.getInterfaces();
         String[] superNames = new String[supers.length];
         for (int i = 0; i < supers.length; i++) {
             superNames[i] = supers[i].getName();
         }
+        Class<?> superclass = type.getSuperclass();
         AOTClass<T> descriptor = new AOTClass<>(
-                iface.getName(),
-                iface.getSimpleName(),
-                iface.getCanonicalName(),
-                iface.getPackageName(),
-                iface.getModifiers() | Modifier.INTERFACE,
-                null,                                // no superclass for interfaces
+                type.getName(),
+                type.getSimpleName(),
+                type.getCanonicalName(),
+                type.getPackageName(),
+                forceInterfaceFlag ? type.getModifiers() | Modifier.INTERFACE : type.getModifiers(),
+                superclass != null ? superclass.getName() : null,
                 superNames,
                 new AOTField[0],
                 new AOTMethod[0],
                 new AOTConstructor<?>[0],
                 new Annotation[0],
-                true,   // isInterface
-                false,  // isArray
-                false,  // isPrimitive
-                false,  // isAnnotation
-                false,  // isEnum
-                false,  // isRecord
-                false,  // isSealed
-                false,  // isHidden
-                false,  // isMemberClass
-                false,  // isLocalClass
-                false,  // isAnonymousClass
-                false   // isSynthetic
+                type.isInterface(),
+                type.isArray(),
+                type.isPrimitive(),
+                type.isAnnotation(),
+                type.isEnum(),
+                type.isRecord(),
+                type.isSealed(),
+                type.isHidden(),
+                type.isMemberClass(),
+                type.isLocalClass(),
+                type.isAnonymousClass(),
+                type.isSynthetic()
         );
-        AOTRegistry.getInstance().register(iface.getName(), descriptor);
+        AOTRegistry.getInstance().register(type.getName(), descriptor);
     }
 }
