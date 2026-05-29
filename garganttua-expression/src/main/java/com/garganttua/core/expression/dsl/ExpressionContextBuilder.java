@@ -245,6 +245,14 @@ public class ExpressionContextBuilder
             // (true) makes the per-builder doAutoDetection read the @Expression
             // annotation for name + description.
             registerLiteralWrappers();
+            // Belt and suspenders: enumerate every @Expression static method
+            // on the framework's Functions classes and register them
+            // explicitly. This bypasses the package scan entirely, so a
+            // misconfigured consumer can never miss a framework built-in.
+            // Classes are resolved via Class.forName; missing binding modules
+            // (e.g. mutex-redis when Redis isn't on classpath) are silently
+            // ignored.
+            registerAllFrameworkBuiltinsByReflection();
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
@@ -294,6 +302,61 @@ public class ExpressionContextBuilder
         this.expression(new NullSupplierBuilder<>(ownerCls), (IClass) returnType)
                 .method(ownerCls.getMethod(methodName, paramType))
                 .autoDetect(true);
+    }
+
+    /**
+     * Framework function classes whose every @Expression-annotated static
+     * method is registered directly by FQN. The package-scan path is the
+     * "soft" version of this; this is the hard guarantee that all framework
+     * built-ins are always present. Binding modules that aren't on the
+     * classpath are silently skipped.
+     */
+    private static final String[] FRAMEWORK_FUNCTION_CLASSES = {
+            "com.garganttua.core.expression.functions.Expressions",
+            "com.garganttua.core.script.functions.ScriptFunctions",
+            "com.garganttua.core.script.functions.LogFunctions",
+            "com.garganttua.core.script.functions.ControlFlowFunctions",
+            "com.garganttua.core.runtime.functions.RuntimeFunctions",
+            "com.garganttua.core.injection.functions.InjectionFunctions",
+            "com.garganttua.core.injection.context.beans.Beans",
+            "com.garganttua.core.mutex.functions.MutexFunctions",
+            "com.garganttua.core.console.ConsoleFunctions",
+            "com.garganttua.core.observability.ObservabilityExpressions",
+            // Binding-conditional
+            "com.garganttua.core.mutex.redis.functions.RedisMutexFunctions"
+    };
+
+    @SuppressWarnings("unchecked")
+    private void registerAllFrameworkBuiltinsByReflection() {
+        IClass<? extends java.lang.annotation.Annotation> exprAnnoCls =
+                (IClass<? extends java.lang.annotation.Annotation>) (IClass<?>)
+                        IClass.getClass(com.garganttua.core.expression.annotations.Expression.class);
+        for (String fqn : FRAMEWORK_FUNCTION_CLASSES) {
+            Class<?> cls;
+            try {
+                cls = Class.forName(fqn, true, Thread.currentThread().getContextClassLoader());
+            } catch (ClassNotFoundException | LinkageError missing) {
+                // Binding module not on classpath — fine.
+                continue;
+            }
+            IClass<?> ownerCls = IClass.getClass(cls);
+            for (com.garganttua.core.reflection.IMethod m : ownerCls.getDeclaredMethods()) {
+                if (!java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+                    continue;
+                }
+                if (m.getAnnotation(exprAnnoCls) == null) {
+                    continue;
+                }
+                try {
+                    this.expression(new NullSupplierBuilder<>(ownerCls),
+                                    (IClass) m.getReturnType())
+                            .method(m)
+                            .autoDetect(true);
+                } catch (DslException ignored) {
+                    // One bad function should not poison the whole context.
+                }
+            }
+        }
     }
 
     /**
