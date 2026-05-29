@@ -12,7 +12,7 @@ import com.garganttua.core.reflection.IClass;
  *
  * @param <T> the type represented by this descriptor
  */
-public interface IAOTClassDescriptor<T> extends IClass<T> {
+public interface IAOTClassDescriptor<T> extends IClass<T>, IAOTSelfRegistering {
 
     /**
      * Always returns {@code true} for AOT-generated descriptors.

@@ -80,5 +80,102 @@ public class AggregateAOTRegistryMojo extends AbstractMojo {
         }
 
         getLog().info("Aggregated " + totalEntries + " entries across " + totalFiles + " AOT class descriptor files.");
+
+        // Generate GraalVM native-image reachability metadata so the
+        // AOTClass_* descriptors stay in the closed-world image, and the
+        // META-INF/garganttua/aot/classes/ + META-INF/services/...
+        // resources are visible at runtime in the native binary.
+        try {
+            generateNativeImageMetadata(dependencyEntries);
+        } catch (IOException e) {
+            throw new MojoExecutionException("Failed to write native-image reachability metadata", e);
+        }
+    }
+
+    /**
+     * Collect every AOTClass_* FQN from the merged listings + the local
+     * compile output, then emit {@code reflect-config.json} and
+     * {@code resource-config.json} under
+     * {@code META-INF/native-image/<groupId>/<artifactId>/}. GraalVM
+     * native-image consumes these automatically — no extra configuration on
+     * the user side.
+     */
+    private void generateNativeImageMetadata(Map<String, Set<String>> dependencyEntries) throws IOException {
+        Set<String> allDescriptors = new LinkedHashSet<>();
+        for (Set<String> entries : dependencyEntries.values()) {
+            allDescriptors.addAll(entries);
+        }
+
+        // Re-walk the local output to catch entries written in the same build
+        // (the loop above only saw dependency JARs).
+        Path classesDir = outputDirectory.toPath().resolve(AOTMetadataConstants.AOT_CLASSES_DIR);
+        if (Files.isDirectory(classesDir)) {
+            try (var stream = Files.list(classesDir)) {
+                stream.filter(Files::isRegularFile).forEach(p -> {
+                    try (BufferedReader br = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            String t = line.trim();
+                            if (!t.isEmpty() && !t.startsWith("#")) {
+                                allDescriptors.add(t);
+                            }
+                        }
+                    } catch (IOException ignored) {
+                        // best-effort
+                    }
+                });
+            }
+        }
+
+        if (allDescriptors.isEmpty()) {
+            getLog().info("No AOT descriptors → skipping native-image metadata generation.");
+            return;
+        }
+
+        String groupId = project.getGroupId();
+        String artifactId = project.getArtifactId();
+        Path metaDir = outputDirectory.toPath()
+                .resolve("META-INF/native-image")
+                .resolve(groupId)
+                .resolve(artifactId);
+        Files.createDirectories(metaDir);
+
+        writeReflectConfig(metaDir.resolve("reflect-config.json"), allDescriptors);
+        writeResourceConfig(metaDir.resolve("resource-config.json"));
+
+        getLog().info("Wrote native-image reachability metadata for "
+                + allDescriptors.size() + " AOTClass_* descriptors under "
+                + outputDirectory.toPath().relativize(metaDir));
+    }
+
+    private void writeReflectConfig(Path target, Set<String> descriptors) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[\n");
+        int i = 0;
+        for (String fqn : descriptors) {
+            if (i++ > 0) {
+                sb.append(",\n");
+            }
+            sb.append("  {\n")
+              .append("    \"name\": \"").append(fqn).append("\",\n")
+              .append("    \"allDeclaredConstructors\": true,\n")
+              .append("    \"allDeclaredMethods\": false,\n")
+              .append("    \"allDeclaredFields\": false\n")
+              .append("  }");
+        }
+        sb.append("\n]\n");
+        Files.writeString(target, sb.toString(), StandardCharsets.UTF_8);
+    }
+
+    private void writeResourceConfig(Path target) throws IOException {
+        String json = "{\n"
+                + "  \"resources\": {\n"
+                + "    \"includes\": [\n"
+                + "      { \"pattern\": \"" + AOTMetadataConstants.AOT_CLASSES_DIR + ".*\" },\n"
+                + "      { \"pattern\": \"META-INF/services/com\\\\.garganttua\\\\.core\\\\.aot\\\\.commons\\\\.IAOTSelfRegistering\" }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "}\n";
+        Files.writeString(target, json, StandardCharsets.UTF_8);
     }
 }

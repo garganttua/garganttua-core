@@ -1,5 +1,6 @@
 package com.garganttua.core.aot.annotation.processor;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -87,9 +88,19 @@ public class DirectBinderGenerator extends AbstractProcessor {
         }
     }
 
+    /** FQNs of every AOTClass_* generated across all processing rounds.
+     *  Written to META-INF/services/...IAOTSelfRegistering in the final round
+     *  so ServiceLoader (and GraalVM native-image) can discover them. */
+    private final java.util.Set<String> generatedDescriptorFqns = new LinkedHashSet<>();
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        if (!enabled || roundEnv.processingOver()) {
+        if (!enabled) {
+            return false;
+        }
+        if (roundEnv.processingOver()) {
+            // Final round: emit the ServiceLoader descriptor accumulated across rounds.
+            writeSelfRegisteringServiceFile();
             return false;
         }
 
@@ -195,6 +206,7 @@ public class DirectBinderGenerator extends AbstractProcessor {
                     "[garganttua-aot] Generated AOT descriptor: " + classGen.getGeneratedQualifiedName());
 
             writeListingEntry(qualifiedName, classGen.getGeneratedQualifiedName());
+            this.generatedDescriptorFqns.add(classGen.getGeneratedQualifiedName());
         } catch (IOException e) {
             messager.printMessage(Diagnostic.Kind.ERROR,
                     "[garganttua-aot] Failed to generate AOT class for " + qualifiedName + ": " + e.getMessage(),
@@ -259,6 +271,60 @@ public class DirectBinderGenerator extends AbstractProcessor {
              BufferedWriter bw = new BufferedWriter(writer)) {
             bw.write(generatedFqn);
             bw.newLine();
+        }
+    }
+
+    /**
+     * Writes {@code META-INF/services/com.garganttua.core.aot.commons.IAOTSelfRegistering}
+     * listing every {@code AOTClass_*} generated across all rounds. This is
+     * the GraalVM-native-image-friendly entry point: ServiceLoader picks the
+     * service descriptor up automatically without reachability-metadata
+     * configuration, triggers each class's static init, which self-registers
+     * into the AOTRegistry.
+     */
+    private void writeSelfRegisteringServiceFile() {
+        if (this.generatedDescriptorFqns.isEmpty()) {
+            return;
+        }
+        String resourcePath = "META-INF/services/com.garganttua.core.aot.commons.IAOTSelfRegistering";
+        try {
+            FileObject existing = null;
+            try {
+                existing = processingEnv.getFiler().getResource(
+                        StandardLocation.CLASS_OUTPUT, "", resourcePath);
+            } catch (IOException ignored) {
+                // first round; no existing file
+            }
+            // Merge with whatever a previous incremental round may have written.
+            java.util.Set<String> all = new LinkedHashSet<>(this.generatedDescriptorFqns);
+            if (existing != null) {
+                try (BufferedReader br = new BufferedReader(existing.openReader(true))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String t = line.trim();
+                        if (!t.isEmpty() && !t.startsWith("#")) {
+                            all.add(t);
+                        }
+                    }
+                } catch (IOException ignored) {
+                    // file didn't exist or unreadable — proceed with our set
+                }
+            }
+            FileObject fileObject = processingEnv.getFiler().createResource(
+                    StandardLocation.CLASS_OUTPUT, "", resourcePath);
+            try (Writer writer = fileObject.openWriter();
+                 BufferedWriter bw = new BufferedWriter(writer)) {
+                for (String fqn : all) {
+                    bw.write(fqn);
+                    bw.newLine();
+                }
+            }
+            messager.printMessage(Diagnostic.Kind.NOTE,
+                    "[garganttua-aot] Wrote ServiceLoader descriptor with "
+                            + all.size() + " AOT classes");
+        } catch (IOException e) {
+            messager.printMessage(Diagnostic.Kind.WARNING,
+                    "[garganttua-aot] Failed to write " + resourcePath + ": " + e.getMessage());
         }
     }
 

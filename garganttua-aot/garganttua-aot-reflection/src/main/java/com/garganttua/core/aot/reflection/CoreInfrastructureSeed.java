@@ -17,6 +17,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import com.garganttua.core.aot.commons.AOTRegistry;
+import com.garganttua.core.aot.commons.IAOTSelfRegistering;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
@@ -109,31 +110,51 @@ public final class CoreInfrastructureSeed {
     }
 
     /**
-     * Walks the classpath under {@code META-INF/garganttua/aot/classes/} and
-     * triggers {@code Class.forName(...)} on every listed AOT descriptor —
-     * forcing each one's static initialiser to fire, which is what registers
-     * the descriptor into {@link AOTRegistry}.
+     * Forces every AOT-generated descriptor's static initialiser to run, which
+     * is what registers it into {@link AOTRegistry}.
      *
-     * <p>Without this step the AOTClass_* classes are present in the jar but
-     * never loaded (the JVM does NOT pre-initialise classes), so user-side
-     * descriptors silently never reach the registry.
+     * <p>Two mechanisms in order of preference, both run on every startup so
+     * we tolerate jars built with the old packaging:
+     * <ol>
+     *   <li><strong>ServiceLoader</strong> on {@link IAOTSelfRegistering} —
+     *       GraalVM-native-image-friendly out of the box (the closed-world
+     *       assumption is OK with ServiceLoader; the processor writes
+     *       {@code META-INF/services/...IAOTSelfRegistering} per JAR).</li>
+     *   <li><strong>Legacy classpath walk</strong> under
+     *       {@code META-INF/garganttua/aot/classes/} via
+     *       {@code Class.forName} — NOT native-friendly but keeps old jars
+     *       (pre-ServiceLoader-packaging) working on the JVM.</li>
+     * </ol>
      */
     private static void loadGeneratedDescriptors() {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) {
             cl = CoreInfrastructureSeed.class.getClassLoader();
         }
+        // 1) ServiceLoader-based path (native-friendly, recommended).
         try {
-            // getResources returns one URL per classpath root that contains
-            // the prefix — typically one per JAR.
+            java.util.ServiceLoader<IAOTSelfRegistering> loader =
+                    java.util.ServiceLoader.load(IAOTSelfRegistering.class, cl);
+            // Iterator triggers class-load + <clinit> on each provider; the
+            // returned instance itself is unused (each <clinit> already
+            // registered into AOTRegistry).
+            for (IAOTSelfRegistering ignored : loader) {
+                // intentionally empty
+            }
+        } catch (java.util.ServiceConfigurationError e) {
+            System.err.println("[CoreInfrastructureSeed] ServiceLoader for IAOTSelfRegistering failed: "
+                    + e.getMessage());
+        }
+        // 2) Legacy classpath walk — keeps pre-ServiceLoader-packaging jars
+        //    working. No-op when the META-INF/garganttua/aot/classes/ dir is
+        //    absent. NOT native-friendly; relies on dynamic Class.forName.
+        try {
             Enumeration<URL> roots = cl.getResources(AOT_CLASSES_DIR);
             while (roots.hasMoreElements()) {
                 URL root = roots.nextElement();
                 processRoot(root, cl);
             }
         } catch (IOException e) {
-            // Diagnostic-only failure — log and continue so a single broken
-            // JAR doesn't kill the whole startup.
             System.err.println("[CoreInfrastructureSeed] Failed to enumerate "
                     + AOT_CLASSES_DIR + ": " + e.getMessage());
         }
