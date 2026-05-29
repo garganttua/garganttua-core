@@ -131,11 +131,43 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 		Type genericType = field.getGenericType();
 		if (genericType instanceof ParameterizedType parameterizedType) {
 			Type[] typeArguments = parameterizedType.getActualTypeArguments();
-			if (typeArguments.length > index && typeArguments[index] instanceof Class<?> clazz) {
-				return this.reflection.getClass(clazz);
+			if (typeArguments.length > index) {
+				return resolveType(typeArguments[index]);
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Resolves a generic {@link Type} to an {@link IClass} for the most useful
+	 * raw form: Class is returned as-is, ParameterizedType yields its raw type
+	 * (so {@code List<List<X>>} → {@code List}), wildcards collapse to their
+	 * upper bound (so {@code ? extends Foo} → {@code Foo}), and unbounded
+	 * variables fall back to {@code Object}. Returning null caused downstream
+	 * NPEs in {@code Mapper.mapInternal}.
+	 */
+	private IClass<?> resolveType(Type type) {
+		if (type instanceof Class<?> clazz) {
+			return this.reflection.getClass(clazz);
+		}
+		if (type instanceof ParameterizedType pt && pt.getRawType() instanceof Class<?> raw) {
+			return this.reflection.getClass(raw);
+		}
+		if (type instanceof java.lang.reflect.WildcardType wt) {
+			Type[] upper = wt.getUpperBounds();
+			if (upper.length > 0) {
+				return resolveType(upper[0]);
+			}
+		}
+		if (type instanceof java.lang.reflect.TypeVariable<?> tv) {
+			Type[] bounds = tv.getBounds();
+			if (bounds.length > 0) {
+				return resolveType(bounds[0]);
+			}
+		}
+		// Last resort — Object covers passthrough mapping where the actual
+		// item type is supplied by the source at runtime.
+		return this.reflection.getClass(Object.class);
 	}
 
 	private Object instanciateCollectionField(IField field) throws ReflectionException {

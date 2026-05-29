@@ -124,8 +124,21 @@ public class Mapper implements IMapper, IObservable {
 	@SuppressWarnings("unchecked")
 	private <destination> destination mapInternal(Object source, IClass<destination> destinationClass,
 			destination destination, Set<Object> visited) throws MapperException {
-		if (destinationClass == null)
-			destinationClass = (IClass<destination>) this.reflection.getClass(destination.getClass());
+		if (destinationClass == null) {
+			if (destination != null) {
+				destinationClass = (IClass<destination>) this.reflection.getClass(destination.getClass());
+			} else if (source != null) {
+				// Recursion path where the caller couldn't resolve the
+				// destination type (e.g. collection of a complex generic
+				// like List<List<X>>, List<? extends Foo>, …). Fall back to
+				// the source's class — for collection-item passthrough, the
+				// dest and source types are typically the same.
+				destinationClass = (IClass<destination>) this.reflection.getClass(source.getClass());
+			} else {
+				// Truly no information: nothing to map.
+				return null;
+			}
+		}
 
 		if (source != null && !visited.add(source)) {
 			if (this.configuration.failOnCycle()) {
