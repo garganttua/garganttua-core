@@ -130,20 +130,30 @@ public class WorkflowsBuilder
         if (this.observabilityBuilder != null) {
             child.provide((IObservableBuilder<?, ?>) this.observabilityBuilder);
         }
-        IScriptingEnvironment env = materializeScriptingEnvironment();
-        if (env != null) {
-            child.acceptScriptingEnvironment(env);
+        // Push the scripting environment if it is ALREADY materialised
+        // (PRE_BUILD has fired, or a direct-DSL caller built it earlier).
+        // Otherwise defer — the child will pull it lazily via
+        // requireScriptingEnvironment() at its own build time. This avoids
+        // building the IScriptsBuilder during CONFIGURATION, before its
+        // transitive deps (IExpressionContextBuilder, …) are ready.
+        if (this.scriptingEnvironment != null) {
+            child.acceptScriptingEnvironment(this.scriptingEnvironment);
         }
     }
 
     /**
-     * Build the IScriptsBuilder lazily on first need, so direct-DSL callers
-     * who do {@code workflowsBuilder.workflow("x")...build()} on the child
-     * get the env without having to call {@code workflowsBuilder.build()}.
-     * Bootstrap-driven flows hit the same materialization via
-     * {@link #doPreBuildWithDependency(Object)} earlier.
+     * Materialise the {@link IScriptingEnvironment} on demand. Called by:
+     * <ul>
+     *   <li>child {@code WorkflowBuilder.doBuild()} when its own build kicks
+     *       in but no env has been delivered via the bootstrap pre-build path
+     *       (direct-DSL caller flow);</li>
+     *   <li>internally by {@link #doBuild()} before generating the children
+     *       so the same env is propagated.</li>
+     * </ul>
+     * Returns {@code null} when no {@link IScriptsBuilder} has been provided
+     * at all. Idempotent — caches the env after first successful build.
      */
-    private IScriptingEnvironment materializeScriptingEnvironment() {
+    IScriptingEnvironment requireScriptingEnvironment() {
         if (this.scriptingEnvironment != null) {
             return this.scriptingEnvironment;
         }
@@ -155,7 +165,7 @@ public class WorkflowsBuilder
             log.debug("Materialised IScriptingEnvironment from provided IScriptsBuilder");
             return this.scriptingEnvironment;
         } catch (DslException e) {
-            throw new IllegalStateException("Failed to build IScriptsBuilder while opening a child workflow", e);
+            throw new IllegalStateException("Failed to build IScriptsBuilder while materialising scripting environment", e);
         }
     }
 
@@ -179,14 +189,12 @@ public class WorkflowsBuilder
                 child.provide(dependency);
             }
         }
-        if (dependency instanceof IScriptsBuilder && !this.workflowBuilders.isEmpty()) {
-            IScriptingEnvironment env = materializeScriptingEnvironment();
-            if (env != null) {
-                for (WorkflowBuilder child : this.workflowBuilders.values()) {
-                    child.acceptScriptingEnvironment(env);
-                }
-            }
-        }
+        // Note: when an IScriptsBuilder is provided during CONFIGURATION (the
+        // typical bootstrap flow), do NOT try to materialise it here — its own
+        // transitive deps (IExpressionContextBuilder, …) may not be built yet.
+        // The env is delivered either via doPreBuildWithDependency() once
+        // PRE_BUILD fires, or pulled lazily by a child at its own build time
+        // via requireScriptingEnvironment().
         return super.provide(dependency);
     }
 

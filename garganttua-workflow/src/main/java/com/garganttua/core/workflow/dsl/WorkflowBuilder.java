@@ -147,7 +147,19 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         }
 
         if (scriptingEnvironment == null) {
-            throw new DslException("IScriptingEnvironment is required — workflow can't compile its script");
+            // Direct-DSL caller path: ask the parent to materialise the env
+            // on demand. Bootstrap-driven flows already delivered it via
+            // doPreBuildWithDependency() so this branch is the fallback for
+            // workflowsBuilder.workflow("x").stage(…).build() chains.
+            if (this.parent instanceof WorkflowsBuilder wsb) {
+                IScriptingEnvironment env = wsb.requireScriptingEnvironment();
+                if (env != null) {
+                    this.scriptingEnvironment = env;
+                }
+            }
+            if (scriptingEnvironment == null) {
+                throw new DslException("IScriptingEnvironment is required — workflow can't compile its script");
+            }
         }
 
         String generatedScript;
