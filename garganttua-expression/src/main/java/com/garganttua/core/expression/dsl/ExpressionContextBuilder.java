@@ -78,7 +78,17 @@ public class ExpressionContextBuilder
     private static final String SOURCE_EXPLICIT = "explicit";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
 
-    private final Set<String> packages = new HashSet<>();
+    /** Framework's own built-in expression functions package — always scanned so
+     *  literals (string, int, double, boolean, …) and core operators
+     *  (concatenate, increment, …) defined in {@code Expressions} are always
+     *  registered regardless of the consumer's package configuration. Without
+     *  this, an app that only declares its own packages would parse fine until
+     *  the first literal hits the parser, then crash with
+     *  "Function not found: string(String)". */
+    private static final String BUILTIN_FUNCTIONS_PACKAGE =
+            "com.garganttua.core.expression.functions";
+
+    private final Set<String> packages = new HashSet<>(Set.of(BUILTIN_FUNCTIONS_PACKAGE));
     private final Set<IExpressionMethodBinderBuilder<?>> explicitNodes = new HashSet<>();
     private final Set<IExpressionMethodBinderBuilder<?>> autoDetectedNodes = new HashSet<>();
     private final MultiSourceCollector<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeCollector;
