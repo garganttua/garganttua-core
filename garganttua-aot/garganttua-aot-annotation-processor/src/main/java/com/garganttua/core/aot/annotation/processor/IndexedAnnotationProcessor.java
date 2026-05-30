@@ -112,13 +112,30 @@ public class IndexedAnnotationProcessor extends AbstractProcessor {
     }
 
     /**
-     * Checks whether the given annotation type is meta-annotated with {@code @Indexed}.
+     * Checks whether the given annotation type is meta-annotated with any of
+     * the markers that opt it into compile-time indexing — {@code @Indexed},
+     * {@code javax.inject.Qualifier} / {@code Scope}, and their jakarta
+     * equivalents.
+     *
+     * <p>The Qualifier/Scope inclusion is what makes user-defined custom
+     * qualifier annotations work in pure-AOT mode. Without it, a consumer
+     * annotation like {@code @MyQualifier} (which is itself
+     * {@code @Qualifier}-meta) gets no index file — so framework code that
+     * iterates known qualifiers and asks the scanner for classes annotated
+     * with each one finds nothing for {@code @MyQualifier}.</p>
      */
     private boolean isIndexedAnnotation(TypeElement annotationType) {
         for (AnnotationMirror mirror : annotationType.getAnnotationMirrors()) {
             DeclaredType mirrorType = mirror.getAnnotationType();
             TypeElement mirrorElement = (TypeElement) mirrorType.asElement();
-            if (INDEXED_ANNOTATION.equals(mirrorElement.getQualifiedName().toString())) {
+            String fqn = mirrorElement.getQualifiedName().toString();
+            if (INDEXED_ANNOTATION.equals(fqn)) {
+                return true;
+            }
+            // Treat @Qualifier and @Scope (javax + jakarta) as implicit
+            // @Indexed markers. Any user-defined custom qualifier or scope
+            // is therefore auto-indexed without requiring @Indexed on top.
+            if (JSR330_ANNOTATIONS.contains(fqn)) {
                 return true;
             }
         }
