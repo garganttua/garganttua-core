@@ -388,6 +388,22 @@ class PureAotIntegrationTest {
     }
 
     @Test
+    void aotScanner_finds_TOP_LEVEL_class_annotated_with_real_Observer() {
+        // Top-level case — the dominant real-world pattern. If THIS one
+        // breaks the user's @Observer-annotated classes are invisible
+        // regardless of nesting.
+        AOTAnnotationScanner scanner = new AOTAnnotationScanner();
+        IClass<com.garganttua.core.observability.annotations.Observer> observerCls =
+                IClass.getClass(com.garganttua.core.observability.annotations.Observer.class);
+        java.util.List<IClass<?>> hits = scanner.getClassesWithAnnotation(observerCls);
+        boolean foundTopLevel = hits.stream()
+                .anyMatch(c -> c.getName().equals(TopLevelObserverBean.class.getName()));
+        assertTrue(foundTopLevel,
+                "Scanner did NOT find TopLevelObserverBean. Hits: "
+                        + hits.stream().map(IClass::getName).toList());
+    }
+
+    @Test
     void aotScanner_finds_test_class_annotated_with_real_Observer() {
         // The proof end-to-end: a class annotated with the framework's
         // @Observer annotation must be discoverable via the scanner.
