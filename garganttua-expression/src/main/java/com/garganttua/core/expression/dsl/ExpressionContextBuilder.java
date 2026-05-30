@@ -252,6 +252,15 @@ public class ExpressionContextBuilder
             // Classes are resolved via Class.forName; missing binding modules
             // (e.g. mutex-redis when Redis isn't on classpath) are silently
             // ignored.
+            //
+            // Why kept: empirically, removing this drops 15 functions in a
+            // consumer's pure-AOT fat-jar (238 → 223) even though every
+            // FRAMEWORK_FUNCTION_CLASSES package is already in the
+            // BUILTIN_FUNCTIONS_PACKAGES set — the package-scan path
+            // depends on the shade-plugin AppendingTransformer covering
+            // every index file, and a single missed transformer silently
+            // drops those entries. The reflection-based scan is the only
+            // guarantee that survives a consumer's mis-configured shade.
             registerAllFrameworkBuiltinsByReflection();
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);

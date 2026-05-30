@@ -54,27 +54,64 @@ public class AnnotationIndex implements IAnnotationIndex {
 
     /**
      * Holds parsed index data for an annotation.
+     *
+     * <p>The raw {@code Class<?>}/{@code Method} collections are populated
+     * during index parse. The wrapped {@code IClass<?>}/{@code IMethod} lists
+     * are derived lazily once per IndexData via
+     * {@link #wrappedClasses()}/{@link #wrappedMethods()} and cached, so
+     * repeated callers ({@code doAutoDetection} re-scanning the same
+     * annotation per-package across many builders) don't pay the wrap cost
+     * on every invocation. This was a real startup hot spot in the
+     * pure-AOT path: 238 expression methods × ~10 packages × ~4 builders
+     * = thousands of redundant {@code wrapMethod} calls.</p>
      */
     private static class IndexData {
         final List<Class<?>> classes = new ArrayList<>();
         final List<Method> methods = new ArrayList<>();
         final boolean loaded;
 
+        private volatile List<IClass<?>> wrappedClasses;
+        private volatile List<IMethod> wrappedMethods;
+
         IndexData(boolean loaded) {
             this.loaded = loaded;
+        }
+
+        List<IClass<?>> wrappedClasses() {
+            List<IClass<?>> snap = wrappedClasses;
+            if (snap != null) return snap;
+            synchronized (this) {
+                if (wrappedClasses != null) return wrappedClasses;
+                List<IClass<?>> built = new ArrayList<>(classes.size());
+                for (Class<?> c : classes) built.add(IClass.getClass(c));
+                wrappedClasses = Collections.unmodifiableList(built);
+                return wrappedClasses;
+            }
+        }
+
+        List<IMethod> wrappedMethods() {
+            List<IMethod> snap = wrappedMethods;
+            if (snap != null) return snap;
+            synchronized (this) {
+                if (wrappedMethods != null) return wrappedMethods;
+                List<IMethod> built = new ArrayList<>(methods.size());
+                for (Method m : methods) built.add(AnnotationIndex.wrapMethod(m));
+                wrappedMethods = Collections.unmodifiableList(built);
+                return wrappedMethods;
+            }
         }
     }
 
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());
-        return data.loaded ? data.classes.stream().<IClass<?>>map(IClass::getClass).toList() : Collections.emptyList();
+        return data.loaded ? data.wrappedClasses() : Collections.emptyList();
     }
 
     @Override
     public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());
-        return data.loaded ? data.methods.stream().<IMethod>map(AnnotationIndex::wrapMethod).toList() : Collections.emptyList();
+        return data.loaded ? data.wrappedMethods() : Collections.emptyList();
     }
 
     @Override
