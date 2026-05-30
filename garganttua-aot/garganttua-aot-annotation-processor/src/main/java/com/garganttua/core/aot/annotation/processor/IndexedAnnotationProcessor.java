@@ -59,9 +59,19 @@ public class IndexedAnnotationProcessor extends AbstractProcessor {
             "javax.inject.Inject",
             "javax.inject.Singleton",
             "javax.inject.Named",
+            // Qualifier + Scope are meta-markers. Indexing them captures every
+            // annotation TYPE that wears one — e.g. @Observer, @BeanProvider,
+            // user-side custom qualifiers — so framework code that asks the
+            // scanner for "classes annotated with @Qualifier" reliably finds
+            // each qualifier annotation type. Without this, an AOT consumer
+            // gets nothing on getClassesWithAnnotation(Qualifier).
+            "javax.inject.Qualifier",
+            "javax.inject.Scope",
             "jakarta.inject.Inject",
             "jakarta.inject.Singleton",
-            "jakarta.inject.Named"
+            "jakarta.inject.Named",
+            "jakarta.inject.Qualifier",
+            "jakarta.inject.Scope"
     );
 
     /** Accumulated entries across processing rounds: annotation FQN -> set of index entries. */
@@ -123,7 +133,15 @@ public class IndexedAnnotationProcessor extends AbstractProcessor {
     private String toIndexEntry(Element element) {
         ElementKind kind = element.getKind();
 
-        if (kind.isClass() || kind.isInterface() || kind == ElementKind.ENUM || kind == ElementKind.RECORD) {
+        // ANNOTATION_TYPE must be handled explicitly — kind.isInterface() is
+        // false for it in some JDK versions, which used to silently drop
+        // annotation declarations bearing meta-annotations like @Qualifier.
+        // That left the Qualifier / Scope indices empty, so the AOT scanner
+        // returned nothing on getClassesWithAnnotation(Qualifier) and the
+        // framework's qualifier-annotation discovery (Observer, BeanProvider,
+        // PropertyProvider, custom user qualifiers, …) silently no-op'd.
+        if (kind.isClass() || kind.isInterface() || kind == ElementKind.ENUM
+                || kind == ElementKind.RECORD || kind == ElementKind.ANNOTATION_TYPE) {
             TypeElement typeElement = (TypeElement) element;
             return "C:" + typeElement.getQualifiedName().toString();
         }
