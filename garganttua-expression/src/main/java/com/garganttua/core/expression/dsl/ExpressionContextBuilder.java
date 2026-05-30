@@ -312,18 +312,38 @@ public class ExpressionContextBuilder
      * classpath are silently skipped.
      */
     private static final String[] FRAMEWORK_FUNCTION_CLASSES = {
+            // expression
             "com.garganttua.core.expression.functions.Expressions",
+            // script
             "com.garganttua.core.script.functions.ScriptFunctions",
             "com.garganttua.core.script.functions.LogFunctions",
             "com.garganttua.core.script.functions.ControlFlowFunctions",
+            // runtime
             "com.garganttua.core.runtime.functions.RuntimeFunctions",
+            // injection
             "com.garganttua.core.injection.functions.InjectionFunctions",
             "com.garganttua.core.injection.context.beans.Beans",
+            // mutex (+ binding-conditional redis)
             "com.garganttua.core.mutex.functions.MutexFunctions",
+            "com.garganttua.core.mutex.redis.functions.RedisMutexFunctions",
+            // console & observability
             "com.garganttua.core.console.ConsoleFunctions",
             "com.garganttua.core.observability.ObservabilityExpressions",
-            // Binding-conditional
-            "com.garganttua.core.mutex.redis.functions.RedisMutexFunctions"
+            // conditions — and / or / nor / nand / xor / not / null / notNull /
+            // equals / notEquals / greater / greaterOrEquals / lower / lowerOrEquals
+            "com.garganttua.core.condition.AndCondition",
+            "com.garganttua.core.condition.OrCondition",
+            "com.garganttua.core.condition.NorCondition",
+            "com.garganttua.core.condition.NandCondition",
+            "com.garganttua.core.condition.XorCondition",
+            "com.garganttua.core.condition.NullCondition",
+            "com.garganttua.core.condition.NotNullCondition",
+            "com.garganttua.core.condition.EqualsCondition",
+            "com.garganttua.core.condition.NotEqualsCondition",
+            "com.garganttua.core.condition.GreaterCondition",
+            "com.garganttua.core.condition.GreaterOrEqualsCondition",
+            "com.garganttua.core.condition.LowerCondition",
+            "com.garganttua.core.condition.LowerOrEqualsCondition"
     };
 
     @SuppressWarnings("unchecked")
