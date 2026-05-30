@@ -121,7 +121,16 @@ public final class AOTClassSourceGenerator {
         src.append("            ").append(fieldsArray).append(",\n");
         src.append("            ").append(methodsArray).append(",\n");
         src.append("            ").append(constructorsArray).append(",\n");
-        src.append("            new Annotation[0],\n");
+        // Class-level annotations sourced from the live Class<?>. Java's
+        // {@code MyClass.class.getAnnotations()} is AOT-friendly (the class
+        // literal compiles to a constant pool entry, no reflection at
+        // descriptor construction time). Without this the framework sees an
+        // empty annotation array on every AOTClass_* and qualifier discovery
+        // (@Observer, @BeanProvider, @Resolver, …) silently no-ops —
+        // observers never get notified, bean providers never get registered,
+        // resolvers never get wired. The fix that ended the
+        // "@Observer not detected" loop.
+        src.append("            ").append(qualifiedName).append(".class.getAnnotations(),\n");
         src.append("            ").append(isInterfaceFlag).append(",\n");
         src.append("            false,\n");
         src.append("            false,\n");
