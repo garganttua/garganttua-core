@@ -17,7 +17,17 @@ class ProviderSelector implements IReflectionProvider {
     }
 
     IReflectionProvider select(Class<?> type) {
-        for (IReflectionProvider provider : providers) {
+        // Single-provider fast path (pure-AOT, pure-runtime, native-image):
+        // skip the supports() check entirely — there's nowhere else to go.
+        // Whichever provider is registered owns every getClass() call by
+        // construction, and supports() can be non-trivial (AOT's checks
+        // AOTRegistry containment + isIntrinsic per call).
+        int size = providers.size();
+        if (size == 1) {
+            return providers.get(0);
+        }
+        for (int i = 0; i < size; i++) {
+            IReflectionProvider provider = providers.get(i);
             if (provider.supports(type)) {
                 return provider;
             }

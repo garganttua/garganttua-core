@@ -43,6 +43,17 @@ class ScannerAggregator implements IAnnotationScanner {
 
     private <T> List<T> aggregate(Function<IAnnotationScanner, List<T>> extractor) {
         log.trace("Aggregating scanner results across {} scanners", scanners.size());
+        // Fast path for pure-AOT / pure-runtime configurations with a single
+        // scanner — skip the LinkedHashSet+ArrayList round-trip and return
+        // the scanner's own list directly. Callers don't mutate the result
+        // (verified via grep: every caller is .stream() or .addAll(returned)
+        // into a separate accumulator). Saves N×Set/List allocation per
+        // bootstrap auto-detection sweep — multiplied across every builder
+        // that calls getClassesWithAnnotation / getMethodsWithAnnotation
+        // it's a real micro-win.
+        if (scanners.size() == 1) {
+            return extractor.apply(scanners.get(0));
+        }
         LinkedHashSet<T> result = new LinkedHashSet<>();
         for (IAnnotationScanner scanner : scanners) {
             result.addAll(extractor.apply(scanner));
