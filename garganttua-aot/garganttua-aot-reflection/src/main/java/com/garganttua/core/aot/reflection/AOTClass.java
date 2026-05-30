@@ -61,6 +61,19 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
     private volatile IClass<? super T> resolvedSuperclass;
     private volatile IClass<?>[] resolvedInterfaces;
 
+    // --- Lazy fallback caches (shallow descriptors only) ---
+    // For shallow descriptors created by CoreInfrastructureSeed.synthesize,
+    // fields/methods/constructors arrays are empty and every call has to
+    // synthesize from the live Class<?>. Without these caches the framework's
+    // repeated getDeclaredMethods/Fields calls during auto-detection re-run
+    // Class.forName + getDeclaredMethods + N×AOTMethod.synthesizeFrom on
+    // every invocation. Memoising once makes subsequent calls O(1).
+    private volatile Class<?> liveClassCache;
+    private volatile boolean liveClassResolved;
+    private volatile IMethod[] cachedFallbackMethods;
+    private volatile IField[] cachedFallbackFields;
+    private volatile IConstructor<?>[] cachedFallbackConstructors;
+
     @SuppressWarnings("java:S107") // Constructor with many parameters is intentional for AOT
     public AOTClass(String name, String simpleName, String canonicalName, String packageName,
                     int modifiers, String superclassName, String[] interfaceNames,
@@ -729,19 +742,31 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
     // Class.forName and synthesise the AOT* member on demand. Pure-AOT JVM
     // mode works since Class.forName + reflection are available; native-
     // image consumers need the member in reflect-config (handled by the
-    // GarganttuaAotFeature for seeded types). Members synthesised here are
-    // not cached on AOTClass (the methods/fields/constructors arrays are
-    // final) — subsequent calls re-resolve, but the lookup path is fast
-    // enough that this is acceptable for the typical "called once at
-    // bootstrap" pattern.
+    // GarganttuaAotFeature for seeded types).
+    //
+    // The bulk-array fallbacks (fallbackDeclared{Methods,Fields,Constructors})
+    // memoise their result in cachedFallback* and loadLiveClass() memoises
+    // the resolved Class<?>: repeated calls during auto-detection no longer
+    // re-Class.forName + re-allocate N×AOTMethod per invocation. The
+    // single-member fallbacks (fallbackDeclaredMethod / fallbackDeclaredField
+    // / fallbackDeclaredConstructor) stay non-cached: each (name, parameter
+    // types) tuple would need its own cache key, and the lookup pattern in
+    // practice is one-shot per name — caching there pays the map overhead
+    // without amortising it.
 
     private Class<?> loadLiveClass() {
-        try {
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            if (cl == null) cl = AOTClass.class.getClassLoader();
-            return Class.forName(name, false, cl);
-        } catch (ClassNotFoundException | LinkageError ignored) {
-            return null;
+        if (liveClassResolved) return liveClassCache;
+        synchronized (this) {
+            if (liveClassResolved) return liveClassCache;
+            try {
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                if (cl == null) cl = AOTClass.class.getClassLoader();
+                liveClassCache = Class.forName(name, false, cl);
+            } catch (ClassNotFoundException | LinkageError ignored) {
+                liveClassCache = null;
+            }
+            liveClassResolved = true;
+            return liveClassCache;
         }
     }
 
@@ -827,6 +852,8 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
     }
 
     private IMethod[] fallbackDeclaredMethods() {
+        IMethod[] cached = cachedFallbackMethods;
+        if (cached != null) return cached.length == 0 ? null : cached.clone();
         Class<?> live = loadLiveClass();
         if (live == null) return null;
         try {
@@ -835,13 +862,17 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
             for (int i = 0; i < raw.length; i++) {
                 out[i] = AOTMethod.synthesizeFrom(raw[i]);
             }
-            return out;
+            cachedFallbackMethods = out;
+            return out.clone();
         } catch (Throwable ignored) {
+            cachedFallbackMethods = new IMethod[0];
             return null;
         }
     }
 
     private IField[] fallbackDeclaredFields() {
+        IField[] cached = cachedFallbackFields;
+        if (cached != null) return cached.length == 0 ? null : cached.clone();
         Class<?> live = loadLiveClass();
         if (live == null) return null;
         try {
@@ -850,13 +881,17 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
             for (int i = 0; i < raw.length; i++) {
                 out[i] = AOTField.synthesizeFrom(raw[i]);
             }
-            return out;
+            cachedFallbackFields = out;
+            return out.clone();
         } catch (Throwable ignored) {
+            cachedFallbackFields = new IField[0];
             return null;
         }
     }
 
     private IConstructor<?>[] fallbackDeclaredConstructors() {
+        IConstructor<?>[] cached = cachedFallbackConstructors;
+        if (cached != null) return cached.length == 0 ? null : cached.clone();
         Class<?> live = loadLiveClass();
         if (live == null) return null;
         try {
@@ -865,8 +900,10 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
             for (int i = 0; i < raw.length; i++) {
                 out[i] = AOTConstructor.synthesizeFrom(raw[i]);
             }
-            return out;
+            cachedFallbackConstructors = out;
+            return out.clone();
         } catch (Throwable ignored) {
+            cachedFallbackConstructors = new IConstructor<?>[0];
             return null;
         }
     }
