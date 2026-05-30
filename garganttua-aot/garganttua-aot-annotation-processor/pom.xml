@@ -17,6 +17,14 @@
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-commons</artifactId>
         </dependency>
+        <!-- Test scope: the real @Observer annotation, to run the
+             IndexedAnnotationProcessor against it in an end-to-end test
+             that reproduces the user-reported failure. -->
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-observability</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

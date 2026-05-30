@@ -377,6 +377,55 @@ class PureAotIntegrationTest {
     // when caller asks for @Qualifier-annotated classes.
     // ─────────────────────────────────────────────────────────────────────
 
+    // A test-scope class annotated with the real @Observer. Its presence in
+    // the test compilation forces the IndexedAnnotationProcessor to emit the
+    // corresponding index entry under
+    // META-INF/garganttua/index/com.garganttua.core.observability.annotations.Observer.
+    // The scanner then has actual content to surface.
+    @com.garganttua.core.observability.annotations.Observer
+    public static class TestObserverBean {
+        public TestObserverBean() {}
+    }
+
+    @Test
+    void aotScanner_finds_test_class_annotated_with_real_Observer() {
+        // The proof end-to-end: a class annotated with the framework's
+        // @Observer annotation must be discoverable via the scanner.
+        // If this fails, the consumer-side detection chain is broken at
+        // the framework boundary.
+        AOTAnnotationScanner scanner = new AOTAnnotationScanner();
+        IClass<com.garganttua.core.observability.annotations.Observer> observerCls =
+                IClass.getClass(com.garganttua.core.observability.annotations.Observer.class);
+        java.util.List<IClass<?>> hits = scanner.getClassesWithAnnotation(observerCls);
+        assertNotNull(hits);
+        boolean foundTestObserver = hits.stream()
+                .anyMatch(c -> c.getName().equals(TestObserverBean.class.getName()));
+        assertTrue(foundTestObserver,
+                "Scanner did NOT find TestObserverBean annotated with @Observer. "
+                        + "Hits returned: " + hits.stream().map(IClass::getName).toList()
+                        + ". This breaks the framework's observer auto-detection chain.");
+    }
+
+    @Test
+    void aotScanner_finds_Observer_under_Qualifier_via_meta_walking() {
+        // The flow InjectionContextBuilder relies on: ask for @Qualifier,
+        // expect framework annotation types (and user-defined qualifiers)
+        // back. @Observer is itself meta-annotated @Qualifier, so it must
+        // surface — either directly in the Qualifier index, or via the
+        // scanner's meta-walking pass.
+        AOTAnnotationScanner scanner = new AOTAnnotationScanner();
+        IClass<javax.inject.Qualifier> qualifier =
+                IClass.getClass(javax.inject.Qualifier.class);
+        java.util.List<IClass<?>> hits = scanner.getClassesWithAnnotation(qualifier);
+        boolean foundObserverAsQualifier = hits.stream()
+                .anyMatch(c -> c.getName().equals(
+                        "com.garganttua.core.observability.annotations.Observer"));
+        assertTrue(foundObserverAsQualifier,
+                "Scanner did NOT find @Observer when asked for @Qualifier. "
+                        + "Hits returned: " + hits.stream().map(IClass::getName).toList()
+                        + ". This is the framework-wide qualifier discovery breaking.");
+    }
+
     @Test
     void aotScanner_walks_meta_annotations_observer_surfaces_under_qualifier() {
         // The framework's InjectionContextBuilder asks the scanner for classes

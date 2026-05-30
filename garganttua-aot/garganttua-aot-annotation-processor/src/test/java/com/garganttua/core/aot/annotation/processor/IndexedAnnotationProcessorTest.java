@@ -135,6 +135,37 @@ class IndexedAnnotationProcessorTest {
     // the list are exercised at consumer build time.
 
     @Test
+    void frameworkObserverAnnotation_userClassEndsUpInObserverIndex(@TempDir Path tmp) throws IOException {
+        // End-to-end reproduction of the user's reported scenario: a user
+        // class annotated with the framework's REAL @Observer annotation
+        // must end up in the Observer index. If this test passes, the
+        // framework-side compile pipeline is correct and any residual
+        // breakage on the consumer side is downstream (Maven cache, missing
+        // processor wiring in the consumer pom, etc.).
+        String src = """
+                package sample;
+                import com.garganttua.core.observability.annotations.Observer;
+
+                @Observer
+                public class MyObserverImpl {
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.MyObserverImpl", src);
+        assertCompiled(r);
+
+        Path observerIndex = r.outputDir.resolve(
+                "META-INF/garganttua/index/com.garganttua.core.observability.annotations.Observer");
+        assertTrue(Files.exists(observerIndex),
+                () -> "Observer index missing — consumer apps using @Observer "
+                        + "won't have their classes discovered. Outputs: "
+                        + listOutputs(r.outputDir));
+
+        String content = Files.readString(observerIndex);
+        assertTrue(content.contains("C:sample.MyObserverImpl"),
+                () -> "Observer index doesn't list MyObserverImpl; got:\n" + content);
+    }
+
+    @Test
     void scopeMetaAnnotatedTypeIsIndexed(@TempDir Path tmp) throws IOException {
         // @Scope is the sibling of @Qualifier — used to define scope markers
         // (e.g. @RequestScoped). Same indexing semantics expected.

@@ -160,13 +160,20 @@ public class IndexedAnnotationProcessor extends AbstractProcessor {
         if (kind.isClass() || kind.isInterface() || kind == ElementKind.ENUM
                 || kind == ElementKind.RECORD || kind == ElementKind.ANNOTATION_TYPE) {
             TypeElement typeElement = (TypeElement) element;
-            return "C:" + typeElement.getQualifiedName().toString();
+            // Use the JVM binary name (Outer$Inner) rather than the Java
+            // source name (Outer.Inner) so the runtime side's Class.forName
+            // resolves nested / inner classes. Without this, an @Observer-
+            // annotated nested class (common pattern in real apps, and the
+            // exact shape used by the test harness) ends up in the index
+            // under "Outer.Inner" which Class.forName rejects → the scanner
+            // silently drops the entry → the framework never sees the class.
+            return "C:" + binaryName(typeElement);
         }
 
         if (kind == ElementKind.METHOD || kind == ElementKind.CONSTRUCTOR) {
             ExecutableElement executableElement = (ExecutableElement) element;
             TypeElement enclosingType = (TypeElement) executableElement.getEnclosingElement();
-            String className = enclosingType.getQualifiedName().toString();
+            String className = binaryName(enclosingType);
             String methodName = executableElement.getSimpleName().toString();
             String params = formatParameters(executableElement);
             return "M:" + className + "#" + methodName + "(" + params + ")";
@@ -174,6 +181,18 @@ public class IndexedAnnotationProcessor extends AbstractProcessor {
 
         // Fields and other elements are not indexed
         return null;
+    }
+
+    /**
+     * Returns the JVM binary name of a type element — {@code Outer$Inner$Foo}
+     * for nested classes, plain {@code com.example.Foo} for top-level types.
+     * This matches what {@code Class.forName} expects, so the runtime side
+     * can resolve every indexed FQN. Using {@code getQualifiedName} alone
+     * yields the Java source notation ({@code Outer.Inner}) which
+     * {@code Class.forName} rejects.
+     */
+    private String binaryName(TypeElement type) {
+        return processingEnv.getElementUtils().getBinaryName(type).toString();
     }
 
     /**
