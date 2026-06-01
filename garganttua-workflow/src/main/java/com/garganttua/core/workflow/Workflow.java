@@ -124,7 +124,11 @@ public class Workflow implements IWorkflow, IObservable {
 
     @Override
     public WorkflowResult execute(WorkflowInput input, WorkflowExecutionOptions options) {
-        UUID uuid = UUID.randomUUID();
+        // Reuse a caller-pinned execution id (e.g. the api's EXECUTION_UUID) so
+        // stage:*/script:* observability events correlate with the caller's
+        // api:operation:* events. Falls back to a fresh id when the workflow is
+        // driven directly, outside any correlating caller.
+        UUID uuid = options.executionId().orElseGet(UUID::randomUUID);
         Instant start = Instant.now();
 
         try {

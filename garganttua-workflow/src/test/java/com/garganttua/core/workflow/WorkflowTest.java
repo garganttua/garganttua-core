@@ -849,6 +849,39 @@ class WorkflowTest {
                 "Guarded output must be set: notNull(:arg(...)) on a present key is true");
     }
 
+    /**
+     * A caller-pinned executionId (WorkflowExecutionOptions) must be the id the
+     * workflow runs under — it is the one pushed to the observability session
+     * (ObservableContextHolder.push) and surfaced on the result, so stage:*
+     * events correlate with the caller's api:operation:* events.
+     */
+    @Test
+    void testExecutionIdIsReusedFromOptions() throws Exception {
+        IWorkflow workflow = WorkflowsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(scriptsBuilder)
+                .workflow("execid-workflow")
+                .stage("s")
+                    .script("result <- \"ok\"")
+                        .name("g")
+                        .output("greeting", "result")
+                        .up()
+                    .up()
+                .build();
+
+        java.util.UUID pinned = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
+        WorkflowResult pinnedResult = workflow.execute(WorkflowInput.empty(),
+                com.garganttua.core.workflow.WorkflowExecutionOptions.builder().executionId(pinned).build());
+        assertTrue(pinnedResult.isSuccess());
+        assertEquals(pinned, pinnedResult.uuid(), "workflow must run under the pinned executionId");
+
+        // No executionId → a fresh random id (current behaviour, no regression).
+        WorkflowResult randomResult = workflow.execute(WorkflowInput.empty(),
+                com.garganttua.core.workflow.WorkflowExecutionOptions.none());
+        assertTrue(randomResult.isSuccess());
+        assertNotEquals(pinned, randomResult.uuid(), "without a pinned id, a random uuid is used");
+    }
+
     @Test
     void testConditionalStageExecution() throws Exception {
         IWorkflow workflow = WorkflowsBuilder.builder()

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Options for filtering which stages are executed in a workflow.
@@ -13,23 +14,30 @@ import java.util.Set;
  * a starting stage, stopping stage, or stages to skip.
  * </p>
  *
- * @param startFrom  the first stage to execute (inclusive), or empty for the first stage
- * @param stopAfter  the last stage to execute (inclusive), or empty for the last stage
- * @param skipStages stage names to exclude from execution
+ * @param startFrom   the first stage to execute (inclusive), or empty for the first stage
+ * @param stopAfter   the last stage to execute (inclusive), or empty for the last stage
+ * @param skipStages  stage names to exclude from execution
+ * @param executionId the execution id to pin for observability correlation, or
+ *                    empty to let {@code Workflow.execute} generate a random one.
+ *                    Deliberately excluded from {@link #hasFiltering()}: pinning
+ *                    an id must not rewrite the script, so the precompiled cache
+ *                    path stays active.
  * @since 2.0.0-ALPHA01
  */
 public record WorkflowExecutionOptions(
     Optional<String> startFrom,
     Optional<String> stopAfter,
-    Set<String> skipStages
+    Set<String> skipStages,
+    Optional<UUID> executionId
 ) {
     private static final WorkflowExecutionOptions NONE = new WorkflowExecutionOptions(
-            Optional.empty(), Optional.empty(), Collections.emptySet());
+            Optional.empty(), Optional.empty(), Collections.emptySet(), Optional.empty());
 
     public WorkflowExecutionOptions {
         skipStages = skipStages != null ? Collections.unmodifiableSet(new HashSet<>(skipStages)) : Collections.emptySet();
         startFrom = startFrom != null ? startFrom : Optional.empty();
         stopAfter = stopAfter != null ? stopAfter : Optional.empty();
+        executionId = executionId != null ? executionId : Optional.empty();
     }
 
     /**
@@ -60,6 +68,7 @@ public record WorkflowExecutionOptions(
         private String startFrom;
         private String stopAfter;
         private final Set<String> skipStages = new HashSet<>();
+        private UUID executionId;
 
         private Builder() {}
 
@@ -96,13 +105,25 @@ public record WorkflowExecutionOptions(
         }
 
         /**
+         * Pins the execution id for observability correlation. When set,
+         * {@code Workflow.execute} reuses it instead of generating a random
+         * UUID, so {@code stage:*}/{@code script:*} events share the caller's
+         * id (e.g. the api's EXECUTION_UUID behind {@code api:operation:*}).
+         */
+        public Builder executionId(UUID executionId) {
+            this.executionId = executionId;
+            return this;
+        }
+
+        /**
          * Builds the execution options.
          */
         public WorkflowExecutionOptions build() {
             return new WorkflowExecutionOptions(
                     Optional.ofNullable(startFrom),
                     Optional.ofNullable(stopAfter),
-                    skipStages);
+                    skipStages,
+                    Optional.ofNullable(executionId));
         }
     }
 }
