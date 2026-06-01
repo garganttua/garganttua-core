@@ -1,8 +1,13 @@
 package com.garganttua.core.aot.annotation.processor;
 
+import java.util.List;
+
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -62,7 +67,7 @@ final class AOTFieldSourceGenerator {
            .append(enclosingQualifiedName).append("\", \"")
            .append(fieldTypeName).append("\", ")
            .append(TypeNames.toReflectModifiers(field.getModifiers())).append(", ")
-           .append("new Annotation[0], null);\n");
+           .append("new Annotation[0], ").append(buildGenericTypeExpr()).append(");\n");
         src.append("    }\n\n");
 
         // get(Object) — direct read, with autoboxing for primitives
@@ -110,6 +115,63 @@ final class AOTFieldSourceGenerator {
 
         src.append("}\n");
         return src.toString();
+    }
+
+    /**
+     * Generated-source expression for the field's generic type. For a
+     * parameterized field whose type arguments are all plain classes (e.g.
+     * {@code List<String>}, {@code Map<String,Integer>}) emits
+     * {@code AOTParameterizedType.of(List.class, String.class)} so that
+     * {@code AOTField.getGenericType()} reports a real {@link
+     * java.lang.reflect.ParameterizedType} under AOT, just like runtime
+     * reflection. Returns {@code "null"} (the previous erased-type behaviour)
+     * for non-generic fields, raw types, or arguments that can't be a
+     * {@code .class} literal (wildcards, type variables, nested generics).
+     */
+    private String buildGenericTypeExpr() {
+        TypeMirror type = field.asType();
+        if (type.getKind() != TypeKind.DECLARED) {
+            return "null";
+        }
+        DeclaredType declared = (DeclaredType) type;
+        List<? extends TypeMirror> args = declared.getTypeArguments();
+        if (args.isEmpty()) {
+            return "null";
+        }
+        String raw = rawClassLiteral(declared);
+        if (raw == null) {
+            return "null";
+        }
+        StringBuilder sb = new StringBuilder(
+                "com.garganttua.core.aot.reflection.AOTParameterizedType.of(").append(raw);
+        for (TypeMirror arg : args) {
+            String argLiteral = plainClassLiteral(arg);
+            if (argLiteral == null) {
+                return "null";
+            }
+            sb.append(", ").append(argLiteral);
+        }
+        return sb.append(")").toString();
+    }
+
+    /** {@code <qualified>.class} for the erasure of a declared type. */
+    private static String rawClassLiteral(DeclaredType declared) {
+        Element element = declared.asElement();
+        return (element instanceof TypeElement typeElement)
+                ? typeElement.getQualifiedName().toString() + ".class"
+                : null;
+    }
+
+    /** Class literal for a plain declared type with no further type arguments. */
+    private static String plainClassLiteral(TypeMirror type) {
+        if (type.getKind() != TypeKind.DECLARED) {
+            return null;
+        }
+        DeclaredType declared = (DeclaredType) type;
+        if (!declared.getTypeArguments().isEmpty()) {
+            return null;
+        }
+        return rawClassLiteral(declared);
     }
 
     private String readAccess() {
