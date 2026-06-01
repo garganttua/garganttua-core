@@ -5,10 +5,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import org.graalvm.nativeimage.hosted.Feature;
+import org.graalvm.nativeimage.hosted.RuntimeClassInitialization;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 import com.garganttua.core.aot.commons.AOTRegistry;
 import com.garganttua.core.aot.reflection.AOTReflectionProvider;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IConstructor;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 
 /**
  * GraalVM native-image {@link Feature} that mirrors every AOT descriptor
@@ -47,8 +52,20 @@ public class GarganttuaAotFeature implements Feature {
                     "AOTReflectionProvider must be on the native-image build classpath", e);
         }
 
+        // The Class.forName above already ran AOTReflectionProvider.<clinit>,
+        // which transitively initialised every AOTClass_*/AOTMethod_*/AOTField_*/
+        // AOTConstructor_* descriptor (their INSTANCE fields). Those classes are
+        // therefore initialised AT BUILD TIME — so they must be declared as such,
+        // or native-image's default "initialize app classes at runtime" policy
+        // fails with "Classes that should be initialized at run time got
+        // initialized during image building". We target ONLY the AOT descriptor
+        // classes (a blanket --initialize-at-build-time=com.garganttua breaks
+        // ExpressionUtils / IOperationRequest, whose <clinit> must stay runtime).
+        RuntimeClassInitialization.initializeAtBuildTime(AOTReflectionProvider.class);
+
         int classCount = 0;
         int memberCount = 0;
+        int descriptorInitCount = 0;
         for (String fqn : AOTRegistry.getInstance().registeredClasses()) {
             try {
                 Class<?> clazz = access.findClassByName(fqn);
@@ -61,12 +78,15 @@ public class GarganttuaAotFeature implements Feature {
                 RuntimeReflection.register(clazz);
                 classCount++;
                 memberCount += registerMembers(clazz);
+                descriptorInitCount += initializeDescriptorAtBuildTime(
+                        AOTRegistry.getInstance().get(fqn).orElse(null));
             } catch (RuntimeException e) {
                 System.err.println("[GarganttuaAotFeature] Failed to register " + fqn + ": " + e.getMessage());
             }
         }
         System.out.println("[GarganttuaAotFeature] Registered " + classCount
-                + " AOT descriptor classes (" + memberCount + " members) with RuntimeReflection.");
+                + " AOT descriptor classes (" + memberCount + " members) with RuntimeReflection; "
+                + descriptorInitCount + " descriptor classes marked initialize-at-build-time.");
     }
 
     /**
@@ -76,6 +96,36 @@ public class GarganttuaAotFeature implements Feature {
      * reflectively. The cost is a slight image-size increase, never a
      * correctness issue.
      */
+    /**
+     * Declare a descriptor's own class and its pre-generated member descriptor
+     * classes ({@code AOTMethod_*}/{@code AOTField_*}/{@code AOTConstructor_*})
+     * as initialize-at-build-time, matching the fact that they were already
+     * initialised when {@code AOTReflectionProvider.<clinit>} ran. Returns the
+     * number of classes marked. {@code null} descriptor (registry miss) is a
+     * no-op.
+     */
+    private static int initializeDescriptorAtBuildTime(IClass<?> descriptor) {
+        if (descriptor == null) {
+            return 0;
+        }
+        int count = 0;
+        RuntimeClassInitialization.initializeAtBuildTime(descriptor.getClass());
+        count++;
+        for (IMethod m : descriptor.getDeclaredMethods()) {
+            RuntimeClassInitialization.initializeAtBuildTime(m.getClass());
+            count++;
+        }
+        for (IField f : descriptor.getDeclaredFields()) {
+            RuntimeClassInitialization.initializeAtBuildTime(f.getClass());
+            count++;
+        }
+        for (IConstructor<?> c : descriptor.getDeclaredConstructors()) {
+            RuntimeClassInitialization.initializeAtBuildTime(c.getClass());
+            count++;
+        }
+        return count;
+    }
+
     private static int registerMembers(Class<?> clazz) {
         int count = 0;
         try {
