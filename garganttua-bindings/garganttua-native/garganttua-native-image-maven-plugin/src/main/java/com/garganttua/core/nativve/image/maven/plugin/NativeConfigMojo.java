@@ -58,6 +58,21 @@ public class NativeConfigMojo extends AbstractMojo {
 	@Parameter(property = "dependencies")
 	private List<Dependency> dependencies;
 
+	@Parameter(defaultValue = "${project.groupId}", readonly = true)
+	private String projectGroupId;
+
+	@Parameter(defaultValue = "${project.artifactId}", readonly = true)
+	private String projectArtifactId;
+
+	/**
+	 * Sub-path under {@code META-INF/native-image/} where configs are written.
+	 * Defaults to {@code <groupId>/<artifactId>} (GraalVM-recommended, unique per
+	 * artifact — avoids collisions in uber-jars / aggregated builds). Set to an
+	 * empty value to fall back to the flat (legacy) layout.
+	 */
+	@Parameter(property = "configOutputNamespace")
+	private String configOutputNamespace;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 		getLog().info("Generating Native-image configuration in directory: " + this.buildOutputDirectory);
@@ -81,6 +96,7 @@ public class NativeConfigMojo extends AbstractMojo {
 			builder = NativeConfigurationBuilder.builder()
 					.reflectionPath(this.buildOutputDirectory)
 					.resourcesPath(this.buildOutputDirectory)
+					.configNamespace(resolveConfigNamespace())
 					.autoDetect(true)
 					.withPackages(this.packages.toArray(new String[0]));
 			builder.provide(reflectionBuilder);
@@ -115,6 +131,18 @@ public class NativeConfigMojo extends AbstractMojo {
 		getLog().info("Writing Native-image configuration");
 		configuration.writeReflectionConfiguration();
 		configuration.writeResourcesConfiguration();
+	}
+
+	/**
+	 * Resolves the {@code META-INF/native-image/} sub-path: the explicit
+	 * {@code configOutputNamespace} when provided (empty string = flat layout),
+	 * otherwise {@code <groupId>/<artifactId>}.
+	 */
+	private String resolveConfigNamespace() {
+		if (this.configOutputNamespace != null) {
+			return this.configOutputNamespace.trim();
+		}
+		return this.projectGroupId + "/" + this.projectArtifactId;
 	}
 
 	public void validateFiles(List<String> filePaths, INativeConfigurationBuilder builder) throws IOException {

@@ -163,6 +163,20 @@ public interface INativeConfigurationBuilder extends IPackageableBuilder<INative
     INativeConfigurationBuilder reflectionPath(String path);
 
     /**
+     * Sets the sub-path appended under {@code META-INF/native-image/} where the
+     * generated config files are written — typically {@code <groupId>/<artifactId>}.
+     * This is the GraalVM-recommended layout: a unique location per artifact
+     * avoids collisions when multiple {@code resource-config.json}/{@code
+     * reflect-config.json} end up on a single build path (uber-jar, tracing
+     * agent output, downstream application).
+     *
+     * @param namespace sub-path under {@code META-INF/native-image/}; {@code null}
+     *        or blank means flat (legacy) layout
+     * @return this builder for method chaining
+     */
+    INativeConfigurationBuilder configNamespace(String namespace);
+
+    /**
      * Registers a class for reflection access and returns a builder to configure it.
      *
      * <p>

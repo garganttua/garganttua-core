@@ -33,6 +33,7 @@ public class NativeConfigurationBuilder
     private final Set<String> resources = new HashSet<>();
     private String resourcesPath = null;
     private String reflectionPath = null;
+    private String configNamespace = "";
     private Set<INativeBuilder<?, ?>> nativeConfigurationBuilder = new HashSet<>();
 
     public NativeConfigurationBuilder() {
@@ -96,7 +97,8 @@ public class NativeConfigurationBuilder
                 this.reflectionEntries.stream().map(e -> e.build()).collect(Collectors.toSet()),
                 this.resources,
                 this.resourcesPath,
-                this.reflectionPath);
+                this.reflectionPath,
+                this.configNamespace);
         log.debug("Native configuration built successfully");
         return config;
     }
@@ -164,6 +166,13 @@ public class NativeConfigurationBuilder
     public INativeConfigurationBuilder reflectionPath(String path) {
         log.trace("Setting reflection path: {}", path);
         this.reflectionPath = Objects.requireNonNull(path, "Path cannot be null");
+        return this;
+    }
+
+    @Override
+    public INativeConfigurationBuilder configNamespace(String namespace) {
+        log.trace("Setting config namespace: {}", namespace);
+        this.configNamespace = namespace != null ? namespace.trim() : "";
         return this;
     }
 

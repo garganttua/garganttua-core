@@ -29,27 +29,48 @@ public class NativeConfiguration implements INativeConfiguration {
     private Set<String> resources;
     private String resourcesPath;
     private String reflectionPath;
+    private final String configNamespace;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public NativeConfiguration(NativeConfigurationMode mode, Set<IReflectionConfigurationEntry> collect,
             Set<String> resources, String resourcesPath, String reflectionPath) {
+        this(mode, collect, resources, resourcesPath, reflectionPath, "");
+    }
+
+    /**
+     * @param configNamespace sub-path appended under {@code META-INF/native-image/}
+     *        (e.g. {@code <groupId>/<artifactId>}) so each artifact writes its
+     *        config to a unique location — the GraalVM-recommended layout that
+     *        prevents collisions when several configs end up on one build path
+     *        (uber-jar, tracing agent, downstream app). Empty = flat (legacy).
+     */
+    public NativeConfiguration(NativeConfigurationMode mode, Set<IReflectionConfigurationEntry> collect,
+            Set<String> resources, String resourcesPath, String reflectionPath, String configNamespace) {
         log.trace("Creating NativeConfiguration with mode: {}", mode);
         this.mode = Objects.requireNonNull(mode, "Mode cannot be null");
         this.collect = Objects.requireNonNull(collect, "Reflection entries cannot be null");
         this.resources = Objects.requireNonNull(resources, "Resources cannot be null");
         this.resourcesPath = Objects.requireNonNull(resourcesPath, "Resources path cannot be null");
         this.reflectionPath = Objects.requireNonNull(reflectionPath, "Reflection path cannot be null");
+        this.configNamespace = configNamespace != null ? configNamespace.trim() : "";
         log.debug("NativeConfiguration created with {} reflection entries, {} resources",
                 collect.size(), resources.size());
+    }
+
+    /** {@code META-INF/native-image[/<configNamespace>]}. */
+    private String nativeImageDir() {
+        return this.configNamespace.isEmpty()
+                ? NATIVE_IMAGE_DIR
+                : NATIVE_IMAGE_DIR + File.separator + this.configNamespace;
     }
 
     @Override
     public void writeReflectionConfiguration() {
         log.trace("Entering writeReflectionConfiguration");
         try {
-            String reflectConfigPath = this.reflectionPath+File.separator+NATIVE_IMAGE_DIR+File.separator+REFLECT_CONFIG_FILE;
+            String reflectConfigPath = this.reflectionPath+File.separator+nativeImageDir()+File.separator+REFLECT_CONFIG_FILE;
             log.debug("Writing reflection configuration to: {}", reflectConfigPath);
-            this.ensureDirectoryExists(this.reflectionPath+File.separator+NATIVE_IMAGE_DIR);
+            this.ensureDirectoryExists(this.reflectionPath+File.separator+nativeImageDir());
             this.ensureFileExists(reflectConfigPath);
             OutputStream outputStream = new FileOutputStream(reflectConfigPath);
             InputStream inputStream = new FileInputStream(reflectConfigPath);
@@ -66,9 +87,9 @@ public class NativeConfiguration implements INativeConfiguration {
     public void writeResourcesConfiguration() {
         log.trace("Entering writeResourcesConfiguration");
         try {
-            String resourceConfigPath = this.resourcesPath+File.separator+NATIVE_IMAGE_DIR+File.separator+RESOURCE_CONFIG_FILE;
+            String resourceConfigPath = this.resourcesPath+File.separator+nativeImageDir()+File.separator+RESOURCE_CONFIG_FILE;
             log.debug("Writing resources configuration to: {}", resourceConfigPath);
-            this.ensureDirectoryExists(this.resourcesPath+File.separator+NATIVE_IMAGE_DIR);
+            this.ensureDirectoryExists(this.resourcesPath+File.separator+nativeImageDir());
             this.ensureFileExists(resourceConfigPath);
             OutputStream outputStream = new FileOutputStream(resourceConfigPath);
             InputStream inputStream = new FileInputStream(resourceConfigPath);
