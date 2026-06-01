@@ -41,12 +41,14 @@ public class NotNullCondition implements ICondition {
         };
     }
 
-    @Expression(name = "notNull", description = "Checks if an object is not null")
+    @Expression(name = "notNull", description = "Checks if an object is not null; an empty Optional counts as null")
     public static boolean notNull(Object obj) {
-        boolean nullResult = obj == null;
-        log.debug("NULL condition result: {}", nullResult);
-
-        boolean result = !nullResult;
+        // Optional-aware: an empty Optional means "no value", so it must read as
+        // null here. Without this, guards built on suppliers that return
+        // Optional.ofNullable(...) (e.g. request-arg lookups) are never skipped
+        // because Optional.empty() is itself a non-null reference.
+        boolean result = obj instanceof Optional<?> opt ? opt.isPresent() : obj != null;
+        log.debug("NOT NULL condition result: {}", result);
         return result;
     }
 

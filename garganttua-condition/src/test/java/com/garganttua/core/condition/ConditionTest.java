@@ -234,4 +234,34 @@ public class ConditionTest {
 
         }
 
+        /**
+         * Regression: the {@code notNull} / {@code null} built-in @Expression
+         * functions must be Optional-aware. A supplier such as a request-arg
+         * lookup returns {@code Optional.ofNullable(...)}; an absent key yields
+         * {@code Optional.empty()} — a non-null reference. Before the fix,
+         * {@code notNull(Optional.empty())} returned true, so a stage guarded by
+         * {@code when("notNull(:arg(@0,\"k\"))")} ran even when the key was absent.
+         */
+        @Test
+        public void testNotNullAndNullAreOptionalAwareAndStrictInverses() {
+                // null reference
+                assertFalse(NotNullCondition.notNull(null));
+                assertTrue(NullCondition.Null(null));
+                // empty Optional reads as null
+                assertFalse(NotNullCondition.notNull(java.util.Optional.empty()));
+                assertTrue(NullCondition.Null(java.util.Optional.empty()));
+                // present Optional reads as a value
+                assertTrue(NotNullCondition.notNull(java.util.Optional.of("v")));
+                assertFalse(NullCondition.Null(java.util.Optional.of("v")));
+                // plain non-null object reads as a value
+                assertTrue(NotNullCondition.notNull("string"));
+                assertFalse(NullCondition.Null("string"));
+
+                // strict-inverse invariant across all four cases
+                for (Object x : new Object[] { null, java.util.Optional.empty(),
+                                java.util.Optional.of("v"), "string" }) {
+                        assertEquals(NotNullCondition.notNull(x), !NullCondition.Null(x));
+                }
+        }
+
 }

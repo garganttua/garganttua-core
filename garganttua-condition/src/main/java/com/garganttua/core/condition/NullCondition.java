@@ -41,11 +41,12 @@ public class NullCondition implements ICondition {
         };
     }
 
-    @Expression(name = "null", description = "Checks if an object is not null")
+    @Expression(name = "null", description = "Checks if an object is null; an empty Optional counts as null")
     public static boolean Null(Object obj) {
-        boolean result = obj == null;
+        // Strict inverse of NotNullCondition.notNull — Optional-aware so that an
+        // empty Optional reads as null (the value semantics, not the reference).
+        boolean result = obj instanceof Optional<?> opt ? opt.isEmpty() : obj == null;
         log.debug("NULL condition result: {}", result);
-
         return result;
     }
 

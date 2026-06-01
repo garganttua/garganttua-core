@@ -777,6 +777,78 @@ class WorkflowTest {
                 "Output variable 'greeting' should not be set when condition is false");
     }
 
+    /**
+     * Faithful reproduction of the garganttua-api "Mode B" regression: a request
+     * object exposes {@code arg(String) -> Optional.ofNullable(...)}, and a stage
+     * is guarded by {@code when("notNull(:arg(@req,"key"))")}. When the key is
+     * absent the guard expression evaluates to {@code Optional.empty()} — a
+     * non-null reference — so before the Optional-aware fix the stage always ran.
+     * It must now be SKIPPED.
+     */
+    public static class RequestFixture {
+        private final java.util.Map<String, Object> args;
+
+        public RequestFixture(java.util.Map<String, Object> args) {
+            this.args = args;
+        }
+
+        public java.util.Optional<Object> arg(String key) {
+            return java.util.Optional.ofNullable(this.args.get(key));
+        }
+    }
+
+    @Test
+    void testNotNullGuard_AbsentArg_StageSkipped() throws Exception {
+        IWorkflow workflow = WorkflowsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(scriptsBuilder)
+                .workflow("notnull-absent-workflow")
+                .stage("conditional")
+                    .script("result <- \"executed\"")
+                        .name("guarded")
+                        .when("notNull(:arg(@0, \"missing\"))")
+                        .output("greeting", "result")
+                        .up()
+                    .up()
+                .build();
+
+        WorkflowResult result = workflow.execute(
+                WorkflowInput.of(new RequestFixture(java.util.Map.of("present", "value"))));
+
+        assertTrue(result.isSuccess(), "Workflow should succeed even when the guarded script is skipped");
+        assertEquals(0, result.code());
+        assertFalse(result.variables().containsKey("greeting"),
+                "Guarded output must NOT be set: notNull(:arg(...)) on an absent key is false");
+    }
+
+    /**
+     * Counterpart to {@link #testNotNullGuard_AbsentArg_StageSkipped()}: a present
+     * arg keeps the {@code notNull} guard true and the stage runs.
+     */
+    @Test
+    void testNotNullGuard_PresentArg_StageExecuted() throws Exception {
+        IWorkflow workflow = WorkflowsBuilder.builder()
+                .provide(injectionContextBuilder)
+                .provide(scriptsBuilder)
+                .workflow("notnull-present-workflow")
+                .stage("conditional")
+                    .script("result <- \"executed\"")
+                        .name("guarded")
+                        .when("notNull(:arg(@0, \"present\"))")
+                        .output("greeting", "result")
+                        .up()
+                    .up()
+                .build();
+
+        WorkflowResult result = workflow.execute(
+                WorkflowInput.of(new RequestFixture(java.util.Map.of("present", "value"))));
+
+        assertTrue(result.isSuccess(), "Workflow should succeed");
+        assertEquals(0, result.code());
+        assertTrue(result.variables().containsKey("greeting"),
+                "Guarded output must be set: notNull(:arg(...)) on a present key is true");
+    }
+
     @Test
     void testConditionalStageExecution() throws Exception {
         IWorkflow workflow = WorkflowsBuilder.builder()
