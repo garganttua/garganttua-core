@@ -364,6 +364,36 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         return fallback != null ? fallback : constructors.clone();
     }
 
+    /**
+     * The classes of every generator-emitted descriptor this AOTClass holds —
+     * itself plus its raw {@code AOTField_*}/{@code AOTMethod_*}/
+     * {@code AOTConstructor_*} INSTANCEs — for the native-image Feature to
+     * declare initialize-at-build-time.
+     *
+     * <p>Deliberately reads the raw backing arrays, NOT
+     * {@link #getDeclaredConstructors()} et al.: those fall back to live-
+     * reflection synthesis when a descriptor is shallow (and notably for any
+     * class with a single constructor, where {@code length <= 1}), returning
+     * synthesized instances whose class is the base {@code AOTConstructor}
+     * rather than the generated {@code AOTConstructor_X_0} that actually sits
+     * in the image heap. Marking the wrong class left those heap objects
+     * unreachable for build-time init and failed the native build.</p>
+     */
+    public java.util.List<Class<?>> descriptorClassesForBuildTimeInit() {
+        java.util.List<Class<?>> out = new java.util.ArrayList<>();
+        out.add(this.getClass());
+        for (AOTField f : this.fields) {
+            out.add(f.getClass());
+        }
+        for (AOTMethod m : this.methods) {
+            out.add(m.getClass());
+        }
+        for (AOTConstructor<?> c : this.constructors) {
+            out.add(c.getClass());
+        }
+        return out;
+    }
+
     @Override
     public IField getDeclaredField(String fieldName) throws NoSuchFieldException, SecurityException {
         for (AOTField f : fields) {

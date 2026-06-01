@@ -9,11 +9,9 @@ import org.graalvm.nativeimage.hosted.RuntimeClassInitialization;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 import com.garganttua.core.aot.commons.AOTRegistry;
+import com.garganttua.core.aot.reflection.AOTClass;
 import com.garganttua.core.aot.reflection.AOTReflectionProvider;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.IConstructor;
-import com.garganttua.core.reflection.IField;
-import com.garganttua.core.reflection.IMethod;
 
 /**
  * GraalVM native-image {@link Feature} that mirrors every AOT descriptor
@@ -108,22 +106,20 @@ public class GarganttuaAotFeature implements Feature {
         if (descriptor == null) {
             return 0;
         }
-        int count = 0;
+        // Use AOTClass's RAW backing arrays, not getDeclared*(): those fall back
+        // to live-reflection synthesis for shallow descriptors and for any class
+        // with a single constructor, returning synthesized instances whose class
+        // is the base AOTConstructor rather than the generated AOTConstructor_X_0
+        // that actually sits in the image heap.
+        if (descriptor instanceof AOTClass<?> aot) {
+            java.util.List<Class<?>> classes = aot.descriptorClassesForBuildTimeInit();
+            for (Class<?> c : classes) {
+                RuntimeClassInitialization.initializeAtBuildTime(c);
+            }
+            return classes.size();
+        }
         RuntimeClassInitialization.initializeAtBuildTime(descriptor.getClass());
-        count++;
-        for (IMethod m : descriptor.getDeclaredMethods()) {
-            RuntimeClassInitialization.initializeAtBuildTime(m.getClass());
-            count++;
-        }
-        for (IField f : descriptor.getDeclaredFields()) {
-            RuntimeClassInitialization.initializeAtBuildTime(f.getClass());
-            count++;
-        }
-        for (IConstructor<?> c : descriptor.getDeclaredConstructors()) {
-            RuntimeClassInitialization.initializeAtBuildTime(c.getClass());
-            count++;
-        }
-        return count;
+        return 1;
     }
 
     private static int registerMembers(Class<?> clazz) {
