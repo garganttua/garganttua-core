@@ -17,6 +17,13 @@
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-commons</artifactId>
     </dependency>
+    <!-- AOT seed SPI (IAOTInfrastructureSeed): lets the script module register
+         its AST node classes for native reflection without depending on the
+         heavy aot-reflection. Same pattern as garganttua-runtime. -->
+    <dependency>
+      <groupId>com.garganttua.core</groupId>
+      <artifactId>garganttua-aot-commons</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-runtime</artifactId>
