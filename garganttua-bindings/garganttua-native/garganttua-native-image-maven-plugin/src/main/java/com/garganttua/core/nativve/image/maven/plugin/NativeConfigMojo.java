@@ -22,6 +22,7 @@ import com.garganttua.core.nativve.INativeConfiguration;
 import com.garganttua.core.nativve.INativeConfigurationBuilder;
 import com.garganttua.core.nativve.NativeConfigurationBuilder;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntry;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
@@ -64,6 +65,10 @@ public class NativeConfigMojo extends AbstractMojo {
 		IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
 				.withProvider(new RuntimeReflectionProvider())
 				.withScanner(new ReflectionsAnnotationScanner());
+		// Install the reflection facade before constructing NativeConfigurationBuilder:
+		// its constructor calls IClass.getClass(...), which needs IClass.setReflection()
+		// already set (otherwise: "No IReflection available").
+		IClass.setReflection(reflectionBuilder.build());
 
 		File outputDir = new File(buildDirectory, "classes/META-INF/native-image");
 		if (!outputDir.exists() && !outputDir.mkdirs()) {
