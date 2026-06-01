@@ -2,6 +2,22 @@ package com.garganttua.core.condition;
 
 class ComparisonHelper {
 
+    /**
+     * Optional-aware operand normalisation shared by every value-inspecting
+     * primitive condition (equals, notEquals, ordering comparisons). A present
+     * Optional yields its value; an empty Optional yields {@code null} so it
+     * compares as "no value"; non-Optional operands pass through unchanged.
+     *
+     * <p>Suppliers fed by request-arg style lookups return
+     * {@code Optional.ofNullable(...)}, so without this the conditions would
+     * compare the Optional wrapper itself ("Type mismatch: Optional VS String")
+     * and silently return false. Mirrors the fix applied to
+     * {@link NotNullCondition} / {@link NullCondition}.</p>
+     */
+    static Object unwrapOptional(Object o) {
+        return o instanceof java.util.Optional<?> opt ? opt.orElse(null) : o;
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     static int compare(Object a, Object b) {
         // If both are numbers or can be parsed as numbers, compare numerically

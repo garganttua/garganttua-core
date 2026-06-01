@@ -28,6 +28,8 @@ public class LowerOrEqualsCondition<T> implements ICondition {
 
     @Expression(name = "lowerOrEquals", description = "Checks if first argument is lower than or equal to second")
     public static boolean lowerOrEquals(Object a, Object b) {
+        a = ComparisonHelper.unwrapOptional(a);
+        b = ComparisonHelper.unwrapOptional(b);
         if (a == null || b == null) {
             return false;
         }
@@ -51,12 +53,14 @@ public class LowerOrEqualsCondition<T> implements ICondition {
 
     @Expression(name = "lowerOrEquals", description = "Checks if first Object argument is lower than or equal to second int")
     public static boolean lowerOrEquals(Object a, int b) {
+        a = ComparisonHelper.unwrapOptional(a);
         if (a == null) return false;
         return ComparisonHelper.compare(a, b) <= 0;
     }
 
     @Expression(name = "lowerOrEquals", description = "Checks if first int argument is lower than or equal to second Object")
     public static boolean lowerOrEquals(int a, Object b) {
+        b = ComparisonHelper.unwrapOptional(b);
         if (b == null) return false;
         return ComparisonHelper.compare(a, b) <= 0;
     }

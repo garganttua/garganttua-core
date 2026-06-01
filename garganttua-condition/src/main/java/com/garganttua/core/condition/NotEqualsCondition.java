@@ -46,6 +46,8 @@ public class NotEqualsCondition<T> implements ICondition {
 
     @Expression(name = "notEquals", description = "Checks if two objects are not equal")
     public static boolean notEquals(Object obj1, Object obj2) {
+        obj1 = ComparisonHelper.unwrapOptional(obj1);
+        obj2 = ComparisonHelper.unwrapOptional(obj2);
         if (obj1 == null || obj2 == null) {
             return false;
         }

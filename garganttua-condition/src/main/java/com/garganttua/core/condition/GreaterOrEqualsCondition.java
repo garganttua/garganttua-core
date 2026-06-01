@@ -28,6 +28,8 @@ public class GreaterOrEqualsCondition<T> implements ICondition {
 
     @Expression(name = "greaterOrEquals", description = "Checks if first argument is greater than or equal to second")
     public static boolean greaterOrEquals(Object a, Object b) {
+        a = ComparisonHelper.unwrapOptional(a);
+        b = ComparisonHelper.unwrapOptional(b);
         if (a == null || b == null) {
             return false;
         }
@@ -51,12 +53,14 @@ public class GreaterOrEqualsCondition<T> implements ICondition {
 
     @Expression(name = "greaterOrEquals", description = "Checks if first Object argument is greater than or equal to second int")
     public static boolean greaterOrEquals(Object a, int b) {
+        a = ComparisonHelper.unwrapOptional(a);
         if (a == null) return false;
         return ComparisonHelper.compare(a, b) >= 0;
     }
 
     @Expression(name = "greaterOrEquals", description = "Checks if first int argument is greater than or equal to second Object")
     public static boolean greaterOrEquals(int a, Object b) {
+        b = ComparisonHelper.unwrapOptional(b);
         if (b == null) return false;
         return ComparisonHelper.compare(a, b) >= 0;
     }

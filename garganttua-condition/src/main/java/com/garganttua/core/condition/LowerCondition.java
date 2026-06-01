@@ -28,6 +28,8 @@ public class LowerCondition<T> implements ICondition {
 
     @Expression(name = "lower", description = "Checks if first argument is lower than second")
     public static boolean lower(Object a, Object b) {
+        a = ComparisonHelper.unwrapOptional(a);
+        b = ComparisonHelper.unwrapOptional(b);
         if (a == null || b == null) {
             return false;
         }
@@ -51,12 +53,14 @@ public class LowerCondition<T> implements ICondition {
 
     @Expression(name = "lower", description = "Checks if first Object argument is lower than second int")
     public static boolean lower(Object a, int b) {
+        a = ComparisonHelper.unwrapOptional(a);
         if (a == null) return false;
         return ComparisonHelper.compare(a, b) < 0;
     }
 
     @Expression(name = "lower", description = "Checks if first int argument is lower than second Object")
     public static boolean lower(int a, Object b) {
+        b = ComparisonHelper.unwrapOptional(b);
         if (b == null) return false;
         return ComparisonHelper.compare(a, b) < 0;
     }

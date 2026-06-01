@@ -264,4 +264,32 @@ public class ConditionTest {
                 }
         }
 
+        /**
+         * Follow-up regression: every value-inspecting primitive condition must
+         * unwrap Optional operands (a present Optional becomes its value, an empty
+         * one becomes null) — otherwise a guard like {@code equals(:arg(@0,"mode"),
+         * "uuid")} compares {@code Optional.of("uuid")} against {@code "uuid"} and
+         * logs "Type mismatch: Optional VS String" then returns false.
+         */
+        @Test
+        public void testEqualsAndComparisonsAreOptionalAware() {
+                // equals — acceptance criterion of the follow-up ticket
+                assertTrue(EqualsCondition.equals(java.util.Optional.of("uuid"), "uuid"));
+                assertTrue(EqualsCondition.equals("uuid", java.util.Optional.of("uuid")));
+                assertTrue(EqualsCondition.equals(java.util.Optional.of("uuid"), java.util.Optional.of("uuid")));
+                assertFalse(EqualsCondition.equals(java.util.Optional.empty(), "uuid")); // empty -> null
+                assertFalse(EqualsCondition.equals(java.util.Optional.of("id"), "uuid"));
+
+                // notEquals — symmetric (null operand stays false per existing semantics)
+                assertTrue(NotEqualsCondition.notEquals(java.util.Optional.of("id"), "uuid"));
+                assertFalse(NotEqualsCondition.notEquals(java.util.Optional.of("uuid"), "uuid"));
+
+                // ordering comparisons — Object/Object and the int-mixed overloads
+                assertTrue(GreaterCondition.greater(java.util.Optional.of(5), 3));
+                assertFalse(GreaterCondition.greater(java.util.Optional.empty(), 3)); // empty -> null -> false
+                assertTrue(LowerCondition.lower(3, java.util.Optional.of(5)));
+                assertTrue(GreaterOrEqualsCondition.greaterOrEquals(java.util.Optional.of(5), java.util.Optional.of(5)));
+                assertTrue(LowerOrEqualsCondition.lowerOrEquals(java.util.Optional.of(2), java.util.Optional.of(5)));
+        }
+
 }

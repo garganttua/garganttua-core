@@ -54,7 +54,9 @@ public class EqualsCondition<T> implements ICondition {
     @Expression(name = "equals", description = "Checks if two objects are equal")
     public static boolean equals(Object obj1, Object obj2) {
         log.trace("Entering static equals() method");
-                if( obj1 == null || obj2 == null ) {
+        obj1 = ComparisonHelper.unwrapOptional(obj1);
+        obj2 = ComparisonHelper.unwrapOptional(obj2);
+        if( obj1 == null || obj2 == null ) {
             return false;
         }
         if (!obj1.getClass().equals(obj2.getClass())) {
