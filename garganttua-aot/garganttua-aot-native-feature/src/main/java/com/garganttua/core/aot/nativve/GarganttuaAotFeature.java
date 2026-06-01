@@ -1,8 +1,16 @@
 package com.garganttua.core.aot.nativve;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeClassInitialization;
@@ -82,9 +90,89 @@ public class GarganttuaAotFeature implements Feature {
                 System.err.println("[GarganttuaAotFeature] Failed to register " + fqn + ": " + e.getMessage());
             }
         }
+        // Second pass: register every @Reflected class for native reflection
+        // from the compile-time @Reflected index. This is the layering-clean,
+        // universal mechanism — the index (META-INF/garganttua/index/...Reflected)
+        // is emitted by IndexedAnnotationProcessor in EVERY module (a resource
+        // file, no aot-reflection dependency, no -Dgarganttua.direct.binders),
+        // so it covers framework classes that ship no generated AOTClass_*
+        // descriptor (e.g. ExpressionContext, whose man() built-in is resolved
+        // reflectively and would otherwise throw NoSuchMethodException in the
+        // closed world). Registering the class + members makes the live-
+        // reflection fallback in AOTClass work natively.
+        int reflectedCount = registerReflectedClassesFromIndex(access);
+
         System.out.println("[GarganttuaAotFeature] Registered " + classCount
                 + " AOT descriptor classes (" + memberCount + " members) with RuntimeReflection; "
-                + descriptorInitCount + " descriptor classes marked initialize-at-build-time.");
+                + descriptorInitCount + " descriptor classes marked initialize-at-build-time; "
+                + reflectedCount + " @Reflected classes registered from the annotation index.");
+    }
+
+    private static final String REFLECTED_INDEX_RESOURCE =
+            "META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Reflected";
+
+    /**
+     * Reads every {@code @Reflected} index file on the application classpath
+     * and registers each listed class (plus its members) for native
+     * reflection. Index lines are {@code C:<fqn>} (class) or
+     * {@code M:<class>#<method>(<params>)} (member) — for the latter we
+     * register the declaring class. Unresolvable names are skipped.
+     */
+    private static int registerReflectedClassesFromIndex(BeforeAnalysisAccess access) {
+        Set<String> classNames = new LinkedHashSet<>();
+        try {
+            Enumeration<URL> urls = access.getApplicationClassLoader().getResources(REFLECTED_INDEX_RESOURCE);
+            while (urls.hasMoreElements()) {
+                URL url = urls.nextElement();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String fqn = classFqnFromIndexLine(line.trim());
+                        if (fqn != null) {
+                            classNames.add(fqn);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("[GarganttuaAotFeature] Failed reading @Reflected index: " + e.getMessage());
+        }
+
+        int registered = 0;
+        for (String fqn : classNames) {
+            try {
+                Class<?> clazz = access.findClassByName(fqn);
+                if (clazz == null) {
+                    continue;
+                }
+                RuntimeReflection.register(clazz);
+                registerMembers(clazz);
+                registered++;
+            } catch (RuntimeException | LinkageError e) {
+                System.err.println("[GarganttuaAotFeature] @Reflected index: failed to register "
+                        + fqn + ": " + e.getMessage());
+            }
+        }
+        return registered;
+    }
+
+    /** Extracts the class FQN from a {@code C:}/{@code M:} index line, or null. */
+    private static String classFqnFromIndexLine(String line) {
+        if (line.isEmpty()) {
+            return null;
+        }
+        if (line.startsWith("C:")) {
+            String fqn = line.substring(2).trim();
+            return fqn.isEmpty() ? null : fqn;
+        }
+        if (line.startsWith("M:")) {
+            String body = line.substring(2).trim();
+            int hash = body.indexOf('#');
+            String fqn = (hash >= 0 ? body.substring(0, hash) : body).trim();
+            return fqn.isEmpty() ? null : fqn;
+        }
+        return null;
     }
 
     /**
