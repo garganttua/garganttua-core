@@ -172,26 +172,30 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 
 	private Object instanciateCollectionField(IField field) throws ReflectionException {
 		IClass<?> fieldType = field.getType();
-		try {
+		// A concrete type has a usable no-arg ctor — instantiate it directly so a
+		// declared LinkedList stays a LinkedList, etc. Only interfaces / abstract
+		// collection types (List, Set, Map, …) lack one; calling newInstance on
+		// those makes ConstructorDelegate log a spurious ERROR before any
+		// fallback, so map them straight to a default concrete impl instead.
+		if (!fieldType.isInterface() && !java.lang.reflect.Modifier.isAbstract(fieldType.getModifiers())) {
 			return this.reflection.newInstance(fieldType);
-		} catch (Exception e) {
-			if (mapClass.isAssignableFrom(fieldType)) {
-				return new HashMap<>();
-			}
-			if (listClass.isAssignableFrom(fieldType)) {
-				return new ArrayList<>();
-			}
-			if (setClass.isAssignableFrom(fieldType)) {
-				return new HashSet<>();
-			}
-			if (queueClass.isAssignableFrom(fieldType)) {
-				return new LinkedList<>();
-			}
-			if (collectionClass.isAssignableFrom(fieldType)) {
-				return new Vector<>();
-			}
-			throw new ReflectionException("Unable to instantiate collection of type " + fieldType.getSimpleName(), e);
 		}
+		if (mapClass.isAssignableFrom(fieldType)) {
+			return new HashMap<>();
+		}
+		if (listClass.isAssignableFrom(fieldType)) {
+			return new ArrayList<>();
+		}
+		if (setClass.isAssignableFrom(fieldType)) {
+			return new HashSet<>();
+		}
+		if (queueClass.isAssignableFrom(fieldType)) {
+			return new LinkedList<>();
+		}
+		if (collectionClass.isAssignableFrom(fieldType)) {
+			return new Vector<>();
+		}
+		throw new ReflectionException("Unable to instantiate collection of type " + fieldType.getSimpleName());
 	}
 
 }
