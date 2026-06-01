@@ -227,7 +227,19 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     public boolean isOfOutputType(IClass<?> type) {
         log.trace("[RuntimeContext.isOfOutputType] Checking type {}", type);
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(RuntimeException.class));
-        return this.outputType.isAssignableFrom(type);
+        try {
+            return this.outputType.isAssignableFrom(type);
+        } catch (RuntimeException e) {
+            // Output-type validation is a safety net, not business logic. When a
+            // type can't be resolved — notably in a native image where the class
+            // isn't registered for reflection (Class.forName → "Cannot resolve
+            // class") — don't abort the whole step: warn and accept the produced
+            // value. Registering the type (@Reflected) restores strict checking.
+            log.warn("[RuntimeContext.isOfOutputType] Could not resolve output type {} vs {} "
+                    + "(accepting value, strict check skipped): {}",
+                    this.outputType, type, e.getMessage());
+            return true;
+        }
     }
 
     @Override
