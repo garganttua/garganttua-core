@@ -229,23 +229,52 @@ public class AOTMethod implements IMethod {
 
     @Override
     public IParameter[] getParameters() {
+        Annotation[][] paramAnnotations = resolveParameterAnnotationsOrNull();
         IParameter[] result = new IParameter[parameterTypeNames.length];
         for (int i = 0; i < parameterTypeNames.length; i++) {
             String pName = (parameterNames.length > i) ? parameterNames[i] : ("arg" + i);
+            Annotation[] annos = (paramAnnotations != null
+                    && paramAnnotations.length > i && paramAnnotations[i] != null)
+                    ? paramAnnotations[i] : new Annotation[0];
             result[i] = new AOTParameter(pName, parameterTypeNames[i], 0,
                     parameterNames.length > i, false, false, (varArgs && i == parameterTypeNames.length - 1),
-                    new Annotation[0]);
+                    annos);
         }
         return result;
     }
 
     @Override
     public Annotation[][] getParameterAnnotations() {
+        Annotation[][] resolved = resolveParameterAnnotationsOrNull();
+        if (resolved != null) {
+            return resolved;
+        }
         Annotation[][] result = new Annotation[parameterTypeNames.length][];
         for (int i = 0; i < result.length; i++) {
             result[i] = new Annotation[0];
         }
         return result;
+    }
+
+    /**
+     * Parameter-level annotations are not baked into the generated descriptor
+     * (the source generator emits parameter types/names only), so recover them
+     * from the live {@link Method} — exactly as {@code AOTClass} sources its
+     * class annotations from {@code MyClass.class.getAnnotations()}. Without
+     * this, RUNTIME-retained marker annotations on parameters are invisible
+     * under AOT: e.g. {@code @Nullable} on {@code observe(…, Integer code)}
+     * would be lost, the expression layer would treat the argument as
+     * non-nullable, and a null value would abort the whole call instead of
+     * passing through. Degrades to {@code null} (→ empty arrays) when the live
+     * method cannot be resolved, so AOT-only setups are never worse off than
+     * the previous always-empty behaviour.
+     */
+    private Annotation[][] resolveParameterAnnotationsOrNull() {
+        try {
+            return resolveMethod().getParameterAnnotations();
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     // --- Exceptions ---
