@@ -48,6 +48,9 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
  - `com.garganttua.core:garganttua-observability`
  - `com.garganttua.core:garganttua-runtime-reflection:test`
  - `com.garganttua.core:garganttua-reflections:test`
+ - `com.garganttua.core:garganttua-aot-reflection:${project.version}:test`
+ - `com.garganttua.core:garganttua-aot-annotation-scanner:${project.version}:test`
+ - `com.garganttua.core:garganttua-mapper:test`
 
 <!-- AUTO-GENERATED-END -->
 

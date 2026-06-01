@@ -23,6 +23,7 @@ Compile-time annotation processor for generating AOT class descriptors. This pro
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
+ - `com.garganttua.core:garganttua-observability:test`
  - `org.junit.jupiter:junit-jupiter-engine:test`
 
 <!-- AUTO-GENERATED-END -->
