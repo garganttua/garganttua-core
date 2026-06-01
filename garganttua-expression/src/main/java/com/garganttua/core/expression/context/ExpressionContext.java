@@ -25,8 +25,15 @@ import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.antlr4.ExpressionLexer;
 import com.garganttua.core.expression.antlr4.ExpressionParser;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.supply.ISupplier;
 
+// @Reflected so the AOT processor emits a full IClass descriptor (with methods)
+// rather than a shallow synthesized one. ExpressionContextBuilder.doBuild()
+// resolves the man() built-in via getMethod("man", …); under native image the
+// shallow-descriptor live-reflection fallback fails (closed world), so the real
+// descriptor — registered for reflection by GarganttuaAotFeature — is required.
+@Reflected(queryAllDeclaredMethods = true)
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
     public ExpressionContext() {
     }
