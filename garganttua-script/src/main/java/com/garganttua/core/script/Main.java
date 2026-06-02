@@ -145,6 +145,10 @@ public class Main {
                 .withProvider(loadReflectionProvider())
                 .withScanner(new ReflectionsAnnotationScanner());
 
+        // Build the reflection chain first: this installs the global IReflection
+        // (IClass.setReflection) that InjectionContext.builder() resolves at construction.
+        reflectionBuilder.build();
+
         // Build injection context
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
                 .provide(reflectionBuilder)
