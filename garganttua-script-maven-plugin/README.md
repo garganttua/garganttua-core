@@ -55,7 +55,7 @@ Use the `script-jar` goal to create a self-contained JAR:
 <plugin>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-script-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA01</version>
+    <version>2.0.0-ALPHA02</version>
     <executions>
         <execution>
             <goals>
@@ -74,7 +74,7 @@ Specify packages explicitly instead of auto-detection:
 <plugin>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-script-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA01</version>
+    <version>2.0.0-ALPHA02</version>
     <executions>
         <execution>
             <goals>
@@ -98,7 +98,7 @@ Specify packages explicitly instead of auto-detection:
 <plugin>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-script-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA01</version>
+    <version>2.0.0-ALPHA02</version>
     <executions>
         <execution>
             <goals>
@@ -236,7 +236,7 @@ public class MyExpressions {
         <dependency>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-commons</artifactId>
-            <version>2.0.0-ALPHA01</version>
+            <version>2.0.0-ALPHA02</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -246,7 +246,7 @@ public class MyExpressions {
             <plugin>
                 <groupId>com.garganttua.core</groupId>
                 <artifactId>garganttua-script-maven-plugin</artifactId>
-                <version>2.0.0-ALPHA01</version>
+                <version>2.0.0-ALPHA02</version>
                 <executions>
                     <execution>
                         <goals>

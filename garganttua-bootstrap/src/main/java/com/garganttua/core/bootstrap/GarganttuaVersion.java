@@ -58,7 +58,7 @@ public final class GarganttuaVersion {
     /**
      * Returns the Garganttua Core version.
      *
-     * @return the version string (e.g., "2.0.0-ALPHA01")
+     * @return the version string (e.g., "2.0.0-ALPHA02")
      */
     public static String getVersion() {
         return PROPERTIES.getProperty("garganttua.version", UNKNOWN);
@@ -94,7 +94,7 @@ public final class GarganttuaVersion {
     /**
      * Returns the full version string with name.
      *
-     * @return formatted string like "Garganttua Core v2.0.0-ALPHA01"
+     * @return formatted string like "Garganttua Core v2.0.0-ALPHA02"
      */
     public static String getFullVersion() {
         return getName() + " v" + getVersion();

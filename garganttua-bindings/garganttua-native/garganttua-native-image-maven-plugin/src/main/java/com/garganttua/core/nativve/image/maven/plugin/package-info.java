@@ -19,7 +19,7 @@
  * <plugin>
  *     <groupId>com.garganttua.core</groupId>
  *     <artifactId>garganttua-native-image-maven-plugin</artifactId>
- *     <version>2.0.0-ALPHA01</version>
+ *     <version>2.0.0-ALPHA02</version>
  *     <executions>
  *         <execution>
  *             <goals>
@@ -51,6 +51,6 @@
  *   <li>garganttua-commons - Native annotations</li>
  * </ul>
  *
- * @since 2.0.0-ALPHA01
+ * @since 2.0.0-ALPHA02
  */
 package com.garganttua.core.nativve.image.maven.plugin;

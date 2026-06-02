@@ -62,7 +62,7 @@ import static com.garganttua.core.console.ConsolePalette.BRIGHT_CYAN;
  */
 public class ScriptConsole {
 
-    private static final String VERSION = "2.0.0-ALPHA01";
+    private static final String VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
 
     // JLine terminal lifecycle (terminal, line reader, history, completer)
     private final ConsoleTerminal jline;
