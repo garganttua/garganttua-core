@@ -66,7 +66,8 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     private static final String SOURCE_BUILT_IN = "built-in";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
 
-    private final Set<String> packages = new HashSet<>();
+    // package-private: read by InjectionAutoDetector
+    final Set<String> packages = new HashSet<>();
 
     // Bean providers: built-in (P1) + manual (P0)
     private final Map<String, IBeanProviderBuilder> manualBeanProviders = new HashMap<>();
@@ -80,15 +81,15 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
 
     // Child context factories: manual (P0) + auto-detected (P1)
     private final Map<String, IInjectionChildContextFactory<? extends IInjectionContext>> manualChildContextFactories = new HashMap<>();
-    private final Map<String, IInjectionChildContextFactory<? extends IInjectionContext>> autoDetectedChildContextFactories = new HashMap<>();
+    final Map<String, IInjectionChildContextFactory<? extends IInjectionContext>> autoDetectedChildContextFactories = new HashMap<>();
     private final MultiSourceCollector<String, IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactoryCollector;
 
     // Qualifiers: manual (P0) + auto-detected (P1)
     private final Map<String, IClass<? extends Annotation>> manualQualifiers = new HashMap<>();
-    private final Map<String, IClass<? extends Annotation>> autoDetectedQualifiers = new HashMap<>();
+    final Map<String, IClass<? extends Annotation>> autoDetectedQualifiers = new HashMap<>();
     private final MultiSourceCollector<String, IClass<? extends Annotation>> qualifierCollector;
 
-    private IInjectableElementResolverBuilder resolvers;
+    IInjectableElementResolverBuilder resolvers;
     private Set<IBuilderObserver<IInjectionContextBuilder, IInjectionContext>> observers = new HashSet<>();
 
     @SuppressWarnings("unchecked")
@@ -118,7 +119,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return builder;
     }
 
-    private IReflection reflection;
+    IReflection reflection;
     private IObservableBuilder<?, ?> reflectionBuilderRef;
 
     public InjectionContextBuilder() throws DslException {
@@ -155,7 +156,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         log.trace("Exiting InjectionContextBuilder constructor");
     }
 
-    private Map<String, IBeanProviderBuilder> getAllBeanProviders() {
+    Map<String, IBeanProviderBuilder> getAllBeanProviders() {
         return this.beanProviderCollector.build();
     }
 
@@ -404,104 +405,10 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
         if (dependency instanceof IReflection reflection) {
-            log.debug("Received IReflection dependency, starting auto-detection");
-            this.reflection = reflection;
-
-            IClass<? extends Annotation> qualifierAnnotation = (IClass<? extends Annotation>) reflection.getClass(Qualifier.class);
-            IClass<? extends Annotation> childContextAnnotation = (IClass<? extends Annotation>) reflection.getClass(ChildContext.class);
-            IClass<?> childContextFactoryInterface = reflection.getClass(IInjectionChildContextFactory.class);
-
-            // Auto-detect qualifiers
-            this.packages.stream()
-                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, qualifierAnnotation).stream()
-                            .filter(clazz -> clazz.isAnnotationPresent(qualifierAnnotation)))
-                    .map(clazz -> (IClass<? extends Annotation>) clazz)
-                    .forEach(q -> this.autoDetectedQualifiers.put(q.getName(), q));
-            log.debug("Auto-detected qualifiers: {}", this.autoDetectedQualifiers);
-
-            // Auto-detect @ChildContext annotated classes
-            this.packages.stream()
-                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, childContextAnnotation).stream())
-                    .forEach(factoryClass -> {
-                        try {
-                            if (childContextFactoryInterface.isAssignableFrom(factoryClass)) {
-                                IInjectionChildContextFactory<? extends IInjectionContext> factory =
-                                        (IInjectionChildContextFactory<? extends IInjectionContext>) reflection.newInstance(factoryClass);
-                                this.autoDetectedChildContextFactories.put(factoryClass.getName(), factory);
-                                log.debug("Auto-registered child context factory: {}", factoryClass.getName());
-                            } else {
-                                log.warn(
-                                        "Class {} annotated with @ChildContext but does not implement IInjectionChildContextFactory",
-                                        factoryClass.getName());
-                            }
-                        } catch (Exception e) {
-                            log.error("Failed to instantiate child context factory {}: {}",
-                                    factoryClass.getName(), e.getMessage(), e);
-                            throw new DslException("Failed to auto-detect child context factory: " + factoryClass.getName(), e);
-                        }
-                    });
-
-            // Auto-detect @BeanProviderAnnotation annotated classes
-            IClass<? extends Annotation> beanProviderAnnotation = reflection.getClass(BeanProvider.class);
-            IClass<?> beanProviderBuilderInterface = reflection.getClass(IBeanProviderBuilder.class);
-
-            this.packages.stream()
-                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, beanProviderAnnotation).stream())
-                    .forEach(providerClass -> {
-                        try {
-                            if (beanProviderBuilderInterface.isAssignableFrom(providerClass)) {
-                                BeanProvider anno = ((Class<?>) providerClass.getType()).getAnnotation(BeanProvider.class);
-                                String scope = anno.scope();
-                                IBeanProviderBuilder provider = (IBeanProviderBuilder) reflection.newInstance(providerClass, this);
-                                this.beanProvider(scope, provider);
-                                log.info("Auto-registered bean provider '{}' from {}", scope, providerClass.getName());
-                            } else {
-                                log.warn("Class {} annotated with @BeanProviderAnnotation but does not implement IBeanProviderBuilder",
-                                        providerClass.getName());
-                            }
-                        } catch (Exception e) {
-                            log.error("Failed to instantiate bean provider {}: {}", providerClass.getName(), e.getMessage(), e);
-                        }
-                    });
-
-            // Auto-detect @PropertyProviderAnnotation annotated classes
-            IClass<? extends Annotation> propertyProviderAnnotation = (IClass<? extends Annotation>) reflection.getClass(PropertyProvider.class);
-            IClass<?> propertyProviderBuilderInterface = reflection.getClass(IPropertyProviderBuilder.class);
-
-            this.packages.stream()
-                    .flatMap(pkg -> reflection.getClassesWithAnnotation(pkg, propertyProviderAnnotation).stream())
-                    .forEach(providerClass -> {
-                        try {
-                            if (propertyProviderBuilderInterface.isAssignableFrom(providerClass)) {
-                                PropertyProvider anno = ((Class<?>) providerClass.getType()).getAnnotation(PropertyProvider.class);
-                                String scope = anno.scope();
-                                IPropertyProviderBuilder provider = (IPropertyProviderBuilder) reflection.newInstance(providerClass, this);
-                                this.propertyProvider(scope, provider);
-                                log.info("Auto-registered property provider '{}' from {}", scope, providerClass.getName());
-                            } else {
-                                log.warn("Class {} annotated with @PropertyProviderAnnotation but does not implement IPropertyProviderBuilder",
-                                        providerClass.getName());
-                            }
-                        } catch (Exception e) {
-                            log.error("Failed to instantiate property provider {}: {}", providerClass.getName(), e.getMessage(), e);
-                        }
-                    });
-
-            // Pass IReflection to sub-builders for their own auto-detection
-            getAllBeanProviders().values().forEach(bp -> {
-                if (bp instanceof BeanProviderBuilder bpb) {
-                    bpb.setReflection(reflection);
-                }
-            });
-            if (this.resolvers instanceof InjectableElementResolverBuilder ier) {
-                ier.setReflection(reflection);
-            }
-
-            log.debug("Auto-detection with IReflection completed");
+            InjectionAutoDetector.detect(this, reflection);
         }
     }
 
