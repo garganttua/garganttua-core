@@ -92,48 +92,9 @@ public class MappingRules {
 								FieldMappingRule::source,
 								"field " + destinationClass.getSimpleName() + "." + field.getName());
 				if (pickedField != null && !objectMapping) {
-					ObjectAddress fromSourceMethod = null;
-					if (!pickedField.fromSourceMethod().isEmpty()) {
-						fromSourceMethod = new ObjectAddress(pickedField.fromSourceMethod());
-					}
-					ObjectAddress toSourceMethod = null;
-					if (!pickedField.toSourceMethod().isEmpty()) {
-						toSourceMethod = new ObjectAddress(pickedField.toSourceMethod());
-					}
-
-					ObjectAddress sourceFieldAddress = new ObjectAddress(pickedField.sourceFieldAddress());
-					ObjectAddress destFieldAddress = new ObjectAddress(fieldAddress + field.getName());
-
-					mappingRules.add(new MappingRule(sourceFieldAddress, destFieldAddress, destinationClass,
-							fromSourceMethod, toSourceMethod));
+					addFieldRule(pickedField, field, destinationClass, fieldAddress, mappingRules);
 				} else {
-					IClass<?> fieldType = field.getType();
-					if (isNotPrimitive(fieldType) &&
-							!collectionClass.isAssignableFrom(fieldType) &&
-							!mapClass.isAssignableFrom(fieldType) &&
-							fieldType.isArray()) {
-						this.recursiveParsing(fieldType, sourceClass, mappingRules,
-								fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
-					} else if (collectionClass.isAssignableFrom(fieldType)) {
-						IClass<?> genericType = getFieldGenericType(field, 0);
-						if (genericType != null) {
-							this.recursiveParsing(genericType, sourceClass, mappingRules,
-									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR);
-						}
-					} else if (mapClass.isAssignableFrom(fieldType)) {
-						IClass<?> keyType = getFieldGenericType(field, 0);
-						IClass<?> valueType = getFieldGenericType(field, 1);
-						if (keyType != null) {
-							this.recursiveParsing(keyType, sourceClass, mappingRules,
-									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
-											+ ObjectAddress.MAP_KEY_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
-						}
-						if (valueType != null) {
-							this.recursiveParsing(valueType, sourceClass, mappingRules,
-									fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR
-											+ ObjectAddress.MAP_VALUE_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
-						}
-					}
+					recurseIntoFieldType(field, sourceClass, mappingRules, fieldAddress);
 				}
 			}
 			IClass<?> superclass = destinationClass.getSuperclass();
@@ -144,6 +105,46 @@ public class MappingRules {
 			return mappingRules;
 		} catch (ReflectionException e) {
 			throw new MapperException(e);
+		}
+	}
+
+	/** Record a single annotated field mapping rule (with optional from/to source converter methods). */
+	private void addFieldRule(FieldMappingRule pickedField, IField field, IClass<?> destinationClass,
+			String fieldAddress, List<MappingRule> mappingRules) {
+		ObjectAddress fromSourceMethod = pickedField.fromSourceMethod().isEmpty() ? null
+				: new ObjectAddress(pickedField.fromSourceMethod());
+		ObjectAddress toSourceMethod = pickedField.toSourceMethod().isEmpty() ? null
+				: new ObjectAddress(pickedField.toSourceMethod());
+		ObjectAddress sourceFieldAddress = new ObjectAddress(pickedField.sourceFieldAddress());
+		ObjectAddress destFieldAddress = new ObjectAddress(fieldAddress + field.getName());
+		mappingRules.add(new MappingRule(sourceFieldAddress, destFieldAddress, destinationClass,
+				fromSourceMethod, toSourceMethod));
+	}
+
+	/** Recurse into a non-annotated field's structural type (array element, collection element, map key/value). */
+	private void recurseIntoFieldType(IField field, IClass<?> sourceClass, List<MappingRule> mappingRules,
+			String fieldAddress) throws MapperException {
+		IClass<?> fieldType = field.getType();
+		String base = fieldAddress + field.getName() + ObjectAddress.ELEMENT_SEPARATOR;
+		if (isNotPrimitive(fieldType) && !collectionClass.isAssignableFrom(fieldType)
+				&& !mapClass.isAssignableFrom(fieldType) && fieldType.isArray()) {
+			this.recursiveParsing(fieldType, sourceClass, mappingRules, base);
+		} else if (collectionClass.isAssignableFrom(fieldType)) {
+			IClass<?> genericType = getFieldGenericType(field, 0);
+			if (genericType != null) {
+				this.recursiveParsing(genericType, sourceClass, mappingRules, base);
+			}
+		} else if (mapClass.isAssignableFrom(fieldType)) {
+			IClass<?> keyType = getFieldGenericType(field, 0);
+			IClass<?> valueType = getFieldGenericType(field, 1);
+			if (keyType != null) {
+				this.recursiveParsing(keyType, sourceClass, mappingRules,
+						base + ObjectAddress.MAP_KEY_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
+			}
+			if (valueType != null) {
+				this.recursiveParsing(valueType, sourceClass, mappingRules,
+						base + ObjectAddress.MAP_VALUE_INDICATOR + ObjectAddress.ELEMENT_SEPARATOR);
+			}
 		}
 	}
 
@@ -193,33 +194,42 @@ public class MappingRules {
 		}
 
 		if (!assignable.isEmpty()) {
-			A best = null;
-			for (A candidate : assignable) {
-				Class<?> candidateSrc = sourceOf.sourceOf(candidate);
-				boolean dominated = false;
-				for (A other : assignable) {
-					if (other == candidate) {
-						continue;
-					}
-					Class<?> otherSrc = sourceOf.sourceOf(other);
-					if (!otherSrc.equals(candidateSrc) && candidateSrc.isAssignableFrom(otherSrc)) {
-						dominated = true;
-						break;
-					}
-				}
-				if (!dominated) {
-					if (best != null) {
-						throw new MapperException("Ambiguous mapping rules on " + memberLabel
-								+ " for source " + actualSource.getName()
-								+ " (multiple incomparable matching source types)");
-					}
-					best = candidate;
-				}
-			}
-			return best;
+			return mostSpecificAssignable(assignable, sourceOf, memberLabel, actualSource);
 		}
 
 		return wildcard;
+	}
+
+	/**
+	 * From the assignable candidates, return the single most-specific (undominated)
+	 * one, or throw when two incomparable candidates both match.
+	 */
+	private <A> A mostSpecificAssignable(List<A> assignable, SourceExtractor<A> sourceOf,
+			String memberLabel, Class<?> actualSource) throws MapperException {
+		A best = null;
+		for (A candidate : assignable) {
+			Class<?> candidateSrc = sourceOf.sourceOf(candidate);
+			boolean dominated = false;
+			for (A other : assignable) {
+				if (other == candidate) {
+					continue;
+				}
+				Class<?> otherSrc = sourceOf.sourceOf(other);
+				if (!otherSrc.equals(candidateSrc) && candidateSrc.isAssignableFrom(otherSrc)) {
+					dominated = true;
+					break;
+				}
+			}
+			if (!dominated) {
+				if (best != null) {
+					throw new MapperException("Ambiguous mapping rules on " + memberLabel
+							+ " for source " + actualSource.getName()
+							+ " (multiple incomparable matching source types)");
+				}
+				best = candidate;
+			}
+		}
+		return best;
 	}
 
 	public void validate(IClass<?> sourceClass, List<MappingRule> rules) throws MapperException {
@@ -311,54 +321,10 @@ public class MappingRules {
 			IField sourceFieldLeaf = (IField) sourceField.get(sourceField.size() - 1);
 			IField destinationFieldLeaf = (IField) destinationField.get(destinationField.size() - 1);
 
-			IClass<?> sourceFieldType = sourceFieldLeaf.getType();
-			IClass<?> destFieldType = destinationFieldLeaf.getType();
-
-			if (mappingMethod != null) {
-				IMethod methodLeaf = (IMethod) mappingMethod.get(mappingMethod.size() - 1);
-				return new MethodMappingExecutor(methodLeaf, sourceFieldLeaf, destinationFieldLeaf, mappingDirection);
-			} else if (mapClass.isAssignableFrom(sourceFieldType)
-					&& mapClass.isAssignableFrom(destFieldType)) {
-				// Map<K,V> mapping
-				IClass<?> srcKeyType = getFieldGenericType(sourceFieldLeaf, 0);
-				IClass<?> srcValType = getFieldGenericType(sourceFieldLeaf, 1);
-				IClass<?> dstKeyType = getFieldGenericType(destinationFieldLeaf, 0);
-				IClass<?> dstValType = getFieldGenericType(destinationFieldLeaf, 1);
-				boolean keysMatch = srcKeyType != null && dstKeyType != null
-						&& srcKeyType.getType().equals(dstKeyType.getType());
-				boolean valsMatch = srcValType != null && dstValType != null
-						&& srcValType.getType().equals(dstValType.getType());
-				if (keysMatch && valsMatch) {
-					return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
-				} else {
-					return new MapableMapMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
-				}
-			} else if (collectionClass.isAssignableFrom(sourceFieldType)
-					&& collectionClass.isAssignableFrom(destFieldType)) {
-				IClass<?> sourceGenericType = getFieldGenericType(sourceFieldLeaf, 0);
-				IClass<?> destGenericType = getFieldGenericType(destinationFieldLeaf, 0);
-
-				if (sourceFieldType.getType().equals(destFieldType.getType())
-						&& sourceGenericType != null && sourceGenericType.getType().equals(destGenericType != null ? destGenericType.getType() : null)) {
-					return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
-				} else if (!sourceFieldType.getType().equals(destFieldType.getType())
-						&& sourceGenericType != null && sourceGenericType.getType().equals(destGenericType != null ? destGenericType.getType() : null)) {
-					return new SimpleCollectionMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
-				} else {
-					return new MapableCollectionMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
-				}
-			} else if (sourceFieldType.getType().equals(destFieldType.getType())) {
-				return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
-			} else {
-				// Try implicit conversion before falling back to mapable field
-				java.util.Optional<java.util.function.Function<Object, Object>> conv =
-						ImplicitConversions.findConversion(sourceFieldType, destFieldType);
-				if (conv.isPresent()) {
-					return new ImplicitConversionMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf, conv.get());
-				} else if (!isArrayOrMapOrCollection(sourceFieldLeaf)
-						&& !isArrayOrMapOrCollection(destinationFieldLeaf)) {
-					return new SimpleMapableFieldMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
-				}
+			IMappingRuleExecutor executor = selectExecutor(mapper, mappingDirection,
+					sourceFieldLeaf, destinationFieldLeaf, mappingMethod);
+			if (executor != null) {
+				return executor;
 			}
 
 			log.warn("No suitable executor found for rule: {}", rule);
@@ -367,6 +333,71 @@ public class MappingRules {
 			throw new MapperException(e);
 		}
 		return null;
+	}
+
+	/** Choose the executor implementation for a resolved (source field, dest field) pair; null if none fits. */
+	private IMappingRuleExecutor selectExecutor(IMapper mapper, MappingDirection mappingDirection,
+			IField sourceFieldLeaf, IField destinationFieldLeaf, List<Object> mappingMethod) {
+		IClass<?> sourceFieldType = sourceFieldLeaf.getType();
+		IClass<?> destFieldType = destinationFieldLeaf.getType();
+
+		if (mappingMethod != null) {
+			IMethod methodLeaf = (IMethod) mappingMethod.get(mappingMethod.size() - 1);
+			return new MethodMappingExecutor(methodLeaf, sourceFieldLeaf, destinationFieldLeaf, mappingDirection);
+		}
+		if (mapClass.isAssignableFrom(sourceFieldType) && mapClass.isAssignableFrom(destFieldType)) {
+			return mapExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		if (collectionClass.isAssignableFrom(sourceFieldType) && collectionClass.isAssignableFrom(destFieldType)) {
+			return collectionExecutor(mapper, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		if (sourceFieldType.getType().equals(destFieldType.getType())) {
+			return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		// Try implicit conversion before falling back to mapable field.
+		java.util.Optional<java.util.function.Function<Object, Object>> conv =
+				ImplicitConversions.findConversion(sourceFieldType, destFieldType);
+		if (conv.isPresent()) {
+			return new ImplicitConversionMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf, conv.get());
+		}
+		if (!isArrayOrMapOrCollection(sourceFieldLeaf) && !isArrayOrMapOrCollection(destinationFieldLeaf)) {
+			return new SimpleMapableFieldMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		return null;
+	}
+
+	/** Executor for a Map&lt;K,V&gt; field pair: simple copy when key/value types match, else element-mapping. */
+	private IMappingRuleExecutor mapExecutor(IMapper mapper, IField sourceFieldLeaf, IField destinationFieldLeaf) {
+		IClass<?> srcKeyType = getFieldGenericType(sourceFieldLeaf, 0);
+		IClass<?> srcValType = getFieldGenericType(sourceFieldLeaf, 1);
+		IClass<?> dstKeyType = getFieldGenericType(destinationFieldLeaf, 0);
+		IClass<?> dstValType = getFieldGenericType(destinationFieldLeaf, 1);
+		boolean keysMatch = srcKeyType != null && dstKeyType != null
+				&& srcKeyType.getType().equals(dstKeyType.getType());
+		boolean valsMatch = srcValType != null && dstValType != null
+				&& srcValType.getType().equals(dstValType.getType());
+		if (keysMatch && valsMatch) {
+			return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		return new MapableMapMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
+	}
+
+	/** Executor for a Collection field pair: simple/collection copy when element types match, else element-mapping. */
+	private IMappingRuleExecutor collectionExecutor(IMapper mapper, IField sourceFieldLeaf, IField destinationFieldLeaf) {
+		IClass<?> sourceFieldType = sourceFieldLeaf.getType();
+		IClass<?> destFieldType = destinationFieldLeaf.getType();
+		IClass<?> sourceGenericType = getFieldGenericType(sourceFieldLeaf, 0);
+		IClass<?> destGenericType = getFieldGenericType(destinationFieldLeaf, 0);
+		boolean genericsMatch = sourceGenericType != null
+				&& sourceGenericType.getType().equals(destGenericType != null ? destGenericType.getType() : null);
+		boolean sameContainer = sourceFieldType.getType().equals(destFieldType.getType());
+		if (sameContainer && genericsMatch) {
+			return new SimpleFieldMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		if (!sameContainer && genericsMatch) {
+			return new SimpleCollectionMappingExecutor(this.reflection, sourceFieldLeaf, destinationFieldLeaf);
+		}
+		return new MapableCollectionMappingExecutor(this.reflection, mapper, sourceFieldLeaf, destinationFieldLeaf);
 	}
 
 	public List<MappingRule> generateConventionRules(IClass<?> source, IClass<?> destination) {
