@@ -35,27 +35,13 @@ public class PropertyElementResolver implements IElementResolver {
         Objects.requireNonNull(elementType, "ElementType cannot be null");
         log.debug("ElementType is not null: {}", elementType);
 
-        String provider = null;
-
         Property property = element.getAnnotation(IClass.getClass(Property.class));
         log.debug("Retrieved @Property annotation: {}", property);
 
         String key = property.value();
         log.debug("Property key: {}", key);
 
-        for (Annotation annotation : element.getAnnotations()) {
-            if (annotation.annotationType().equals(Provider.class)) {
-                Provider prov = (Provider) annotation;
-                if (prov.value() != null && !prov.value().isBlank()) {
-                    provider = prov.value();
-                    log.debug("Found provider annotation with value: {}", provider);
-                } else {
-                    log.debug("Provider annotation value is null or blank");
-                }
-            } else {
-                log.trace("Skipping unrelated annotation: {}", annotation.annotationType().getSimpleName());
-            }
-        }
+        String provider = resolveProvider(element);
 
         IPropertySupplierBuilder<?> propertySupplierBuilder = Properties.property(elementType);
         log.debug("Created IPropertySupplierBuilder for elementType: {}", elementType.getSimpleName());
@@ -72,5 +58,24 @@ public class PropertyElementResolver implements IElementResolver {
         log.trace("Exiting resolve with Resolved for elementType: {}", elementType.getSimpleName());
 
         return new Resolved(true, elementType, result, IInjectableElementResolver.isNullable(element));
+    }
+
+    /** Resolve the optional {@code @Provider} value declared on the element, or {@code null} if none/blank. */
+    private String resolveProvider(IAnnotatedElement element) {
+        String provider = null;
+        for (Annotation annotation : element.getAnnotations()) {
+            if (annotation.annotationType().equals(Provider.class)) {
+                Provider prov = (Provider) annotation;
+                if (prov.value() != null && !prov.value().isBlank()) {
+                    provider = prov.value();
+                    log.debug("Found provider annotation with value: {}", provider);
+                } else {
+                    log.debug("Provider annotation value is null or blank");
+                }
+            } else {
+                log.trace("Skipping unrelated annotation: {}", annotation.annotationType().getSimpleName());
+            }
+        }
+        return provider;
     }
 }

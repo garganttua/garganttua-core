@@ -116,59 +116,25 @@ public class BeanProviderBuilder
 
 		this.packages.parallelStream().forEach(pkg -> {
 			log.debug("Auto-detecting beans in package: {}", pkg);
-
-			// 1. Singleton
-			reflection.getClassesWithAnnotation(pkg, singletonAnnotation)
-					.forEach(singletonClass -> {
-						try {
-							log.trace("Detected @Singleton class: {}", singletonClass.getSimpleName());
-							synchronized (this.autoDetectedBeanFactoryBuilders) {
-								this.autoDetectedBeanFactoryBuilders.put(singletonClass.getName(),
-										this.createBeanFactory(qualifierAnnotations, singletonClass)
-												.strategy(BeanStrategy.singleton));
-							}
-						} catch (DslException e) {
-							log.error("Failed to create singleton bean factory for {}",
-									singletonClass.getSimpleName(), e);
-						}
-					});
-
-			// 2. Prototype
-			reflection.getClassesWithAnnotation(pkg, prototypeAnnotation)
-					.forEach(prototypeClass -> {
-						try {
-							log.trace("Detected @Prototype class: {}", prototypeClass.getSimpleName());
-							synchronized (this.autoDetectedBeanFactoryBuilders) {
-								this.autoDetectedBeanFactoryBuilders.put(prototypeClass.getName(),
-										this.createBeanFactory(qualifierAnnotations, prototypeClass)
-												.strategy(BeanStrategy.prototype));
-							}
-						} catch (DslException e) {
-							log.error("Failed to create prototype bean factory for {}",
-									prototypeClass.getSimpleName(), e);
-						}
-					});
-
-			// 3. Qualifiers
-			qualifierAnnotations.forEach(qualifierAnnotation -> {
-				reflection.getClassesWithAnnotation(pkg, qualifierAnnotation)
-						.forEach(qualifiedClass -> {
-							try {
-								log.trace("Detected @Qualifier class: {} with qualifier {}",
-										qualifiedClass.getSimpleName(), qualifierAnnotation.getSimpleName());
-								synchronized (this.autoDetectedBeanFactoryBuilders) {
-									this.autoDetectedBeanFactoryBuilders.put(qualifiedClass.getName(),
-											this.createBeanFactory(qualifierAnnotations, qualifiedClass)
-													.strategy(BeanStrategy.singleton));
-								}
-							} catch (DslException e) {
-								log.error("Failed to create bean factory for qualifier class {}",
-										qualifiedClass.getSimpleName(), e);
-							}
-						});
-			});
+			detectAndRegister(pkg, singletonAnnotation, BeanStrategy.singleton);
+			detectAndRegister(pkg, prototypeAnnotation, BeanStrategy.prototype);
+			qualifierAnnotations.forEach(qualifier -> detectAndRegister(pkg, qualifier, BeanStrategy.singleton));
 		});
 		log.trace("Exiting doAutoDetection() method");
+	}
+
+	/** Register every class in {@code pkg} annotated with {@code annotation} as an auto-detected bean factory with the given strategy. */
+	private void detectAndRegister(String pkg, IClass<? extends Annotation> annotation, BeanStrategy strategy) {
+		reflection.getClassesWithAnnotation(pkg, annotation).forEach(beanClass -> {
+			try {
+				synchronized (this.autoDetectedBeanFactoryBuilders) {
+					this.autoDetectedBeanFactoryBuilders.put(beanClass.getName(),
+							this.createBeanFactory(qualifierAnnotations, beanClass).strategy(strategy));
+				}
+			} catch (DslException e) {
+				log.error("Failed to create bean factory for {}", beanClass.getSimpleName(), e);
+			}
+		});
 	}
 
 	private IBeanFactoryBuilder<?> createBeanFactory(Set<IClass<? extends Annotation>> qualifierAnnotations,

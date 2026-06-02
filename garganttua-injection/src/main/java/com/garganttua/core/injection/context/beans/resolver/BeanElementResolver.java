@@ -40,44 +40,49 @@ public class BeanElementResolver {
         Objects.requireNonNull(parameter, "Parameter cannot be null");
         Objects.requireNonNull(elementType, "Element type cannot be null");
 
+        BeanAnnotations parsed = parseBeanAnnotations(parameter);
+
+        ISupplierBuilder beanSupplierBuilder = Beans.bean(
+                Optional.ofNullable(parsed.provider()),
+                new BeanReference<>(elementType, Optional.ofNullable(strategy), Optional.ofNullable(parsed.name()),
+                        parsed.qualifiers()));
+
+        log.debug("Bean supplier builder created for elementType: {} with provider: {} and name: {}",
+                elementType, parsed.provider(), parsed.name());
+        log.trace("Exiting resolve with builder: {}", beanSupplierBuilder);
+
+        return Optional.of(beanSupplierBuilder);
+    }
+
+    /** Extract the @Named name, @Provider provider and matching qualifier annotations from the element. */
+    private BeanAnnotations parseBeanAnnotations(IAnnotatedElement parameter) {
         String name = null;
         String provider = null;
         Set<IClass<? extends Annotation>> paramQualifiers = new HashSet<>();
-
         for (Annotation annotation : parameter.getAnnotations()) {
             log.debug("Inspecting annotation: {}", annotation);
-
             if (annotation.annotationType().equals(Named.class)) {
                 Named named = (Named) annotation;
                 if (named.value() != null && !named.value().isBlank()) {
                     name = named.value();
-                    log.debug("Named annotation found with value: {}", name);
                 }
             } else if (annotation.annotationType().equals(Provider.class)) {
                 Provider prov = (Provider) annotation;
                 if (prov.value() != null && !prov.value().isBlank()) {
                     provider = prov.value();
-                    log.debug("Provider annotation found with value: {}", provider);
                 }
             } else {
                 @SuppressWarnings("unchecked")
-                IClass<? extends Annotation> annotationIClass = (IClass<? extends Annotation>) IClass.getClass(annotation.annotationType());
+                IClass<? extends Annotation> annotationIClass =
+                        (IClass<? extends Annotation>) IClass.getClass(annotation.annotationType());
                 if (qualifiers.stream().anyMatch(q -> q.getName().equals(annotationIClass.getName()))) {
                     paramQualifiers.add(annotationIClass);
-                    log.debug("Qualifier annotation found: {}", annotation.annotationType());
                 }
             }
         }
+        return new BeanAnnotations(name, provider, paramQualifiers);
+    }
 
-        ISupplierBuilder beanSupplierBuilder = Beans.bean(
-                Optional.ofNullable(provider),
-                new BeanReference<>(elementType, Optional.ofNullable(strategy), Optional.ofNullable(name),
-                        paramQualifiers));
-
-        log.debug("Bean supplier builder created for elementType: {} with provider: {} and name: {}",
-                elementType, provider, name);
-        log.trace("Exiting resolve with builder: {}", beanSupplierBuilder);
-
-        return Optional.of(beanSupplierBuilder);
+    private record BeanAnnotations(String name, String provider, Set<IClass<? extends Annotation>> qualifiers) {
     }
 }

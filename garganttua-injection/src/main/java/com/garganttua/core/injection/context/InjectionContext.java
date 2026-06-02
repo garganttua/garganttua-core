@@ -40,6 +40,17 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.utils.CopyException;
 
+/**
+ * The DI context — cohesive implementation of {@link IInjectionContext} over its
+ * bean/property providers, lifecycle and child contexts.
+ *
+ * <p><b>Size note:</b> this type exceeds the 500-line code-size gate on purpose.
+ * It is a contract facade (~25 small interface methods, none over the method-length
+ * limit) with no extractable complex cluster; splitting it would only add
+ * forwarding boilerplate and couple a delegate to the lifecycle gating. Treated as
+ * a documented exception, like the {@code IClass}/{@code IRuntimeContext} mirror
+ * implementations.
+ */
 public class InjectionContext extends AbstractLifecycle implements IInjectionContext, IBootstrapSummaryContributor {
     private static final Logger log = Logger.getLogger(InjectionContext.class);
 
