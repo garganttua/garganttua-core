@@ -254,6 +254,25 @@ public class Mapper implements IMapper, IObservable {
 		MappingConfiguration mappingConfig = new MappingConfiguration(source, destination, sourceRules,
 				destinationRules, mappingDirection);
 
+		runValidation(mappingDirection, source, destination, sourceRules, destinationRules);
+
+		// Strict mode: check all destination fields are covered
+		if (this.configuration.strictMode()) {
+			validateStrictCoverage(destination, mappingDirection == MappingDirection.REGULAR ? destinationRules : sourceRules);
+		}
+
+		// Pre-compute executors
+		List<IMappingRuleExecutor> destExecutors = precomputeExecutors(MappingDirection.REGULAR,
+				destinationRules, source, destination);
+		List<IMappingRuleExecutor> srcExecutors = precomputeExecutors(MappingDirection.REVERSE,
+				sourceRules, source, destination);
+
+		return new CachedMappingConfiguration(mappingConfig, destExecutors, srcExecutors);
+	}
+
+	/** Validate the resolved rules against the active side when validation is enabled; honours failOnError. */
+	private void runValidation(MappingDirection mappingDirection, IClass<?> source, IClass<?> destination,
+			List<MappingRule> sourceRules, List<MappingRule> destinationRules) throws MapperException {
 		try {
 			if (this.configuration.doValidation()) {
 				if (mappingDirection == MappingDirection.REVERSE)
@@ -268,19 +287,6 @@ public class Mapper implements IMapper, IObservable {
 				log.warn("Validation failed, ignoring: {}", e.getMessage());
 			}
 		}
-
-		// Strict mode: check all destination fields are covered
-		if (this.configuration.strictMode()) {
-			validateStrictCoverage(destination, mappingDirection == MappingDirection.REGULAR ? destinationRules : sourceRules);
-		}
-
-		// Pre-compute executors
-		List<IMappingRuleExecutor> destExecutors = precomputeExecutors(MappingDirection.REGULAR,
-				destinationRules, source, destination);
-		List<IMappingRuleExecutor> srcExecutors = precomputeExecutors(MappingDirection.REVERSE,
-				sourceRules, source, destination);
-
-		return new CachedMappingConfiguration(mappingConfig, destExecutors, srcExecutors);
 	}
 
 	private List<MappingRule> complementRules(List<MappingRule> annotatedRules, List<MappingRule> conventionRules) {
