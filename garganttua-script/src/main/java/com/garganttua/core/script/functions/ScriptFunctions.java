@@ -22,6 +22,12 @@ import com.garganttua.core.script.context.ScriptExecutionContext;
 import jakarta.annotation.Nullable;
 
 import com.garganttua.core.reflection.annotations.Reflected;
+
+/**
+ * Core built-in script expression functions: console output ({@code print}/{@code eprint}),
+ * type casting, {@link String#format} string formatting, and script composition
+ * ({@code include}, {@code call}, {@code execute_script}, {@code script_variable}).
+ */
 @Reflected(queryAllDeclaredMethods = true)
 public class ScriptFunctions {
     private static final Logger log = Logger.getLogger(ScriptFunctions.class);
@@ -70,6 +76,15 @@ public class ScriptFunctions {
 
     // ========== Cast Function ==========
 
+    /**
+     * Casts a value to the given type, returning {@code null} when the value is {@code null}.
+     *
+     * @param <T>   the target type
+     * @param type  the target type wrapper
+     * @param value the value to cast
+     * @return the value cast to {@code T}, or {@code null}
+     * @throws ExpressionException if {@code type} is {@code null} or the value is not assignable
+     */
     @Expression(name = "cast", description = "Casts a value to the specified type")
     public static <T> T cast(@Nullable IClass<T> type, @Nullable Object value) {
         log.debug("cast({}, {})", type, value);
@@ -172,6 +187,15 @@ public class ScriptFunctions {
 
     private static final String CLASSPATH_PREFIX = "classpath:";
 
+    /**
+     * Includes a {@code .jar} plugin or compiles a {@code .gs} script for later invocation.
+     * A {@code classpath:} prefix resolves the path as a classpath resource (scripts only).
+     *
+     * @param path the file path or {@code classpath:} resource of the {@code .jar} or {@code .gs}
+     * @return the loaded JAR path, or the registered name of the included script
+     * @throws ExpressionException if the path is blank, no script context is active,
+     *                             the file type is unsupported, or loading fails
+     */
     @Expression(name = "include", description = "Includes a JAR or a script file (.gs). Supports classpath: prefix for classpath resources.")
     public static String include(@Nullable String path) {
         log.debug("include({})", path);
@@ -204,6 +228,14 @@ public class ScriptFunctions {
         }
     }
 
+    /**
+     * Executes a previously {@code include}d script by its registered name.
+     *
+     * @param name the registered script name
+     * @return the script's exit code
+     * @throws ExpressionException if the name is blank, no script context is active,
+     *                             or no script is registered under {@code name}
+     */
     @Expression(name = "call", description = "Calls an included script by name")
     public static int call(@Nullable String name) {
         log.debug("call({})", name);
@@ -323,45 +355,123 @@ public class ScriptFunctions {
         return script.execute(args != null ? args : new Object[0]);
     }
 
+    /**
+     * Executes a previously included script with no arguments.
+     *
+     * @param name the registered script name
+     * @return the script's exit code
+     * @throws ExpressionException if the name is {@code null}, no script context is active,
+     *                             or no script is registered under {@code name}
+     */
     @Expression(name = "execute_script", description = "Executes an included script with no arguments")
     public static int executeScript(@Nullable Object name) {
         return executeScriptImpl(name);
     }
 
+    /**
+     * Executes a previously included script with one positional argument.
+     *
+     * @param name the registered script name
+     * @param arg0 the first positional argument (accessible as {@code @0})
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 1 argument")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0) {
         return executeScriptImpl(name, arg0);
     }
 
+    /**
+     * Executes a previously included script with 2 positional arguments (accessible as {@code @0}..{@code @1}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 2 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1) {
         return executeScriptImpl(name, arg0, arg1);
     }
 
+    /**
+     * Executes a previously included script with 3 positional arguments (accessible as {@code @0}..{@code @2}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 3 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2) {
         return executeScriptImpl(name, arg0, arg1, arg2);
     }
 
+    /**
+     * Executes a previously included script with 4 positional arguments (accessible as {@code @0}..{@code @3}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 4 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3) {
         return executeScriptImpl(name, arg0, arg1, arg2, arg3);
     }
 
+    /**
+     * Executes a previously included script with 5 positional arguments (accessible as {@code @0}..{@code @4}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @param arg4 positional argument 4
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 5 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4) {
         return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4);
     }
 
+    /**
+     * Executes a previously included script with 6 positional arguments (accessible as {@code @0}..{@code @5}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @param arg4 positional argument 4
+     * @param arg5 positional argument 5
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 6 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5) {
         return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
+    /**
+     * Executes a previously included script with 7 positional arguments (accessible as {@code @0}..{@code @6}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @param arg4 positional argument 4
+     * @param arg5 positional argument 5
+     * @param arg6 positional argument 6
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 7 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
@@ -369,6 +479,20 @@ public class ScriptFunctions {
         return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
+    /**
+     * Executes a previously included script with 8 positional arguments (accessible as {@code @0}..{@code @7}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @param arg4 positional argument 4
+     * @param arg5 positional argument 5
+     * @param arg6 positional argument 6
+     * @param arg7 positional argument 7
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 8 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
@@ -376,6 +500,21 @@ public class ScriptFunctions {
         return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
+    /**
+     * Executes a previously included script with 9 positional arguments (accessible as {@code @0}..{@code @8}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @param arg4 positional argument 4
+     * @param arg5 positional argument 5
+     * @param arg6 positional argument 6
+     * @param arg7 positional argument 7
+     * @param arg8 positional argument 8
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 9 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
@@ -383,6 +522,22 @@ public class ScriptFunctions {
         return executeScriptImpl(name, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
 
+    /**
+     * Executes a previously included script with 10 positional arguments (accessible as {@code @0}..{@code @9}).
+     *
+     * @param name the registered script name
+     * @param arg0 positional argument 0
+     * @param arg1 positional argument 1
+     * @param arg2 positional argument 2
+     * @param arg3 positional argument 3
+     * @param arg4 positional argument 4
+     * @param arg5 positional argument 5
+     * @param arg6 positional argument 6
+     * @param arg7 positional argument 7
+     * @param arg8 positional argument 8
+     * @param arg9 positional argument 9
+     * @return the script's exit code
+     */
     @Expression(name = "execute_script", description = "Executes an included script with 10 arguments")
     public static int executeScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1,
             @Nullable Object arg2, @Nullable Object arg3, @Nullable Object arg4, @Nullable Object arg5,
@@ -392,6 +547,15 @@ public class ScriptFunctions {
 
     // ========== Script Variable Function ==========
 
+    /**
+     * Retrieves a variable from an included script after it has been executed.
+     *
+     * @param scriptName the registered script name
+     * @param varName    the variable name to read
+     * @return the variable value, or {@code null} if unset
+     * @throws ExpressionException if either argument is blank/null, no script context is active,
+     *                             or no script is registered under {@code scriptName}
+     */
     @Expression(name = "script_variable", description = "Retrieves a variable from an included script after execution")
     public static Object scriptVariable(@Nullable Object scriptName, @Nullable String varName) {
         log.debug("script_variable({}, {})", scriptName, varName);

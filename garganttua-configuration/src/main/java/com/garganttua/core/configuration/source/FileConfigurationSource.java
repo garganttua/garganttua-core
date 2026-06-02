@@ -9,14 +9,28 @@ import java.util.Optional;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationSource;
 
+/**
+ * {@link IConfigurationSource} that reads configuration from a filesystem file,
+ * deriving the format hint from the file extension.
+ */
 public class FileConfigurationSource implements IConfigurationSource {
 
     private final Path path;
 
+    /**
+     * Creates a source backed by the given file path.
+     *
+     * @param path the configuration file path
+     */
     public FileConfigurationSource(Path path) {
         this.path = path;
     }
 
+    /**
+     * Creates a source backed by the given file path.
+     *
+     * @param path the configuration file path
+     */
     public FileConfigurationSource(String path) {
         this.path = Path.of(path);
     }

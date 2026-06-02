@@ -14,6 +14,9 @@ import com.garganttua.core.injection.context.properties.PropertyProvider;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder that collects individual properties and assembles them into an {@link IPropertyProvider}.
+ */
 @Reflected
 public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
@@ -21,12 +24,27 @@ public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPro
 
     private List<IPropertyBuilder<?>> propertyBuilders = new ArrayList<>();
 
+    /**
+     * Creates a property provider builder linked to its parent injection context builder.
+     *
+     * @param link the parent injection context builder
+     */
     public PropertyProviderBuilder(IInjectionContextBuilder link) {
         super(link);
         log.trace("Entering PropertyProviderBuilder constructor with link={}", link);
         log.trace("Exiting PropertyProviderBuilder constructor");
     }
 
+    /**
+     * Registers a property with the provider.
+     *
+     * @param propertyType   the declared type of the property value
+     * @param key            the property key
+     * @param property       the property value
+     * @param <PropertyType> the property value type parameter
+     * @return this builder for chaining
+     * @throws DslException if the property cannot be registered
+     */
     @Override
     public <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType, String key,
                                                                 PropertyType property) throws DslException {

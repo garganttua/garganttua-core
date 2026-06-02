@@ -14,13 +14,23 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
+/**
+ * {@link IElementResolver} for elements annotated with {@link Null}, supplying a {@code null}
+ * value of the element's type.
+ */
 @Resolver(annotations={Null.class})
 public class NullElementResolver implements IElementResolver {
+    /** Creates a resolver for {@link Null}-annotated elements. */
     public NullElementResolver() {
     }
 
     private static final Logger log = Logger.getLogger(NullElementResolver.class);
 
+    /**
+     * Resolves the element to a supplier yielding {@code null} of the element's type.
+     *
+     * @return a resolved supplier producing {@code null}, carrying the element's nullability flag
+     */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {

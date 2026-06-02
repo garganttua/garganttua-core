@@ -24,12 +24,31 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 import jakarta.annotation.Nullable;
 
+/**
+ * {@link IExpressionNodeFactory} backing constructor-call expressions of the form
+ * {@code :(ClassName, args...)}.
+ *
+ * <p>The class node is evaluated at construction time to resolve the target {@link IClass}, and a
+ * matching {@link IConstructor} is selected (exact signature first, then assignable parameters).
+ * Parameters annotated with {@link jakarta.annotation.Nullable} are tracked so {@code null}
+ * arguments are accepted.
+ *
+ * @param <R> the constructed type
+ * @param <S> the supplier type produced for the node
+ */
 public class ConstructorCallExpressionNodeFactory<R, S extends ISupplier<R>> implements IExpressionNodeFactory<R, S> {
 
     private final IConstructor<R> constructor;
     private final IClass<R> targetIClass;
     private final List<Boolean> nullables;
 
+    /**
+     * Resolves the target class and a matching constructor for the given parameter types.
+     *
+     * @param classNode      expression node that evaluates to the target {@link Class}/{@link IClass}
+     * @param parameterTypes the constructor parameter types to match
+     * @throws ExpressionException if the class cannot be resolved or no matching constructor is found
+     */
     public ConstructorCallExpressionNodeFactory(IExpressionNode<?, ?> classNode, IClass<?>[] parameterTypes)
             throws ExpressionException {
         Objects.requireNonNull(classNode, "Class node cannot be null");

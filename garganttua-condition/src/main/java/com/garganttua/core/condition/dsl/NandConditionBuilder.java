@@ -11,12 +11,22 @@ import com.garganttua.core.condition.NandCondition;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builds a {@link NandCondition} that is satisfied unless every supplied
+ * sub-condition evaluates to {@code true} (the negation of AND).
+ */
 @Reflected
 public class NandConditionBuilder implements IConditionBuilder {
     private static final Logger log = Logger.getLogger(NandConditionBuilder.class);
 
     private IConditionBuilder[] conditions;
 
+    /**
+     * Creates a builder over the operand conditions to be NAND-combined.
+     *
+     * @param conditions the sub-condition builders; must be non-null and non-empty
+     * @throws ConditionException if no condition is provided
+     */
     public NandConditionBuilder(IConditionBuilder[] conditions) throws ConditionException{
         log.trace("Entering NandConditionBuilder constructor with {} conditions", conditions != null ? conditions.length : 0);
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
@@ -27,6 +37,13 @@ public class NandConditionBuilder implements IConditionBuilder {
         log.trace("Exiting NandConditionBuilder constructor");
     }
 
+    /**
+     * Builds the NAND condition, or {@code null} when this builder is contextual
+     * (deferred resolution).
+     *
+     * @return the composed {@link NandCondition}, or {@code null} if contextual
+     * @throws DslException if any sub-condition fails to build
+     */
     @Override
     public ICondition build() throws DslException {
         log.trace("Entering build() for NandConditionBuilder");
@@ -41,6 +58,9 @@ public class NandConditionBuilder implements IConditionBuilder {
         return condition;
     }
 
+    /**
+     * @return {@code true} if any sub-condition builder is contextual
+     */
     @Override
     public boolean isContextual() {
         return Arrays.stream(this.conditions).anyMatch(IConditionBuilder::isContextual);

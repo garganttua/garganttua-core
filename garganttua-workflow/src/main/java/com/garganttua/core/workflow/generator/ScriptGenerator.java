@@ -57,16 +57,50 @@ public class ScriptGenerator {
         }
     }
 
+    /**
+     * Generates script source in include mode (file-backed scripts) with default options.
+     *
+     * @param workflowName    the workflow name (emitted as a header comment)
+     * @param stages          the ordered workflow stages
+     * @param presetVariables the preset variables to seed at the top of the script
+     * @return the generated Garganttua Script source
+     * @throws WorkflowException if a stage or script cannot be rendered
+     */
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables)
             throws WorkflowException {
         return generate(workflowName, stages, presetVariables, false, ScriptGenerationOptions.defaults());
     }
 
+    /**
+     * Generates script source with default options and the given inline mode.
+     *
+     * @param workflowName    the workflow name (emitted as a header comment)
+     * @param stages          the ordered workflow stages
+     * @param presetVariables the preset variables to seed at the top of the script
+     * @param inlineAll       when {@code true}, embeds all script content inline instead of {@code include()}
+     * @return the generated Garganttua Script source
+     * @throws WorkflowException if a stage or script cannot be rendered
+     */
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables,
             boolean inlineAll) throws WorkflowException {
         return generate(workflowName, stages, presetVariables, inlineAll, ScriptGenerationOptions.defaults());
     }
 
+    /**
+     * Generates script source for the given stages.
+     *
+     * <p>Timing instrumentation requested via {@code options} is silently skipped when
+     * {@code garganttua-observability} is absent from the classpath, so the generated
+     * script compiles either way.
+     *
+     * @param workflowName    the workflow name (emitted as a header comment)
+     * @param stages          the ordered workflow stages
+     * @param presetVariables the preset variables to seed at the top of the script
+     * @param inlineAll       when {@code true}, embeds all script content inline instead of {@code include()}
+     * @param options         generation options (timing config); {@code null} falls back to disabled timing
+     * @return the generated Garganttua Script source
+     * @throws WorkflowException if a stage or script cannot be rendered
+     */
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables,
             boolean inlineAll, ScriptGenerationOptions options) throws WorkflowException {
         StringBuilder script = new StringBuilder();

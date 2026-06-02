@@ -15,6 +15,11 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class InjectionContextBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * {@return a fresh {@link InjectionContextBuilder}}
+     *
+     * @throws DslException if the builder cannot be created
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return InjectionContextBuilder.builder();

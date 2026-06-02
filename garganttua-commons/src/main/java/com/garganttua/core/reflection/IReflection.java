@@ -59,6 +59,7 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 * @param <T>         the object type
 	 * @param objectClass the class to introspect
 	 * @return a new object query instance
+	 * @throws ReflectionException if the query cannot be built for the class
 	 */
 	<T> IObjectQuery<T> query(IClass<T> objectClass) throws ReflectionException;
 
@@ -68,6 +69,7 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 * @param <T>    the object type
 	 * @param object the object to bind the query to
 	 * @return a new object query instance
+	 * @throws ReflectionException if the query cannot be built for the object
 	 */
 	<T> IObjectQuery<T> query(T object) throws ReflectionException;
 
@@ -78,6 +80,7 @@ public interface IReflection extends IReflectionProvider, IAnnotationScanner {
 	 * @param objectClass the class to introspect
 	 * @param object      the object to bind the query to
 	 * @return a new object query instance
+	 * @throws ReflectionException if the query cannot be built for the class
 	 */
 	<T> IObjectQuery<T> query(IClass<T> objectClass, T object) throws ReflectionException;
 

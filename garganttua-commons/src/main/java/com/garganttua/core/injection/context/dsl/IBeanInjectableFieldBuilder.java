@@ -72,6 +72,12 @@ public interface IBeanInjectableFieldBuilder<FieldType, BeanType> extends IField
     @Override
     Set<IClass<?>> dependencies();
 
+    /**
+     * Sets the supplier builder that provides the owner bean instance on which the field is injected.
+     *
+     * @param ownerSupplierBuilder the supplier builder for the owning bean instance
+     * @return this builder for method chaining
+     */
     public IBeanInjectableFieldBuilder<FieldType, BeanType> ownerSupplierBuilder(ISupplierBuilder<BeanType, ? extends ISupplier<BeanType>> ownerSupplierBuilder);
 
     /**

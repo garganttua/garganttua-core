@@ -18,11 +18,21 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * Base resolver that turns an injectable element into a bean {@link ISupplierBuilder},
+ * reading {@code @Named}, {@code @Provider} and qualifier annotations from the element.
+ * Concrete subclasses fix the {@link BeanStrategy} (singleton or prototype).
+ */
 public class BeanElementResolver {
     private static final Logger log = Logger.getLogger(BeanElementResolver.class);
 
     private Set<IClass<? extends Annotation>> qualifiers;
 
+    /**
+     * Builds a resolver aware of the given qualifier annotation types.
+     *
+     * @param qualifiers annotation types treated as bean qualifiers
+     */
     protected BeanElementResolver(Set<IClass<? extends Annotation>> qualifiers) {
         log.trace("Entering BeanElementResolver constructor with qualifiers: {}", qualifiers);
         this.qualifiers = Objects.requireNonNull(qualifiers, "Qualifiers cannot be null");
@@ -30,6 +40,15 @@ public class BeanElementResolver {
         log.trace("Exiting BeanElementResolver constructor");
     }
 
+    /**
+     * Builds a bean supplier builder for the element, applying the given strategy and the
+     * name/provider/qualifiers parsed from the element's annotations.
+     *
+     * @param elementType the injection target type
+     * @param parameter   the annotated element being injected
+     * @param strategy    the bean strategy to request, may be {@code null}
+     * @return a supplier builder for the resolved bean, always present
+     */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     protected Optional<ISupplierBuilder<?, ISupplier<?>>> resolve(IClass<?> elementType,
             IAnnotatedElement parameter,

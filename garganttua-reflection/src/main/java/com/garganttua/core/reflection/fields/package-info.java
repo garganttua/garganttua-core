@@ -8,7 +8,7 @@
  * type conversion, and null safety.
  * </p>
  *
- * <h2>Usage Example: Getting Field Values (from ObjectFieldGetterTest)</h2>
+ * <h2>Usage Example: Getting Field Values</h2>
  * <pre>{@code
  * class ObjectTest {
  *     private long l;
@@ -16,78 +16,34 @@
  *     private float f;
  * }
  *
- * // Get simple field value
- * List<Object> fieldInfos = new ArrayList<Object>();
- * fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+ * IClass<ObjectTest> owner = provider.getClass(ObjectTest.class);
  *
- * ObjectAddress address = new ObjectAddress("l");
- * ObjectFieldGetter getter = new ObjectFieldGetter(ObjectTest.class, fieldInfos, address);
+ * // Get a simple field value
+ * ResolvedField l = FieldResolver.fieldByFieldName(owner, provider, "l");
+ * Object value = new FieldAccessor<>(l).getValue(o).single();
  *
- * Object value = getter.getValue(o);
- * assertEquals(1L, value);
- *
- * // Get nested field value
- * List<Object> nestedInfos = new ArrayList<Object>();
- * nestedInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
- * nestedInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "f"));
- *
- * ObjectAddress nestedAddress = new ObjectAddress("inner.f");
- * ObjectFieldGetter nestedGetter = new ObjectFieldGetter(ObjectTest.class, nestedInfos, nestedAddress);
- *
- * Object nestedValue = nestedGetter.getValue(o);
- * assertEquals(1F, nestedValue);
+ * // Get a nested field value via a dotted address
+ * ResolvedField innerF = FieldResolver.fieldByAddress(owner, provider, new ObjectAddress("inner.f"));
+ * Object nested = new FieldAccessor<>(innerF).getValue(o).single();
  * }</pre>
  *
- * <h2>Usage Example: Setting Field Values (from ObjectFieldSetterTest)</h2>
+ * <h2>Usage Example: Setting Field Values</h2>
  * <pre>{@code
  * class ObjectTest {
- *     private long l;
  *     private String s;
  *     private ObjectTest inner;
- * }
- *
- * // Set simple field
- * List<Object> fieldInfos = new ArrayList<Object>();
- * fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "s"));
- *
- * ObjectAddress address = new ObjectAddress("s");
- * ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
- *
- * ObjectTest object = (ObjectTest) setter.setValue("test");
- * assertEquals("test", object.getS());
- *
- * // Set value in nested object
- * List<Object> innerInfos = new ArrayList<Object>();
- * innerInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "inner"));
- * innerInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
- *
- * ObjectAddress innerAddress = new ObjectAddress("inner.l");
- * ObjectFieldSetter innerSetter = new ObjectFieldSetter(ObjectTest.class, innerInfos, innerAddress);
- *
- * ObjectTest innerObject = (ObjectTest) innerSetter.setValue(1L);
- * assertEquals(1L, innerObject.getInner().getL());
- * }</pre>
- *
- * <h2>Usage Example: Working with Lists (from ObjectFieldSetterTest)</h2>
- * <pre>{@code
- * class ObjectTest {
- *     private List<ObjectTest> innersInList;
  *     private long l;
  * }
  *
- * // Set values in list - creates list elements automatically
- * List<Object> fieldInfos = new ArrayList<Object>();
- * fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
- * fieldInfos.add(ObjectReflectionHelper.getField(ObjectTest.class, "l"));
+ * IClass<ObjectTest> owner = provider.getClass(ObjectTest.class);
  *
- * ObjectAddress address = new ObjectAddress("innersInList.l");
- * ObjectFieldSetter setter = new ObjectFieldSetter(ObjectTest.class, fieldInfos, address);
+ * // Set a simple field
+ * ResolvedField s = FieldResolver.fieldByFieldName(owner, provider, "s");
+ * new FieldAccessor<String>(s).setValue(object, SingleFieldValue.of("test", provider.getClass(String.class)));
  *
- * ObjectTest object = (ObjectTest) setter.setValue(List.of(1L, 2L, 3L));
- * assertEquals(3, object.getInnersInList().size());
- * assertEquals(1L, object.getInnersInList().get(0).getL());
- * assertEquals(2L, object.getInnersInList().get(1).getL());
- * assertEquals(3L, object.getInnersInList().get(2).getL());
+ * // Set a value in a nested object via a dotted address
+ * ResolvedField innerL = FieldResolver.fieldByAddress(owner, provider, new ObjectAddress("inner.l"));
+ * new FieldAccessor<Long>(innerL).setValue(object, SingleFieldValue.of(1L, provider.getClass(Long.class)));
  * }</pre>
  *
  * <h2>Features</h2>

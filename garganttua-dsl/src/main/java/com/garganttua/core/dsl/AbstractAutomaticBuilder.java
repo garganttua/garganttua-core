@@ -5,6 +5,14 @@ import java.util.Objects;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IReflection;
 
+/**
+ * Base class for automatic builders that cache their built result and support
+ * optional auto-detection (including {@code @Scan}-driven package discovery) and
+ * rebuild-with-merge semantics.
+ *
+ * @param <Builder> the concrete builder type returned for method chaining
+ * @param <Built>   the type of object this builder produces
+ */
 public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebuildableBuilder<Builder, Built> {
     private static final Logger log = Logger.getLogger(AbstractAutomaticBuilder.class);
 
@@ -18,11 +26,23 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
         log.trace("Exiting AbstractAutomaticBuilder constructor, autoDetect set to false");
     }
 
+    /**
+     * Indicates whether auto-detection is enabled on this builder.
+     *
+     * @return {@code true} if auto-detection will run during {@link #build()}
+     */
     @Override
     public boolean isAutoDetected() {
         return this.autoDetect.booleanValue();
     }
 
+    /**
+     * Enables or disables auto-detection for this builder.
+     *
+     * @param b {@code true} to run auto-detection during {@link #build()}
+     * @return this builder for chaining
+     * @throws DslException if the flag cannot be set
+     */
     @SuppressWarnings("unchecked")
     @Override
     public Builder autoDetect(boolean b) throws DslException {
@@ -38,6 +58,15 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
         }
     }
 
+    /**
+     * Builds and caches the target object. Returns the cached instance on
+     * subsequent calls. When auto-detection is enabled, runs {@code @Scan}
+     * package discovery (for {@link IPackageableBuilder}s) followed by
+     * {@link #doAutoDetection()} before delegating to {@link #doBuild()}.
+     *
+     * @return the built (and cached) instance
+     * @throws DslException if auto-detection or building fails
+     */
     @Override
     public Built build() throws DslException {
         log.trace("Entering build method");
@@ -81,10 +110,29 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
         }
     }
 
+    /**
+     * Creates the target object. Invoked by {@link #build()} and
+     * {@link #rebuild()} after any auto-detection has run.
+     *
+     * @return the newly built instance
+     * @throws DslException if building fails
+     */
     protected abstract Built doBuild() throws DslException;
 
+    /**
+     * Performs builder-specific auto-detection. Invoked only when
+     * auto-detection is enabled.
+     *
+     * @throws DslException if auto-detection fails
+     */
     protected abstract void doAutoDetection() throws DslException;
 
+    /**
+     * Marks this builder as invalidated so the next {@link #rebuild()} discards
+     * the cached instance and rebuilds.
+     *
+     * @return this builder for chaining
+     */
     @SuppressWarnings("unchecked")
     @Override
     public Builder invalidate() {
@@ -95,11 +143,23 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
         return (Builder) this;
     }
 
+    /**
+     * Indicates whether this builder has been invalidated since the last build.
+     *
+     * @return {@code true} if {@link #invalidate()} was called
+     */
     @Override
     public boolean isInvalidated() {
         return this.invalidated;
     }
 
+    /**
+     * Clears the cache, re-runs auto-detection, rebuilds, and merges the new
+     * instance with the previously built one via {@link #doMerge(Object, Object)}.
+     *
+     * @return the rebuilt (and merged) instance
+     * @throws DslException if auto-detection or building fails
+     */
     @Override
     public Built rebuild() throws DslException {
         log.trace("Entering rebuild()");
@@ -186,6 +246,13 @@ public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebui
         return new String[0];
     }
 
+    /**
+     * Returns the {@link IReflection} instance used for {@code @Scan} package
+     * discovery. Overridden by packageable builders; the default returns
+     * {@code null} to disable scanning.
+     *
+     * @return the reflection facade, or {@code null} if none is available
+     */
     protected IReflection getReflection() {
         return null;
     }

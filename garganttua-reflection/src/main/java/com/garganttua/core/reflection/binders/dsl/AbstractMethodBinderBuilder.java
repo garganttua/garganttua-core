@@ -29,6 +29,20 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * Base fluent builder for {@link IMethodBinder}s. The target method is resolved (by {@link IMethod},
+ * by {@link ObjectAddress}, or by name and signature) against the supplier's supplied class;
+ * parameters are then bound by index, name, or next free slot. At {@link #doBuild()} the parameters
+ * are resolved into suppliers and a {@link MethodBinder} or {@link ContextualMethodBinder} is
+ * produced depending on whether the target or any parameter is contextual. Requires an
+ * {@code IReflectionBuilder} dependency, falling back to {@link IClass#getReflection()} when none
+ * is provided.
+ *
+ * @param <ExecutionReturn> the method return type
+ * @param <Builder>         the concrete builder self-type
+ * @param <Link>            the parent builder type returned by {@code up()}
+ * @param <Built>           the concrete binder type produced
+ */
 public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
         extends AbstractAutomaticLinkedDependentBuilder<Builder, Link, Built>
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
@@ -36,6 +50,11 @@ public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder exten
 
     private ISupplierBuilder<?, ?> supplier;
 
+    /**
+     * Replaces the supplier builder providing the object the method is invoked on.
+     *
+     * @param supplier the new object supplier builder
+     */
     protected void setSupplier(ISupplierBuilder<?, ?> supplier) {
         this.supplier = supplier;
     }

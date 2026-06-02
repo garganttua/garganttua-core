@@ -4,6 +4,9 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * JSON configuration format, always available via the core Jackson databind dependency.
+ */
 public class JsonConfigurationFormat extends AbstractConfigurationFormat {
 
     @Override

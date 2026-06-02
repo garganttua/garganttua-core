@@ -11,12 +11,22 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import com.garganttua.core.reflection.annotations.Reflected;
+
+/**
+ * Logical NOR condition: the negation of {@link OrCondition}, i.e. {@code true}
+ * only when none of the wrapped conditions evaluate to {@code true}.
+ */
 @Reflected(queryAllDeclaredMethods = true)
 public class NorCondition implements ICondition {
     private static final Logger log = Logger.getLogger(NorCondition.class);
 
     private Set<ICondition> conditions;
 
+    /**
+     * Creates a NOR condition over the given conditions.
+     *
+     * @param conditions the conditions to combine; must not be {@code null}
+     */
     public NorCondition(Set<ICondition> conditions) {
         log.trace("Entering NorCondition constructor with {} conditions", conditions != null ? conditions.size() : 0);
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
@@ -41,6 +51,12 @@ public class NorCondition implements ICondition {
         };
     }
 
+    /**
+     * Logical NOR of multiple conditions: the negation of their OR.
+     *
+     * @param conditions the conditions to combine
+     * @return {@code true} only when no condition evaluates to {@code true}
+     */
     @Expression(name = "nor", description = "Logical NOR of multiple conditions")
     public static boolean nor(Set<ICondition> conditions) {
         boolean orResult = new OrCondition(conditions).fullEvaluate();

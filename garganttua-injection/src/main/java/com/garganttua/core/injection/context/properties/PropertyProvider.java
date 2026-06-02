@@ -17,11 +17,20 @@ import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.utils.CopyException;
 
+/**
+ * Mutable, lifecycle-aware {@link IPropertyProvider} backed by a {@link ConcurrentHashMap},
+ * with on-read coercion of stored values to the requested scalar type.
+ */
 public class PropertyProvider extends AbstractLifecycle implements IPropertyProvider {
     private static final Logger log = Logger.getLogger(PropertyProvider.class);
 
     private Map<String, Object> properties = new ConcurrentHashMap<>();
 
+    /**
+     * Creates a property provider seeded with the given properties.
+     *
+     * @param properties the initial properties; must not be {@code null}
+     */
     public PropertyProvider(Map<String, Object> properties) {
         log.trace("Entering PropertyProvider constructor with properties: {}", properties);
         Objects.requireNonNull(properties, "Property map cannot be null");
@@ -30,6 +39,16 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
         log.trace("Exiting PropertyProvider constructor");
     }
 
+    /**
+     * Retrieves a property by key, coercing it to the requested type when not already an instance.
+     * Supported coercions: {@code String}, {@code Integer}, {@code Long}, {@code Double}, {@code Boolean}.
+     *
+     * @param key        the property key
+     * @param type       the requested value type
+     * @param <T>        the requested value type parameter
+     * @return the value, or {@link Optional#empty()} if absent or not coercible
+     * @throws DiException if coercion of a present value fails
+     */
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
@@ -67,6 +86,13 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
         return Optional.of((T) value);
     }
 
+    /**
+     * Stores or replaces a property value.
+     *
+     * @param key   the property key; must not be {@code null} or blank
+     * @param value the property value
+     * @throws DiException if this provider is immutable or the key is null/blank
+     */
     @Override
     public void setProperty(String key, Object value) throws DiException {
         log.trace("Entering setProperty with key: '{}' and value: {}", key, value);
@@ -85,18 +111,21 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
         log.trace("Exiting setProperty for key: '{}'", key);
     }
 
+    /** {@return {@code true}; this provider always permits mutation} */
     @Override
     public boolean isMutable() {
         log.trace("Checking if PropertyProvider is mutable");
         return true;
     }
 
+    /** {@return an unmodifiable view of all property keys} */
     @Override
     public Set<String> keys() {
         log.trace("Retrieving all property keys");
         return Collections.unmodifiableSet(properties.keySet());
     }
 
+    /** {@return the ambient {@link IReflection} facade} */
     @Override
     public IReflection reflection() {
         return IClass.getReflection();
@@ -127,6 +156,12 @@ public class PropertyProvider extends AbstractLifecycle implements IPropertyProv
         return this;
     }
 
+    /**
+     * Creates an independent copy of this provider with the same properties.
+     *
+     * @return the copied provider
+     * @throws CopyException if the copy cannot be created
+     */
     @Override
     public IPropertyProvider copy() throws CopyException {
         log.trace("Creating a copy of PropertyProvider");

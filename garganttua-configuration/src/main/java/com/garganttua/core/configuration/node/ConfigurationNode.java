@@ -11,15 +11,30 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.garganttua.core.configuration.IConfigurationNode;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Jackson-backed {@link IConfigurationNode} wrapping a {@link JsonNode} and tracking
+ * its dot/bracket path within the parsed configuration tree.
+ */
 public class ConfigurationNode implements IConfigurationNode {
 
     private final JsonNode jsonNode;
     private final String path;
 
+    /**
+     * Creates a root node with an empty path.
+     *
+     * @param jsonNode the underlying Jackson node
+     */
     public ConfigurationNode(JsonNode jsonNode) {
         this(jsonNode, "");
     }
 
+    /**
+     * Creates a node at the given path within the configuration tree.
+     *
+     * @param jsonNode the underlying Jackson node
+     * @param path     the dot/bracket path of this node from the root
+     */
     public ConfigurationNode(JsonNode jsonNode, String path) {
         this.jsonNode = jsonNode;
         this.path = path;
@@ -138,6 +153,11 @@ public class ConfigurationNode implements IConfigurationNode {
         return type() == NodeType.NULL;
     }
 
+    /**
+     * Returns the underlying Jackson node backing this configuration node.
+     *
+     * @return the wrapped {@link JsonNode}, may be {@code null}
+     */
     public JsonNode getJsonNode() {
         return this.jsonNode;
     }

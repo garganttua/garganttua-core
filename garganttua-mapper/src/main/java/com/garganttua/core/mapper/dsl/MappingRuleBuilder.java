@@ -6,6 +6,12 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Fluent builder for a single {@link MappingRule}, created from a parent
+ * {@link MappingConfigurationBuilder} via {@code field(...)}. Configures the
+ * destination field address and optional from/to-source converter methods, then
+ * returns to the parent via {@link #up()}.
+ */
 @Reflected
 public class MappingRuleBuilder implements IMappingRuleBuilder {
 

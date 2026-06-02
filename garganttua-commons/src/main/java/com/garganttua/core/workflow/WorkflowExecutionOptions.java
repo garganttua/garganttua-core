@@ -41,14 +41,23 @@ public record WorkflowExecutionOptions(
     }
 
     /**
-     * Returns options with no filtering (all stages executed).
+     * Returns shared options with no filtering (all stages executed).
+     *
+     * @return the singleton no-op options instance
      */
     public static WorkflowExecutionOptions none() {
         return NONE;
     }
 
     /**
-     * Returns true if any filtering is active.
+     * Indicates whether any stage filtering is active.
+     *
+     * <p>
+     * Note that {@link #executionId()} is intentionally excluded: pinning an id
+     * must not be treated as filtering so the precompiled cache path stays active.
+     * </p>
+     *
+     * @return {@code true} if a start, stop, or skip filter is set
      */
     public boolean hasFiltering() {
         return startFrom.isPresent() || stopAfter.isPresent() || !skipStages.isEmpty();
@@ -56,6 +65,8 @@ public record WorkflowExecutionOptions(
 
     /**
      * Creates a new builder for execution options.
+     *
+     * @return a fresh {@link Builder}
      */
     public static Builder builder() {
         return new Builder();
@@ -116,7 +127,9 @@ public record WorkflowExecutionOptions(
         }
 
         /**
-         * Builds the execution options.
+         * Builds the execution options from the configured values.
+         *
+         * @return a new immutable {@link WorkflowExecutionOptions}
          */
         public WorkflowExecutionOptions build() {
             return new WorkflowExecutionOptions(

@@ -78,6 +78,7 @@ public class WorkflowsBuilder
         log.trace("WorkflowsBuilder created");
     }
 
+    /** {@return a fresh {@link WorkflowsBuilder} with no workflows declared} */
     public static IWorkflowsBuilder builder() {
         return new WorkflowsBuilder();
     }

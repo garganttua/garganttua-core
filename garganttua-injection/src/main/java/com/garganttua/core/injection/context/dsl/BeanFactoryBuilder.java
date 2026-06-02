@@ -39,6 +39,14 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.PostConstruct;
 
+/**
+ * Fluent builder that assembles a {@link BeanFactory} for a bean type. Supports explicit
+ * configuration (strategy, name, qualifiers, constructor, fields, post-construct methods)
+ * and auto-detection of {@code @Inject} constructors/methods and injectable fields via an
+ * {@link IInjectableElementResolver}.
+ *
+ * @param <Bean> the bean type produced by the built factory
+ */
 @Reflected
 public class BeanFactoryBuilder<Bean>
         extends AbstractAutomaticDependentBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
@@ -69,6 +77,10 @@ public class BeanFactoryBuilder<Bean>
     private IInjectableElementResolverBuilder resolverBuilder;
     private IObservableBuilder<?, ?> reflectionBuilderRef;
 
+    /**
+     * Builds a factory builder for the given bean type, declaring the resolver
+     * (auto-detect) and reflection (build) dependencies.
+     */
     public BeanFactoryBuilder(IClass<Bean> beanClass) {
         super(Set.of(
                 new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build(),
@@ -274,6 +286,13 @@ public class BeanFactoryBuilder<Bean>
         return this;
     }
 
+    /**
+     * Removes duplicate elements from the list in place, keeping the first occurrence of
+     * each distinct {@link Object#hashCode()} (a {@code null} element counts as hash 0).
+     *
+     * @param list the list to deduplicate, mutated in place
+     * @param <T>  the element type
+     */
     public static <T> void removeDuplicatesByHashCode(List<T> list) {
         Set<Integer> seen = new HashSet<>();
         list.removeIf(item -> !seen.add(item != null ? item.hashCode() : 0));

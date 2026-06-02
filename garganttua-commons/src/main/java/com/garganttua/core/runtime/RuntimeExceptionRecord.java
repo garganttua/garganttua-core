@@ -13,7 +13,7 @@ import com.garganttua.core.reflection.IClass;
  *
  * <h2>Key Information Captured</h2>
  * <ul>
- *   <li><b>Location</b> - Runtime name, stage name, and step name where the exception occurred</li>
+ *   <li><b>Location</b> - Runtime name and step name where the exception occurred</li>
  *   <li><b>Exception Details</b> - The exception type, instance, and message</li>
  *   <li><b>Error Code</b> - Custom integer code associated with the exception</li>
  *   <li><b>Abort Status</b> - Whether the exception caused execution to terminate</li>
@@ -32,7 +32,6 @@ import com.garganttua.core.reflection.IClass;
  * // Create an exception record
  * RuntimeExceptionRecord record = new RuntimeExceptionRecord(
  *     "orderProcessing",           // runtime name
- *     "validation",                // stage name
  *     "validateAmount",            // step name
  *     IllegalArgumentException.class, // exception type
  *     new IllegalArgumentException("Amount must be positive"),
@@ -43,7 +42,7 @@ import com.garganttua.core.reflection.IClass;
  *
  * // Pattern matching - find any IllegalArgumentException
  * RuntimeExceptionRecord pattern = new RuntimeExceptionRecord(
- *     null, null, null,
+ *     null, null,
  *     IllegalArgumentException.class,
  *     null, null, null, null
  * );
@@ -51,7 +50,7 @@ import com.garganttua.core.reflection.IClass;
  *
  * // Find exception from specific step
  * RuntimeExceptionRecord stepPattern = new RuntimeExceptionRecord(
- *     null, "validation", "validateAmount",
+ *     null, "validateAmount",
  *     null, null, null, null, null
  * );
  * matches = record.matches(stepPattern); // true
@@ -91,7 +90,6 @@ public record RuntimeExceptionRecord(String runtimeName, String stepName, IClass
      *   <li><b>null pattern</b> - Returns false</li>
      *   <li><b>null field in pattern</b> - Treated as wildcard, always matches</li>
      *   <li><b>runtimeName</b> - Must equal exactly</li>
-     *   <li><b>stageName</b> - Must equal exactly</li>
      *   <li><b>stepName</b> - Must equal exactly</li>
      *   <li><b>exceptionType</b> - Must be assignable (supports polymorphism)</li>
      *   <li><b>code</b> - Must equal exactly</li>
@@ -154,7 +152,8 @@ public record RuntimeExceptionRecord(String runtimeName, String stepName, IClass
      * This is a convenience method equivalent to calling {@code exception().getMessage()}.
      * </p>
      *
-     * @return the exception message, or null if the exception is null or has no message
+     * @return the exception message, or null if the exception has no message
+     * @throws NullPointerException if no exception instance is present in this record
      */
     public String exceptionMessage() {
         return this.exception.getMessage();

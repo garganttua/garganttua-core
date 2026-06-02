@@ -23,6 +23,11 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Default {@link IConfigurationBuilder} implementation that collects configuration sources
+ * and formats, then produces an {@link IConfigurationPopulator}. Resolves an {@link IReflection}
+ * dependency and registers the available built-in formats when none are supplied explicitly.
+ */
 @Reflected
 public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<IConfigurationBuilder, IConfigurationPopulator>
         implements IConfigurationBuilder {
@@ -34,6 +39,9 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
     private boolean strict = false;
     private IReflection reflection;
 
+    /**
+     * Creates a builder declaring its required {@link IReflectionBuilder} dependency.
+     */
     public ConfigurationBuilder() {
         super(Set.of(
                 DependencySpec.requireAutoDetect(IClass.getClass(IReflectionBuilder.class)),
@@ -60,6 +68,9 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
         // No post-build behavior needed
     }
 
+    /**
+     * @return a new configuration builder instance
+     */
     public static IConfigurationBuilder builder() {
         return new ConfigurationBuilder();
     }
@@ -128,6 +139,9 @@ public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<ICon
         }
     }
 
+    /**
+     * @return an immutable snapshot of the source builders registered via {@link #source()}
+     */
     public List<ConfigurationSourceBuilder> getSourceBuilders() {
         return List.copyOf(this.sourceBuilders);
     }

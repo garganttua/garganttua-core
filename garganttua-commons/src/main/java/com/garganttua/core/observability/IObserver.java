@@ -12,5 +12,10 @@ package com.garganttua.core.observability;
 @FunctionalInterface
 public interface IObserver<E extends ObservableEvent> {
 
+	/**
+	 * React to a single emitted event.
+	 *
+	 * @param event the event delivered by the observed source
+	 */
 	void onEvent(E event);
 }

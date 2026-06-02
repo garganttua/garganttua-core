@@ -3,6 +3,12 @@ package com.garganttua.core.reflection;
 import java.lang.reflect.AccessFlag;
 import java.util.Set;
 
+/**
+ * Mirror of {@link java.lang.reflect.Member}: the common contract for fields,
+ * methods, and constructors exposing their declaring class, name, and modifiers.
+ *
+ * @since 2.0.0-ALPHA01
+ */
 public interface IMember {
 
     /**

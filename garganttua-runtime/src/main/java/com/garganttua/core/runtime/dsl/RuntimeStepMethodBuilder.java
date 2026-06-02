@@ -33,6 +33,18 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.Nullable;
 
+/**
+ * Fluent builder for a step's {@code @Operation} method.
+ *
+ * <p>Configures the success code, output flag, result variable, execution
+ * condition, {@code @Catch} clauses, nullability and abort-on-uncaught-exception
+ * behaviour, and binds the operation method via the injection context.</p>
+ *
+ * @param <ExecutionReturn> the operation method return type
+ * @param <StepObjectType>  the type of the object holding the step methods
+ * @param <InputType>       the runtime input type
+ * @param <OutputType>      the runtime output type
+ */
 @Reflected
 public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
@@ -51,6 +63,15 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
     private Boolean abortOnUncatchedException = false;
     private Boolean nullable = false;
 
+    /**
+     * Creates an operation method builder.
+     *
+     * @param runtimeName the owning runtime name
+     * @param stepName    the owning step name
+     * @param up          the parent step builder
+     * @param supplier    supplier of the object whose operation method is invoked
+     * @throws DslException if the underlying binder builder cannot be initialized
+     */
     protected RuntimeStepMethodBuilder(String runtimeName,
             String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
@@ -66,6 +87,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         log.debug("RuntimeStepMethodBuilder constructed successfully for step '{}'", stepName);
     }
 
+    /**
+     * Sets the condition that gates whether this step's operation executes.
+     *
+     * @param conditionBuilder the condition builder
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> condition(
             IConditionBuilder conditionBuilder) {
@@ -75,6 +102,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         return this;
     }
 
+    /**
+     * Stores the operation's return value in the named runtime variable.
+     *
+     * @param variableName the variable name
+     * @return this builder for chaining
+     */
     @Override
     public RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(
             String variableName) {
@@ -100,6 +133,13 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         return katch;
     }
 
+    /**
+     * Declares a {@code @Catch} clause for an exception the operation throws.
+     *
+     * @param exception the exception type to catch
+     * @return the catch builder for further configuration
+     * @throws DslException if the exception is not declared as thrown by the operation method
+     */
     @Override
     public IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> katch(
             IClass<? extends Throwable> exception) throws DslException {
@@ -117,6 +157,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         return katch;
     }
 
+    /**
+     * Marks whether the operation's return value is the runtime output.
+     *
+     * @param output {@code true} to treat the return value as the runtime output
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         log.trace("Entering output method with value={}", output);
@@ -125,6 +171,13 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         return this;
     }
 
+    /**
+     * Tests whether the operation method declares the given exception as thrown
+     * (directly or via a supertype).
+     *
+     * @param exception the exception type to check
+     * @return {@code true} if the operation method can throw the exception
+     */
     @Override
     public boolean isThrown(IClass<? extends Throwable> exception) {
         log.trace("Checking if exception {} is thrown", exception);
@@ -135,6 +188,13 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         return thrown;
     }
 
+    /**
+     * Builds the operation method binder from the configured method, catches,
+     * condition and flags.
+     *
+     * @return the built {@link IRuntimeStepMethodBinder}
+     * @throws DslException if the underlying method binding or condition cannot be built
+     */
     @Override
     public IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> build()
             throws DslException {
@@ -154,6 +214,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
                 binder.getExecutableReference());
     }
 
+    /**
+     * Sets the exit code reported on successful execution.
+     *
+     * @param code the success exit code
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> code(Integer code) {
         log.trace("Entering code method with value={}", code);
@@ -262,6 +328,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         }
     }
 
+    /**
+     * Controls whether an uncaught exception aborts the whole runtime.
+     *
+     * @param abort {@code true} to abort the runtime on an uncaught exception
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> abortOnUncatchedException(
             boolean abort) {
@@ -271,6 +343,12 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         return this;
     }
 
+    /**
+     * Marks whether the operation may return {@code null}.
+     *
+     * @param nullable {@code true} if a {@code null} return is permitted
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
             boolean nullable) {

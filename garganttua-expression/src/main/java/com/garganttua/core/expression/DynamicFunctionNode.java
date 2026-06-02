@@ -12,12 +12,25 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Expression node that resolves a function by name from the runtime
+ * {@link IExpressionVariableResolver} at evaluation time, rather than from a registered factory.
+ *
+ * <p>Used as a fallback for user-defined script functions when dynamic function resolution is
+ * enabled. The resolved variable must hold (or supply) an {@link IScriptFunction}.
+ */
 public class DynamicFunctionNode implements IExpressionNode<Object, ISupplier<Object>> {
     private static final Logger log = Logger.getLogger(DynamicFunctionNode.class);
 
     private final String functionName;
     private final List<IExpressionNode<?, ? extends ISupplier<?>>> argumentNodes;
 
+    /**
+     * Creates a dynamic function node.
+     *
+     * @param functionName the name of the function to resolve at evaluation time
+     * @param argumentNodes the argument expression nodes, evaluated when the function is invoked
+     */
     public DynamicFunctionNode(String functionName,
                                 List<IExpressionNode<?, ? extends ISupplier<?>>> argumentNodes) {
         this.functionName = functionName;

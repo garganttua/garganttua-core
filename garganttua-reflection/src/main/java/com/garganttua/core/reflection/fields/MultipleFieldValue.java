@@ -43,14 +43,39 @@ public final class MultipleFieldValue<F> implements IFieldValue<F> {
 		this.type = Objects.requireNonNull(type, "Type cannot be null");
 	}
 
+	/**
+	 * Creates a multiple field value from raw values.
+	 *
+	 * @param <F> the field value type
+	 * @param values the raw values to wrap
+	 * @param type the field type
+	 * @return a new multiple field value
+	 */
 	public static <F> MultipleFieldValue<F> of(List<F> values, IClass<F> type) {
 		return new MultipleFieldValue<>(values, type);
 	}
 
+	/**
+	 * Creates a multiple field value from already-wrapped {@link SingleFieldValue} entries.
+	 *
+	 * @param <F> the field value type
+	 * @param type the field type
+	 * @param values the wrapped values
+	 * @return a new multiple field value
+	 */
 	public static <F> MultipleFieldValue<F> ofValues(IClass<F> type, List<SingleFieldValue<F>> values) {
 		return new MultipleFieldValue<>(type, values);
 	}
 
+	/**
+	 * Flattens a list of {@link IFieldValue}s (single, multiple, or exceptional)
+	 * into a single multiple field value.
+	 *
+	 * @param <F> the field value type
+	 * @param fieldValues the field values to flatten
+	 * @param type the field type
+	 * @return a new multiple field value aggregating every element
+	 */
 	@SuppressWarnings("unchecked")
 	public static <F> MultipleFieldValue<F> ofFieldValues(List<IFieldValue<F>> fieldValues, IClass<?> type) {
 		Objects.requireNonNull(fieldValues, "Field values list cannot be null");
@@ -123,6 +148,11 @@ public final class MultipleFieldValue<F> implements IFieldValue<F> {
 				.orElse(null);
 	}
 
+	/**
+	 * Returns the wrapped single values, each preserving its own value or exception.
+	 *
+	 * @return the immutable list of underlying single field values
+	 */
 	public List<SingleFieldValue<F>> getValues() {
 		return values;
 	}

@@ -182,7 +182,7 @@ public record MutexName(IClass<? extends IMutex> type, String name) {
     /**
      * Returns the qualified mutex name in the format {@code TypeClassName::name}.
      *
-     * @return the qualified mutex name string using the simple class name
+     * @return the qualified mutex name string using the canonical class name
      */
     @Override
     public String toString() {

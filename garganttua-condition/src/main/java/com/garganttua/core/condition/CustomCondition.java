@@ -9,12 +9,24 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Condition that tests the value produced by a supplier against an arbitrary
+ * {@link Predicate}.
+ *
+ * @param <T> the supplied value type
+ */
 public class CustomCondition<T> implements ICondition  {
     private static final Logger log = Logger.getLogger(CustomCondition.class);
 
     private ISupplier<T> supplier;
     private Predicate<T> predicate;
 
+    /**
+     * Creates a custom condition.
+     *
+     * @param supplier  supplier of the value to test; must not be {@code null}
+     * @param predicate predicate applied to the supplied value; must not be {@code null}
+     */
     public CustomCondition(ISupplier<T> supplier,
             Predicate<T> predicate) {
         log.trace("Entering CustomCondition constructor");

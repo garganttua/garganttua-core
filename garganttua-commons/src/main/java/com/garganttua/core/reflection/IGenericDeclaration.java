@@ -2,6 +2,12 @@ package com.garganttua.core.reflection;
 
 import java.lang.reflect.GenericSignatureFormatError;
 
+/**
+ * Mirror of {@link java.lang.reflect.GenericDeclaration}: an element (class,
+ * method, or constructor) that may declare type variables.
+ *
+ * @since 2.0.0-ALPHA01
+ */
 public interface IGenericDeclaration extends IAnnotatedElement {
     /**
      * Returns an array of {@code TypeVariable} objects that

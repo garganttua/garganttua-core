@@ -24,6 +24,13 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
+/**
+ * {@link IBeanFactory} implementation that instantiates a single bean definition,
+ * applying constructor binding, field injection and post-construct callbacks, and
+ * honouring the singleton/prototype strategy declared by the {@link BeanDefinition}.
+ *
+ * @param <Bean> the type produced by this factory
+ */
 public class BeanFactory<Bean> implements IBeanFactory<Bean> {
     private static final Logger log = Logger.getLogger(BeanFactory.class);
 
@@ -32,14 +39,28 @@ public class BeanFactory<Bean> implements IBeanFactory<Bean> {
 	private final Object beanMutex = new Object();
 	private boolean singletonBeanInitialized = false;
 
+	/**
+	 * Builds a factory that lazily instantiates the bean from the given definition.
+	 */
 	public BeanFactory(BeanDefinition<Bean> definition) {
 		this(definition, Optional.empty());
 	}
 
+	/**
+	 * Builds a factory, optionally seeded with a pre-built bean instance.
+	 *
+	 * @param bean an existing instance to wrap, or empty to instantiate lazily
+	 */
 	public BeanFactory(BeanDefinition<Bean> definition, Optional<Bean> bean) {
 		this(definition, bean.orElse(null));
 	}
 
+	/**
+	 * Builds a factory; when {@code bean} is non-null it is wrapped as a forced
+	 * singleton, otherwise the bean is instantiated lazily on first {@link #supply()}.
+	 *
+	 * @param bean an existing instance to wrap, or {@code null} to instantiate lazily
+	 */
 	public BeanFactory(BeanDefinition<Bean> definition, Bean bean) {
 		log.trace("Entering BeanFactory constructor with definition: {}", definition);
 		this.definition = Objects.requireNonNull(definition, "Bean definition cannot be null");

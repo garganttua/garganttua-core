@@ -46,6 +46,18 @@ import com.garganttua.core.runtime.resolver.VariableElementResolver;
 import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Top-level builder that assembles the map of named {@link IRuntime} instances for
+ * the application.
+ *
+ * <p>Collects runtime definitions from three sources — manual ({@link #runtime}),
+ * injection-context auto-detection ({@code @RuntimeDefinition} beans) and
+ * reflection scanning — wires the runtime parameter resolvers into the injection
+ * context, builds all runtimes and registers them back as beans wrapped in a
+ * {@link RuntimesRegistry}.</p>
+ *
+ * <p>Discoverable as a bootstrap builder via {@code @Bootstrap}.</p>
+ */
 @Bootstrap
 @Reflected
 public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>
@@ -82,6 +94,12 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         log.debug("RuntimesBuilder initialized with phase-aware dependencies");
     }
 
+    /**
+     * No-op build observer registration; this builder does not emit build events.
+     *
+     * @param observer the observer (ignored)
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimesBuilder observer(com.garganttua.core.dsl.IBuilderObserver<IRuntimesBuilder, Map<String, IRuntime<?, ?>>> observer) {
         // IObservableBuilder contract — build-time callback. Not used by
@@ -90,6 +108,12 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         return this;
     }
 
+    /**
+     * Adds a package to scan for {@code @RuntimeDefinition} classes.
+     *
+     * @param packageName the package name to add
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimesBuilder withPackage(String packageName) {
         log.debug("Adding package: {}", packageName);
@@ -97,6 +121,12 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         return this;
     }
 
+    /**
+     * Adds several packages to scan for {@code @RuntimeDefinition} classes.
+     *
+     * @param packageNames the package names to add
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimesBuilder withPackages(String[] packageNames) {
         log.debug("Adding {} packages", packageNames.length);
@@ -107,6 +137,15 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         return this;
     }
 
+    /**
+     * Returns a manual runtime builder for the given name, creating it on first
+     * use and reusing it on subsequent calls.
+     *
+     * @param name       the unique runtime name
+     * @param inputType  the runtime input type
+     * @param outputType the runtime output type
+     * @return the runtime builder for further configuration
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <InputType, OutputType> IRuntimeBuilder<InputType, OutputType> runtime(String name,
@@ -257,6 +296,11 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         log.debug("Auto-detected runtime {} registered", runtimeName);
     }
 
+    /**
+     * Creates a new, empty {@link RuntimesBuilder}.
+     *
+     * @return a fresh runtimes builder
+     */
     public static IRuntimesBuilder builder() {
         log.trace("Entering builder() with no parameters");
         IRuntimesBuilder result = new RuntimesBuilder();
@@ -264,6 +308,15 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         return result;
     }
 
+    /**
+     * Receives a build dependency, capturing the injection context (and wiring its
+     * runtime resolvers) and reflection builder when present, then delegates to the
+     * superclass.
+     *
+     * @param dependency the dependency builder being provided
+     * @return this builder for chaining
+     * @throws DslException if the superclass rejects the dependency
+     */
     @Override
     public IRuntimesBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
         if (dependency instanceof IInjectionContextBuilder injectionContextBuilder) {
@@ -300,6 +353,11 @@ public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimes
         return this;
     }
 
+    /**
+     * Returns the packages registered for {@code @RuntimeDefinition} scanning.
+     *
+     * @return the configured package names
+     */
     @Override
     public String[] getPackages() {
         return this.packages.toArray(new String[0]);

@@ -22,10 +22,19 @@ public final class EventHolderSupplierBuilder
 
     private final EventHolderSupplier holder;
 
+    /**
+     * Wraps an existing holder so the same mutable reference is shared between
+     * the user's compiled condition and the framework's delivery loop.
+     *
+     * @param holder the holder instance to always return from {@link #build()}
+     */
     public EventHolderSupplierBuilder(EventHolderSupplier holder) {
         this.holder = holder;
     }
 
+    /**
+     * Creates a builder backed by a fresh {@link EventHolderSupplier}.
+     */
     public EventHolderSupplierBuilder() {
         this(new EventHolderSupplier());
     }

@@ -18,6 +18,13 @@ import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
+/**
+ * Method-binder builder that, during auto-detection, resolves the bound method's
+ * parameters through an {@link IInjectableElementResolver}, falling back to a
+ * {@link NullSupplierBuilder} for any parameter that cannot be resolved.
+ *
+ * @param <ExecutionReturn> the return type of the bound method
+ */
 public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
         extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
     private static final Logger log = Logger.getLogger(AbstractMethodArgInjectBinderBuilder.class);
@@ -25,11 +32,19 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
     private static final Set<DependencySpec> INJECT_DEPS = Set.of(
             new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build());
 
+    /**
+     * Builds a non-collection method binder for the given parent link and target supplier.
+     */
     protected AbstractMethodArgInjectBinderBuilder(Link up,
             ISupplierBuilder<?, ?> supplier) throws DslException {
         this(up, supplier, false);
     }
 
+    /**
+     * Builds a method binder for the given parent link and target supplier.
+     *
+     * @param collection whether the bound method's result is treated as a collection
+     */
     protected AbstractMethodArgInjectBinderBuilder(Link up,
             ISupplierBuilder<?, ?> supplier, boolean collection) throws DslException {
         super(up, supplier, collection, INJECT_DEPS);
@@ -82,6 +97,11 @@ public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Buil
         });
     }
 
+    /**
+     * Supplies a build-time dependency (e.g. the resolver builder) to this builder.
+     *
+     * @return this builder for chaining
+     */
     @SuppressWarnings("unchecked")
     @Override
     public Builder provide(IObservableBuilder<?, ?> dependency) {

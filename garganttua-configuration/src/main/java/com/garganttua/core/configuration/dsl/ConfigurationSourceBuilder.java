@@ -14,6 +14,11 @@ import com.garganttua.core.dsl.AbstractLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Linked builder that configures a single {@link IConfigurationSource} (file, classpath, stream,
+ * or inline content) and its optional {@link IConfigurationFormat}. Sources are collected by the
+ * parent {@link IConfigurationBuilder} rather than built independently.
+ */
 @Reflected
 public class ConfigurationSourceBuilder extends AbstractLinkedBuilder<IConfigurationBuilder, Void>
         implements IConfigurationSourceBuilder {
@@ -22,6 +27,9 @@ public class ConfigurationSourceBuilder extends AbstractLinkedBuilder<IConfigura
     private IConfigurationSource source;
     private IConfigurationFormat format;
 
+    /**
+     * @param link the parent configuration builder this source builder is linked to
+     */
     public ConfigurationSourceBuilder(IConfigurationBuilder link) {
         super(link);
     }
@@ -66,6 +74,11 @@ public class ConfigurationSourceBuilder extends AbstractLinkedBuilder<IConfigura
         return this;
     }
 
+    /**
+     * No-op build step; the configured source is collected by the parent builder.
+     *
+     * @return always {@code null}
+     */
     @Override
     public Void build() throws DslException {
         // Sources are collected by the parent ConfigurationBuilder, not built independently

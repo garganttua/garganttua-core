@@ -75,7 +75,16 @@ import com.garganttua.core.supply.SupplyException;
  */
 public interface IContextualMethodBinder<ExecutionReturned, OwnerContextType>
         extends IMethodBinder<ExecutionReturned>, IContextualExecutableBinder<ExecutionReturned, OwnerContextType> {
-            
+
+    /**
+     * Supplies the method invocation result by delegating to the context-less
+     * {@link #execute()}, which fails fast when an owner context is required.
+     *
+     * @return an {@link Optional} containing the invocation result, or empty for
+     *         void methods or when no result is produced
+     * @throws SupplyException if invocation fails or the required owner context
+     *                         was not provided
+     */
     @Override
     default Optional<IMethodReturn<ExecutionReturned>> supply() throws SupplyException {
         return this.execute();

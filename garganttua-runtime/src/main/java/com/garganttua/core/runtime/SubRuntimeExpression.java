@@ -50,6 +50,11 @@ public class SubRuntimeExpression implements IExpression<Object, ISupplier<Objec
                 "Scoped variable names cannot be null"));
     }
 
+    /**
+     * Creates a sub-runtime expression with no scoped variables.
+     *
+     * @param subRuntime the sub-runtime to execute
+     */
     public SubRuntimeExpression(SubRuntime<Object[], Object> subRuntime) {
         this(subRuntime, Set.of());
     }

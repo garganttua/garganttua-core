@@ -25,6 +25,19 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * Base fluent builder for {@link IFieldBinder}s. The target field may be specified by name,
+ * {@link IField}, or {@link ObjectAddress}; the value by a raw object or a supplier builder. The
+ * field address and value supplier are resolved lazily at {@link #doBuild()}, producing a
+ * {@link FieldBinder} or {@link ContextualFieldBinder} depending on whether the owner supplier is
+ * contextual. Requires an {@code IReflectionBuilder} dependency, falling back to the global
+ * {@link IClass#getReflection()} when none is provided.
+ *
+ * @param <FieldType> the field value type
+ * @param <OwnerType> the type owning the field
+ * @param <Builder>   the concrete builder self-type
+ * @param <Link>      the parent builder type returned by {@code up()}
+ */
 public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder extends IFieldBinderBuilder<FieldType, OwnerType, Builder, Link>, Link>
         extends
         AbstractAutomaticLinkedDependentBuilder<Builder, Link, IFieldBinder<OwnerType, FieldType>>
@@ -46,6 +59,10 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder e
     private ObjectAddress pendingAddress;
     private Object pendingRawValue;
 
+    /**
+     * Identity is based on the resolved (or pending) field {@link ObjectAddress} when available, so
+     * that builders targeting the same field compare equal; otherwise falls back to identity.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this.address != null) return this.address.equals(obj);
@@ -60,6 +77,13 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder e
         return super.hashCode();
     }
 
+    /**
+     * @param link                the parent builder returned by {@code up()}
+     * @param ownerSupplierBuilder builder of the supplier producing the field owner
+     * @param fieldType           the expected field value type
+     * @param dependencies        caller-supplied build dependencies, augmented with the reflection builder
+     * @throws DslException if construction fails
+     */
     protected AbstractFieldBinderBuilder(Link link,
             ISupplierBuilder<OwnerType, ? extends ISupplier<OwnerType>> ownerSupplierBuilder,
             IClass<FieldType> fieldType, Set<DependencySpec> dependencies) throws DslException {
@@ -83,6 +107,11 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder e
         this.doPreBuildWithDependency_(dependency);
     }
 
+    /**
+     * Subclass hook invoked for each build dependency after the reflection capture.
+     *
+     * @param dependency the resolved build dependency
+     */
     protected abstract void doPreBuildWithDependency_(Object dependency);
 
     private IReflection effectiveReflection() {
@@ -215,6 +244,12 @@ public abstract class AbstractFieldBinderBuilder<FieldType, OwnerType, Builder e
         return this;
     }
 
+    /**
+     * Resolves the field at the currently set address.
+     *
+     * @return the resolved field
+     * @throws DslException if no address is set or resolution fails
+     */
     protected IField findField() throws DslException {
         if (this.address == null) {
             throw new DslException("Field is not set");

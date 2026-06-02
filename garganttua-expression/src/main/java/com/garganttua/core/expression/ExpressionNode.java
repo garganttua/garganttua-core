@@ -9,6 +9,17 @@ import java.util.Objects;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Non-contextual expression node that evaluates an {@link IEvaluateNode} function to produce an
+ * {@link ISupplier}.
+ *
+ * <p>Child parameters that are {@link IExpressionNode}s are evaluated eagerly unless marked lazy,
+ * in which case they are wrapped in an on-demand {@link ISupplier}. When the declared return type
+ * is {@code Object}, the supplier's actual return type is resolved dynamically from the first
+ * non-null produced value.
+ *
+ * @param <R> the type produced by this node
+ */
 public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
 
     private List<Object> params = new LinkedList<>();
@@ -26,6 +37,13 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
      */
     private List<Boolean> lazyParameters;
 
+    /**
+     * Creates a parameterless expression node.
+     *
+     * @param name         the node name
+     * @param evaluate     the evaluation function (must not be {@code null})
+     * @param returnedType the declared return type
+     */
     public ExpressionNode(String name, IEvaluateNode<R> evaluate, IClass<R> returnedType) {
         this.returnedType = returnedType;
         this.params = List.of();
@@ -33,6 +51,14 @@ public class ExpressionNode<R> implements IExpressionNode<R, ISupplier<R>> {
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
+    /**
+     * Creates an expression node with eager parameters (no lazy markers).
+     *
+     * @param name         the node name
+     * @param evaluate     the evaluation function (must not be {@code null})
+     * @param returnedType the declared return type
+     * @param params       the node parameters
+     */
     public ExpressionNode(String name, IEvaluateNode<R> evaluate, IClass<R> returnedType,
             List<Object> params) {
         this(name, evaluate, returnedType, params, null);

@@ -12,6 +12,14 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 
+/**
+ * {@link IField} decorator describing a resolved (possibly nested) field: its
+ * {@link ObjectAddress} and the ordered field path leading to it. Reflective
+ * operations are forwarded to the leaf field at the end of the path.
+ *
+ * @param address the address identifying the resolved field
+ * @param fieldPath the ordered chain of {@link IField} objects from owner to leaf
+ */
 public record ResolvedField(ObjectAddress address, List<Object> fieldPath) implements IField {
 
     private IField field() {

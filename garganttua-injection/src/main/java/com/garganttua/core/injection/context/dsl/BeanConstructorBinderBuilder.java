@@ -11,6 +11,13 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Concrete constructor-binder builder for beans, linked back to its owning
+ * {@link BeanFactoryBuilder}. Reports the {@code @Inject} constructor's parameter types
+ * as DI dependencies so the container can order bean creation correctly.
+ *
+ * @param <Bean> the bean type whose constructor is bound
+ */
 @Reflected
 public class BeanConstructorBinderBuilder<Bean> extends
         AbstractConstructorArgInjectBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
@@ -19,6 +26,9 @@ public class BeanConstructorBinderBuilder<Bean> extends
 
     private IClass<Bean> beanType;
 
+    /**
+     * Builds a constructor binder builder for the given bean type, linked to its factory builder.
+     */
     protected BeanConstructorBinderBuilder(BeanFactoryBuilder<Bean> link, IClass<Bean> beanType) {
         super(link, beanType);
         this.beanType = beanType;

@@ -15,6 +15,11 @@ import com.garganttua.core.configuration.IConfigurationSource;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
 
+/**
+ * {@link IConfigurationPopulator} that recursively maps a configuration tree onto a fluent
+ * {@link IBuilder}, resolving builder methods via {@link MethodMapping}, converting scalar
+ * values with {@link TypeConverter}, and descending into child {@link ILinkedBuilder}s.
+ */
 public class BuilderPopulator implements IConfigurationPopulator {
     private static final Logger log = Logger.getLogger(BuilderPopulator.class);
 
@@ -23,6 +28,13 @@ public class BuilderPopulator implements IConfigurationPopulator {
     private final TypeConverter typeConverter;
     private final boolean strict;
 
+    /**
+     * Creates a populator.
+     *
+     * @param formats  the configuration formats available for parsing sources
+     * @param strategy the method mapping strategy used to match config keys to builder methods
+     * @param strict   when {@code true}, unknown configuration keys raise errors instead of warnings
+     */
     public BuilderPopulator(List<IConfigurationFormat> formats, MethodMappingStrategy strategy, boolean strict) {
         this.formats = formats;
         this.methodMapping = new MethodMapping(strategy);

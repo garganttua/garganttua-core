@@ -110,6 +110,10 @@ public final class Logger implements IObservable {
         return GLOBAL;
     }
 
+    /**
+     * @return the name this logger was created with (typically a fully qualified
+     *         class name).
+     */
     public String name() {
         return this.name;
     }
@@ -141,22 +145,57 @@ public final class Logger implements IObservable {
         return level.ordinal() >= THRESHOLD && hasAnyObserver(ObservableContextHolder.current());
     }
 
+    /**
+     * Emit a {@code TRACE}-level message. See {@link #log(LogEvent.Level, String, Object...)}
+     * for placeholder and {@link Throwable} handling.
+     *
+     * @param format SLF4J-style message with {@code {}} placeholders
+     * @param args   substitution arguments; a trailing {@link Throwable} is the cause
+     */
     public void trace(String format, Object... args) {
         log(LogEvent.Level.TRACE, format, args);
     }
 
+    /**
+     * Emit a {@code DEBUG}-level message. See {@link #log(LogEvent.Level, String, Object...)}
+     * for placeholder and {@link Throwable} handling.
+     *
+     * @param format SLF4J-style message with {@code {}} placeholders
+     * @param args   substitution arguments; a trailing {@link Throwable} is the cause
+     */
     public void debug(String format, Object... args) {
         log(LogEvent.Level.DEBUG, format, args);
     }
 
+    /**
+     * Emit an {@code INFO}-level message. See {@link #log(LogEvent.Level, String, Object...)}
+     * for placeholder and {@link Throwable} handling.
+     *
+     * @param format SLF4J-style message with {@code {}} placeholders
+     * @param args   substitution arguments; a trailing {@link Throwable} is the cause
+     */
     public void info(String format, Object... args) {
         log(LogEvent.Level.INFO, format, args);
     }
 
+    /**
+     * Emit a {@code WARN}-level message. See {@link #log(LogEvent.Level, String, Object...)}
+     * for placeholder and {@link Throwable} handling.
+     *
+     * @param format SLF4J-style message with {@code {}} placeholders
+     * @param args   substitution arguments; a trailing {@link Throwable} is the cause
+     */
     public void warn(String format, Object... args) {
         log(LogEvent.Level.WARN, format, args);
     }
 
+    /**
+     * Emit an {@code ERROR}-level message. See {@link #log(LogEvent.Level, String, Object...)}
+     * for placeholder and {@link Throwable} handling.
+     *
+     * @param format SLF4J-style message with {@code {}} placeholders
+     * @param args   substitution arguments; a trailing {@link Throwable} is the cause
+     */
     public void error(String format, Object... args) {
         log(LogEvent.Level.ERROR, format, args);
     }

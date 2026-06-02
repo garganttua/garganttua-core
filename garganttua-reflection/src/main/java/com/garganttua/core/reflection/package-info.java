@@ -9,9 +9,10 @@
  * object introspection capabilities.
  * </p>
  *
- * <h2>Main Classes</h2>
+ * <h2>Main Types</h2>
  * <ul>
- *   <li>{@code ObjectAccessor} - Unified object access and manipulation interface</li>
+ *   <li>{@code ObjectAddress} - Dotted path locating a (possibly nested) field within an object</li>
+ *   <li>{@link com.garganttua.core.reflection.binders} sub-package - Field, method and constructor binders</li>
  * </ul>
  *
  * <h2>Sub-packages</h2>

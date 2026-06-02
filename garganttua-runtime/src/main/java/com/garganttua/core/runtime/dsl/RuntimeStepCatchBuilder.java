@@ -11,6 +11,15 @@ import com.garganttua.core.runtime.RuntimeStepCatch;
 import com.garganttua.core.runtime.annotations.Catch;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Fluent builder for a step's {@code @Catch} clause, pairing a caught exception
+ * type with an exit code.
+ *
+ * @param <ExecutionReturn> the operation method return type
+ * @param <StepObjectType>  the type of the object holding the step methods
+ * @param <InputType>       the runtime input type
+ * @param <OutputType>      the runtime output type
+ */
 @Reflected
 public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
                 AbstractAutomaticLinkedBuilder<IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepCatch>
@@ -21,6 +30,12 @@ public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType,
         private Integer code;
         private Catch catchAnnotationForAutoDetection;
 
+        /**
+         * Creates a catch builder for the given exception type.
+         *
+         * @param exception the exception type to catch
+         * @param link      the parent method builder
+         */
         public RuntimeStepCatchBuilder(Class<? extends Throwable> exception,
                         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> link) {
                 super(link);
@@ -44,6 +59,12 @@ public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType,
                 log.trace("Initialized RuntimeStepCatchBuilder for auto-detection");
         }
 
+        /**
+         * Sets the exit code associated with the caught exception.
+         *
+         * @param i the exit code
+         * @return this builder for chaining
+         */
         @Override
         public IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> code(int i) {
                 this.code = Objects.requireNonNull(i, "Code cannot be null");

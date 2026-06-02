@@ -45,7 +45,6 @@ import java.util.Optional;
  * @param <Context> the type of the primary context required for creation
  * @since 2.0.0-ALPHA01
  * @see IContextualSupplier
- * @see IContextualSupplier
  */
 @FunctionalInterface
 public interface IContextualSupply<Supplied, Context> {

@@ -18,6 +18,11 @@ import com.garganttua.core.configuration.annotations.ConfigurationFormat;
  */
 public class ConfigurationInfrastructureSeed implements IAOTInfrastructureSeed {
 
+    /**
+     * Registers the configuration annotation classes with the supplied AOT seed context.
+     *
+     * @param context the AOT seed context to register the annotation classes into
+     */
     @Override
     public void seed(IAOTSeedContext context) {
         context.registerClass(Configurable.class);

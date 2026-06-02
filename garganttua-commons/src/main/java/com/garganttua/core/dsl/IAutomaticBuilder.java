@@ -63,6 +63,11 @@ public interface IAutomaticBuilder<Builder, Built> extends IBuilder<Built> {
      */
     Builder autoDetect(boolean b) throws DslException;
 
+    /**
+     * Returns whether automatic detection is currently enabled on this builder.
+     *
+     * @return {@code true} if automatic detection is enabled
+     */
     boolean isAutoDetected();
 
 }

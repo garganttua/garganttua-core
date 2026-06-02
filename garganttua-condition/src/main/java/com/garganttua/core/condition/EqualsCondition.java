@@ -10,6 +10,13 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import com.garganttua.core.reflection.annotations.Reflected;
+
+/**
+ * Equality condition: evaluates to {@code true} when the two supplied values are
+ * equal (operands are unwrapped from {@link java.util.Optional} first).
+ *
+ * @param <T> the supplied value type
+ */
 @Reflected(queryAllDeclaredMethods = true)
 public class EqualsCondition<T> implements ICondition {
     private static final Logger log = Logger.getLogger(EqualsCondition.class);
@@ -17,6 +24,12 @@ public class EqualsCondition<T> implements ICondition {
     private ISupplier<T> supplier1;
     private ISupplier<T> supplier2;
 
+    /**
+     * Creates an equality condition over two suppliers.
+     *
+     * @param supplier1 supplier of the first value; must not be {@code null}
+     * @param supplier2 supplier of the second value; must not be {@code null}
+     */
     public EqualsCondition(ISupplier<T> supplier1, ISupplier<T> supplier2) {
         log.trace("Entering EqualsCondition constructor");
         this.supplier1 = Objects.requireNonNull(supplier1, "Object supplier 1 cannot be null");
@@ -50,6 +63,14 @@ public class EqualsCondition<T> implements ICondition {
         };
     }
 
+    /**
+     * Checks whether two objects are equal, unwrapping {@link java.util.Optional}
+     * operands first; differing runtime types compare as not equal.
+     *
+     * @param obj1 first operand, may be {@code null}
+     * @param obj2 second operand, may be {@code null}
+     * @return {@code true} when the operands are equal
+     */
     @Expression(name = "equals", description = "Checks if two objects are equal")
     public static boolean equals(Object obj1, Object obj2) {
         log.trace("Entering static equals() method");
@@ -59,7 +80,7 @@ public class EqualsCondition<T> implements ICondition {
             return false;
         }
         if (!obj1.getClass().equals(obj2.getClass())) {
-            log.error("Type mismatch: {} VS {}",
+            log.debug("Type mismatch: {} VS {}",
                 obj1.getClass().getSimpleName(),
                 obj2.getClass().getSimpleName());
             return false;

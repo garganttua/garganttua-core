@@ -18,10 +18,17 @@ public record ScriptGenerationOptions(WorkflowTimingConfig timing) {
 		}
 	}
 
+	/**
+	 * @return options with timing disabled (byte-identical legacy generation)
+	 */
 	public static ScriptGenerationOptions defaults() {
 		return new ScriptGenerationOptions(WorkflowTimingConfig.disabled());
 	}
 
+	/**
+	 * @param timing the timing config to apply
+	 * @return options carrying the given timing config
+	 */
 	public static ScriptGenerationOptions withTiming(WorkflowTimingConfig timing) {
 		return new ScriptGenerationOptions(timing);
 	}

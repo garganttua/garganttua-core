@@ -29,16 +29,29 @@ public class StatementBlock {
 
     private final List<IScriptNode> statements;
 
+    /**
+     * Creates a statement block.
+     *
+     * @param statements the ordered statements, or {@code null} for an empty block
+     */
     public StatementBlock(List<IScriptNode> statements) {
         this.statements = statements != null ? List.copyOf(statements) : List.of();
     }
 
+    /** Returns the ordered statements in this block. */
     public List<IScriptNode> statements() {
         return this.statements;
     }
 
     private static final ScriptVariableResolver RESOLVER = new ScriptVariableResolver();
 
+    /**
+     * Executes the statements in order within a bound expression-variable scope and
+     * returns the result of the last statement.
+     *
+     * @return the last statement's result, or {@code null} if the block is empty
+     * @throws ScriptException if no runtime context is bound or a statement fails uncaught
+     */
     @SuppressWarnings("unchecked")
     public Object execute() {
         IRuntimeContext<Object[], Object> context = RuntimeExpressionContext.get();

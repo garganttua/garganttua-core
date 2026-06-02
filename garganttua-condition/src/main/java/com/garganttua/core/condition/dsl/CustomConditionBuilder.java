@@ -11,6 +11,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builds a {@link CustomCondition} that applies an arbitrary {@link Predicate}
+ * directly to a supplied value.
+ *
+ * @param <T> the type of the value tested by the predicate
+ */
 @Reflected
 public class CustomConditionBuilder<T> implements IConditionBuilder {
     private static final Logger log = Logger.getLogger(CustomConditionBuilder.class);
@@ -18,6 +24,12 @@ public class CustomConditionBuilder<T> implements IConditionBuilder {
     private final ISupplierBuilder<T, ? extends ISupplier<T>> builder;
     private final Predicate<T> predicate;
 
+    /**
+     * Creates a builder pairing a value supplier with a predicate.
+     *
+     * @param builder   the value supplier builder; must be non-null
+     * @param predicate the predicate to apply to the supplied value; must be non-null
+     */
     public CustomConditionBuilder(ISupplierBuilder<T, ? extends ISupplier<T>> builder,
             Predicate<T> predicate) {
         log.trace("Entering CustomConditionBuilder constructor");
@@ -26,6 +38,13 @@ public class CustomConditionBuilder<T> implements IConditionBuilder {
         log.trace("Exiting CustomConditionBuilder constructor");
     }
 
+    /**
+     * Builds the custom condition, or {@code null} when this builder is
+     * contextual (deferred resolution).
+     *
+     * @return the composed {@link CustomCondition}, or {@code null} if contextual
+     * @throws DslException if the value supplier fails to build
+     */
     @Override
     public ICondition build() throws DslException {
         log.trace("Entering build() for CustomConditionBuilder");
@@ -40,6 +59,9 @@ public class CustomConditionBuilder<T> implements IConditionBuilder {
         return condition;
     }
 
+    /**
+     * @return {@code true} if the value supplier builder is contextual
+     */
     @Override
     public boolean isContextual() {
         return this.builder.isContextual();

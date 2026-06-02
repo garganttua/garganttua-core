@@ -19,8 +19,8 @@ import com.garganttua.core.reflection.annotations.Indexed;
  *
  * <p>
  * When an exception matching the specified criteria occurs, the fallback method is invoked.
- * The criteria include the exception type and optionally the source stage and step names.
- * Empty strings for stage/step names act as wildcards, matching any stage or step.
+ * The criteria include the exception type and optionally the source step name. An empty
+ * {@link #fromStep()} acts as a wildcard, matching any step.
  * </p>
  *
  * <h2>Usage Example - Handle Specific Exception</h2>
@@ -39,24 +39,23 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * @FallBack
  * @OnException(
  *     exception = IllegalArgumentException.class,
- *     fromStage = "validation",
  *     fromStep = "validateAmount"
  * )
  * @Output
  * public OrderResult handleAmountValidationError(@Exception Throwable e) {
- *     // Only handles IllegalArgumentException from validation.validateAmount
+ *     // Only handles IllegalArgumentException from the validateAmount step
  *     return new OrderResult(null, "INVALID_AMOUNT: " + e.getMessage());
  * }
  * }</pre>
  *
- * <h2>Usage Example - Handle Exceptions from Stage</h2>
+ * <h2>Usage Example - Handle Exceptions of a Broad Type</h2>
  * <pre>{@code
  * @FallBack
- * @OnException(exception = Exception.class, fromStage = "database")
+ * @OnException(exception = Exception.class)
  * @Output
- * public OrderResult handleDatabaseErrors(@Exception Throwable e) {
- *     // Handles any exception from the database stage
- *     return new OrderResult(null, "DATABASE_ERROR");
+ * public OrderResult handleAnyError(@Exception Throwable e) {
+ *     // Handles any exception from any step
+ *     return new OrderResult(null, "ERROR");
  * }
  * }</pre>
  *

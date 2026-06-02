@@ -14,119 +14,85 @@
  *   <li>{@link com.garganttua.core.mapper.annotations.FieldMappingRule} - Defines field-level mapping rules</li>
  * </ul>
  *
- * <h2>Usage Example: Simple Mapping</h2>
+ * <h2>Usage Example: Field-Level Mapping</h2>
+ * <p>
+ * {@link com.garganttua.core.mapper.annotations.FieldMappingRule} is placed on a
+ * destination field and names the source field it reads from. Declare it more than
+ * once (one per {@code source} class) to map a single DTO from multiple entity types.
+ * </p>
  * <pre>{@code
- * @ObjectMappingRule(source = UserDTO.class, target = User.class)
- * public class UserMapper {
+ * public class UserDTO {
  *
- *     @FieldMappingRule(source = "firstName", target = "givenName")
- *     @FieldMappingRule(source = "lastName", target = "familyName")
- *     public void configure() {
- *         // Configuration marker method
- *     }
+ *     // Direct field mapping from the source's "email" field
+ *     @FieldMappingRule(sourceFieldAddress = "email")
+ *     private String emailAddress;
+ *
+ *     // Nested field path
+ *     @FieldMappingRule(sourceFieldAddress = "address.city")
+ *     private String city;
+ *
+ *     // Multi-source: one rule per source class
+ *     @FieldMappingRule(source = UserEntity.class, sourceFieldAddress = "firstName")
+ *     @FieldMappingRule(source = LegacyUser.class, sourceFieldAddress = "prenom")
+ *     private String name;
  * }
  * }</pre>
  *
- * <h2>Usage Example: Custom Transformations</h2>
+ * <h2>Usage Example: Field Transformations</h2>
+ * <p>
+ * {@code fromSourceMethod} and {@code toSourceMethod} name static converter methods in
+ * {@code "ClassName.methodName"} form, applied during forward and reverse mapping.
+ * </p>
  * <pre>{@code
- * @ObjectMappingRule(source = OrderDTO.class, target = Order.class)
- * public class OrderMapper {
+ * public class UserDTO {
  *
  *     @FieldMappingRule(
- *         source = "orderDate",
- *         target = "createdAt",
- *         transformer = DateToTimestampTransformer.class
+ *         sourceFieldAddress = "birthDate",
+ *         fromSourceMethod = "DateUtils.calculateAge",
+ *         toSourceMethod = "DateUtils.estimateBirthYear"
  *     )
- *     @FieldMappingRule(
- *         source = "totalAmount",
- *         target = "total",
- *         transformer = CurrencyConverter.class
- *     )
- *     public void configure() {
- *     }
+ *     private Integer age;
  * }
  * }</pre>
  *
- * <h2>Usage Example: Nested Mappings</h2>
+ * <h2>Usage Example: Object-Level Mapping</h2>
+ * <p>
+ * {@link com.garganttua.core.mapper.annotations.ObjectMappingRule} is placed on the
+ * destination class to delegate the whole transformation to static converter methods.
+ * </p>
  * <pre>{@code
- * @ObjectMappingRule(source = CustomerDTO.class, target = Customer.class)
- * public class CustomerMapper {
- *
- *     @FieldMappingRule(
- *         source = "billingAddress",
- *         target = "address",
- *         nestedMapper = AddressMapper.class
- *     )
- *     @FieldMappingRule(
- *         source = "contactInfo.email",
- *         target = "email"
- *     )
- *     @FieldMappingRule(
- *         source = "contactInfo.phone",
- *         target = "phoneNumber"
- *     )
- *     public void configure() {
- *     }
+ * @ObjectMappingRule(
+ *     fromSourceMethod = "UserConverter.toDTO",
+ *     toSourceMethod = "UserConverter.fromDTO"
+ * )
+ * public class UserDTO {
+ *     private String name;
+ *     private String email;
  * }
  * }</pre>
  *
- * <h2>Usage Example: Collection Mappings</h2>
+ * <h2>Usage Example: Excluding Fields</h2>
+ * <p>
+ * {@link com.garganttua.core.mapper.annotations.MappingIgnore} excludes a field from
+ * convention-based mapping.
+ * </p>
  * <pre>{@code
- * @ObjectMappingRule(source = OrderDTO.class, target = Order.class)
- * public class OrderMapper {
+ * public class UserDTO {
+ *     private String name;        // mapped by convention
  *
- *     @FieldMappingRule(
- *         source = "items",
- *         target = "orderItems",
- *         elementMapper = OrderItemMapper.class
- *     )
- *     public void configure() {
- *     }
- * }
- * }</pre>
- *
- * <h2>Usage Example: Conditional Mappings</h2>
- * <pre>{@code
- * @ObjectMappingRule(source = ProductDTO.class, target = Product.class)
- * public class ProductMapper {
- *
- *     @FieldMappingRule(
- *         source = "discountPrice",
- *         target = "price",
- *         condition = "source.onSale == true"
- *     )
- *     @FieldMappingRule(
- *         source = "regularPrice",
- *         target = "price",
- *         condition = "source.onSale == false"
- *     )
- *     public void configure() {
- *     }
+ *     @MappingIgnore
+ *     private String internalId;  // never mapped
  * }
  * }</pre>
  *
  * <h2>Features</h2>
  * <ul>
- *   <li>Declarative mapping configuration</li>
- *   <li>Field name transformation</li>
- *   <li>Custom type converters</li>
- *   <li>Nested object mapping</li>
- *   <li>Collection element mapping</li>
- *   <li>Conditional mapping rules</li>
- *   <li>Bidirectional mapping support</li>
- *   <li>Default value handling</li>
- *   <li>Null safety</li>
- *   <li>Deep vs shallow copy control</li>
- * </ul>
- *
- * <h2>Mapping Strategies</h2>
- * <ul>
- *   <li><b>Direct Mapping</b> - Field-to-field copy</li>
- *   <li><b>Transformed Mapping</b> - Apply transformation function</li>
- *   <li><b>Nested Mapping</b> - Map nested objects recursively</li>
- *   <li><b>Collection Mapping</b> - Map collection elements</li>
- *   <li><b>Conditional Mapping</b> - Map based on conditions</li>
- *   <li><b>Computed Mapping</b> - Calculate target value</li>
+ *   <li>Declarative field- and object-level mapping rules</li>
+ *   <li>Static converter methods for forward and reverse transformation</li>
+ *   <li>Nested field paths via dot notation</li>
+ *   <li>Per-source rules on a single destination (repeatable annotations)</li>
+ *   <li>Field exclusion via {@code @MappingIgnore}</li>
+ *   <li>Convention-based mapping by field name</li>
  * </ul>
  *
  * <h2>Integration</h2>

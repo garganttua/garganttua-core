@@ -54,10 +54,10 @@ import com.garganttua.core.reflection.annotations.Indexed;
  * <h2>Usage Example - Conditional Fallback</h2>
  * <pre>{@code
  * @FallBack
- * @OnException(exception = IllegalArgumentException.class, fromStage = "validation")
+ * @OnException(exception = IllegalArgumentException.class, fromStep = "validate")
  * @Output
  * public OrderResult handleValidationError(@Exception Throwable e) {
- *     // Only handles IllegalArgumentException from validation stage
+ *     // Only handles IllegalArgumentException from the validate step
  *     return new OrderResult(null, "VALIDATION_ERROR: " + e.getMessage());
  * }
  * }</pre>

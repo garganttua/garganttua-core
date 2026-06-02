@@ -24,5 +24,8 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Target(ElementType.TYPE)
 public @interface ObjectMappingRules {
 
+	/**
+	 * @return the object-level mapping rules declared on the annotated class, one per source
+	 */
 	ObjectMappingRule[] value();
 }

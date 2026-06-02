@@ -40,6 +40,12 @@ public class ScriptingEnvironment implements IScriptingEnvironment, IBootstrapSu
      *  scripts + WorkflowBuilder.precompile(true) workflows). */
     private final AtomicInteger precompiledCount = new AtomicInteger();
 
+    /**
+     * @param expressionContext      expression context captured for every spawned script
+     * @param runtimesBuilderFactory factory yielding a fresh {@link IRuntimesBuilder} per script
+     * @param classLoaderManager     JAR hot-load manager, or {@code null} to disable hot-loading
+     * @param registry               auto-detected named scripts, or {@code null} for an empty registry
+     */
     public ScriptingEnvironment(IExpressionContext expressionContext,
                                 Supplier<IRuntimesBuilder> runtimesBuilderFactory,
                                 IClassLoaderManager classLoaderManager,

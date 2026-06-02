@@ -10,8 +10,8 @@
  *
  * <h2>Core Builder Interfaces</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.supply.dsl.ISupplierBuilder} - Generic value supplier builder</li>
- *   <li>{@link com.garganttua.core.supply.dsl.ISupplierBuilder} - Object-specific supplier builder</li>
+ *   <li>{@link com.garganttua.core.supply.dsl.ISupplierBuilder} - Base supplier builder with metadata introspection</li>
+ *   <li>{@link com.garganttua.core.supply.dsl.ICommonSupplierBuilder} - Supplier builder exposing the common supply strategies</li>
  * </ul>
  *
  * <h2>Usage Example: Simple Supplier</h2>
@@ -146,7 +146,7 @@
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.supply
  * @see com.garganttua.core.supply.dsl.ISupplierBuilder
- * @see com.garganttua.core.supply.dsl.ISupplierBuilder
+ * @see com.garganttua.core.supply.dsl.ICommonSupplierBuilder
  * @see com.garganttua.core.dsl.IAutomaticBuilder
  */
 package com.garganttua.core.supply.dsl;

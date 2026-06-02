@@ -5,6 +5,10 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Java {@code .properties} configuration format, available only when the Jackson
+ * {@code jackson-dataformat-properties} dependency is on the classpath.
+ */
 public class PropertiesConfigurationFormat extends AbstractConfigurationFormat {
 
     private static final String PROPS_FACTORY_CLASS = "com.fasterxml.jackson.dataformat.javaprop.JavaPropsFactory";

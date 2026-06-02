@@ -30,6 +30,9 @@ public class ScriptExpressionWrapper<R> implements IExpression<R, ISupplier<R>> 
 
     private final IExpression<R, ? extends ISupplier<R>> inner;
 
+    /**
+     * @param inner the expression to decorate with script variable resolution
+     */
     public ScriptExpressionWrapper(IExpression<R, ? extends ISupplier<R>> inner) {
         this.inner = inner;
     }

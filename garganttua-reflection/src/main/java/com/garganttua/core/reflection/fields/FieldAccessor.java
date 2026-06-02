@@ -21,6 +21,17 @@ import com.garganttua.core.reflection.constructors.ConstructorAccessManager;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Reads and writes the value addressed by a {@link ResolvedField}, traversing
+ * nested fields, collections, maps, and arrays along the resolved field path.
+ *
+ * <p>
+ * Implements {@link ISupplier} so that, when supplied, it instantiates a fresh
+ * owner instance and returns the value at the resolved address.
+ * </p>
+ *
+ * @param <T> the type of the addressed field value
+ */
 public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
     private static final Logger log = Logger.getLogger(FieldAccessor.class);
 
@@ -30,10 +41,24 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 	private final IClass<T> fieldType;
 	private final boolean force;
 
+	/**
+	 * Creates an accessor for the given resolved field without forcing access to
+	 * non-public members.
+	 *
+	 * @param resolvedField the resolved field path to access
+	 * @throws ReflectionException if the resolved field is invalid
+	 */
 	public FieldAccessor(ResolvedField resolvedField) throws ReflectionException {
 		this(resolvedField, false);
 	}
 
+	/**
+	 * Creates an accessor for the given resolved field.
+	 *
+	 * @param resolvedField the resolved field path to access
+	 * @param force whether to force access to non-public members
+	 * @throws ReflectionException if the resolved field is invalid
+	 */
 	public FieldAccessor(ResolvedField resolvedField, boolean force) throws ReflectionException {
 		Objects.requireNonNull(resolvedField, "Resolved field cannot be null");
 		log.trace("Creating FieldAccessor for resolved field={}, force={}", resolvedField, force);
@@ -52,6 +77,14 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 	// GET
 	// ──────────────────────────────────────────────────────────────
 
+	/**
+	 * Reads the value at the resolved address from the given object.
+	 *
+	 * @param object the owner instance to read from
+	 * @return the addressed value, possibly multiple when the path crosses a
+	 *         collection, map, or array
+	 * @throws ReflectionException if the object is incompatible or a field cannot be read
+	 */
 	public IFieldValue<T> getValue(Object object) throws ReflectionException {
 		log.trace("getValue entry: object={}, ownerType={}, address={}", object, this.ownerType, this.address);
 		validateObject(object);
@@ -177,6 +210,14 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 	// SET (on existing object)
 	// ──────────────────────────────────────────────────────────────
 
+	/**
+	 * Writes the given value at the resolved address on an existing object.
+	 *
+	 * @param object the owner instance to mutate
+	 * @param value the value to write
+	 * @return the supplied {@code value}
+	 * @throws ReflectionException if the object is incompatible or a field cannot be written
+	 */
 	public IFieldValue<T> setValue(Object object, IFieldValue<T> value) throws ReflectionException {
 		log.trace("setValue entry: object={}, value={}, ownerType={}, address={}", object, value, this.ownerType, this.address);
 		validateObject(object);
@@ -199,6 +240,14 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 	// SET (creates new instance)
 	// ──────────────────────────────────────────────────────────────
 
+	/**
+	 * Instantiates a fresh owner instance and writes the given value at the
+	 * resolved address on it.
+	 *
+	 * @param fieldValue the value to write
+	 * @return the supplied {@code fieldValue}
+	 * @throws ReflectionException if the owner cannot be instantiated or a field cannot be written
+	 */
 	public IFieldValue<T> setValue(IFieldValue<T> fieldValue) throws ReflectionException {
 		log.trace("setValue(fieldValue) entry: ownerType={}, address={}", this.ownerType, this.address);
 		Object newInstance = instantiateNewObject(this.ownerType);

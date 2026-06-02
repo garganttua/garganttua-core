@@ -9,6 +9,13 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
 
+/**
+ * Supplier that creates a new instance via a constructor binder on each call.
+ *
+ * @param <SuppliedType> the type of object this supplier instantiates
+ * @see ISupplier
+ * @see IConstructorBinder
+ */
 public class NewSupplier<SuppliedType> implements ISupplier<SuppliedType> {
     private static final Logger log = Logger.getLogger(NewSupplier.class);
 
@@ -16,6 +23,12 @@ public class NewSupplier<SuppliedType> implements ISupplier<SuppliedType> {
     private IClass<SuppliedType> suppliedClass;
     private IConstructorBinder<SuppliedType> constructorBinder;
 
+    /**
+     * Creates an instantiating supplier.
+     *
+     * @param suppliedClass     the {@link IClass} of the object to instantiate
+     * @param constructorBinder the constructor binder used to build instances
+     */
     public NewSupplier(IClass<SuppliedType> suppliedClass,
             IConstructorBinder<SuppliedType> constructorBinder) {
         log.trace("Entering NewSupplier constructor with suppliedClass: {}", suppliedClass);
@@ -25,6 +38,12 @@ public class NewSupplier<SuppliedType> implements ISupplier<SuppliedType> {
         log.trace("Exiting NewSupplier constructor");
     }
 
+    /**
+     * Instantiates a new object using the constructor binder.
+     *
+     * @return the newly created instance, or {@link Optional#empty()} if a reflection
+     *         error occurs during construction
+     */
     @Override
     public Optional<SuppliedType> supply() throws SupplyException {
         log.trace("Entering supply method");

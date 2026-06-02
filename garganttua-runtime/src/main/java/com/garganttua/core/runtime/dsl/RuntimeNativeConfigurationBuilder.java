@@ -59,6 +59,12 @@ public class RuntimeNativeConfigurationBuilder
 
     private final Set<String> packages = new HashSet<>();
 
+    /**
+     * Adds several packages to scan for native reflection configuration.
+     *
+     * @param packageNames the package names to add
+     * @return this builder for chaining
+     */
     @Override
     public RuntimeNativeConfigurationBuilder withPackages(String[] packageNames) {
         log.trace("Adding {} packages to runtime native configuration", packageNames.length);
@@ -66,6 +72,12 @@ public class RuntimeNativeConfigurationBuilder
         return this;
     }
 
+    /**
+     * Adds a single package to scan for native reflection configuration.
+     *
+     * @param packageName the package name to add
+     * @return this builder for chaining
+     */
     @Override
     public RuntimeNativeConfigurationBuilder withPackage(String packageName) {
         log.trace("Adding package to runtime native configuration: {}", packageName);
@@ -73,6 +85,11 @@ public class RuntimeNativeConfigurationBuilder
         return this;
     }
 
+    /**
+     * Returns the packages registered for native reflection configuration.
+     *
+     * @return the configured package names
+     */
     @Override
     public String[] getPackages() {
         return this.packages.toArray(new String[0]);

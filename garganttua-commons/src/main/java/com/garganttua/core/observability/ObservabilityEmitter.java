@@ -93,22 +93,46 @@ public final class ObservabilityEmitter {
 			this.startedAt = Instant.now();
 		}
 
+		/**
+		 * @return the execution id this scope correlates events with (inherited
+		 *         from the parent session when nested), or {@code null} for a
+		 *         no-op scope.
+		 */
 		public UUID executionId() {
 			return executionId;
 		}
 
+		/**
+		 * @return the instant this scope was opened, used as the start point for
+		 *         {@code End}/{@code Error} durations.
+		 */
 		public Instant startedAt() {
 			return startedAt;
 		}
 
+		/**
+		 * @return whether any observer is registered on the active or local
+		 *         registry; fire methods short-circuit when this is {@code false}.
+		 */
 		public boolean hasObservers() {
 			return (active != null && active.hasObservers()) || (local != null && local != active && local.hasObservers());
 		}
 
+		/**
+		 * Fire a {@link StartEvent} with no payload.
+		 *
+		 * @param source the hierarchical source identifier
+		 */
 		public void fireStart(String source) {
 			fireStart(source, null);
 		}
 
+		/**
+		 * Fire a {@link StartEvent}. No-op when no observer is listening.
+		 *
+		 * @param source  the hierarchical source identifier
+		 * @param payload optional domain object to attach, or {@code null}
+		 */
 		public void fireStart(String source, Object payload) {
 			if (!hasObservers()) {
 				return;
@@ -116,14 +140,33 @@ public final class ObservabilityEmitter {
 			fire(new StartEvent(executionId, Instant.now(), source, payload));
 		}
 
+		/**
+		 * Fire an {@link EndEvent} with no status code or payload.
+		 *
+		 * @param source the hierarchical source identifier
+		 */
 		public void fireEnd(String source) {
 			fireEnd(source, null, null);
 		}
 
+		/**
+		 * Fire an {@link EndEvent} carrying a domain status code.
+		 *
+		 * @param source the hierarchical source identifier
+		 * @param code   optional domain status code, or {@code null}
+		 */
 		public void fireEnd(String source, Integer code) {
 			fireEnd(source, code, null);
 		}
 
+		/**
+		 * Fire an {@link EndEvent} with the elapsed duration since {@link #startedAt()}.
+		 * No-op when no observer is listening.
+		 *
+		 * @param source  the hierarchical source identifier
+		 * @param code    optional domain status code, or {@code null}
+		 * @param payload optional domain object to attach, or {@code null}
+		 */
 		public void fireEnd(String source, Integer code, Object payload) {
 			if (!hasObservers()) {
 				return;
@@ -133,10 +176,24 @@ public final class ObservabilityEmitter {
 			fire(new EndEvent(executionId, now, source, duration, code, payload));
 		}
 
+		/**
+		 * Fire an {@link ErrorEvent} with no payload.
+		 *
+		 * @param source  the hierarchical source identifier
+		 * @param failure the throwable that ended the unit of work
+		 */
 		public void fireError(String source, Throwable failure) {
 			fireError(source, failure, null);
 		}
 
+		/**
+		 * Fire an {@link ErrorEvent} with the elapsed duration since {@link #startedAt()}.
+		 * No-op when no observer is listening.
+		 *
+		 * @param source  the hierarchical source identifier
+		 * @param failure the throwable that ended the unit of work
+		 * @param payload optional domain object to attach, or {@code null}
+		 */
 		public void fireError(String source, Throwable failure, Object payload) {
 			if (!hasObservers()) {
 				return;
@@ -146,10 +203,26 @@ public final class ObservabilityEmitter {
 			fire(new ErrorEvent(executionId, now, source, duration, failure, payload));
 		}
 
+		/**
+		 * Fire a {@link LogEvent} with no payload.
+		 *
+		 * @param source  the hierarchical source identifier
+		 * @param level   the log severity
+		 * @param message the log text
+		 */
 		public void fireLog(String source, LogEvent.Level level, String message) {
 			fireLog(source, level, message, null);
 		}
 
+		/**
+		 * Fire a {@link LogEvent} correlated with this scope's execution. No-op
+		 * when no observer is listening.
+		 *
+		 * @param source  the hierarchical source identifier
+		 * @param level   the log severity
+		 * @param message the log text
+		 * @param payload optional domain object to attach, or {@code null}
+		 */
 		public void fireLog(String source, LogEvent.Level level, String message, Object payload) {
 			if (!hasObservers()) {
 				return;

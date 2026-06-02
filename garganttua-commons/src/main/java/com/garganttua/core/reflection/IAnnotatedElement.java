@@ -9,6 +9,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Mirror of {@link java.lang.reflect.AnnotatedElement} expressed in terms of
+ * {@link IClass}, so annotation queries work uniformly across runtime and AOT
+ * reflection providers.
+ *
+ * @since 2.0.0-ALPHA01
+ */
 public interface IAnnotatedElement extends IReflectionUser {
 
     /**
@@ -124,6 +131,12 @@ public interface IAnnotatedElement extends IReflectionUser {
         return result;
     }
 
+    /**
+     * Returns the {@link IReflection} facade used to resolve annotation classes
+     * during the default annotation-lookup methods.
+     *
+     * @return the reflection facade backing this element
+     */
     IReflection reflection();
 
     /**

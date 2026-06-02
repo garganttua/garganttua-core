@@ -32,6 +32,19 @@ import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * {@link IExpressionNodeFactory} that binds an expression function to a Java {@link IMethod}.
+ *
+ * <p>For each parsed function call it produces either a non-contextual {@link ExpressionNode} or a
+ * {@link ContextualExpressionNode} (when any argument is contextual), wrapping the underlying
+ * method invocation in a supplier that unwraps the {@link IMethodReturn}. Parameters typed as
+ * {@link ISupplier} are treated as lazy (passed unevaluated); {@link jakarta.annotation.Nullable}
+ * parameters accept {@code null}. Generic methods returning {@code Object} have their actual return
+ * type resolved from the produced value.
+ *
+ * @param <R> the value type produced by the bound method
+ * @param <S> the supplier type produced for the node
+ */
 public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         extends ContextualMethodBinder<IExpressionNode<R, S>, IExpressionNodeContext>
         implements IExpressionNodeFactory<R, S> {
@@ -53,6 +66,18 @@ public class ExpressionNodeFactory<R, S extends ISupplier<R>>
 
     // ========== Constructors ==========
 
+    /**
+     * Creates a factory bound to a method.
+     *
+     * @param methodOwnerSupplier supplies the instance (or {@code null} for static) the method is invoked on
+     * @param supplied            the supplier type produced by nodes from this factory
+     * @param method              the bound method
+     * @param methodAddress       the resolved address of the method
+     * @param nullableParameters  per-parameter nullability flags; size must equal the parameter count
+     * @param name                optional function name (defaults to the method name)
+     * @param description         optional human-readable description
+     * @throws ExpressionException if the parameter and nullability counts disagree
+     */
     public ExpressionNodeFactory(
             ISupplier<?> methodOwnerSupplier,
             Class<S> supplied,

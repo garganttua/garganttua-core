@@ -31,12 +31,34 @@ public class StatementGroupNode implements IScriptNode {
     private final int line;
     private final String sourceText;
 
+    /**
+     * Creates a statement group at an unknown source location.
+     *
+     * @param statements             the grouped statements
+     * @param variableName           the variable the group result binds to, or {@code null}
+     * @param code                   the exit code for the group, or {@code null}
+     * @param catchClauses           the immediate ({@code !}) catch clauses
+     * @param downstreamCatchClauses the downstream ({@code *}) catch clauses
+     * @param pipeClauses            the conditional pipe ({@code |}) clauses
+     */
     public StatementGroupNode(List<IScriptNode> statements, String variableName, Integer code,
             List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
             List<PipeClause> pipeClauses) {
         this(statements, variableName, code, catchClauses, downstreamCatchClauses, pipeClauses, 0, null);
     }
 
+    /**
+     * Creates a statement group.
+     *
+     * @param statements             the grouped statements
+     * @param variableName           the variable the group result binds to, or {@code null}
+     * @param code                   the exit code for the group, or {@code null}
+     * @param catchClauses           the immediate ({@code !}) catch clauses
+     * @param downstreamCatchClauses the downstream ({@code *}) catch clauses
+     * @param pipeClauses            the conditional pipe ({@code |}) clauses
+     * @param line                   the source line of the group
+     * @param sourceText             the original source text, or {@code null}
+     */
     public StatementGroupNode(List<IScriptNode> statements, String variableName, Integer code,
             List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
             List<PipeClause> pipeClauses, int line, String sourceText) {

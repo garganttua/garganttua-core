@@ -15,6 +15,13 @@ import com.garganttua.core.runtime.annotations.ExceptionMessage;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * Resolves {@code @ExceptionMessage}-annotated parameters to a supplier of the
+ * caught exception's message.
+ *
+ * <p>Registered for the {@link ExceptionMessage} annotation; the target
+ * parameter must be assignable to {@link String}.</p>
+ */
 @Resolver(annotations={ExceptionMessage.class})
 public class ExceptionMessageElementResolver implements IElementResolver {
     public ExceptionMessageElementResolver() {
@@ -22,6 +29,14 @@ public class ExceptionMessageElementResolver implements IElementResolver {
 
     private static final Logger log = Logger.getLogger(ExceptionMessageElementResolver.class);
 
+    /**
+     * Resolves the annotated element to a supplier of the caught exception's message.
+     *
+     * @param elementType the declared type of the injection target; must be assignable to {@link String}
+     * @param element     the annotated element being resolved
+     * @return a {@link Resolved} wrapping the exception-message supplier
+     * @throws DiException if {@code elementType} is not a {@link String}
+     */
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
 

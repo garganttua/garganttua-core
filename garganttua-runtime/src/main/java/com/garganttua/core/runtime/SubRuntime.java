@@ -28,6 +28,12 @@ public class SubRuntime<InputType, OutputType> {
     private final String name;
     private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;
 
+    /**
+     * Creates a sub-runtime.
+     *
+     * @param name  the sub-runtime name (for logging)
+     * @param steps the ordered steps to execute, keyed by step name
+     */
     public SubRuntime(String name, Map<String, IRuntimeStep<?, InputType, OutputType>> steps) {
         this.name = Objects.requireNonNull(name, "Name cannot be null");
         this.steps = Collections.unmodifiableMap(

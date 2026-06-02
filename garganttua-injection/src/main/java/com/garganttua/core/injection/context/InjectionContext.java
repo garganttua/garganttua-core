@@ -66,6 +66,12 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
     private final Object copyMutex = new Object();
     private final Object singletonMutex = new Object();
 
+    /**
+     * Creates a fresh {@link IInjectionContextBuilder} for fluent context configuration.
+     *
+     * @return a new context builder
+     * @throws DslException if the builder cannot be initialised
+     */
     public static IInjectionContextBuilder builder() throws DslException {
         log.trace("Entering InjectionContext.builder()");
         IInjectionContextBuilder builder = new InjectionContextBuilder();
@@ -73,6 +79,12 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         return builder;
     }
 
+    /**
+     * Builds the master (root) injection context, which is also installed as the
+     * process-wide {@link #context} singleton.
+     *
+     * @return the master context
+     */
     public static IInjectionContext master(IInjectableElementResolver resolver,
             Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
@@ -83,6 +95,11 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         return ctx;
     }
 
+    /**
+     * Builds a child injection context that does not become the master singleton.
+     *
+     * @return the child context
+     */
     public static IInjectionContext child(IInjectableElementResolver resolver,
             Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
@@ -93,6 +110,12 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         return ctx;
     }
 
+    /**
+     * Builds a context over the supplied providers, factories and resolver, optionally
+     * registering itself as the master singleton.
+     *
+     * @param masterContext {@code true} to install this instance as the master singleton
+     */
     protected InjectionContext(Boolean masterContext, IInjectableElementResolver resolver,
             Map<String, IBeanProvider> beanProviders,
             Map<String, IPropertyProvider> propertyProviders,
@@ -432,18 +455,33 @@ public class InjectionContext extends AbstractLifecycle implements IInjectionCon
         return result;
     }
 
+    /**
+     * Returns the live, mutable map of registered bean providers keyed by scope name.
+     *
+     * @return the backing bean-provider map
+     */
     public Map<String, IBeanProvider> beanProviders() {
         log.trace("Accessing beanProviders map");
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         return this.beanProviders;
     }
 
+    /**
+     * Returns the live, mutable map of registered property providers keyed by scope name.
+     *
+     * @return the backing property-provider map
+     */
     public Map<String, IPropertyProvider> propertyProviders() {
         log.trace("Accessing propertyProviders map");
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));
         return this.propertyProviders;
     }
 
+    /**
+     * Returns the live, mutable list of registered child-context factories.
+     *
+     * @return the backing child-context-factory list
+     */
     public List<IInjectionChildContextFactory<? extends IInjectionContext>> childContextFactories() {
         log.trace("Accessing childContextFactories list");
         wrapLifecycle(this::ensureInitializedAndStarted, IClass.getClass(DiException.class));

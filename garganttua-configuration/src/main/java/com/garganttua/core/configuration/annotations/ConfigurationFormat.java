@@ -7,10 +7,17 @@ import java.lang.annotation.Target;
 
 import com.garganttua.core.reflection.annotations.Indexed;
 
+/**
+ * Declares the configuration format (e.g. {@code "json"}, {@code "yaml"}) associated
+ * with the annotated type.
+ */
 @Indexed
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigurationFormat {
 
+    /**
+     * @return the format name this type is associated with
+     */
     String value();
 }

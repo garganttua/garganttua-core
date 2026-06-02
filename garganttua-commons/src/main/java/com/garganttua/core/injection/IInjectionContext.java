@@ -144,16 +144,71 @@ public interface IInjectionContext
          */
         <Bean> List<Bean> queryBeans(String provider, BeanReference<Bean> query) throws DiException;
 
+        /**
+         * Registers a pre-built bean instance in the named provider.
+         *
+         * @param <T>        the bean type
+         * @param provider   the target provider name
+         * @param reference  the reference identifying the bean
+         * @param bean       the bean instance to register
+         * @param autoDetect whether to auto-detect injectable members on the instance
+         * @throws DiException if the provider is unknown/immutable or registration fails
+         */
         <T> void addBean(String provider, BeanReference<T> reference, T bean, boolean autoDetect) throws DiException;
 
+        /**
+         * Registers an optional pre-built bean instance in the named provider.
+         *
+         * @param <T>        the bean type
+         * @param provider   the target provider name
+         * @param reference  the reference identifying the bean
+         * @param bean       the optional bean instance to register
+         * @param autoDetect whether to auto-detect injectable members on the instance
+         * @throws DiException if the provider is unknown/immutable or registration fails
+         */
         <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException;
 
+        /**
+         * Registers a pre-built bean instance in the named provider.
+         *
+         * @param <T>       the bean type
+         * @param provider  the target provider name
+         * @param reference the reference identifying the bean
+         * @param bean      the bean instance to register
+         * @throws DiException if the provider is unknown/immutable or registration fails
+         */
         <T> void addBean(String provider, BeanReference<T> reference, T bean) throws DiException;
 
+        /**
+         * Registers an optional pre-built bean instance in the named provider.
+         *
+         * @param <T>       the bean type
+         * @param provider  the target provider name
+         * @param reference the reference identifying the bean
+         * @param bean      the optional bean instance to register
+         * @throws DiException if the provider is unknown/immutable or registration fails
+         */
         <T> void addBean(String provider, BeanReference<T> reference, Optional<T> bean) throws DiException;
 
+        /**
+         * Registers a bean to be lazily instantiated in the named provider.
+         *
+         * @param <T>       the bean type
+         * @param provider  the target provider name
+         * @param reference the reference identifying the bean
+         * @throws DiException if the provider is unknown/immutable or registration fails
+         */
         <T> void addBean(String provider, BeanReference<T> reference) throws DiException;
 
+        /**
+         * Registers a bean to be lazily instantiated in the named provider.
+         *
+         * @param <T>        the bean type
+         * @param provider   the target provider name
+         * @param reference  the reference identifying the bean
+         * @param autoDetect whether to auto-detect injectable members on the bean
+         * @throws DiException if the provider is unknown/immutable or registration fails
+         */
         <T> void addBean(String provider, BeanReference<T> reference, boolean autoDetect) throws DiException;
 
         // --- Property Scopes ---

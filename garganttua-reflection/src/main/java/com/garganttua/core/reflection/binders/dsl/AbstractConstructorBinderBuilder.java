@@ -31,6 +31,17 @@ import com.garganttua.core.supply.NullableSupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * Base fluent builder for {@link IConstructorBinder}s. Collects parameter entries (raw values or
+ * supplier builders) per index, resolves the matching constructor via {@link ConstructorResolver}
+ * at build time, and produces a {@link ConstructorBinder} or {@link ContextualConstructorBinder}
+ * depending on whether any parameter is contextual. Requires an {@code IReflectionBuilder}
+ * dependency, falling back to the global {@link IClass#getReflection()} when none is provided.
+ *
+ * @param <Constructed> the type produced by the built binder
+ * @param <Builder>     the concrete builder self-type
+ * @param <Link>        the parent builder type returned by {@code up()}
+ */
 public abstract class AbstractConstructorBinderBuilder<Constructed, Builder extends IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>>, Link>
         extends AbstractAutomaticLinkedDependentBuilder<Builder, Link, IConstructorBinder<Constructed>>
         implements IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>> {
@@ -45,6 +56,11 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
 
     private IReflection reflection;
 
+    /**
+     * @param link         the parent builder returned by {@code up()}
+     * @param objectClass  the class whose constructor is to be bound
+     * @param dependencies caller-supplied build dependencies, augmented with the reflection builder
+     */
     protected AbstractConstructorBinderBuilder(Link link, IClass<Constructed> objectClass,
             Set<DependencySpec> dependencies) {
         super(
@@ -66,6 +82,11 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         this.doPreBuildWithDependency_(dependency);
     }
 
+    /**
+     * Subclass hook invoked for each build dependency after the reflection capture.
+     *
+     * @param dependency the resolved build dependency
+     */
     protected abstract void doPreBuildWithDependency_(Object dependency);
 
     private IReflection effectiveReflection() {
@@ -132,22 +153,42 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return withParam(idx, supplier, acceptNullable);
     }
 
+    /**
+     * Unsupported: constructor parameters cannot be bound by name.
+     *
+     * @throws DslException always
+     */
     @Override
     public Builder withParam(String paramName, Object parameter) throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
+    /**
+     * Unsupported: constructor parameters cannot be bound by name.
+     *
+     * @throws DslException always
+     */
     @Override
     public Builder withParam(String paramName, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
             throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
+    /**
+     * Unsupported: constructor parameters cannot be bound by name.
+     *
+     * @throws DslException always
+     */
     @Override
     public Builder withParam(String paramName, Object parameter, boolean acceptNullable) throws DslException {
         throw new DslException("Parameter name-based binding is not supported for constructors");
     }
 
+    /**
+     * Unsupported: constructor parameters cannot be bound by name.
+     *
+     * @throws DslException always
+     */
     @Override
     public Builder withParam(String paramName, ISupplierBuilder<?, ? extends ISupplier<?>> supplier,
             boolean acceptNullable)
@@ -162,6 +203,12 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         }
     }
 
+    /**
+     * Resolves the constructor matching the configured parameters and builds the binder.
+     *
+     * @return a {@link ContextualConstructorBinder} if any parameter is contextual, otherwise a {@link ConstructorBinder}
+     * @throws DslException if a parameter is unconfigured or no matching constructor is found
+     */
     @Override
     public IConstructorBinder<Constructed> doBuild() throws DslException {
         IReflection reflection = effectiveReflection();
@@ -243,6 +290,14 @@ public abstract class AbstractConstructorBinderBuilder<Constructed, Builder exte
         return sb.toString();
     }
 
+    /**
+     * Builds the supplier for a parameter, wrapping it in a nullable (possibly contextual) supplier.
+     *
+     * @param builder       the parameter supplier builder
+     * @param allowNullable whether {@code null} is an acceptable supplied value
+     * @return the built supplier
+     * @throws DslException if the supplier cannot be built
+     */
     protected static ISupplier<?> createNullableObjectSupplier(ISupplierBuilder<?, ?> builder,
             boolean allowNullable) throws DslException {
         if (builder.isContextual()) {

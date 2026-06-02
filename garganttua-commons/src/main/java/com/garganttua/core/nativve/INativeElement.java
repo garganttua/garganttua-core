@@ -6,7 +6,7 @@ import com.garganttua.core.injection.IBeanFactory;
  * Functional interface for elements that require native image reflection configuration.
  *
  * <p>
- * {@code NativeReflectionElement} is implemented by DI framework elements that need to be
+ * {@code INativeElement} is implemented by DI framework elements that need to be
  * registered in the GraalVM native image reflection configuration. This is essential for
  * components that use reflection at runtime in native images, as GraalVM requires explicit
  * declaration of all reflectively accessed classes, methods, and fields. This interface

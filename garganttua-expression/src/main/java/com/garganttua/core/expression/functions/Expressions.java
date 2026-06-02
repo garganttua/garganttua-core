@@ -10,33 +10,29 @@ import jakarta.annotation.Nullable;
 
 import com.garganttua.core.reflection.annotations.Reflected;
 /**
- * Type converter functions for expression language.
+ * Built-in type-conversion, string and arithmetic functions for the expression language.
  *
  * <p>
- * This class provides static converter methods that transform various input types
- * into {@link ISupplier} instances for use in expression evaluation contexts.
- * All methods are annotated with {@link Expression} to be discoverable by
- * the expression framework.
+ * This class provides static methods that parse or transform input values into the
+ * corresponding Java type (primitives, {@link String}, {@link IClass}). Each method is
+ * annotated with {@link Expression} so it is discovered and registered by the expression
+ * framework under the declared function name.
  * </p>
  *
- * <h2>Supported Conversions</h2>
+ * <h2>Provided Functions</h2>
  * <ul>
- * <li>Primitive types: String, Integer, Long, Double, Float, Boolean, Byte, Short, Character</li>
- * <li>Collection types: List, Set, Collection, Map</li>
- * <li>Array types: Object[], primitive arrays</li>
- * <li>Class types: {@code Class<?>}</li>
+ * <li>Primitive parsers: {@code string}, {@code int}, {@code long}, {@code double},
+ *     {@code float}, {@code boolean}, {@code byte}, {@code short}, {@code char}</li>
+ * <li>Class loading: {@code class} (by FQN or primitive type name)</li>
+ * <li>String: {@code concatenate} (2- and 3-argument overloads)</li>
+ * <li>Arithmetic: {@code increment}, {@code decrement}</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * // Convert string
- * ISupplier<String> strSupplier = TypeConverters.String("hello");
- *
- * // Convert integer
- * ISupplier<Integer> intSupplier = TypeConverters.Integer("42");
- *
- * // Convert list
- * ISupplier<List<String>> listSupplier = TypeConverters.List(Arrays.asList("a", "b", "c"));
+ * String s = Expressions.string("hello");      // "hello"
+ * int i    = Expressions.integer("42");         // 42
+ * IClass<?> c = Expressions.Class("java.lang.String");
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
@@ -66,11 +62,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Integer&gt;.
+     * Parses a string into an {@code int}.
      *
      * @param value the string representation of an integer
-     * @return an ISupplier that supplies the parsed integer value
-     * @throws ExpressionException if value cannot be parsed as integer
+     * @return the parsed integer value
+     * @throws ExpressionException if {@code value} cannot be parsed as an integer
      */
     @Expression(name = "int", description = "Parses a string to an Integer")
     public static int integer(@Nullable String value) {
@@ -85,11 +81,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Long&gt;.
+     * Parses a string into a {@code long}.
      *
      * @param value the string representation of a long
-     * @return an ISupplier that supplies the parsed long value
-     * @throws ExpressionException if value cannot be parsed as long
+     * @return the parsed long value
+     * @throws ExpressionException if {@code value} cannot be parsed as a long
      */
     @Expression(name = "long", description = "Parses a string to a Long")
     public static long longnumber(@Nullable String value) {
@@ -101,11 +97,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Double&gt;.
+     * Parses a string into a {@code double}.
      *
      * @param value the string representation of a double
-     * @return an ISupplier that supplies the parsed double value
-     * @throws ExpressionException if value cannot be parsed as double
+     * @return the parsed double value
+     * @throws ExpressionException if {@code value} cannot be parsed as a double
      */
     @Expression(name = "double", description = "Parses a string to a Double")
     public static double doublenumber(@Nullable String value) {
@@ -117,11 +113,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Float&gt;.
+     * Parses a string into a {@code float}.
      *
      * @param value the string representation of a float
-     * @return an ISupplier that supplies the parsed float value
-     * @throws ExpressionException if value cannot be parsed as float
+     * @return the parsed float value
+     * @throws ExpressionException if {@code value} cannot be parsed as a float
      */
     @Expression(name = "float", description = "Parses a string to a Float")
     public static float floatnumber(@Nullable String value) {
@@ -133,10 +129,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Boolean&gt;.
+     * Parses a string into a {@code boolean}.
      *
-     * @param value the string representation of a boolean ("true" or "false")
-     * @return an ISupplier that supplies the parsed boolean value
+     * @param value the string representation of a boolean; anything other than
+     *              {@code "true"} (case-insensitive) yields {@code false}
+     * @return the parsed boolean value
      */
     @Expression(name = "boolean", description = "Parses a string to a Boolean (true/false)")
     public static boolean booleanValue(@Nullable String value) {
@@ -144,11 +141,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Byte&gt;.
+     * Parses a string into a {@code byte}.
      *
      * @param value the string representation of a byte
-     * @return an ISupplier that supplies the parsed byte value
-     * @throws ExpressionException if value cannot be parsed as byte
+     * @return the parsed byte value
+     * @throws ExpressionException if {@code value} cannot be parsed as a byte
      */
     @Expression(name = "byte", description = "Parses a string to a Byte (-128 to 127)")
     public static byte byteValue(@Nullable String value) {
@@ -160,11 +157,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Short&gt;.
+     * Parses a string into a {@code short}.
      *
      * @param value the string representation of a short
-     * @return an ISupplier that supplies the parsed short value
-     * @throws ExpressionException if value cannot be parsed as short
+     * @return the parsed short value
+     * @throws ExpressionException if {@code value} cannot be parsed as a short
      */
     @Expression(name = "short", description = "Parses a string to a Short")
     public static short shortNumber(@Nullable String value) {
@@ -176,11 +173,11 @@ public class Expressions {
     }
 
     /**
-     * Converts a String representation to an ISupplier&lt;Character&gt;.
+     * Extracts the first character of a string as a {@code char}.
      *
-     * @param value the string representation of a character (first char is used)
-     * @return an ISupplier that supplies the character value
-     * @throws ExpressionException if value is empty
+     * @param value the source string (only the first character is used)
+     * @return the first character of {@code value}
+     * @throws ExpressionException if {@code value} is {@code null} or empty
      */
     @Expression(name = "char", description = "Extracts first character from string as Character")
     public static char character(@Nullable String value) {
@@ -193,12 +190,15 @@ public class Expressions {
     // ========== Class Type Converter ==========
 
     /**
-     * Converts a fully qualified class name to an ISupplier&lt;Class&lt;?&gt;&gt;.
-     * Supports primitive type names (int, boolean, etc.) and fully qualified class names.
+     * Resolves a class by name into an {@link IClass}.
+     *
+     * <p>Accepts primitive type names ({@code int}, {@code boolean}, {@code void}, ...) and
+     * fully qualified class names; a simple unqualified name is also retried under the
+     * {@code java.lang.} package.</p>
      *
      * @param className the fully qualified class name or primitive type name
-     * @return an ISupplier that supplies the Class object
-     * @throws ExpressionException if class cannot be found
+     * @return the {@link IClass} mirror for the resolved type
+     * @throws ExpressionException if {@code className} is {@code null} or cannot be resolved
      */
     @Expression(name = "class", description = "Loads a class by fully qualified name or primitive type")
     public static IClass<?> Class(@Nullable String className) {
@@ -292,6 +292,13 @@ public class Expressions {
 
     // ========== Arithmetic Functions ==========
 
+    /**
+     * Increments a numeric or numeric-string value by one.
+     *
+     * @param value a {@link Number} or a string parseable as an integer
+     * @return the value plus one, as an {@code int}
+     * @throws ExpressionException if {@code value} is null, non-numeric, or an unsupported type
+     */
     @Expression(name = "increment", description = "Increments an integer value by 1")
     public static int increment(@Nullable Object value) {
         if (value instanceof Number n) {
@@ -307,6 +314,13 @@ public class Expressions {
         throw new ExpressionException("Cannot increment value of type: " + (value == null ? "null" : value.getClass().getName()));
     }
 
+    /**
+     * Decrements a numeric or numeric-string value by one.
+     *
+     * @param value a {@link Number} or a string parseable as an integer
+     * @return the value minus one, as an {@code int}
+     * @throws ExpressionException if {@code value} is null, non-numeric, or an unsupported type
+     */
     @Expression(name = "decrement", description = "Decrements an integer value by 1")
     public static int decrement(@Nullable Object value) {
         if (value instanceof Number n) {

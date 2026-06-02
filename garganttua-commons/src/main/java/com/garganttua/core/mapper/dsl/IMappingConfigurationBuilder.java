@@ -22,11 +22,36 @@ import com.garganttua.core.reflection.IClass;
  */
 public interface IMappingConfigurationBuilder extends IBuilder<MappingConfiguration> {
 
+	/**
+	 * Sets the source class to map from.
+	 *
+	 * @param source the source class
+	 * @return this builder for chaining
+	 */
 	IMappingConfigurationBuilder from(IClass<?> source);
 
+	/**
+	 * Sets the destination class to map into.
+	 *
+	 * @param destination the destination class
+	 * @return this builder for chaining
+	 */
 	IMappingConfigurationBuilder to(IClass<?> destination);
 
+	/**
+	 * Starts a new mapping rule for the given source field, returning a nested rule
+	 * builder; call {@link IMappingRuleBuilder#up()} to return to this builder.
+	 *
+	 * @param sourceFieldAddress the address of the source field to map from
+	 * @return the nested rule builder
+	 */
 	IMappingRuleBuilder field(String sourceFieldAddress);
 
+	/**
+	 * Sets the mapping direction.
+	 *
+	 * @param direction the mapping direction
+	 * @return this builder for chaining
+	 */
 	IMappingConfigurationBuilder direction(MappingDirection direction);
 }

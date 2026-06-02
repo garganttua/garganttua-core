@@ -46,7 +46,7 @@ import com.garganttua.core.supply.ISupplier;
  * @param <Built>    the specific supplier type that will be constructed
  * @since 2.0.0-ALPHA01
  * @see IBuilder
- * @see ISupplierBuilder
+ * @see ICommonSupplierBuilder
  * @see ISupplier
  */
 public interface ISupplierBuilder<Supplied, Built extends ISupplier<Supplied>> extends IBuilder<Built> {
@@ -63,6 +63,16 @@ public interface ISupplierBuilder<Supplied, Built extends ISupplier<Supplied>> e
      */
     IClass<Supplied> getSuppliedClass();
 
+    /**
+     * Returns the generic {@link Type} of objects the built supplier will provide.
+     *
+     * <p>
+     * Unlike {@link #getSuppliedClass()}, this preserves parameterized type
+     * information (e.g. {@code List<String>}) when available.
+     * </p>
+     *
+     * @return the {@link Type} representing the type to be supplied
+     */
     Type getSuppliedType();
 
     /**

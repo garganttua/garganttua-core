@@ -14,6 +14,16 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ITypeVariable;
 import com.garganttua.core.reflection.ObjectAddress;
 
+/**
+ * An {@link IMethod} resolved at the end of an {@link ObjectAddress} path.
+ *
+ * <p>Pairs the resolved address with the full {@code methodPath} (the chain of fields
+ * traversed plus the leaf method) and delegates all {@link IMethod} operations to that
+ * leaf method.
+ *
+ * @param address    the address the method was resolved from
+ * @param methodPath the traversed members ending with the resolved {@link IMethod}
+ */
 public record ResolvedMethod(ObjectAddress address, List<Object> methodPath) implements IMethod {
 
     private IMethod method() {

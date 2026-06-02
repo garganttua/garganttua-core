@@ -52,7 +52,10 @@ public class BootstrapSummary {
     }
 
     /**
-     * Sets the startup time.
+     * Sets the measured startup time displayed under the metrics section.
+     *
+     * @param duration the total bootstrap duration
+     * @return this summary for chaining
      */
     public BootstrapSummary startupTime(Duration duration) {
         this.startupTime = duration;
@@ -60,7 +63,10 @@ public class BootstrapSummary {
     }
 
     /**
-     * Sets the number of builders processed.
+     * Sets the number of builders processed during bootstrap.
+     *
+     * @param count the builder count
+     * @return this summary for chaining
      */
     public BootstrapSummary buildersCount(int count) {
         this.buildersCount = count;
@@ -68,7 +74,10 @@ public class BootstrapSummary {
     }
 
     /**
-     * Sets the number of built objects.
+     * Sets the number of objects built during bootstrap.
+     *
+     * @param count the built-object count
+     * @return this summary for chaining
      */
     public BootstrapSummary builtObjectsCount(int count) {
         this.builtObjectsCount = count;
@@ -76,7 +85,10 @@ public class BootstrapSummary {
     }
 
     /**
-     * Sets the application name.
+     * Sets the application name shown in the header and footer.
+     *
+     * @param name the application name
+     * @return this summary for chaining
      */
     public BootstrapSummary applicationName(String name) {
         this.applicationName = name;
@@ -84,7 +96,10 @@ public class BootstrapSummary {
     }
 
     /**
-     * Sets the application version.
+     * Sets the application version shown in the footer.
+     *
+     * @param version the application version
+     * @return this summary for chaining
      */
     public BootstrapSummary applicationVersion(String version) {
         this.applicationVersion = version;
@@ -92,7 +107,12 @@ public class BootstrapSummary {
     }
 
     /**
-     * Adds a summary item.
+     * Adds a summary item under the given category.
+     *
+     * @param category the grouping category
+     * @param name     the item label
+     * @param value    the item value
+     * @return this summary for chaining
      */
     public BootstrapSummary addItem(String category, String name, String value) {
         items.add(new SummaryItem(category, name, value));
@@ -100,7 +120,13 @@ public class BootstrapSummary {
     }
 
     /**
-     * Adds a summary item with an icon.
+     * Adds a summary item with a leading icon glyph.
+     *
+     * @param category the grouping category
+     * @param name     the item label
+     * @param value    the item value
+     * @param icon     the icon glyph rendered before the label
+     * @return this summary for chaining
      */
     public BootstrapSummary addItem(String category, String name, String value, String icon) {
         items.add(new SummaryItem(category, name, value, icon));
@@ -108,7 +134,9 @@ public class BootstrapSummary {
     }
 
     /**
-     * Prints the summary to the specified output stream.
+     * Prints the formatted summary to the specified output stream.
+     *
+     * @param out the destination stream
      */
     public void print(PrintStream out) {
         String line = "─".repeat(70);

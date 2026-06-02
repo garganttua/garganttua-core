@@ -258,5 +258,6 @@
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.supply.ISupplier
  * @see com.garganttua.core.supply.IContextualSupplier
+ * @see com.garganttua.core.supply.Supplier
  */
 package com.garganttua.core.supply;

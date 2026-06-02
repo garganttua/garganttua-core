@@ -8,11 +8,21 @@ import java.util.Optional;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationSource;
 
+/**
+ * {@link IConfigurationSource} backed by an in-memory string, read as UTF-8 with an
+ * explicit format hint.
+ */
 public class StringConfigurationSource implements IConfigurationSource {
 
     private final String content;
     private final String formatHint;
 
+    /**
+     * Creates a source over the given inline content.
+     *
+     * @param content    the configuration content
+     * @param formatHint the format hint (e.g. {@code "json"}, {@code "yaml"})
+     */
     public StringConfigurationSource(String content, String formatHint) {
         this.content = content;
         this.formatHint = formatHint;

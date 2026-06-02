@@ -3,6 +3,14 @@ package com.garganttua.core.reflection;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
+/**
+ * Discovers classes and methods carrying a given annotation, optionally scoped
+ * to a package. Pluggable providers (classpath scanning at runtime, or
+ * compile-time indices for AOT) implement this contract and are prioritized by
+ * the {@link IReflection} facade.
+ *
+ * @since 2.0.0-ALPHA01
+ */
 public interface IAnnotationScanner {
 
 	// --- IClass<>-based methods (new API for AOT migration) ---

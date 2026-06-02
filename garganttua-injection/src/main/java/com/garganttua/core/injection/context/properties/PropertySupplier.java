@@ -11,6 +11,12 @@ import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Lazy {@link IPropertySupplier} that resolves a property from the active
+ * {@link InjectionContext} on each {@link #supply()} call, optionally scoped to a named provider.
+ *
+ * @param <Property> the type of the property value supplied
+ */
 public class PropertySupplier<Property> implements IPropertySupplier<Property> {
     private static final Logger log = Logger.getLogger(PropertySupplier.class);
 
@@ -18,6 +24,13 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
     private Optional<String> provider;
     private IClass<Property> type;
 
+    /**
+     * Creates a property supplier.
+     *
+     * @param provider the optional provider scope; must not be {@code null} (may be empty)
+     * @param key      the property key; must not be {@code null}
+     * @param type     the property value type; must not be {@code null}
+     */
     public PropertySupplier(Optional<String> provider, String key, IClass<Property> type) {
         log.trace("Entering PropertySupplier constructor with provider: {}, key: {}, type: {}", provider, key, type);
         this.key = Objects.requireNonNull(key, "Key cannot be null");
@@ -27,6 +40,12 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
         log.trace("Exiting PropertySupplier constructor");
     }
 
+    /**
+     * Resolves the property value from the active injection context.
+     *
+     * @return the property value, or {@link Optional#empty()} if not found
+     * @throws SupplyException if resolution fails
+     */
     @Override
     public Optional<Property> supply() throws SupplyException {
         log.trace("Entering supply for key: '{}' with provider: {}", key, provider);
@@ -51,12 +70,14 @@ public class PropertySupplier<Property> implements IPropertySupplier<Property> {
         }
     }
 
+    /** {@return the reflective {@link Type} of the property value} */
     @Override
     public Type getSuppliedType() {
         log.trace("Returning supplied type: {}", type);
         return this.type.getType();
     }
 
+    /** {@return the {@link IClass} of the property value} */
     @Override
     public IClass<Property> getSuppliedClass() {
         return this.type;

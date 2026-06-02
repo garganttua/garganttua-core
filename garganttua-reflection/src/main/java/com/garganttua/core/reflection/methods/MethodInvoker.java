@@ -22,6 +22,17 @@ import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Invokes a resolved method against a target object, traversing any intermediate
+ * field path (including collections, arrays and maps) encoded in the method's
+ * {@link ObjectAddress}.
+ *
+ * <p>As an {@link ISupplier}, it can also be evaluated lazily as a no-argument
+ * static invocation producing an {@link IMethodReturn}.
+ *
+ * @param <T> the owner (declaring) type the method is invoked on
+ * @param <R> the method's return type
+ */
 public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
     private static final Logger log = Logger.getLogger(MethodInvoker.class);
 
@@ -32,10 +43,23 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 	private boolean statix;
 	private boolean force;
 
+	/**
+	 * Creates an invoker for {@code method} without forcing access on inaccessible members.
+	 *
+	 * @param method the resolved method to invoke
+	 * @throws ReflectionException if the method metadata cannot be initialized
+	 */
 	public MethodInvoker(ResolvedMethod method) throws ReflectionException {
 		this(method, false);
 	}
 
+	/**
+	 * Creates an invoker for {@code method}.
+	 *
+	 * @param method the resolved method to invoke
+	 * @param force  whether to force access even for non-public members
+	 * @throws ReflectionException if the method metadata cannot be initialized
+	 */
 	public MethodInvoker(ResolvedMethod method, boolean force) throws ReflectionException {
 		Objects.requireNonNull(method, "Resolved method cannot be null");
 		log.trace("Creating ObjectMethodInvoker for resolved method={}, force={}", method, force);
@@ -49,6 +73,17 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 		log.debug("ObjectMethodInvoker initialized for ownerType={}, address={}, force={}", ownerType.getName(), address, force);
 	}
 
+	/**
+	 * Invokes the resolved method on {@code object}, walking the field path when the
+	 * method lives on a nested member.
+	 *
+	 * @param object the target instance, or {@code null} for a static method
+	 * @param args   the arguments passed to the leaf method
+	 * @return the invocation result, possibly wrapping multiple values when the path
+	 *         traverses a collection, array or map
+	 * @throws ReflectionException if {@code object} is null for an instance method, is
+	 *         of the wrong type, the path is inconsistent, or an intermediate field is null
+	 */
 	public IMethodReturn<R> invoke(Object object, Object... args) throws ReflectionException {
 		log.trace("invoke entry: object={}, ownerType={}, address={}, args count={}", object, this.ownerType,
 				this.address, args != null ? args.length : 0);

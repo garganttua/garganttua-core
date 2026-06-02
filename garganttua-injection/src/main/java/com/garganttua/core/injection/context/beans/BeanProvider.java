@@ -29,6 +29,11 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.utils.CopyException;
 
+/**
+ * {@link IBeanProvider} backed by a list of {@link IBeanFactory} instances. Resolves
+ * beans by type or {@link BeanReference} query, performs dependency-cycle detection at
+ * init time, and optionally supports runtime bean registration when {@code mutable}.
+ */
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
     private static final Logger log = Logger.getLogger(BeanProvider.class);
 
@@ -37,27 +42,53 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 	private boolean mutable = true;
 	private IInjectableElementResolverBuilder resolverBuilder = null;
 
+	/**
+	 * Builds an immutable provider over the supplied factories.
+	 */
 	public BeanProvider(List<IBeanFactory<?>> beanFactories) {
 		this(beanFactories, Optional.empty(), false);
 	}
 
+	/**
+	 * Builds a provider over the supplied factories.
+	 *
+	 * @param mutable whether runtime bean registration is allowed
+	 */
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, boolean mutable) {
 		this(beanFactories, Optional.empty(), mutable);
 	}
 
+	/**
+	 * Builds an immutable provider that uses the given resolver builder for beans
+	 * registered at runtime.
+	 */
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, IInjectableElementResolverBuilder resolverBuilder) {
 		this(beanFactories, resolverBuilder, false);
 	}
 
+	/**
+	 * Builds an immutable provider, accepting an optional resolver builder.
+	 */
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, Optional<IInjectableElementResolverBuilder> resolverBuilder) {
 		this(beanFactories, resolverBuilder.orElse(null), false);
 	}
 
+	/**
+	 * Builds a provider, accepting an optional resolver builder.
+	 *
+	 * @param mutable whether runtime bean registration is allowed
+	 */
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, Optional<IInjectableElementResolverBuilder> resolverBuilder,
 			boolean mutable) {
 		this(beanFactories, resolverBuilder.orElse(null), mutable);
 	}
 
+	/**
+	 * Builds a provider over the supplied factories.
+	 *
+	 * @param resolverBuilder resolver builder used to bind beans added at runtime, may be {@code null}
+	 * @param mutable whether runtime bean registration is allowed
+	 */
 	public BeanProvider(List<IBeanFactory<?>> beanFactories, IInjectableElementResolverBuilder resolverBuilder, boolean mutable) {
 		log.trace("Entering BeanProvider constructor with beanFactories: {}", beanFactories);
 		this.mutable = mutable;
@@ -102,7 +133,7 @@ public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
 
 	@Override
 	public boolean isMutable() {
-		log.trace("Checking if BeanProvider is mutable: returning false");
+		log.trace("Checking if BeanProvider is mutable: {}", this.mutable);
 		return this.mutable;
 	}
 

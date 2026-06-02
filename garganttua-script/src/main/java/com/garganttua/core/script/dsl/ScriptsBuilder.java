@@ -79,6 +79,9 @@ public class ScriptsBuilder
         log.trace("ScriptsBuilder created");
     }
 
+    /**
+     * @return a new, unconfigured {@link ScriptsBuilder}
+     */
     public static IScriptsBuilder builder() {
         return new ScriptsBuilder();
     }

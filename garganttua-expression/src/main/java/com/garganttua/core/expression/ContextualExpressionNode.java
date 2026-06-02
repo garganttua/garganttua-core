@@ -11,6 +11,17 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Contextual expression node that evaluates an {@link IContextualEvaluate} function against an
+ * {@link IExpressionContext}, producing an {@link IContextualSupplier}.
+ *
+ * <p>Child parameters that are themselves {@link IExpressionNode}s are evaluated eagerly, unless
+ * marked lazy, in which case they are wrapped in an on-demand {@link ISupplier}. When the declared
+ * return type is {@code Object}, the supplier's actual return type is resolved dynamically from the
+ * first non-null produced value.
+ *
+ * @param <R> the type produced by this node
+ */
 public class ContextualExpressionNode<R>
         implements IContextualExpressionNode<R, IContextualSupplier<R, IExpressionContext>> {
 
@@ -27,6 +38,13 @@ public class ContextualExpressionNode<R>
      */
     private List<Boolean> lazyParameters;
 
+    /**
+     * Creates a parameterless contextual expression node.
+     *
+     * @param name         the node name
+     * @param evaluate     the evaluation function (must not be {@code null})
+     * @param returnedType the declared return type
+     */
     public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, IClass<R> returnedType) {
         this.returnedType = returnedType;
         this.params = List.of();
@@ -34,6 +52,14 @@ public class ContextualExpressionNode<R>
         this.evaluate = Objects.requireNonNull(evaluate, "Evaluate function cannot be null");
     }
 
+    /**
+     * Creates a contextual expression node with eager parameters (no lazy markers).
+     *
+     * @param name         the node name
+     * @param evaluate     the evaluation function (must not be {@code null})
+     * @param returnedType the declared return type
+     * @param params       the node parameters
+     */
     public ContextualExpressionNode(String name, IContextualEvaluate<R> evaluate, IClass<R> returnedType,
             List<Object> params) {
         this(name, evaluate, returnedType, params, null);

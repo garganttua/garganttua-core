@@ -39,6 +39,16 @@ import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.StatementBlock;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Mutable, single-threaded {@link IScript} implementation: loads {@code .gs}
+ * source, compiles it into an immutable {@link IRuntime} via a fresh
+ * {@link IRuntimesBuilder} per {@link #compile()}, and executes it while
+ * tracking the last run's variables, output, exit code and aborting exception.
+ *
+ * <p>Observable as {@code scriptcontext:compile} and
+ * {@code scriptcontext:execute} events. For concurrent reuse, freeze a compiled
+ * instance into a thread-safe handle via {@link #toCompiled()}.
+ */
 public class ScriptContext implements IScript, IObservable {
 
     private final IExpressionContext expressionContext;
@@ -319,18 +329,38 @@ public class ScriptContext implements IScript, IObservable {
         return this.aborted;
     }
 
+    /**
+     * @return an immutable snapshot of all variables from the last execution
+     */
     public Map<String, Object> getAllVariables() {
         return Map.copyOf(this.lastVariables);
     }
 
+    /**
+     * Creates an independent child script sharing this context's expression
+     * context, runtimes-builder factory and class-loader manager.
+     *
+     * @return a fresh {@link ScriptContext}
+     */
     public ScriptContext createChildScript() {
         return new ScriptContext(this.expressionContext, this.runtimesBuilderFactory, this.classLoaderManager);
     }
 
+    /**
+     * Registers a script under {@code name} so {@code include()} / {@code call()}
+     * can later resolve it via {@link #getIncludedScript(String)}.
+     *
+     * @param name   logical name of the included script
+     * @param script the compiled script to associate
+     */
     public void registerIncludedScript(String name, IScript script) {
         this.includedScripts.put(name, script);
     }
 
+    /**
+     * @param name logical name of a previously included script
+     * @return the registered script, or {@code null} if none is registered under {@code name}
+     */
     public IScript getIncludedScript(String name) {
         return this.includedScripts.get(name);
     }

@@ -28,6 +28,15 @@ public class FunctionDefNode implements IScriptNode {
     private final int line;
     private final String sourceText;
 
+    /**
+     * Creates a function definition node.
+     *
+     * @param functionName   the name the function is bound to
+     * @param parameterNames  the ordered parameter names
+     * @param bodyBlockName   the name of the pre-compiled {@link StatementBlock} holding the body
+     * @param line            the source line of the definition
+     * @param sourceText      the original source text
+     */
     public FunctionDefNode(String functionName, List<String> parameterNames,
                            String bodyBlockName, int line, String sourceText) {
         this.functionName = functionName;
@@ -37,10 +46,12 @@ public class FunctionDefNode implements IScriptNode {
         this.sourceText = sourceText;
     }
 
+    /** Returns the ordered parameter names of the function. */
     public List<String> parameterNames() {
         return this.parameterNames;
     }
 
+    /** Returns the name of the pre-compiled {@link StatementBlock} holding the function body. */
     public String bodyBlockName() {
         return this.bodyBlockName;
     }

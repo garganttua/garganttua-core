@@ -16,6 +16,13 @@ import com.garganttua.core.workflow.header.ScriptHeader.HeaderOutput;
 import com.garganttua.core.workflow.header.ScriptHeaderParser;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for a single {@link WorkflowScript} within a {@link WorkflowStageBuilder}.
+ *
+ * <p>On {@link #build()} the script's {@code #@workflow} header (if any) is parsed and
+ * its declared inputs/outputs are merged in as defaults — explicit {@code .input()} /
+ * {@code .output()} calls take precedence over header-derived entries.
+ */
 @Reflected
 public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
     private static final Logger log = Logger.getLogger(WorkflowScriptBuilder.class);
@@ -35,6 +42,11 @@ public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
     private final Map<String, String> outputs = new HashMap<>();
     private final Map<Integer, CodeAction> codeActions = new HashMap<>();
 
+    /**
+     * Creates a script builder backed by the given source (string, file, path, stream, or reader).
+     *
+     * @param source the script source content provider
+     */
     public WorkflowScriptBuilder(ScriptSource source) {
         this.source = source;
     }

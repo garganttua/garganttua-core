@@ -86,41 +86,60 @@ public class Workflow implements IWorkflow, IObservable {
         this.timingConfig = timingConfig != null ? timingConfig : WorkflowTimingConfig.disabled();
     }
 
+    /** Registers an observer to receive this workflow's observability events. */
     @Override
     public void addObserver(IObserver<ObservableEvent> observer) {
         this.observers.addObserver(observer);
     }
 
+    /** Detaches a previously registered observer. */
     @Override
     public void removeObserver(IObserver<ObservableEvent> observer) {
         this.observers.removeObserver(observer);
     }
 
+    /** {@return the workflow name} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@return the Garganttua Script source generated from this workflow's stages} */
     @Override
     public String getGeneratedScript() {
         return generatedScript;
     }
 
+    /** {@return {@code true} when this workflow holds a pre-compiled script reused across executions} */
     @Override
     public boolean isPrecompiled() {
         return this.precompiled != null;
     }
 
+    /** Executes the workflow with empty input and no execution options. */
     @Override
     public WorkflowResult execute() {
         return execute(WorkflowInput.empty(), WorkflowExecutionOptions.none());
     }
 
+    /** Executes the workflow with the given input and no execution options. */
     @Override
     public WorkflowResult execute(WorkflowInput input) {
         return execute(input, WorkflowExecutionOptions.none());
     }
 
+    /**
+     * Executes the workflow with the given input and options.
+     *
+     * <p>When {@code options} request stage filtering the script is regenerated for
+     * the selected stages; otherwise the cached pre-generated (or pre-compiled)
+     * script is run. Execution never throws — failures are returned as a
+     * {@link WorkflowResult#failure} carrying a {@link WorkflowException}.
+     *
+     * @param input   the workflow input (payload and named parameters)
+     * @param options execution options (stage filtering, caller-pinned execution id)
+     * @return the workflow result, success or failure
+     */
     @Override
     public WorkflowResult execute(WorkflowInput input, WorkflowExecutionOptions options) {
         // Reuse a caller-pinned execution id (e.g. the api's EXECUTION_UUID) so
@@ -275,11 +294,13 @@ public class Workflow implements IWorkflow, IObservable {
                 stop);
     }
 
+    /** {@return a human-readable ANSI-rendered diagram of this workflow's structure} */
     @Override
     public String describeWorkflow() {
         return renderer.render(name, stages, presetVariables, inlineAll);
     }
 
+    /** {@return an immutable {@link WorkflowDescriptor} snapshot of this workflow's stages and scripts} */
     @Override
     public WorkflowDescriptor getDescriptor() {
         List<WorkflowDescriptor.StageDescriptor> stageDescriptors = stages.stream()

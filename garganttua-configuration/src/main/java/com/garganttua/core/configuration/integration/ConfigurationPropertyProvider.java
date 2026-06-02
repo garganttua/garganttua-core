@@ -14,12 +14,21 @@ import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 
+/**
+ * Adapts a parsed configuration tree as an immutable {@link IPropertyProvider}, exposing
+ * leaf values under flattened dot-notation keys (with {@code [index]} suffixes for arrays).
+ */
 public class ConfigurationPropertyProvider implements IPropertyProvider {
     private static final Logger log = Logger.getLogger(ConfigurationPropertyProvider.class);
 
     private final Map<String, String> properties;
     private LifecycleStatus status = LifecycleStatus.NEW;
 
+    /**
+     * Flattens the given configuration tree into dot-notation properties.
+     *
+     * @param root the root configuration node to flatten
+     */
     public ConfigurationPropertyProvider(IConfigurationNode root) {
         this.properties = new LinkedHashMap<>();
         flatten(root, "");
@@ -46,6 +55,17 @@ public class ConfigurationPropertyProvider implements IPropertyProvider {
         }
     }
 
+    /**
+     * Resolves a property by key, converting the stored string to the requested type.
+     * Supports {@code String} and the boxed/primitive forms of {@code Integer}, {@code Long},
+     * {@code Double}, and {@code Boolean}.
+     *
+     * @param key  the property key
+     * @param type the target type
+     * @param <T>  the target type parameter
+     * @return the converted value, or empty if the key is absent
+     * @throws DiException if the requested type is not supported
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<T> getProperty(String key, IClass<T> type) throws DiException {
@@ -72,6 +92,11 @@ public class ConfigurationPropertyProvider implements IPropertyProvider {
         throw new DiException("Unsupported property type: " + type.getName());
     }
 
+    /**
+     * Unsupported: this provider is immutable.
+     *
+     * @throws DiException always, since the provider is read-only
+     */
     @Override
     public void setProperty(String key, Object value) throws DiException {
         throw new DiException("ConfigurationPropertyProvider is immutable");

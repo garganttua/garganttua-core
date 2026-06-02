@@ -15,6 +15,12 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class RuntimesBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * Creates a new {@link RuntimesBuilder} for bootstrap auto-detection.
+     *
+     * @return a fresh runtimes builder
+     * @throws DslException if the builder cannot be created
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return RuntimesBuilder.builder();

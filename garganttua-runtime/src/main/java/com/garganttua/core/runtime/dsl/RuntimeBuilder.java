@@ -45,6 +45,18 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.OrderedMapPosition;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Fluent builder that assembles a single {@link IRuntime} from declared steps and
+ * preset variables.
+ *
+ * <p>Supports both programmatic construction (via {@link #step} and
+ * {@link #variable}) and annotation-driven auto-detection from a runtime
+ * definition object. Resolves an {@link IInjectionContextBuilder} at build time
+ * and optionally attaches the built runtime to an observability binding.</p>
+ *
+ * @param <InputType>  the runtime input type
+ * @param <OutputType> the runtime output type
+ */
 @Reflected
 public class RuntimeBuilder<InputType, OutputType>
                 extends
@@ -68,6 +80,14 @@ public class RuntimeBuilder<InputType, OutputType>
          */
         private IInjectionContext injectionContext;
 
+        /**
+         * Creates a runtime builder for programmatic step/variable definition.
+         *
+         * @param runtimesBuilder the parent builder this runtime belongs to
+         * @param name            the runtime name
+         * @param inputType       the runtime input type
+         * @param outputType      the runtime output type
+         */
         public RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
                         Class<OutputType> outputType) {
                 super(Objects.requireNonNull(runtimesBuilder, "RuntimesBuilder cannot be null"),
@@ -86,6 +106,16 @@ public class RuntimeBuilder<InputType, OutputType>
                 log.debug("{} RuntimeBuilder initialized", logLineHeader());
         }
 
+        /**
+         * Creates a runtime builder seeded with a runtime definition object for
+         * annotation-driven auto-detection of its steps and variables.
+         *
+         * @param runtimesBuilder         the parent builder this runtime belongs to
+         * @param name                    the runtime name
+         * @param inputType               the runtime input type
+         * @param outputType              the runtime output type
+         * @param objectForAutoDetection  the annotated runtime definition instance to scan
+         */
         protected RuntimeBuilder(RuntimesBuilder runtimesBuilder, String name, Class<InputType> inputType,
                         Class<OutputType> outputType, Object objectForAutoDetection) {
                 this(runtimesBuilder, name, inputType, outputType);
@@ -97,6 +127,14 @@ public class RuntimeBuilder<InputType, OutputType>
                                 objectForAutoDetection.getClass().getName());
         }
 
+        /**
+         * Declares a step appended after the existing steps.
+         *
+         * @param stepName       the unique step name
+         * @param objectSupplier supplier of the object whose operation method the step invokes
+         * @param returnType     the step's execution return type
+         * @return the step builder for further configuration
+         */
         @Override
         public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
                         String stepName,
@@ -115,6 +153,15 @@ public class RuntimeBuilder<InputType, OutputType>
                 return stepBuilder;
         }
 
+        /**
+         * Declares a step inserted at the given position relative to existing steps.
+         *
+         * @param stepName       the unique step name
+         * @param position       where to insert the step in the ordered step map
+         * @param objectSupplier supplier of the object whose operation method the step invokes
+         * @param returnType     the step's execution return type
+         * @return the step builder for further configuration
+         */
         @Override
         public <StepObjectType, ExecutionReturn> IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> step(
                         String stepName,
@@ -135,6 +182,13 @@ public class RuntimeBuilder<InputType, OutputType>
                 return stepBuilder;
         }
 
+        /**
+         * Registers an already-built step under the given name.
+         *
+         * @param name the unique step name
+         * @param step the pre-built step instance
+         * @return this builder for chaining
+         */
         @Override
         public IRuntimeBuilder<InputType, OutputType> step(String name, IRuntimeStep<?, InputType, OutputType> step) {
                 Objects.requireNonNull(name, "Step name cannot be null");
@@ -209,7 +263,7 @@ public class RuntimeBuilder<InputType, OutputType>
                                 IClass.getClass(this.objectForAutoDetection.getClass()), Variables.class, (Class<?>) mapType.getRawType());
 
                 if (address == null) {
-                        log.warn("{} No preset variables found", logLineHeader());
+                        log.debug("{} No preset variables found", logLineHeader());
                         return;
                 }
 
@@ -297,6 +351,14 @@ public class RuntimeBuilder<InputType, OutputType>
                 return new ParameterizedTypeImpl(List.class, new Type[] { Class.class });
         }
 
+        /**
+         * Receives a build dependency, capturing the injection context, reflection
+         * and observability builders when present, then delegates to the superclass.
+         *
+         * @param dependency the dependency builder being provided
+         * @return this builder for chaining
+         * @throws DslException if the superclass rejects the dependency
+         */
         @Override
         public IRuntimeBuilder<InputType, OutputType> provide(IObservableBuilder<?, ?> dependency) throws DslException {
                 if (dependency instanceof IInjectionContextBuilder injCtxBuilder) {
@@ -311,6 +373,13 @@ public class RuntimeBuilder<InputType, OutputType>
                 return super.provide(dependency);
         }
 
+        /**
+         * Registers a preset runtime variable backed by a supplier builder.
+         *
+         * @param name  the variable name
+         * @param value the supplier builder producing the variable value
+         * @return this builder for chaining
+         */
         @Override
         public IRuntimeBuilder<InputType, OutputType> variable(String name,
                         ISupplierBuilder<?, ? extends ISupplier<?>> value) {
@@ -321,6 +390,13 @@ public class RuntimeBuilder<InputType, OutputType>
                 return this;
         }
 
+        /**
+         * Registers a preset runtime variable with a fixed value.
+         *
+         * @param name  the variable name
+         * @param value the fixed variable value
+         * @return this builder for chaining
+         */
         @Override
         public IRuntimeBuilder<InputType, OutputType> variable(String name, Object value) {
                 log.trace("{} Entering variable registration for [{}]", logLineHeader(), name);
@@ -330,6 +406,12 @@ public class RuntimeBuilder<InputType, OutputType>
                 return this;
         }
 
+        /**
+         * Sets the runtime definition object used as the source for auto-detection.
+         *
+         * @param runtimeDefinitionObject the annotated runtime definition instance to scan
+         * @return this builder for chaining
+         */
         public IRuntimeBuilder<InputType, OutputType> setObjectForAutoDetection(
                         Object runtimeDefinitionObject) {
                 this.objectForAutoDetection = Objects.requireNonNull(runtimeDefinitionObject,

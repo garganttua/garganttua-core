@@ -33,6 +33,29 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Fluent builder that assembles an {@link IMutexManager} from factories collected
+ * across multiple sources: manual registrations, the injection context, and
+ * package reflection scanning.
+ *
+ * <p>
+ * Sources are merged through a {@link MultiSourceCollector} with a fixed precedence
+ * (manual &gt; context &gt; reflection). On build, factories discovered outside the
+ * injection context are registered as beans and the resulting manager is itself
+ * exposed as an {@link IMutexManager} bean. The builder also wires a
+ * {@link MutexResolver} into the injection context for {@code @Mutex}-annotated
+ * elements.
+ * </p>
+ *
+ * <p>
+ * Discoverable via the bootstrap SPI ({@link MutexManagerBuilderFactory}); declared
+ * {@link Bootstrap @Bootstrap} so {@code Bootstrap.autoDetect(true)} picks it up.
+ * </p>
+ *
+ * @since 2.0.0-ALPHA01
+ * @see IMutexManagerBuilder
+ * @see MutexManager
+ */
 @Bootstrap
 @Reflected
 public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMutexManagerBuilder, IMutexManager>

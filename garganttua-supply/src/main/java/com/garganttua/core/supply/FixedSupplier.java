@@ -7,12 +7,24 @@ import java.util.Optional;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Supplier that always returns the same pre-supplied object.
+ *
+ * @param <Supplied> the type of object this supplier provides
+ * @see ISupplier
+ */
 public class FixedSupplier<Supplied> implements ISupplier<Supplied> {
     private static final Logger log = Logger.getLogger(FixedSupplier.class);
 
     private Supplied object;
     private IClass<Supplied> suppliedClass;
 
+    /**
+     * Creates a fixed supplier wrapping the given object.
+     *
+     * @param object        the constant object to supply; must not be {@code null}
+     * @param suppliedClass the {@link IClass} of the supplied object
+     */
     public FixedSupplier(Supplied object, IClass<Supplied> suppliedClass) {
         log.trace("Entering FixedSupplier constructor with object type: {}", object.getClass().getSimpleName());
         this.object = Objects.requireNonNull(object, "Fixed object cannot be null");

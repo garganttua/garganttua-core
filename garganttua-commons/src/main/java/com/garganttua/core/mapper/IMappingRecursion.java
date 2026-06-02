@@ -19,5 +19,15 @@ import com.garganttua.core.reflection.IClass;
  */
 public interface IMappingRecursion {
 
+	/**
+	 * Maps {@code source} to a new instance of {@code destinationClass}, reusing the
+	 * call-scoped state of the enclosing mapping invocation (cycle-detection set, etc.).
+	 *
+	 * @param <destination>    the destination type
+	 * @param source           the object to map from
+	 * @param destinationClass the target type to map into
+	 * @return the mapped destination instance
+	 * @throws MapperException if the nested mapping fails
+	 */
 	<destination> destination map(Object source, IClass<destination> destinationClass) throws MapperException;
 }

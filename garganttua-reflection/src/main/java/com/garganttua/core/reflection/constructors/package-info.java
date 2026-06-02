@@ -8,85 +8,37 @@
  * automatic accessibility handling, and support for complex object creation scenarios.
  * </p>
  *
- * <h2>Usage Example: Constructor Invocation</h2>
+ * <h2>Usage Example: Constructor Resolution and Invocation</h2>
  * <pre>{@code
- * public class User {
- *     private String name;
- *     private int age;
- *     private String email;
+ * IClass<User> userType = IClass.getClass(User.class);
  *
- *     public User(String name, int age) {
- *         this.name = name;
- *         this.age = age;
- *     }
+ * // Resolve a constructor by parameter types, then invoke it
+ * ResolvedConstructor<User> resolved = ConstructorResolver.constructorByParameterTypes(
+ *     userType, provider, IClass.getClass(String.class), IClass.getClass(int.class));
  *
- *     private User(String name, int age, String email) {
- *         this.name = name;
- *         this.age = age;
- *         this.email = email;
- *     }
- * }
- *
- * // Invoke public constructor
- * ConstructorAccessor<User> publicConstructor =
- *     new ConstructorAccessor<>(User.class, String.class, int.class);
- *
- * publicConstructor.withParameter(0, "Alice");
- * publicConstructor.withParameter(1, 30);
- * User user1 = publicConstructor.newInstance();
- *
- * // Invoke private constructor
- * ConstructorAccessor<User> privateConstructor =
- *     new ConstructorAccessor<>(User.class, String.class, int.class, String.class);
- *
- * privateConstructor.withParameter(0, "Bob");
- * privateConstructor.withParameter(1, 25);
- * privateConstructor.withParameter(2, "bob@example.com");
- * User user2 = privateConstructor.newInstance();
+ * ConstructorInvoker<User> invoker = new ConstructorInvoker<>(resolved);
+ * IMethodReturn<User> result = invoker.newInstance("Alice", 30);
+ * User user = result.single();
  * }</pre>
  *
- * <h2>Usage Example: Constructor Queries</h2>
+ * <h2>Usage Example: Constructor Resolution Variants</h2>
  * <pre>{@code
- * // Find all constructors
- * List<Constructor<?>> constructors = ConstructorQuery.findAllConstructors(
- *     User.class
- * );
+ * // Resolve the no-arg constructor
+ * ResolvedConstructor<User> def = ConstructorResolver.defaultConstructor(userType, provider);
  *
- * // Find constructor with @Inject annotation
- * Constructor<?> injectConstructor = ConstructorQuery.findInjectableConstructor(
- *     UserService.class
- * );
+ * // Resolve the constructor annotated with a given annotation
+ * ResolvedConstructor<User> injected = ConstructorResolver.constructorByAnnotation(
+ *     userType, provider, IClass.getClass(Inject.class));
  *
- * // Find constructor by parameter types
- * Constructor<User> constructor = ConstructorQuery.findConstructor(
- *     User.class,
- *     String.class, int.class
- * );
+ * // Enumerate all declared constructors
+ * List<ResolvedConstructor<User>> all = ConstructorResolver.allConstructors(userType, provider);
  * }</pre>
  *
- * <h2>Usage Example: Constructor Binding</h2>
+ * <h2>Usage Example: Forcing Access to a Private Constructor</h2>
  * <pre>{@code
- * // Create reusable constructor binder
- * ConstructorBinder<DataSource> binder =
- *     new ConstructorBinder<>(HikariDataSource.class);
- *
- * // Bind parameters
- * binder.bindParameter(0, "jdbc:mysql://localhost:3306/mydb");
- * binder.bindParameter(1, "admin");
- * binder.bindParameter(2, "password");
- *
- * // Create multiple instances with same parameters
- * DataSource ds1 = binder.newInstance();
- * DataSource ds2 = binder.newInstance();
- * }</pre>
- *
- * <h2>Usage Example: Default Constructor</h2>
- * <pre>{@code
- * // Invoke default (no-arg) constructor
- * ConstructorAccessor<User> defaultConstructor =
- *     new ConstructorAccessor<>(User.class);
- *
- * User user = defaultConstructor.newInstance();
+ * // The second argument forces accessibility for non-public constructors
+ * ConstructorInvoker<User> invoker = new ConstructorInvoker<>(resolved, true);
+ * User user = invoker.newInstance("Bob", 25, "bob@example.com").single();
  * }</pre>
  *
  * <h2>Features</h2>

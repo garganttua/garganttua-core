@@ -12,6 +12,10 @@ import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ReflectionException;
 
+/**
+ * Resolves {@link IConstructor}s of a type by various criteria (default, parameter types, annotation)
+ * and wraps the result in a {@link ResolvedConstructor}. Stateless utility class.
+ */
 public class ConstructorResolver {
     private static final Logger log = Logger.getLogger(ConstructorResolver.class);
 
@@ -19,6 +23,15 @@ public class ConstructorResolver {
     // Provider-based API (preferred)
     // ========================================================================
 
+    /**
+     * Resolves the no-argument constructor of {@code ownerType}.
+     *
+     * @param <T>       the owner type
+     * @param ownerType the class whose default constructor is sought
+     * @param provider  the reflection provider (must not be {@code null})
+     * @return the resolved default constructor
+     * @throws ReflectionException if no no-arg constructor exists
+     */
     public static <T> ResolvedConstructor<T> defaultConstructor(IClass<T> ownerType,
             IReflectionProvider provider) throws ReflectionException {
         log.debug("[defaultConstructor] Resolving default constructor for {}", ownerType.getName());
@@ -37,6 +50,17 @@ public class ConstructorResolver {
         }
     }
 
+    /**
+     * Resolves the single constructor of {@code ownerType} assignable from the given parameter types.
+     * Falls back to {@link #defaultConstructor(IClass, IReflectionProvider)} when no types are supplied.
+     *
+     * @param <T>            the owner type
+     * @param ownerType      the class whose constructor is sought
+     * @param provider       the reflection provider (must not be {@code null})
+     * @param parameterTypes the parameter types to match
+     * @return the resolved constructor
+     * @throws ReflectionException if no constructor matches or more than one matches ambiguously
+     */
     public static <T> ResolvedConstructor<T> constructorByParameterTypes(IClass<T> ownerType,
             IReflectionProvider provider,
             IClass<?>... parameterTypes) throws ReflectionException {
@@ -78,6 +102,16 @@ public class ConstructorResolver {
         return new ResolvedConstructor<>(matches.get(0));
     }
 
+    /**
+     * Resolves the single constructor of {@code ownerType} bearing the given annotation.
+     *
+     * @param <T>        the owner type
+     * @param ownerType  the class whose constructor is sought
+     * @param provider   the reflection provider (must not be {@code null})
+     * @param annotation the annotation that must be present on the constructor
+     * @return the resolved annotated constructor
+     * @throws ReflectionException if no annotated constructor exists or more than one does
+     */
     @SuppressWarnings("unchecked")
     public static <T> ResolvedConstructor<T> constructorByAnnotation(IClass<T> ownerType,
             IReflectionProvider provider,
@@ -117,6 +151,15 @@ public class ConstructorResolver {
         return new ResolvedConstructor<>(matches.get(0));
     }
 
+    /**
+     * Lists all declared constructors of {@code ownerType}.
+     *
+     * @param <T>       the owner type
+     * @param ownerType the class whose constructors are listed
+     * @param provider  the reflection provider (must not be {@code null})
+     * @return one {@link ResolvedConstructor} per declared constructor
+     * @throws ReflectionException if the constructors cannot be retrieved
+     */
     @SuppressWarnings("unchecked")
     public static <T> List<ResolvedConstructor<T>> allConstructors(IClass<T> ownerType,
             IReflectionProvider provider) throws ReflectionException {

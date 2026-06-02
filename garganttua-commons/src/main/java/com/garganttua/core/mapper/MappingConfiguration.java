@@ -73,6 +73,14 @@ public record MappingConfiguration(
 		MappingDirection mappingDirection) {
     private static final Logger log = Logger.getLogger(MappingConfiguration.class);
 
+	/**
+	 * Two configurations are equal when they share the same {@code source} and
+	 * {@code destination} classes; the rule lists and direction are intentionally not
+	 * part of the equality contract.
+	 *
+	 * @param o the object to compare against
+	 * @return {@code true} if {@code o} is a configuration with matching source and destination
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)

@@ -11,6 +11,15 @@ import com.garganttua.core.runtime.RuntimeStepOnException;
 import com.garganttua.core.runtime.annotations.OnException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Fluent builder for a fallback's {@code @OnException} handler, declaring which
+ * exception (optionally originating from a specific step) the fallback responds to.
+ *
+ * @param <ExecutionReturn> the operation method return type
+ * @param <StepObjectType>  the type of the object holding the step methods
+ * @param <InputType>       the runtime input type
+ * @param <OutputType>      the runtime output type
+ */
 @Reflected
 public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractAutomaticLinkedBuilder<IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepOnException>
@@ -22,6 +31,13 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
     private OnException onExceptionForAutoDetection;
     private String runtimeName;
 
+    /**
+     * Creates an on-exception handler builder.
+     *
+     * @param link        the parent fallback builder
+     * @param runtimeName the owning runtime name
+     * @param exception   the exception type this handler responds to
+     */
     protected RuntimeStepOnExceptionBuilder(
             IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> link,
             String runtimeName,
@@ -54,6 +70,12 @@ public class RuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, Inpu
         log.debug("OnException annotation set for auto-detection");
     }
 
+    /**
+     * Restricts this handler to exceptions originating from the named step.
+     *
+     * @param stepName the source step name
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fromStep(
             String stepName) {

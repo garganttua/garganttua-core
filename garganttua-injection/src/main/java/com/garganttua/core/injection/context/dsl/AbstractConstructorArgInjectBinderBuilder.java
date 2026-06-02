@@ -20,12 +20,23 @@ import com.garganttua.core.reflection.binders.dsl.AbstractConstructorBinderBuild
 import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
 import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
+/**
+ * Constructor-binder builder that, during auto-detection, resolves the parameters of the
+ * target class's {@code @Inject} constructor through an {@link IInjectableElementResolver},
+ * falling back to a {@link NullSupplierBuilder} for any parameter that cannot be resolved.
+ *
+ * @param <Constructed> the type produced by the bound constructor
+ */
 public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Builder extends IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>>, Link>
         extends AbstractConstructorBinderBuilder<Constructed, Builder, Link> {
     private static final Logger log = Logger.getLogger(AbstractConstructorArgInjectBinderBuilder.class);
 
     private final IClass<Constructed> constructedClass;
 
+    /**
+     * Builds the binder for the given parent link and constructed class, declaring the
+     * resolver dependency required for auto-detection.
+     */
     protected AbstractConstructorArgInjectBinderBuilder(Link link,
             IClass<Constructed> constructed) {
         super(link, constructed, Set.of(new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build()));
@@ -94,10 +105,20 @@ public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Bui
         });
     }
 
+    /**
+     * Returns the class whose constructor this builder binds.
+     *
+     * @return the constructed class
+     */
     protected IClass<Constructed> getConstructedClass() {
         return this.constructedClass;
     }
 
+    /**
+     * Supplies a build-time dependency (e.g. the resolver builder) to this builder.
+     *
+     * @return this builder for chaining
+     */
     @SuppressWarnings("unchecked")
     @Override
     public Builder provide(IObservableBuilder<?, ?> dependency) {

@@ -24,30 +24,81 @@ public interface IClass<T> extends IGenericDeclaration, Type,
 
 	// --- Static factory (mirrors Class.forName) ---
 
+	/**
+	 * Resolves a class by fully-qualified name through the active
+	 * {@link IReflection} facade. Mirror of {@link Class#forName(String)}.
+	 *
+	 * @param <T>       the represented type
+	 * @param className the fully-qualified class name
+	 * @return the {@code IClass} descriptor for the named class
+	 * @throws ClassNotFoundException if the class cannot be located
+	 */
 	static <T> IClass<T> forName(String className) throws ClassNotFoundException {
 		return ReflectionHolder.reflection().forName(className);
 	}
 
+	/**
+	 * Resolves a class by name with explicit initialization and class loader.
+	 * Mirror of {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
+	 * @param <T>        the represented type
+	 * @param name       the fully-qualified class name
+	 * @param initialize whether the class must be initialized
+	 * @param loader     the class loader to resolve through
+	 * @return the {@code IClass} descriptor for the named class
+	 * @throws ClassNotFoundException if the class cannot be located
+	 */
 	static <T> IClass<T> forName(String name, boolean initialize, ClassLoader loader) throws ClassNotFoundException {
 		return ReflectionHolder.reflection().forName(name, initialize, loader);
 	}
 
+	/**
+	 * Installs the global default {@link IReflection} used by the static factory
+	 * methods when no thread-local reflection is set.
+	 *
+	 * @param reflection the reflection facade to install globally
+	 */
 	static void setReflection(IReflection reflection) {
 		ReflectionHolder.globalDefault = reflection;
 	}
 
+	/**
+	 * Returns the active {@link IReflection} (thread-local if set, otherwise the
+	 * global default).
+	 *
+	 * @return the active reflection facade
+	 * @throws IllegalStateException if no reflection has been installed
+	 */
 	static IReflection getReflection() {
 		return ReflectionHolder.reflection();
 	}
 
+	/**
+	 * Installs a thread-local {@link IReflection} that takes precedence over the
+	 * global default for the current thread.
+	 *
+	 * @param reflection the reflection facade to install for this thread
+	 */
 	static void setThreadReflection(IReflection reflection) {
 		ReflectionHolder.threadLocal.set(reflection);
 	}
 
+	/**
+	 * Removes any thread-local {@link IReflection} previously installed via
+	 * {@link #setThreadReflection(IReflection)}.
+	 */
 	static void clearThreadReflection() {
 		ReflectionHolder.threadLocal.remove();
 	}
 
+	/**
+	 * Wraps a raw {@link Class} into its {@code IClass} descriptor through the
+	 * active {@link IReflection} facade.
+	 *
+	 * @param <T>   the represented type
+	 * @param clazz the raw class to wrap
+	 * @return the corresponding {@code IClass} descriptor
+	 */
 	static <T> IClass<T> getClass(Class<T> clazz) {
 		return ReflectionHolder.reflection().getClass(clazz);
 	}

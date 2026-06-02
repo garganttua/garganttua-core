@@ -18,6 +18,13 @@ import com.garganttua.core.reflection.methods.ResolvedMethod;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * {@link IMethodBinder} implementation that invokes a resolved {@link ResolvedMethod} on an object
+ * obtained from a supplier, with arguments produced from parameter suppliers. When configured as a
+ * collection binder, the method is invoked on each element of a target {@link java.util.Collection}.
+ *
+ * @param <Returned> the method return type
+ */
 public class MethodBinder<Returned>
         extends ExecutableBinder<Returned>
         implements IMethodBinder<Returned> {
@@ -27,6 +34,14 @@ public class MethodBinder<Returned>
     private final ISupplier<?> objectSupplier;
     private final boolean collection;
 
+    /**
+     * Creates a method binder.
+     *
+     * @param objectSupplier     supplier of the object the method is invoked on
+     * @param method             the resolved method to invoke
+     * @param parameterSuppliers suppliers producing the method arguments, in declaration order
+     * @param collection         when {@code true}, the method is invoked on each element of a target collection
+     */
     public MethodBinder(ISupplier<?> objectSupplier,
             ResolvedMethod method,
             List<ISupplier<?>> parameterSuppliers,
@@ -40,12 +55,32 @@ public class MethodBinder<Returned>
         log.debug("MethodBinder created for method {} with {} parameters", method, parameterSuppliers.size());
     }
 
+    /**
+     * Creates a non-collection method binder.
+     *
+     * @param objectSupplier     supplier of the object the method is invoked on
+     * @param method             the resolved method to invoke
+     * @param parameterSuppliers suppliers producing the method arguments, in declaration order
+     */
     public MethodBinder(ISupplier<?> objectSupplier,
             ResolvedMethod method,
             List<ISupplier<?>> parameterSuppliers) {
         this(objectSupplier, method, parameterSuppliers, false);
     }
 
+    /**
+     * Invokes {@code method} on {@code owner} (or on each element when {@code collectionTarget} is set).
+     *
+     * @param <T>              the owner type
+     * @param <ReturnedType>   the method return type
+     * @param owner            the target object, may be {@code null} for static methods
+     * @param ownerType        the declared type of the owner
+     * @param method           the resolved method to invoke
+     * @param collectionTarget when {@code true} and {@code owner} is a {@link java.util.Collection}, invokes per element
+     * @param args             the resolved method arguments
+     * @return the method result(s) wrapped in an {@link IMethodReturn}
+     * @throws ReflectionException if invocation fails
+     */
     public static <T, ReturnedType> Optional<IMethodReturn<ReturnedType>> execute(
             Object owner,
             IClass<T> ownerType,
@@ -83,6 +118,12 @@ public class MethodBinder<Returned>
 
     }
 
+    /**
+     * Builds the arguments, supplies the target object and invokes the method.
+     *
+     * @return the method result wrapped in an {@link IMethodReturn}
+     * @throws ReflectionException if argument building or invocation fails
+     */
     @Override
     public Optional<IMethodReturn<Returned>> execute() throws ReflectionException {
         log.trace("Executing MethodBinder for method {}", method);
@@ -102,12 +143,18 @@ public class MethodBinder<Returned>
         }
     }
 
+    /** {@return a colored, human-readable rendering of the bound method} */
     @Override
     public String getExecutableReference() {
         log.trace("Getting executable reference for method {}", method);
         return Methods.prettyColored(this.method);
     }
 
+    /**
+     * Supplies the method result by delegating to {@link #execute()}.
+     *
+     * @throws SupplyException if invocation fails
+     */
     @Override
     public Optional<IMethodReturn<Returned>> supply() throws SupplyException {
         try {
@@ -117,11 +164,13 @@ public class MethodBinder<Returned>
         }
     }
 
+    /** {@return the {@link Type} supplied by the target object supplier} */
     @Override
     public Type getSuppliedType() {
         return this.objectSupplier.getSuppliedType();
     }
 
+    /** {@return the supplied class, namely {@link IMethodReturn}} */
     @Override
     public IClass<IMethodReturn<Returned>> getSuppliedClass() {
         return (IClass<IMethodReturn<Returned>>) (IClass<?>) IClass.getClass(IMethodReturn.class);

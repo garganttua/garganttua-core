@@ -149,6 +149,11 @@ public interface ILifecycle {
      */
     ILifecycle onReload() throws LifecycleException;
 
+    /**
+     * Returns the current lifecycle status of the component.
+     *
+     * @return the current {@link LifecycleStatus}
+     */
     LifecycleStatus status();
 
 }

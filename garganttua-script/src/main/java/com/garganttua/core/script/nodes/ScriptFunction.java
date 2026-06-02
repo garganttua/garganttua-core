@@ -29,6 +29,13 @@ public class ScriptFunction implements IScriptFunction {
     private final List<String> parameterNames;
     private final StatementBlock body;
 
+    /**
+     * Creates a runtime function.
+     *
+     * @param name           the function name
+     * @param parameterNames the ordered parameter names
+     * @param body           the statement block executed on invocation
+     */
     public ScriptFunction(String name, List<String> parameterNames, StatementBlock body) {
         this.name = name;
         this.parameterNames = List.copyOf(parameterNames);

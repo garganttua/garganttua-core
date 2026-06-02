@@ -64,6 +64,15 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
     private final Object lifecycleMutex = new Object();
     private final Set<RuntimeExceptionRecord> recordedException = Collections.synchronizedSet(new HashSet<>());
 
+    /**
+     * Creates a runtime context backed by the given parent injection context.
+     *
+     * @param parent          the delegate injection context (bean/property resolution)
+     * @param input           the runtime input value
+     * @param outputType      the declared output type, used for output validation
+     * @param presetVariables variables seeded into the context on start
+     * @param uuid            the execution correlation id
+     */
     public RuntimeContext(IInjectionContext parent, InputType input, Class<OutputType> outputType,
             Map<String, ISupplier<?>> presetVariables, UUID uuid) {
         this.uuid = Objects.requireNonNull(uuid, "Uuid cannot be null");
@@ -94,6 +103,13 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         return result;
     }
 
+    /**
+     * Builds a contextual supplier that resolves a named variable from the runtime context.
+     *
+     * @param variableName the variable name to read
+     * @param variableType the expected variable type
+     * @return a supplier builder yielding the variable value
+     */
     @SuppressWarnings("unchecked")
     public static <VariableType, InputType, OutputType> ISupplierBuilder<VariableType, IContextualSupplier<VariableType, IRuntimeContext<InputType, OutputType>>> variable(
             String variableName, IClass<VariableType> variableType) {
@@ -104,6 +120,12 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, variableType, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
+    /**
+     * Builds a contextual supplier that resolves the runtime input.
+     *
+     * @param inputType the expected input type
+     * @return a supplier builder yielding the input value
+     */
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> ISupplierBuilder<InputType, IContextualSupplier<InputType, IRuntimeContext<InputType, OutputType>>> input(
             IClass<InputType> inputType) {
@@ -113,6 +135,12 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, inputType, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
+    /**
+     * Builds a contextual supplier that resolves a recorded exception of the given type.
+     *
+     * @param exceptionType the expected exception type
+     * @return a supplier builder yielding the matching exception
+     */
     @SuppressWarnings("unchecked")
     public static <ExceptionType extends Throwable, InputType, OutputType> ISupplierBuilder<ExceptionType, IContextualSupplier<ExceptionType, IRuntimeContext<InputType, OutputType>>> exception(
             IClass<ExceptionType> exceptionType) {
@@ -122,6 +150,11 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, exceptionType, (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
+    /**
+     * Builds a contextual supplier that resolves the current runtime exit code.
+     *
+     * @return a supplier builder yielding the code
+     */
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> ISupplierBuilder<Integer, IContextualSupplier<Integer, IRuntimeContext<InputType, OutputType>>> code() {
         log.trace("[RuntimeContext.code] Creating code supplier");
@@ -130,6 +163,11 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, IClass.getClass(Integer.class), (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
+    /**
+     * Builds a contextual supplier that resolves the aborting exception's message.
+     *
+     * @return a supplier builder yielding the exception message
+     */
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> ISupplierBuilder<String, IContextualSupplier<String, IRuntimeContext<InputType, OutputType>>> exceptionMessage() {
         log.trace("[RuntimeContext.exceptionMessage] Creating exceptionMessage supplier");
@@ -138,6 +176,11 @@ public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         }, IClass.getClass(String.class), (IClass<IRuntimeContext<InputType, OutputType>>) (IClass<?>) IClass.getClass(IRuntimeContext.class));
     }
 
+    /**
+     * Builds a contextual supplier that yields the runtime context itself.
+     *
+     * @return a supplier builder yielding the current context
+     */
     @SuppressWarnings("unchecked")
     public static <InputType, OutputType> ISupplierBuilder<IRuntimeContext<InputType, OutputType>, IContextualSupplier<IRuntimeContext<InputType, OutputType>, IRuntimeContext<InputType, OutputType>>> context() {
         log.trace("[RuntimeContext.context] Creating context supplier");

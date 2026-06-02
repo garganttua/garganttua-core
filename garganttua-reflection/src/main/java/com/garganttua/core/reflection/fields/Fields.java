@@ -23,6 +23,11 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.TypeUtils;
 
+/**
+ * Static helpers for inspecting and instantiating fields: generic type
+ * extraction, collection/map/array detection, primitive checks, and default
+ * value instantiation, plus a process-wide class blacklist.
+ */
 public class Fields {
     private static final Logger log = Logger.getLogger(Fields.class);
 
@@ -30,6 +35,10 @@ public class Fields {
 		/* This utility class should not be instantiated */
 	}
 
+	/**
+	 * Process-wide blacklist of classes that should be skipped during recursive
+	 * field traversal (for example, to break otherwise infinite type cycles).
+	 */
 	public static class BlackList {
 		private BlackList() {
 			/* This utility class should not be instantiated */
@@ -37,11 +46,22 @@ public class Fields {
 
 		private static List<IClass<?>> blackList = new CopyOnWriteArrayList<>();
 
+		/**
+		 * Adds a class to the blacklist.
+		 *
+		 * @param clazz the class to blacklist
+		 */
 		public static void addClassToBlackList(IClass<?> clazz) {
 			log.debug("Adding class {} to blacklist", clazz.getName());
 			BlackList.blackList.add(clazz);
 		}
 
+		/**
+		 * Returns whether the given class is blacklisted.
+		 *
+		 * @param clazz the class to test
+		 * @return {@code true} if the class is blacklisted
+		 */
 		public static boolean isBlackListed(IClass<?> clazz) {
 			Optional<IClass<?>> found = BlackList.blackList.stream().filter(cl -> cl.equals(clazz)).findFirst();
 			boolean blacklisted = found.isPresent();
@@ -50,6 +70,13 @@ public class Fields {
 		}
 	}
 
+	/**
+	 * Builds an ANSI-colored single-line representation of a field
+	 * ({@code Owner.name : Type}) for console output.
+	 *
+	 * @param f the field to render
+	 * @return the colored representation
+	 */
 	public static String prettyColored(IField f) {
 		log.trace("Creating pretty colored representation for field: {}", f);
 		return "\u001B[36m" + f.getDeclaringClass().getSimpleName() + "\u001B[0m"
@@ -59,21 +86,53 @@ public class Fields {
 				+ "\u001B[33m" + f.getType().getSimpleName() + "\u001B[0m";
 	}
 
+	/**
+	 * Returns the generic type argument at the given index of a field's declared type.
+	 *
+	 * @param field the field whose generic type is inspected
+	 * @param genericTypeIndex the zero-based type-argument index
+	 * @return the resolved type argument, or {@code null} if none
+	 */
 	static public IClass<?> getGenericType(IField field, int genericTypeIndex) {
 		log.trace("Getting generic type for field={}, index={}", field.getName(), genericTypeIndex);
 		return getGenericType(field.getGenericType(), genericTypeIndex);
 	}
 
+	/**
+	 * Returns the generic type argument at the given index of a field's declared
+	 * type, resolving classes through the supplied provider.
+	 *
+	 * @param field the field whose generic type is inspected
+	 * @param genericTypeIndex the zero-based type-argument index
+	 * @param provider the reflection provider used for class resolution
+	 * @return the resolved type argument, or {@code null} if none
+	 */
 	static public IClass<?> getGenericType(IField field, int genericTypeIndex, IReflectionProvider provider) {
 		log.trace("Getting generic type for field={}, index={}", field.getName(), genericTypeIndex);
 		return getGenericType(field.getGenericType(), genericTypeIndex, provider);
 	}
 
+	/**
+	 * Returns the generic type argument at the given index of a class's generic superclass.
+	 *
+	 * @param clazz the class whose generic superclass is inspected
+	 * @param genericTypeIndex the zero-based type-argument index
+	 * @return the resolved type argument, or {@code null} if none
+	 */
 	static public IClass<?> getGenericType(IClass<?> clazz, int genericTypeIndex) {
 		log.trace("Getting generic type for class={}, index={}", clazz.getName(), genericTypeIndex);
 		return getGenericType(clazz.getGenericSuperclass(), genericTypeIndex);
 	}
 
+	/**
+	 * Returns the generic type argument at the given index of a class's generic
+	 * superclass, resolving classes through the supplied provider.
+	 *
+	 * @param clazz the class whose generic superclass is inspected
+	 * @param genericTypeIndex the zero-based type-argument index
+	 * @param provider the reflection provider used for class resolution
+	 * @return the resolved type argument, or {@code null} if none
+	 */
 	static public IClass<?> getGenericType(IClass<?> clazz, int genericTypeIndex, IReflectionProvider provider) {
 		log.trace("Getting generic type for class={}, index={}", clazz.getName(), genericTypeIndex);
 		return getGenericType(clazz.getGenericSuperclass(), genericTypeIndex, provider);
@@ -108,14 +167,33 @@ public class Fields {
 		return null;
 	}
 
+	/**
+	 * Returns whether the given class is not a primitive type.
+	 *
+	 * @param clazz the class to test
+	 * @return {@code true} if the class is not primitive
+	 */
 	public static boolean isNotPrimitive(IClass<?> clazz) {
 		return TypeUtils.isNotPrimitive(clazz);
 	}
 
+	/**
+	 * Returns whether the given class is neither primitive nor a JDK-internal type
+	 * (the latter being skipped during recursive field traversal).
+	 *
+	 * @param clazz the class to test
+	 * @return {@code true} if the class is neither primitive nor internal
+	 */
 	public static boolean isNotPrimitiveOrInternal(IClass<?> clazz) {
 		return TypeUtils.isNotPrimitiveOrInternal(clazz);
 	}
 
+	/**
+	 * Returns whether the field's type is an array, {@link Collection}, or {@link Map}.
+	 *
+	 * @param field the field to test
+	 * @return {@code true} for array, collection, or map fields
+	 */
 	public static boolean isArrayOrMapOrCollectionField(IField field) {
 		log.trace("Checking if field {} is array/map/collection", field.getName());
 		Class<?> rawType = (Class<?>) field.getType().getType();
@@ -124,6 +202,14 @@ public class Fields {
 				rawType.isArray();
 	}
 
+	/**
+	 * Returns whether the field's type is an array, {@link Collection}, or
+	 * {@link Map}, resolving the relevant classes through the supplied provider.
+	 *
+	 * @param field the field to test
+	 * @param provider the reflection provider used for class resolution
+	 * @return {@code true} for array, collection, or map fields
+	 */
 	public static boolean isArrayOrMapOrCollectionField(IField field, IReflectionProvider provider) {
 		log.trace("Checking if field {} is array/map/collection", field.getName());
 		IClass<?> type = field.getType();
@@ -132,6 +218,15 @@ public class Fields {
 				|| provider.getClass(Map.class).isAssignableFrom(type);
 	}
 
+	/**
+	 * Instantiates a value suitable for the given field: a fresh no-arg instance
+	 * of its type, falling back to a default primitive value or an empty
+	 * collection/map when direct instantiation fails.
+	 *
+	 * @param field the field whose type should be instantiated
+	 * @return a non-null instance for the field's type
+	 * @throws ReflectionException if no instance can be produced for the type
+	 */
 	public static Object instanciate(IField field) throws ReflectionException {
 		log.trace("instanciate entry for field: {}", field.getName());
 		log.debug("Instanciating Field Object of type {}", field.getType().getSimpleName());

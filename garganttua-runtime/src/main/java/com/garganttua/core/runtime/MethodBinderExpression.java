@@ -13,12 +13,25 @@ import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Expression that adapts an {@link IContextualMethodBinder} so it can be evaluated
+ * as a lazy {@link ISupplier}, supplying the current {@link IRuntimeContext} (read
+ * from {@link RuntimeExpressionContext}) as the binder's invocation context.
+ *
+ * @param <R> the method return type
+ * @param <C> the contextual invocation type
+ */
 public class MethodBinderExpression<R, C> implements IExpression<R, ISupplier<R>> {
     private static final Logger log = Logger.getLogger(MethodBinderExpression.class);
 
     private final IContextualMethodBinder<R, C> binder;
     private final String expressionReference;
 
+    /**
+     * Wraps the given contextual method binder.
+     *
+     * @param binder the binder to invoke during evaluation; must not be {@code null}
+     */
     public MethodBinderExpression(IContextualMethodBinder<R, C> binder) {
         this.binder = Objects.requireNonNull(binder, "Binder cannot be null");
         this.expressionReference = binder.getExecutableReference();
@@ -60,6 +73,9 @@ public class MethodBinderExpression<R, C> implements IExpression<R, ISupplier<R>
         };
     }
 
+    /**
+     * @return the underlying binder's executable reference string
+     */
     public String getExpressionReference() {
         return expressionReference;
     }

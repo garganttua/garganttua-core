@@ -16,6 +16,12 @@ import com.garganttua.core.reflection.constructors.ResolvedConstructor;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * {@link IConstructorBinder} implementation that instantiates {@code Constructed} objects by
+ * invoking a resolved {@link IConstructor} with arguments produced from parameter suppliers.
+ *
+ * @param <Constructed> the type produced by the bound constructor
+ */
 public class ConstructorBinder<Constructed>
         extends ExecutableBinder<Constructed>
         implements IConstructorBinder<Constructed> {
@@ -24,6 +30,13 @@ public class ConstructorBinder<Constructed>
     private IClass<Constructed> objectClass;
     private IConstructor<Constructed> constructor;
 
+    /**
+     * Creates a binder for the given constructor.
+     *
+     * @param objectClass        the class to instantiate
+     * @param constructor        the constructor to invoke
+     * @param parameterSuppliers suppliers producing the constructor arguments, in declaration order
+     */
     public ConstructorBinder(IClass<Constructed> objectClass,
             IConstructor<Constructed> constructor, List<ISupplier<?>> parameterSuppliers) {
         super(parameterSuppliers);
@@ -34,6 +47,12 @@ public class ConstructorBinder<Constructed>
 
     }
 
+    /**
+     * Builds the constructor arguments from the parameter suppliers and instantiates the object.
+     *
+     * @return the constructor result wrapped in an {@link IMethodReturn}
+     * @throws ReflectionException if argument building or instantiation fails
+     */
     @Override
     public Optional<IMethodReturn<Constructed>> execute() throws ReflectionException {
         log.trace("Executing constructor for class {}", objectClass.getName());
@@ -45,26 +64,35 @@ public class ConstructorBinder<Constructed>
         return Optional.of(result);
     }
 
+    /** {@return the class instantiated by this binder} */
     @Override
     public IClass<Constructed> getConstructedType() {
         return this.objectClass;
     }
 
+    /** {@return a colored, human-readable rendering of the bound constructor} */
     @Override
     public String getExecutableReference() {
         return Constructors.prettyColored(constructor);
     }
 
+    /** {@return the bound constructor} */
     @Override
     public IConstructor<?> constructor() {
         return this.constructor;
     }
 
+    /** {@return the {@link Type} of the constructed object} */
     @Override
     public Type getSuppliedType() {
         return this.objectClass.getType();
     }
 
+    /**
+     * Supplies a freshly constructed instance by delegating to {@link #execute()}.
+     *
+     * @throws SupplyException if instantiation fails
+     */
     @Override
     public Optional<IMethodReturn<Constructed>> supply() throws SupplyException {
         try {
@@ -74,6 +102,7 @@ public class ConstructorBinder<Constructed>
         }
     }
 
+    /** {@return the supplied class, the constructed type viewed as an {@link IMethodReturn}} */
     @Override
     public IClass<IMethodReturn<Constructed>> getSuppliedClass() {
         return (IClass<IMethodReturn<Constructed>>) (IClass<?>) this.objectClass;

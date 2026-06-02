@@ -16,6 +16,12 @@ import com.garganttua.core.reflection.constructors.ResolvedConstructor;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Context-aware {@link ConstructorBinder} variant that resolves its parameter suppliers against
+ * one or more evaluation contexts passed at execution time.
+ *
+ * @param <Constructed> the type produced by the bound constructor
+ */
 public class ContextualConstructorBinder<Constructed>
         extends ContextualExecutableBinder<Constructed, Void>
         implements IContextualConstructorBinder<Constructed> {
@@ -24,6 +30,13 @@ public class ContextualConstructorBinder<Constructed>
     private final IClass<Constructed> objectClass;
     private final IConstructor<Constructed> constructor;
 
+    /**
+     * Creates a contextual binder for the given constructor.
+     *
+     * @param objectClass        the class to instantiate
+     * @param constructor        the constructor to invoke
+     * @param parameterSuppliers suppliers producing the constructor arguments, in declaration order
+     */
     public ContextualConstructorBinder(IClass<Constructed> objectClass,
             IConstructor<Constructed> constructor,
             List<ISupplier<?>> parameterSuppliers) {
@@ -36,11 +49,20 @@ public class ContextualConstructorBinder<Constructed>
                 parameterSuppliers.size());
     }
 
+    /** {@return the class instantiated by this binder} */
     @Override
     public IClass<Constructed> getConstructedType() {
         return this.objectClass;
     }
 
+    /**
+     * Builds the constructor arguments using the supplied contexts and instantiates the object.
+     *
+     * @param ownerContext unused for constructors (always {@link Void})
+     * @param contexts     contexts forwarded to contextual parameter suppliers
+     * @return the constructor result wrapped in an {@link IMethodReturn}
+     * @throws ReflectionException if argument building or instantiation fails
+     */
     @Override
     public Optional<IMethodReturn<Constructed>> execute(Void ownerContext, Object... contexts) throws ReflectionException {
         log.trace("Executing contextual constructor for class {}", objectClass.getName());
@@ -53,26 +75,37 @@ public class ContextualConstructorBinder<Constructed>
         return Optional.of(result);
     }
 
+    /** {@return a colored, human-readable rendering of the bound constructor} */
     @Override
     public String getExecutableReference() {
         return Constructors.prettyColored(constructor);
     }
 
+    /** {@return the bound constructor} */
     @Override
     public IConstructor<?> constructor() {
         return this.constructor;
     }
 
+    /** {@return the {@link Type} of the constructed object} */
     @Override
     public Type getSuppliedType() {
         return this.objectClass.getType();
     }
 
+    /**
+     * Supplies a freshly constructed instance by delegating to {@link #execute(Void, Object...)}.
+     *
+     * @param ownerContext   unused for constructors (always {@link Void})
+     * @param otherContexts  contexts forwarded to contextual parameter suppliers
+     * @throws SupplyException if instantiation fails
+     */
     @Override
     public Optional<IMethodReturn<Constructed>> supply(Void ownerContext, Object... otherContexts) throws SupplyException {
         return this.execute(ownerContext, otherContexts);
     }
 
+    /** {@return the supplied class, the constructed type viewed as an {@link IMethodReturn}} */
     @Override
     public IClass<IMethodReturn<Constructed>> getSuppliedClass() {
         return (IClass<IMethodReturn<Constructed>>) (IClass<?>) this.objectClass;

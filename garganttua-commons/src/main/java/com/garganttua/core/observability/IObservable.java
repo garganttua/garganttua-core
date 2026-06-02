@@ -13,7 +13,18 @@ package com.garganttua.core.observability;
  */
 public interface IObservable {
 
+	/**
+	 * Register an observer to receive every {@link ObservableEvent} this source
+	 * subsequently emits.
+	 *
+	 * @param observer the observer to attach
+	 */
 	void addObserver(IObserver<ObservableEvent> observer);
 
+	/**
+	 * Detach a previously registered observer; a no-op if it was never attached.
+	 *
+	 * @param observer the observer to remove
+	 */
 	void removeObserver(IObserver<ObservableEvent> observer);
 }

@@ -58,8 +58,15 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 public interface IBeanFactoryBuilder<Bean> extends IAutomaticBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>, ISupplierBuilder<Bean, IBeanFactory<Bean>>, IDependentBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>> {
 
 
+    /**
+     * Supplies a pre-built bean instance for this factory to return directly.
+     *
+     * @param bean the existing bean instance to wrap
+     * @return this builder for method chaining
+     * @throws DslException if the instance cannot be registered
+     */
     IBeanFactoryBuilder<Bean> bean(Bean bean) throws DslException;
-    
+
     /**
      * Specifies the bean strategy (scope) for this factory.
      *

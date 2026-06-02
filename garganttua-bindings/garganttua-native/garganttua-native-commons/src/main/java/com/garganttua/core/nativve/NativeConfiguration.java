@@ -16,6 +16,11 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Default {@link INativeConfiguration} that serializes collected reflection
+ * entries and resource patterns into the GraalVM {@code reflect-config.json} and
+ * {@code resource-config.json} files under {@code META-INF/native-image}.
+ */
 public class NativeConfiguration implements INativeConfiguration {
     private static final Logger log = Logger.getLogger(NativeConfiguration.class);
 
@@ -31,12 +36,28 @@ public class NativeConfiguration implements INativeConfiguration {
     private final String configNamespace;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Creates a configuration writing to the flat (legacy) {@code META-INF/native-image} layout.
+     *
+     * @param mode           write mode (override or append)
+     * @param collect        reflection entries to serialize
+     * @param resources      resource patterns to include
+     * @param resourcesPath  base directory for the resource config
+     * @param reflectionPath base directory for the reflection config
+     */
     public NativeConfiguration(NativeConfigurationMode mode, Set<IReflectionConfigurationEntry> collect,
             Set<String> resources, String resourcesPath, String reflectionPath) {
         this(mode, collect, resources, resourcesPath, reflectionPath, "");
     }
 
     /**
+     * Creates a configuration writing under a namespaced {@code META-INF/native-image} layout.
+     *
+     * @param mode            write mode (override or append)
+     * @param collect         reflection entries to serialize
+     * @param resources       resource patterns to include
+     * @param resourcesPath   base directory for the resource config
+     * @param reflectionPath  base directory for the reflection config
      * @param configNamespace sub-path appended under {@code META-INF/native-image/}
      *        (e.g. {@code <groupId>/<artifactId>}) so each artifact writes its
      *        config to a unique location — the GraalVM-recommended layout that

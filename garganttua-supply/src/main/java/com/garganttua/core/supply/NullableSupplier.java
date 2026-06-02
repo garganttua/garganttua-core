@@ -7,12 +7,29 @@ import java.util.Optional;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Decorator enforcing nullability rules on a supplier.
+ *
+ * <p>
+ * Delegates to the wrapped {@link ISupplier} and, when {@code allowNull} is
+ * {@code false}, rejects empty results by throwing a {@link SupplyException}.
+ * </p>
+ *
+ * @param <SuppliedType> the type of object supplied
+ * @see ISupplier
+ */
 public class NullableSupplier<SuppliedType> implements ISupplier<SuppliedType> {
     private static final Logger log = Logger.getLogger(NullableSupplier.class);
 
     private final ISupplier<SuppliedType> delegate;
     private final boolean allowNull;
 
+    /**
+     * Wraps a supplier with a nullability guard.
+     *
+     * @param delegate  the underlying supplier
+     * @param allowNull whether an empty/null result is permitted
+     */
     public NullableSupplier(ISupplier<SuppliedType> delegate, boolean allowNull) {
         log.trace("Entering NullableSupplier constructor with allowNull: {}", allowNull);
         this.delegate = Objects.requireNonNull(delegate);

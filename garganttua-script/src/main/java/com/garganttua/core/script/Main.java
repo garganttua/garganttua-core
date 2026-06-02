@@ -19,11 +19,25 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 
+/**
+ * Command-line entry point for the Garganttua script engine. Parses CLI flags
+ * ({@code --help}, {@code --version}, {@code --console}, {@code --syntax},
+ * {@code --man}, {@code --dump}), then either launches the interactive console
+ * or executes a {@code .gs} script file and exits with the script's exit code.
+ */
 public class Main {
 
     private static final String VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
     private static final String SHEBANG_PREFIX = "#!";
 
+    /**
+     * CLI dispatcher. With no arguments starts the interactive console;
+     * otherwise interprets the first argument as a flag or script path and
+     * terminates the JVM via {@link System#exit(int)} with the resulting code.
+     *
+     * @param args command-line arguments: optional flags followed by a script
+     *             file path and its positional arguments
+     */
     public static void main(String[] args) {
         // No arguments: start interactive console
         if (args.length == 0) {

@@ -25,10 +25,20 @@ import java.util.UUID;
  */
 public sealed interface ObservableEvent permits StartEvent, EndEvent, ErrorEvent, LogEvent {
 
+	/**
+	 * @return the UUID correlating every event emitted by a single logical
+	 *         execution.
+	 */
 	UUID executionId();
 
+	/**
+	 * @return the wall-clock instant the event was emitted.
+	 */
 	Instant timestamp();
 
+	/**
+	 * @return the stable, hierarchical identifier of the unit producing the event.
+	 */
 	String source();
 
 	/**

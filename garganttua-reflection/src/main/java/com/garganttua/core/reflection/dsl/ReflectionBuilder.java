@@ -18,6 +18,17 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Default {@link IReflectionBuilder} implementation that assembles prioritized
+ * {@link IReflectionProvider providers} and {@link IAnnotationScanner scanners}
+ * into a single {@link IReflection} facade (a {@link CompositeReflection}).
+ *
+ * <p>
+ * Providers and scanners are sorted by descending priority at build time; the
+ * built facade is also installed as the process-wide reflection via
+ * {@link IClass#setReflection(IReflection)}.
+ * </p>
+ */
 @Bootstrap
 @Reflected
 public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuilder, IReflection>
@@ -30,6 +41,11 @@ public class ReflectionBuilder extends AbstractAutomaticBuilder<IReflectionBuild
     private final List<PrioritizedScanner> scanners = new ArrayList<>();
     private final Set<IBuilderObserver<IReflectionBuilder, IReflection>> observers = new HashSet<>();
 
+    /**
+     * Creates a new, empty reflection builder.
+     *
+     * @return a fresh {@link IReflectionBuilder}
+     */
     public static IReflectionBuilder builder() {
         return new ReflectionBuilder();
     }

@@ -10,14 +10,27 @@ import java.util.stream.Collectors;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationSource;
 
+/**
+ * {@link IConfigurationSource} that exposes environment variables as a JSON document.
+ * Keys are optionally filtered by prefix (which is then stripped), lower-cased, and have
+ * underscores replaced by dots so they map onto nested configuration keys.
+ */
 public class EnvironmentConfigurationSource implements IConfigurationSource {
 
     private final String prefix;
 
+    /**
+     * Creates a source exposing all environment variables with no prefix filtering.
+     */
     public EnvironmentConfigurationSource() {
         this(null);
     }
 
+    /**
+     * Creates a source exposing only environment variables matching the given prefix.
+     *
+     * @param prefix the prefix to filter and strip from variable names, or {@code null} for none
+     */
     public EnvironmentConfigurationSource(String prefix) {
         this.prefix = prefix;
     }

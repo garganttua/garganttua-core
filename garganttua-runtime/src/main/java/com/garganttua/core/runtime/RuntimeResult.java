@@ -8,6 +8,26 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Immutable outcome of a runtime execution: input/output values, timing, exit
+ * code, recorded exceptions, and the final variable snapshot.
+ *
+ * <p>Also provides helpers to format the execution duration in human-readable
+ * form, both colorized (ANSI) and plain.</p>
+ *
+ * @param uuid               the execution correlation id
+ * @param input              the runtime input
+ * @param output             the produced output (may be {@code null})
+ * @param start              wall-clock start instant
+ * @param stop               wall-clock stop instant
+ * @param startNano          monotonic start time in nanoseconds
+ * @param stopNano           monotonic stop time in nanoseconds
+ * @param code               the runtime exit code
+ * @param recordedExceptions all exceptions recorded during execution
+ * @param variables          final variable values keyed by name
+ * @param <InputType>        the input type
+ * @param <OutputType>       the output type
+ */
 public record RuntimeResult<InputType, OutputType>(
         UUID uuid,
         InputType input,
@@ -84,6 +104,12 @@ public record RuntimeResult<InputType, OutputType>(
         return prettyDurationColor(duration());
     }
 
+    /**
+     * Formats a duration as an ANSI-colorized {@code h m s ms} string.
+     *
+     * @param duration the duration to format
+     * @return the colorized representation
+     */
     public static String prettyDurationColor(Duration duration) {
         log.trace("[RuntimeResult.prettyDurationColor] Formatting duration with color: {}", duration);
         String h = "\u001B[36m";
@@ -103,11 +129,20 @@ public record RuntimeResult<InputType, OutputType>(
     // DURATIONS — PLAIN (NO COLORS)
     // =======================================
 
+    /**
+     * @return this result's duration formatted as a plain {@code h m s ms} string
+     */
     public String prettyDurationPlain() {
         log.trace("[RuntimeResult.prettyDurationPlain] Formatting plain pretty duration for uuid={}", uuid);
         return prettyDurationPlain(duration());
     }
 
+    /**
+     * Formats a duration as a plain (non-colorized) {@code h m s ms} string.
+     *
+     * @param duration the duration to format
+     * @return the plain representation
+     */
     public static String prettyDurationPlain(Duration duration) {
         log.trace("[RuntimeResult.prettyDurationPlain] Formatting duration without color: {}", duration);
         return String.format("%dh %dm %ds %dms",
@@ -121,6 +156,12 @@ public record RuntimeResult<InputType, OutputType>(
     // NANOS — COLOR
     // =======================================
 
+    /**
+     * Formats a nanosecond count as an ANSI-colorized string, scaling to us/ms as needed.
+     *
+     * @param nanos the nanosecond count
+     * @return the colorized representation
+     */
     public static String prettyNanoColor(long nanos) {
         log.trace("[RuntimeResult.prettyNanoColor] Formatting nanos with color: {}", nanos);
         String nsColor = "\u001B[36m";
@@ -152,6 +193,12 @@ public record RuntimeResult<InputType, OutputType>(
     // NANOS — PLAIN (NO COLORS)
     // =======================================
 
+    /**
+     * Formats a nanosecond count as a plain string, scaling to us/ms as needed.
+     *
+     * @param nanos the nanosecond count
+     * @return the plain representation
+     */
     public static String prettyNano(long nanos) {
         log.trace("[RuntimeResult.prettyNano] Formatting nanos without color: {}", nanos);
         if (nanos < 1_000) {
@@ -166,6 +213,9 @@ public record RuntimeResult<InputType, OutputType>(
         }
     }
 
+    /**
+     * @return this result's nanosecond duration formatted as a plain string
+     */
     public String prettyDurationInNanosPlain() {
         log.trace("[RuntimeResult.prettyDurationInNanosPlain] Formatting plain pretty duration in nanos for uuid={}", uuid);
         return prettyNano(durationInNanos());

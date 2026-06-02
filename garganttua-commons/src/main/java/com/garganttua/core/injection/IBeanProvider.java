@@ -151,16 +151,65 @@ public interface IBeanProvider extends ILifecycle, Copyable<IBeanProvider>, IRef
      */
     int size();
 
+    /**
+     * Registers a pre-built bean instance under the given reference.
+     *
+     * @param <T>        the bean type
+     * @param reference  the reference identifying the bean
+     * @param bean       the bean instance to register
+     * @param autoDetect whether to auto-detect injectable members on the instance
+     * @throws DiException if the provider is immutable or registration fails
+     */
     <T> void add(BeanReference<T> reference, T bean, boolean autoDetect) throws DiException;
 
+    /**
+     * Registers an optional pre-built bean instance under the given reference.
+     *
+     * @param <T>        the bean type
+     * @param reference  the reference identifying the bean
+     * @param bean       the optional bean instance to register
+     * @param autoDetect whether to auto-detect injectable members on the instance
+     * @throws DiException if the provider is immutable or registration fails
+     */
     <T> void add(BeanReference<T> reference, Optional<T> bean, boolean autoDetect) throws DiException;
 
+    /**
+     * Registers a pre-built bean instance under the given reference.
+     *
+     * @param <T>       the bean type
+     * @param reference the reference identifying the bean
+     * @param bean      the bean instance to register
+     * @throws DiException if the provider is immutable or registration fails
+     */
     <T> void add(BeanReference<T> reference, T bean) throws DiException;
 
+    /**
+     * Registers an optional pre-built bean instance under the given reference.
+     *
+     * @param <T>       the bean type
+     * @param reference the reference identifying the bean
+     * @param bean      the optional bean instance to register
+     * @throws DiException if the provider is immutable or registration fails
+     */
     <T> void add(BeanReference<T> reference, Optional<T> bean) throws DiException;
 
+    /**
+     * Registers a bean to be lazily instantiated from the given reference.
+     *
+     * @param <T>       the bean type
+     * @param reference the reference identifying the bean
+     * @throws DiException if the provider is immutable or registration fails
+     */
     <T> void add(BeanReference<T> reference) throws DiException;
 
+    /**
+     * Registers a bean to be lazily instantiated from the given reference.
+     *
+     * @param <T>        the bean type
+     * @param reference  the reference identifying the bean
+     * @param autoDetect whether to auto-detect injectable members on the bean
+     * @throws DiException if the provider is immutable or registration fails
+     */
     <T> void add(BeanReference<T> reference, boolean autoDetect) throws DiException;
 
 }

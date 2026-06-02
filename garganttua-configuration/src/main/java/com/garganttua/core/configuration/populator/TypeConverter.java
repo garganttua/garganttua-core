@@ -18,9 +18,23 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Converts configuration string values into target Java types: primitives and wrappers,
+ * big numbers, {@code java.time} temporals, IO/net types ({@link Path}, {@link URI},
+ * {@link URL}), {@link UUID}, {@link Class}, and enums.
+ */
 public class TypeConverter {
     private static final Logger log = Logger.getLogger(TypeConverter.class);
 
+    /**
+     * Converts a string to the requested target type.
+     *
+     * @param value      the raw string value, may be {@code null}
+     * @param targetType the type to convert to
+     * @param <T>        the target type
+     * @return the converted value, or {@code null} when {@code value} is {@code null}
+     * @throws ConfigurationException if the target type is unsupported or the value cannot be parsed
+     */
     @SuppressWarnings("unchecked")
     public <T> T convert(String value, Class<T> targetType) throws ConfigurationException {
         if (value == null) {
@@ -128,6 +142,12 @@ public class TypeConverter {
         return (T) Enum.valueOf((Class<Enum>) enumType, value.toUpperCase());
     }
 
+    /**
+     * Returns the boxed wrapper type for a primitive type.
+     *
+     * @param type the type to inspect
+     * @return the corresponding wrapper class, or empty if {@code type} is not a primitive
+     */
     public Optional<Class<?>> toPrimitiveWrapper(Class<?> type) {
         if (type == int.class) return Optional.of(Integer.class);
         if (type == long.class) return Optional.of(Long.class);
@@ -140,6 +160,12 @@ public class TypeConverter {
         return Optional.empty();
     }
 
+    /**
+     * Indicates whether {@link #convert(String, Class)} supports the given type.
+     *
+     * @param type the candidate target type
+     * @return {@code true} if the type can be converted from a string
+     */
     public boolean isConvertible(Class<?> type) {
         return type == String.class
                 || type.isPrimitive()

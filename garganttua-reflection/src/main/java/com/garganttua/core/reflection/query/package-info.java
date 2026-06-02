@@ -3,125 +3,41 @@
  *
  * <h2>Overview</h2>
  * <p>
- * This package provides query utilities for discovering class members (fields, methods,
- * constructors) based on various criteria such as annotations, types, names, and modifiers.
- * It simplifies reflection-based introspection and metadata collection.
+ * This package resolves dotted member paths within a class hierarchy. Given an element
+ * name or {@link com.garganttua.core.reflection.ObjectAddress}, an
+ * {@link com.garganttua.core.reflection.IObjectQuery} locates the matching fields and
+ * methods, recursing through superclasses, collection/array element types and map
+ * key/value types.
  * </p>
  *
- * <h2>Usage Example: Field Queries</h2>
+ * <h2>Usage Example: Resolving an Address</h2>
  * <pre>{@code
- * // Find all fields with @Inject annotation
- * List<Field> injectableFields = ReflectionQuery.findFields(
- *     UserService.class,
- *     field -> field.isAnnotationPresent(Inject.class)
- * );
+ * IClass<User> owner = provider.getClass(User.class);
+ * IObjectQuery<User> query = ObjectQueryFactory.objectQuery(owner, provider);
  *
- * // Find all private fields
- * List<Field> privateFields = ReflectionQuery.findFields(
- *     UserService.class,
- *     field -> Modifier.isPrivate(field.getModifiers())
- * );
+ * // Resolve the address of a (possibly nested) element by name
+ * ObjectAddress address = query.address("email");
  *
- * // Find field by name
- * Optional<Field> emailField = ReflectionQuery.findField(
- *     User.class,
- *     "email"
- * );
+ * // Resolve all addresses that match the element name
+ * List<ObjectAddress> addresses = query.addresses("name");
  * }</pre>
  *
- * <h2>Usage Example: Method Queries</h2>
+ * <h2>Usage Example: Resolving Member Paths</h2>
  * <pre>{@code
- * // Find all methods with @Provider annotation
- * List<Method> providers = ReflectionQuery.findMethods(
- *     ConfigClass.class,
- *     method -> method.isAnnotationPresent(Provider.class)
- * );
+ * // The single best path (chain of members) for an address
+ * List<Object> path = query.find("inner.value");
  *
- * // Find all public methods
- * List<Method> publicMethods = ReflectionQuery.findMethods(
- *     UserService.class,
- *     method -> Modifier.isPublic(method.getModifiers())
- * );
- *
- * // Find methods by name
- * List<Method> getMethods = ReflectionQuery.findMethods(
- *     User.class,
- *     method -> method.getName().startsWith("get")
- * );
- * }</pre>
- *
- * <h2>Usage Example: Constructor Queries</h2>
- * <pre>{@code
- * // Find all public constructors
- * List<Constructor<?>> publicConstructors = ReflectionQuery.findConstructors(
- *     User.class,
- *     ctor -> Modifier.isPublic(ctor.getModifiers())
- * );
- *
- * // Find constructor with @Inject
- * Optional<Constructor<?>> injectConstructor = ReflectionQuery.findConstructor(
- *     UserService.class,
- *     ctor -> ctor.isAnnotationPresent(Inject.class)
- * );
- *
- * // Find constructor by parameter types
- * Optional<Constructor<User>> constructor = ReflectionQuery.findConstructor(
- *     User.class,
- *     String.class, int.class
- * );
- * }</pre>
- *
- * <h2>Usage Example: Annotation Queries</h2>
- * <pre>{@code
- * // Find all annotations on a class
- * List<Annotation> classAnnotations = ReflectionQuery.getAnnotations(
- *     UserService.class
- * );
- *
- * // Find specific annotation
- * Optional<RuntimeDefinition> runtimeDef = ReflectionQuery.findAnnotation(
- *     OrderProcessing.class,
- *     RuntimeDefinition.class
- * );
- *
- * // Check if annotation is present
- * boolean isProvider = ReflectionQuery.hasAnnotation(
- *     method,
- *     Provider.class
- * );
- * }</pre>
- *
- * <h2>Usage Example: Type Queries</h2>
- * <pre>{@code
- * // Find all interfaces implemented by class
- * List<Class<?>> interfaces = ReflectionQuery.getInterfaces(UserService.class);
- *
- * // Find all superclasses
- * List<Class<?>> superclasses = ReflectionQuery.getSuperclasses(UserService.class);
- *
- * // Check if class implements interface
- * boolean isRepository = ReflectionQuery.implementsInterface(
- *     UserRepositoryImpl.class,
- *     Repository.class
- * );
- *
- * // Get generic type parameters
- * Type[] typeParams = ReflectionQuery.getGenericTypeParameters(
- *     Repository.class
- * );
+ * // Every matching path (e.g. overloaded methods at the leaf)
+ * List<List<Object>> allPaths = query.findAll("compute");
  * }</pre>
  *
  * <h2>Features</h2>
  * <ul>
- *   <li>Field queries by name, type, annotation, modifier</li>
- *   <li>Method queries by name, signature, annotation, modifier</li>
- *   <li>Constructor queries by signature, annotation</li>
- *   <li>Annotation discovery and introspection</li>
- *   <li>Type hierarchy traversal</li>
- *   <li>Generic type resolution</li>
- *   <li>Predicate-based filtering</li>
+ *   <li>Field and method resolution by dotted address</li>
+ *   <li>Type hierarchy traversal (superclasses and interfaces)</li>
+ *   <li>Recursion into collection, array and map element/key/value types</li>
+ *   <li>Generic type resolution via the reflection provider</li>
  *   <li>Support for inherited members</li>
- *   <li>Performance optimization through caching</li>
  * </ul>
  *
  * @since 2.0.0-ALPHA01

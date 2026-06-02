@@ -21,6 +21,15 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.Supplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Context-aware {@link FieldBinder} variant. Resolves the owner and value via contextual suppliers
+ * and reads or writes a field reached through an {@link ObjectAddress}.
+ *
+ * @param <OnwerType>        the type owning the field
+ * @param <FieldType>        the field value type
+ * @param <OwnerContextType> the context type required to supply the owner
+ * @param <FieldContextType> the context type required to supply the value
+ */
 public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, FieldContextType>
         implements IContextualFieldBinder<OnwerType, FieldType, OwnerContextType, FieldContextType> {
     private static final Logger log = Logger.getLogger(ContextualFieldBinder.class);
@@ -31,6 +40,15 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
     private final IReflectionProvider reflectionProvider;
     private final ResolvedField resolvedField;
 
+    /**
+     * Creates a contextual field binder and resolves the field located at {@code fieldAddress}.
+     *
+     * @param ownerSupplier      supplier of the object owning the field
+     * @param fieldAddress       dotted path locating the field within the owner
+     * @param valueSupplier      supplier of the value to write
+     * @param reflectionProvider provider used to resolve the field
+     * @throws ReflectionException if the field cannot be resolved
+     */
     public ContextualFieldBinder(ISupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
             ISupplier<FieldType> valueSupplier, IReflectionProvider reflectionProvider) throws ReflectionException {
         log.trace("Creating ContextualFieldBinder for fieldAddress={}", fieldAddress);
@@ -42,6 +60,7 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
         log.debug("ContextualFieldBinder created for field {}", fieldAddress);
     }
 
+    /** {@return the context type required to supply the owner, or {@code Void} when non-contextual} */
     @SuppressWarnings("unchecked")
     @Override
     public IClass<OwnerContextType> getOwnerContextType() {
@@ -51,6 +70,7 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
         return (IClass<OwnerContextType>) reflectionProvider.getClass(Void.class);
     }
 
+    /** {@return the context type required to supply the value, or {@code Void} when non-contextual} */
     @SuppressWarnings("unchecked")
     @Override
     public IClass<FieldContextType> getValueContextType() {
@@ -60,6 +80,13 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
         return (IClass<FieldContextType>) reflectionProvider.getClass(Void.class);
     }
 
+    /**
+     * Writes the supplied value into the field, resolving owner and value from the given contexts.
+     *
+     * @param ownerContext context used to supply the owner
+     * @param valueContext context used to supply the value
+     * @throws ReflectionException if the owner cannot be supplied or the write fails
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public void setValue(OwnerContextType ownerContext, FieldContextType valueContext) throws ReflectionException {
@@ -84,6 +111,13 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
         }
     }
 
+    /**
+     * Reads the field value from the owner supplied for the given context.
+     *
+     * @param ownerContext context used to supply the owner
+     * @return the current field value
+     * @throws ReflectionException if the owner cannot be supplied or the read fails
+     */
     @SuppressWarnings("unchecked")
     @Override
     public FieldType getValue(OwnerContextType ownerContext) throws ReflectionException {
@@ -107,21 +141,31 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
         }
     }
 
+    /** {@return a colored, human-readable rendering of the bound field} */
     @Override
     public String getFieldReference() {
         return Fields.prettyColored((IField) resolvedField.fieldPath().getLast());
     }
 
+    /** {@return the {@link Type} supplied for the field value} */
     @Override
     public Type getSuppliedType() {
         return valueSupplier.getSuppliedClass().getType();
     }
 
+    /**
+     * Supplies the value to be written into the field, resolved from the given contexts.
+     *
+     * @param ownerContext  context used to supply the owner
+     * @param otherContexts additional contexts forwarded to the value supplier
+     * @throws SupplyException if the value cannot be supplied
+     */
     @Override
     public Optional<FieldType> supply(OwnerContextType ownerContext, Object... otherContexts) throws SupplyException {
         return this.supply(ownerContext, otherContexts);
     }
 
+    /** {@return the supplied field value class} */
     @Override
     @SuppressWarnings("unchecked")
     public IClass<FieldType> getSuppliedClass() {

@@ -18,6 +18,13 @@ import com.garganttua.core.reflection.fields.SingleFieldValue;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * {@link IFieldBinder} implementation that reads or writes a field reached through an
+ * {@link ObjectAddress}, using suppliers for the owning object and the value to write.
+ *
+ * @param <OnwerType> the type owning the field
+ * @param <FieldType> the field value type
+ */
 public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType, FieldType> {
     private static final Logger log = Logger.getLogger(FieldBinder.class);
 
@@ -27,6 +34,15 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
     private final IReflectionProvider reflectionProvider;
     private final ResolvedField resolvedField;
 
+    /**
+     * Creates a field binder and resolves the field located at {@code fieldAddress}.
+     *
+     * @param ownerSupplier      supplier of the object owning the field
+     * @param fieldAddress       dotted path locating the field within the owner
+     * @param valueSupplier      supplier of the value to write
+     * @param reflectionProvider provider used to resolve the field
+     * @throws ReflectionException if the field cannot be resolved
+     */
     public FieldBinder(ISupplier<OnwerType> ownerSupplier, ObjectAddress fieldAddress,
             ISupplier<FieldType> valueSupplier, IReflectionProvider reflectionProvider) throws ReflectionException {
         log.trace("Creating FieldBinder: fieldAddress={}", fieldAddress);
@@ -38,6 +54,11 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         log.debug("FieldBinder created for field {}", fieldAddress);
     }
 
+    /**
+     * Writes the supplied value into the field of the supplied owner.
+     *
+     * @throws ReflectionException if the owner cannot be supplied or the write fails
+     */
     @SuppressWarnings({"rawtypes"})
     @Override
     public void setValue() throws ReflectionException {
@@ -60,6 +81,12 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         }
     }
 
+    /**
+     * Reads the field value from the supplied owner.
+     *
+     * @return the current field value
+     * @throws ReflectionException if the owner cannot be supplied or the read fails
+     */
     @Override
     public FieldType getValue() throws ReflectionException {
         log.trace("Getting value for field {}", address);
@@ -80,17 +107,24 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         }
     }
 
+    /** {@return a colored, human-readable rendering of the bound field} */
     @Override
     public String getFieldReference() {
         log.trace("Getting field reference for {}", address);
         return Fields.prettyColored((IField) resolvedField.fieldPath().getLast());
     }
 
+    /** {@return the {@link Type} supplied for the field value} */
     @Override
     public Type getSuppliedType() {
         return valueSupplier.getSuppliedClass().getType();
     }
 
+    /**
+     * Supplies the current field value by delegating to {@link #getValue()}.
+     *
+     * @throws SupplyException if the value cannot be read
+     */
     @Override
     public java.util.Optional<FieldType> supply() throws SupplyException {
         try {
@@ -100,6 +134,7 @@ public class FieldBinder<OnwerType, FieldType> implements IFieldBinder<OnwerType
         }
     }
 
+    /** {@return the supplied field value class} */
     @Override
     public IClass<FieldType> getSuppliedClass() {
         return (IClass<FieldType>) valueSupplier.getSuppliedClass();

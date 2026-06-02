@@ -32,6 +32,11 @@ import com.garganttua.core.runtime.RuntimeStepPipe;
  */
 public class RuntimeInfrastructureSeed implements IAOTInfrastructureSeed {
 
+    /**
+     * Registers the runtime module's concrete classes into the AOT seed context.
+     *
+     * @param ctx the seed context that collects classes for native reflection registration
+     */
     @Override
     public void seed(IAOTSeedContext ctx) {
         ctx.registerClass(Runtime.class);

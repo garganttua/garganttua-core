@@ -10,15 +10,33 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.annotations.ConfigIgnore;
 import com.garganttua.core.configuration.annotations.ConfigProperty;
 
+/**
+ * Resolves a configuration key to a builder {@link Method} using the configured
+ * {@link MethodMappingStrategy}, honouring {@link ConfigProperty} and {@link ConfigIgnore}
+ * annotations and falling back through direct, {@code with}-prefixed, camelCase and
+ * kebab-case name variants.
+ */
 public class MethodMapping {
     private static final Logger log = Logger.getLogger(MethodMapping.class);
 
     private final MethodMappingStrategy strategy;
 
+    /**
+     * Creates a mapping resolver using the given strategy.
+     *
+     * @param strategy the name-matching strategy to apply
+     */
     public MethodMapping(MethodMappingStrategy strategy) {
         this.strategy = strategy;
     }
 
+    /**
+     * Finds the builder method that best matches a configuration key.
+     *
+     * @param builderClass the builder type to search
+     * @param configKey    the configuration key to map
+     * @return the matching method, or empty if none matches
+     */
     public Optional<Method> resolve(Class<?> builderClass, String configKey) {
         // 1. Check @ConfigProperty annotations
         var annotated = findByAnnotation(builderClass, configKey);

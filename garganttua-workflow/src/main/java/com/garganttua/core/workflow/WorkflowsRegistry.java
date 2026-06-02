@@ -25,15 +25,28 @@ public class WorkflowsRegistry implements IBootstrapSummaryContributor, Map<Stri
 
     private final Map<String, IWorkflow> workflows;
 
+    /**
+     * Creates an immutable registry from the given name-to-workflow map.
+     *
+     * @param workflows the workflows to register, keyed by name; defensively copied
+     * @throws NullPointerException if {@code workflows} is {@code null}
+     */
     public WorkflowsRegistry(Map<String, IWorkflow> workflows) {
         Objects.requireNonNull(workflows, "Workflows map cannot be null");
         this.workflows = Collections.unmodifiableMap(new LinkedHashMap<>(workflows));
     }
 
+    /**
+     * Looks up a registered workflow by name.
+     *
+     * @param name the workflow name
+     * @return the workflow, or empty if none is registered under {@code name}
+     */
     public Optional<IWorkflow> getWorkflow(String name) {
         return Optional.ofNullable(this.workflows.get(name));
     }
 
+    /** {@return an unmodifiable view of all registered workflows keyed by name} */
     public Map<String, IWorkflow> getAll() {
         return this.workflows;
     }

@@ -17,13 +17,25 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * {@link IElementResolver} for elements annotated with {@code @Property}, producing a
+ * property supplier keyed by the annotation's value and optionally scoped to a {@code @Provider}.
+ */
 @Resolver(annotations={Property.class})
 public class PropertyElementResolver implements IElementResolver {
+    /** Creates a property element resolver. */
     public PropertyElementResolver() {
     }
 
     private static final Logger log = Logger.getLogger(PropertyElementResolver.class);
 
+    /**
+     * Resolves a {@code @Property}-annotated element to a property supplier builder.
+     *
+     * @param elementType the declared type of the element; must not be {@code null}
+     * @param element     the annotated element; must not be {@code null}
+     * @return the resolution result wrapping a property supplier builder
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) {

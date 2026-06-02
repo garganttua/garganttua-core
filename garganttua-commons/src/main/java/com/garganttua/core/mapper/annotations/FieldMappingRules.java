@@ -24,5 +24,8 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Target(ElementType.FIELD)
 public @interface FieldMappingRules {
 
+	/**
+	 * @return the field mapping rules declared on the annotated field, one per source
+	 */
 	FieldMappingRule[] value();
 }

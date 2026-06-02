@@ -8,68 +8,37 @@
  * and return type management.
  * </p>
  *
- * <h2>Usage Example: Method Invocation</h2>
+ * <h2>Usage Example: Resolving and Invoking a Method</h2>
  * <pre>{@code
  * public class UserService {
- *     private void updateUser(String userId, String name, int age) {
- *         // Implementation
- *     }
- *
  *     public String getWelcomeMessage(String name) {
  *         return "Welcome, " + name;
  *     }
  * }
  *
- * UserService service = new UserService();
+ * IClass<UserService> owner = provider.getClass(UserService.class);
  *
- * // Invoke private method
- * MethodInvoker updateInvoker = new MethodInvoker(service, "updateUser");
- * updateInvoker.withParameter(0, "user123");
- * updateInvoker.withParameter(1, "Alice");
- * updateInvoker.withParameter(2, 30);
- * updateInvoker.invoke();
+ * // Resolve the method by name + signature
+ * ResolvedMethod resolved = MethodResolver.methodByName(
+ *     owner, provider, "getWelcomeMessage",
+ *     provider.getClass(String.class), provider.getClass(String.class));
  *
- * // Invoke public method with return value
- * MethodInvoker welcomeInvoker = new MethodInvoker(service, "getWelcomeMessage");
- * welcomeInvoker.withParameter(0, "Bob");
- * String message = welcomeInvoker.invoke();
+ * // Invoke it against an instance
+ * MethodInvoker<UserService, String> invoker = new MethodInvoker<>(resolved);
+ * IMethodReturn<String> result = invoker.invoke(new UserService(), "Bob");
+ * String message = result.single();
  * }</pre>
  *
- * <h2>Usage Example: Method Queries</h2>
+ * <h2>Usage Example: Invoking Through a Field Path</h2>
  * <pre>{@code
- * // Find all methods with @Provider annotation
- * List<Method> providerMethods = MethodQuery.findMethodsWithAnnotation(
- *     ConfigClass.class,
- *     Provider.class
- * );
- *
- * // Find all methods with @PostConstruct
- * List<Method> initMethods = MethodQuery.findMethodsWithAnnotation(
- *     UserService.class,
- *     PostConstruct.class
- * );
- *
- * // Find method by name
- * Method updateMethod = MethodQuery.findMethod(
- *     UserService.class,
- *     "updateUser",
- *     String.class, String.class, int.class
- * );
- * }</pre>
- *
- * <h2>Usage Example: Method Binding</h2>
- * <pre>{@code
- * // Create reusable method binder
- * MethodBinder binder = new MethodBinder(emailService, "sendEmail");
- *
- * // Bind parameters
- * binder.bindParameter(0, "recipient@example.com");
- * binder.bindParameter(1, "Subject Line");
- * binder.bindParameter(2, "Email body content");
- *
- * // Invoke multiple times with same binding
- * binder.invoke();
- * binder.invoke();  // Reuses parameter bindings
+ * // An ObjectAddress such as "inner.compute" resolves the leaf method `compute`
+ * // reached by first reading the `inner` field; the invoker walks the path
+ * // automatically and returns a MultipleMethodReturn when the path crosses a
+ * // collection, array or map.
+ * ResolvedMethod resolved = MethodResolver.methodByAddress(owner, provider,
+ *     new ObjectAddress("inner.compute"));
+ * MethodInvoker<?, ?> invoker = new MethodInvoker<>(resolved);
+ * IMethodReturn<?> result = invoker.invoke(root);
  * }</pre>
  *
  * <h2>Features</h2>
@@ -87,6 +56,6 @@
  *
  * @since 2.0.0-ALPHA01
  * @see com.garganttua.core.reflection
- * @see com.garganttua.core.reflection.binders.IMethodBinder
+ * @see com.garganttua.core.reflection.binders.MethodBinder
  */
 package com.garganttua.core.reflection.methods;

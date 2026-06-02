@@ -32,6 +32,17 @@ public interface IMethod extends IExecutable {
 
 	// --- Invocation ---
 
+	/**
+	 * Invokes this method. Mirror of
+	 * {@link java.lang.reflect.Method#invoke(Object, Object...)}.
+	 *
+	 * @param obj  the instance to invoke on, or {@code null} for a static method
+	 * @param args the method arguments
+	 * @return the method result, or {@code null} for a {@code void} method
+	 * @throws IllegalAccessException    if this method is inaccessible
+	 * @throws IllegalArgumentException  if the arguments do not match the parameters
+	 * @throws InvocationTargetException if the underlying method throws an exception
+	 */
 	Object invoke(Object obj, Object... args)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
 

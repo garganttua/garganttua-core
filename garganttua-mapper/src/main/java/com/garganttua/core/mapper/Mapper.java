@@ -22,6 +22,17 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
 
+/**
+ * Default {@link IMapper} implementation: maps a source object onto a destination
+ * type by resolving annotation-driven and convention-based {@link MappingRule}s,
+ * caching the pre-computed {@link IMappingRuleExecutor}s per source/destination pair.
+ *
+ * <p>Thread-safe: configurations are cached in a {@link ConcurrentHashMap} and
+ * listeners/observers use copy-on-write collections. Per-call cycle detection uses
+ * an identity set bound through {@link IMappingRecursion} rather than a
+ * {@code ThreadLocal}. Mapping activity is exposed via the {@link IObservable}
+ * contract under the {@code mapper:<src>-><dst>} source.
+ */
 public class Mapper implements IMapper, IObservable {
     private static final Logger log = Logger.getLogger(Mapper.class);
 
@@ -34,6 +45,12 @@ public class Mapper implements IMapper, IObservable {
 	private final MapperMetrics metrics = new MapperMetrics();
 	private final ObservableRegistry observers = new ObservableRegistry();
 
+	/**
+	 * Creates a mapper backed by the given reflection facade.
+	 *
+	 * @param reflection the reflection provider used to resolve classes, fields and methods
+	 * @throws NullPointerException if {@code reflection} is {@code null}
+	 */
 	public Mapper(IReflection reflection) {
 		this.reflection = Objects.requireNonNull(reflection, "IReflection implementation cannot be null");
 		this.mappingRules = new MappingRules(reflection);
@@ -70,6 +87,17 @@ public class Mapper implements IMapper, IObservable {
 		this.observers.removeObserver(observer);
 	}
 
+	/**
+	 * Core mapping entry point. Resolves the cached configuration for the
+	 * {@code source}/{@code destinationClass} pair, applies its executors and
+	 * returns the populated destination, while notifying listeners, recording
+	 * metrics and firing observability start/end/error events.
+	 *
+	 * @param destination an existing destination instance to populate, or {@code null}
+	 *                    to let the mapper instantiate one
+	 * @return the populated destination instance
+	 * @throws MapperException if mapping fails (rethrown after error notification)
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <destination> destination map(Object source, IClass<destination> destinationClass, destination destination)
@@ -380,6 +408,13 @@ public class Mapper implements IMapper, IObservable {
 		return executors;
 	}
 
+	/**
+	 * Builds, caches and returns the mapping configuration for the given pair,
+	 * pre-computing its executors so subsequent {@code map(...)} calls are cheap.
+	 *
+	 * @return the resolved {@link MappingConfiguration}
+	 * @throws MapperException if the configuration cannot be built
+	 */
 	@Override
 	public MappingConfiguration recordMappingConfiguration(IClass<?> source, IClass<?> destination)
 			throws MapperException {
@@ -411,6 +446,13 @@ public class Mapper implements IMapper, IObservable {
 		}
 	}
 
+	/**
+	 * Registers an externally-built {@link MappingConfiguration}, pre-computing and
+	 * caching its regular/reverse executors under the source/destination key.
+	 *
+	 * @param config the configuration to install
+	 * @throws MapperException if its rules cannot be turned into executors
+	 */
 	@Override
 	public void register(MappingConfiguration config) throws MapperException {
 		MappingKey key = new MappingKey(config.source(), config.destination());

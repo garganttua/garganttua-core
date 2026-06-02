@@ -8,6 +8,15 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Expression node implementing a {@code for}-style loop: while the condition node evaluates to
+ * {@code true}, the body node runs and the update node advances the loop variable.
+ *
+ * <p>Each iteration re-evaluates the condition, body, and update nodes and writes the update result
+ * back into the named variable (when the active resolver is a {@link VariableSettableResolver}).
+ * The loop is capped at {@value #MAX_ITERATIONS} iterations to guard against runaway loops, and the
+ * value of the last body evaluation is returned.
+ */
 public class ForLoopExpressionNode implements IExpressionNode<Object, ISupplier<Object>> {
 
     private static final int MAX_ITERATIONS = 10000;
@@ -17,6 +26,14 @@ public class ForLoopExpressionNode implements IExpressionNode<Object, ISupplier<
     private final IExpressionNode<?, ? extends ISupplier<?>> conditionNode;
     private final IExpressionNode<?, ? extends ISupplier<?>> bodyNode;
 
+    /**
+     * Creates a for-loop node.
+     *
+     * @param variableName  the loop variable name, updated each iteration
+     * @param updateNode    node evaluated at the end of each iteration to compute the next variable value
+     * @param conditionNode node evaluated before each iteration; iteration continues while it yields {@code true}
+     * @param bodyNode      node evaluated as the loop body each iteration
+     */
     public ForLoopExpressionNode(String variableName,
                                   IExpressionNode<?, ? extends ISupplier<?>> updateNode,
                                   IExpressionNode<?, ? extends ISupplier<?>> conditionNode,
@@ -91,7 +108,16 @@ public class ForLoopExpressionNode implements IExpressionNode<Object, ISupplier<
         return Object.class;
     }
 
+    /**
+     * Variable resolver capable of writing variable values back, enabling loop variable updates.
+     */
     public interface VariableSettableResolver extends IExpressionVariableResolver {
+        /**
+         * Sets a variable in the resolver scope.
+         *
+         * @param name  the variable name
+         * @param value the value to bind
+         */
         void setVariable(String name, Object value);
     }
 }

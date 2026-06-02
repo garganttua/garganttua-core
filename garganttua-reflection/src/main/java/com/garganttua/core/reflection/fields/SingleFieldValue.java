@@ -33,10 +33,26 @@ public final class SingleFieldValue<F> implements IFieldValue<F> {
 		this.exception = Objects.requireNonNull(exception, "exception cannot be null");
 	}
 
+	/**
+	 * Creates a single field value holding a successful result.
+	 *
+	 * @param <F> the field value type
+	 * @param value the value (may be {@code null})
+	 * @param type the field type
+	 * @return a new single field value
+	 */
 	public static <F> SingleFieldValue<F> of(F value, IClass<F> type) {
 		return new SingleFieldValue<>(value, type);
 	}
 
+	/**
+	 * Creates a single field value representing a failed access.
+	 *
+	 * @param <F> the field value type
+	 * @param exception the exception captured during access
+	 * @param type the field type
+	 * @return a new single field value carrying the exception
+	 */
 	public static <F> SingleFieldValue<F> ofException(Throwable exception, IClass<F> type) {
 		return new SingleFieldValue<>(exception, type);
 	}

@@ -10,6 +10,13 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Condition that extracts a value from the object produced by a supplier and
+ * tests the extracted value against a {@link Predicate}.
+ *
+ * @param <T> the supplied source type
+ * @param <R> the extracted value type
+ */
 public class CustomExtractedCondition<T, R> implements ICondition {
     private static final Logger log = Logger.getLogger(CustomExtractedCondition.class);
 
@@ -17,6 +24,13 @@ public class CustomExtractedCondition<T, R> implements ICondition {
     private Function<T, R> extractor;
     private Predicate<R> predicate;
 
+    /**
+     * Creates a custom extracted condition.
+     *
+     * @param supplier  supplier of the source value; must not be {@code null}
+     * @param extractor function deriving the value to test; must not be {@code null}
+     * @param predicate predicate applied to the extracted value; must not be {@code null}
+     */
     public CustomExtractedCondition(ISupplier<T> supplier,
             Function<T, R> extractor,
             Predicate<R> predicate) {

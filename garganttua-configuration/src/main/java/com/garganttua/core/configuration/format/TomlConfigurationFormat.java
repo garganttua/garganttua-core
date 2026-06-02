@@ -5,6 +5,10 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * TOML configuration format, available only when the Jackson
+ * {@code jackson-dataformat-toml} dependency is on the classpath.
+ */
 public class TomlConfigurationFormat extends AbstractConfigurationFormat {
 
     private static final String TOML_FACTORY_CLASS = "com.fasterxml.jackson.dataformat.toml.TomlFactory";

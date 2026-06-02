@@ -7,5 +7,10 @@ package com.garganttua.core.reflection;
  */
 public interface IReflectionUser {
 
+	/**
+	 * Returns the reflection facade used by this component.
+	 *
+	 * @return the {@link IReflection} instance
+	 */
 	IReflection reflection();
 }

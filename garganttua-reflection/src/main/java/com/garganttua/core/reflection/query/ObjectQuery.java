@@ -15,6 +15,16 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
 
+/**
+ * Default {@link IObjectQuery} implementation that resolves dotted member paths
+ * (fields and methods) within a class hierarchy.
+ *
+ * <p>Resolution recurses through fields, superclasses, collection/array element types
+ * and map key/value types, producing one or more {@link ObjectAddress}es or member paths
+ * for a requested element name.
+ *
+ * @param <T> the queried class type
+ */
 public class ObjectQuery<T> implements IObjectQuery<T> {
     private static final Logger log = Logger.getLogger(ObjectQuery.class);
 
@@ -26,6 +36,13 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
     private IClass<?> collectionIClass;
     private IClass<?> mapIClass;
 
+    /**
+     * Creates a query bound to a class and reflection provider.
+     *
+     * @param objectClass the class whose members are queried
+     * @param provider    the reflection provider used to resolve well-known and generic types
+     * @throws ReflectionException if {@code objectClass} is null
+     */
     protected ObjectQuery(IClass<T> objectClass, IReflectionProvider provider) throws ReflectionException {
         log.trace("Creating ObjectQuery with objectClass={}", objectClass);
         if (objectClass == null) {

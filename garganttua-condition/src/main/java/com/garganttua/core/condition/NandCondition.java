@@ -11,12 +11,22 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 import com.garganttua.core.reflection.annotations.Reflected;
+
+/**
+ * Logical NAND condition: the negation of {@link AndCondition}, i.e. {@code true}
+ * unless every wrapped condition evaluates to {@code true}.
+ */
 @Reflected(queryAllDeclaredMethods = true)
 public class NandCondition implements ICondition {
     private static final Logger log = Logger.getLogger(NandCondition.class);
 
     private Set<ICondition> conditions;
 
+    /**
+     * Creates a NAND condition over the given conditions.
+     *
+     * @param conditions the conditions to combine; must not be {@code null}
+     */
     public NandCondition(Set<ICondition> conditions) {
         log.trace("Entering NandCondition constructor with {} conditions",
                 conditions != null ? conditions.size() : 0);
@@ -42,6 +52,12 @@ public class NandCondition implements ICondition {
         };
     }
 
+    /**
+     * Logical NAND of multiple conditions: the negation of their AND.
+     *
+     * @param conditions the conditions to combine
+     * @return {@code true} unless every condition evaluates to {@code true}
+     */
     @Expression(name = "nand", description = "Logical AND of multiple conditions")
     public static Boolean nand(Set<ICondition> conditions) {
         boolean andResult = new AndCondition(conditions).fullEvaluate();

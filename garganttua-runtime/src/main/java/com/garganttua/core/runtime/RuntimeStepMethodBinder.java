@@ -20,6 +20,15 @@ import com.garganttua.core.supply.FixedSupplier;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Binds a step's main operation expression and drives its execution: optional
+ * condition gating, expression evaluation, pipe post-processing, catch/abort
+ * handling, and storing the result as a variable and/or the runtime output.
+ *
+ * @param <ExecutionReturned> the expression's return type
+ * @param <InputType>         the runtime input type
+ * @param <OutputType>        the runtime output type
+ */
 public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         implements
         IRuntimeStepMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
@@ -39,6 +48,21 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
     private final Boolean nullable;
     private final String expressionReference;
 
+    /**
+     * Creates a method binder with no pipes.
+     *
+     * @param runtimeName              the owning runtime name
+     * @param stepName                 the step name
+     * @param expression               the operation expression to evaluate
+     * @param variable                 the optional variable to store the result in
+     * @param isOutput                 whether the result becomes the runtime output
+     * @param successCode              the exit code set on successful execution
+     * @param catches                  the catch clauses for this step
+     * @param condition                an optional condition gating execution
+     * @param abortOnUncatchedException whether an uncaught exception aborts the runtime
+     * @param nullable                 whether a {@code null} result is permitted
+     * @param expressionReference      reference to the expression, for diagnostics
+     */
     public RuntimeStepMethodBinder(String runtimeName, String stepName,
             IExpression<ExecutionReturned, ? extends ISupplier<ExecutionReturned>> expression,
             Optional<String> variable, boolean isOutput, Integer successCode, Set<IRuntimeStepCatch> catches,
@@ -48,6 +72,22 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
                 condition, abortOnUncatchedException, nullable, expressionReference);
     }
 
+    /**
+     * Creates a method binder.
+     *
+     * @param runtimeName              the owning runtime name
+     * @param stepName                 the step name
+     * @param expression               the operation expression to evaluate
+     * @param variable                 the optional variable to store the result in
+     * @param isOutput                 whether the result becomes the runtime output
+     * @param successCode              the exit code set on successful execution
+     * @param catches                  the catch clauses for this step
+     * @param pipes                    conditional pipes applied to the result
+     * @param condition                an optional condition gating execution
+     * @param abortOnUncatchedException whether an uncaught exception aborts the runtime
+     * @param nullable                 whether a {@code null} result is permitted
+     * @param expressionReference      reference to the expression, for diagnostics
+     */
     public RuntimeStepMethodBinder(String runtimeName, String stepName,
             IExpression<ExecutionReturned, ? extends ISupplier<ExecutionReturned>> expression,
             Optional<String> variable, boolean isOutput, Integer successCode, Set<IRuntimeStepCatch> catches,
@@ -133,6 +173,15 @@ public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         return this.nullable;
     }
 
+    /**
+     * Executes the step within the chain: evaluates the condition (skipping the
+     * step when unmet), runs the expression and its pipes, handles catch/abort
+     * outcomes, processes the result, and advances the chain.
+     *
+     * @param context the runtime context
+     * @param next    the next executor in the chain
+     * @throws ExecutorException if the step aborts with an unhandled exception
+     */
     public void execute(IRuntimeContext<InputType, OutputType> context,
             IExecutorChain<IRuntimeContext<InputType, OutputType>> next) throws ExecutorException {
 

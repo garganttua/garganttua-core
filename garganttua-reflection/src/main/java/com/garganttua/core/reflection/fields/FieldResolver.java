@@ -12,6 +12,11 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
+/**
+ * Resolves a field (possibly nested via dotted/indexed addresses) on an owner
+ * type into a {@link ResolvedField} carrying its {@link ObjectAddress} and the
+ * full field path, validating the optional expected field type.
+ */
 public class FieldResolver {
     private static final Logger log = Logger.getLogger(FieldResolver.class);
 
@@ -19,11 +24,30 @@ public class FieldResolver {
         // Provider-based API (preferred)
         // ========================================================================
 
+        /**
+         * Resolves a field by its (possibly nested) name on the given owner type.
+         *
+         * @param ownerType the type to resolve against
+         * @param provider the reflection provider used for class resolution
+         * @param fieldName the field name or nested address
+         * @return the resolved field
+         * @throws ReflectionException if the field cannot be found
+         */
         public static ResolvedField fieldByFieldName(IClass<?> ownerType, IReflectionProvider provider,
                         String fieldName) throws ReflectionException {
                 return fieldByFieldName(ownerType, provider, fieldName, null);
         }
 
+        /**
+         * Resolves a field by name and validates its declared type.
+         *
+         * @param ownerType the type to resolve against
+         * @param provider the reflection provider used for class resolution
+         * @param fieldName the field name or nested address
+         * @param fieldType the expected field type, or {@code null} to skip the check
+         * @return the resolved field
+         * @throws ReflectionException if the field is missing or has a mismatching type
+         */
         public static ResolvedField fieldByFieldName(IClass<?> ownerType, IReflectionProvider provider,
                         String fieldName, IClass<?> fieldType) throws ReflectionException {
                 log.debug("[fieldByFieldName] Resolving: fieldName={}, fieldType={}, ownerType={}",
@@ -46,11 +70,31 @@ public class FieldResolver {
                 return resolveAndValidate(query, address, ownerType, fieldType);
         }
 
+        /**
+         * Resolves the given {@link IField} on the owner type, verifying it matches
+         * the field actually declared there.
+         *
+         * @param ownerType the type to resolve against
+         * @param provider the reflection provider used for class resolution
+         * @param field the field to resolve and match
+         * @return the resolved field
+         * @throws ReflectionException if the field cannot be resolved or does not match
+         */
         public static ResolvedField fieldByField(IClass<?> ownerType, IReflectionProvider provider,
                         IField field) throws ReflectionException {
                 return fieldByField(ownerType, provider, field, null);
         }
 
+        /**
+         * Resolves the given {@link IField} on the owner type and validates its declared type.
+         *
+         * @param ownerType the type to resolve against
+         * @param provider the reflection provider used for class resolution
+         * @param field the field to resolve and match
+         * @param fieldType the expected field type, or {@code null} to skip the check
+         * @return the resolved field
+         * @throws ReflectionException if the field cannot be resolved, does not match, or has a mismatching type
+         */
         public static ResolvedField fieldByField(IClass<?> ownerType, IReflectionProvider provider,
                         IField field, IClass<?> fieldType) throws ReflectionException {
                 log.debug("[fieldByField] Resolving: field={}, fieldType={}, ownerType={}", field, fieldType,
@@ -83,11 +127,30 @@ public class FieldResolver {
                 }
         }
 
+        /**
+         * Resolves a field from a precomputed {@link ObjectAddress} on the owner type.
+         *
+         * @param ownerType the type to resolve against
+         * @param provider the reflection provider used for class resolution
+         * @param fieldAddress the address pointing at the target field
+         * @return the resolved field
+         * @throws ReflectionException if the address does not resolve to a field
+         */
         public static ResolvedField fieldByAddress(IClass<?> ownerType, IReflectionProvider provider,
                         ObjectAddress fieldAddress) throws ReflectionException {
                 return fieldByAddress(ownerType, provider, fieldAddress, null);
         }
 
+        /**
+         * Resolves a field from an {@link ObjectAddress} and validates its declared type.
+         *
+         * @param ownerType the type to resolve against
+         * @param provider the reflection provider used for class resolution
+         * @param fieldAddress the address pointing at the target field
+         * @param fieldType the expected field type, or {@code null} to skip the check
+         * @return the resolved field
+         * @throws ReflectionException if the address does not resolve to a field or the type mismatches
+         */
         public static ResolvedField fieldByAddress(IClass<?> ownerType, IReflectionProvider provider,
                         ObjectAddress fieldAddress, IClass<?> fieldType) throws ReflectionException {
                 log.debug("[fieldByAddress] Resolving: fieldAddress={}, fieldType={}, ownerType={}",

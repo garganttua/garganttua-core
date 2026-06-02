@@ -6,10 +6,19 @@ import java.util.Optional;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationSource;
 
+/**
+ * {@link IConfigurationSource} that loads configuration from a classpath resource,
+ * deriving the format hint from the resource file extension.
+ */
 public class ClasspathConfigurationSource implements IConfigurationSource {
 
     private final String resource;
 
+    /**
+     * Creates a source backed by a classpath resource.
+     *
+     * @param resource the classpath resource path
+     */
     public ClasspathConfigurationSource(String resource) {
         this.resource = resource;
     }

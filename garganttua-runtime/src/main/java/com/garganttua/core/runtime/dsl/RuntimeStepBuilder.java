@@ -27,6 +27,19 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Fluent builder for a single runtime step, configuring its operation method and
+ * optional fallback.
+ *
+ * <p>Supports annotation-driven auto-detection of the {@code @Operation} and
+ * {@code @FallBack} methods on the step's object class, and builds an
+ * {@link IRuntimeStep} bound to the resolved injection context.</p>
+ *
+ * @param <ExecutionReturn> the operation method return type
+ * @param <StepObjectType>  the type of the object holding the step methods
+ * @param <InputType>       the runtime input type
+ * @param <OutputType>      the runtime output type
+ */
 @Reflected
 public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>
         extends
@@ -44,6 +57,15 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
     private IInjectionContextBuilder injectionContextBuilder;
     private IObservableBuilder<?, ?> reflectionBuilderRef;
 
+    /**
+     * Creates a step builder.
+     *
+     * @param runtimeBuilder  the parent runtime builder
+     * @param runtimeName     the owning runtime name
+     * @param stepName        the unique step name
+     * @param executionReturn the step's execution return type
+     * @param supplier        supplier of the object whose operation/fallback methods the step invokes
+     */
     public RuntimeStepBuilder(RuntimeBuilder<InputType, OutputType> runtimeBuilder, String runtimeName,
             String stepName,
             Class<ExecutionReturn> executionReturn,
@@ -59,6 +81,12 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         log.debug("{} Supplier type: {}", logLineHeader(), supplier.getSuppliedClass());
     }
 
+    /**
+     * Returns the operation method builder, creating it lazily on first call.
+     *
+     * @return the method builder for the step's operation
+     * @throws DslException if the method builder cannot be created
+     */
     @Override
     public IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> method()
             throws DslException {
@@ -73,6 +101,12 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         return this.methodBuilder;
     }
 
+    /**
+     * Returns the fallback method builder, creating it lazily on first call.
+     *
+     * @return the fallback builder for the step
+     * @throws DslException if the fallback builder cannot be created
+     */
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> fallBack()
             throws DslException {
@@ -120,7 +154,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
                         fallbackMethod.getName());
             }
         } else {
-            log.warn("{} No fallback method detected", logLineHeader());
+            log.debug("{} No fallback method detected", logLineHeader());
         }
     }
 
@@ -181,6 +215,14 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         return "[Runtime " + runtimeName + "][Step " + stepName + "] ";
     }
 
+    /**
+     * Receives a build dependency, capturing the injection context builder and its
+     * resolvers when present, then delegates to the superclass.
+     *
+     * @param dependency the dependency builder being provided
+     * @return this builder for chaining
+     * @throws DslException if the superclass rejects the dependency
+     */
     @Override
     public IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> provide(
             IObservableBuilder<?, ?> dependency) throws DslException {

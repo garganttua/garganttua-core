@@ -17,6 +17,12 @@ import com.garganttua.core.injection.context.beans.ContextualBeanSupplier;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for an {@link IBeanSupplier}, capturing the bean reference criteria and whether
+ * the supplier resolves against the static {@code InjectionContext} or a contextual one.
+ *
+ * @param <Bean> the type of bean supplied
+ */
 @Reflected
 public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     private static final Logger log = Logger.getLogger(BeanSupplierBuilder.class);
@@ -28,6 +34,11 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
     private IClass<? extends Annotation> qualifier;
     private boolean useStaticContext = true;
 
+    /**
+     * Creates a bean supplier builder for the given bean type.
+     *
+     * @param type the bean type; must not be {@code null}
+     */
     public BeanSupplierBuilder(IClass<Bean> type) {
         log.trace("Entering BeanSupplierBuilder constructor with type: {}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
@@ -35,6 +46,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
+    /**
+     * Creates a bean supplier builder from a bean reference, optionally overriding the provider scope.
+     *
+     * @param provider the optional provider scope; when present its value overrides the reference's provider
+     * @param query    the bean reference to initialise from; must not be {@code null}
+     */
     public BeanSupplierBuilder(Optional<String> provider, BeanReference<Bean> query) {
         log.trace("Entering BeanSupplierBuilder constructor with Optional provider: {} and query: {}",
                 provider, query);
@@ -51,6 +68,11 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
+    /**
+     * Creates a bean supplier builder from a bean reference.
+     *
+     * @param query the bean reference to initialise from; must not be {@code null}
+     */
     public BeanSupplierBuilder(BeanReference<Bean> query) {
         log.trace("Entering BeanSupplierBuilder constructor with query: {}", query);
         Objects.requireNonNull(query, "query cannot be null");
@@ -58,6 +80,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         log.trace("Exiting BeanSupplierBuilder constructor");
     }
 
+    /**
+     * Creates a bean supplier builder from a bean reference with an explicit provider scope.
+     *
+     * @param provider the provider scope; must not be {@code null}
+     * @param query    the bean reference to initialise from; must not be {@code null}
+     */
     public BeanSupplierBuilder(String provider, BeanReference<Bean> query) {
         log.trace("Entering BeanSupplierBuilder constructor with provider: {} and query: {}", provider,
                 query);
@@ -84,6 +112,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         log.trace("Exiting initFromQuery method");
     }
 
+    /** {@return the reflective {@link Type} of the bean to be supplied} */
     @Override
     public Type getSuppliedType() {
         log.trace("Entering getSuppliedType() method");
@@ -91,11 +120,19 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return type.getType();
     }
 
+    /** {@return the {@link IClass} of the bean to be supplied} */
     @Override
     public IClass<Bean> getSuppliedClass() {
         return this.type;
     }
 
+    /**
+     * Builds the bean supplier, choosing a static or contextual implementation based on
+     * {@link #useStaticContext(boolean)}.
+     *
+     * @return the built bean supplier
+     * @throws DslException if the bean type was not set
+     */
     @Override
     public IBeanSupplier<Bean> build() throws DslException {
         log.trace("Entering build() method");
@@ -127,6 +164,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return supplier;
     }
 
+    /**
+     * Sets the name constraint for the supplied bean.
+     *
+     * @param name the bean name; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanSupplierBuilder<Bean> name(String name) {
         log.trace("Entering name() method with name: {}", name);
@@ -136,6 +179,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the provider scope from which the bean is resolved.
+     *
+     * @param provider the provider scope; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanSupplierBuilder<Bean> provider(String provider) {
         log.trace("Entering provider() method with provider: {}", provider);
@@ -145,6 +194,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the instantiation strategy for the supplied bean.
+     *
+     * @param strategy the bean strategy; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanSupplierBuilder<Bean> strategy(BeanStrategy strategy) {
         log.trace("Entering strategy() method with strategy: {}", strategy);
@@ -154,6 +209,12 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the qualifier annotation constraint for the supplied bean.
+     *
+     * @param qualifier the qualifier annotation class; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanSupplierBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) {
         log.trace("Entering qualifier() method with qualifier: {}", qualifier);
@@ -163,6 +224,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return this;
     }
 
+    /** {@return an empty set, as a bean supplier declares no build-time dependencies} */
     @Override
     public Set<IClass<?>> dependencies() {
         log.trace("Entering getDependencies() method");
@@ -170,6 +232,7 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return Set.of();
     }
 
+    /** {@return {@code true} if the built supplier resolves against a contextual (non-static) context} */
     @Override
     public boolean isContextual() {
         log.trace("Entering isContextual() method");
@@ -177,6 +240,13 @@ public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
         return !this.useStaticContext;
     }
 
+    /**
+     * Controls whether the built supplier resolves against the static {@code InjectionContext}
+     * ({@code true}) or a contextual one ({@code false}).
+     *
+     * @param useStaticContext {@code true} to use the static context
+     * @return this builder for chaining
+     */
     @Override
     public IBeanSupplierBuilder<Bean> useStaticContext(boolean useStaticContext) {
         this.useStaticContext = useStaticContext;

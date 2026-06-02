@@ -16,13 +16,25 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * {@link IElementResolver} for elements annotated with {@link Fixed}, supplying a constant
+ * primitive (or boxed primitive) value declared on the annotation.
+ */
 @Resolver(annotations={Fixed.class})
 public class FixedElementResolver implements IElementResolver {
+    /** Creates a resolver for {@link Fixed}-annotated elements. */
     public FixedElementResolver() {
     }
 
     private static final Logger log = Logger.getLogger(FixedElementResolver.class);
 
+    /**
+     * Resolves the element to a supplier yielding the constant value carried by its {@link Fixed}
+     * annotation. Non-primitive element types are rejected and reported as not resolved.
+     *
+     * @return a resolved supplier wrapping the fixed value, or a not-resolved marker for
+     *         non-primitive types
+     */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
@@ -57,6 +69,14 @@ public class FixedElementResolver implements IElementResolver {
         return resolved;
     }
 
+    /**
+     * Extracts the constant value held by a {@link Fixed} annotation, coerced to the given target type.
+     *
+     * @param annotation the {@link Fixed} annotation, may be {@code null}
+     * @param targetType the primitive or boxed target type, may be {@code null}
+     * @return the fixed value, or {@code null} if either argument is {@code null}
+     * @throws DiException if {@code targetType} is not a supported primitive or boxed type
+     */
     @SuppressWarnings("unchecked")
     public static <T> T getFixedValue(Fixed annotation, IClass<T> targetType) throws DiException {
         log.trace("Entering getFixedValue with annotation: {} and targetType: {}", annotation, targetType);

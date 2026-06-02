@@ -11,7 +11,7 @@
  * <h2>Core Annotations</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.injection.annotations.Property} - Injects configuration properties using ${property.name} placeholders</li>
- *   <li>{@link com.garganttua.core.injection.annotations.Provider} - Marks factory methods that produce beans</li>
+ *   <li>{@link com.garganttua.core.injection.annotations.Provider} - Selects which bean provider resolves a dependency</li>
  *   <li>{@link com.garganttua.core.injection.annotations.Prototype} - Declares prototype-scoped beans (new instance per request)</li>
  *   <li>{@link com.garganttua.core.injection.annotations.Fixed} - Marks fixed value injections</li>
  *   <li>{@link com.garganttua.core.injection.annotations.Null} - Explicitly injects null values</li>
@@ -57,7 +57,7 @@
  * <pre>{@code
  * public class Configuration {
  *     @Inject
- *     @Fixed("production")
+ *     @Fixed(valueString = "production")
  *     private String environment;
  * }
  * }</pre>

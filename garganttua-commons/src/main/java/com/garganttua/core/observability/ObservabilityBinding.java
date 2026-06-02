@@ -48,6 +48,13 @@ public final class ObservabilityBinding implements AutoCloseable, IBootstrapSumm
     private final List<Registration> registrations = new CopyOnWriteArrayList<>();
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /**
+     * Creates a binding owning the given observer wrappers. The list is
+     * defensively copied; sources are attached later via
+     * {@link #attachSource(IObservable)}.
+     *
+     * @param wrappers the observer wrappers produced by the parent builder
+     */
     public ObservabilityBinding(List<IObserver<ObservableEvent>> wrappers) {
         this.wrappers = List.copyOf(Objects.requireNonNull(wrappers, "wrappers"));
     }

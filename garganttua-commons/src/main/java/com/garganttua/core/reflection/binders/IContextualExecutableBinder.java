@@ -150,6 +150,15 @@ public interface IContextualExecutableBinder<ExecutionReturn, OwnerContextType>
                 return execute(null);
         }
 
+        /**
+         * Supplies the execution result by delegating to the context-less
+         * {@link #execute()}, which fails fast when an owner context is required.
+         *
+         * @return an {@link Optional} containing the execution result, or empty for
+         *         void executables or when no result is produced
+         * @throws SupplyException if execution fails or the required owner context
+         *                         was not provided
+         */
         @Override
         default Optional<IMethodReturn<ExecutionReturn>> supply() throws SupplyException {
                 return this.execute();

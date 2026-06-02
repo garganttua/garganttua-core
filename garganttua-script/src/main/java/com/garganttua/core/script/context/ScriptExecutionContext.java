@@ -62,13 +62,32 @@ public final class ScriptExecutionContext {
         throw (X) t;
     }
 
+    /**
+     * Body executed by {@link #runIn(ScriptContext, ScriptRunnable)} with a
+     * bound script context, allowed to throw a single checked type {@code X}.
+     *
+     * @param <X> the checked exception type the body may throw
+     */
     @FunctionalInterface
     public interface ScriptRunnable<X extends Throwable> {
+        /** @throws X if the body fails */
         void run() throws X;
     }
 
+    /**
+     * Result-producing body executed by
+     * {@link #callIn(ScriptContext, ScriptCallable)} with a bound script
+     * context, allowed to throw a single checked type {@code X}.
+     *
+     * @param <R> the result type
+     * @param <X> the checked exception type the body may throw
+     */
     @FunctionalInterface
     public interface ScriptCallable<R, X extends Exception> {
+        /**
+         * @return the computed result
+         * @throws X if the body fails
+         */
         R call() throws X;
     }
 }

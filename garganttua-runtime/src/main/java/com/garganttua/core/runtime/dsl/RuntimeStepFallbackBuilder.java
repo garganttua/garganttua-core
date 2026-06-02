@@ -25,6 +25,19 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.Nullable;
 
+/**
+ * Fluent builder for a step's {@code @FallBack} method, invoked when the operation
+ * raises a matching exception.
+ *
+ * <p>Configures the fallback's output flag, result variable, nullability and the
+ * set of {@code @OnException} handlers, and binds the fallback method via the
+ * injection context.</p>
+ *
+ * @param <ExecutionReturn> the fallback method return type
+ * @param <StepObjectType>  the type of the object holding the step methods
+ * @param <InputType>       the runtime input type
+ * @param <OutputType>      the runtime output type
+ */
 @Reflected
 public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
@@ -38,6 +51,15 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
     private String runtimeName;
     private Boolean nullable = false;
 
+    /**
+     * Creates a fallback builder.
+     *
+     * @param runtimeName the owning runtime name
+     * @param stepName    the owning step name
+     * @param up          the parent step builder
+     * @param supplier    supplier of the object whose fallback method is invoked
+     * @throws DslException if the underlying binder builder cannot be initialized
+     */
     protected RuntimeStepFallbackBuilder(String runtimeName,
             String stepName,
             IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> up,
@@ -49,6 +71,12 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         log.trace("{} Initialized RuntimeStepFallbackBuilder", logLineHeader());
     }
 
+    /**
+     * Stores the fallback's return value in the named runtime variable.
+     *
+     * @param variableName the variable name
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> variable(
             String variableName) {
@@ -57,6 +85,12 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         return this;
     }
 
+    /**
+     * Marks whether the fallback's return value is the runtime output.
+     *
+     * @param output {@code true} to treat the return value as the runtime output
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> output(boolean output) {
         this.output = Objects.requireNonNull(output, "Output cannot be null");
@@ -64,6 +98,12 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         return this;
     }
 
+    /**
+     * Builds the fallback binder from the configured method, handlers and flags.
+     *
+     * @return the built {@link IRuntimeStepFallbackBinder}
+     * @throws DslException if the underlying method binding cannot be built
+     */
     @Override
     public IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> build()
             throws DslException {
@@ -80,6 +120,13 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         return fallbackBinder;
     }
 
+    /**
+     * Declares an exception this fallback handles.
+     *
+     * @param exception the exception type to handle
+     * @return the on-exception builder for further configuration
+     * @throws DslException if the handler cannot be created
+     */
     @Override
     public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
             IClass<? extends Throwable> exception) throws DslException {
@@ -92,6 +139,15 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         return onException;
     }
 
+    /**
+     * Declares an exception this fallback handles, seeded with an
+     * {@link OnException} annotation for auto-detection.
+     *
+     * @param exception    the exception type to handle
+     * @param oneException the source {@link OnException} annotation
+     * @return the on-exception builder for further configuration
+     * @throws DslException if the handler cannot be created
+     */
     public IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException(
             Class<? extends Throwable> exception, OnException oneException) throws DslException {
         IRuntimeStepOnExceptionBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> onException = new RuntimeStepOnExceptionBuilder<>(
@@ -146,6 +202,12 @@ public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputTy
         }
     }
 
+    /**
+     * Marks whether the fallback may return {@code null}.
+     *
+     * @param nullable {@code true} if a {@code null} return is permitted
+     * @return this builder for chaining
+     */
     @Override
     public IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> nullable(
             boolean nullable) {

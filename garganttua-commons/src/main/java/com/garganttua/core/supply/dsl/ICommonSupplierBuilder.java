@@ -9,6 +9,22 @@ import com.garganttua.core.reflection.binders.IConstructorBinder;
 import com.garganttua.core.supply.IContextualSupply;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * Fluent builder for {@link ISupplier} instances backed by a common set of
+ * supply strategies.
+ *
+ * <p>
+ * Implementations expose mutually exclusive strategy methods ({@link #withValue},
+ * {@link #withConstructor}, {@link #withContext}, {@link #withFuture},
+ * {@link #withBlockingQueue}) plus the {@link #nullable(boolean)} flag. Selecting
+ * more than one supply strategy raises a {@link DslException}.
+ * </p>
+ *
+ * @param <Supplied> the type of object the built supplier will provide
+ * @since 2.0.0-ALPHA01
+ * @see ISupplierBuilder
+ * @see ISupplier
+ */
 public interface ICommonSupplierBuilder<Supplied> extends ISupplierBuilder<Supplied, ISupplier<Supplied>>{
 
     /**

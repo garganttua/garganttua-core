@@ -19,6 +19,18 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.github.f4b6a3.uuid.UuidCreator;
 
+/**
+ * Default {@link IRuntime} implementation: orchestrates an ordered set of
+ * {@link IRuntimeStep steps} over a dedicated child {@link IRuntimeContext}.
+ *
+ * <p>Each execution creates its own context (seeded with preset variables),
+ * builds an {@link IExecutorChain} from the steps, runs it, and collects an
+ * {@link IRuntimeResult}. The runtime is {@link IObservable}: start/end/error
+ * events are emitted under the {@code runtime:<name>} source.</p>
+ *
+ * @param <InputType>  the runtime input type
+ * @param <OutputType> the runtime output type
+ */
 public class Runtime<InputType, OutputType>
 		implements IRuntime<InputType, OutputType>, IObservable {
     private static final Logger log = Logger.getLogger(Runtime.class);
@@ -31,6 +43,16 @@ public class Runtime<InputType, OutputType>
 	private final Map<String, ISupplier<?>> presetVariables;
 	private final ObservableRegistry observers = new ObservableRegistry();
 
+	/**
+	 * Creates a runtime.
+	 *
+	 * @param name             the runtime name (used as observability source prefix)
+	 * @param steps            ordered steps to execute, keyed by step name
+	 * @param injectionContext the parent injection context used to spawn child contexts
+	 * @param inputType        the declared input type
+	 * @param outputType       the declared output type
+	 * @param variables        preset variables supplied to each execution context
+	 */
 	public Runtime(
 			String name,
 			Map<String, IRuntimeStep<?, InputType, OutputType>> steps,

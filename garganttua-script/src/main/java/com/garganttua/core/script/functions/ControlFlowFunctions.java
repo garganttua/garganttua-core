@@ -23,6 +23,13 @@ public class ControlFlowFunctions {
     private ControlFlowFunctions() {
     }
 
+    /**
+     * Evaluates {@code thenBlock} only when {@code condition} is true.
+     *
+     * @param condition the branch condition
+     * @param thenBlock the value or {@link StatementBlock} to run when {@code condition} holds
+     * @return the block's result (or the value itself) when taken, otherwise {@code null}
+     */
     @Expression(name = "if", description = "Conditional execution: if(condition, thenBlock)")
     public static Object ifExpr(boolean condition, @Nullable Object thenBlock) {
         if (condition) {
@@ -34,6 +41,15 @@ public class ControlFlowFunctions {
         return null;
     }
 
+    /**
+     * Evaluates {@code thenBlock} when {@code condition} is true, otherwise {@code elseBlock}.
+     * Only the taken branch is executed.
+     *
+     * @param condition the branch condition
+     * @param thenBlock the value or {@link StatementBlock} to run when {@code condition} holds
+     * @param elseBlock the value or {@link StatementBlock} to run otherwise
+     * @return the result of the taken branch (block result or the value itself)
+     */
     @Expression(name = "if", description = "Conditional execution with else: if(condition, thenBlock, elseBlock)")
     public static Object ifExpr(boolean condition, @Nullable Object thenBlock, @Nullable Object elseBlock) {
         if (condition) {

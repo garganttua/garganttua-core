@@ -13,6 +13,12 @@ import com.garganttua.core.workflow.WorkflowScript.ScriptSource;
 import com.garganttua.core.workflow.WorkflowStage;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for a single {@link WorkflowStage} within a {@link WorkflowBuilder}.
+ *
+ * <p>Accumulates the stage's scripts plus its optional condition, wrap, and
+ * catch expressions, then materialises a {@link WorkflowStage} on {@link #build()}.
+ */
 @Reflected
 public class WorkflowStageBuilder implements IWorkflowStageBuilder {
 
@@ -25,6 +31,11 @@ public class WorkflowStageBuilder implements IWorkflowStageBuilder {
     private String catchExpression;
     private String catchDownstreamExpression;
 
+    /**
+     * Creates a stage builder with the given stage name.
+     *
+     * @param name the stage name (used to derive generated script variable prefixes)
+     */
     public WorkflowStageBuilder(String name) {
         this.name = name;
     }

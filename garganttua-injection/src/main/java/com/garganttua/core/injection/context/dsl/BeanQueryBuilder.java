@@ -17,8 +17,15 @@ import com.garganttua.core.injection.context.beans.BeanQuery;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for an {@link IBeanQuery}, accumulating the type, provider, strategy, qualifier,
+ * and name criteria used to look up a bean.
+ *
+ * @param <Bean> the type of bean being queried
+ */
 @Reflected
 public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
+    /** Creates an empty bean query builder. */
     public BeanQueryBuilder() {
     }
 
@@ -30,6 +37,12 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
     private IClass<? extends Annotation> qualifier;
     private String name;
 
+    /**
+     * Builds the immutable {@link IBeanQuery} from the accumulated criteria.
+     *
+     * @return the built bean query
+     * @throws DslException if the query cannot be constructed
+     */
     @Override
     public IBeanQuery<Bean> build() throws DslException {
         log.trace("Entering build() method");
@@ -67,6 +80,12 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
         return type==null?"":type.getSimpleName();
     }
 
+    /**
+     * Sets the bean type to query for.
+     *
+     * @param type the bean type; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanQueryBuilder<Bean> type(IClass<Bean> type) {
         log.trace("Entering type() method with parameter: {}", type);
@@ -76,6 +95,12 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the bean name to query for.
+     *
+     * @param name the bean name; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanQueryBuilder<Bean> name(String name) {
         log.trace("Entering name() method with parameter: {}", name);
@@ -85,6 +110,13 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the qualifier annotation to constrain the query.
+     *
+     * @param qualifier the qualifier annotation class; must not be {@code null}
+     * @return this builder for chaining
+     * @throws DiException if the qualifier is invalid
+     */
     @Override
     public IBeanQueryBuilder<Bean> qualifier(IClass<? extends Annotation> qualifier) throws DiException {
         log.trace("Entering qualifier() method with parameter: {}", qualifier);
@@ -94,6 +126,12 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the instantiation strategy (singleton or prototype) to query for.
+     *
+     * @param strategy the bean strategy; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanQueryBuilder<Bean> strategy(BeanStrategy strategy) {
         log.trace("Entering strategy() method with parameter: {}", strategy);
@@ -103,6 +141,12 @@ public class BeanQueryBuilder<Bean> implements IBeanQueryBuilder<Bean> {
         return this;
     }
 
+    /**
+     * Sets the provider scope to query within.
+     *
+     * @param provider the provider scope; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IBeanQueryBuilder<Bean> provider(String provider) {
         log.trace("Entering provider() method with parameter: {}", provider);

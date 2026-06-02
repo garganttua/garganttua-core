@@ -33,6 +33,11 @@ public class MappingConfigurationBuilder implements IMappingConfigurationBuilder
 	private MappingConfigurationBuilder() {
 	}
 
+	/**
+	 * Starts a new fluent mapping configuration builder.
+	 *
+	 * @return a fresh builder with {@link MappingDirection#REGULAR} as the default direction
+	 */
 	public static IMappingConfigurationBuilder create() {
 		return new MappingConfigurationBuilder();
 	}

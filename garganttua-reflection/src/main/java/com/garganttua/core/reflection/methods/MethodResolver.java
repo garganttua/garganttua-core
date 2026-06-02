@@ -12,6 +12,11 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
+/**
+ * Resolves a single {@link ResolvedMethod} on a class from a name, an existing
+ * {@link IMethod}, or an {@link ObjectAddress}, applying optional return-type and
+ * parameter-type signature constraints.
+ */
 public class MethodResolver {
     private static final Logger log = Logger.getLogger(MethodResolver.class);
 
@@ -19,6 +24,18 @@ public class MethodResolver {
         // Provider-based API (preferred)
         // ========================================================================
 
+        /**
+         * Resolves the single method matching the given name and signature constraints.
+         *
+         * @param ownerType      the class to search
+         * @param provider       the reflection provider used to query members
+         * @param methodName      the method name
+         * @param returnType      the expected return type, or {@code null} for no constraint
+         * @param parameterTypes  the expected parameter types; empty or {@code null} means no
+         *                        constraint on parameters
+         * @return the single matching resolved method
+         * @throws ReflectionException if no method or more than one method matches
+         */
         public static ResolvedMethod methodByName(IClass<?> ownerType, IReflectionProvider provider,
                         String methodName, IClass<?> returnType,
                         IClass<?>... parameterTypes) throws ReflectionException {
@@ -59,6 +76,15 @@ public class MethodResolver {
 
         }
 
+        /**
+         * Resolves the single method with the given name, ignoring signature.
+         *
+         * @param ownerType   the class to search
+         * @param provider    the reflection provider used to query members
+         * @param methodName  the method name
+         * @return the single matching resolved method
+         * @throws ReflectionException if no method or more than one method with that name exists
+         */
         public static ResolvedMethod methodByName(IClass<?> ownerType, IReflectionProvider provider,
                         String methodName)
                         throws ReflectionException {
@@ -86,6 +112,16 @@ public class MethodResolver {
                 return found.get(0);
         }
 
+        /**
+         * Resolves the method on {@code ownerType} that exactly matches the signature of
+         * the supplied {@code method} (name, return type and parameter types).
+         *
+         * @param ownerType  the class to search
+         * @param provider   the reflection provider used to query members
+         * @param method     the method whose exact signature is matched
+         * @return the single matching resolved method
+         * @throws ReflectionException if no method or more than one method matches the exact signature
+         */
         public static ResolvedMethod methodByMethod(IClass<?> ownerType, IReflectionProvider provider,
                         IMethod method) throws ReflectionException {
                 log.trace("[methodByMethod] Start: method={}, ownerType={}", method.getName(), ownerType);
@@ -113,6 +149,15 @@ public class MethodResolver {
                 return found.get(0);
         }
 
+        /**
+         * Resolves the method named by the last element of {@code methodAddress}, ignoring signature.
+         *
+         * @param ownerType      the class to search
+         * @param provider       the reflection provider used to query members
+         * @param methodAddress  the address whose last element is the method name
+         * @return the single matching resolved method
+         * @throws ReflectionException if no method or more than one method with that name exists
+         */
         public static ResolvedMethod methodByAddress(IClass<?> ownerType, IReflectionProvider provider,
                         ObjectAddress methodAddress)
                         throws ReflectionException {
@@ -121,6 +166,18 @@ public class MethodResolver {
                 return MethodResolver.methodByName(ownerType, provider, methodAddress.getLastElement());
         }
 
+        /**
+         * Resolves the method named by the last element of {@code methodAddress} matching the
+         * given signature constraints.
+         *
+         * @param ownerType      the class to search
+         * @param provider       the reflection provider used to query members
+         * @param methodAddress  the address whose last element is the method name
+         * @param returnType     the expected return type, or {@code null} for no constraint
+         * @param parameterTypes the expected parameter types; empty or {@code null} means no constraint
+         * @return the single matching resolved method
+         * @throws ReflectionException if no method or more than one method matches
+         */
         public static ResolvedMethod methodByAddress(IClass<?> ownerType, IReflectionProvider provider,
                         ObjectAddress methodAddress,
                         IClass<?> returnType, IClass<?>... parameterTypes)

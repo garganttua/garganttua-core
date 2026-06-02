@@ -132,6 +132,11 @@ public interface IContextualSupplier<Supplied, Context> extends ISupplier<Suppli
      */
     Optional<Supplied> supply(Context ownerContext, Object... otherContexts) throws SupplyException;
 
+    /**
+     * Indicates that this supplier requires a context to supply instances.
+     *
+     * @return always {@code true} for contextual suppliers
+     */
     default boolean isContextual() {
         return true;
     }

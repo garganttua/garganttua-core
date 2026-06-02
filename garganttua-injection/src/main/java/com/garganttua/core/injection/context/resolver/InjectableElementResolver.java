@@ -21,11 +21,20 @@ import com.garganttua.core.reflection.IExecutable;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IParameter;
 
+/**
+ * Default {@link IInjectableElementResolver} that dispatches resolution to per-annotation
+ * {@link IElementResolver}s, keyed by annotation type name.
+ */
 public class InjectableElementResolver implements IInjectableElementResolver {
     private static final Logger log = Logger.getLogger(InjectableElementResolver.class);
 
     private Map<String, IElementResolver> resolvers = new ConcurrentHashMap<>();
 
+    /**
+     * Creates a resolver seeded with the given annotation-to-resolver mappings.
+     *
+     * @param resolvers initial map of annotation types to their element resolvers
+     */
     public InjectableElementResolver(Map<IClass<? extends Annotation>, IElementResolver> resolvers) {
         log.trace("Entering InjectableElementResolver constructor with resolvers map: {}", resolvers);
         Objects.requireNonNull(resolvers, "Resolvers map cannot be null");
@@ -34,6 +43,13 @@ public class InjectableElementResolver implements IInjectableElementResolver {
         log.trace("Exiting InjectableElementResolver constructor");
     }
 
+    /**
+     * Resolves a single element by delegating to the resolver registered for the first of the
+     * element's annotations that has one.
+     *
+     * @return the delegate's result, or an unresolved {@link Resolved} (carrying the element's
+     *         nullability) when no annotation matches a registered resolver
+     */
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
         log.trace("Entering resolve with elementType: {} and element: {}", elementType, element);
@@ -59,6 +75,12 @@ public class InjectableElementResolver implements IInjectableElementResolver {
         return resolved;
     }
 
+    /**
+     * Resolves every parameter of a constructor or method.
+     *
+     * @param executable the executable whose parameters are resolved
+     * @return one {@link Resolved} per parameter, or an empty set for unsupported executables
+     */
     @Override
     public Set<Resolved> resolve(IExecutable executable) throws DiException {
         log.trace("Entering resolve for IExecutable: {}", executable);
@@ -79,6 +101,12 @@ public class InjectableElementResolver implements IInjectableElementResolver {
         return paramResolved;
     }
 
+    /**
+     * Registers (or replaces) the resolver handling a given annotation type.
+     *
+     * @param annotation the annotation type to bind
+     * @param resolver the resolver invoked for elements carrying that annotation
+     */
     @Override
     public void addResolver(IClass<? extends Annotation> annotation, IElementResolver resolver) {
         log.trace("Entering addResolver with annotation: {} and resolver: {}", annotation.getSimpleName(), resolver);

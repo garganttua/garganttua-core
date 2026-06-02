@@ -38,6 +38,11 @@ public record StageFailureContext(
         String reason,
         Throwable cause) {
 
+    /**
+     * Canonical constructor. Validates that {@code depClass}, {@code stage},
+     * {@code kind} and {@code reason} are non-null; {@code consumerClass} and
+     * {@code cause} are allowed to be {@code null}.
+     */
     public StageFailureContext {
         Objects.requireNonNull(depClass, "depClass");
         Objects.requireNonNull(stage, "stage");
@@ -65,6 +70,10 @@ public record StageFailureContext(
         return sb.toString();
     }
 
+    /**
+     * @return the failure {@link #cause()} wrapped in an {@link Optional},
+     *         empty when no cause was recorded
+     */
     public Optional<Throwable> causeOpt() {
         return Optional.ofNullable(cause);
     }

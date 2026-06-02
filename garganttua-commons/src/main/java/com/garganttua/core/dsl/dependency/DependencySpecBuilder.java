@@ -7,40 +7,33 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
- * Fluent builder for creating DependencySpec with phase-specific requirements.
+ * Fluent builder for creating a single-stage {@link DependencySpec}.
  *
  * <p>
- * This builder allows specifying different requirement levels (required/optional)
- * for auto-detection and build phases independently. This is useful when a dependency
- * is mandatory in one phase but optional in another.
+ * Exactly one phase must be configured per builder: either the auto-detect
+ * phase ({@link #requireForAutoDetect()} / {@link #useForAutoDetect()}) or the
+ * build phase ({@link #requireForBuild()} / {@link #useForBuild()}). Configuring
+ * both on the same chain is rejected by {@link #build()} — declare two separate
+ * {@link DependencySpec} entries, or use {@link DependencySpec#configureAndStage}
+ * for the configuration-then-build pattern.
  * </p>
  *
  * <h2>Usage Examples</h2>
  * <pre>{@code
- * // Config required for auto-detection, optional for build
+ * // Required for auto-detection
  * DependencySpec.of(IConfigBuilder.class)
  *     .requireForAutoDetect()
- *     .useForBuild()
+ *     .build();
  *
- * // InjectionContext optional for auto-detection, required for build
- * DependencySpec.of(IInjectionContextBuilder.class)
- *     .useForAutoDetect()
- *     .requireForBuild()
- *
- * // Required in both phases (equivalent to DependencySpec.require(...))
- * DependencySpec.of(ILoggerBuilder.class)
- *     .requireForAutoDetect()
- *     .requireForBuild()
- *
- * // Optional in both phases (equivalent to DependencySpec.use(...))
+ * // Optional for build
  * DependencySpec.of(ICacheBuilder.class)
- *     .useForAutoDetect()
  *     .useForBuild()
+ *     .build();
  * }</pre>
  *
  * @since 2.0.0-ALPHA01
  * @see DependencySpec
- * @see DependencyPhase
+ * @see DependencyStage
  * @see DependencyRequirement
  */
 @Reflected

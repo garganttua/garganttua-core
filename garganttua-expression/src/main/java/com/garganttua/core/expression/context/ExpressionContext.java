@@ -32,8 +32,17 @@ import com.garganttua.core.supply.ISupplier;
 // resolves the man() built-in via getMethod("man", …); under native image the
 // shallow-descriptor live-reflection fallback fails (closed world), so the real
 // descriptor — registered for reflection by GarganttuaAotFeature — is required.
+/**
+ * Default {@link IExpressionContext}: a registry of {@link IExpressionNodeFactory} keyed by
+ * function signature, used to parse expression strings (via ANTLR4) into {@link IExpressionNode}
+ * trees and to expose {@code man()} documentation.
+ *
+ * <p>Also acts as an {@link IBootstrapSummaryContributor}, reporting the number of registered
+ * expression functions. Factory storage and variable-type registration are thread-safe.
+ */
 @Reflected(queryAllDeclaredMethods = true)
 public class ExpressionContext implements IExpressionContext, IBootstrapSummaryContributor {
+    /** Creates an empty expression context with no registered node factories. */
     public ExpressionContext() {
     }
 
@@ -43,6 +52,12 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
     private final Map<String, IClass<?>> variableTypes = new ConcurrentHashMap<>();
     private volatile boolean dynamicFunctionsEnabled = false;
 
+    /**
+     * Creates a context populated from the given factories, keyed by {@link IExpressionNodeFactory#key()}.
+     * Duplicate keys are ignored (first registration wins).
+     *
+     * @param nodeFactories the node factories to register (must not be {@code null})
+     */
     public ExpressionContext(Set<IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories) {
         log.trace("Entering ExpressionContext constructor");
         Objects.requireNonNull(nodeFactories, "Node Factories set cannot be null");

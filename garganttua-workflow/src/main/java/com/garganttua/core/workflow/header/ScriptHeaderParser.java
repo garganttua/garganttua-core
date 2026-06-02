@@ -12,6 +12,13 @@ import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.header.ScriptHeader.HeaderInput;
 import com.garganttua.core.workflow.header.ScriptHeader.HeaderOutput;
 
+/**
+ * Parses the {@code #@workflow ... #@end} metadata block out of script source.
+ *
+ * <p>Recognises {@code @in}, {@code @out}, {@code @return}, {@code @catch}, and
+ * {@code @catchDownstream} tags plus a leading free-text description, producing a
+ * {@link ScriptHeader}. Also strips the block from source for inline embedding.
+ */
 public class ScriptHeaderParser {
 
     private static final Pattern HEADER_PATTERN = Pattern.compile(
@@ -49,6 +56,13 @@ public class ScriptHeaderParser {
         Pattern.MULTILINE
     );
 
+    /**
+     * Parses the {@code #@workflow} header block from the given script content.
+     *
+     * @param scriptContent the full script source
+     * @return the parsed header, or empty if the script has no {@code #@workflow} block
+     * @throws WorkflowException if the header is present but malformed
+     */
     public Optional<ScriptHeader> parse(String scriptContent) throws WorkflowException {
         Matcher headerMatcher = HEADER_PATTERN.matcher(scriptContent);
         if (!headerMatcher.find()) {

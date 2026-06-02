@@ -8,6 +8,13 @@ import java.nio.file.Path;
 import com.garganttua.core.dsl.ILinkedBuilder;
 import com.garganttua.core.workflow.WorkflowStage;
 
+/**
+ * Fluent builder for a {@link WorkflowStage} within an {@link IWorkflowBuilder}.
+ *
+ * <p>Adds scripts from several source kinds and configures the stage-level
+ * condition, wrap and catch expressions. Call {@code up()} to return to the
+ * owning workflow builder.
+ */
 public interface IWorkflowStageBuilder extends ILinkedBuilder<IWorkflowBuilder, WorkflowStage> {
 
     /**
@@ -15,17 +22,48 @@ public interface IWorkflowStageBuilder extends ILinkedBuilder<IWorkflowBuilder, 
      * executed if the condition expression evaluates to true at runtime.
      *
      * @param expression the Garganttua expression to evaluate (e.g., "equals(@env, \"prod\")")
+     * @return this builder for method chaining
      */
     IWorkflowStageBuilder when(String expression);
 
+    /**
+     * Adds an inline script from its source text.
+     *
+     * @param content the script source (or a {@code classpath:} reference)
+     * @return a script builder for the new script
+     */
     IWorkflowScriptBuilder script(String content);
 
+    /**
+     * Adds a script loaded from a file.
+     *
+     * @param file the script file
+     * @return a script builder for the new script
+     */
     IWorkflowScriptBuilder script(File file);
 
+    /**
+     * Adds a script loaded from a path.
+     *
+     * @param path the script path
+     * @return a script builder for the new script
+     */
     IWorkflowScriptBuilder script(Path path);
 
+    /**
+     * Adds a script read from an input stream.
+     *
+     * @param inputStream the stream supplying the script source
+     * @return a script builder for the new script
+     */
     IWorkflowScriptBuilder script(InputStream inputStream);
 
+    /**
+     * Adds a script read from a reader.
+     *
+     * @param reader the reader supplying the script source
+     * @return a script builder for the new script
+     */
     IWorkflowScriptBuilder script(Reader reader);
 
     /**

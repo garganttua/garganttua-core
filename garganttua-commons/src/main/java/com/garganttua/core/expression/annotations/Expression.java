@@ -25,10 +25,25 @@ import com.garganttua.core.reflection.annotations.Indexed;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Expression {
 
+    /**
+     * Convenience alias for {@link #name()}; the function name exposed in the expression language.
+     *
+     * @return the function name, or empty to derive it from the method name
+     */
     String value() default "";
 
+    /**
+     * The function name exposed in the expression language.
+     *
+     * @return the function name, or empty to derive it from the method name
+     */
     String name() default "";
 
+    /**
+     * Human-readable description used in generated manual pages.
+     *
+     * @return the description, or empty if none
+     */
     String description() default "";
 
 }

@@ -11,20 +11,52 @@ import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ITypeVariable;
 
+/**
+ * {@link IConstructor} decorator that wraps a resolved constructor and forwards
+ * every reflective operation to it, while adding convenience matching helpers
+ * used during constructor selection.
+ *
+ * @param <T> the type instantiated by the wrapped constructor
+ * @param constructor the underlying resolved constructor
+ */
 public record ResolvedConstructor<T>(IConstructor<T> constructor) implements IConstructor<T> {
 
+    /**
+     * Returns the type instantiated by this constructor.
+     *
+     * @return the declaring (constructed) class
+     */
     public IClass<T> constructedType() {
         return (IClass<T>) constructor.getDeclaringClass();
     }
 
+    /**
+     * Returns whether the wrapped constructor accepts a variable number of arguments.
+     *
+     * @return {@code true} if the constructor is varargs
+     */
     public boolean isVarArgs() {
         return constructor.isVarArgs();
     }
 
+    /**
+     * Returns the number of formal parameters of the wrapped constructor.
+     *
+     * @return the parameter count
+     */
     public int parameterCount() {
         return constructor.getParameterCount();
     }
 
+    /**
+     * Tests whether the given parameter types are assignment-compatible with the
+     * wrapped constructor's formal parameters.
+     *
+     * @param parameterTypes the candidate argument types; an empty or {@code null}
+     *        array matches only a no-arg constructor
+     * @return {@code true} if the arity matches and every formal parameter is
+     *         assignable from the corresponding candidate type
+     */
     public boolean matches(IClass<?>... parameterTypes) {
         IClass<?>[] actualParams = constructor.getParameterTypes();
         if (parameterTypes == null || parameterTypes.length == 0) {
@@ -41,6 +73,13 @@ public record ResolvedConstructor<T>(IConstructor<T> constructor) implements ICo
         return true;
     }
 
+    /**
+     * Tests whether this resolved constructor wraps the same underlying constructor
+     * as {@code other}.
+     *
+     * @param other the constructor to compare against
+     * @return {@code true} if the wrapped constructors are equal
+     */
     public boolean matches(IConstructor<?> other) {
         return this.constructor.equals(other);
     }

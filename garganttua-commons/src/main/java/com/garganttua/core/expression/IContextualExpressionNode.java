@@ -64,6 +64,14 @@ import com.garganttua.core.supply.SupplyException;
 public interface IContextualExpressionNode<R, S extends IContextualSupplier<R, IExpressionContext>>
         extends IExpressionNode<R, S>, IContextualSupplier<S, IExpressionContext> {
 
+    /**
+     * Evaluates this node against the given owner context.
+     *
+     * @param ownerContext  the expression context required for evaluation
+     * @param otherContexts additional contexts passed through to the supplier
+     * @return the evaluated contextual supplier
+     * @throws ExpressionException if evaluation fails
+     */
     S evaluate(IExpressionContext ownerContext,
             Object... otherContexts) throws ExpressionException;
 

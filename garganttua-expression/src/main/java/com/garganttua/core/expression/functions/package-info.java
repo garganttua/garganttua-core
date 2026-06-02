@@ -1,23 +1,23 @@
 /**
- * Standard expression functions and leafs for common operations.
+ * Built-in expression functions for common operations.
  *
  * <h2>Overview</h2>
  * <p>
- * This package provides a collection of standard expression functions and leafs
- * that can be used in expression evaluation. These include basic type operations,
- * string manipulation, and primitive value creation.
+ * This package provides the framework's built-in expression functions: type parsing
+ * and conversion, string manipulation, and simple arithmetic. They are exposed as
+ * {@link com.garganttua.core.expression.annotations.Expression}-annotated static methods
+ * so the expression context can discover and register them by name.
  * </p>
  *
- * <h2>Standard Functions</h2>
+ * <h2>Built-in Functions</h2>
  * <p>
- * The {@code StandardExpressionLeafs} class provides annotated static methods
- * for common expression operations:
+ * The {@link com.garganttua.core.expression.functions.Expressions} class provides:
  * </p>
  * <ul>
- *   <li>String literals and operations</li>
- *   <li>Integer literals and arithmetic</li>
- *   <li>Boolean values</li>
- *   <li>Type references (Class objects)</li>
+ *   <li>Primitive parsers ({@code int}, {@code long}, {@code double}, {@code boolean}, ...)</li>
+ *   <li>String conversion ({@code string}) and concatenation ({@code concatenate})</li>
+ *   <li>Class loading by name ({@code class})</li>
+ *   <li>Integer arithmetic ({@code increment}, {@code decrement})</li>
  * </ul>
  *
  * <h2>Usage Example (from ExpressionContextTest)</h2>
@@ -38,7 +38,6 @@
  * <h2>Features</h2>
  * <ul>
  *   <li>Standard primitive types</li>
- *   <li>Type-safe leaf creation</li>
  *   <li>Annotation-based discovery</li>
  *   <li>Integration with expression context</li>
  * </ul>

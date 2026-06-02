@@ -119,41 +119,89 @@ public final class ScriptTimingFunctions {
 
     // ========== Time Unit Functions ==========
 
+    /**
+     * Identity conversion treating {@code value} as milliseconds.
+     *
+     * @param value the duration in milliseconds
+     * @return {@code value}
+     */
     @Expression(name = "milliseconds", description = "Returns the value as milliseconds (identity function)")
     public static long milliseconds(long value) {
         return value;
     }
 
+    /**
+     * Identity conversion treating {@code value} as milliseconds.
+     *
+     * @param value the duration in milliseconds
+     * @return {@code value}
+     */
     @Expression(name = "milliseconds", description = "Returns the value as milliseconds (identity function)")
     public static long milliseconds(int value) {
         return value;
     }
 
+    /**
+     * Converts seconds to milliseconds.
+     *
+     * @param value the duration in seconds
+     * @return the equivalent milliseconds
+     */
     @Expression(name = "seconds", description = "Converts seconds to milliseconds")
     public static long seconds(long value) {
         return TimeUnit.SECONDS.toMillis(value);
     }
 
+    /**
+     * Converts seconds to milliseconds.
+     *
+     * @param value the duration in seconds
+     * @return the equivalent milliseconds
+     */
     @Expression(name = "seconds", description = "Converts seconds to milliseconds")
     public static long seconds(int value) {
         return TimeUnit.SECONDS.toMillis(value);
     }
 
+    /**
+     * Converts minutes to milliseconds.
+     *
+     * @param value the duration in minutes
+     * @return the equivalent milliseconds
+     */
     @Expression(name = "minutes", description = "Converts minutes to milliseconds")
     public static long minutes(long value) {
         return TimeUnit.MINUTES.toMillis(value);
     }
 
+    /**
+     * Converts minutes to milliseconds.
+     *
+     * @param value the duration in minutes
+     * @return the equivalent milliseconds
+     */
     @Expression(name = "minutes", description = "Converts minutes to milliseconds")
     public static long minutes(int value) {
         return TimeUnit.MINUTES.toMillis(value);
     }
 
+    /**
+     * Converts hours to milliseconds.
+     *
+     * @param value the duration in hours
+     * @return the equivalent milliseconds
+     */
     @Expression(name = "hours", description = "Converts hours to milliseconds")
     public static long hours(long value) {
         return TimeUnit.HOURS.toMillis(value);
     }
 
+    /**
+     * Converts hours to milliseconds.
+     *
+     * @param value the duration in hours
+     * @return the equivalent milliseconds
+     */
     @Expression(name = "hours", description = "Converts hours to milliseconds")
     public static long hours(int value) {
         return TimeUnit.HOURS.toMillis(value);

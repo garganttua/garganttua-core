@@ -18,15 +18,28 @@ import com.garganttua.core.script.nodes.StatementGroupNode;
 import com.garganttua.core.script.nodes.StatementNode;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * ANTLR4 visitor that walks a parsed script tree and builds the
+ * {@link IScriptNode} AST — statements, statement groups, function definitions
+ * and their catch / downstream-catch / pipe clauses. Expression text is handed
+ * to the {@link IExpressionContext} to produce {@link IExpression} nodes.
+ */
 public class ScriptNodeVisitor extends ScriptBaseVisitor<Object> {
 
     private final IExpressionContext expressionContext;
     private final List<IScriptNode> statements = new ArrayList<>();
 
+    /**
+     * @param expressionContext context used to compile expression fragments
+     *                          embedded in the script
+     */
     public ScriptNodeVisitor(IExpressionContext expressionContext) {
         this.expressionContext = expressionContext;
     }
 
+    /**
+     * @return the AST nodes collected so far, in source order
+     */
     public List<IScriptNode> getStatements() {
         return this.statements;
     }

@@ -69,13 +69,35 @@ public final class RuntimeExpressionContext {
         throw (X) t;
     }
 
+    /**
+     * Runnable body that may throw a checked exception of type {@code X}.
+     *
+     * @param <X> the throwable type the body may raise
+     */
     @FunctionalInterface
     public interface CtxRunnable<X extends Throwable> {
+        /**
+         * Runs the body.
+         *
+         * @throws X if the body fails
+         */
         void run() throws X;
     }
 
+    /**
+     * Callable body returning {@code R} that may throw a checked exception of type {@code X}.
+     *
+     * @param <R> the result type
+     * @param <X> the exception type the body may raise
+     */
     @FunctionalInterface
     public interface CtxCallable<R, X extends Exception> {
+        /**
+         * Computes and returns the result.
+         *
+         * @return the computed value
+         * @throws X if the body fails
+         */
         R call() throws X;
     }
 }

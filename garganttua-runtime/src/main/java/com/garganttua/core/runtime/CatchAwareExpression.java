@@ -43,11 +43,26 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
         private final Optional<Integer> code;
         private final String variableName;
 
+        /**
+         * Creates a handler matching the given exception types, with no result variable.
+         *
+         * @param exceptionTypes the exception types to match (empty/null means match-all)
+         * @param handler        the handler expression
+         * @param code           the optional exit code to set when this handler runs
+         */
         public CatchHandler(List<IClass<? extends Throwable>> exceptionTypes,
                 IExpression<R, ? extends ISupplier<R>> handler, Optional<Integer> code) {
             this(exceptionTypes, handler, code, null);
         }
 
+        /**
+         * Creates a handler matching the given exception types.
+         *
+         * @param exceptionTypes the exception types to match (empty/null means match-all)
+         * @param handler        the handler expression
+         * @param code           the optional exit code to set when this handler runs
+         * @param variableName   the optional variable to bind the handler result to
+         */
         public CatchHandler(List<IClass<? extends Throwable>> exceptionTypes,
                 IExpression<R, ? extends ISupplier<R>> handler, Optional<Integer> code, String variableName) {
             this.handler = handler;
@@ -61,6 +76,14 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
             }
         }
 
+        /**
+         * Creates a handler with an explicit matcher predicate.
+         *
+         * @param matcher      predicate deciding whether a throwable is handled
+         * @param handler      the handler expression
+         * @param code         the optional exit code to set when this handler runs
+         * @param variableName the optional variable to bind the handler result to
+         */
         public CatchHandler(java.util.function.Predicate<Throwable> matcher,
                 IExpression<R, ? extends ISupplier<R>> handler, Optional<Integer> code, String variableName) {
             this.matcher = matcher;
@@ -69,12 +92,21 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
             this.variableName = variableName;
         }
 
+        /**
+         * @param exception the thrown exception to test
+         * @return {@code true} if this handler matches the exception
+         */
         public boolean matches(Throwable exception) {
             return matcher.test(exception);
         }
 
+        /** @return the handler expression evaluated when this clause matches */
         public IExpression<R, ? extends ISupplier<R>> handler() { return handler; }
+
+        /** @return the optional exit code set when this clause runs */
         public Optional<Integer> code() { return code; }
+
+        /** @return the optional variable name the result is bound to, or {@code null} */
         public String variableName() { return variableName; }
     }
 
@@ -85,18 +117,32 @@ public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
     public static class CatchResultException extends RuntimeException {
         private final Object result;
         private final String variableName;
+        /**
+         * @param result       the handler's result
+         * @param variableName the variable name to bind the result to, or {@code null}
+         */
         public CatchResultException(Object result, String variableName) {
             super("Catch handler matched");
             this.result = result;
             this.variableName = variableName;
         }
+
+        /** @return the handler's result */
         public Object getResult() { return result; }
+
+        /** @return the variable name to bind the result to, or {@code null} */
         public String getVariableName() { return variableName; }
     }
 
     private final IExpression<R, ? extends ISupplier<R>> inner;
     private final List<CatchHandler<R>> handlers;
 
+    /**
+     * Wraps an inner expression with an ordered list of catch handlers.
+     *
+     * @param inner    the expression to evaluate
+     * @param handlers the catch handlers tried in order when {@code inner} throws
+     */
     public CatchAwareExpression(IExpression<R, ? extends ISupplier<R>> inner, List<CatchHandler<R>> handlers) {
         this.inner = Objects.requireNonNull(inner, "Inner expression cannot be null");
         this.handlers = List.copyOf(Objects.requireNonNull(handlers, "Handlers cannot be null"));

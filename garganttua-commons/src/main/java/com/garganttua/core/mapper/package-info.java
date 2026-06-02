@@ -8,97 +8,62 @@
  * and bidirectional mapping between DTOs and domain entities.
  * </p>
  *
- * <h2>Core Interfaces</h2>
+ * <h2>Core Types</h2>
  * <ul>
- *   <li>{@link com.garganttua.core.mapper.IMapper} - Main mapper interface</li>
- *   <li><b>IMappingRule</b> - Mapping rule definition (provided by implementations)</li>
- *   <li><b>IFieldMapping</b> - Field-to-field mapping (provided by implementations)</li>
+ *   <li>{@link com.garganttua.core.mapper.IMapper} - main mapper interface</li>
+ *   <li>{@link com.garganttua.core.mapper.MappingConfiguration} - rules and metadata for a source/destination pair</li>
+ *   <li>{@link com.garganttua.core.mapper.MappingRule} - a single field-to-field rule</li>
+ *   <li>{@link com.garganttua.core.mapper.IMappingRuleExecutor} - custom transformation hook</li>
+ *   <li>{@link com.garganttua.core.mapper.MapperConfiguration} - global mapper behavior flags</li>
  * </ul>
  *
  * <h2>Annotation-Based Mapping</h2>
+ * <p>
+ * Mapping rules are declared on the <em>destination</em> type via
+ * {@link com.garganttua.core.mapper.annotations.FieldMappingRule} (per field) and
+ * {@link com.garganttua.core.mapper.annotations.ObjectMappingRule} (whole object).
+ * </p>
  * <pre>{@code
- * @ObjectMappingRule(source = UserDTO.class, target = User.class)
- * public class UserMapper {
+ * public class UserDTO {
  *
- *     // Simple field mapping with transformation
- *     @FieldMappingRule(sourceField = "fullName", targetField = "name")
- *     public void mapName(UserDTO dto, User user) {
- *         user.setName(dto.getFullName().toUpperCase());
- *     }
+ *     // Map from the source's "email" field
+ *     @FieldMappingRule(sourceFieldAddress = "email")
+ *     private String emailAddress;
  *
- *     // Derived field mapping
- *     @FieldMappingRule(sourceField = "birthDate", targetField = "age")
- *     public void calculateAge(UserDTO dto, User user) {
- *         LocalDate birthDate = dto.getBirthDate();
- *         int age = Period.between(birthDate, LocalDate.now()).getYears();
- *         user.setAge(age);
- *     }
- *
- *     // Complex object mapping
- *     @FieldMappingRule(sourceField = "addressDTO", targetField = "address")
- *     public void mapAddress(UserDTO dto, User user) {
- *         AddressDTO addressDTO = dto.getAddressDTO();
- *         Address address = new Address(
- *             addressDTO.getStreet(),
- *             addressDTO.getCity(),
- *             addressDTO.getZipCode()
- *         );
- *         user.setAddress(address);
- *     }
+ *     // Map with a static converter method "ClassName.methodName"
+ *     @FieldMappingRule(
+ *         sourceFieldAddress = "birthDate",
+ *         fromSourceMethod = "DateUtils.calculateAge")
+ *     private Integer age;
  * }
  *
- * // Use mapper
- * IMapper<UserDTO, User> mapper = new Mapper<>(UserMapper.class);
- * UserDTO dto = new UserDTO("John Doe", LocalDate.of(1990, 1, 1));
- * User user = mapper.map(dto);
+ * // Map a source instance into a new destination instance
+ * UserDTO dto = mapper.map(user, IClass.getClass(UserDTO.class));
  * }</pre>
  *
- * <h2>Bidirectional Mapping</h2>
- * <pre>{@code
- * @ObjectMappingRule(source = UserDTO.class, target = User.class)
- * @BidirectionalMapping
- * public class BidirectionalUserMapper {
- *
- *     @FieldMappingRule(sourceField = "fullName", targetField = "name")
- *     @ReverseMapping(sourceField = "name", targetField = "fullName")
- *     public void mapName(UserDTO dto, User user) {
- *         user.setName(dto.getFullName().toUpperCase());
- *     }
- *
- *     public void mapNameReverse(User user, UserDTO dto) {
- *         dto.setFullName(user.getName().toLowerCase());
- *     }
- * }
- *
- * // Forward mapping: DTO -> Entity
- * User user = mapper.map(dto);
- *
- * // Reverse mapping: Entity -> DTO
- * UserDTO dto = mapper.mapReverse(user);
- * }</pre>
+ * <h2>Reverse Mapping</h2>
+ * <p>
+ * Rules carrying a {@code toSourceMethod} (or a registered reverse
+ * {@link com.garganttua.core.mapper.MappingConfiguration} with
+ * {@link com.garganttua.core.mapper.MappingDirection#REVERSE}) allow mapping back from
+ * the destination to the source format using the same {@code map} overloads.
+ * </p>
  *
  * <h2>Programmatic Mapping</h2>
- * <pre>{@code
- * IMapper<OrderDTO, Order> mapper = new MapperBuilder<>(OrderDTO.class, Order.class)
- *     .mapField("orderId", "id")
- *     .mapField("customerName", "customer.name")
- *     .mapField("total", "amount", (dto, order) -> {
- *         order.setAmount(dto.getTotal().multiply(new BigDecimal("1.10"))); // Add 10% tax
- *     })
- *     .build();
- *
- * Order order = mapper.map(orderDTO);
- * }</pre>
+ * <p>
+ * Configurations can be built without annotations through
+ * {@link com.garganttua.core.mapper.dsl.IMappingConfigurationBuilder} and registered via
+ * {@link com.garganttua.core.mapper.IMapper#register(com.garganttua.core.mapper.MappingConfiguration)}.
+ * </p>
  *
  * <h2>Features</h2>
  * <ul>
- *   <li>Annotation-based mapping rules</li>
- *   <li>Field-level transformation support</li>
- *   <li>Bidirectional mapping</li>
- *   <li>Nested object mapping</li>
- *   <li>Custom mapping logic</li>
- *   <li>Collection mapping</li>
- *   <li>Null-safe operations</li>
+ *   <li>Annotation-based and programmatic mapping rules</li>
+ *   <li>Field-level transformation via static converter methods</li>
+ *   <li>Forward and reverse mapping</li>
+ *   <li>Nested object and nested field-path mapping</li>
+ *   <li>Custom mapping logic via {@link com.garganttua.core.mapper.IMappingRuleExecutor}</li>
+ *   <li>Cycle detection and configurable error handling</li>
  * </ul>
  *
  * <h2>Use Cases</h2>

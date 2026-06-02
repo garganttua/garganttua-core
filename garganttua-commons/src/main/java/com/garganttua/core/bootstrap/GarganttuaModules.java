@@ -52,6 +52,11 @@ public final class GarganttuaModules {
 	 *                   {@code artifactId} if absent
 	 */
 	public record ModuleInfo(String artifactId, String version, String groupId, String title) {
+		/**
+		 * Validates that every component is non-null.
+		 *
+		 * @throws NullPointerException if any argument is {@code null}
+		 */
 		public ModuleInfo {
 			Objects.requireNonNull(artifactId, "artifactId");
 			Objects.requireNonNull(version, "version");

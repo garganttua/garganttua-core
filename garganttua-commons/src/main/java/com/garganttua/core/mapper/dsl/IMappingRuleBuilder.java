@@ -17,9 +17,29 @@ import com.garganttua.core.mapper.MappingRule;
  */
 public interface IMappingRuleBuilder extends ILinkedBuilder<IMappingConfigurationBuilder, MappingRule> {
 
+	/**
+	 * Sets the destination field this rule writes to.
+	 *
+	 * @param destinationFieldAddress the address of the destination field
+	 * @return this builder for chaining
+	 */
 	IMappingRuleBuilder to(String destinationFieldAddress);
 
+	/**
+	 * Sets the address of the method used to transform the value from source to
+	 * destination format.
+	 *
+	 * @param methodAddress the transformation method address
+	 * @return this builder for chaining
+	 */
 	IMappingRuleBuilder withFromSourceMethod(String methodAddress);
 
+	/**
+	 * Sets the address of the method used to transform the value from destination back
+	 * to source format (reverse mapping).
+	 *
+	 * @param methodAddress the reverse transformation method address
+	 * @return this builder for chaining
+	 */
 	IMappingRuleBuilder withToSourceMethod(String methodAddress);
 }

@@ -25,6 +25,11 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder that assembles an {@link IInjectableElementResolver} from manually registered
+ * per-annotation {@link IElementResolver}s plus those auto-detected from classes annotated
+ * with {@code @Resolver} in the configured packages.
+ */
 @Reflected
 public class InjectableElementResolverBuilder
         extends
@@ -63,10 +68,20 @@ public class InjectableElementResolverBuilder
         };
     }
 
+    /**
+     * Sets the resolved {@link IReflection} used to scan packages for {@code @Resolver} classes.
+     *
+     * @param reflection the reflection facade
+     */
     public void setReflection(IReflection reflection) {
         this.reflection = reflection;
     }
 
+    /**
+     * Creates a resolver builder linked to its parent injection context builder.
+     *
+     * @param link the parent injection context builder
+     */
     public InjectableElementResolverBuilder(IInjectionContextBuilder link) {
         super(link);
         log.trace("Entering InjectableElementResolverBuilder constructor with link={}", link);
@@ -78,6 +93,14 @@ public class InjectableElementResolverBuilder
         log.trace("Exiting InjectableElementResolverBuilder constructor");
     }
 
+    /**
+     * Registers a resolver for the given annotation. If the resolver was already built, the
+     * resolver is also added to the live built instance.
+     *
+     * @param annotation the annotation the resolver handles; must not be {@code null}
+     * @param resolver   the element resolver; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectableElementResolverBuilder withResolver(IClass<? extends Annotation> annotation,
             IElementResolver resolver) {
@@ -98,6 +121,13 @@ public class InjectableElementResolverBuilder
         return this;
     }
 
+    /**
+     * Registers a build observer. If the resolver was already built, the observer is notified
+     * immediately.
+     *
+     * @param observer the build observer; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectableElementResolverBuilder observer(
             IBuilderObserver<IInjectableElementResolverBuilder, IInjectableElementResolver> observer) {
@@ -172,6 +202,12 @@ public class InjectableElementResolverBuilder
                 });
     }
 
+    /**
+     * Adds a package to scan for {@code @Resolver}-annotated classes during auto-detection.
+     *
+     * @param packageName the package to scan; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectableElementResolverBuilder withPackage(String packageName) {
         log.debug("Adding package: {}", packageName);
@@ -179,6 +215,12 @@ public class InjectableElementResolverBuilder
         return this;
     }
 
+    /**
+     * Adds several packages to scan for {@code @Resolver}-annotated classes during auto-detection.
+     *
+     * @param packageNames the packages to scan; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectableElementResolverBuilder withPackages(String[] packageNames) {
         log.debug("Adding {} packages", packageNames.length);
@@ -189,6 +231,7 @@ public class InjectableElementResolverBuilder
         return this;
     }
 
+    /** {@return the packages configured for {@code @Resolver} auto-detection} */
     @Override
     public String[] getPackages() {
         return this.packages.toArray(new String[0]);

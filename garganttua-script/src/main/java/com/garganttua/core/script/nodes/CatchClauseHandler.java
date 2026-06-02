@@ -12,6 +12,12 @@ import com.garganttua.core.script.ScriptException;
  */
 public class CatchClauseHandler {
 
+    /**
+     * Outcome of a catch-clause match attempt.
+     *
+     * @param caught        whether a clause matched and handled the exception
+     * @param handlerResult the result produced by the matched handler, or {@code null}
+     */
     public record CatchResult(boolean caught, Object handlerResult) {}
 
     /**

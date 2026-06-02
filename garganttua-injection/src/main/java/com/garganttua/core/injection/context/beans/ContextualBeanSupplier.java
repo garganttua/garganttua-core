@@ -14,12 +14,24 @@ import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * {@link IContextualBeanSupplier} that resolves a {@link BeanReference} against an
+ * {@link IInjectionContext} supplied at {@code supply} time, optionally scoped to a
+ * named provider.
+ *
+ * @param <Bean> the supplied bean type
+ */
 public class ContextualBeanSupplier<Bean> implements IContextualBeanSupplier<Bean> {
     private static final Logger log = Logger.getLogger(ContextualBeanSupplier.class);
 
     private Optional<String> provider;
     private BeanReference<Bean> query;
 
+    /**
+     * Builds a contextual supplier for the given reference, optionally scoped to a named provider.
+     *
+     * @param provider the provider name to restrict the lookup to, or empty for all providers
+     */
     public ContextualBeanSupplier(Optional<String> provider, BeanReference<Bean> query) {
         log.trace("Entering ContextualBeanSupplier constructor with provider: {} and query: {}", provider, query);
         this.query = Objects.requireNonNull(query, "query cannot be null");

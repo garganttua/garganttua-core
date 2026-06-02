@@ -11,6 +11,12 @@ import com.garganttua.core.injection.context.properties.PropertySupplier;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for an {@link IPropertySupplier}, capturing the property key, value type, and
+ * optional provider scope.
+ *
+ * @param <Property> the type of the property value supplied
+ */
 @Reflected
 public class PropertySupplierBuilder<Property> implements IPropertySupplierBuilder<Property> {
     private static final Logger log = Logger.getLogger(PropertySupplierBuilder.class);
@@ -19,6 +25,11 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
     private String key;
     private String provider;
 
+    /**
+     * Creates a property supplier builder for the given value type.
+     *
+     * @param type the property value type; must not be {@code null}
+     */
     public PropertySupplierBuilder(IClass<Property> type) {
         log.trace("Entering PropertySupplierBuilder constructor with type={}", type);
         this.type = Objects.requireNonNull(type, "Type cannot be null");
@@ -26,17 +37,25 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
         log.trace("Exiting PropertySupplierBuilder constructor");
     }
 
+    /** {@return the reflective {@link Type} of the property value} */
     @Override
     public Type getSuppliedType() {
         log.trace("getSuppliedType() called, returning type={}", this.type);
         return this.type.getType();
     }
 
+    /** {@return the {@link IClass} of the property value} */
     @Override
     public IClass<Property> getSuppliedClass() {
         return this.type;
     }
 
+    /**
+     * Builds the property supplier from the configured key, type, and optional provider.
+     *
+     * @return the built property supplier
+     * @throws DslException if the supplier cannot be built
+     */
     @Override
     public IPropertySupplier<Property> build() throws DslException {
         log.trace("Entering build() for PropertySupplierBuilder with key={} and provider={}", this.key, this.provider);
@@ -46,6 +65,12 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
         return supplier;
     }
 
+    /**
+     * Sets the key identifying the property to supply.
+     *
+     * @param key the property key; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IPropertySupplierBuilder<Property> key(String key) {
         log.trace("key() called with key={}", key);
@@ -55,6 +80,12 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
         return this;
     }
 
+    /**
+     * Sets the provider scope from which the property is resolved.
+     *
+     * @param provider the provider scope; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IPropertySupplierBuilder<Property> provider(String provider) {
         log.trace("provider() called with provider={}", provider);
@@ -64,6 +95,7 @@ public class PropertySupplierBuilder<Property> implements IPropertySupplierBuild
         return this;
     }
 
+    /** {@return {@code false}, as property suppliers are never contextual} */
     @Override
     public boolean isContextual() {
         log.trace("isContextual() called, returning false");

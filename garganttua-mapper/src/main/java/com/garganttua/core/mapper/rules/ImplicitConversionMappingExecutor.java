@@ -15,6 +15,11 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Maps a single field by applying an implicit type converter (see
+ * {@link ImplicitConversions}) to the source value before assigning it to the
+ * destination field — e.g. {@code String -> Integer} or {@code enum -> String}.
+ */
 public class ImplicitConversionMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(ImplicitConversionMappingExecutor.class);
 

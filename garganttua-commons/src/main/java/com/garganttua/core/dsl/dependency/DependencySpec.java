@@ -263,30 +263,37 @@ public record DependencySpec(
     // Convenience predicates
     // ---------------------------------------------------------------------
 
+    /** @return {@code true} if the stage is {@link DependencyStage#CONFIGURATION}. */
     public boolean isConfiguration() {
         return this.stage == DependencyStage.CONFIGURATION;
     }
 
+    /** @return {@code true} if the stage is {@link DependencyStage#AUTO_DETECT}. */
     public boolean isAutoDetect() {
         return this.stage == DependencyStage.AUTO_DETECT;
     }
 
+    /** @return {@code true} if the stage is {@link DependencyStage#BUILD}. */
     public boolean isBuild() {
         return this.stage == DependencyStage.BUILD;
     }
 
+    /** @return {@code true} if the kind is {@link DependencyKind#BUILDER}. */
     public boolean isBuilderKind() {
         return this.kind == DependencyKind.BUILDER;
     }
 
+    /** @return {@code true} if the kind is {@link DependencyKind#BUILT}. */
     public boolean isBuiltKind() {
         return this.kind == DependencyKind.BUILT;
     }
 
+    /** @return {@code true} if the requirement is {@link DependencyRequirement#REQUIRED}. */
     public boolean isRequired() {
         return this.requirement == DependencyRequirement.REQUIRED;
     }
 
+    /** @return {@code true} if the requirement is {@link DependencyRequirement#OPTIONAL}. */
     public boolean isOptional() {
         return this.requirement == DependencyRequirement.OPTIONAL;
     }

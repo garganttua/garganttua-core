@@ -6,6 +6,11 @@ import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.script.ScriptException;
 import com.garganttua.core.supply.ISupplier;
 
+/**
+ * The default {@link IScriptNode} for a single expression statement. Holds the
+ * expression, its optional variable binding and exit code, and any catch/pipe
+ * clauses attached to it.
+ */
 public class StatementNode implements IScriptNode {
 
     private final IExpression<?, ? extends ISupplier<?>> expression;
@@ -18,6 +23,18 @@ public class StatementNode implements IScriptNode {
     private final int line;
     private final String sourceText;
 
+    /**
+     * Creates a statement node at an unknown source location.
+     *
+     * @param expression             the expression evaluated by this statement
+     * @param variableName           the variable the result binds to, or {@code null}
+     * @param assignExpression       {@code true} to assign the supplier itself ({@code =}),
+     *                               {@code false} to assign its evaluated result ({@code <-})
+     * @param code                   the exit code for this statement, or {@code null}
+     * @param catchClauses           the immediate ({@code !}) catch clauses
+     * @param downstreamCatchClauses the downstream ({@code *}) catch clauses
+     * @param pipeClauses            the conditional pipe ({@code |}) clauses
+     */
     public StatementNode(IExpression<?, ? extends ISupplier<?>> expression, String variableName,
             boolean assignExpression, Integer code,
             List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,
@@ -25,6 +42,20 @@ public class StatementNode implements IScriptNode {
         this(expression, variableName, assignExpression, code, catchClauses, downstreamCatchClauses, pipeClauses, 0, null);
     }
 
+    /**
+     * Creates a statement node.
+     *
+     * @param expression             the expression evaluated by this statement
+     * @param variableName           the variable the result binds to, or {@code null}
+     * @param assignExpression       {@code true} to assign the supplier itself ({@code =}),
+     *                               {@code false} to assign its evaluated result ({@code <-})
+     * @param code                   the exit code for this statement, or {@code null}
+     * @param catchClauses           the immediate ({@code !}) catch clauses
+     * @param downstreamCatchClauses the downstream ({@code *}) catch clauses
+     * @param pipeClauses            the conditional pipe ({@code |}) clauses
+     * @param line                   the source line of this statement
+     * @param sourceText             the original source text, or {@code null}
+     */
     public StatementNode(IExpression<?, ? extends ISupplier<?>> expression, String variableName,
             boolean assignExpression, Integer code,
             List<CatchClause> catchClauses, List<CatchClause> downstreamCatchClauses,

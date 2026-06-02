@@ -11,7 +11,29 @@ import java.util.regex.Pattern;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
-/** Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
+/**
+ * Immutable identity of a bean within the dependency injection system.
+ *
+ * <p>
+ * A reference combines the bean type, optional {@link BeanStrategy}, optional name,
+ * and a set of qualifier annotations. References are used both to declare beans and
+ * to query for them via {@link #matches(BeanReference)}.
+ * </p>
+ *
+ * <p>
+ * References serialize to and parse from the textual naming rule:
+ * {@code [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...]}
+ * </p>
+ *
+ * @param <Bean>     the bean type this reference identifies
+ * @param type       the bean type
+ * @param strategy   the optional lifecycle strategy (scope)
+ * @param name       the optional bean name
+ * @param qualifiers the qualifier annotation types attached to the bean
+ * @since 2.0.0-ALPHA01
+ * @see BeanStrategy
+ * @see BeanDefinition
+ */
 public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<IClass<? extends Annotation>> qualifiers) {
     private static final Logger log = Logger.getLogger(BeanReference.class);
@@ -38,6 +60,12 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
         return result;
     }
 
+    /**
+     * Serializes this reference to its textual naming-rule form.
+     *
+     * @return the reference string in the form
+     *         {@code class[!strategy][#name][@qualifier...]}
+     */
     public String toReference() {
         StringBuilder sb = new StringBuilder();
 
@@ -111,6 +139,12 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
         return type == null && strategy.isEmpty() && name.isEmpty() && qualifiers.isEmpty();
     }
 
+    /**
+     * Extracts the optional provider segment ({@code provider::}) from a reference string.
+     *
+     * @param ref the reference string
+     * @return the provider name if present, otherwise empty
+     */
     public static Optional<String> extractProvider(String ref) {
         if (ref.contains("::")) {
             String[] parts = ref.split("::", 2);
@@ -120,6 +154,13 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
         return Optional.empty();
     }
 
+    /**
+     * Extracts the class segment from a reference string (the portion before any
+     * {@code !}, {@code #} or {@code @} marker).
+     *
+     * @param ref the reference string
+     * @return the class name if present, otherwise empty
+     */
     public static Optional<String> extractClass(String ref) {
         String work = ref;
         if (work.contains("::")) {
@@ -134,6 +175,12 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
         return Optional.empty();
     }
 
+    /**
+     * Extracts the strategy segment ({@code !strategy}) from a reference string.
+     *
+     * @param ref the reference string
+     * @return the strategy name if present, otherwise empty
+     */
     public static Optional<String> extractStrategy(String ref) {
         Matcher m = Pattern.compile("!(\\w+)").matcher(ref);
         if (m.find()) {
@@ -142,6 +189,12 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
         return Optional.empty();
     }
 
+    /**
+     * Extracts the name segment ({@code #name}) from a reference string.
+     *
+     * @param ref the reference string
+     * @return the bean name if present, otherwise empty
+     */
     public static Optional<String> extractName(String ref) {
         Matcher m = Pattern.compile("#([^@]+)").matcher(ref);
         if (m.find()) {
@@ -150,6 +203,12 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
         return Optional.empty();
     }
 
+    /**
+     * Extracts all qualifier segments ({@code @qualifier}) from a reference string.
+     *
+     * @param ref the reference string
+     * @return the set of qualifier names (never {@code null}, may be empty)
+     */
     public static Set<String> extractQualifiers(String ref) {
         Set<String> qualifiers = new HashSet<>();
         Matcher m = Pattern.compile("@([^!#@]+)").matcher(ref);
@@ -163,10 +222,18 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
     }
 
     /**
-     * x
-     * @param ref Namming rule : [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...]
-     * @return
-     * @throws DiException
+     * Parses a textual reference into its provider segment and a {@link BeanReference}.
+     *
+     * <p>
+     * Class and qualifier resolution from their string form is deferred to callers
+     * (it requires an {@code IReflectionProvider.forName()}), so the returned
+     * reference carries a {@code null} type and empty qualifier set.
+     * </p>
+     *
+     * @param ref the naming rule
+     *            {@code [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1][@qualifier2,...]}
+     * @return a pair of the optional provider name and the parsed reference
+     * @throws DiException if {@code ref} is null/blank or specifies no usable criteria
      */
     public static Pair<Optional<String>, BeanReference<?>> parse(String ref) throws DiException {
 

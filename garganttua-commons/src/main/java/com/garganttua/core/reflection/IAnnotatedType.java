@@ -5,6 +5,12 @@ import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.MalformedParameterizedTypeException;
 import java.lang.reflect.Type;
 
+/**
+ * Mirror of {@link java.lang.reflect.AnnotatedType}: a {@link Type} together
+ * with the type-use annotations present on it.
+ *
+ * @since 2.0.0-ALPHA01
+ */
 public interface IAnnotatedType extends IAnnotatedElement {
    /**
      * Returns the potentially annotated type that this type is a member of, if

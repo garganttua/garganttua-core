@@ -12,6 +12,13 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builds a {@link CustomExtractedCondition} that extracts a value from the
+ * supplied object via a {@link Function} and tests it with a {@link Predicate}.
+ *
+ * @param <T> the type of the supplied object
+ * @param <R> the type of the extracted value tested by the predicate
+ */
 @Reflected
 public class CustomExtractedConditionBuilder<T, R> implements IConditionBuilder {
     private static final Logger log = Logger.getLogger(CustomExtractedConditionBuilder.class);
@@ -20,6 +27,13 @@ public class CustomExtractedConditionBuilder<T, R> implements IConditionBuilder 
     private final Function<T, R> extractor;
     private final Predicate<R> predicate;
 
+    /**
+     * Creates a builder pairing a value supplier with an extractor and a predicate.
+     *
+     * @param builder   the source value supplier builder; must be non-null
+     * @param extractor extracts the value to test from the supplied object; must be non-null
+     * @param predicate the predicate to apply to the extracted value; must be non-null
+     */
     public CustomExtractedConditionBuilder(ISupplierBuilder<T, ? extends ISupplier<T>> builder,
             Function<T, R> extractor,
             Predicate<R> predicate) {
@@ -30,6 +44,13 @@ public class CustomExtractedConditionBuilder<T, R> implements IConditionBuilder 
         log.trace("Exiting CustomExtractedConditionBuilder constructor");
     }
 
+    /**
+     * Builds the custom extracted condition, or {@code null} when this builder
+     * is contextual (deferred resolution).
+     *
+     * @return the composed {@link CustomExtractedCondition}, or {@code null} if contextual
+     * @throws DslException if the value supplier fails to build
+     */
     @Override
     public ICondition build() throws DslException {
         log.trace("Entering build() for CustomExtractedConditionBuilder");
@@ -44,6 +65,9 @@ public class CustomExtractedConditionBuilder<T, R> implements IConditionBuilder 
         return condition;
     }
 
+    /**
+     * @return {@code true} if the source value supplier builder is contextual
+     */
     @Override
     public boolean isContextual() {
         return this.builder.isContextual();

@@ -10,6 +10,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builds a {@link NotEqualsCondition} that compares the values produced by two
+ * suppliers of the same type for inequality.
+ *
+ * @param <T> the type of the values being compared
+ */
 @Reflected
 public class NotEqualsConditionBuilder<T> implements IConditionBuilder {
     private static final Logger log = Logger.getLogger(NotEqualsConditionBuilder.class);
@@ -17,6 +23,13 @@ public class NotEqualsConditionBuilder<T> implements IConditionBuilder {
     private ISupplierBuilder<T, ISupplier<T>> supplier1;
     private ISupplierBuilder<T, ISupplier<T>> supplier2;
 
+    /**
+     * Creates a builder comparing the values of the two suppliers for inequality.
+     *
+     * @param supplier1 the first value supplier builder; must be non-null
+     * @param supplier2 the second value supplier builder; must be non-null
+     * @throws DslException if the two suppliers do not supply the same type
+     */
     public NotEqualsConditionBuilder(ISupplierBuilder<T, ISupplier<T>> supplier1,
             ISupplierBuilder<T, ISupplier<T>> supplier2) {
         log.trace("Entering NotEqualsConditionBuilder constructor");
@@ -32,6 +45,13 @@ public class NotEqualsConditionBuilder<T> implements IConditionBuilder {
         log.trace("Exiting NotEqualsConditionBuilder constructor");
     }
 
+    /**
+     * Builds the inequality condition, or {@code null} when this builder is
+     * contextual (deferred resolution).
+     *
+     * @return the composed {@link NotEqualsCondition}, or {@code null} if contextual
+     * @throws DslException if either supplier fails to build
+     */
     @Override
     public ICondition build() throws DslException {
         log.trace("Entering build() for NotEqualsConditionBuilder");
@@ -46,6 +66,9 @@ public class NotEqualsConditionBuilder<T> implements IConditionBuilder {
         return condition;
     }
 
+    /**
+     * @return {@code true} if either value supplier builder is contextual
+     */
     @Override
     public boolean isContextual() {
         return this.supplier1.isContextual() || this.supplier2.isContextual();

@@ -14,12 +14,25 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for a bean's post-construct method binder, invoked on the bean instance after
+ * construction and field injection complete. Method arguments are themselves injected.
+ *
+ * @param <Bean> the type of the bean declaring the post-construct method
+ */
 @Reflected
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 AbstractMethodArgInjectBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>
                 implements IBeanPostConstructMethodBinderBuilder<Bean> {
     private static final Logger log = Logger.getLogger(BeanPostConstructMethodBinderBuilder.class);
 
+        /**
+         * Creates a post-construct method binder builder for the given bean factory.
+         *
+         * @param up       the parent bean factory builder
+         * @param supplier the supplier builder providing the bean factory
+         * @throws DslException if the binder builder cannot be initialised
+         */
         protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,
                         ISupplierBuilder<Bean, IBeanFactory<Bean>> supplier) throws DslException {
                 super(up, supplier);
@@ -31,6 +44,13 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 log.trace("Exiting BeanPostConstructMethodBinderBuilder constructor");
         }
 
+        /**
+         * Builds the post-construct method binder bound to the given bean supplier.
+         *
+         * @param supplierBuilder the supplier builder providing the bean instance
+         * @return the built method binder
+         * @throws DslException if the binder cannot be built
+         */
         @Override
         public IMethodBinder<Void> build(ISupplierBuilder<Bean, ISupplier<Bean>> supplierBuilder)
                         throws DslException {
@@ -44,6 +64,7 @@ public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 return binder;
         }
 
+        /** {@return the parameter types of the post-construct method, each a dependency to resolve} */
         @Override
         public Set<IClass<?>> dependencies() {
                 log.trace("Entering getDependencies()");

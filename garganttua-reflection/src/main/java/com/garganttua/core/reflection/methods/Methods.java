@@ -10,13 +10,29 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IMethodReturn;
 
+/**
+ * Static helpers for inspecting and formatting {@link IMethod} instances, plus
+ * factory methods for {@link IMethodReturn} values.
+ */
 public class Methods {
     private static final Logger log = Logger.getLogger(Methods.class);
 
+        /**
+         * Returns whether {@code method} is declared {@code static}.
+         *
+         * @param method the method to inspect
+         * @return {@code true} if the method is static
+         */
         public static boolean isStatic(IMethod method) {
                 return Modifier.isStatic(method.getModifiers());
         }
 
+        /**
+         * Renders a method as an ANSI-colored {@code Class.name(ParamTypes)} string for terminal output.
+         *
+         * @param m the method to render
+         * @return the colored signature representation
+         */
         public static String prettyColored(IMethod m) {
                 log.trace("Creating pretty colored representation for method: {}", m);
                 return "\u001B[36m" + m.getDeclaringClass().getSimpleName() + "\u001B[0m"
@@ -29,6 +45,12 @@ public class Methods {
                                 + ")";
         }
 
+        /**
+         * Renders a method as a plain {@code Class.name(ParamTypes)} string.
+         *
+         * @param method the method to render
+         * @return the signature representation
+         */
         public static String pretty(IMethod method) {
                 log.trace("Creating pretty representation for method: {}", method);
 

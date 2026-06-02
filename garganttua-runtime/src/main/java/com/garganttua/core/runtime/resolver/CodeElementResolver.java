@@ -15,6 +15,12 @@ import com.garganttua.core.runtime.annotations.Code;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+/**
+ * Resolves {@code @Code}-annotated parameters to the runtime exit code supplier.
+ *
+ * <p>Registered for the {@link Code} annotation; the target parameter must be
+ * assignable to {@link Integer}.</p>
+ */
 @Resolver(annotations = { Code.class })
 public class CodeElementResolver implements IElementResolver {
     public CodeElementResolver() {
@@ -22,6 +28,14 @@ public class CodeElementResolver implements IElementResolver {
 
     private static final Logger log = Logger.getLogger(CodeElementResolver.class);
 
+        /**
+         * Resolves the annotated element to a supplier of the current runtime exit code.
+         *
+         * @param elementType the declared type of the injection target; must be assignable to {@link Integer}
+         * @param element     the annotated element being resolved
+         * @return a {@link Resolved} wrapping the code supplier
+         * @throws DiException if {@code elementType} is not an {@link Integer}
+         */
         @Override
         public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {
 

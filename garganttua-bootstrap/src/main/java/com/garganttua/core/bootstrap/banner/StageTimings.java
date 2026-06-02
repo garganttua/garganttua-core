@@ -24,7 +24,10 @@ public final class StageTimings {
 
     /**
      * Record an elapsed duration for the given stage. Subsequent calls with
-     * the same stage name add to the accumulator.
+     * the same stage name add to the accumulator. Null arguments are ignored.
+     *
+     * @param stage   the stage name key
+     * @param elapsed the elapsed duration to add
      */
     public void record(String stage, Duration elapsed) {
         if (stage == null || elapsed == null) {
@@ -35,6 +38,10 @@ public final class StageTimings {
 
     /**
      * Time a runnable section and record the elapsed under the given stage.
+     * The duration is recorded even if {@code body} throws.
+     *
+     * @param stage the stage name key
+     * @param body  the section to time
      */
     public void time(String stage, Runnable body) {
         Instant start = Instant.now();

@@ -104,6 +104,12 @@ public interface IMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBi
          */
         IMethod method() throws DslException;
 
+        /**
+         * Returns the {@link ObjectAddress} of the resolved method.
+         *
+         * @return the symbolic address identifying the bound method
+         * @throws DslException if the method has not been resolved yet
+         */
         ObjectAddress methodAddress() throws DslException;
 
         /**

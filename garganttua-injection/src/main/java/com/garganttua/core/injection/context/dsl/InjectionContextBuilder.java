@@ -55,6 +55,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Root fluent builder that assembles an {@link IInjectionContext} from bean providers,
+ * property providers, child context factories, qualifiers, and element resolvers.
+ *
+ * <p>Sources are merged by priority (manual over built-in/auto-detected). Classpath
+ * auto-detection is delegated to {@link InjectionAutoDetector} once an {@link IReflection}
+ * dependency is resolved. Discoverable as a bootstrap builder via {@link InjectionContextBuilderFactory}.
+ */
 @Bootstrap
 @ReflectedBuilder
 @Reflected
@@ -112,6 +120,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         };
     }
 
+    /**
+     * Creates a new injection context builder seeded with the default bean/property providers and resolver.
+     *
+     * @return a fresh injection context builder
+     * @throws DslException if the builder cannot be initialised
+     */
     public static IInjectionContextBuilder builder() throws DslException {
         log.trace("Entering InjectionContextBuilder.builder()");
         IInjectionContextBuilder builder = new InjectionContextBuilder();
@@ -122,6 +136,13 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     IReflection reflection;
     private IObservableBuilder<?, ?> reflectionBuilderRef;
 
+    /**
+     * Creates an injection context builder, initialising the source collectors, the built-in
+     * Garganttua bean and property providers, the default element resolver, and the framework's
+     * own package scan.
+     *
+     * @throws DslException if initialisation fails
+     */
     public InjectionContextBuilder() throws DslException {
         super(Set.of(
                 DependencySpec.requireAutoDetect(IClass.getClass(IReflectionBuilder.class)),
@@ -164,6 +185,14 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return this.propertyProviderCollector.build();
     }
 
+    /**
+     * Enables or disables classpath auto-detection, propagating the flag to all bean providers,
+     * property providers, and the resolver builder.
+     *
+     * @param b {@code true} to enable auto-detection
+     * @return this builder for chaining
+     * @throws DslException if propagation fails
+     */
     @Override
     public IInjectionContextBuilder autoDetect(boolean b) throws DslException {
         getAllBeanProviders().values().forEach(bp -> bp.autoDetect(b));
@@ -172,6 +201,13 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return super.autoDetect(b);
     }
 
+    /**
+     * Registers a manual child context factory. If the context is already built and the factory
+     * class is new, it is also forwarded to the built context.
+     *
+     * @param factory the child context factory; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectionContextBuilder childContextFactory(
             IInjectionChildContextFactory<? extends IInjectionContext> factory) {
@@ -227,6 +263,14 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return result;
     }
 
+    /**
+     * Registers a manual bean provider under the given scope, wiring it to this builder and
+     * propagating the current auto-detect flag and packages.
+     *
+     * @param scope    the scope name; must not be {@code null}
+     * @param provider the bean provider builder; must not be {@code null}
+     * @return the registered provider builder for chaining
+     */
     @Override
     public IBeanProviderBuilder beanProvider(String scope, IBeanProviderBuilder provider) {
         log.trace("Entering beanProvider(scope={}, provider={})", scope, provider);
@@ -241,6 +285,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return provider;
     }
 
+    /**
+     * Returns the bean provider builder registered under the given scope.
+     *
+     * @param scope the scope name; must not be {@code null}
+     * @return the provider builder, or {@code null} if none is registered for the scope
+     */
     @Override
     public IBeanProviderBuilder beanProvider(String scope) {
         log.trace("Entering beanProvider(scope={})", scope);
@@ -250,6 +300,13 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return provider;
     }
 
+    /**
+     * Registers a manual property provider under the given scope, wiring it to this builder.
+     *
+     * @param scope    the scope name; must not be {@code null}
+     * @param provider the property provider builder; must not be {@code null}
+     * @return the registered provider builder for chaining
+     */
     @Override
     public IPropertyProviderBuilder propertyProvider(String scope, IPropertyProviderBuilder provider) {
         log.trace("Entering propertyProvider(scope={}, provider={})", scope, provider);
@@ -262,6 +319,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return provider;
     }
 
+    /**
+     * Returns the property provider builder registered under the given scope.
+     *
+     * @param scope the scope name; must not be {@code null}
+     * @return the provider builder, or {@code null} if none is registered for the scope
+     */
     @Override
     public IPropertyProviderBuilder propertyProvider(String scope) {
         log.trace("Entering propertyProvider(scope={})", scope);
@@ -271,6 +334,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return provider;
     }
 
+    /**
+     * Adds several packages to scan, propagating them to bean providers and the resolver builder.
+     *
+     * @param packageNames the packages to scan
+     * @return this builder for chaining
+     */
     @Override
     public IInjectionContextBuilder withPackages(String[] packageNames) {
         log.trace("Entering withPackages(packageNames={})", (Object) packageNames);
@@ -282,6 +351,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return this;
     }
 
+    /**
+     * Adds a package to scan, propagating it to bean providers and the resolver builder.
+     *
+     * @param packageName the package to scan
+     * @return this builder for chaining
+     */
     @Override
     public IInjectionContextBuilder withPackage(String packageName) {
         log.trace("Entering withPackage(packageName={})", packageName);
@@ -293,6 +368,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return this;
     }
 
+    /** {@return the element resolver builder used to register custom {@link IInjectableElementResolver}s} */
     @Override
     public IInjectableElementResolverBuilder resolvers() {
         log.trace("Entering resolvers()");
@@ -300,6 +376,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return this.resolvers;
     }
 
+    /**
+     * Registers a qualifier annotation used to mark and resolve qualified beans.
+     *
+     * @param qualifier the qualifier annotation class; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectionContextBuilder withQualifier(IClass<? extends Annotation> qualifier) {
         log.trace("Entering withQualifier(qualifier={})", qualifier);
@@ -358,6 +440,14 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         log.trace("Exiting notifyObserver");
     }
 
+    /**
+     * Registers the framework's built-in element resolvers (singleton, inject, prototype, and —
+     * unless auto-detection is enabled — property, null, and fixed) on the given resolver builder.
+     *
+     * @param resolvers  the resolver builder to populate
+     * @param qualifiers the known qualifier annotations passed to the bean resolvers
+     * @param autoDetect when {@code true}, the property/null/fixed resolvers are left to auto-detection
+     */
     @SuppressWarnings("unchecked")
     public static void setBuiltInResolvers(IInjectableElementResolverBuilder resolvers,
             Set<IClass<? extends Annotation>> qualifiers, boolean autoDetect) {
@@ -379,6 +469,7 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         log.trace("doAutoDetection() — no-op, scanning deferred to doAutoDetectionWithDependency()");
     }
 
+    /** {@return the packages configured for classpath auto-detection} */
     @Override
     public String[] getPackages() {
         log.trace("Entering getPackages()");
@@ -387,6 +478,12 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         return pkgs;
     }
 
+    /**
+     * Registers a build observer. If the context is already built, the observer is notified immediately.
+     *
+     * @param observer the build observer; must not be {@code null}
+     * @return this builder for chaining
+     */
     @Override
     public IInjectionContextBuilder observer(IBuilderObserver<IInjectionContextBuilder, IInjectionContext> observer) {
         log.trace("Entering observer(observer={})", observer);
@@ -412,6 +509,13 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         }
     }
 
+    /**
+     * Captures the {@link IReflectionBuilder} dependency when supplied, then delegates to the superclass.
+     *
+     * @param dependency the dependency builder being provided
+     * @return this builder for chaining
+     * @throws DslException if the dependency cannot be accepted
+     */
     @Override
     public IInjectionContextBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
         if (dependency instanceof IReflectionBuilder) {

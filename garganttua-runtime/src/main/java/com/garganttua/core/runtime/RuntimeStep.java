@@ -8,6 +8,17 @@ import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.execution.IFallBackExecutor;
 import com.garganttua.core.observability.ObservabilityEmitter;
 
+/**
+ * Default {@link IRuntimeStep} implementation: registers an observed operation
+ * executor (and optional fallback executor) into an {@link IExecutorChain}.
+ *
+ * <p>Each step emits start/end/error observability events under
+ * {@code runtime:<runtime>:step:<step>} (and {@code :fallback} for its fallback).</p>
+ *
+ * @param <ExecutionReturn> the step's execution return type
+ * @param <InputType>       the runtime input type
+ * @param <OutputType>      the runtime output type
+ */
 public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         implements IRuntimeStep<ExecutionReturn, InputType, OutputType> {
     private static final Logger log = Logger.getLogger(RuntimeStep.class);
@@ -18,6 +29,15 @@ public class RuntimeStep<ExecutionReturn, InputType, OutputType>
     private Optional<IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> fallbackBinder;
     private String runtimeName;
 
+    /**
+     * Creates a runtime step.
+     *
+     * @param runtimeName     the owning runtime's name (for observability and logging)
+     * @param stepName        this step's name
+     * @param executionReturn the step's declared return type
+     * @param operationBinder the binder that performs the step's operation
+     * @param fallbackBinder  an optional fallback binder invoked on failure
+     */
     public RuntimeStep(String runtimeName, String stepName, Class<ExecutionReturn> executionReturn,
             IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType> operationBinder,
             Optional<IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>> fallbackBinder) {

@@ -33,6 +33,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder that assembles an {@link IBeanProvider} from manually registered bean factories
+ * and classpath-scanned beans annotated with {@code @Singleton}, {@code @Prototype}, or
+ * any registered qualifier annotation.
+ *
+ * <p>Requires an {@link IInjectableElementResolverBuilder} for auto-detection and an
+ * {@link IReflectionBuilder} at build time.
+ */
 @Reflected
 public class BeanProviderBuilder
 		extends AbstractAutomaticLinkedDependentBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
@@ -51,6 +59,11 @@ public class BeanProviderBuilder
 	private IInjectableElementResolverBuilder resolverBuilder;
 	private IObservableBuilder<?, ?> reflectionBuilderRef;
 
+	/**
+	 * Creates a bean provider builder linked to its parent injection context builder.
+	 *
+	 * @param link the parent injection context builder
+	 */
 	public BeanProviderBuilder(IInjectionContextBuilder link) {
 		super(link, Set.of(
 				new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build(),
@@ -59,6 +72,14 @@ public class BeanProviderBuilder
 		log.trace("BeanProviderBuilder initialized with link: {}", link);
 	}
 
+	/**
+	 * Registers (or returns the existing) manual bean factory builder for the given bean type.
+	 *
+	 * @param beanType the bean type to register
+	 * @param <BeanType> the bean type parameter
+	 * @return the bean factory builder for the type
+	 * @throws DslException if the factory builder cannot be created
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <BeanType> IBeanFactoryBuilder<BeanType> withBean(IClass<BeanType> beanType) throws DslException {
@@ -167,6 +188,12 @@ public class BeanProviderBuilder
 		return builder;
 	}
 
+	/**
+	 * Adds a package to scan for annotated beans during auto-detection.
+	 *
+	 * @param packageName the package to scan
+	 * @return this builder for chaining
+	 */
 	@Override
 	public IBeanProviderBuilder withPackage(String packageName) {
 		log.trace("Entering withPackage() method with package: {}", packageName);
@@ -176,6 +203,12 @@ public class BeanProviderBuilder
 		return this;
 	}
 
+	/**
+	 * Adds several packages to scan for annotated beans during auto-detection.
+	 *
+	 * @param packageNames the packages to scan
+	 * @return this builder for chaining
+	 */
 	@Override
 	public IBeanProviderBuilder withPackages(String[] packageNames) {
 		log.trace("Entering withPackages() method with packages: {}", Arrays.toString(packageNames));
@@ -226,14 +259,31 @@ public class BeanProviderBuilder
 	protected void doPostBuildWithDependency(Object dependency) {
 	}
 
+	/**
+	 * Sets the resolved {@link IReflection} used to scan packages during auto-detection.
+	 *
+	 * @param reflection the reflection facade
+	 */
 	public void setReflection(IReflection reflection) {
 		this.reflection = reflection;
 	}
 
+	/**
+	 * Sets the qualifier annotations whose presence on a class marks it as an auto-detectable bean.
+	 *
+	 * @param qualifierAnnotations the qualifier annotation classes
+	 */
 	public void setQualifierAnnotations(Set<IClass<? extends Annotation>> qualifierAnnotations) {
 		this.qualifierAnnotations = qualifierAnnotations;
 	}
 
+	/**
+	 * Captures the {@link IInjectableElementResolverBuilder} and {@link IReflectionBuilder} dependencies
+	 * when supplied, then delegates to the superclass.
+	 *
+	 * @param dependency the dependency builder being provided
+	 * @return this builder for chaining
+	 */
 	@Override
     public IBeanProviderBuilder provide(IObservableBuilder<?, ?> dependency) {
         if (dependency instanceof IInjectableElementResolverBuilder rb) {

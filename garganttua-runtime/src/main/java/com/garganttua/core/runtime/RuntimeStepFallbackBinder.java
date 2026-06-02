@@ -17,6 +17,16 @@ import com.garganttua.core.reflection.methods.SingleMethodReturn;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Binds a step's fallback expression: when a step aborts with an exception that
+ * matches one of this binder's {@code onException} declarations, the fallback
+ * expression is evaluated and its result is stored as a variable and/or the
+ * runtime output, before delegating to the next fallback in the chain.
+ *
+ * @param <ExecutionReturned> the fallback expression's return type
+ * @param <InputType>         the runtime input type
+ * @param <OutputType>        the runtime output type
+ */
 public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType> implements
         IRuntimeStepFallbackBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
     private static final Logger log = Logger.getLogger(RuntimeStepFallbackBinder.class);
@@ -30,6 +40,18 @@ public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType>
     private final Boolean nullable;
     private final String expressionReference;
 
+    /**
+     * Creates a fallback binder.
+     *
+     * @param runtimeName         the owning runtime name
+     * @param stepName            the step name
+     * @param expression          the fallback expression to evaluate
+     * @param variable            the optional variable to store the fallback result in
+     * @param isOutput            whether the fallback result becomes the runtime output
+     * @param onExceptions        the exception declarations this fallback handles
+     * @param nullable            whether a {@code null} fallback result is permitted
+     * @param expressionReference reference to the expression, for diagnostics
+     */
     public RuntimeStepFallbackBinder(String runtimeName, String stepName,
             IExpression<ExecutionReturned, ? extends ISupplier<ExecutionReturned>> expression,
             Optional<String> variable, Boolean isOutput, List<IRuntimeStepOnException> onExceptions, Boolean nullable,

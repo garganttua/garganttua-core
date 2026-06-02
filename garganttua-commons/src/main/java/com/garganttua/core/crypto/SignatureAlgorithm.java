@@ -1,5 +1,14 @@
 package com.garganttua.core.crypto;
 
+/**
+ * Digest algorithms usable for signing and signature verification. Each
+ * constant carries the canonical JCA-style name returned by {@link #getName()}.
+ *
+ * <p>{@link #MD2} and {@link #MD5} are retained only for legacy interoperability
+ * and are deprecated for removal as they are cryptographically broken.</p>
+ *
+ * @since 2.0.0-ALPHA01
+ */
 public enum SignatureAlgorithm {
 	SHA1("SHA1"),
 	SHA224("SHA224"),
@@ -45,6 +54,11 @@ public enum SignatureAlgorithm {
 		this.name = name;
 	}
 
+	/**
+	 * Returns the canonical algorithm name.
+	 *
+	 * @return the algorithm name
+	 */
 	public String getName() {
 		return name;
 	}

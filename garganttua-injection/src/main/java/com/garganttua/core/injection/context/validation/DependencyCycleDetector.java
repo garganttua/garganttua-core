@@ -12,6 +12,10 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Detects circular dependencies in a {@link DependencyGraph} using a depth-first three-colour
+ * traversal, failing fast with a formatted cycle description when one is found.
+ */
 public class DependencyCycleDetector {
     private static final Logger log = Logger.getLogger(DependencyCycleDetector.class);
 
@@ -19,6 +23,12 @@ public class DependencyCycleDetector {
         UNVISITED, VISITING, VISITED
     }
 
+    /**
+     * Runs cycle detection over the whole graph.
+     *
+     * @param graph the dependency graph to inspect
+     * @throws DiException if a circular dependency is detected, with the offending chain in its message
+     */
     public void detectCycles(DependencyGraph graph) throws DiException {
         log.trace("Entering detectCycles with graph: {}", graph);
 
