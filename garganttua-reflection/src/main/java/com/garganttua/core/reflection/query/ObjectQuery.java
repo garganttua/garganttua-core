@@ -72,6 +72,60 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
         return findAllRecursively(this.objectClass, elementName, 0, new ArrayList<>());
     }
 
+    /** A map field's traversed generic type (key or value) and the address index past the indicator. */
+    private record MapEntry(IClass<?> type, int nextIndex) {
+    }
+
+    /**
+     * Resolve the generic type to recurse into for a map field, using the address
+     * element following the field (which must indicate key or value).
+     */
+    private MapEntry resolveMapEntry(IField field, ObjectAddress address, int index, String element)
+            throws ReflectionException {
+        String nextElement = address.getElement(index + 1);
+        log.trace("Field '{}' is Map, next address element='{}'", field.getName(), nextElement);
+        if (ObjectAddress.MAP_VALUE_INDICATOR.equals(nextElement)) {
+            return new MapEntry(Fields.getGenericType(field, 1, provider), index + 2);
+        }
+        if (ObjectAddress.MAP_KEY_INDICATOR.equals(nextElement)) {
+            return new MapEntry(Fields.getGenericType(field, 0, provider), index + 2);
+        }
+        log.error("Map field '{}' address element must indicate key or value, got '{}'", field.getName(), nextElement);
+        throw new ReflectionException("Field " + element + " is a map, so address must indicate key or value");
+    }
+
+    /** Recurse into a non-terminal field's type (collection element, map key/value, or the type itself) — all-paths variant. */
+    private List<List<Object>> recurseIntoFieldTypeAll(IField field, ObjectAddress address, int index, String element,
+            List<Object> newPath) throws ReflectionException {
+        IClass<?> fieldType = field.getType();
+        if (collectionIClass.isAssignableFrom(fieldType)) {
+            IClass<?> genericType = Fields.getGenericType(field, 0, provider);
+            log.trace("Field '{}' is Collection, recursing into type={}", field.getName(), genericType);
+            return findAllRecursively(genericType, address, index + 1, newPath);
+        }
+        if (mapIClass.isAssignableFrom(fieldType)) {
+            MapEntry entry = resolveMapEntry(field, address, index, element);
+            return findAllRecursively(entry.type(), address, entry.nextIndex(), newPath);
+        }
+        return findAllRecursively(fieldType, address, index + 1, newPath);
+    }
+
+    /** Recurse into a non-terminal field's type (collection element, map key/value, or the type itself) — single-path variant. */
+    private List<Object> recurseIntoFieldType(IField field, ObjectAddress address, int index, String element,
+            List<Object> list, boolean findAll) throws ReflectionException {
+        IClass<?> fieldType = field.getType();
+        if (collectionIClass.isAssignableFrom(fieldType)) {
+            IClass<?> genericType = Fields.getGenericType(field, 0, provider);
+            log.trace("Field '{}' is Collection, recursing into type={}", field.getName(), genericType);
+            return findRecursively(genericType, address, index + 1, list, findAll);
+        }
+        if (mapIClass.isAssignableFrom(fieldType)) {
+            MapEntry entry = resolveMapEntry(field, address, index, element);
+            return findRecursively(entry.type(), address, entry.nextIndex(), list, findAll);
+        }
+        return findRecursively(fieldType, address, index + 1, list, findAll);
+    }
+
     private List<List<Object>> findAllRecursively(IClass<?> clazz, ObjectAddress address, int index, List<Object> currentPath)
             throws ReflectionException {
         String element = address.getElement(index);
@@ -109,30 +163,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
                 result.add(newPath);
                 return result;
             }
-
-            IClass<?> fieldType = field.getType();
-            if (collectionIClass.isAssignableFrom(fieldType)) {
-                IClass<?> genericType = Fields.getGenericType(field, 0, provider);
-                log.trace("Field '{}' is Collection, recursing into type={}", field.getName(), genericType);
-                return findAllRecursively(genericType, address, index + 1, newPath);
-            } else if (mapIClass.isAssignableFrom(fieldType)) {
-                String nextElement = address.getElement(index + 1);
-                log.trace("Field '{}' is Map, next address element='{}'", field.getName(), nextElement);
-                if (ObjectAddress.MAP_VALUE_INDICATOR.equals(nextElement)) {
-                    IClass<?> valueType = Fields.getGenericType(field, 1, provider);
-                    return findAllRecursively(valueType, address, index + 2, newPath);
-                } else if (ObjectAddress.MAP_KEY_INDICATOR.equals(nextElement)) {
-                    IClass<?> keyType = Fields.getGenericType(field, 0, provider);
-                    return findAllRecursively(keyType, address, index + 2, newPath);
-                } else {
-                    log.error("Map field '{}' address element must indicate key or value, got '{}'",
-                            field.getName(), nextElement);
-                    throw new ReflectionException(
-                            "Field " + element + " is a map, so address must indicate key or value");
-                }
-            } else {
-                return findAllRecursively(fieldType, address, index + 1, newPath);
-            }
+            return recurseIntoFieldTypeAll(field, address, index, element, newPath);
         } else if (field == null && hasMethods) {
             log.debug("Found {} method(s) named '{}' in {}", methods.size(), element, clazz.getName());
 
@@ -185,29 +216,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
                 log.debug("Resolved field '{}' fully in {}", element, clazz);
                 return list;
             }
-            IClass<?> fieldType = field.getType();
-            if (collectionIClass.isAssignableFrom(fieldType)) {
-                IClass<?> genericType = Fields.getGenericType(field, 0, provider);
-                log.trace("Field '{}' is Collection, recursing into type={}", field.getName(), genericType);
-                return findRecursively(genericType, address, index + 1, list, findAll);
-            } else if (mapIClass.isAssignableFrom(fieldType)) {
-                String nextElement = address.getElement(index + 1);
-                log.trace("Field '{}' is Map, next address element='{}'", field.getName(), nextElement);
-                if (ObjectAddress.MAP_VALUE_INDICATOR.equals(nextElement)) {
-                    IClass<?> valueType = Fields.getGenericType(field, 1, provider);
-                    return findRecursively(valueType, address, index + 2, list, findAll);
-                } else if (ObjectAddress.MAP_KEY_INDICATOR.equals(nextElement)) {
-                    IClass<?> keyType = Fields.getGenericType(field, 0, provider);
-                    return findRecursively(keyType, address, index + 2, list, findAll);
-                } else {
-                    log.error("Map field '{}' address element must indicate key or value, got '{}'",
-                            field.getName(), nextElement);
-                    throw new ReflectionException(
-                            "Field " + element + " is a map, so address must indicate key or value");
-                }
-            } else {
-                return findRecursively(fieldType, address, index + 1, list, findAll);
-            }
+            return recurseIntoFieldType(field, address, index, element, list, findAll);
         } else if (field == null && hasMethod) {
             log.debug("Method '{}' found in {}", method.getName(), clazz.getName());
             list.add(method);
@@ -273,6 +282,17 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             }
         }
 
+        List<ObjectAddress> nested = scanFieldsForAddresses(objectClass, elementName, baseAddress);
+        if (nested != null) {
+            return nested;
+        }
+
+        log.warn("No addresses found for element '{}' in {}", elementName, objectClass.getName());
+        return result;
+    }
+
+    private List<ObjectAddress> scanFieldsForAddresses(IClass<?> objectClass, String elementName, ObjectAddress baseAddress)
+            throws ReflectionException {
         for (IField f : objectClass.getDeclaredFields()) {
             if (Fields.isNotPrimitiveOrInternal(f.getType())) {
                 List<ObjectAddress> a;
@@ -286,9 +306,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
                     return a;
             }
         }
-
-        log.warn("No addresses found for element '{}' in {}", elementName, objectClass.getName());
-        return result;
+        return null;
     }
 
     private ObjectAddress address(IClass<?> objectClass, String elementName, ObjectAddress address)
@@ -320,6 +338,17 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             }
         }
 
+        ObjectAddress nested = scanFieldsForAddress(objectClass, elementName, address);
+        if (nested != null) {
+            return nested;
+        }
+
+        log.warn("Element '{}' could not be resolved in {}", elementName, objectClass.getName());
+        return null;
+    }
+
+    private ObjectAddress scanFieldsForAddress(IClass<?> objectClass, String elementName, ObjectAddress address)
+            throws ReflectionException {
         for (IField f : objectClass.getDeclaredFields()) {
             if (Fields.isNotPrimitiveOrInternal(f.getType())) {
                 ObjectAddress a;
@@ -333,8 +362,6 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
                     return a;
             }
         }
-
-        log.warn("Element '{}' could not be resolved in {}", elementName, objectClass.getName());
         return null;
     }
 
