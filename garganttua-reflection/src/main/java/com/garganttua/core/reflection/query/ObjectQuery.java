@@ -2,7 +2,6 @@ package com.garganttua.core.reflection.query;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -44,94 +43,6 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
         this.mapIClass = provider.getClass(Map.class);
     }
 
-    // --- Local helpers for IClass-based field/method lookup ---
-
-    private static IField getField(IClass<?> clazz, String name) {
-        for (IField f : clazz.getDeclaredFields()) {
-            if (f.getName().equals(name)) {
-                return f;
-            }
-        }
-        IClass<?> superclass = clazz.getSuperclass();
-        if (superclass != null) {
-            return getField(superclass, name);
-        }
-        return null;
-    }
-
-    private static IMethod getMethod(IClass<?> clazz, String name) {
-        for (IMethod m : clazz.getDeclaredMethods()) {
-            if (m.getName().equals(name)) {
-                return m;
-            }
-        }
-        // Traverse interfaces (needed for anonymous classes implementing interfaces)
-        for (IClass<?> iface : clazz.getInterfaces()) {
-            IMethod m = getMethod(iface, name);
-            if (m != null) {
-                return m;
-            }
-        }
-        IClass<?> superclass = clazz.getSuperclass();
-        if (superclass != null) {
-            return getMethod(superclass, name);
-        }
-        return null;
-    }
-
-    private static List<IMethod> getMethods(IClass<?> clazz, String name) {
-        List<IMethod> methods = new ArrayList<>();
-        HashSet<String> seenSignatures = new HashSet<>();
-
-        for (IMethod m : clazz.getDeclaredMethods()) {
-            if (m.getName().equals(name)) {
-                String signature = buildMethodSignature(m);
-                if (!seenSignatures.contains(signature)) {
-                    methods.add(m);
-                    seenSignatures.add(signature);
-                }
-            }
-        }
-
-        // Traverse interfaces (needed for anonymous classes implementing interfaces)
-        for (IClass<?> iface : clazz.getInterfaces()) {
-            for (IMethod m : getMethods(iface, name)) {
-                String signature = buildMethodSignature(m);
-                if (!seenSignatures.contains(signature)) {
-                    methods.add(m);
-                    seenSignatures.add(signature);
-                }
-            }
-        }
-
-        IClass<?> superclass = clazz.getSuperclass();
-        if (superclass != null) {
-            for (IMethod m : getMethods(superclass, name)) {
-                String signature = buildMethodSignature(m);
-                if (!seenSignatures.contains(signature)) {
-                    methods.add(m);
-                    seenSignatures.add(signature);
-                }
-            }
-        }
-
-        return methods;
-    }
-
-    private static String buildMethodSignature(IMethod method) {
-        StringBuilder signature = new StringBuilder(method.getName());
-        signature.append("(");
-        IClass<?>[] paramTypes = method.getParameterTypes();
-        for (int i = 0; i < paramTypes.length; i++) {
-            if (i > 0) {
-                signature.append(",");
-            }
-            signature.append(paramTypes[i].getName());
-        }
-        signature.append(")");
-        return signature.toString();
-    }
-
     // --- IObjectQuery implementation ---
 
     @Override
@@ -171,11 +82,11 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             throw new ReflectionException("Object element " + element + " not found in class " + clazz);
         }
 
-        IField field = getField(clazz, element);
+        IField field = MemberLookup.getField(clazz, element);
 
         List<IMethod> methods = null;
         if (index == address.length() - 1 && field == null) {
-            methods = getMethods(clazz, element);
+            methods = MemberLookup.getMethods(clazz, element);
         }
 
         boolean hasMethods = (methods != null && !methods.isEmpty());
@@ -251,11 +162,11 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
             throw new ReflectionException("Object element " + element + " not found in class " + clazz);
         }
 
-        IField field = getField(clazz, element);
+        IField field = MemberLookup.getField(clazz, element);
 
         IMethod method = null;
         if (index == address.length() - 1 && field == null && !findAll) {
-            method = getMethod(clazz, element);
+            method = MemberLookup.getMethod(clazz, element);
         }
 
         boolean hasMethod = (method != null);
@@ -334,7 +245,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
         } catch (NoSuchFieldException | SecurityException ignored) {
         }
 
-        List<IMethod> methods = getMethods(objectClass, elementName);
+        List<IMethod> methods = MemberLookup.getMethods(objectClass, elementName);
 
         if (!methods.isEmpty()) {
             log.debug("Found {} method(s) named '{}' in {}", methods.size(), elementName, objectClass.getName());
@@ -390,7 +301,7 @@ public class ObjectQuery<T> implements IObjectQuery<T> {
         } catch (NoSuchFieldException | SecurityException ignored) {
         }
 
-        IMethod method = getMethod(objectClass, elementName);
+        IMethod method = MemberLookup.getMethod(objectClass, elementName);
         if (method != null) {
             log.debug("Found method '{}' in {}", elementName, objectClass.getName());
             return new ObjectAddress(address == null ? elementName : address + "." + elementName, true);
