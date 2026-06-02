@@ -247,30 +247,10 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 			Map<Object, Object> collectionTarget = (Map<Object, Object>) temp;
 			List<?> collectionSource = ((List<?>) value);
 
-			if (collectionSource.size() != collectionTarget.size()) {
-				int nbToCreate = collectionSource.size() - collectionTarget.size();
-				if (nbToCreate > 0) {
-					IClass<?> keyType = Fields.getGenericType(field, 0);
-					IClass<?> valueType = Fields.getGenericType(field, 1);
-					for (int i = 0; i < nbToCreate; i++) {
-						collectionTarget.put(
-								instantiateNewObject(keyType),
-								instantiateNewObject(valueType));
-					}
-				}
-			}
+			growMapToSize(field, collectionSource, collectionTarget);
 
 			String nextFieldName = this.address.getElement(fieldNameIndex + 1);
-			Iterator<?> it = null;
-			if (nextFieldName.equals(ObjectAddress.MAP_KEY_INDICATOR)) {
-				it = collectionTarget.keySet().iterator();
-			}
-			if (nextFieldName.equals(ObjectAddress.MAP_VALUE_INDICATOR)) {
-				it = collectionTarget.values().iterator();
-			}
-			if (it == null) {
-				throw new ReflectionException("Invalid address, " + nextFieldName + " should be either #key or #value");
-			}
+			Iterator<?> it = mapEntryIterator(collectionTarget, nextFieldName);
 			for (int i = 0; i < collectionSource.size(); i++) {
 				Object tempObject = it.next();
 				if (isLastIteration) {
@@ -280,6 +260,30 @@ public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
 				}
 			}
 		}
+	}
+
+	/** Grow {@code target} with freshly-instantiated key/value pairs until it matches {@code source} size. */
+	private void growMapToSize(IField field, List<?> source, Map<Object, Object> target) throws ReflectionException {
+		int nbToCreate = source.size() - target.size();
+		if (nbToCreate <= 0) {
+			return;
+		}
+		IClass<?> keyType = Fields.getGenericType(field, 0);
+		IClass<?> valueType = Fields.getGenericType(field, 1);
+		for (int i = 0; i < nbToCreate; i++) {
+			target.put(instantiateNewObject(keyType), instantiateNewObject(valueType));
+		}
+	}
+
+	/** Iterator over the map's keys or values according to the address indicator (#key / #value). */
+	private Iterator<?> mapEntryIterator(Map<Object, Object> target, String nextFieldName) throws ReflectionException {
+		if (nextFieldName.equals(ObjectAddress.MAP_KEY_INDICATOR)) {
+			return target.keySet().iterator();
+		}
+		if (nextFieldName.equals(ObjectAddress.MAP_VALUE_INDICATOR)) {
+			return target.values().iterator();
+		}
+		throw new ReflectionException("Invalid address, " + nextFieldName + " should be either #key or #value");
 	}
 
 	private void doSetIfIsArray(Object object, Object value, int fieldIndex, int fieldNameIndex,

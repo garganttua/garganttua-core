@@ -163,17 +163,31 @@ public class Fields {
 		log.debug("Attempting to instantiate primitive or interface for field type: {}",
 				field.getType().getSimpleName());
 		Class<?> rawType = (Class<?>) field.getType().getType();
+		Object primitive = defaultPrimitiveOrArray(rawType);
+		if (primitive != null) {
+			return primitive;
+		}
+		Object collection = defaultCollectionInstance(rawType);
+		if (collection != null) {
+			return collection;
+		}
+		log.error("Unable to instanciate object of type {}", field.getType().getSimpleName());
+		throw new ReflectionException("Unable to instanciate object of type " + field.getType().getSimpleName());
+	}
+
+	/** Default boxed value for a primitive type, or an empty array for array types; {@code null} otherwise. */
+	private static Object defaultPrimitiveOrArray(Class<?> rawType) {
 		if (rawType == int.class) {
-			return (int) 1;
+			return 1;
 		}
 		if (rawType == long.class) {
-			return (long) 0L;
+			return 0L;
 		}
 		if (rawType == float.class) {
-			return (float) 0F;
+			return 0F;
 		}
 		if (rawType == double.class) {
-			return (double) 0D;
+			return 0D;
 		}
 		if (rawType == short.class) {
 			return (short) 0;
@@ -182,14 +196,19 @@ public class Fields {
 			return (byte) 0x00;
 		}
 		if (rawType == char.class) {
-			return (char) '0';
+			return '0';
 		}
 		if (rawType == boolean.class) {
-			return (boolean) false;
+			return Boolean.FALSE;
 		}
 		if (rawType.isArray()) {
 			return Array.newInstance(rawType.getComponentType(), 0);
 		}
+		return null;
+	}
+
+	/** Empty instance for a well-known collection/map interface type; {@code null} otherwise. */
+	private static Object defaultCollectionInstance(Class<?> rawType) {
 		if (Map.class.isAssignableFrom(rawType)) {
 			return new HashMap<>();
 		}
@@ -205,7 +224,6 @@ public class Fields {
 		if (Collection.class.isAssignableFrom(rawType)) {
 			return new Vector<>();
 		}
-		log.error("Unable to instanciate object of type {}", field.getType().getSimpleName());
-		throw new ReflectionException("Unable to instanciate object of type " + field.getType().getSimpleName());
+		return null;
 	}
 }

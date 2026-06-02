@@ -96,18 +96,7 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 		IField field = (IField) this.methodPath.get(fieldIndex);
 		String fieldName = this.address.getElement(fieldNameIndex);
 
-		if (!field.getName().equals(fieldName)) {
-			log.error("field names mismatch: address={}, field={}", fieldName, field.getName());
-			throw new ReflectionException(
-					"field names of address " + fieldName + " and fields list " + field.getName() + " do not match");
-		}
-
-		Object temp = getFieldValue(object, field);
-		if (temp == null) {
-			log.error("Field {} is null, cannot invoke method with address {}", fieldName, this.address);
-			throw new ReflectionException("cannot invoke method with address " + this.address + ". The field "
-					+ fieldName + " of object " + object + " is null");
-		}
+		Object temp = resolveStepFieldValue(object, field, fieldName);
 
 		if (Fields.isArrayOrMapOrCollectionField(field)) {
 			log.debug("Field {} is array/map/collection type", fieldName);
@@ -127,6 +116,22 @@ public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
 				return this.invokeMethodRecursively(temp, fieldIndex + 1, fieldNameIndex + 1, args);
 			}
 		}
+	}
+
+	/** Validate the path field name matches and return its non-null value, or throw. */
+	private Object resolveStepFieldValue(Object object, IField field, String fieldName) throws ReflectionException {
+		if (!field.getName().equals(fieldName)) {
+			log.error("field names mismatch: address={}, field={}", fieldName, field.getName());
+			throw new ReflectionException(
+					"field names of address " + fieldName + " and fields list " + field.getName() + " do not match");
+		}
+		Object temp = getFieldValue(object, field);
+		if (temp == null) {
+			log.error("Field {} is null, cannot invoke method with address {}", fieldName, this.address);
+			throw new ReflectionException("cannot invoke method with address " + this.address + ". The field "
+					+ fieldName + " of object " + object + " is null");
+		}
+		return temp;
 	}
 
 	private void doIfIsArray(int fieldIndex, int fieldNameIndex, boolean isLastIteration, IField field, Object temp,
