@@ -359,46 +359,8 @@ public final class CoreInfrastructureSeed {
         // some of these accessors. AOTClass treats them as non-null strings.
         String canonicalName = type.getCanonicalName() != null ? type.getCanonicalName() : type.getName();
         String packageName = type.getPackageName() != null ? type.getPackageName() : "";
-        // Synthesize the no-arg constructor descriptor when one exists. This
-        // covers the dominant "framework instantiates the type by reflection"
-        // pattern (factory classes annotated @ChildContext, @MutexFactory,
-        // etc. that the InjectionContextBuilder spins up via no-arg ctor).
-        // Without this, the shallow descriptor crashes on
-        // "Class X does not have constructor with no params". Reflection lookup
-        // works in JVM-AOT mode; native-image needs the ctor registered via
-        // reflect-config which the GarganttuaAotFeature handles for seeded
-        // types.
-        AOTConstructor<?>[] constructors = new AOTConstructor<?>[0];
-        try {
-            java.lang.reflect.Constructor<T> noArg = type.getDeclaredConstructor();
-            constructors = new AOTConstructor<?>[] {
-                    new AOTConstructor<>(
-                            type.getName(),
-                            new String[0],
-                            new String[0],
-                            noArg.getModifiers(),
-                            new Annotation[0],
-                            false,
-                            new String[0])
-            };
-        } catch (NoSuchMethodException ignored) {
-            // No no-arg ctor on this type — leave constructors empty. Callers
-            // that need other ctors should @Reflected the type for full
-            // descriptor generation.
-        } catch (Throwable ignored) {
-            // Interfaces, primitives, arrays, void.class — Class.getDeclaredConstructor
-            // throws various exceptions. Stay shallow.
-        }
-        // Populate the annotations array from the live class. Without this,
-        // framework wiring that introspects class-level annotations (e.g.
-        // InjectableElementResolverBuilder reading @Resolver) sees an empty
-        // array and treats annotated classes as if they weren't annotated.
-        Annotation[] annotations;
-        try {
-            annotations = type.getAnnotations();
-        } catch (Throwable ignored) {
-            annotations = new Annotation[0];
-        }
+        AOTConstructor<?>[] constructors = synthesizeNoArgConstructor(type);
+        Annotation[] annotations = safeAnnotations(type);
         return new AOTClass<>(
                 type.getName(),
                 type.getSimpleName(),
@@ -424,5 +386,37 @@ public final class CoreInfrastructureSeed {
                 type.isAnonymousClass(),
                 type.isSynthetic()
         );
+    }
+
+    /**
+     * Synthesise the no-arg constructor descriptor when one exists — covers the
+     * dominant "framework instantiates the type by reflection via no-arg ctor"
+     * pattern (factories annotated @ChildContext, @MutexFactory, …). Empty array
+     * when none / for interfaces / primitives / arrays / void.
+     */
+    private static <T> AOTConstructor<?>[] synthesizeNoArgConstructor(Class<T> type) {
+        try {
+            java.lang.reflect.Constructor<T> noArg = type.getDeclaredConstructor();
+            return new AOTConstructor<?>[] {
+                    new AOTConstructor<>(type.getName(), new String[0], new String[0],
+                            noArg.getModifiers(), new Annotation[0], false, new String[0])
+            };
+        } catch (NoSuchMethodException ignored) {
+            return new AOTConstructor<?>[0];
+        } catch (Throwable ignored) {
+            return new AOTConstructor<?>[0];
+        }
+    }
+
+    /**
+     * Class-level annotations from the live class (so framework wiring that reads
+     * e.g. @Resolver sees them); empty array if introspection fails.
+     */
+    private static Annotation[] safeAnnotations(Class<?> type) {
+        try {
+            return type.getAnnotations();
+        } catch (Throwable ignored) {
+            return new Annotation[0];
+        }
     }
 }

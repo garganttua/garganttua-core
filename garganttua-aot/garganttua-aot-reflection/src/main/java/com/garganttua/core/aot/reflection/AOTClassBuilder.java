@@ -337,8 +337,15 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
     @Override
     protected IClass<T> doBuild() throws DslException {
         log.debug("Building AOTClass for {}", targetClass.getName());
+        applyGlobalMemberFlags();
+        AOTClass<T> aotClass = assembleDescriptor();
+        log.debug("AOTClass built for {} with {} fields, {} methods, {} constructors",
+                targetClass.getName(), fieldList.size(), methodList.size(), constructorList.size());
+        return aotClass;
+    }
 
-        // Apply global flags to add all members
+    /** Add every declared/public field, method and constructor requested via the global query flags. */
+    private void applyGlobalMemberFlags() {
         if (allDeclaredFields) {
             for (IField f : targetClass.getDeclaredFields()) {
                 if (fieldList.stream().noneMatch(af -> af.getName().equals(f.getName()))) {
@@ -378,8 +385,10 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
                 }
             }
         }
+    }
 
-        // Build superclass and interface names
+    /** Assemble the immutable AOTClass descriptor from the collected members + class metadata. */
+    private AOTClass<T> assembleDescriptor() {
         IClass<? super T> superclass = targetClass.getSuperclass();
         String superclassName = superclass != null ? superclass.getName() : null;
 
@@ -389,7 +398,7 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
             interfaceNames[i] = interfaces[i].getName();
         }
 
-        AOTClass<T> aotClass = new AOTClass<>(
+        return new AOTClass<>(
                 targetClass.getName(),
                 targetClass.getSimpleName(),
                 targetClass.getCanonicalName(),
@@ -414,10 +423,5 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
                 targetClass.isAnonymousClass(),
                 targetClass.isSynthetic()
         );
-
-        log.debug("AOTClass built for {} with {} fields, {} methods, {} constructors",
-                targetClass.getName(), fieldList.size(), methodList.size(), constructorList.size());
-
-        return aotClass;
     }
 }
