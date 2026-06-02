@@ -202,37 +202,12 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
      * usable on a cold JVM with only provider JARs on the classpath.
      */
     private static Set<DependencySpec> buildDependencies() {
-        ensureReflectionAvailable();
+        BootstrapSpiLoader.ensureReflectionAvailable();
         return Set.of(
                 DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.AUTO_DETECT),
                 DependencySpec.use(IClass.getClass(IObservabilityBuilder.class)));
     }
 
-    /**
-     * Bootstraps a default {@link IReflection} via {@link ServiceLoader} when
-     * none has been installed yet. No-op when one is already present, and also
-     * no-op when no provider JAR is on the classpath (in which case the
-     * downstream {@code IClass.getClass(...)} call will surface a clear error).
-     */
-    private static void ensureReflectionAvailable() {
-        try {
-            IClass.getReflection();
-            return; // already configured by user code
-        } catch (IllegalStateException ignored) {
-            // No reflection bound — fall through to SPI bootstrap.
-        }
-        IReflectionBuilder rb = buildReflectionBuilderFromSpi();
-        if (rb != null) {
-            try {
-                rb.build();
-                // ReflectionBuilder.doBuild() calls IClass.setReflection() internally,
-                // so the global facade is now configured for subsequent IClass.getClass()
-                // calls in this Bootstrap's constructor.
-            } catch (DslException e) {
-                log.warn("SPI-built ReflectionBuilder failed to build: {}", e.getMessage());
-            }
-        }
-    }
 
     @Override
     public IBootstrap withBanner(IBanner banner) {
@@ -449,7 +424,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         // builders receive it via provide(). Skipped if a reflection builder
         // was already provided explicitly.
         if (!this.reflectionBuilderProvided) {
-            IReflectionBuilder spiBuilder = buildReflectionBuilderFromSpi();
+            IReflectionBuilder spiBuilder = BootstrapSpiLoader.buildReflectionBuilderFromSpi();
             if (spiBuilder != null) {
                 log.debug("Registering SPI-bootstrapped IReflectionBuilder on this Bootstrap");
                 this.provide(spiBuilder);
@@ -527,74 +502,6 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         }
     }
 
-    /**
-     * Discovers {@link IReflectionProvider} and {@link IAnnotationScanner}
-     * implementations via {@link ServiceLoader}, populates a fresh
-     * {@link ReflectionBuilder} with them ordered by descending
-     * {@link Priority}, and returns it.
-     *
-     * @return the populated builder, or {@code null} if no provider was found
-     *         on the classpath (in which case the existing
-     *         {@code DependencySpec.require(IReflectionBuilder)} contract will
-     *         take over and produce a clear "dependency not provided" error)
-     */
-    /** Tracks whether the SPI summary line has already been emitted at INFO. */
-    private static final AtomicBoolean SPI_SUMMARY_LOGGED = new AtomicBoolean(false);
-
-    private static IReflectionBuilder buildReflectionBuilderFromSpi() {
-        log.trace("Attempting SPI bootstrap of IReflectionBuilder");
-        IReflectionBuilder rb = ReflectionBuilder.builder();
-        List<String> providerLabels = new ArrayList<>();
-        List<String> scannerLabels = new ArrayList<>();
-
-        for (IReflectionProvider provider : sortedByPriority(ServiceLoader.load(IReflectionProvider.class))) {
-            int priority = readPriority(provider);
-            log.debug("SPI: registering reflection provider {} with priority {}",
-                    provider.getClass().getName(), priority);
-            rb.withProvider(provider, priority);
-            providerLabels.add(provider.getClass().getSimpleName() + "@" + priority);
-        }
-
-        for (IAnnotationScanner scanner : sortedByPriority(ServiceLoader.load(IAnnotationScanner.class))) {
-            int priority = readPriority(scanner);
-            log.debug("SPI: registering annotation scanner {} with priority {}",
-                    scanner.getClass().getName(), priority);
-            rb.withScanner(scanner, priority);
-            scannerLabels.add(scanner.getClass().getSimpleName() + "@" + priority);
-        }
-
-        if (providerLabels.isEmpty() && scannerLabels.isEmpty()) {
-            log.debug("SPI bootstrap found no IReflectionProvider/IAnnotationScanner on the classpath");
-            return null;
-        }
-
-        // First invocation logs at INFO (visible by default); subsequent ones at
-        // DEBUG to avoid noisy duplicates when Bootstrap re-runs the loader from
-        // both the constructor (ensureReflectionAvailable) and the build phase
-        // (doAutoDetection).
-        String summary = String.format("SPI bootstrap: providers=%s, scanners=%s",
-                providerLabels, scannerLabels);
-        if (SPI_SUMMARY_LOGGED.compareAndSet(false, true)) {
-            log.info(summary);
-        } else {
-            log.debug(summary);
-        }
-        return rb;
-    }
-
-    private static <T> List<T> sortedByPriority(ServiceLoader<T> loader) {
-        List<T> list = new ArrayList<>();
-        for (T svc : loader) {
-            list.add(svc);
-        }
-        list.sort(Comparator.comparingInt(Bootstrap::readPriority).reversed());
-        return list;
-    }
-
-    private static int readPriority(Object svc) {
-        Priority p = svc.getClass().getAnnotation(Priority.class);
-        return p == null ? 0 : p.value();
-    }
 
     @Override
     protected IBuiltRegistry doBuild() throws DslException {
