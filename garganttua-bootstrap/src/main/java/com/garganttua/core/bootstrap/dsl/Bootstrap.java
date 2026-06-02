@@ -126,13 +126,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
     private IObservabilityBuilder observabilityBuilder;
     /** Per-stage timings for the most recent build / rebuild; used by the banner summary. */
     private volatile StageTimings lastBuildTimings;
-    /**
-     * Listeners that observe high-level Bootstrap stages. Populated from
-     * {@link java.util.ServiceLoader} on first access and from manual
-     * {@link #withStageListener(IBootstrapStageListener)} calls.
-     */
-    private final List<IBootstrapStageListener> stageListeners = new ArrayList<>();
-    private boolean stageListenersLoadedFromSpi = false;
+    /** Notifies high-level Bootstrap stage listeners (manual + ServiceLoader-discovered). */
+    private final BootstrapStageNotifier stageNotifier = new BootstrapStageNotifier();
     /** When {@code true}, print an ASCII dep graph after Phase 2 (topo sort). */
     private boolean printDependencyGraph = false;
     private boolean spiFallbackEnabled = true;
@@ -635,62 +630,15 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
      * — manual registrations fire first.
      */
     public Bootstrap withStageListener(IBootstrapStageListener listener) {
-        if (listener != null) {
-            this.stageListeners.add(listener);
-        }
+        this.stageNotifier.add(listener);
         return this;
     }
 
-    private void ensureStageListenersLoaded() {
-        if (this.stageListenersLoadedFromSpi) {
-            return;
-        }
-        this.stageListenersLoadedFromSpi = true;
-        try {
-            for (IBootstrapStageListener spi : ServiceLoader.load(IBootstrapStageListener.class)) {
-                this.stageListeners.add(spi);
-                log.debug("SPI: registered Bootstrap stage listener: {}", spi.getClass().getName());
-            }
-        } catch (Throwable t) {
-            log.warn("Failed to load Bootstrap stage listeners via SPI: {}", t.getMessage());
-        }
-    }
-
-    private void fireStageStart(Stage stage) {
-        ensureStageListenersLoaded();
-        for (IBootstrapStageListener l : this.stageListeners) {
-            try { l.onStageStart(stage); }
-            catch (RuntimeException e) {
-                log.warn("Stage listener {} failed at start of {}: {}",
-                        l.getClass().getName(), stage, e.getMessage());
-            }
-        }
-    }
-
-    private void fireStageEnd(Stage stage) {
-        for (IBootstrapStageListener l : this.stageListeners) {
-            try { l.onStageEnd(stage); }
-            catch (RuntimeException e) {
-                log.warn("Stage listener {} failed at end of {}: {}",
-                        l.getClass().getName(), stage, e.getMessage());
-            }
-        }
-    }
-
-    private void fireStageError(Stage stage, Throwable error) {
-        for (IBootstrapStageListener l : this.stageListeners) {
-            try { l.onStageError(stage, error); }
-            catch (RuntimeException e) {
-                log.warn("Stage listener {} failed at error of {}: {}",
-                        l.getClass().getName(), stage, e.getMessage());
-            }
-        }
-    }
 
     private IBuiltRegistry doBuildInternal(Instant startTime) throws DslException {
         StageTimings timings = new StageTimings();
         this.lastBuildTimings = timings;
-        ensureStageListenersLoaded();
+        stageNotifier.ensureLoaded();
         // Print banner at the start of build
         printBanner();
 
@@ -716,16 +664,16 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
 
         // Phase 1: Resolve dependencies between builders
         Instant resolveStart = Instant.now();
-        fireStageStart(Stage.RESOLVE);
+        stageNotifier.fireStageStart(Stage.RESOLVE);
         try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
             phase.fireStart("bootstrap:phase:resolve");
             try {
                 resolveDependencies();
                 phase.fireEnd("bootstrap:phase:resolve");
-                fireStageEnd(Stage.RESOLVE);
+                stageNotifier.fireStageEnd(Stage.RESOLVE);
             } catch (RuntimeException e) {
                 phase.fireError("bootstrap:phase:resolve", e);
-                fireStageError(Stage.RESOLVE, e);
+                stageNotifier.fireStageError(Stage.RESOLVE, e);
                 throw e;
             } finally {
                 timings.record("resolve", Duration.between(resolveStart, Instant.now()));
@@ -739,16 +687,16 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         // mutable. Each (consumer, dep, CONFIGURATION) tuple fires at most
         // once per Bootstrap lifetime — idempotent across rebuild().
         Instant configureStart = Instant.now();
-        fireStageStart(Stage.CONFIGURATION);
+        stageNotifier.fireStageStart(Stage.CONFIGURATION);
         try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
             phase.fireStart("bootstrap:phase:configure");
             try {
                 runGlobalConfigurationPhase();
                 phase.fireEnd("bootstrap:phase:configure");
-                fireStageEnd(Stage.CONFIGURATION);
+                stageNotifier.fireStageEnd(Stage.CONFIGURATION);
             } catch (RuntimeException e) {
                 phase.fireError("bootstrap:phase:configure", e);
-                fireStageError(Stage.CONFIGURATION, e);
+                stageNotifier.fireStageError(Stage.CONFIGURATION, e);
                 throw e;
             } finally {
                 timings.record("configure", Duration.between(configureStart, Instant.now()));
@@ -775,7 +723,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         BootstrapConsoleReporter.printPhase(bannerMode, 2, "Building components", sortedBuilders.size() + " builders");
 
         // Phase 3: Build all builders in dependency order, initialize lifecycle immediately
-        fireStageStart(Stage.BUILD);
+        stageNotifier.fireStageStart(Stage.BUILD);
         List<Object> builtObjects = new ArrayList<>();
         for (IBuilder<?> builder : sortedBuilders) {
             BootstrapConsoleReporter.printBuilderStart(bannerMode, builder.getClass().getSimpleName());
@@ -828,7 +776,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
 
             BootstrapConsoleReporter.printBuilderComplete(bannerMode, builder.getClass().getSimpleName());
         }
-        fireStageEnd(Stage.BUILD);
+        stageNotifier.fireStageEnd(Stage.BUILD);
 
         // Wire ourselves as an IClassLoaderRebuildHook on every freshly-built
         // IClassLoaderManager so that a script's include("foo.jar") triggers
