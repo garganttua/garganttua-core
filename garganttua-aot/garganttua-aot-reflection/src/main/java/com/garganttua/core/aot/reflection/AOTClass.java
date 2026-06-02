@@ -61,18 +61,10 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
     private volatile IClass<? super T> resolvedSuperclass;
     private volatile IClass<?>[] resolvedInterfaces;
 
-    // --- Lazy fallback caches (shallow descriptors only) ---
-    // For shallow descriptors created by CoreInfrastructureSeed.synthesize,
-    // fields/methods/constructors arrays are empty and every call has to
-    // synthesize from the live Class<?>. Without these caches the framework's
-    // repeated getDeclaredMethods/Fields calls during auto-detection re-run
-    // Class.forName + getDeclaredMethods + N×AOTMethod.synthesizeFrom on
-    // every invocation. Memoising once makes subsequent calls O(1).
-    private volatile Class<?> liveClassCache;
-    private volatile boolean liveClassResolved;
-    private volatile IMethod[] cachedFallbackMethods;
-    private volatile IField[] cachedFallbackFields;
-    private volatile IConstructor<?>[] cachedFallbackConstructors;
+    // --- On-demand live-class fallback (shallow descriptors only) ---
+    // Synthesises AOT* members from the live Class<?> when this descriptor's
+    // own member arrays are empty (see AOTLiveClassFallback). One per AOTClass.
+    private final AOTLiveClassFallback liveFallback;
 
     @SuppressWarnings("java:S107") // Constructor with many parameters is intentional for AOT
     public AOTClass(String name, String simpleName, String canonicalName, String packageName,
@@ -84,6 +76,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
                     boolean isSealed, boolean isHidden, boolean isMemberClass,
                     boolean isLocalClass, boolean isAnonymousClass, boolean isSynthetic) {
         this.name = name;
+        this.liveFallback = new AOTLiveClassFallback(name);
         this.simpleName = simpleName;
         this.canonicalName = canonicalName;
         this.packageName = packageName;
@@ -343,14 +336,14 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
     @Override
     public IField[] getDeclaredFields() {
         if (fields.length > 0) return fields.clone();
-        IField[] fallback = fallbackDeclaredFields();
+        IField[] fallback = liveFallback.declaredFields();
         return fallback != null ? fallback : fields.clone();
     }
 
     @Override
     public IMethod[] getDeclaredMethods() {
         if (methods.length > 0) return methods.clone();
-        IMethod[] fallback = fallbackDeclaredMethods();
+        IMethod[] fallback = liveFallback.declaredMethods();
         return fallback != null ? fallback : methods.clone();
     }
 
@@ -360,7 +353,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         // ctor (when one exists on the live class). If we have more than one
         // ctor here, trust it. Otherwise enrich from the live class.
         if (constructors.length > 1) return constructors.clone();
-        IConstructor<?>[] fallback = fallbackDeclaredConstructors();
+        IConstructor<?>[] fallback = liveFallback.declaredConstructors();
         return fallback != null ? fallback : constructors.clone();
     }
 
@@ -399,7 +392,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         for (AOTField f : fields) {
             if (f.getName().equals(fieldName)) return f;
         }
-        AOTField fallback = fallbackDeclaredField(fieldName);
+        AOTField fallback = liveFallback.declaredField(fieldName);
         if (fallback != null) return fallback;
         throw new NoSuchFieldException(fieldName);
     }
@@ -418,7 +411,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         // Class.forName + getDeclaredMethod are runtime-available. Native-
         // image consumers need the method in reflect-config (handled by the
         // GarganttuaAotFeature for seeded types).
-        AOTMethod fallback = fallbackDeclaredMethod(methodName, parameterTypes);
+        AOTMethod fallback = liveFallback.declaredMethod(methodName, parameterTypes);
         if (fallback != null) return fallback;
         throw new NoSuchMethodException(methodName);
     }
@@ -432,7 +425,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
                 return (IConstructor<T>) c;
             }
         }
-        AOTConstructor<?> fallback = fallbackDeclaredConstructor(parameterTypes);
+        AOTConstructor<?> fallback = liveFallback.declaredConstructor(parameterTypes);
         if (fallback != null) return (IConstructor<T>) fallback;
         throw new NoSuchMethodException(name + ".<init>");
     }
@@ -492,7 +485,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         }
         // Live-class fallback before superclass walk — see getMethod for the
         // rationale (avoids the IReflection dependency for shallow descriptors).
-        AOTField fallback = fallbackPublicField(fieldName);
+        AOTField fallback = liveFallback.publicField(fieldName);
         if (fallback != null) return fallback;
         IClass<? super T> superclass = getSuperclass();
         if (superclass != null) {
@@ -517,7 +510,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         // recurse through the AOT registry). This makes shallow descriptors
         // (CoreInfrastructureSeed.synthesize) resolve inherited public
         // methods correctly without needing the full reflection wiring.
-        AOTMethod fallback = fallbackPublicMethod(methodName, parameterTypes);
+        AOTMethod fallback = liveFallback.publicMethod(methodName, parameterTypes);
         if (fallback != null) return fallback;
         // Final fallback: AOT superclass walk — relevant when the live class
         // isn't reachable but the AOT registry has a rich superclass descriptor.
@@ -537,7 +530,7 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
                 return (IConstructor<T>) c;
             }
         }
-        AOTConstructor<?> fallback = fallbackPublicConstructor(parameterTypes);
+        AOTConstructor<?> fallback = liveFallback.publicConstructor(parameterTypes);
         if (fallback != null) return (IConstructor<T>) fallback;
         throw new NoSuchMethodException(name + ".<init>");
     }
@@ -763,178 +756,4 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
         return (isInterface ? "interface " : (isEnum ? "enum " : "class ")) + name;
     }
 
-    // --- Lazy fallback synthesis ---
-    //
-    // Shallow descriptors (CoreInfrastructureSeed.synthesize for types not
-    // run through the annotation processor) carry only identity + flags +
-    // a synthesised no-arg ctor. When framework wiring requests a method,
-    // field or non-trivial ctor, we load the live Class<?> via
-    // Class.forName and synthesise the AOT* member on demand. Pure-AOT JVM
-    // mode works since Class.forName + reflection are available; native-
-    // image consumers need the member in reflect-config (handled by the
-    // GarganttuaAotFeature for seeded types).
-    //
-    // The bulk-array fallbacks (fallbackDeclared{Methods,Fields,Constructors})
-    // memoise their result in cachedFallback* and loadLiveClass() memoises
-    // the resolved Class<?>: repeated calls during auto-detection no longer
-    // re-Class.forName + re-allocate N×AOTMethod per invocation. The
-    // single-member fallbacks (fallbackDeclaredMethod / fallbackDeclaredField
-    // / fallbackDeclaredConstructor) stay non-cached: each (name, parameter
-    // types) tuple would need its own cache key, and the lookup pattern in
-    // practice is one-shot per name — caching there pays the map overhead
-    // without amortising it.
-
-    private Class<?> loadLiveClass() {
-        if (liveClassResolved) return liveClassCache;
-        synchronized (this) {
-            if (liveClassResolved) return liveClassCache;
-            try {
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                if (cl == null) cl = AOTClass.class.getClassLoader();
-                liveClassCache = Class.forName(name, false, cl);
-            } catch (ClassNotFoundException | LinkageError ignored) {
-                liveClassCache = null;
-            }
-            liveClassResolved = true;
-            return liveClassCache;
-        }
-    }
-
-    private Class<?>[] toRawClasses(IClass<?>[] parameterTypes) {
-        if (parameterTypes == null) return new Class<?>[0];
-        Class<?>[] out = new Class<?>[parameterTypes.length];
-        for (int i = 0; i < parameterTypes.length; i++) {
-            IClass<?> p = parameterTypes[i];
-            if (p == null) return null;
-            java.lang.reflect.Type t = p.getType();
-            if (!(t instanceof Class<?> c)) return null;
-            out[i] = c;
-        }
-        return out;
-    }
-
-    private AOTMethod fallbackDeclaredMethod(String methodName, IClass<?>... parameterTypes) {
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        Class<?>[] raw = toRawClasses(parameterTypes);
-        if (raw == null) return null;
-        try {
-            return AOTMethod.synthesizeFrom(live.getDeclaredMethod(methodName, raw));
-        } catch (NoSuchMethodException ignored) {
-            return null;
-        }
-    }
-
-    private AOTMethod fallbackPublicMethod(String methodName, IClass<?>... parameterTypes) {
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        Class<?>[] raw = toRawClasses(parameterTypes);
-        if (raw == null) return null;
-        try {
-            return AOTMethod.synthesizeFrom(live.getMethod(methodName, raw));
-        } catch (NoSuchMethodException ignored) {
-            return null;
-        }
-    }
-
-    private AOTField fallbackDeclaredField(String fieldName) {
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        try {
-            return AOTField.synthesizeFrom(live.getDeclaredField(fieldName));
-        } catch (NoSuchFieldException ignored) {
-            return null;
-        }
-    }
-
-    private AOTField fallbackPublicField(String fieldName) {
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        try {
-            return AOTField.synthesizeFrom(live.getField(fieldName));
-        } catch (NoSuchFieldException ignored) {
-            return null;
-        }
-    }
-
-    private AOTConstructor<?> fallbackDeclaredConstructor(IClass<?>... parameterTypes) {
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        Class<?>[] raw = toRawClasses(parameterTypes);
-        if (raw == null) return null;
-        try {
-            return AOTConstructor.synthesizeFrom(live.getDeclaredConstructor(raw));
-        } catch (NoSuchMethodException ignored) {
-            return null;
-        }
-    }
-
-    private AOTConstructor<?> fallbackPublicConstructor(IClass<?>... parameterTypes) {
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        Class<?>[] raw = toRawClasses(parameterTypes);
-        if (raw == null) return null;
-        try {
-            return AOTConstructor.synthesizeFrom(live.getConstructor(raw));
-        } catch (NoSuchMethodException ignored) {
-            return null;
-        }
-    }
-
-    private IMethod[] fallbackDeclaredMethods() {
-        IMethod[] cached = cachedFallbackMethods;
-        if (cached != null) return cached.length == 0 ? null : cached.clone();
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        try {
-            java.lang.reflect.Method[] raw = live.getDeclaredMethods();
-            IMethod[] out = new IMethod[raw.length];
-            for (int i = 0; i < raw.length; i++) {
-                out[i] = AOTMethod.synthesizeFrom(raw[i]);
-            }
-            cachedFallbackMethods = out;
-            return out.clone();
-        } catch (Throwable ignored) {
-            cachedFallbackMethods = new IMethod[0];
-            return null;
-        }
-    }
-
-    private IField[] fallbackDeclaredFields() {
-        IField[] cached = cachedFallbackFields;
-        if (cached != null) return cached.length == 0 ? null : cached.clone();
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        try {
-            java.lang.reflect.Field[] raw = live.getDeclaredFields();
-            IField[] out = new IField[raw.length];
-            for (int i = 0; i < raw.length; i++) {
-                out[i] = AOTField.synthesizeFrom(raw[i]);
-            }
-            cachedFallbackFields = out;
-            return out.clone();
-        } catch (Throwable ignored) {
-            cachedFallbackFields = new IField[0];
-            return null;
-        }
-    }
-
-    private IConstructor<?>[] fallbackDeclaredConstructors() {
-        IConstructor<?>[] cached = cachedFallbackConstructors;
-        if (cached != null) return cached.length == 0 ? null : cached.clone();
-        Class<?> live = loadLiveClass();
-        if (live == null) return null;
-        try {
-            java.lang.reflect.Constructor<?>[] raw = live.getDeclaredConstructors();
-            IConstructor<?>[] out = new IConstructor<?>[raw.length];
-            for (int i = 0; i < raw.length; i++) {
-                out[i] = AOTConstructor.synthesizeFrom(raw[i]);
-            }
-            cachedFallbackConstructors = out;
-            return out.clone();
-        } catch (Throwable ignored) {
-            cachedFallbackConstructors = new IConstructor<?>[0];
-            return null;
-        }
-    }
 }
