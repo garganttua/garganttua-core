@@ -98,6 +98,14 @@ import com.garganttua.core.supply.SupplyException;
  * <li>Dependency resolution between builders</li>
  * </ul>
  *
+ * <p><b>Size note:</b> this orchestrator exceeds the 500-line code-size gate on
+ * purpose. The separable concerns have been extracted ({@link BootstrapConsoleReporter},
+ * {@link BootstrapStageNotifier}, {@link BootstrapSpiLoader}, {@link BuilderDependencyResolver});
+ * the residual is the framework's startup orchestration / {@code IBootstrap} +
+ * lifecycle implementation, which is inherently cohesive. Treated as a documented
+ * exception, like the {@code IClass}/{@code IRuntimeContext} mirror implementations
+ * and {@code InjectionContext}.
+ *
  * @since 2.0.0-ALPHA01
  */
 public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBuiltRegistry>
@@ -575,7 +583,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         try (ObservabilityEmitter.Scope phase = ObservabilityEmitter.joinCurrent()) {
             phase.fireStart("bootstrap:phase:resolve");
             try {
-                resolveDependencies();
+                new BuilderDependencyResolver(getBuilders(), this.providedBuilders).resolveDependencies();
                 phase.fireEnd("bootstrap:phase:resolve");
                 stageNotifier.fireStageEnd(Stage.RESOLVE);
             } catch (RuntimeException e) {
@@ -611,7 +619,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         }
 
         // Phase 2: Sort builders by dependency order (topological sort)
-        List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
+        List<IBuilder<?>> sortedBuilders = new BuilderDependencyResolver(getBuilders(), this.providedBuilders).sortBuildersByDependencies();
         log.debug("Builders sorted by dependency order: {}",
                 sortedBuilders.stream()
                         .map(b -> b.getClass().getSimpleName())
@@ -789,7 +797,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
 
         // Phase 3: Rebuild each builder in dependency order
         log.debug("Phase 3: Rebuilding {} builders in dependency order", getBuilders().size());
-        List<IBuilder<?>> sortedBuilders = sortBuildersByDependencies();
+        List<IBuilder<?>> sortedBuilders = new BuilderDependencyResolver(getBuilders(), this.providedBuilders).sortBuildersByDependencies();
         List<Object> newBuiltObjects = new ArrayList<>();
 
         for (IBuilder<?> builder : sortedBuilders) {
@@ -849,168 +857,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
      * @return list of builders sorted by dependency order
      * @throws DslException if there is a circular dependency
      */
-    private List<IBuilder<?>> sortBuildersByDependencies() throws DslException {
-        log.trace("Entering sortBuildersByDependencies()");
 
-        Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph = new HashMap<>();
-        Map<IBuilder<?>, Integer> inDegree = new HashMap<>();
-
-        initializeDependencyGraph(dependencyGraph, inDegree);
-        buildDependencyGraph(dependencyGraph, inDegree);
-        List<IBuilder<?>> sortedBuilders = performTopologicalSort(dependencyGraph, inDegree);
-        validateNoCyclicDependencies(sortedBuilders);
-
-        log.trace("Exiting sortBuildersByDependencies()");
-        return sortedBuilders;
-    }
-
-    /**
-     * Initializes the dependency graph with all builders.
-     */
-    private void initializeDependencyGraph(
-            Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph,
-            Map<IBuilder<?>, Integer> inDegree) {
-        for (IBuilder<?> builder : getBuilders()) {
-            dependencyGraph.put(builder, new HashSet<>());
-            inDegree.put(builder, 0);
-        }
-    }
-
-    /**
-     * Builds the dependency graph by analyzing builder dependencies.
-     */
-    private void buildDependencyGraph(
-            Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph,
-            Map<IBuilder<?>, Integer> inDegree) {
-        for (IBuilder<?> builder : getBuilders()) {
-            if (builder instanceof IDependentBuilder) {
-                processDependentBuilder((IDependentBuilder<?, ?>) builder, dependencyGraph, inDegree);
-            }
-        }
-    }
-
-    /**
-     * Processes a single dependent builder to update the dependency graph.
-     */
-    private void processDependentBuilder(
-            IDependentBuilder<?, ?> dependentBuilder,
-            Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph,
-            Map<IBuilder<?>, Integer> inDegree) {
-
-        Set<IClass<? extends IObservableBuilder<?, ?>>> allDeps = new HashSet<>();
-        allDeps.addAll(dependentBuilder.require());
-        allDeps.addAll(dependentBuilder.use());
-
-        for (IClass<? extends IObservableBuilder<?, ?>> depClass : allDeps) {
-            IBuilder<?> dependency = findBuilderInstanceByClass(depClass);
-            if (dependency != null) {
-                dependencyGraph.get(dependency).add(dependentBuilder);
-                inDegree.put(dependentBuilder, inDegree.get(dependentBuilder) + 1);
-            }
-        }
-    }
-
-    /**
-     * Performs topological sort using Kahn's algorithm.
-     */
-    private List<IBuilder<?>> performTopologicalSort(
-            Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph,
-            Map<IBuilder<?>, Integer> inDegree) {
-
-        Queue<IBuilder<?>> queue = initializeQueueWithNoDependencies(inDegree);
-        List<IBuilder<?>> sortedBuilders = new ArrayList<>();
-
-        while (!queue.isEmpty()) {
-            IBuilder<?> current = queue.poll();
-            sortedBuilders.add(current);
-            processBuilderDependents(current, dependencyGraph, inDegree, queue);
-        }
-
-        return sortedBuilders;
-    }
-
-    /**
-     * Initializes the queue with builders that have no dependencies.
-     */
-    private Queue<IBuilder<?>> initializeQueueWithNoDependencies(Map<IBuilder<?>, Integer> inDegree) {
-        Queue<IBuilder<?>> queue = new LinkedList<>();
-        for (IBuilder<?> builder : getBuilders()) {
-            if (inDegree.get(builder) == 0) {
-                queue.add(builder);
-                log.debug("Builder {} has no dependencies, will be built first",
-                        builder.getClass().getSimpleName());
-            }
-        }
-        return queue;
-    }
-
-    /**
-     * Processes all builders that depend on the current builder.
-     */
-    private void processBuilderDependents(
-            IBuilder<?> current,
-            Map<IBuilder<?>, Set<IBuilder<?>>> dependencyGraph,
-            Map<IBuilder<?>, Integer> inDegree,
-            Queue<IBuilder<?>> queue) {
-
-        for (IBuilder<?> dependent : dependencyGraph.get(current)) {
-            int newInDegree = inDegree.get(dependent) - 1;
-            inDegree.put(dependent, newInDegree);
-            if (newInDegree == 0) {
-                queue.add(dependent);
-                log.debug("Builder {} dependencies satisfied, adding to build queue",
-                        dependent.getClass().getSimpleName());
-            }
-        }
-    }
-
-    /**
-     * Validates that there are no cyclic dependencies.
-     */
-    private void validateNoCyclicDependencies(List<IBuilder<?>> sortedBuilders) throws DslException {
-        List<IBuilder<?>> allBuilders = getBuilders();
-        if (sortedBuilders.size() != allBuilders.size()) {
-            List<String> notProcessed = allBuilders.stream()
-                    .filter(b -> !sortedBuilders.contains(b))
-                    .map(b -> b.getClass().getSimpleName())
-                    .toList();
-            throw new DslException("Circular dependency detected among builders: " + notProcessed);
-        }
-    }
-
-    /**
-     * Finds a builder instance by its class.
-     *
-     * @param builderClass the class to search for
-     * @return the builder instance or null if not found
-     */
-    private IBuilder<?> findBuilderInstanceByClass(IClass<? extends IObservableBuilder<?, ?>> builderClass) {
-        return getBuilders().stream()
-                .filter(b -> builderClass.isAssignableFrom(b.getClass()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * Resolves dependencies between builders by providing observable builders to
-     * dependent builders.
-     *
-     * @throws DslException if dependency resolution fails
-     */
-    private void resolveDependencies() throws DslException {
-        log.trace("Entering resolveDependencies()");
-
-        List<IObservableBuilder<?, ?>> observableBuilders = collectObservableBuilders();
-        log.debug("Found {} observable builders", observableBuilders.size());
-
-        for (IBuilder<?> builder : getBuilders()) {
-            if (builder instanceof IDependentBuilder) {
-                resolveDependenciesForBuilder((IDependentBuilder<?, ?>) builder, observableBuilders);
-            }
-        }
-
-        log.trace("Exiting resolveDependencies()");
-    }
 
     /**
      * Drive the {@link com.garganttua.core.dsl.dependency.DependencyStage#CONFIGURATION
@@ -1043,121 +890,6 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         log.trace("Exiting runGlobalConfigurationPhase()");
     }
 
-    /**
-     * Collects all observable builders that can serve as dependencies for
-     * other builders' dep resolution. Includes both managed builders (registered
-     * via {@code withBuilder()}, which Phase 3 lifecycle-manages) AND provided
-     * deps (registered via {@code provide()}, which are NOT lifecycle-managed
-     * here — their consumer owns their lifecycle).
-     *
-     * @return list of observable builders visible to dependency resolution
-     */
-    private List<IObservableBuilder<?, ?>> collectObservableBuilders() {
-        List<IObservableBuilder<?, ?>> result = new ArrayList<>();
-        for (IBuilder<?> builder : getBuilders()) {
-            if (builder instanceof IObservableBuilder) {
-                result.add((IObservableBuilder<?, ?>) builder);
-            }
-        }
-        // Provided deps are also candidates for satisfying other builders'
-        // require() / use() — e.g. SPI-loaded InjectionContextBuilder that
-        // we register via provide() (not withBuilder()) to avoid Phase 3
-        // pre-initializing it.
-        for (IObservableBuilder<?, ?> provided : this.providedBuilders) {
-            if (!result.contains(provided)) {
-                result.add(provided);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Resolves dependencies for a single dependent builder.
-     *
-     * @param dependentBuilder   the dependent builder
-     * @param observableBuilders list of available observable builders
-     * @throws DslException if a required dependency is not found
-     */
-    private void resolveDependenciesForBuilder(
-            IDependentBuilder<?, ?> dependentBuilder,
-            List<IObservableBuilder<?, ?>> observableBuilders) throws DslException {
-
-        Set<IClass<? extends IObservableBuilder<?, ?>>> requiredDeps = dependentBuilder.require();
-        Set<IClass<? extends IObservableBuilder<?, ?>>> usedDeps = dependentBuilder.use();
-
-        log.debug("Builder {} requires {} dependencies and uses {} dependencies",
-                dependentBuilder.getClass().getSimpleName(), requiredDeps.size(), usedDeps.size());
-
-        provideRequiredDependencies(dependentBuilder, observableBuilders, requiredDeps);
-        provideOptionalDependencies(dependentBuilder, observableBuilders, usedDeps);
-    }
-
-    /**
-     * Provides required dependencies to a dependent builder.
-     *
-     * @param dependentBuilder   the dependent builder
-     * @param observableBuilders list of available observable builders
-     * @param requiredDeps       set of required dependency classes
-     * @throws DslException if a required dependency is not found
-     */
-    private void provideRequiredDependencies(
-            IDependentBuilder<?, ?> dependentBuilder,
-            List<IObservableBuilder<?, ?>> observableBuilders,
-            Set<IClass<? extends IObservableBuilder<?, ?>>> requiredDeps) throws DslException {
-
-        for (IClass<? extends IObservableBuilder<?, ?>> depClass : requiredDeps) {
-            IObservableBuilder<?, ?> dependency = findBuilderByClass(observableBuilders, depClass);
-            if (dependency == null) {
-                throw new DslException("Required dependency not found: " + depClass.getName()
-                        + " for builder: " + dependentBuilder.getClass().getSimpleName());
-            }
-            dependentBuilder.provide(dependency);
-            log.debug("Provided required dependency {} to {}",
-                    depClass.getSimpleName(), dependentBuilder.getClass().getSimpleName());
-        }
-    }
-
-    /**
-     * Provides optional dependencies to a dependent builder.
-     *
-     * @param dependentBuilder   the dependent builder
-     * @param observableBuilders list of available observable builders
-     * @param usedDeps           set of optional dependency classes
-     * @throws DslException if providing the dependency fails
-     */
-    private void provideOptionalDependencies(
-            IDependentBuilder<?, ?> dependentBuilder,
-            List<IObservableBuilder<?, ?>> observableBuilders,
-            Set<IClass<? extends IObservableBuilder<?, ?>>> usedDeps) throws DslException {
-
-        for (IClass<? extends IObservableBuilder<?, ?>> depClass : usedDeps) {
-            IObservableBuilder<?, ?> dependency = findBuilderByClass(observableBuilders, depClass);
-            if (dependency != null) {
-                dependentBuilder.provide(dependency);
-                log.debug("Provided optional dependency {} to {}",
-                        depClass.getSimpleName(), dependentBuilder.getClass().getSimpleName());
-            } else {
-                log.debug("Optional dependency {} not available for {}",
-                        depClass.getSimpleName(), dependentBuilder.getClass().getSimpleName());
-            }
-        }
-    }
-
-    /**
-     * Finds a builder by its class in the list of observable builders.
-     *
-     * @param builders     the list of observable builders
-     * @param builderClass the class to search for
-     * @return the builder instance or null if not found
-     */
-    private IObservableBuilder<?, ?> findBuilderByClass(
-            List<IObservableBuilder<?, ?>> builders,
-            IClass<? extends IObservableBuilder<?, ?>> builderClass) {
-        return builders.stream()
-                .filter(b -> builderClass.isAssignableFrom(b.getClass()))
-                .findFirst()
-                .orElse(null);
-    }
 
     /**
      * Gets the list of registered builders from all sources, merged by priority.
