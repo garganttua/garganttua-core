@@ -39,6 +39,11 @@ import java.util.Optional;
  * runtime reflection or AOT-generated descriptors.
  * </p>
  *
+ * <p><b>Size note:</b> this interface exceeds the 500-line advisory threshold; it is an
+ * inherent facade contract (~52 method declarations spanning class resolution and
+ * annotation scanning) that cannot be split without breaking the unified reflection
+ * API. Kept whole by design per the alpha02 rework rules.</p>
+ *
  * @since 2.0.0-ALPHA01
  * @see IReflectionProvider
  */

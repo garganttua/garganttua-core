@@ -36,6 +36,14 @@ import com.garganttua.core.supply.dsl.ContextualSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.utils.CopyException;
 
+/**
+ * Runtime execution context — JVM implementation of {@link IRuntimeContext}.
+ *
+ * <p><b>Size note:</b> this class exceeds the 500-line advisory threshold; it is a
+ * cohesive {@code IRuntimeContext} mirror (input/output/variable/context accessors plus
+ * lifecycle) with no extractable multi-responsibility cluster. Documented exception per
+ * the alpha02 rework rules, alongside {@code RuntimeClass} and {@code AOTClass}.</p>
+ */
 public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         implements IRuntimeContext<InputType, OutputType> {
     private static final Logger log = Logger.getLogger(RuntimeContext.class);

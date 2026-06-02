@@ -20,6 +20,15 @@ import com.garganttua.core.reflection.IRecordComponent;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ITypeVariable;
 
+/**
+ * JVM runtime-reflection implementation of {@link IClass}.
+ *
+ * <p><b>Size note:</b> this class exceeds the 500-line advisory threshold — it is an
+ * {@code IClass} mirror with ~75 mandatory accessor overrides, the same documented
+ * exception as {@code AOTClass}. Its residual length is inherent to the interface
+ * contract; there is no extractable multi-responsibility cluster. Kept whole by
+ * design per the alpha02 rework rules.</p>
+ */
 public class RuntimeClass<T> implements IClass<T> {
 
 	private static final ConcurrentHashMap<Class<?>, RuntimeClass<?>> CACHE = new ConcurrentHashMap<>();

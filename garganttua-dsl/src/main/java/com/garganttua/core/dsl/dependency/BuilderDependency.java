@@ -101,6 +101,13 @@ import com.garganttua.core.reflection.IClass;
  *   <li>{@link #validateRequiredDependency(String)} - Validates required (REQUIRE) dependencies</li>
  * </ul>
  *
+ * <p><b>Size note:</b> this class exceeds the 500-line advisory threshold but is a
+ * cohesive {@link IBuilderDependency} implementation — its length is mandatory
+ * single-line query accessors plus thorough javadoc and per-accessor trace logging,
+ * not extractable multi-responsibility logic (validation needs deep internal state;
+ * a firing-memory wrapper would only add delegation). Kept whole by design per the
+ * alpha02 rework rules.</p>
+ *
  * @param <Builder> the type of the observable builder being depended upon
  * @param <Built> the type of object built by the dependency
  * @since 2.0.0-ALPHA01
