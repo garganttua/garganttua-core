@@ -108,30 +108,6 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
     private static final String SOURCE_MANUAL = "manual";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
 
-    /**
-     * UTF-8 console stream for printing banner art and progress glyphs (▶, ○, ✓, →).
-     * On JVMs where the default {@code System.out} charset is not UTF-8 (e.g.
-     * ANSI_X3.4-1968 on locale-less Linux containers), Unicode glyphs are
-     * replaced by '?' when written through {@code System.out}. This stream
-     * writes UTF-8 bytes directly to {@link FileDescriptor#out}, bypassing the
-     * default {@code PrintStream} encoding.
-     */
-    private static final PrintStream CONSOLE_OUT = createUtf8ConsoleStream();
-
-    private static PrintStream createUtf8ConsoleStream() {
-        try {
-            if (StandardCharsets.UTF_8.equals(System.out.charset())) {
-                return System.out;
-            }
-        } catch (Throwable ignored) {
-            // PrintStream.charset() is Java 18+; pre-21 fall through to wrap.
-        }
-        try {
-            return new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8);
-        } catch (Throwable e) {
-            return System.out;
-        }
-    }
 
     private final Set<String> packages = Collections.synchronizedSet(new HashSet<>());
     private final Map<String, IBuilder<?>> manualBuilders = Collections.synchronizedMap(new HashMap<>());
@@ -306,7 +282,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
 
         switch (bannerMode) {
             case CONSOLE:
-                bannerToPrint.print(CONSOLE_OUT);
+                bannerToPrint.print(BootstrapConsoleReporter.CONSOLE_OUT);
                 break;
             case LOG:
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -736,7 +712,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
             return null;
         }
 
-        printPhase(1, "Resolving dependencies", allBuilders.size() + " builders");
+        BootstrapConsoleReporter.printPhase(bannerMode, 1, "Resolving dependencies", allBuilders.size() + " builders");
 
         // Phase 1: Resolve dependencies between builders
         Instant resolveStart = Instant.now();
@@ -789,20 +765,20 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         if (this.printDependencyGraph) {
             for (String line : DependencyGraphRenderer.render(sortedBuilders)) {
                 if (bannerMode == BannerMode.CONSOLE) {
-                    CONSOLE_OUT.println("  " + line);
+                    BootstrapConsoleReporter.CONSOLE_OUT.println("  " + line);
                 } else {
                     log.info(line);
                 }
             }
         }
 
-        printPhase(2, "Building components", sortedBuilders.size() + " builders");
+        BootstrapConsoleReporter.printPhase(bannerMode, 2, "Building components", sortedBuilders.size() + " builders");
 
         // Phase 3: Build all builders in dependency order, initialize lifecycle immediately
         fireStageStart(Stage.BUILD);
         List<Object> builtObjects = new ArrayList<>();
         for (IBuilder<?> builder : sortedBuilders) {
-            printBuilderStart(builder.getClass().getSimpleName());
+            BootstrapConsoleReporter.printBuilderStart(bannerMode, builder.getClass().getSimpleName());
             String builderSource = "bootstrap:builder:" + builder.getClass().getSimpleName();
             Object built;
             Instant buildStart = Instant.now();
@@ -850,7 +826,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
                 }
             }
 
-            printBuilderComplete(builder.getClass().getSimpleName());
+            BootstrapConsoleReporter.printBuilderComplete(bannerMode, builder.getClass().getSimpleName());
         }
         fireStageEnd(Stage.BUILD);
 
@@ -864,7 +840,7 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         Duration startupTime = Duration.between(startTime, Instant.now());
 
         // Print summary
-        printSummary(builtObjects, startupTime);
+        BootstrapConsoleReporter.printSummary(bannerMode, applicationName, applicationVersion, getBuilders().size(), builtObjects, startupTime, lastBuildTimings);
 
         log.trace("Exiting doBuild()");
 
@@ -904,136 +880,6 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
         }
     }
 
-    /**
-     * Prints a phase header with colored output.
-     */
-    private void printPhase(int phaseNumber, String phaseName, String details) {
-        if (bannerMode == BannerMode.OFF) {
-            log.debug("Phase {}: {} ({})", phaseNumber, phaseName, details);
-            return;
-        }
-
-        String CYAN = "\u001B[36m";
-        String BOLD = "\u001B[1m";
-        String RESET = "\u001B[0m";
-        String DIM = "\u001B[2m";
-
-        CONSOLE_OUT.println();
-        CONSOLE_OUT.println(CYAN + BOLD + "  ▶ Phase " + phaseNumber + ": " + phaseName + RESET +
-                DIM + " (" + details + ")" + RESET);
-    }
-
-    /**
-     * Prints builder start indicator.
-     */
-    private void printBuilderStart(String builderName) {
-        if (bannerMode == BannerMode.OFF) {
-            log.debug("Building: {}", builderName);
-            return;
-        }
-
-        String DIM = "\u001B[2m";
-        String RESET = "\u001B[0m";
-        String YELLOW = "\u001B[33m";
-
-        CONSOLE_OUT.println(DIM + "     ○ " + RESET + YELLOW + builderName + RESET + DIM + " ..." + RESET);
-    }
-
-    /**
-     * Prints builder completion indicator.
-     */
-    private void printBuilderComplete(String builderName) {
-        if (bannerMode == BannerMode.OFF) {
-            log.debug("Built: {}", builderName);
-            return;
-        }
-
-        // Move cursor up and overwrite
-        String GREEN = "\u001B[32m";
-        String RESET = "\u001B[0m";
-        String DIM = "\u001B[2m";
-
-        CONSOLE_OUT.print("\u001B[1A"); // Move up one line
-        CONSOLE_OUT.print("\u001B[2K"); // Clear line
-        CONSOLE_OUT.println(GREEN + "     ✓ " + RESET + builderName + DIM + " ready" + RESET);
-    }
-
-    /**
-     * Prints lifecycle action.
-     */
-    private void printLifecycleAction(String action, String componentName) {
-        if (bannerMode == BannerMode.OFF) {
-            log.debug("{}: {}", action, componentName);
-            return;
-        }
-
-        String BLUE = "\u001B[34m";
-        String RESET = "\u001B[0m";
-        String DIM = "\u001B[2m";
-
-        CONSOLE_OUT.println(BLUE + "     → " + RESET + action + " " + DIM + componentName + RESET);
-    }
-
-    /**
-     * Prints the bootstrap summary.
-     */
-    private void printSummary(List<Object> builtObjects, Duration startupTime) {
-        BootstrapSummary summary = new BootstrapSummary(bannerMode != BannerMode.OFF)
-                .applicationName(applicationName)
-                .applicationVersion(applicationVersion)
-                .startupTime(startupTime)
-                .buildersCount(getBuilders().size())
-                .builtObjectsCount(builtObjects.size());
-
-        // Inventory of garganttua-* modules detected on the classpath. Each
-        // module ships its coordinates in its JAR's MANIFEST.MF (injected by
-        // the parent POM's maven-jar-plugin config); GarganttuaModules walks
-        // the classpath at runtime to collect them.
-        for (com.garganttua.core.bootstrap.GarganttuaModules.ModuleInfo m :
-                com.garganttua.core.bootstrap.GarganttuaModules.discover()) {
-            summary.addItem("Modules", m.artifactId(), m.version(), "📦");
-        }
-
-        // Collect summary contributions from built objects
-        for (Object built : builtObjects) {
-            if (built instanceof IBootstrapSummaryContributor contributor) {
-                String category = contributor.getSummaryCategory();
-                contributor.getSummaryItems().forEach((name, value) -> summary.addItem(category, name, value));
-            }
-        }
-
-        // Per-stage timing breakdown for this build. Two sections:
-        //  - "Stage timings"      → phase totals (resolve, configure, build)
-        //  - "Per-builder timings" → per-builder breakdown sorted slowest-first,
-        //                            so the user sees the dominant builder(s) on top
-        if (this.lastBuildTimings != null) {
-            var snapshot = this.lastBuildTimings.snapshot();
-            // Totals (no ':' in the key)
-            snapshot.entrySet().stream()
-                    .filter(e -> !e.getKey().contains(":"))
-                    .forEach(e -> summary.addItem("Stage timings", e.getKey(),
-                            StageTimings.format(e.getValue())));
-            // Per-builder (key like "configure:WorkflowsBuilder" or "build:WorkflowsBuilder")
-            snapshot.entrySet().stream()
-                    .filter(e -> e.getKey().contains(":"))
-                    .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
-                    .forEach(e -> summary.addItem("Per-builder timings",
-                            e.getKey(), StageTimings.format(e.getValue())));
-        }
-
-        if (bannerMode == BannerMode.CONSOLE) {
-            summary.print(CONSOLE_OUT);
-        } else if (bannerMode == BannerMode.LOG) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            summary.print(new PrintStream(baos, true, StandardCharsets.UTF_8));
-            String summaryText = baos.toString(StandardCharsets.UTF_8);
-            for (String line : summaryText.split("\n")) {
-                if (!line.isBlank()) {
-                    log.info(line);
-                }
-            }
-        }
-    }
 
     /**
      * Rebuilds all managed builders, integrating any new packages or components.
