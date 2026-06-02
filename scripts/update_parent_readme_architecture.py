@@ -71,7 +71,7 @@ def update_readme(readme_path: str, new_table: str):
         content = f.read()
 
     pattern = re.compile(
-        rf"({re.escape(start_tag)})(.*?)(\s*{re.escape(end_tag)})",
+        rf"({re.escape(start_tag)})(.*?)\s*({re.escape(end_tag)})",
         re.DOTALL
     )
     new_content = pattern.sub(f"\\1\n{new_table}\n\\3", content)

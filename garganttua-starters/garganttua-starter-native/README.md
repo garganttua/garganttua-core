@@ -51,7 +51,7 @@ fast for dev and `mvn -Pnative package` builds the binary.
 ## Build & run
 
 ```bash
-# Local GraalVM JDK 21+ required.
+# Local GraalVM JDK 25+ required.
 mvn -Pnative package
 ./target/<your-app-name>
 ```
@@ -91,7 +91,7 @@ auto-aligned, no duplication, no manual JSON.
 
 ## Caveats
 
-- **Java 21 GraalVM**: this is the only currently supported native build.
+- **Java 25 GraalVM**: this is the only currently supported native build.
 - **Image size**: every registered class adds bytes. If your app has
   hundreds of `@Reflected` entities, expect a 10–20 MB binary (still
   ~10× smaller than the equivalent JAR + JVM).

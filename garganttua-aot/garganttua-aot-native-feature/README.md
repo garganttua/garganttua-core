@@ -60,7 +60,7 @@ flags to scope this more tightly per-class.
 
 ## Requirements
 
-- GraalVM JDK 21+
+- GraalVM JDK 25+
 - `native-maven-plugin` wired in the consumer's `<build>` (see the
   native starter's README)
 

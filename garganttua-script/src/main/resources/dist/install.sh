@@ -9,7 +9,7 @@ set -e
 
 PREFIX="/usr/local"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MIN_JAVA_VERSION=21
+MIN_JAVA_VERSION=25
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

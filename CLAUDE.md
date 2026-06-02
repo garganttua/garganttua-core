@@ -63,7 +63,7 @@ python3 scripts/run_all.py
 
 ## Architecture Overview
 
-Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA02`) is a modular Java 21 framework providing dependency injection, reflection utilities, expression language evaluation, scripting, and workflow orchestration. Base package: `com.garganttua.core`. The codebase follows a layered architecture with strict acyclic dependencies.
+Garganttua Core (`com.garganttua:garganttua-core:2.0.0-ALPHA02`) is a modular Java 25 framework providing dependency injection, reflection utilities, expression language evaluation, scripting, and workflow orchestration. Base package: `com.garganttua.core`. The codebase follows a layered architecture with strict acyclic dependencies.
 
 ### Module Layers
 
