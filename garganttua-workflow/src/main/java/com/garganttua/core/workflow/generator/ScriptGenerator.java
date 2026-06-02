@@ -4,6 +4,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowScript;
 import com.garganttua.core.workflow.WorkflowStage;
@@ -31,7 +34,28 @@ import com.garganttua.core.workflow.header.ScriptHeaderParser;
  */
 public class ScriptGenerator {
 
+    private static final Logger log = Logger.getLogger(ScriptGenerator.class);
+
     private static final ScriptHeaderParser HEADER_PARSER = new ScriptHeaderParser();
+
+    /**
+     * Whether {@code garganttua-observability} is on the classpath. That module
+     * (an <b>optional</b> dependency) provides the script-side {@code observe(...)}
+     * expression function. When it is absent, timing instrumentation is silently
+     * skipped so generated scripts compile and run without it.
+     */
+    private static final boolean OBSERVABILITY_AVAILABLE = isObservabilityAvailable();
+
+    private static final AtomicBoolean ABSENCE_LOGGED = new AtomicBoolean(false);
+
+    private static boolean isObservabilityAvailable() {
+        try {
+            Class.forName("com.garganttua.core.observability.ObservabilityExpressions");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 
     public String generate(String workflowName, List<WorkflowStage> stages, Map<String, Object> presetVariables)
             throws WorkflowException {
@@ -47,6 +71,16 @@ public class ScriptGenerator {
             boolean inlineAll, ScriptGenerationOptions options) throws WorkflowException {
         StringBuilder script = new StringBuilder();
         WorkflowTimingConfig timing = options == null ? WorkflowTimingConfig.disabled() : options.timing();
+
+        // Observability is an optional dependency: if its module (and thus the
+        // script-side observe(...) function) is absent, emit no instrumentation.
+        if (!OBSERVABILITY_AVAILABLE && !timing.isFullyDisabled()) {
+            if (ABSENCE_LOGGED.compareAndSet(false, true)) {
+                log.debug("Workflow timing requested but garganttua-observability is not on the "
+                        + "classpath; skipping observe(...) instrumentation");
+            }
+            timing = WorkflowTimingConfig.disabled();
+        }
 
         appendHeader(script, workflowName);
         appendPresetVariables(script, presetVariables);

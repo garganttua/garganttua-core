@@ -43,9 +43,13 @@
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-injection</artifactId>
 		</dependency>
+		<!-- Optional: provides the script-side observe(...) function. When absent,
+		     ScriptGenerator emits no timing instrumentation (graceful degradation).
+		     Not propagated transitively — consumers opt in explicitly. -->
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-observability</artifactId>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
