@@ -8,7 +8,6 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;

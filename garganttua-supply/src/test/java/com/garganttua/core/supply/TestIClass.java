@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.constant.ClassDesc;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.util.Objects;
 import java.util.Optional;
 

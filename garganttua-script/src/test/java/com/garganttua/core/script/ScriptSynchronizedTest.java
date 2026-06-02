@@ -13,8 +13,6 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.InterruptibleLeaseMutex;
-import com.garganttua.core.mutex.MutexStrategy;
-import com.garganttua.core.script.functions.ScriptFunctions;
 import com.garganttua.core.script.functions.ScriptConcurrencyFunctions;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 

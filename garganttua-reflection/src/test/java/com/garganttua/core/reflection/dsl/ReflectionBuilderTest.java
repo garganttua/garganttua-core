@@ -3,7 +3,6 @@ package com.garganttua.core.reflection.dsl;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;

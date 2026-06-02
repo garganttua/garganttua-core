@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.reflection.IFieldValue;
 import com.garganttua.core.reflection.IReflectionProvider;
-import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;

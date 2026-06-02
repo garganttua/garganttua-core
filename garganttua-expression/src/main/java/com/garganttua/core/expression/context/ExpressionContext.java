@@ -1,6 +1,5 @@
 package com.garganttua.core.expression.context;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,9 +15,6 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
-import com.garganttua.core.expression.ExpressionNode;
-import com.garganttua.core.expression.ForLoopExpressionNode;
-import com.garganttua.core.expression.IEvaluateNode;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.antlr4.ExpressionLexer;

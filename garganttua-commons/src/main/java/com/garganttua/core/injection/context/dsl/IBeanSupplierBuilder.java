@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IBeanSupplier;
-import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.Dependent;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;

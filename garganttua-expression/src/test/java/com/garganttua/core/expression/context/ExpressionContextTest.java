@@ -18,7 +18,6 @@ import com.garganttua.core.expression.functions.Expressions;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;

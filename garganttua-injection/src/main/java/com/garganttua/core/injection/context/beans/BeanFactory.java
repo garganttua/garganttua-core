@@ -4,7 +4,6 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;

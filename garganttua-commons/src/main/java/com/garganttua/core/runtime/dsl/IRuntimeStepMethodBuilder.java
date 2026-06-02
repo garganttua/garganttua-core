@@ -2,7 +2,6 @@ package com.garganttua.core.runtime.dsl;
 
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.runtime.IRuntimeContext;

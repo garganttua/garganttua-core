@@ -15,7 +15,6 @@ import com.garganttua.core.configuration.format.YamlConfigurationFormat;
 import com.garganttua.core.configuration.populator.BuilderPopulator;
 import com.garganttua.core.configuration.populator.MethodMappingStrategy;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.reflection.IClass;

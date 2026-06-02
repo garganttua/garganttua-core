@@ -14,7 +14,6 @@ import com.garganttua.core.mutex.InterruptibleLeaseMutex;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexName;
 import com.garganttua.core.mutex.dsl.fixtures.TestMutex;
-import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;

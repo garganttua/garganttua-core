@@ -2,7 +2,6 @@ package com.garganttua.core.configuration.format;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

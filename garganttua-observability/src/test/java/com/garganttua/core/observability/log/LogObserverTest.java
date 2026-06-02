@@ -26,7 +26,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.garganttua.core.observability.EndEvent;
 import com.garganttua.core.observability.ErrorEvent;
-import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.StartEvent;
 
 class LogObserverTest {

@@ -9,7 +9,6 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.mutex.IMutexManager;
-import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;

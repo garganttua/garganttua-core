@@ -37,7 +37,6 @@ import com.garganttua.core.script.antlr4.ScriptLexer;
 import com.garganttua.core.script.antlr4.ScriptParser;
 import com.garganttua.core.script.nodes.IScriptNode;
 import com.garganttua.core.script.nodes.StatementBlock;
-import com.garganttua.core.supply.ISupplier;
 
 /**
  * Mutable, single-threaded {@link IScript} implementation: loads {@code .gs}

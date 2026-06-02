@@ -2,7 +2,6 @@ package com.garganttua.core.reflection.binders.dsl;
 
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 

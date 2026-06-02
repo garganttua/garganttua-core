@@ -1,7 +1,6 @@
 package com.garganttua.core.reflection.runtime;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;

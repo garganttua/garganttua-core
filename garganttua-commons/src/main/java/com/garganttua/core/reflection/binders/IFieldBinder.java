@@ -1,6 +1,5 @@
 package com.garganttua.core.reflection.binders;
 
-import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.ISupplier;
 

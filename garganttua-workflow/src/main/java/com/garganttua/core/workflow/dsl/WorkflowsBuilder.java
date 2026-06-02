@@ -27,7 +27,6 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.script.IScriptingEnvironment;
 import com.garganttua.core.script.dsl.IScriptsBuilder;
-import com.garganttua.core.script.dsl.ScriptsBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowsRegistry;
 import com.garganttua.core.workflow.annotations.IWorkflowDefinition;

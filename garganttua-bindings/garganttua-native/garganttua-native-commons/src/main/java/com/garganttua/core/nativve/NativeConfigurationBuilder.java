@@ -9,7 +9,6 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
-import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.core.reflection.IReflectionUsageReporter;

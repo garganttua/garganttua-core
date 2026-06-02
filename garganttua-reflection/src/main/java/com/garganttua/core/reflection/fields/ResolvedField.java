@@ -1,7 +1,6 @@
 package com.garganttua.core.reflection.fields;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.List;

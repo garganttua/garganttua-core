@@ -30,7 +30,6 @@ import com.garganttua.core.injection.IInjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.beans.BeanFactory;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;

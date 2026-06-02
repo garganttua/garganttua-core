@@ -1,8 +1,6 @@
 package com.garganttua.core.bootstrap.dsl;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -13,13 +11,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Comparator;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.UUID;
@@ -27,13 +22,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.BannerMode;
-import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.DependencyGraphRenderer;
 import com.garganttua.core.bootstrap.banner.StageTimings;
 import com.garganttua.core.bootstrap.banner.FileBanner;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBanner;
-import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.bootstrap.dsl.IBootstrapStageListener;
 import com.garganttua.core.bootstrap.dsl.IBootstrapStageListener.Stage;
 import com.garganttua.core.observability.ObservabilityBinding;
@@ -61,7 +54,6 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
-import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 
 import jakarta.annotation.Priority;
 import com.garganttua.core.supply.ISupplier;
