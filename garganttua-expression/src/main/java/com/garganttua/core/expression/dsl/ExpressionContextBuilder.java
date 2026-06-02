@@ -260,7 +260,7 @@ public class ExpressionContextBuilder
             // every index file, and a single missed transformer silently
             // drops those entries. The reflection-based scan is the only
             // guarantee that survives a consumer's mis-configured shade.
-            registerAllFrameworkBuiltinsByReflection();
+            FrameworkBuiltinRegistrar.registerAll(this);
         } catch (DslException | NoSuchMethodException | SecurityException e) {
             throw new DslException("Failed to register built-in expression nodes", e);
         }
@@ -312,81 +312,6 @@ public class ExpressionContextBuilder
                 .autoDetect(true);
     }
 
-    /**
-     * Framework function classes whose every @Expression-annotated static
-     * method is registered directly by FQN. The package-scan path is the
-     * "soft" version of this; this is the hard guarantee that all framework
-     * built-ins are always present. Binding modules that aren't on the
-     * classpath are silently skipped.
-     */
-    private static final String[] FRAMEWORK_FUNCTION_CLASSES = {
-            // expression
-            "com.garganttua.core.expression.functions.Expressions",
-            // script
-            "com.garganttua.core.script.functions.ScriptFunctions",
-            "com.garganttua.core.script.functions.LogFunctions",
-            "com.garganttua.core.script.functions.ControlFlowFunctions",
-            // runtime
-            "com.garganttua.core.runtime.functions.RuntimeFunctions",
-            // injection
-            "com.garganttua.core.injection.functions.InjectionFunctions",
-            "com.garganttua.core.injection.functions.BeanMutationFunctions",
-            "com.garganttua.core.injection.context.beans.Beans",
-            // mutex (+ binding-conditional redis)
-            "com.garganttua.core.mutex.functions.MutexFunctions",
-            "com.garganttua.core.mutex.redis.functions.RedisMutexFunctions",
-            // console & observability
-            "com.garganttua.core.console.ConsoleFunctions",
-            "com.garganttua.core.observability.ObservabilityExpressions",
-            // conditions — and / or / nor / nand / xor / not / null / notNull /
-            // equals / notEquals / greater / greaterOrEquals / lower / lowerOrEquals
-            "com.garganttua.core.condition.AndCondition",
-            "com.garganttua.core.condition.OrCondition",
-            "com.garganttua.core.condition.NorCondition",
-            "com.garganttua.core.condition.NandCondition",
-            "com.garganttua.core.condition.XorCondition",
-            "com.garganttua.core.condition.NullCondition",
-            "com.garganttua.core.condition.NotNullCondition",
-            "com.garganttua.core.condition.EqualsCondition",
-            "com.garganttua.core.condition.NotEqualsCondition",
-            "com.garganttua.core.condition.GreaterCondition",
-            "com.garganttua.core.condition.GreaterOrEqualsCondition",
-            "com.garganttua.core.condition.LowerCondition",
-            "com.garganttua.core.condition.LowerOrEqualsCondition"
-    };
-
-    @SuppressWarnings("unchecked")
-    private void registerAllFrameworkBuiltinsByReflection() {
-        IClass<? extends java.lang.annotation.Annotation> exprAnnoCls =
-                (IClass<? extends java.lang.annotation.Annotation>) (IClass<?>)
-                        IClass.getClass(com.garganttua.core.expression.annotations.Expression.class);
-        for (String fqn : FRAMEWORK_FUNCTION_CLASSES) {
-            Class<?> cls;
-            try {
-                cls = Class.forName(fqn, true, Thread.currentThread().getContextClassLoader());
-            } catch (ClassNotFoundException | LinkageError missing) {
-                // Binding module not on classpath — fine.
-                continue;
-            }
-            IClass<?> ownerCls = IClass.getClass(cls);
-            for (com.garganttua.core.reflection.IMethod m : ownerCls.getDeclaredMethods()) {
-                if (!java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
-                    continue;
-                }
-                if (m.getAnnotation(exprAnnoCls) == null) {
-                    continue;
-                }
-                try {
-                    this.expression(new NullSupplierBuilder<>(ownerCls),
-                                    (IClass) m.getReturnType())
-                            .method(m)
-                            .autoDetect(true);
-                } catch (DslException ignored) {
-                    // One bad function should not poison the whole context.
-                }
-            }
-        }
-    }
 
     /**
      * Automatically detects and registers methods annotated with @Expression.
@@ -432,7 +357,7 @@ public class ExpressionContextBuilder
         Map<String, IMethod> uniqueMethods = new LinkedHashMap<>();
         int duplicateCount = 0;
         for (IMethod m : expressions) {
-            String signature = buildMethodSignature(m);
+            String signature = FrameworkBuiltinRegistrar.buildMethodSignature(m);
             if (uniqueMethods.putIfAbsent(signature, m) != null) {
                 duplicateCount++;
             }
@@ -533,24 +458,6 @@ public class ExpressionContextBuilder
      * @return a unique string signature like
      *         "com.example.Beans.bean(java.lang.Class,java.lang.String)"
      */
-    private String buildMethodSignature(IMethod method) {
-        StringBuilder signature = new StringBuilder();
-        signature.append(method.getDeclaringClass().getName());
-        signature.append(".");
-        signature.append(method.getName());
-        signature.append("(");
-
-        IClass<?>[] paramTypes = method.getParameterTypes();
-        for (int i = 0; i < paramTypes.length; i++) {
-            if (i > 0) {
-                signature.append(",");
-            }
-            signature.append(paramTypes[i].getName());
-        }
-
-        signature.append(")");
-        return signature.toString();
-    }
 
     @Override
     public IExpressionContextBuilder provide(IObservableBuilder<?, ?> dependency) {
