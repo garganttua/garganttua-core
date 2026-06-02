@@ -563,4 +563,46 @@
     <module>garganttua-aot</module>
     <module>garganttua-starters</module>
   </modules>
+
+  <profiles>
+    <!-- Opt-in code-size gate (WARNING ONLY — never fails the build). Kept out
+         of the default build so offline builds don't need the Checkstyle
+         artifacts. Activate with `-Pquality`:
+           mvn -Pquality checkstyle:checkstyle   # human-readable worklist
+           mvn -Pquality verify                  # passive gate, writes XML
+         Tracks the god-class / long-method debt and guards against regression. -->
+    <profile>
+      <id>quality</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <version>3.6.0</version>
+            <dependencies>
+              <dependency>
+                <groupId>com.puppycrawl.tools</groupId>
+                <artifactId>checkstyle</artifactId>
+                <version>10.21.0</version>
+              </dependency>
+            </dependencies>
+            <configuration>
+              <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
+              <includeTestSourceDirectory>false</includeTestSourceDirectory>
+              <failOnViolation>false</failOnViolation>
+              <violationSeverity>ignore</violationSeverity>
+              <consoleOutput>false</consoleOutput>
+            </configuration>
+            <executions>
+              <execution>
+                <id>checkstyle-size-gate</id>
+                <phase>verify</phase>
+                <goals><goal>check</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

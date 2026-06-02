@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+  "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+  "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Garganttua code-size gate — WARNING ONLY.
+
+  Purpose: track the "god class / long method" technical debt addressed during
+  the 2.0.0-ALPHA02 rework and prevent silent regression afterwards. The Maven
+  plugin is configured with failOnViolation=false / violationSeverity=ignore, so
+  these checks NEVER break the build — they are advisory and feed the worklist
+  produced by `mvn checkstyle:checkstyle`.
+
+  Deliberately minimal: only the two size checks the rework targets, plus an
+  advisory parameter-count check.
+-->
+<module name="Checker">
+  <property name="severity" value="warning"/>
+
+  <!-- God-class gate: production files over 500 lines. -->
+  <module name="FileLength">
+    <property name="max" value="500"/>
+  </module>
+
+  <module name="TreeWalker">
+    <!-- Long-method gate: method bodies over 20 lines (blank lines excluded).
+         Token METHOD_DEF only — constructors are intentionally NOT checked
+         because the codebase's large constructors are field-assignment / record
+         canonical bodies (heuristic false positives), not refactor targets. -->
+    <module name="MethodLength">
+      <property name="tokens" value="METHOD_DEF"/>
+      <property name="max" value="20"/>
+      <property name="countEmpty" value="false"/>
+    </module>
+
+    <!-- Advisory: many parameters often signals a missing value object.
+         Known noisy hit: AOTClass' generated 23-arg constructor. -->
+    <module name="ParameterNumber">
+      <property name="max" value="7"/>
+      <property name="tokens" value="METHOD_DEF"/>
+    </module>
+  </module>
+</module>
