@@ -330,6 +330,7 @@ public class ExpressionContextBuilder
             "com.garganttua.core.runtime.functions.RuntimeFunctions",
             // injection
             "com.garganttua.core.injection.functions.InjectionFunctions",
+            "com.garganttua.core.injection.functions.BeanMutationFunctions",
             "com.garganttua.core.injection.context.beans.Beans",
             // mutex (+ binding-conditional redis)
             "com.garganttua.core.mutex.functions.MutexFunctions",
