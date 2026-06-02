@@ -3,7 +3,6 @@ package com.garganttua.core.mapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +21,6 @@ import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
-import com.garganttua.core.reflection.ReflectionException;
 
 public class Mapper implements IMapper, IObservable {
     private static final Logger log = Logger.getLogger(Mapper.class);
@@ -155,7 +153,7 @@ public class Mapper implements IMapper, IObservable {
 		// through". Without this guard, an auto-convention pass over (String
 		// -> String) tries to iterate String.value byte[] and the framework
 		// crashes with InaccessibleObjectException on java.base.
-		if (source != null && isLeafType(source.getClass())) {
+		if (source != null && LeafTypes.isLeaf(source.getClass())) {
 			@SuppressWarnings("unchecked")
 			destination passthrough = (destination) source;
 			return passthrough;
@@ -188,7 +186,7 @@ public class Mapper implements IMapper, IObservable {
 
 		// Record mapping: build via canonical constructor
 		if (destinationIClass.isRecord()) {
-			return doRecordMapping(mappingDirection, destinationIClass, destObject, source, executors);
+			return RecordMapping.map(this.reflection, destinationIClass, source);
 		}
 
 		for (IMappingRuleExecutor executor : executors) {
@@ -204,80 +202,6 @@ public class Mapper implements IMapper, IObservable {
 		}
 
 		return destObject;
-	}
-
-	@SuppressWarnings("unchecked")
-	private <destination> destination doRecordMapping(MappingDirection mappingDirection,
-			IClass<destination> destinationIClass, destination destObject, Object source,
-			List<IMappingRuleExecutor> executors) throws MapperException {
-		try {
-			var components = destinationIClass.getRecordComponents();
-			Map<String, Object> values = new LinkedHashMap<>();
-
-			// Initialize with default values for primitives, null for objects
-			for (var component : components) {
-				values.put(component.getName(), defaultValueForClass(component.getType()));
-			}
-
-			// Read source fields directly for each record component
-			IClass<?> sourceClass = this.reflection.getClass(source.getClass());
-			for (var component : components) {
-				String name = component.getName();
-				try {
-					var sourceQuery = this.reflection.query(sourceClass);
-					var sourceFields = sourceQuery.find(new com.garganttua.core.reflection.ObjectAddress(name));
-					if (!sourceFields.isEmpty()) {
-						IField sourceField = (IField) sourceFields.get(sourceFields.size() - 1);
-						com.garganttua.core.reflection.fields.FieldAccessor<Object> accessor =
-								new com.garganttua.core.reflection.fields.FieldAccessor<>(
-										new com.garganttua.core.reflection.fields.ResolvedField(
-												new com.garganttua.core.reflection.ObjectAddress(name, false),
-												List.of(sourceField)));
-						Object val = accessor.getValue(source).single();
-						if (val != null) {
-							values.put(name, val);
-						}
-					}
-				} catch (ReflectionException e) {
-					// Field not found in source, keep default
-				}
-			}
-
-			// Build the record via canonical constructor using raw reflection
-			Class<?>[] paramTypes = new Class<?>[components.length];
-			Object[] args = new Object[components.length];
-			for (int i = 0; i < components.length; i++) {
-				paramTypes[i] = (Class<?>) components[i].getType().getType();
-				args[i] = values.get(components[i].getName());
-			}
-			java.lang.reflect.Constructor<?> ctor = ((Class<?>) destinationIClass.getType()).getDeclaredConstructor(paramTypes);
-			ctor.setAccessible(true);
-			return (destination) ctor.newInstance(args);
-
-		} catch (MapperException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new MapperException("Record mapping failed: " + e.getMessage(),
-					e instanceof Exception ex ? ex : new RuntimeException(e));
-		}
-	}
-
-	private static Object defaultValueForClass(IClass<?> type) {
-		if (type.isPrimitive()) {
-			String name = type.getName();
-			return switch (name) {
-				case "int" -> 0;
-				case "long" -> 0L;
-				case "double" -> 0.0;
-				case "float" -> 0.0f;
-				case "boolean" -> false;
-				case "byte" -> (byte) 0;
-				case "short" -> (short) 0;
-				case "char" -> '\0';
-				default -> null;
-			};
-		}
-		return null;
 	}
 
 	private MappingDirection determineMapingDirection(List<MappingRule> sourceRules,
@@ -537,48 +461,6 @@ public class Mapper implements IMapper, IObservable {
 		public MapperRuntimeException(String message, MapperException cause) {
 			super(message, cause);
 		}
-	}
-
-	/**
-	 * True if the given class is an atomic JDK leaf type that the mapper
-	 * should NOT recurse into via convention rules. These types are passed
-	 * through as-is (source value reused as destination). Includes
-	 * primitives & wrappers, String, JDK numeric / time / math types, and
-	 * common util types.
-	 */
-	private static boolean isLeafType(Class<?> type) {
-		if (type.isPrimitive()) return true;
-		if (type.isEnum()) return true;
-		String name = type.getName();
-		return switch (name) {
-			case "java.lang.String",
-			     "java.lang.Boolean",
-			     "java.lang.Byte",
-			     "java.lang.Short",
-			     "java.lang.Character",
-			     "java.lang.Integer",
-			     "java.lang.Long",
-			     "java.lang.Float",
-			     "java.lang.Double",
-			     "java.lang.Void",
-			     "java.lang.Class",
-			     "java.lang.Number",
-			     "java.math.BigDecimal",
-			     "java.math.BigInteger",
-			     "java.time.Instant",
-			     "java.time.LocalDate",
-			     "java.time.LocalDateTime",
-			     "java.time.LocalTime",
-			     "java.time.OffsetDateTime",
-			     "java.time.ZonedDateTime",
-			     "java.time.Duration",
-			     "java.time.Period",
-			     "java.util.Date",
-			     "java.util.UUID",
-			     "java.util.Locale",
-			     "java.util.TimeZone" -> true;
-			default -> false;
-		};
 	}
 
 }
