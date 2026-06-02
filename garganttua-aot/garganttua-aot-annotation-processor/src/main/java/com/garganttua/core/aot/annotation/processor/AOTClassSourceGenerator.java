@@ -38,6 +38,16 @@ public final class AOTClassSourceGenerator {
     private final List<ExecutableElement> constructors;
     private final Map<ExecutableElement, String> constructorNames;
 
+    /**
+     * Creates a generator for the class descriptor of {@code typeElement}.
+     *
+     * @param typeElement      the {@code @Reflected} type to describe
+     * @param fields           the fields to expose, in source order
+     * @param methods          the methods to expose, in source order
+     * @param methodNames      mapping of each method to its generated descriptor class name
+     * @param constructors     the constructors to expose, in source order
+     * @param constructorNames mapping of each constructor to its generated descriptor class name
+     */
     public AOTClassSourceGenerator(TypeElement typeElement,
                                    List<VariableElement> fields,
                                    List<ExecutableElement> methods,
@@ -59,10 +69,20 @@ public final class AOTClassSourceGenerator {
         this.constructorNames = constructorNames;
     }
 
+    /**
+     * Returns the fully-qualified name of the generated class descriptor.
+     *
+     * @return the package-qualified name of the {@code AOTClass_*} to be emitted
+     */
     public String getGeneratedQualifiedName() {
         return packageName.isEmpty() ? generatedSimpleName : packageName + "." + generatedSimpleName;
     }
 
+    /**
+     * Renders the complete Java source of the {@code AOTClass_*} descriptor.
+     *
+     * @return the generated source code
+     */
     public String generate() {
         Set<String> imports = new TreeSet<>();
         imports.add("com.garganttua.core.aot.reflection.AOTClass");

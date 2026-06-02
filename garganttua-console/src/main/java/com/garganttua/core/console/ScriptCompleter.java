@@ -36,14 +36,28 @@ public class ScriptCompleter implements Completer {
     private volatile IExpressionContext expressionContext;
     private volatile Map<String, Object> sessionVariables;
 
+    /**
+     * Configures the expression context used to source function-name completions.
+     *
+     * @param expressionContext the expression context to complete against
+     */
     public void setExpressionContext(IExpressionContext expressionContext) {
         this.expressionContext = expressionContext;
     }
 
+    /**
+     * Configures the session variable map used to source {@code @}-prefixed completions.
+     *
+     * @param sessionVariables the live session variable map
+     */
     public void setSessionVariables(Map<String, Object> sessionVariables) {
         this.sessionVariables = sessionVariables;
     }
 
+    /**
+     * Adds completion candidates for the current word: session variables when the word
+     * starts with {@code @}, otherwise expression functions and language keywords.
+     */
     @Override
     public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
         String word = line.word();

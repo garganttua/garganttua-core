@@ -79,12 +79,26 @@ public class IndexedAnnotationProcessor extends AbstractProcessor {
 
     private Messager messager;
 
+    /**
+     * Captures the {@link Messager} from the processing environment for later
+     * diagnostic reporting.
+     *
+     * @param processingEnv the processing environment supplied by the compiler
+     */
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         this.messager = processingEnv.getMessager();
     }
 
+    /**
+     * Accumulates index entries for indexed/JSR-330 annotations each round, then
+     * writes all index files once processing is over.
+     *
+     * @param annotations the annotation types requested to be processed this round
+     * @param roundEnv     information about the current and prior rounds
+     * @return {@code false} — this processor never claims the annotations it reads
+     */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (roundEnv.processingOver()) {

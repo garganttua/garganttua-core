@@ -9,6 +9,10 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IRecordComponent;
 
+/**
+ * JVM runtime-reflection implementation of {@link IRecordComponent}, wrapping a
+ * JDK {@link RecordComponent}.
+ */
 public class RuntimeRecordComponent implements IRecordComponent {
 
 	private final RecordComponent component;
@@ -17,10 +21,21 @@ public class RuntimeRecordComponent implements IRecordComponent {
 		this.component = component;
 	}
 
+	/**
+	 * Wraps the given JDK record component in a new mirror.
+	 *
+	 * @param component the JDK record component to wrap
+	 * @return a {@code RuntimeRecordComponent} mirror of {@code component}
+	 */
 	public static RuntimeRecordComponent of(RecordComponent component) {
 		return new RuntimeRecordComponent(component);
 	}
 
+	/**
+	 * Returns the underlying JDK {@link RecordComponent} this mirror wraps.
+	 *
+	 * @return the wrapped record component
+	 */
 	public RecordComponent unwrap() {
 		return component;
 	}

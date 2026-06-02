@@ -36,9 +36,13 @@ public interface IBootstrapStageListener {
      * High-level Bootstrap orchestration stages observable by listeners.
      */
     enum Stage {
+        /** Builders are discovered and sorted into dependency order. */
         REGISTRATION,
+        /** Each declared dependency is provided to its dependents. */
         RESOLVE,
+        /** Per-builder {@code doConfigureWithDependencyBuilder} hooks run. */
         CONFIGURATION,
+        /** Each builder is built and its lifecycle initialized and started. */
         BUILD
     }
 

@@ -24,22 +24,20 @@ import com.garganttua.core.runtime.IRuntimeStepOnException;
  *         .name("handleValidationError")
  *         .parameter(Exception.class)
  *         .onException(IllegalArgumentException.class)
- *             .fromStage("validation")
  *             .fromStep("validateAmount")
  *             .end()
  *         .output(true)
  *         .end();
  * }</pre>
  *
- * <h2>Usage Example - Handle All Exceptions from Stage</h2>
+ * <h2>Usage Example - Handle Exceptions from Any Step</h2>
  * <pre>{@code
  * stepBuilder
  *     .fallBack()
  *         .name("handleDatabaseErrors")
  *         .parameter(Exception.class)
  *         .onException(Exception.class)
- *             .fromStage("database")  // Handle any exception from database stage
- *             .end()
+ *             .end()  // No fromStep filter: handle this exception from any step
  *         .output(true)
  *         .end();
  * }</pre>

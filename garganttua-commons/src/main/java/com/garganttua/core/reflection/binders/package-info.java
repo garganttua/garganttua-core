@@ -32,70 +32,54 @@
  *
  * <h2>Usage Example: Field Binding</h2>
  * <pre>{@code
- * public class UserService {
- *     private String apiUrl;
- *     private int timeout;
- * }
+ * // Read/write a field via a binder configured through the DSL
+ * User user = new User();
+ * IFieldBinder<User, String> nameBinder = FieldBinder
+ *     .forInstance(user)
+ *     .field("name")
+ *     .withValue("Alice")
+ *     .build();
  *
- * // Create binders
- * IFieldBinder urlBinder = new FieldBinder(UserService.class, "apiUrl")
- *     .bind("https://api.example.com");
- *
- * IFieldBinder timeoutBinder = new FieldBinder(UserService.class, "timeout")
- *     .bind(30);
- *
- * // Apply bindings
- * UserService service = new UserService();
- * urlBinder.inject(service);
- * timeoutBinder.inject(service);
+ * nameBinder.setValue();          // user.name = "Alice"
+ * String name = nameBinder.getValue();
  * }</pre>
  *
  * <h2>Usage Example: Constructor Binding</h2>
  * <pre>{@code
- * public class DatabaseService {
- *     public DatabaseService(String url, String user, String password) {
- *         // ...
- *     }
- * }
+ * // Instantiate via a resolved constructor
+ * IConstructorBinder<Database> binder = ConstructorBinder
+ *     .forClass(Database.class)
+ *     .withParam("jdbc:mysql://localhost:3306/mydb")
+ *     .withParam(3306)
+ *     .build();
  *
- * // Create constructor binder
- * IConstructorBinder binder = new ConstructorBinder(DatabaseService.class)
- *     .bindParameter(0, "jdbc:mysql://localhost:3306/mydb")
- *     .bindParameter(1, "admin")
- *     .bindParameter(2, "secret");
- *
- * // Create instance
- * DatabaseService service = binder.newInstance();
+ * Optional<IMethodReturn<Database>> instance = binder.execute();
  * }</pre>
  *
  * <h2>Usage Example: Method Binding</h2>
  * <pre>{@code
- * public class EmailService {
- *     public void sendEmail(String to, String subject, String body) {
- *         // ...
- *     }
- * }
+ * // Invoke an instance method
+ * StringBuilder target = new StringBuilder("Hello");
+ * IMethodBinder<StringBuilder> binder = MethodBinder
+ *     .forInstance(target)
+ *     .method("append")
+ *     .withParam(" World")
+ *     .build();
  *
- * // Create method binder
- * IMethodBinder binder = new MethodBinder(emailService, "sendEmail")
- *     .bindParameter(0, "user@example.com")
- *     .bindParameter(1, "Welcome!")
- *     .bindParameter(2, "Thank you for joining.");
- *
- * // Invoke method
- * binder.invoke();
+ * Optional<IMethodReturn<StringBuilder>> result = binder.execute();
  * }</pre>
  *
  * <h2>Usage Example: Contextual Binding</h2>
  * <pre>{@code
- * // Contextual field binder with dependency injection context
- * IContextualFieldBinder<IInjectionContext> binder =
- *     new ContextualFieldBinder<>(UserService.class, "repository")
- *         .bindFromContext(ctx -> ctx.getBean(UserRepository.class));
+ * // A contextual field binder resolves its value from a runtime context
+ * IContextualFieldBinder<UserService, UserRepository, InjectionContext, InjectionContext> binder =
+ *     ContextualFieldBinder
+ *         .forClass(UserService.class)
+ *         .field("repository")
+ *         .build();
  *
  * // Apply with context
- * UserService service = new UserService();
- * binder.inject(service, injectionContext);
+ * binder.setValue(injectionContext, injectionContext);
  * }</pre>
  *
  * <h2>Features</h2>

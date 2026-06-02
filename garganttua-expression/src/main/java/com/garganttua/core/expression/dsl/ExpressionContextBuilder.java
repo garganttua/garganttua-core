@@ -45,23 +45,28 @@ import java.lang.reflect.Modifier;
 import jakarta.annotation.Nullable;
 
 /**
- * Builder for constructing ExpressionContext instances with fluent API.
+ * Builder for constructing {@link IExpressionContext} instances with a fluent API.
  *
  * <p>
- * {@code ExpressionBuilder} implements the DSL builder pattern for creating
+ * {@code ExpressionContextBuilder} implements the DSL builder pattern for creating
  * {@link IExpressionContext} objects. It extends
  * {@link AbstractAutomaticDependentBuilder} to
  * provide automatic configuration detection and package scanning capabilities.
  * </p>
  *
+ * <p>
+ * The framework's own built-in {@code @Expression} function packages are always
+ * scanned (see {@code BUILTIN_FUNCTIONS_PACKAGES}) so that literal wrappers and
+ * built-in functions are registered regardless of the consumer's package
+ * configuration.
+ * </p>
+ *
  * <h2>Usage Example</h2>
  *
  * <pre>{@code
- * IExpressionContext context = ExpressionBuilder
+ * IExpressionContext context = ExpressionContextBuilder
  *         .builder()
- *         .withExpressionNode(Calculator.class, Integer.class)
- *         .method("add")
- *         .up()
+ *         .withPackage("com.example.expressions")
  *         .build();
  * }</pre>
  *
@@ -153,12 +158,12 @@ public class ExpressionContextBuilder
     }
 
     /**
-     * Creates a new ExpressionBuilder.
+     * Creates a new {@link ExpressionContextBuilder}.
      *
-     * @return a new ExpressionBuilder instance
+     * @return a new {@code ExpressionContextBuilder} instance
      */
     public static ExpressionContextBuilder builder() {
-        log.trace("Creating new ExpressionBuilder");
+        log.trace("Creating new ExpressionContextBuilder");
         return new ExpressionContextBuilder();
     }
 
@@ -449,15 +454,6 @@ public class ExpressionContextBuilder
 
         log.trace("Exiting synchronizePackagesFromContext()");
     }
-
-    /**
-     * Builds a unique signature for a method based on its declaring class, name,
-     * and parameter types.
-     *
-     * @param method the method to build a signature for
-     * @return a unique string signature like
-     *         "com.example.Beans.bean(java.lang.Class,java.lang.String)"
-     */
 
     @Override
     public IExpressionContextBuilder provide(IObservableBuilder<?, ?> dependency) {

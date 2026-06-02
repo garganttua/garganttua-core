@@ -18,6 +18,15 @@ import com.garganttua.core.reflection.fields.Fields;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Field lookup, access, and address-resolution delegate for {@link CompositeReflection}.
+ *
+ * <p>
+ * Walks the class hierarchy (and nested complex fields) to find fields by name,
+ * by annotation, or by {@link ObjectAddress}, and reads/writes their values via
+ * {@link FieldAccessor}.
+ * </p>
+ */
 class FieldDelegate {
     private static final Logger log = Logger.getLogger(FieldDelegate.class);
 

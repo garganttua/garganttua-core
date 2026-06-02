@@ -94,22 +94,37 @@ import com.garganttua.core.supply.ISupplier;
 //@FunctionalInterface
 public interface ICondition extends IExpressionNode<Boolean, ISupplier<Boolean>> {
 
+    /**
+     * {@return the type supplied by this condition, namely {@link ISupplier}}
+     */
     @Override
     default Type getSuppliedType() {
         return ISupplier.class;
     }
 
+    /**
+     * {@return the {@link IClass} mirror of the supplied {@link ISupplier} type}
+     */
     @SuppressWarnings("unchecked")
     @Override
     default IClass<ISupplier<Boolean>> getSuppliedClass() {
         return (IClass<ISupplier<Boolean>>) (IClass<?>) IClass.getClass(ISupplier.class);
     }
 
+    /**
+     * {@return the {@link IClass} mirror of the final supplied value type, {@link Boolean}}
+     */
     @Override
     default IClass<Boolean> getFinalSuppliedClass() {
         return IClass.getClass(Boolean.class);
     }
 
+    /**
+     * Evaluates this condition and resolves its supplier chain to a concrete boolean value.
+     *
+     * @return the resolved boolean result of the condition
+     * @throws ExpressionException if evaluation or supplier resolution fails
+     */
     default Boolean fullEvaluate() throws ExpressionException {
         return this.evaluate().supply().get();
     }

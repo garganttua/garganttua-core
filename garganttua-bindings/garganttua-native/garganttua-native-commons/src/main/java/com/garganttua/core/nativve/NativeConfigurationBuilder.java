@@ -20,6 +20,16 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 
+/**
+ * Fluent builder that assembles an {@link INativeConfiguration} from explicitly
+ * declared reflection entries and resources plus packages scanned for
+ * {@link Reflected @Reflected} elements and {@link ReflectedBuilder @ReflectedBuilder}
+ * reporters.
+ *
+ * <p>Annotated with {@link Bootstrap} so it is auto-detected and registered when
+ * {@code Bootstrap.autoDetect(true)} is used; it depends on an
+ * {@link IReflectionBuilder} for classpath scanning.
+ */
 @Bootstrap
 public class NativeConfigurationBuilder
         extends AbstractAutomaticDependentBuilder<INativeConfigurationBuilder, INativeConfiguration>
@@ -35,6 +45,7 @@ public class NativeConfigurationBuilder
     private String configNamespace = "";
     private Set<INativeBuilder<?, ?>> nativeConfigurationBuilder = new HashSet<>();
 
+    /** Creates a builder that depends on an {@link IReflectionBuilder} for package scanning. */
     public NativeConfigurationBuilder() {
         super(Set.of(
                 DependencySpec.autoDetect(IClass.getClass(IReflectionBuilder.class)),
@@ -43,14 +54,14 @@ public class NativeConfigurationBuilder
 
     @Override
     protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
-        log.trace("Starting auto-detection for native configuration with dependency "
-                + dependency.getClass().getSimpleName());
+        log.trace("Starting auto-detection for native configuration with dependency {}",
+                dependency.getClass().getSimpleName());
         if (dependency instanceof IReflection reflection) {
             this.detectNativeElements(reflection);
             this.detectNativeConfigurationBuilders(reflection);
         }
-        log.trace("Completed auto-detection for native configuration with Dependency "
-                + dependency.getClass().getSimpleName());
+        log.trace("Completed auto-detection for native configuration with dependency {}",
+                dependency.getClass().getSimpleName());
     }
 
     @Override
@@ -215,6 +226,11 @@ public class NativeConfigurationBuilder
         return this;
     }
 
+    /**
+     * Creates a fresh native configuration builder.
+     *
+     * @return a new {@link INativeConfigurationBuilder} instance
+     */
     public static INativeConfigurationBuilder builder() {
         return new NativeConfigurationBuilder();
     }

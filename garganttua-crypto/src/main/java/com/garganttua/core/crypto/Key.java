@@ -14,6 +14,14 @@ import java.util.Objects;
 
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * Immutable {@link IKey} implementation that stores its raw material Base64-encoded
+ * and lazily reconstructs the corresponding JDK {@link java.security.Key} on first
+ * use (cached via double-checked locking). Delegates encryption/decryption to
+ * {@link Encryptor} and signing/verification to {@link Signer}.
+ *
+ * <p>Equality is defined solely on the stored raw key bytes.
+ */
 public class Key implements IKey {
     private static final Logger log = Logger.getLogger(Key.class);
 
@@ -115,6 +123,13 @@ public class Key implements IKey {
 		return new Key(type, algorithm, material, ivSize, mode, padding, null);
 	}
 
+	/**
+	 * Reconstructs (or returns the cached) JDK {@link java.security.Key} from the
+	 * stored raw material. Thread-safe and computed at most once.
+	 *
+	 * @return the reconstructed JDK key
+	 * @throws CryptoException if the stored material cannot be decoded into a key
+	 */
 	@Override
 	public java.security.Key getKey() throws CryptoException {
 		// Fast path: cache hit (no synchronization required, volatile read suffices).
@@ -145,18 +160,41 @@ public class Key implements IKey {
 		}
 	}
 
+	/**
+	 * Encrypts {@code clear} using this key's algorithm, mode and padding. When an
+	 * IV size is configured, a fresh IV is generated and prepended to the output.
+	 *
+	 * @param clear the plaintext bytes
+	 * @return the ciphertext (IV prefixed when applicable)
+	 * @throws CryptoException if encryption fails
+	 */
 	@Override
 	public byte[] encrypt(byte[] clear) throws CryptoException {
 		String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
 		return Encryptor.encrypt(this.getKey(), cipherName, this.encryptionMode, this.ivSize, clear);
 	}
 
+	/**
+	 * Decrypts {@code encoded}, consuming the prepended IV when an IV size is
+	 * configured.
+	 *
+	 * @param encoded the ciphertext (IV prefixed when applicable)
+	 * @return the recovered plaintext bytes
+	 * @throws CryptoException if decryption fails
+	 */
 	@Override
 	public byte[] decrypt(byte[] encoded) throws CryptoException {
 		String cipherName = this.algorithm.getCipherName(this.encryptionMode, this.encryptionPaddingMode);
 		return Encryptor.decrypt(this.getKey(), cipherName, this.encryptionMode, this.ivSize, encoded);
 	}
 
+	/**
+	 * Signs {@code data} with this private key.
+	 *
+	 * @param data the bytes to sign
+	 * @return the signature bytes
+	 * @throws CryptoException if this is not a {@link KeyType#PRIVATE} key or signing fails
+	 */
 	@Override
 	public byte[] sign(byte[] data) throws CryptoException {
 		if (this.type != KeyType.PRIVATE) {
@@ -166,6 +204,14 @@ public class Key implements IKey {
 		return Signer.sign((PrivateKey) this.getKey(), sigName, data);
 	}
 
+	/**
+	 * Verifies {@code signature} against {@code originalData} with this public key.
+	 *
+	 * @param signature    the signature to check
+	 * @param originalData the data that was supposedly signed
+	 * @return {@code true} if the signature is valid
+	 * @throws CryptoException if this is not a {@link KeyType#PUBLIC} key or verification fails
+	 */
 	@Override
 	public boolean verifySignature(byte[] signature, byte[] originalData) throws CryptoException {
 		if (this.type != KeyType.PUBLIC) {
@@ -175,36 +221,48 @@ public class Key implements IKey {
 		return Signer.verify((PublicKey) this.getKey(), sigName, signature, originalData);
 	}
 
+	/** {@return the Base64-encoded raw key bytes (legacy contract)} */
 	@Override
 	public byte[] getRawKey() {
 		return this.rawKey;
 	}
 
+	/** {@return the algorithm this key was generated for} */
 	@Override
 	public IKeyAlgorithm getAlgorithm() {
 		return this.algorithm;
 	}
 
+	/** {@return the key type (secret, private or public)} */
 	@Override
 	public KeyType getType() {
 		return this.type;
 	}
 
+	/** {@return the configured encryption mode, or {@code null} for signing keys} */
 	@Override
 	public EncryptionMode getEncryptionMode() {
 		return this.encryptionMode;
 	}
 
+	/** {@return the configured padding scheme, or {@code null} for signing keys} */
 	@Override
 	public EncryptionPaddingMode getEncryptionPaddingMode() {
 		return this.encryptionPaddingMode;
 	}
 
+	/** {@return the configured signature algorithm, or {@code null} for encryption keys} */
 	@Override
 	public SignatureAlgorithm getSignatureAlgorithm() {
 		return this.signatureAlgorithm;
 	}
 
+	/**
+	 * Compares two keys by their raw key bytes.
+	 *
+	 * @param obj the object to compare with
+	 * @return {@code true} if {@code obj} is a {@link Key} with identical raw bytes
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) return true;
@@ -213,6 +271,7 @@ public class Key implements IKey {
 		return Arrays.equals(rawKey, other.rawKey);
 	}
 
+	/** {@return a hash code derived from the raw key bytes} */
 	@Override
 	public int hashCode() {
 		return Arrays.hashCode(rawKey);

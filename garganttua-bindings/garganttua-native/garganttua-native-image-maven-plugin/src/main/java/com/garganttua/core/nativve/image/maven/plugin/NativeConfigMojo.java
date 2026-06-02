@@ -28,6 +28,16 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
+/**
+ * Maven {@link AbstractMojo} that generates GraalVM Native Image configuration for the
+ * current project.
+ * <p>
+ * Bound to the {@code prepare-package} phase, the {@code native-config} goal scans the
+ * project classpath for reflection metadata, validates and registers declared resources,
+ * aggregates {@code META-INF/native-image} configs found in dependency JARs, and writes
+ * {@code reflect-config.json} and {@code resource-config.json} under
+ * {@code META-INF/native-image/<namespace>}.
+ */
 @Mojo(name = "native-config", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class NativeConfigMojo extends AbstractMojo {
 
@@ -73,6 +83,16 @@ public class NativeConfigMojo extends AbstractMojo {
 	@Parameter(property = "configOutputNamespace")
 	private String configOutputNamespace;
 
+	/**
+	 * Runs the {@code native-config} goal: installs the reflection facade, builds the
+	 * {@link INativeConfiguration} from declared reflections/resources/packages, merges
+	 * native-image configs from project artifacts, then writes the reflection and resource
+	 * configuration files.
+	 *
+	 * @throws MojoExecutionException if the output directory cannot be created, a declared
+	 *         resource is missing, an artifact cannot be processed, or the native
+	 *         configuration cannot be configured or built
+	 */
 	@Override
 	public void execute() throws MojoExecutionException {
 		getLog().info("Generating Native-image configuration in directory: " + this.buildOutputDirectory);
@@ -145,6 +165,14 @@ public class NativeConfigMojo extends AbstractMojo {
 		return this.projectGroupId + "/" + this.projectArtifactId;
 	}
 
+	/**
+	 * Validates that each declared resource exists under the project's resources directory
+	 * and registers it on the given builder.
+	 *
+	 * @param filePaths the resource paths (relative to the resources directory) to register
+	 * @param builder   the native configuration builder to register the resources on
+	 * @throws IOException if any declared resource does not exist
+	 */
 	public void validateFiles(List<String> filePaths, INativeConfigurationBuilder builder) throws IOException {
 
 		String resourcesPath = resourcesDirectory.getAbsolutePath();

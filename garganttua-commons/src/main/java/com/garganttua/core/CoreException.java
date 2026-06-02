@@ -182,8 +182,21 @@ public class CoreException extends RuntimeException {
      */
     public static final int NATIVE_ERROR = 10;
 
+    /**
+     * Error code for mutex and locking errors.
+     * <p>
+     * Used when errors occur while acquiring, releasing, or managing locks and
+     * other mutual-exclusion primitives.
+     * </p>
+     */
     public static final int MUTEX_ERROR = 11;
 
+    /**
+     * Error code for expression language errors.
+     * <p>
+     * Used when errors occur during expression parsing, compilation, or evaluation.
+     * </p>
+     */
     public static final int EXPRESSION_ERROR = 12;
 
     /**

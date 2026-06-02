@@ -11,6 +11,15 @@ import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 
+/**
+ * Aggregates annotation-scanning results across every registered
+ * {@link IAnnotationScanner}.
+ *
+ * <p>
+ * With a single scanner it returns that scanner's list directly; with several it
+ * merges their results into an insertion-ordered, deduplicated list.
+ * </p>
+ */
 class ScannerAggregator implements IAnnotationScanner {
     private static final Logger log = Logger.getLogger(ScannerAggregator.class);
 

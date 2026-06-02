@@ -282,27 +282,6 @@ public class ScriptConsole {
     }
 
     /**
-     * Reads a complete statement, handling multi-line input.
-     * Multi-line statements are detected by:
-     * - Lines ending with backslash (\) for explicit continuation
-     * - Open brackets/parentheses
-     */
-
-    /**
-     * Reads a single line using JLine or fallback reader.
-     *
-     * @param firstLine true if this is the first line (uses main prompt), false for
-     *                  continuation
-     * @return the line read, or null on EOF
-     */
-
-    /**
-     * Determines if the current input needs continuation based on unclosed
-     * brackets.
-     * Note: Backslash continuation is handled separately in readStatement().
-     */
-
-    /**
      * Executes a script statement and displays the result.
      */
     private void executeStatement(String statement) {
@@ -365,10 +344,6 @@ public class ScriptConsole {
             }
         }
     }
-
-    /**
-     * Checks if a result should be considered "void" and not displayed.
-     */
 
     /**
      * Collects variables from executed script into session variables.

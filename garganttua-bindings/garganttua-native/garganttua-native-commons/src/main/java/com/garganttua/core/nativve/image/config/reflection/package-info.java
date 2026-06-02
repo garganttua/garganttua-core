@@ -10,46 +10,27 @@
  *
  * <h2>Main Classes</h2>
  * <ul>
- *   <li>{@code ReflectConfig} - Main reflection configuration</li>
- *   <li>{@code ReflectConfigEntry} - Single reflection entry</li>
- *   <li>{@code ReflectConfigEntryBuilder} - Builder for reflection entries</li>
- *   <li>{@code IReflectConfigEntryBuilder} - Builder interface</li>
+ *   <li>{@link com.garganttua.core.nativve.image.config.reflection.ReflectionConfiguration} -
+ *       in-memory model of a {@code reflect-config.json} file (load/save)</li>
+ *   <li>{@link com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntry} -
+ *       single reflection entry</li>
+ *   <li>{@link com.garganttua.core.nativve.image.config.reflection.ReflectConfigEntryBuilder} -
+ *       fluent builder for reflection entries</li>
  * </ul>
- *
- * <h2>Usage Example: Simple Configuration</h2>
- * <pre>{@code
- * // Create reflection configuration
- * ReflectConfig config = new ReflectConfig();
- *
- * // Add class with all methods and fields
- * config.addClass(UserService.class)
- *     .allDeclaredMethods(true)
- *     .allDeclaredFields(true);
- *
- * // Add class with specific methods
- * config.addClass(DataRepository.class)
- *     .method("findById", String.class)
- *     .method("save", Object.class);
- *
- * // Write to file
- * config.writeToFile("reflect-config.json");
- * }</pre>
  *
  * <h2>Usage Example: Builder API</h2>
  * <pre>{@code
- * // Use builder for fine-grained control
- * ReflectConfigEntry entry = new ReflectConfigEntryBuilder()
- *     .className(OrderService.class.getName())
- *     .allDeclaredConstructors(true)
- *     .allDeclaredMethods(false)
+ * // Use the builder for fine-grained control over a single entry
+ * IReflectionConfigurationEntry entry = ReflectConfigEntryBuilder.builder(orderServiceClass)
+ *     .queryAllDeclaredConstructors(true)
  *     .allDeclaredFields(false)
- *     .addMethod("processOrder", Order.class)
- *     .addMethod("validateOrder", Order.class)
- *     .addField("orderRepository")
+ *     .method("processOrder", orderClass)
+ *     .field("orderRepository")
  *     .build();
  *
- * ReflectConfig config = new ReflectConfig();
+ * ReflectionConfiguration config = ReflectionConfiguration.loadFromFile(reflectConfigFile);
  * config.addEntry(entry);
+ * config.saveToFile(reflectConfigFile);
  * }</pre>
  *
  * <h2>Features</h2>
@@ -58,7 +39,8 @@
  *   <li>Method registration (by name and signature)</li>
  *   <li>Field registration</li>
  *   <li>Constructor registration</li>
- *   <li>All declared members flags</li>
+ *   <li>Bulk "all/query-all declared members" flags</li>
+ *   <li>Automatic detection of {@code @Reflected} members</li>
  *   <li>Fluent builder API</li>
  *   <li>JSON serialization</li>
  * </ul>

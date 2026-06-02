@@ -27,6 +27,12 @@ import com.garganttua.core.script.nodes.StatementNode;
  */
 public class ScriptInfrastructureSeed implements IAOTInfrastructureSeed {
 
+    /**
+     * Registers each {@code com.garganttua.core.script.nodes} AST class with the
+     * AOT registry so they remain reflectively resolvable in a native image.
+     *
+     * @param ctx the seed context that records classes for reflection
+     */
     @Override
     public void seed(IAOTSeedContext ctx) {
         ctx.registerClass(StatementBlock.class);

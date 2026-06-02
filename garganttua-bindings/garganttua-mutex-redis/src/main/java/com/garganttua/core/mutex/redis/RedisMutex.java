@@ -60,6 +60,15 @@ public class RedisMutex implements IMutex {
         log.debug("Created RedisMutex with custom RedUtilsLock for lock: {}", lockName);
     }
 
+    /**
+     * Acquires the distributed lock, executes the given function within the locked
+     * region, and releases the lock, blocking until the lock becomes available.
+     *
+     * @param <R>      the result type produced by {@code function}
+     * @param function the work to run while holding the lock
+     * @return the value returned by {@code function}
+     * @throws MutexException if the lock cannot be acquired or the function fails
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <R> R acquire(ThrowingFunction<R> function) throws MutexException {
@@ -92,6 +101,22 @@ public class RedisMutex implements IMutex {
         }
     }
 
+    /**
+     * Acquires the distributed lock according to the supplied {@link MutexStrategy},
+     * executes the given function, and releases the lock.
+     *
+     * <p>
+     * A strategy with a zero wait time results in a single non-blocking try-acquire;
+     * otherwise the lock is acquired with the strategy's retry count and interval. A
+     * {@code null} strategy falls back to {@link #acquire(ThrowingFunction)}.
+     * </p>
+     *
+     * @param <R>      the result type produced by {@code function}
+     * @param function the work to run while holding the lock
+     * @param strategy the acquisition strategy, or {@code null} for blocking acquisition
+     * @return the value returned by {@code function}
+     * @throws MutexException if the lock cannot be acquired under the strategy or the function fails
+     */
     @Override
     public <R> R acquire(ThrowingFunction<R> function, MutexStrategy strategy) throws MutexException {
         log.trace("Attempting to acquire lock with strategy: {}", lockName);

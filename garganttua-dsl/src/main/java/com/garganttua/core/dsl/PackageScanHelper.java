@@ -26,6 +26,12 @@ public class PackageScanHelper {
     private final IReflection reflection;
     private IClass<? extends Annotation> scanAnnotationClass;
 
+    /**
+     * Creates a helper that uses the given reflection facade for annotation scanning.
+     *
+     * @param reflection the reflection facade used to discover {@code @Scan}-annotated classes
+     * @throws NullPointerException if {@code reflection} is {@code null}
+     */
     public PackageScanHelper(IReflection reflection) {
         this.reflection = Objects.requireNonNull(reflection, "IReflection cannot be null");
         this.scanAnnotationClass = this.reflection.getClass(Scan.class);

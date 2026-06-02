@@ -46,6 +46,11 @@ public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilde
     private boolean allPublicFields;
     private boolean allDeclaredClasses;
 
+    /**
+     * Creates a builder that describes the given target class.
+     *
+     * @param targetClass the class whose AOT descriptor is being assembled
+     */
     public AOTClassBuilder(IClass<T> targetClass) {
         this.targetClass = targetClass;
     }

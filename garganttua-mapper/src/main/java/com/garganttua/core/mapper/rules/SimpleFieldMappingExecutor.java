@@ -14,6 +14,11 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Copies a single source field value directly into the matching destination
+ * field, without any type conversion or recursive mapping. Used when source and
+ * destination field types are compatible leaf types.
+ */
 public class SimpleFieldMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(SimpleFieldMappingExecutor.class);
 
@@ -23,6 +28,14 @@ public class SimpleFieldMappingExecutor implements IMappingRuleExecutor {
 	private FieldAccessor<Object> sourceFieldAccessor;
 	private FieldAccessor<Object> destinationFieldAccessor;
 
+	/**
+	 * Creates an executor that copies {@code sourceField} into {@code destinationField}.
+	 *
+	 * @param reflection the reflection facade used to instantiate the destination
+	 * @param sourceField the field to read from the source object
+	 * @param destinationField the field to write on the destination object
+	 * @throws ReflectionException if the field accessors cannot be resolved
+	 */
 	public SimpleFieldMappingExecutor(IReflection reflection, IField sourceField, IField destinationField) throws ReflectionException {
 		this.reflection = reflection;
 		this.sourceField = sourceField;
@@ -33,6 +46,12 @@ public class SimpleFieldMappingExecutor implements IMappingRuleExecutor {
 				new ResolvedField(new ObjectAddress(destinationField.getName(), false), List.of(destinationField)));
 	}
 
+	/**
+	 * Reads the source field value and writes it as-is onto the destination,
+	 * creating the destination instance first if {@code destinationObject} is null.
+	 *
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject, Object sourceObject) throws MapperException {
 		log.debug("SimpleField: {} -> {}", this.sourceField.getName(), this.destinationField.getName());

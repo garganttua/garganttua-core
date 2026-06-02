@@ -23,7 +23,7 @@ import com.garganttua.core.reflection.IClass;
  *     .type(DataSource.class)
  *     .name("primaryDataSource")
  *     .qualifier(Primary.class)
- *     .strategy(BeanStrategy.SINGLETON)
+ *     .strategy(BeanStrategy.singleton)
  *     .provider("dbProvider")
  *     .build();
  *
@@ -81,7 +81,7 @@ public interface IBeanQueryBuilder<Bean> extends IBuilder<IBeanQuery<Bean>>{
      * Specifies the bean strategy (scope) to query for.
      *
      * <p>
-     * The query will match only beans with the specified strategy (e.g., SINGLETON, PROTOTYPE).
+     * The query will match only beans with the specified strategy (e.g., singleton, prototype).
      * </p>
      *
      * @param strategy the bean strategy

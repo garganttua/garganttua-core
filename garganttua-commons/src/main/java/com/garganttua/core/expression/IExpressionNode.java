@@ -79,6 +79,12 @@ public interface IExpressionNode<R, S extends ISupplier<R>> extends ISupplier<S>
      */
     IClass<R> getFinalSuppliedClass();
 
+    /**
+     * Returns the supplied class as {@link ISupplier}, reflecting that this node
+     * supplies a supplier rather than the final result directly.
+     *
+     * @return the {@link IClass} for {@link ISupplier}
+     */
     @SuppressWarnings("unchecked")
     @Override
     default IClass<S> getSuppliedClass() {

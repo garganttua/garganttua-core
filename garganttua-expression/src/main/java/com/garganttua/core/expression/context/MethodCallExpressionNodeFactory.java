@@ -28,6 +28,18 @@ import com.garganttua.core.supply.SupplyException;
 
 import jakarta.annotation.Nullable;
 
+/**
+ * Expression node factory for {@code :methodName(...)} method-call syntax, resolving the
+ * target method on the owner node's type (static when the owner is a {@code Class}/{@link IClass},
+ * instance otherwise).
+ *
+ * <p>When the owner type is {@code Object} at compile time (e.g. the result of a generic
+ * function such as {@code cast()}), method resolution is deferred to evaluation time, where
+ * the concrete runtime type of the owner is known.
+ *
+ * @param <R> the type returned by the resolved method
+ * @param <S> the supplier type produced for the result
+ */
 public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implements IExpressionNodeFactory<R, S> {
     private static final Logger log = Logger.getLogger(MethodCallExpressionNodeFactory.class);
 
@@ -41,6 +53,15 @@ public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implemen
     private IClass<?>[] deferredParameterTypes;
     private ISupplier<?> deferredOwnerSupplier;
 
+    /**
+     * Builds a method-call factory for the given owner node and method signature.
+     *
+     * @param ownerNode      the expression node whose supplied value (or type, for static calls)
+     *                       owns the method
+     * @param methodName     the name of the method to invoke
+     * @param parameterTypes the declared parameter types used to resolve the overload
+     * @throws ExpressionException if the target class for a static call cannot be resolved
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public MethodCallExpressionNodeFactory(IExpressionNode<?, S> ownerNode, String methodName, IClass<?>[] parameterTypes)
             throws ExpressionException {

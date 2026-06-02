@@ -35,6 +35,12 @@ public class AggregateIndexMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project;
 
+    /**
+     * Scans dependency JARs for annotation index files and merges their entries
+     * with any local index files into the module output directory.
+     *
+     * @throws MojoExecutionException if reading or writing an index file fails
+     */
     @Override
     public void execute() throws MojoExecutionException {
         Map<String, Set<String>> dependencyEntries = ArtifactScanner.scan(project, AOTMetadataConstants.INDEX_DIR);

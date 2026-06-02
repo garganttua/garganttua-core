@@ -79,22 +79,28 @@ import com.garganttua.core.supply.SupplyException;
 public interface IContextualConstructorBinder<Constructed> extends IConstructorBinder<Constructed>, IContextualExecutableBinder<Constructed, Void> {
 
     /**
-     * Returns {@link Void}.class as the owner context type.
+     * Returns the owner context type, which is always {@code null} for constructors.
      *
      * <p>
      * Constructors don't have an owning instance context (unlike methods which
-     * belong to an instance or class). This method returns {@link Void}.class
-     * to indicate that no owner context is required, and all parameters are
-     * resolved from the contexts array passed to
-     * {@link #execute(Object, Object...)}.
+     * belong to an instance or class). This method returns {@code null} to
+     * indicate that no owner context is required; all parameters are resolved
+     * from the contexts passed to the contextual {@code execute} overloads.
      * </p>
      *
-     * @return {@link Void}.class, indicating no owner context is required
+     * @return {@code null}, indicating no owner context is required
      */
     @Override
     default IClass<Void> getOwnerContextType(){
         return null; // Void context — no owner required
     }
+
+    /**
+     * Supplies a freshly constructed instance by delegating to {@link #execute()}.
+     *
+     * @return an {@link Optional} wrapping the constructed instance, or empty if none was produced
+     * @throws SupplyException if instantiation fails
+     */
 
     @Override
     default Optional<IMethodReturn<Constructed>> supply() throws SupplyException {

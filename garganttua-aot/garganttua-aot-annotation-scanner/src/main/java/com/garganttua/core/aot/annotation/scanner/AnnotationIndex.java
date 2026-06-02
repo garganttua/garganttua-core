@@ -102,18 +102,40 @@ public class AnnotationIndex implements IAnnotationIndex {
         }
     }
 
+    /**
+     * Returns the classes recorded in the compile-time index for the given
+     * annotation.
+     *
+     * @param annotation the annotation type to look up
+     * @return the indexed classes, or an empty list when no index exists
+     */
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());
         return data.loaded ? data.wrappedClasses() : Collections.emptyList();
     }
 
+    /**
+     * Returns the methods recorded in the compile-time index for the given
+     * annotation.
+     *
+     * @param annotation the annotation type to look up
+     * @return the indexed methods, or an empty list when no index exists
+     */
     @Override
     public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());
         return data.loaded ? data.wrappedMethods() : Collections.emptyList();
     }
 
+    /**
+     * Returns the indexed classes for the given annotation whose name starts
+     * with the supplied package prefix.
+     *
+     * @param annotation    the annotation type to look up
+     * @param packagePrefix the package prefix used to filter results
+     * @return the matching classes, or an empty list when no index exists
+     */
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation, String packagePrefix) {
         return getClassesWithAnnotation(annotation).stream()
@@ -121,6 +143,14 @@ public class AnnotationIndex implements IAnnotationIndex {
                 .toList();
     }
 
+    /**
+     * Returns the indexed methods for the given annotation whose declaring
+     * class name starts with the supplied package prefix.
+     *
+     * @param annotation    the annotation type to look up
+     * @param packagePrefix the package prefix used to filter results
+     * @return the matching methods, or an empty list when no index exists
+     */
     @Override
     public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation, String packagePrefix) {
         return getMethodsWithAnnotation(annotation).stream()
@@ -128,6 +158,13 @@ public class AnnotationIndex implements IAnnotationIndex {
                 .toList();
     }
 
+    /**
+     * Indicates whether a compile-time index file exists for the given
+     * annotation.
+     *
+     * @param annotation the annotation type to check
+     * @return {@code true} if an index was loaded for the annotation
+     */
     @Override
     public boolean hasIndex(IClass<? extends Annotation> annotation) {
         IndexData data = getOrLoadIndex(annotation.getName());

@@ -27,6 +27,10 @@ public interface ICompiledScript {
      */
     IScriptExecutionResult execute(Object... args) throws ScriptException;
 
-    /** @return the source code this compiled script came from. */
+    /**
+     * Returns the original script source this compiled instance was built from.
+     *
+     * @return the source code this compiled script came from
+     */
     String getSource();
 }

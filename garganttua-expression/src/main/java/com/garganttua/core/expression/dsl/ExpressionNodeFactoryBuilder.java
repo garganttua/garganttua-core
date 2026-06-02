@@ -23,6 +23,17 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 import jakarta.annotation.Nullable;
 
+/**
+ * Builder that turns a single owner-supplier + method into an
+ * {@link IExpressionNodeFactory}, reading {@code @Expression} metadata (name,
+ * description, {@code @Nullable} parameters) during auto-detection.
+ *
+ * <p>The inherited {@code withParam(...)} and string/address {@code method(...)}
+ * overloads are intentionally inoperative here: an expression node's parameters
+ * are bound from the parsed argument nodes, not pre-set on the builder.
+ *
+ * @param <S> the value type supplied by the produced expression node
+ */
 @Reflected
 public class ExpressionNodeFactoryBuilder<S>
         extends
@@ -37,6 +48,14 @@ public class ExpressionNodeFactoryBuilder<S>
     private String description = "No description";
     private IObjectQuery<?> objectQuery;
 
+    /**
+     * Creates a node-factory builder for a method whose owner is produced by the given supplier.
+     *
+     * @param parent              the owning expression-context builder this builder navigates back to
+     * @param methodOwnerSupplier supplies the instance (or null/type for static calls) the method runs on
+     * @param supplied            the value type the resulting expression node supplies
+     * @throws DslException if a reflection query cannot be created for the owner type
+     */
     public ExpressionNodeFactoryBuilder(IExpressionContextBuilder parent,
             ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier,
             IClass<S> supplied) throws DslException {

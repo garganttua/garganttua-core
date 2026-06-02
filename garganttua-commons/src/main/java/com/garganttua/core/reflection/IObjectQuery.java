@@ -42,6 +42,7 @@ import java.util.List;
  *   <li><b>Map access</b>: "map#key" or "map#value" - Special indicators</li>
  * </ul>
  *
+ * @param <T> the type of the root object being queried
  * @since 2.0.0-ALPHA01
  * @see ObjectAddress
  * @see ReflectionException

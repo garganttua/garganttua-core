@@ -6,6 +6,27 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Default {@link IExecutorChain} implementation that runs a queue of {@link IExecutor}s
+ * sequentially, passing the current request from one executor to the next.
+ *
+ * <p>
+ * Each executor receives the current request and a chain proxy; calling
+ * {@code chain.execute(...)} on that proxy advances to the next executor with a possibly
+ * mutated request. An executor that does not call the proxy stops the chain. Execution is
+ * driven by an iterative trampoline rather than recursion, so chains of thousands of
+ * executors do not overflow the stack.
+ * </p>
+ *
+ * <p>
+ * Executors may be registered with an optional {@link IFallBackExecutor}; when an executor
+ * throws an {@link ExecutorException}, registered fallbacks are run in reverse registration
+ * order. If {@code rethrow} is enabled the exception is propagated after fallbacks complete,
+ * otherwise the chain simply stops.
+ * </p>
+ *
+ * @param <T> the type of request flowing through the chain
+ */
 public class ExecutorChain<T> implements IExecutorChain<T> {
     private static final Logger log = Logger.getLogger(ExecutorChain.class);
 
@@ -15,6 +36,9 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 
 	private final boolean rethrow;
 
+	/**
+	 * Creates a chain that rethrows any {@link ExecutorException} after running fallbacks.
+	 */
 	public ExecutorChain() {
 		log.trace("Entering default constructor ExecutorChain()");
 		this.executors = new LinkedList<>();
@@ -23,6 +47,12 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		log.trace("Exiting default constructor ExecutorChain()");
 	}
 
+	/**
+	 * Creates a chain with explicit control over exception propagation.
+	 *
+	 * @param rethrow if {@code true}, an {@link ExecutorException} is rethrown after
+	 *                fallbacks run; if {@code false}, the chain stops silently
+	 */
 	public ExecutorChain(boolean rethrow) {
 		log.trace("Entering constructor ExecutorChain(boolean rethrow) with rethrow={}", rethrow);
 		this.executors = new LinkedList<>();
@@ -31,6 +61,11 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		log.trace("Exiting constructor ExecutorChain(boolean rethrow)");
 	}
 
+	/**
+	 * Appends an executor with no associated fallback to the end of the chain.
+	 *
+	 * @param executor the executor to add
+	 */
 	@Override
 	public void addExecutor(IExecutor<T> executor) {
 		log.trace("Entering addExecutor(IExecutor) with executor={}", executor);
@@ -54,6 +89,13 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		log.trace("Exiting addExecutor(IExecutor)");
 	}
 
+	/**
+	 * Runs the chain starting with the given request, advancing through executors until one
+	 * stops the chain (does not call the proxy) or the queue is drained.
+	 *
+	 * @param request the initial request to feed to the first executor
+	 * @throws ExecutorException if an executor fails and this chain was built with rethrow enabled
+	 */
 	@Override
 	public void execute(T request) throws ExecutorException {
 		log.trace("Entering execute() with request={}", request);
@@ -124,7 +166,7 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 					this.executeFallBack(reqForFallback);
 				}
 				if (this.rethrow) {
-					log.error("Rethrowing ExecutorException due to rethrow=true");
+					log.debug("Rethrowing ExecutorException due to rethrow=true");
 					throw e;
 				}
 				break; // Stop the chain after exception
@@ -134,6 +176,11 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		log.trace("Exiting execute()");
 	}
 
+	/**
+	 * Runs the next pending fallback executor, if any, against the given request.
+	 *
+	 * @param request the request to pass to the fallback executor
+	 */
 	@Override
 	public void executeFallBack(T request) {
 		log.trace("Entering executeFallBack() with request={}", request);
@@ -148,6 +195,12 @@ public class ExecutorChain<T> implements IExecutorChain<T> {
 		log.trace("Exiting executeFallBack()");
 	}
 
+	/**
+	 * Appends an executor together with the fallback to run if it (or a later executor) fails.
+	 *
+	 * @param executor         the executor to add
+	 * @param fallBackExecutor the fallback invoked on {@link ExecutorException}
+	 */
 	@Override
 	public void addExecutor(IExecutor<T> executor, IFallBackExecutor<T> fallBackExecutor) {
 		log.trace("Entering addExecutor(IExecutor, IFallBackExecutor) with executor={} and fallback={}",

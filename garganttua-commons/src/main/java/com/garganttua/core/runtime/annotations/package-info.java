@@ -11,7 +11,6 @@
  * <h2>Core Annotations</h2>
  * <ul>
  *   <li>{@link com.garganttua.core.runtime.annotations.RuntimeDefinition} - Defines a runtime with input/output types</li>
- *   <li><b>Stages</b> - Declares multiple execution stages</li>
  *   <li>{@link com.garganttua.core.runtime.annotations.Step} - Defines a single execution step</li>
  *   <li>{@link com.garganttua.core.runtime.annotations.Operation} - Marks methods as runtime operations</li>
  *   <li>{@link com.garganttua.core.runtime.annotations.Code} - Associates error codes with operations</li>
@@ -94,11 +93,13 @@
  * <h2>Usage Example: Variables and Context</h2>
  * <pre>{@code
  * @RuntimeDefinition(input = UserInput.class, output = UserOutput.class)
- * @Variables({
- *     @Variable(name = "userId", type = String.class),
- *     @Variable(name = "timestamp", type = Long.class)
- * })
  * public class UserProcessingRuntime {
+ *
+ *     @Variables
+ *     private Map<String, Object> initialVariables = Map.of(
+ *         "userId", "",
+ *         "timestamp", 0L
+ *     );
  *
  *     @Step(order = 1)
  *     @Operation("extractUserId")

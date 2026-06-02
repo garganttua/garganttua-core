@@ -17,6 +17,12 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class WorkflowsBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * Creates a fresh plural {@link WorkflowsBuilder} for the bootstrap process.
+     *
+     * @return a new workflows builder
+     * @throws DslException if the builder cannot be created
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return WorkflowsBuilder.builder();

@@ -15,6 +15,12 @@ import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ITypeVariable;
 
+/**
+ * JVM runtime-reflection implementation of {@link IConstructor}, wrapping a JDK
+ * {@link Constructor}. Instances are cached and shared per underlying constructor.
+ *
+ * @param <T> the type instantiated by the wrapped constructor
+ */
 public class RuntimeConstructor<T> implements IConstructor<T> {
 
 	private static final ConcurrentHashMap<Constructor<?>, RuntimeConstructor<?>> CACHE = new ConcurrentHashMap<>();
@@ -25,20 +31,50 @@ public class RuntimeConstructor<T> implements IConstructor<T> {
 		this.constructor = constructor;
 	}
 
+	/**
+	 * Returns the cached mirror for the given JDK constructor, creating it on
+	 * first request.
+	 *
+	 * @param <T>         the instantiated type
+	 * @param constructor the JDK constructor to wrap
+	 * @return the shared {@code RuntimeConstructor} for {@code constructor}
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> RuntimeConstructor<T> of(Constructor<T> constructor) {
 		return (RuntimeConstructor<T>) CACHE.computeIfAbsent(constructor, k -> new RuntimeConstructor<>(constructor));
 	}
 
+	/**
+	 * Wildcard-typed variant of {@link #of(Constructor)} for use when the
+	 * instantiated type is not statically known.
+	 *
+	 * @param constructor the JDK constructor to wrap
+	 * @return the shared {@code RuntimeConstructor} for {@code constructor}
+	 */
 	@SuppressWarnings("unchecked")
 	public static RuntimeConstructor<?> ofUnchecked(Constructor<?> constructor) {
 		return CACHE.computeIfAbsent(constructor, k -> new RuntimeConstructor<>(k));
 	}
 
+	/**
+	 * Returns the underlying JDK {@link Constructor} this mirror wraps.
+	 *
+	 * @return the wrapped constructor
+	 */
 	public Constructor<T> unwrap() {
 		return constructor;
 	}
 
+	/**
+	 * Extracts the underlying JDK {@link Constructor} from an {@link IConstructor}
+	 * mirror.
+	 *
+	 * @param <T>          the instantiated type
+	 * @param iconstructor the mirror to unwrap
+	 * @return the wrapped constructor
+	 * @throws IllegalArgumentException if {@code iconstructor} is not a
+	 *         {@code RuntimeConstructor}
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Constructor<T> unwrap(IConstructor<T> iconstructor) {
 		if (iconstructor instanceof RuntimeConstructor<T> rc) return rc.constructor;

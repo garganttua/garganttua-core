@@ -65,7 +65,7 @@ public class LifecycleException extends CoreException {
      */
     public LifecycleException(String string) {
         super(CoreException.LIFECYCLE_ERROR, string);
-        log.trace("Exiting LifecycleException constructor");
+        log.trace("Created LifecycleException with message");
     }
 
     /**
@@ -75,7 +75,7 @@ public class LifecycleException extends CoreException {
      */
     public LifecycleException(Exception e) {
         super(CoreException.LIFECYCLE_ERROR, e);
-        log.trace("Exiting LifecycleException constructor");
+        log.trace("Created LifecycleException from cause");
     }
 
 }

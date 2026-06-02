@@ -21,6 +21,13 @@ public class RuntimeTypeVariable<D extends IGenericDeclaration> implements IType
 	private final TypeVariable<?> delegate;
 	private final D declaration;
 
+	/**
+	 * Wraps a JDK {@link TypeVariable} together with the mirror of its declaring
+	 * generic element.
+	 *
+	 * @param delegate    the JDK type variable to wrap
+	 * @param declaration the mirror of the element that declared {@code delegate}
+	 */
 	public RuntimeTypeVariable(TypeVariable<?> delegate, D declaration) {
 		this.delegate = delegate;
 		this.declaration = declaration;

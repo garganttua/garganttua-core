@@ -15,6 +15,12 @@ import com.garganttua.core.observability.annotations.Observer;
  */
 public class ObservabilityInfrastructureSeed implements IAOTInfrastructureSeed {
 
+    /**
+     * Register the {@link Observer @Observer} annotation into the AOT seed
+     * context so it is reflectively available in pure-AOT consumers.
+     *
+     * @param context the AOT seed context to populate
+     */
     @Override
     public void seed(IAOTSeedContext context) {
         context.registerClass(Observer.class);

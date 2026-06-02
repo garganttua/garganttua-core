@@ -18,6 +18,12 @@ import com.garganttua.core.reflection.fields.SingleFieldValue;
 import com.garganttua.core.reflection.methods.MethodInvoker;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 
+/**
+ * Maps a field by invoking a user-supplied conversion method. The source field
+ * value is passed to the configured method and its return value is written to
+ * the destination field. The method is invoked on the destination object for
+ * {@link MappingDirection#REGULAR} mappings and on the source object otherwise.
+ */
 public class MethodMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(MethodMappingExecutor.class);
 
@@ -29,6 +35,16 @@ public class MethodMappingExecutor implements IMappingRuleExecutor {
 	private FieldAccessor<Object> destinationFieldAccessor;
 	private MethodInvoker<Object, Object> methodInvoker;
 
+	/**
+	 * Creates an executor that maps {@code sourceField} into {@code destinationField}
+	 * via the given conversion method.
+	 *
+	 * @param method the conversion method that transforms the source field value
+	 * @param sourceField the field to read from the source object
+	 * @param destinationField the field to write on the destination object
+	 * @param mappingDirection the direction that determines which object the method is invoked on
+	 * @throws ReflectionException if the field accessors or method invoker cannot be resolved
+	 */
 	public MethodMappingExecutor(IMethod method, IField sourceField, IField destinationField, MappingDirection mappingDirection) throws ReflectionException {
 		this.method = method;
 		this.sourceField = sourceField;
@@ -42,6 +58,13 @@ public class MethodMappingExecutor implements IMappingRuleExecutor {
 				new ResolvedMethod(new ObjectAddress(method.getName(), false), List.of(method)));
 	}
 
+	/**
+	 * Reads the source field value, invokes the conversion method on it, and
+	 * writes the result to the destination field. A null source value is skipped.
+	 *
+	 * @return the populated destination object
+	 * @throws MapperException if the conversion method throws or fails to invoke
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject, Object sourceObject) throws MapperException {
 		log.debug("Method: {} via {} ({})", this.sourceField.getName(), this.method.getName(), this.mappingDirection);

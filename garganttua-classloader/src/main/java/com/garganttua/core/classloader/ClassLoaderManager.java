@@ -27,6 +27,16 @@ public class ClassLoaderManager implements IClassLoaderManager {
 
     private final CopyOnWriteArrayList<IClassLoaderRebuildHook> hooks = new CopyOnWriteArrayList<>();
 
+    /**
+     * Loads the given JAR onto the current thread's context classloader, then
+     * reads its {@code Garganttua-Packages} manifest attribute and fires every
+     * registered {@link IClassLoaderRebuildHook} with the discovered package
+     * list. Hooks are only fired when at least one package is declared.
+     *
+     * @param jar the path to the JAR file to load
+     * @throws ClassLoaderException if the JAR is missing, its URL cannot be
+     *         resolved, or a rebuild hook fails
+     */
     @Override
     public void loadJar(Path jar) throws ClassLoaderException {
         Objects.requireNonNull(jar, "jar path cannot be null");
@@ -62,12 +72,22 @@ public class ClassLoaderManager implements IClassLoaderManager {
         }
     }
 
+    /**
+     * Registers a hook to be invoked whenever a loaded JAR declares packages.
+     *
+     * @param hook the rebuild hook to register
+     */
     @Override
     public void addRebuildHook(IClassLoaderRebuildHook hook) {
         Objects.requireNonNull(hook, "hook cannot be null");
         this.hooks.add(hook);
     }
 
+    /**
+     * Returns an immutable snapshot of the currently registered rebuild hooks.
+     *
+     * @return an immutable copy of the registered hooks
+     */
     @Override
     public List<IClassLoaderRebuildHook> getRebuildHooks() {
         return List.copyOf(this.hooks);

@@ -10,8 +10,14 @@ import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
+/**
+ * A single reflection entry in a GraalVM {@code reflect-config.json}, mapping a
+ * class name to the reflective members and bulk-registration flags it requires.
+ * Serialized via Jackson, omitting default-valued fields.
+ */
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class ReflectConfigEntry implements IReflectionConfigurationEntry {
+    /** Creates an empty entry (used by Jackson deserialization). */
     public ReflectConfigEntry() {
     }
 
@@ -34,6 +40,11 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
     private List<Field> fields;
     private List<Method> methods;
 
+    /**
+     * Creates an entry for the given fully-qualified class name.
+     *
+     * @param name the fully-qualified name of the class to register for reflection
+     */
     public ReflectConfigEntry(String name) {
         log.trace("Creating ReflectConfigEntry for: {}", name);
         this.name = name;
@@ -54,6 +65,12 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
         }
     }
 
+    /**
+     * Resolves and wraps the entry's class using the default runtime reflection provider.
+     *
+     * @return the {@link IClass} for this entry's {@link #getName() name}
+     * @throws ClassNotFoundException if the named class is not on the classpath
+     */
     @JsonIgnore
     public IClass<?> getEntryClass() throws ClassNotFoundException {
         log.trace("Getting entry class for: {}", this.name);

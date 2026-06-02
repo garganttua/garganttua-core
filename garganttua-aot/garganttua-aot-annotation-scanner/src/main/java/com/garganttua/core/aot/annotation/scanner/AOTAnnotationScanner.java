@@ -66,6 +66,13 @@ public class AOTAnnotationScanner implements IAnnotationScanner {
         this.index = index;
     }
 
+    /**
+     * Returns the indexed classes annotated with the given annotation, including
+     * classes carrying an annotation that is itself meta-annotated with it.
+     *
+     * @param annotation the annotation type to look up
+     * @return the matching classes, or an empty list when no index exists
+     */
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
         List<IClass<?>> direct = index.hasIndex(annotation)
@@ -74,6 +81,14 @@ public class AOTAnnotationScanner implements IAnnotationScanner {
         return unionWithMetaAnnotated(annotation, direct, null);
     }
 
+    /**
+     * Returns the indexed classes within the given package annotated with the
+     * specified annotation, including matches via meta-annotation.
+     *
+     * @param package_   the package prefix to restrict results to
+     * @param annotation the annotation type to look up
+     * @return the matching classes, or an empty list when no index exists
+     */
     @Override
     public List<IClass<?>> getClassesWithAnnotation(String package_, IClass<? extends Annotation> annotation) {
         List<IClass<?>> direct = index.hasIndex(annotation)
@@ -82,6 +97,12 @@ public class AOTAnnotationScanner implements IAnnotationScanner {
         return unionWithMetaAnnotated(annotation, direct, package_);
     }
 
+    /**
+     * Returns the indexed methods annotated with the given annotation.
+     *
+     * @param annotation the annotation type to look up
+     * @return the matching methods, or an empty list when no index exists
+     */
     @Override
     public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
         return index.hasIndex(annotation)
@@ -89,6 +110,14 @@ public class AOTAnnotationScanner implements IAnnotationScanner {
                 : List.of();
     }
 
+    /**
+     * Returns the indexed methods within the given package annotated with the
+     * specified annotation.
+     *
+     * @param package_   the package prefix to restrict results to
+     * @param annotation the annotation type to look up
+     * @return the matching methods, or an empty list when no index exists
+     */
     @Override
     public List<IMethod> getMethodsWithAnnotation(String package_, IClass<? extends Annotation> annotation) {
         return index.hasIndex(annotation)

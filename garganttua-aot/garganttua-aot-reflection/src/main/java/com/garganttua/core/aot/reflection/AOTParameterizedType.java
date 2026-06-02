@@ -34,8 +34,11 @@ public final class AOTParameterizedType implements ParameterizedType {
     }
 
     /**
+     * Builds an owner-less parameterized type from a raw type and its type arguments.
+     *
      * @param rawType the erased raw type (e.g. {@code List.class})
      * @param actualTypeArguments the type arguments (e.g. {@code String.class})
+     * @return an immutable {@link ParameterizedType} equivalent to {@code rawType<actualTypeArguments>}
      */
     public static AOTParameterizedType of(Type rawType, Type... actualTypeArguments) {
         return new AOTParameterizedType(rawType, null, actualTypeArguments);

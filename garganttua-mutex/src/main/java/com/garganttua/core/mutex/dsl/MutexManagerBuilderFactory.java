@@ -15,6 +15,13 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class MutexManagerBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * Creates a fresh {@link MutexManagerBuilder} for the bootstrap to configure
+     * and build during auto-detection.
+     *
+     * @return a new {@link MutexManagerBuilder} instance
+     * @throws DslException if the builder cannot be created
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return MutexManagerBuilder.builder();

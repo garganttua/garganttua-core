@@ -26,6 +26,15 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class RuntimeContextFactory implements IInjectionChildContextFactory<IRuntimeContext<?, ?>> {
     private static final Logger log = Logger.getLogger(RuntimeContextFactory.class);
 
+    /**
+     * Creates a runtime child context from the supplied positional arguments.
+     *
+     * @param parent the parent injection context the runtime context is derived from
+     * @param args positional arguments in the order: input object, output {@code Class},
+     *        preset variables map ({@code Map<String, ISupplier<?>>}) and execution {@link UUID}
+     * @return a new {@link IRuntimeContext} bound to {@code parent}
+     * @throws DiException if the child context cannot be created
+     */
     @SuppressWarnings("unchecked")
     @Override
     public IRuntimeContext<?, ?> createChildContext(IInjectionContext parent, Object... args) throws DiException {

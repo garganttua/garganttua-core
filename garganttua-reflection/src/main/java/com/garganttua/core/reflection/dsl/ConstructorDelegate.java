@@ -12,6 +12,15 @@ import com.garganttua.core.reflection.TypeUtils;
 import com.garganttua.core.reflection.constructors.ConstructorInvoker;
 import com.garganttua.core.reflection.constructors.ResolvedConstructor;
 
+/**
+ * Constructor lookup and instantiation delegate for {@link CompositeReflection}.
+ *
+ * <p>
+ * Resolves declared constructors by parameter assignability and instantiates
+ * objects through {@link ConstructorInvoker}, wrapping any failure in a
+ * {@link ReflectionException}.
+ * </p>
+ */
 class ConstructorDelegate {
     private static final Logger log = Logger.getLogger(ConstructorDelegate.class);
 

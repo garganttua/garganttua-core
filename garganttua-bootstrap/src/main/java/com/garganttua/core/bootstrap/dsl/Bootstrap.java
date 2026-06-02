@@ -71,18 +71,16 @@ import com.garganttua.core.supply.SupplyException;
  * Builder for bootstrapping Garganttua applications.
  *
  * <p>
- * The {@code BootstrapBuilder} provides a fluent API for configuring and
- * initializing
- * a Garganttua application. It manages the lifecycle of various builders
- * (injection context,
- * runtime, expression context, etc.) and orchestrates their initialization in
- * the correct order.
+ * {@code Bootstrap} provides a fluent API for configuring and initializing a
+ * Garganttua application. It manages the lifecycle of various builders
+ * (injection context, runtime, expression context, etc.) and orchestrates their
+ * initialization in the correct order. Obtain an instance via {@link #builder()}.
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
- * Object app = new BootstrapBuilder()
+ * IBuiltRegistry app = Bootstrap.builder()
  *         .withPackage("com.myapp")
  *         .withBuilder(injectionContextBuilder)
  *         .withBuilder(runtimeBuilder)
@@ -190,7 +188,10 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
     }
 
     /**
-     * Default constructor.
+     * Creates a new Bootstrap, wiring its manual and auto-detected builder
+     * sources and triggering the {@link BootstrapSpiLoader} cold-start fallback
+     * so {@code new Bootstrap()} is usable on a cold JVM with only provider JARs
+     * on the classpath.
      */
     public Bootstrap() {
         super(buildDependencies());
@@ -350,6 +351,8 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
      * {@code META-INF/services/com.garganttua.core.reflection.*}) and builds a
      * default reflection. Call this method to opt out — typically only useful
      * for tests that want to assert the absence of a fallback.
+     *
+     * @return this builder for method chaining
      */
     public IBootstrap disableSpiFallback() {
         this.spiFallbackEnabled = false;
@@ -532,6 +535,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
     /**
      * Toggle the ASCII dependency-graph dump printed to the banner after
      * topological sort. Off by default — useful for cold-start debugging.
+     *
+     * @param enabled whether to print the dependency graph after topological sort
+     * @return this builder for method chaining
      */
     public Bootstrap printDependencyGraph(boolean enabled) {
         this.printDependencyGraph = enabled;
@@ -543,6 +549,9 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
      * Bootstrap stages (REGISTRATION / RESOLVE / CONFIGURATION / BUILD).
      * Listeners are also auto-discovered via {@link java.util.ServiceLoader}
      * — manual registrations fire first.
+     *
+     * @param listener the stage listener to notify of Bootstrap stages
+     * @return this builder for method chaining
      */
     public Bootstrap withStageListener(IBootstrapStageListener listener) {
         this.stageNotifier.add(listener);

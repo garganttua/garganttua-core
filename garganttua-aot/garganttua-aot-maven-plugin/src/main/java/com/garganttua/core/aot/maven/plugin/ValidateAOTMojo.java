@@ -34,6 +34,14 @@ public class ValidateAOTMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project;
 
+    /**
+     * Reads the {@code @Reflected} index file and warns for every reflected
+     * class that lacks a corresponding AOT class descriptor. The build is never
+     * failed, so AOT coverage can be adopted gradually.
+     *
+     * @throws MojoExecutionException if the {@code @Reflected} index file cannot
+     *                                be read
+     */
     @Override
     public void execute() throws MojoExecutionException {
         Path indexFile = outputDirectory.toPath()

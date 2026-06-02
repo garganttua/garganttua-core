@@ -15,6 +15,11 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Copies a collection field by reference (shallow), reusing the source elements
+ * without mapping them individually. Used when source and destination element
+ * types are compatible and no per-element transformation is required.
+ */
 public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(SimpleCollectionMappingExecutor.class);
 
@@ -24,6 +29,15 @@ public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
 	private FieldAccessor<Object> sourceFieldAccessor;
 	private FieldAccessor<Object> destinationFieldAccessor;
 
+	/**
+	 * Creates an executor that shallow-copies the collection in {@code sourceField}
+	 * into {@code destinationField}.
+	 *
+	 * @param reflection the reflection facade used to instantiate the destination
+	 * @param sourceField the collection field to read from the source object
+	 * @param destinationField the collection field to write on the destination object
+	 * @throws ReflectionException if the field accessors cannot be resolved
+	 */
 	public SimpleCollectionMappingExecutor(IReflection reflection, IField sourceField, IField destinationField) throws ReflectionException {
 		this.reflection = reflection;
 		this.sourceField = sourceField;
@@ -34,6 +48,13 @@ public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
 				new ResolvedField(new ObjectAddress(destinationField.getName(), false), List.of(destinationField)));
 	}
 
+	/**
+	 * Copies the source collection elements into the destination and sets the
+	 * destination field to the source field value, creating the destination
+	 * instance first if {@code destinationObject} is null.
+	 *
+	 * @return the populated destination object
+	 */
 	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,

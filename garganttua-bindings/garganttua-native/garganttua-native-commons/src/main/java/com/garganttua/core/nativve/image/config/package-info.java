@@ -10,32 +10,21 @@
  *
  * <h2>Main Classes</h2>
  * <ul>
- *   <li>{@code NativeImageConfig} - Main native image configuration</li>
+ *   <li>{@link com.garganttua.core.nativve.image.config.NativeImageConfig} - resolves the
+ *       standard {@code META-INF/native-image} config file locations</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * // Create native image configuration
- * NativeImageConfig config = new NativeImageConfig();
- *
- * // Add reflection configuration
- * config.addReflectionClass(UserService.class);
- * config.addReflectionClass(DataRepository.class);
- *
- * // Add resource patterns
- * config.addResourcePattern("*.properties");
- * config.addResourcePattern("templates/*.html");
- *
- * // Generate configuration files
- * config.writeToDirectory(outputDir);
+ * // Resolve the standard native-image config file locations under a base directory
+ * File reflectConfig = NativeImageConfig.getReflectConfigFile(baseDir);
+ * File resourceConfig = NativeImageConfig.getResourceConfigFile(baseDir);
  * }</pre>
  *
  * <h2>Features</h2>
  * <ul>
  *   <li>Reflection configuration generation</li>
  *   <li>Resource pattern configuration</li>
- *   <li>JNI configuration support</li>
- *   <li>Serialization configuration</li>
  *   <li>JSON format output</li>
  * </ul>
  *

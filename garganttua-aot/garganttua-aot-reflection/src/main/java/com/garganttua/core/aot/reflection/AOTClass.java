@@ -66,6 +66,21 @@ public class AOTClass<T> implements IAOTClassDescriptor<T> {
     // own member arrays are empty (see AOTLiveClassFallback). One per AOTClass.
     private final AOTLiveClassFallback liveFallback;
 
+    /**
+     * Creates a fully-populated AOT class descriptor from pre-computed metadata.
+     *
+     * <p>All arrays are defensively cloned; {@code null} arrays are normalised to
+     * empty ones. The underlying {@link Class} is not touched here — it is resolved
+     * lazily only when an operation needs the live type.</p>
+     *
+     * @param name fully-qualified binary name (or Java-source array name such as {@code "int[]"})
+     * @param superclassName binary name of the superclass, or {@code null} for none
+     * @param interfaceNames binary names of the directly-implemented interfaces
+     * @param fields the declared field descriptors
+     * @param methods the declared method descriptors
+     * @param constructors the declared constructor descriptors
+     * @param annotations the declared annotations present on the type
+     */
     @SuppressWarnings("java:S107") // Constructor with many parameters is intentional for AOT
     public AOTClass(String name, String simpleName, String canonicalName, String packageName,
                     int modifiers, String superclassName, String[] interfaceNames,

@@ -26,6 +26,14 @@ public final class ExpressionVariableContext {
         return RESOLVER.isBound() ? RESOLVER.get() : null;
     }
 
+    /**
+     * Binds {@code resolver} to the current scope for the duration of {@code body} and runs it.
+     *
+     * @param <X>      the checked exception type the body may throw
+     * @param resolver the resolver to bind for the scope
+     * @param body     the action to run with the resolver bound
+     * @throws X if the body throws
+     */
     public static <X extends Throwable> void runIn(IExpressionVariableResolver resolver,
             ResolverRunnable<X> body) throws X {
         ScopedValue.where(RESOLVER, resolver).run(() -> {
@@ -37,6 +45,16 @@ public final class ExpressionVariableContext {
         });
     }
 
+    /**
+     * Binds {@code resolver} to the current scope, runs {@code body}, and returns its result.
+     *
+     * @param <R>      the result type
+     * @param <X>      the checked exception type the body may throw
+     * @param resolver the resolver to bind for the scope
+     * @param body     the action to run with the resolver bound
+     * @return the value produced by {@code body}
+     * @throws X if the body throws
+     */
     public static <R, X extends Exception> R callIn(IExpressionVariableResolver resolver,
             ResolverCallable<R, X> body) throws X {
         try {
@@ -54,13 +72,35 @@ public final class ExpressionVariableContext {
         throw (X) t;
     }
 
+    /**
+     * A runnable body executed within a bound resolver scope, allowed to throw a checked exception.
+     *
+     * @param <X> the checked exception type the body may throw
+     */
     @FunctionalInterface
     public interface ResolverRunnable<X extends Throwable> {
+        /**
+         * Runs the body.
+         *
+         * @throws X if the body fails
+         */
         void run() throws X;
     }
 
+    /**
+     * A value-returning body executed within a bound resolver scope, allowed to throw a checked exception.
+     *
+     * @param <R> the result type
+     * @param <X> the checked exception type the body may throw
+     */
     @FunctionalInterface
     public interface ResolverCallable<R, X extends Exception> {
+        /**
+         * Computes and returns the body's result.
+         *
+         * @return the computed value
+         * @throws X if the body fails
+         */
         R call() throws X;
     }
 }

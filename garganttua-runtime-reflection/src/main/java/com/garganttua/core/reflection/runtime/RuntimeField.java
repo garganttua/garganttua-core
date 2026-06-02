@@ -11,6 +11,10 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflection;
 
+/**
+ * JVM runtime-reflection implementation of {@link IField}, wrapping a JDK
+ * {@link Field}. Instances are cached and shared per underlying field.
+ */
 public class RuntimeField implements IField {
 
 	private static final ConcurrentHashMap<Field, RuntimeField> CACHE = new ConcurrentHashMap<>();
@@ -21,14 +25,33 @@ public class RuntimeField implements IField {
 		this.field = field;
 	}
 
+	/**
+	 * Returns the cached mirror for the given JDK field, creating it on first
+	 * request.
+	 *
+	 * @param field the JDK field to wrap
+	 * @return the shared {@code RuntimeField} for {@code field}
+	 */
 	public static RuntimeField of(Field field) {
 		return CACHE.computeIfAbsent(field, RuntimeField::new);
 	}
 
+	/**
+	 * Returns the underlying JDK {@link Field} this mirror wraps.
+	 *
+	 * @return the wrapped field
+	 */
 	public Field unwrap() {
 		return field;
 	}
 
+	/**
+	 * Extracts the underlying JDK {@link Field} from an {@link IField} mirror.
+	 *
+	 * @param ifield the mirror to unwrap
+	 * @return the wrapped field
+	 * @throws IllegalArgumentException if {@code ifield} is not a {@code RuntimeField}
+	 */
 	public static Field unwrap(IField ifield) {
 		if (ifield instanceof RuntimeField rf) return rf.field;
 		throw new IllegalArgumentException("Cannot unwrap non-RuntimeField IField: " + ifield.getClass());

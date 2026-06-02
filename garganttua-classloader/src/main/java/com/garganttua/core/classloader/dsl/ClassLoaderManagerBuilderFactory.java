@@ -15,6 +15,12 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class ClassLoaderManagerBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * Creates a new {@link ClassLoaderManagerBuilder} for Bootstrap auto-detection.
+     *
+     * @return a fresh class loader manager builder
+     * @throws DslException if the builder cannot be created
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return ClassLoaderManagerBuilder.builder();

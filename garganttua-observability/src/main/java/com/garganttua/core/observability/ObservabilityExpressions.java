@@ -40,11 +40,29 @@ public class ObservabilityExpressions {
 	private ObservabilityExpressions() {
 	}
 
+	/**
+	 * Fire an observability event with no exit code; equivalent to
+	 * {@link #observe(String, String, Integer)} with a {@code null} code.
+	 *
+	 * @param eventType one of {@code "start"}, {@code "end"} or {@code "error"}
+	 * @param source    the hierarchical event source identifier
+	 */
 	@Expression(name = "observe", description = "Fire an observability event (start|end|error, source)")
 	public static void observe(String eventType, String source) {
 		observe(eventType, source, null);
 	}
 
+	/**
+	 * Fire an observability event to the registry bound on the current
+	 * {@link ObservableContextHolder} session. No-op when no session is bound
+	 * or the registry has no observers. Unknown {@code eventType} values are
+	 * logged and ignored.
+	 *
+	 * @param eventType one of {@code "start"}, {@code "end"} or {@code "error"}
+	 * @param source    the hierarchical event source identifier
+	 * @param code      optional exit code forwarded on {@code "end"} events,
+	 *                  may be {@code null}
+	 */
 	@Expression(name = "observe", description = "Fire an observability event (start|end|error, source, code)")
 	public static void observe(String eventType, String source, @Nullable Integer code) {
 		Session session = ObservableContextHolder.current();

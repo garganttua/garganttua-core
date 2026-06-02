@@ -11,6 +11,15 @@ import java.util.Arrays;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+/**
+ * Catalogue of supported JCA key algorithms, each enum constant pairing an
+ * algorithm name with a key size in bits. Implements {@link IKeyAlgorithm} so it
+ * can derive cipher and signature transformation names and generate JDK keys.
+ *
+ * <p>Constants for known-insecure algorithms (DES, RC4, RC2) are marked
+ * {@link Deprecated @Deprecated(forRemoval = true)} and should not be used for
+ * new material.
+ */
 public enum KeyAlgorithm implements IKeyAlgorithm {
 
     // DSA
@@ -192,21 +201,33 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
         this.keySize = keySize;
     }
 
+    /** {@return the JCA algorithm name (e.g. {@code "AES"})} */
     @Override
     public String getName() {
         return algorithm;
     }
 
+    /** {@return the key size in bits} */
     @Override
     public int getKeySize() {
         return keySize;
     }
 
+    /** {@return the {@code name_size} string form of this constant} */
     @Override
     public String toString() {
         return algorithm + "_" + keySize;
     }
 
+    /**
+     * Parses an {@code algo-size} string (e.g. {@code "RSA-2048"}) into the
+     * matching enum constant.
+     *
+     * @param input the algorithm specifier in {@code algo-size} form
+     * @return the matching {@link KeyAlgorithm}
+     * @throws IllegalArgumentException if the format is invalid, the size is not a
+     *                                  number, or no constant matches
+     */
     public static KeyAlgorithm validateKeyAlgorithm(String input) throws IllegalArgumentException {
         log.trace("Entering validateKeyAlgorithm with input: {}", input);
 
@@ -240,6 +261,12 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
         return result;
     }
 
+    /**
+     * Classifies this algorithm as symmetric or asymmetric.
+     *
+     * @return the {@link KeyAlgorithmType}
+     * @throws IllegalArgumentException if the algorithm is not recognised as either
+     */
     @Override
     public KeyAlgorithmType getType() throws IllegalArgumentException {
         log.trace("Entering getType for algorithm: {}", this.algorithm);
@@ -290,6 +317,12 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
         }
     }
 
+    /**
+     * Generates a fresh symmetric {@link SecretKey} for this algorithm and size.
+     *
+     * @return the generated secret key
+     * @throws IllegalArgumentException if the algorithm is unavailable in the JCA provider
+     */
     public SecretKey generateSymmetricKey() throws IllegalArgumentException {
         log.trace("Entering generateSymmetricKey for algorithm: {}, keySize: {}", this.algorithm, this.keySize);
 
@@ -308,6 +341,13 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
         }
     }
 
+    /**
+     * Generates a fresh asymmetric {@link KeyPair} for this algorithm and size.
+     * EC algorithms are mapped to the corresponding {@code secp<size>r1} curve.
+     *
+     * @return the generated key pair
+     * @throws IllegalArgumentException if the algorithm or parameters are unavailable
+     */
     public KeyPair generateAsymmetricKey() throws IllegalArgumentException {
         log.trace("Entering generateAsymmetricKey for algorithm: {}, keySize: {}", this.algorithm, this.keySize);
 
@@ -337,6 +377,14 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
         }
     }
 
+    /**
+     * Builds the JCA transformation string {@code name/mode/padding}.
+     *
+     * @param mode    encryption mode (block-cipher mode of operation)
+     * @param padding padding scheme
+     * @return the transformation string usable with {@code Cipher.getInstance}
+     * @throws IllegalArgumentException if {@code mode} or {@code padding} is {@code null}
+     */
     @Override
     public String getCipherName(EncryptionMode mode, EncryptionPaddingMode padding) throws IllegalArgumentException {
         log.trace("Entering getCipherName for algorithm: {}, mode: {}, padding: {}", this.algorithm, mode, padding);
@@ -352,6 +400,14 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
         return cipherName;
     }
 
+    /**
+     * Builds the JCA signature name {@code <digest>with<algorithm>}, mapping
+     * {@code EC} to {@code ECDSA}.
+     *
+     * @param signatureAlgorithm the digest portion of the signature name
+     * @return the signature name usable with {@code Signature.getInstance}
+     * @throws IllegalArgumentException if {@code signatureAlgorithm} is {@code null}
+     */
     @Override
     public String getSignatureName(SignatureAlgorithm signatureAlgorithm) {
         log.trace("Entering getSignatureName for algorithm: {}, signatureAlgorithm: {}", this.algorithm, signatureAlgorithm);

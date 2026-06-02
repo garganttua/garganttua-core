@@ -71,12 +71,20 @@ public class PropertiesFileProviderBuilder
 
     private final List<PropertySource> sources = new ArrayList<>();
 
+    /**
+     * Creates a builder linked to the given injection context builder.
+     *
+     * @param link the parent injection context builder returned by {@link #up()}
+     */
     public PropertiesFileProviderBuilder(IInjectionContextBuilder link) {
         super(link);
     }
 
     /**
      * Creates a new builder linked to the given injection context builder.
+     *
+     * @param link the parent injection context builder returned by {@link #up()}
+     * @return a new {@link PropertiesFileProviderBuilder} instance
      */
     public static PropertiesFileProviderBuilder create(IInjectionContextBuilder link) {
         return new PropertiesFileProviderBuilder(link);
@@ -122,6 +130,16 @@ public class PropertiesFileProviderBuilder
         return file(file.getAbsolutePath());
     }
 
+    /**
+     * Registers an inline property that is merged alongside file- and classpath-loaded
+     * sources, with the same {@code ${VAR:default}} placeholder resolution applied.
+     *
+     * @param propertyType the declared property type (informational; the value is stored as text)
+     * @param key          the property key
+     * @param property     the property value
+     * @return this builder for method chaining
+     * @throws DslException if the property cannot be registered
+     */
     @Override
     public <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType,
             String key, PropertyType property) throws DslException {

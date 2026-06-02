@@ -14,6 +14,15 @@ public final class ImplicitConversions {
 	private ImplicitConversions() {
 	}
 
+	/**
+	 * Finds an implicit conversion function from the source type to the
+	 * destination type, if one is supported.
+	 *
+	 * @param source the source value type
+	 * @param dest the destination value type
+	 * @return a conversion function (null-safe) wrapped in an {@link Optional}, or
+	 *         {@link Optional#empty()} if no implicit conversion applies
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Optional<Function<Object, Object>> findConversion(IClass<?> source, IClass<?> dest) {
 		String srcName = source.getName();

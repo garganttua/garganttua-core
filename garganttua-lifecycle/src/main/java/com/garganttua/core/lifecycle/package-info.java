@@ -15,12 +15,11 @@
  *
  * <h2>Lifecycle States</h2>
  * <ul>
- *   <li><b>NEW</b> - Component created but not started</li>
- *   <li><b>STARTING</b> - Component is starting</li>
- *   <li><b>STARTED</b> - Component is running</li>
- *   <li><b>STOPPING</b> - Component is stopping</li>
- *   <li><b>STOPPED</b> - Component is stopped</li>
- *   <li><b>FAILED</b> - Component failed to start or stop</li>
+ *   <li><b>NEW</b> - Component created but not yet initialized</li>
+ *   <li><b>INITIALIZED</b> - {@code onInit()} completed</li>
+ *   <li><b>STARTED</b> - {@code onStart()} completed and running</li>
+ *   <li><b>STOPPED</b> - {@code onStop()} completed</li>
+ *   <li><b>FLUSHED</b> - {@code onFlush()} completed (buffers/caches cleared)</li>
  * </ul>
  *
  * <h2>Usage Example: Custom Lifecycle Component (from AbstractLifecycleTest)</h2>
@@ -117,13 +116,9 @@
  *
  * <h2>State Transitions</h2>
  * <pre>
- * NEW {@literal ->} STARTING {@literal ->} STARTED
- *  |                    |
- *  |                    v
- *  |                STOPPING {@literal ->} STOPPED
- *  |                    |
- *  {@literal +}------{@literal >} FAILED {@literal <}-----{@literal +}
+ * NEW {@literal ->} INITIALIZED {@literal ->} STARTED {@literal ->} STOPPED {@literal ->} FLUSHED
  * </pre>
+ * <p>{@code onReload()} runs the full {@code stop -> flush -> init -> start} cycle.</p>
  *
  * <h2>Features</h2>
  * <ul>
@@ -131,7 +126,7 @@
  *   <li>Automatic state transitions</li>
  *   <li>Start/stop callback hooks</li>
  *   <li>State validation</li>
- *   <li>Error handling and FAILED state</li>
+ *   <li>Error handling via {@code LifecycleException}</li>
  *   <li>Thread-safe state management</li>
  *   <li>Idempotent start/stop operations</li>
  *   <li>State query methods (isStarted, isStopped, etc.)</li>

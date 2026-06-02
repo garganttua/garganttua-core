@@ -21,13 +21,10 @@ import com.garganttua.core.reflection.binders.Dependent;
  * IBeanFactory<MyService> factory = ...;
  *
  * // Get the bean definition
- * BeanDefinition<MyService> definition = factory.getDefinition();
+ * BeanDefinition<MyService> definition = factory.definition();
  *
- * // Check if the factory matches a query
- * BeanDefinition<?> query = BeanDefinition.example(MyService.class,
- *     Optional.of(BeanStrategy.SINGLETON),
- *     Optional.of("myService"),
- *     Set.of());
+ * // Check if the factory's bean matches a query reference, then supply it
+ * BeanReference<?> query = ...;
  * if (factory.matches(query)) {
  *     MyService instance = factory.supply(context);
  * }
@@ -56,7 +53,7 @@ public interface IBeanFactory<Bean> extends IBeanSupplier<Bean>, INativeElement 
      * </p>
      *
      * @param query the bean reference to match against
-     * @return {@code true} if this factory matches the example, {@code false} otherwise
+     * @return {@code true} if this factory matches the query, {@code false} otherwise
      * @see BeanReference#matches(BeanReference)
      */
     boolean matches(BeanReference<?> query);

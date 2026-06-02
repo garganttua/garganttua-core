@@ -23,7 +23,7 @@ import com.garganttua.core.supply.ISupplier;
  * MyService instance = supplier.supply(context);
  *
  * // Check dependencies for circular dependency detection
- * Set<Class<?>> dependencies = supplier.getDependencies();
+ * Set<IClass<?>> dependencies = supplier.dependencies();
  * }</pre>
  *
  * <h2>Thread Safety</h2>

@@ -192,6 +192,12 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
                 dependencyClass.getName());
     }
 
+    /**
+     * Records the built object produced by the dependency, marking it resolvable.
+     *
+     * @param observable the built object
+     * @throws NullPointerException if {@code observable} is {@code null}
+     */
     @Override
     public void handle(Built observable) {
         log.trace("Handling built object notification: {}", observable);
@@ -200,20 +206,10 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     }
 
     /**
-     * Checks if the dependency is ready for use.
-     *
-     * <p>
-     * The dependency is considered ready when both the builder and built object are present.
-     * This mirrors the pattern from ContextReadinessBuilder where both components must be
-     * available for the dependency to be fully resolved.
-     * </p>
-     *
-     * @return true if both builder and builtObject are not null, false otherwise
-     */
-    /**
      * Attempts to resolve the built object from the builder if not already resolved.
      * This supports deferred resolution where the builder may be provided during
-     * dependency resolution (Phase 1) but only built later (Phase 2).
+     * dependency resolution (Phase 1) but only built later (Phase 2). Build failures
+     * are swallowed (logged at trace) since the upstream may simply not be ready yet.
      */
     private void tryResolve() {
         if (builder != null && builtObject == null) {
@@ -421,6 +417,11 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         return spec.isOptionalForBuild();
     }
 
+    /**
+     * Asserts that this dependency has been provided in some form.
+     *
+     * @throws IllegalStateException if the dependency is empty (neither builder nor built object set)
+     */
     @Override
     public void requireNotEmpty() {
         if(this.isEmpty())
@@ -431,22 +432,27 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
     // Stage / Kind accessors (new vocabulary, mirror DependencySpec)
     // ----------------------------------------------------------------------
 
+    /** @return the dependency stage (CONFIGURATION, AUTO_DETECT or BUILD). */
     public DependencyStage stage() {
         return spec.stage();
     }
 
+    /** @return the dependency kind (BUILDER or BUILT). */
     public DependencyKind kind() {
         return spec.kind();
     }
 
+    /** @return the underlying dependency specification. */
     public DependencySpec spec() {
         return spec;
     }
 
+    /** @return {@code true} if this dependency is required (not optional). */
     public boolean isRequired() {
         return spec.isRequired();
     }
 
+    /** @return {@code true} if this dependency is optional. */
     public boolean isOptional() {
         return spec.isOptional();
     }
@@ -461,22 +467,27 @@ public class BuilderDependency<Builder extends IObservableBuilder<Builder, Built
         return this.builtObject != null;
     }
 
+    /** @return {@code true} if this dependency belongs to the CONFIGURATION stage. */
     public boolean isConfigurationStage() {
         return spec.stage() == DependencyStage.CONFIGURATION;
     }
 
+    /** @return {@code true} if this dependency belongs to the AUTO_DETECT stage. */
     public boolean isAutoDetectStage() {
         return spec.stage() == DependencyStage.AUTO_DETECT;
     }
 
+    /** @return {@code true} if this dependency belongs to the BUILD stage. */
     public boolean isBuildStage() {
         return spec.stage() == DependencyStage.BUILD;
     }
 
+    /** @return {@code true} if this dependency is satisfied with the upstream builder reference. */
     public boolean isBuilderKind() {
         return spec.kind() == DependencyKind.BUILDER;
     }
 
+    /** @return {@code true} if this dependency is satisfied with the upstream built object. */
     public boolean isBuiltKind() {
         return spec.kind() == DependencyKind.BUILT;
     }

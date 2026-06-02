@@ -73,6 +73,13 @@ public interface IMappingRuleExecutor {
 	 * which is fine for terminal executors (no nested mapping). Non-recursing
 	 * executors do not need to override this method.
 	 *
+	 * @param <destination> the type of the destination object
+	 * @param destinationClass the class of the destination object
+	 * @param destinationObject the current destination object, may be {@code null}
+	 * @param sourceObject the source object to transform
+	 * @param recursion callback used to map nested values while preserving per-invocation state
+	 * @return the transformed destination object
+	 * @throws MapperException if the mapping transformation fails
 	 * @since 2.0.0-ALPHA02
 	 */
 	default <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,

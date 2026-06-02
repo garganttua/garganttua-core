@@ -70,6 +70,13 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
         log.trace("Exiting AbstractAutomaticDependentBuilder constructor");
     }
 
+    /**
+     * Supplies a concrete dependency builder instance to satisfy a declared dependency.
+     *
+     * @param dependency the dependency builder to provide
+     * @return this builder for method chaining
+     * @throws DslException if the dependency is not declared in {@link #use()} or {@link #require()}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public B provide(IObservableBuilder<?, ?> dependency) throws DslException {
@@ -77,16 +84,34 @@ public abstract class AbstractAutomaticDependentBuilder<B extends IBuilder<T>, T
         return (B) this;
     }
 
+    /**
+     * Returns the classes of optional (use) dependencies declared by this builder.
+     *
+     * @return the set of optional dependency classes
+     */
     @Override
     public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
         return this.support.use();
     }
 
+    /**
+     * Returns the classes of required dependencies declared by this builder.
+     *
+     * @return the set of required dependency classes
+     */
     @Override
     public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
         return this.support.require();
     }
 
+    /**
+     * Builds the target object, running auto-detection (if enabled) and the
+     * pre-build and post-build dependency phases. The result is cached on
+     * first success and returned directly on subsequent calls.
+     *
+     * @return the built object
+     * @throws DslException if a dependency phase or {@code doBuild()} fails
+     */
     @Override
     public T build() throws DslException {
         log.trace("Entering build method");

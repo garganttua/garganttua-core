@@ -70,6 +70,13 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         return b;
     }
 
+    /**
+     * Returns the parent {@link IWorkflowsBuilder} that opened this builder.
+     *
+     * @return the owning plural builder
+     * @throws IllegalStateException if this builder was created without a parent
+     *         (i.e. outside of {@code WorkflowsBuilder.workflow()})
+     */
     @Override
     public IWorkflowsBuilder up() {
         if (this.parent == null) {
@@ -89,30 +96,64 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         this.scriptingEnvironment = env;
     }
 
+    /**
+     * Sets the workflow name.
+     *
+     * @param name the workflow name
+     * @return this builder for chaining
+     */
     @Override
     public IWorkflowBuilder name(String name) {
         this.name = name;
         return this;
     }
 
+    /**
+     * Registers a preset variable made available to every stage script.
+     *
+     * @param name  the variable name
+     * @param value the variable value
+     * @return this builder for chaining
+     */
     @Override
     public IWorkflowBuilder variable(String name, Object value) {
         this.presetVariables.put(name, value);
         return this;
     }
 
+    /**
+     * Forces every file-backed script to be inlined into the generated script
+     * rather than included by reference.
+     *
+     * @return this builder for chaining
+     */
     @Override
     public IWorkflowBuilder inlineAll() {
         this.inlineAll = true;
         return this;
     }
 
+    /**
+     * Enables or disables pre-compilation of the generated script at build time.
+     * When enabled, a fresh runtime is spawned once during {@link #doBuild()}.
+     *
+     * @param enabled {@code true} to pre-compile at build time
+     * @return this builder for chaining
+     */
     @Override
     public IWorkflowBuilder precompile(boolean enabled) {
         this.precompile = enabled;
         return this;
     }
 
+    /**
+     * Configures stage/script timing instrumentation.
+     *
+     * @param config the timing configuration; use
+     *        {@link WorkflowTimingConfig#disabled()} to turn it off
+     * @return this builder for chaining
+     * @throws IllegalArgumentException if {@code config} is {@code null}
+     */
     @Override
     public IWorkflowBuilder timing(WorkflowTimingConfig config) {
         if (config == null) {
@@ -122,6 +163,12 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         return this;
     }
 
+    /**
+     * Opens a builder for a new stage appended to this workflow.
+     *
+     * @param name the stage name
+     * @return a stage builder whose {@code up()} returns to this workflow builder
+     */
     @Override
     public IWorkflowStageBuilder stage(String name) {
         WorkflowStageBuilder stageBuilder = new WorkflowStageBuilder(name);
@@ -133,6 +180,16 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         this.stages.add(stage);
     }
 
+    /**
+     * Generates the workflow script from the configured stages, optionally
+     * pre-compiles it, and assembles the {@link Workflow} instance, attaching it
+     * to the observability binding when one was provided.
+     *
+     * @return the built workflow
+     * @throws DslException if no stage was declared, the required
+     *         {@link IInjectionContextBuilder} or {@link IScriptingEnvironment}
+     *         is missing, or script generation/pre-compilation fails
+     */
     @Override
     protected IWorkflow doBuild() throws DslException {
         log.trace("Building workflow '{}'", name);
@@ -204,17 +261,38 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         return workflow;
     }
 
+    /**
+     * Pre-build dependency hook. No-op: the {@link IScriptingEnvironment} is
+     * delivered via {@link #acceptScriptingEnvironment(IScriptingEnvironment)}
+     * by the parent {@link WorkflowsBuilder}.
+     *
+     * @param dependency the resolved dependency (unused)
+     */
     @Override
     protected void doPreBuildWithDependency(Object dependency) {
         // IScriptingEnvironment is delivered via acceptScriptingEnvironment()
         // by the parent WorkflowsBuilder; nothing pre-build dependency-side.
     }
 
+    /**
+     * Post-build dependency hook. No-op.
+     *
+     * @param dependency the resolved dependency (unused)
+     */
     @Override
     protected void doPostBuildWithDependency(Object dependency) {
         // No post-build processing needed
     }
 
+    /**
+     * Accepts a provided dependency builder, capturing the
+     * {@link IInjectionContextBuilder} and {@link IObservabilityBuilder} when
+     * recognised before delegating to the superclass.
+     *
+     * @param dependency the dependency builder being provided
+     * @return this builder for chaining
+     * @throws DslException if the superclass rejects the dependency
+     */
     @Override
     public IWorkflowBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
         if (dependency instanceof IInjectionContextBuilder builder) {
@@ -226,11 +304,23 @@ public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, 
         return super.provide(dependency);
     }
 
+    /**
+     * Renders a human-readable description of the workflow as currently
+     * configured, without building it.
+     *
+     * @return the rendered workflow diagram
+     */
     @Override
     public String describeWorkflow() {
         return renderer.render(name, stages, presetVariables, inlineAll);
     }
 
+    /**
+     * Builds an immutable {@link WorkflowDescriptor} snapshot of the workflow's
+     * stages and scripts as currently configured.
+     *
+     * @return the descriptor snapshot
+     */
     @Override
     public WorkflowDescriptor getDescriptor() {
         List<WorkflowDescriptor.StageDescriptor> stageDescriptors = stages.stream()

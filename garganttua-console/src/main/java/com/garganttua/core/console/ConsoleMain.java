@@ -8,6 +8,11 @@ package com.garganttua.core.console;
  */
 public class ConsoleMain {
 
+    /**
+     * Launches the interactive REPL console.
+     *
+     * @param args command-line arguments; pass {@code --aot} to enable the AOT annotation scanner
+     */
     public static void main(String[] args) {
         boolean useAOT = false;
         for (String arg : args) {

@@ -35,6 +35,14 @@ public class AggregateAOTRegistryMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project;
 
+    /**
+     * Scans dependency JARs for AOT class descriptor listings, merges them with
+     * any local listings into the module output directory, and emits GraalVM
+     * native-image reachability metadata for the collected descriptors.
+     *
+     * @throws MojoExecutionException if reading or writing a registry file, or
+     *                                emitting native-image metadata, fails
+     */
     @Override
     public void execute() throws MojoExecutionException {
         Map<String, Set<String>> dependencyEntries = ArtifactScanner.scan(project, AOTMetadataConstants.AOT_CLASSES_DIR);

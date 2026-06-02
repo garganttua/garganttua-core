@@ -60,11 +60,22 @@ public class RuntimesRegistry implements IBootstrapSummaryContributor, Map<Strin
 
     // --- IBootstrapSummaryContributor implementation ---
 
+    /**
+     * Returns the bootstrap summary category label for registered runtimes.
+     *
+     * @return the summary category name
+     */
     @Override
     public String getSummaryCategory() {
         return "Runtime Engine";
     }
 
+    /**
+     * Returns the bootstrap summary items describing the registered runtimes,
+     * including the count and a (possibly truncated) list of runtime names.
+     *
+     * @return an ordered map of summary label to value
+     */
     @Override
     public Map<String, String> getSummaryItems() {
         Map<String, String> items = new LinkedHashMap<>();
@@ -84,61 +95,89 @@ public class RuntimesRegistry implements IBootstrapSummaryContributor, Map<Strin
 
     // --- Map interface implementation (delegation) ---
 
+    /** {@inheritDoc} */
     @Override
     public int size() {
         return runtimes.size();
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isEmpty() {
         return runtimes.isEmpty();
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean containsKey(Object key) {
         return runtimes.containsKey(key);
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean containsValue(Object value) {
         return runtimes.containsValue(value);
     }
 
+    /** {@inheritDoc} */
     @Override
     public IRuntime<?, ?> get(Object key) {
         return runtimes.get(key);
     }
 
+    /**
+     * Unsupported: this registry is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public IRuntime<?, ?> put(String key, IRuntime<?, ?> value) {
         throw new UnsupportedOperationException("RuntimesRegistry is immutable");
     }
 
+    /**
+     * Unsupported: this registry is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public IRuntime<?, ?> remove(Object key) {
         throw new UnsupportedOperationException("RuntimesRegistry is immutable");
     }
 
+    /**
+     * Unsupported: this registry is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void putAll(Map<? extends String, ? extends IRuntime<?, ?>> m) {
         throw new UnsupportedOperationException("RuntimesRegistry is immutable");
     }
 
+    /**
+     * Unsupported: this registry is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void clear() {
         throw new UnsupportedOperationException("RuntimesRegistry is immutable");
     }
 
+    /** {@inheritDoc} */
     @Override
     public Set<String> keySet() {
         return runtimes.keySet();
     }
 
+    /** {@inheritDoc} */
     @Override
     public Collection<IRuntime<?, ?>> values() {
         return runtimes.values();
     }
 
+    /** {@inheritDoc} */
     @Override
     public Set<Entry<String, IRuntime<?, ?>>> entrySet() {
         return runtimes.entrySet();

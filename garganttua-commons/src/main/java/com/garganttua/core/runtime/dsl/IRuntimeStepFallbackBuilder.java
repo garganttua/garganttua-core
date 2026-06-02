@@ -46,7 +46,6 @@ import com.garganttua.core.runtime.IRuntimeStepFallbackBinder;
  *                 .name("handleValidationError")
  *                 .parameter(Exception.class)
  *                 .onException(IllegalArgumentException.class)
- *                 .fromStage("validation")
  *                 .fromStep("validateAmount")
  *                 .end()
  *                 .output(true)

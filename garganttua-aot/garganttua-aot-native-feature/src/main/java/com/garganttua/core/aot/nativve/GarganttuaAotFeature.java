@@ -38,11 +38,34 @@ import com.garganttua.core.reflection.IClass;
  */
 public class GarganttuaAotFeature implements Feature {
 
+    /**
+     * Returns the human-readable label shown by native-image when this feature
+     * is active.
+     *
+     * @return a short description of what the feature registers
+     */
     @Override
     public String getDescription() {
         return "Registers garganttua-core AOT descriptors with RuntimeReflection";
     }
 
+    /**
+     * Mirrors every AOT descriptor and every {@code @Reflected}-indexed class
+     * into the native-image reflection configuration before closed-world
+     * analysis begins.
+     *
+     * <p>Triggers {@link AOTReflectionProvider}'s static initialiser to populate
+     * the {@link AOTRegistry}, marks the descriptor classes as
+     * initialize-at-build-time, registers each resolved class plus its members
+     * with {@link RuntimeReflection}, then performs a second pass over the
+     * compile-time {@code @Reflected} index. Unresolvable class names are
+     * skipped rather than failing the build.
+     *
+     * @param access the native-image build-time access used to resolve classes
+     *               and the application class loader
+     * @throws IllegalStateException if {@link AOTReflectionProvider} is absent
+     *               from the native-image build classpath
+     */
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         // Trigger AOTReflectionProvider's <clinit>, which runs

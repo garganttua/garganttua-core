@@ -72,7 +72,7 @@ public class ObjectAddress implements Cloneable {
         log.trace("Entering ObjectAddress constructor with address='{}', detectLoops={}", address, detectLoops);
         this.detectLoops = detectLoops;
         if (address == null || address.startsWith(".") || address.endsWith(".") || address.isEmpty()) {
-            log.error("Invalid address: '{}'", address);
+            log.debug("Invalid address: '{}'", address);
             throw new IllegalArgumentException("Address cannot start or end with a dot, or be empty");
         }
         this.fields = address.split("\\.");

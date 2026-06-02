@@ -27,6 +27,12 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Maps a collection field by recursively mapping each source element into the
+ * destination collection's generic element type. Instantiates a concrete
+ * destination collection (preserving the declared type where possible) and adds
+ * the mapped elements one by one.
+ */
 public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(MapableCollectionMappingExecutor.class);
 
@@ -48,6 +54,16 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 	@SuppressWarnings("rawtypes")
 	private final IClass<Collection> collectionClass;
 
+	/**
+	 * Creates an executor that recursively maps each element of the collection in
+	 * {@code sourceField} into {@code destinationField}.
+	 *
+	 * @param reflection the reflection facade used for type resolution and instantiation
+	 * @param mapper the mapper used to recursively map collection elements
+	 * @param sourceField the collection field to read from the source object
+	 * @param destinationField the collection field to write on the destination object
+	 * @throws ReflectionException if the field accessors or collection types cannot be resolved
+	 */
 	public MapableCollectionMappingExecutor(IReflection reflection, IMapper mapper, IField sourceField, IField destinationField) throws ReflectionException {
 		this.reflection = reflection;
 		this.mapper = mapper;
@@ -65,6 +81,11 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 		this.collectionClass = reflection.getClass(Collection.class);
 	}
 
+	/**
+	 * Maps the collection using the bare mapper (no shared recursion scope).
+	 *
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException {
@@ -80,6 +101,13 @@ public class MapableCollectionMappingExecutor implements IMappingRuleExecutor {
 		};
 	}
 
+	/**
+	 * Maps the collection using the supplied recursion scope, which carries cycle
+	 * detection across the mapping boundary.
+	 *
+	 * @param recursion the shared recursion scope to delegate element mapping to
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject, IMappingRecursion recursion) throws MapperException {

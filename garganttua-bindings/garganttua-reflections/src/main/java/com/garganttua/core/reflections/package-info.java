@@ -18,16 +18,16 @@
  * // Create scanner
  * ReflectionsAnnotationScanner scanner = new ReflectionsAnnotationScanner();
  *
- * // Scan for classes with @Inject annotation
- * Set<Class<?>> injectableClasses = scanner.findAnnotatedClasses(
+ * // Scan a package for classes annotated with @Inject
+ * List<IClass<?>> injectableClasses = scanner.getClassesWithAnnotation(
  *     "com.myapp",
- *     Inject.class
+ *     IClass.getClass(Inject.class)
  * );
  *
- * // Scan for classes with @RuntimeDefinition
- * Set<Class<?>> runtimeClasses = scanner.findAnnotatedClasses(
- *     "com.myapp.runtimes",
- *     RuntimeDefinition.class
+ * // Scan a package for methods annotated with @Expression
+ * List<IMethod> expressionMethods = scanner.getMethodsWithAnnotation(
+ *     "com.myapp.expressions",
+ *     IClass.getClass(Expression.class)
  * );
  * }</pre>
  *

@@ -32,6 +32,17 @@ public class ScriptVariableResolver implements ForLoopExpressionNode.VariableSet
     private static final IClass<Object> OBJECT_CLASS = IClass.getClass(Object.class);
     private static final IClass<Integer> INTEGER_CLASS = IClass.getClass(Integer.class);
 
+    /**
+     * Resolves a script variable reference against the current runtime context.
+     * Handles positional arguments ({@code $0, $1, ...}), the special
+     * {@code code} and {@code output} names, and ordinary context variables.
+     *
+     * @param name the variable name (without the {@code @}/{@code .} sigil)
+     * @param type the expected value type used for casting/assignability checks
+     * @param <T>  the resolved value type
+     * @return the resolved value, or {@link Optional#empty()} when absent, the
+     *         context is missing, or the value is not assignable to {@code type}
+     */
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<T> resolve(String name, IClass<T> type) {
@@ -88,6 +99,14 @@ public class ScriptVariableResolver implements ForLoopExpressionNode.VariableSet
         return context.getVariable(name, type);
     }
 
+    /**
+     * Assigns a value to a script variable in the current runtime context.
+     * The special name {@code output} sets the context output instead of a
+     * named variable. No-op when there is no active context.
+     *
+     * @param name  the variable name (or {@code output})
+     * @param value the value to assign; a {@code null} {@code output} value is ignored
+     */
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void setVariable(String name, Object value) {

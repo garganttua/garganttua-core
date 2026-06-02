@@ -146,6 +146,13 @@ public class ScriptPackageMojo extends AbstractMojo {
     @Parameter(property = "scanPackages")
     private List<String> scanPackages;
 
+    /**
+     * Collects the configured and auto-detected Garganttua packages and exposes them
+     * for the {@code maven-jar-plugin} so the {@code Garganttua-Packages} manifest
+     * attribute is added to the project JAR during the package phase.
+     *
+     * @throws MojoExecutionException if package auto-detection fails
+     */
     @Override
     public void execute() throws MojoExecutionException {
         getLog().info("Garganttua Script Maven Plugin - Preparing JAR for script inclusion");

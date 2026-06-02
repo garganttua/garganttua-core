@@ -11,7 +11,7 @@
  *
  * <h2>Main Classes</h2>
  * <ul>
- *   <li>{@code SpringAnnotationScanner} - Annotation scanner using Spring's scanning infrastructure</li>
+ *   <li>{@link com.garganttua.core.spring.SpringAnnotationScanner} - Annotation scanner using Spring's scanning infrastructure</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -19,16 +19,16 @@
  * // Create scanner
  * SpringAnnotationScanner scanner = new SpringAnnotationScanner();
  *
- * // Scan for classes with @Inject annotation
- * Set<Class<?>> injectableClasses = scanner.findAnnotatedClasses(
- *     "com.myapp",
- *     Inject.class
+ * // Scan a package for classes carrying an annotation
+ * List<IClass<?>> serviceClasses = scanner.getClassesWithAnnotation(
+ *     "com.myapp.services",
+ *     IClass.getClass(Service.class)
  * );
  *
- * // Scan for stereotype annotations
- * Set<Class<?>> serviceClasses = scanner.findAnnotatedClasses(
- *     "com.myapp.services",
- *     Service.class
+ * // Scan a package for methods carrying an annotation
+ * List<IMethod> scheduledMethods = scanner.getMethodsWithAnnotation(
+ *     "com.myapp",
+ *     IClass.getClass(Scheduled.class)
  * );
  * }</pre>
  *

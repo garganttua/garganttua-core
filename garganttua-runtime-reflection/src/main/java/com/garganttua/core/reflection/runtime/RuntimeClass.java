@@ -40,14 +40,34 @@ public class RuntimeClass<T> implements IClass<T> {
 	}
 
 
+	/**
+	 * Returns the cached {@link RuntimeClass} mirror for the given raw class,
+	 * creating it on first request.
+	 *
+	 * @param <T>   the wrapped type
+	 * @param clazz the raw class to wrap
+	 * @return the shared {@code RuntimeClass} instance for {@code clazz}
+	 */
 	public static <T> RuntimeClass<T> of(Class<T> clazz) {
 		return (RuntimeClass<T>) CACHE.computeIfAbsent(clazz, RuntimeClass::new);
 	}
 
+	/**
+	 * Wildcard-typed variant of {@link #of(Class)} for use when the wrapped
+	 * type is not statically known.
+	 *
+	 * @param clazz the raw class to wrap
+	 * @return the shared {@code RuntimeClass} instance for {@code clazz}
+	 */
 	public static RuntimeClass<?> ofUnchecked(Class<?> clazz) {
 		return CACHE.computeIfAbsent(clazz, k -> new RuntimeClass<>(k));
 	}
 
+	/**
+	 * Returns the underlying JDK {@link Class} this mirror wraps.
+	 *
+	 * @return the wrapped raw class
+	 */
 	public Class<T> unwrap() {
 		return clazz;
 	}
@@ -529,6 +549,14 @@ public class RuntimeClass<T> implements IClass<T> {
 
 	// --- Utility ---
 
+	/**
+	 * Extracts the underlying raw {@link Class} from an {@link IClass} mirror.
+	 *
+	 * @param iclass the mirror to unwrap, may be {@code null}
+	 * @return the raw class, or {@code null} if {@code iclass} is {@code null}
+	 * @throws IllegalArgumentException if {@code iclass} is not a {@code RuntimeClass}
+	 *         and its {@link IClass#getType()} is not a raw {@code Class}
+	 */
 	public static Class<?> unwrapClass(IClass<?> iclass) {
 		if (iclass == null) return null;
 		if (iclass instanceof RuntimeClass<?> rc) return rc.clazz;
@@ -538,6 +566,14 @@ public class RuntimeClass<T> implements IClass<T> {
 				+ " — getType() returned non-Class Type: " + t);
 	}
 
+	/**
+	 * Unwraps an array of {@link IClass} mirrors into their raw {@link Class}
+	 * counterparts, preserving order.
+	 *
+	 * @param iclasses the mirrors to unwrap, may be {@code null}
+	 * @return a parallel array of raw classes; an empty array if {@code iclasses}
+	 *         is {@code null}
+	 */
 	public static Class<?>[] unwrapClasses(IClass<?>[] iclasses) {
 		if (iclasses == null) return new Class<?>[0];
 		Class<?>[] result = new Class<?>[iclasses.length];
@@ -547,6 +583,13 @@ public class RuntimeClass<T> implements IClass<T> {
 		return result;
 	}
 
+	/**
+	 * Unwraps an annotation-type {@link IClass} mirror into its raw {@link Class}.
+	 *
+	 * @param <A>    the annotation type
+	 * @param iclass the annotation mirror to unwrap
+	 * @return the raw annotation class
+	 */
 	@SuppressWarnings("unchecked")
 	public static <A extends Annotation> Class<A> unwrapAnnotationClass(IClass<A> iclass) {
 		return (Class<A>) unwrapClass(iclass);

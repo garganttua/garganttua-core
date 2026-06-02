@@ -9,6 +9,10 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.IReflection;
 
+/**
+ * JVM runtime-reflection implementation of {@link IParameter}, wrapping a JDK
+ * {@link Parameter}.
+ */
 public class RuntimeParameter implements IParameter {
 
 	private final Parameter parameter;
@@ -17,10 +21,21 @@ public class RuntimeParameter implements IParameter {
 		this.parameter = parameter;
 	}
 
+	/**
+	 * Wraps the given JDK parameter in a new mirror.
+	 *
+	 * @param parameter the JDK parameter to wrap
+	 * @return a {@code RuntimeParameter} mirror of {@code parameter}
+	 */
 	public static RuntimeParameter of(Parameter parameter) {
 		return new RuntimeParameter(parameter);
 	}
 
+	/**
+	 * Returns the underlying JDK {@link Parameter} this mirror wraps.
+	 *
+	 * @return the wrapped parameter
+	 */
 	public Parameter unwrap() {
 		return parameter;
 	}

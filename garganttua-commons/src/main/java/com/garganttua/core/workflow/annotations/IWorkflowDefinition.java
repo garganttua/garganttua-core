@@ -21,6 +21,10 @@ public interface IWorkflowDefinition {
      * Configure the supplied workflow builder. The builder is already named
      * (from {@link WorkflowDefinition#name()}) and has its Bootstrap-injected
      * dependencies; the implementation only adds stages/scripts/variables.
+     *
+     * @param workflowBuilder the workflow builder to populate, passed as
+     *                        {@code Object} and cast by the implementation to
+     *                        {@code com.garganttua.core.workflow.dsl.IWorkflowBuilder}
      */
     void define(Object workflowBuilder);
 }

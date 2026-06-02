@@ -39,6 +39,18 @@ public class AOTConstructor<T> implements IConstructor<T> {
     private volatile IClass<?>[] resolvedExceptionTypes;
     private volatile Constructor<?> resolvedConstructor;
 
+    /**
+     * Creates an AOT constructor descriptor from pre-computed metadata.
+     *
+     * <p>All arrays are defensively cloned; {@code null} arrays are normalised to
+     * empty ones. The live {@link Constructor} is resolved lazily on first use.</p>
+     *
+     * @param declaringClassName binary name of the declaring class
+     * @param parameterTypeNames binary names of the parameter types, in order
+     * @param parameterNames the parameter names, in order (may be shorter than the types)
+     * @param annotations the declared annotations present on the constructor
+     * @param exceptionTypeNames binary names of the declared checked exception types
+     */
     public AOTConstructor(String declaringClassName, String[] parameterTypeNames,
                           String[] parameterNames, int modifiers,
                           Annotation[] annotations, boolean varArgs,

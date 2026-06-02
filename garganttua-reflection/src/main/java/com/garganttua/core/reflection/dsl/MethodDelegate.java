@@ -17,6 +17,16 @@ import com.garganttua.core.reflection.methods.MethodInvoker;
 import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 
+/**
+ * Method lookup, resolution, and invocation delegate for {@link CompositeReflection}.
+ *
+ * <p>
+ * Finds methods by name or annotation across the class hierarchy, resolves them
+ * by signature via {@link MethodResolver}, and invokes them (including deep
+ * address-based invocation) through {@link MethodInvoker}, wrapping failures in
+ * a {@link ReflectionException}.
+ * </p>
+ */
 class MethodDelegate {
     private static final Logger log = Logger.getLogger(MethodDelegate.class);
 

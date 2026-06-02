@@ -14,6 +14,8 @@ import java.util.List;
 public interface IClassLoaderRebuildHook {
 
     /**
+     * Invoked after a JAR has been loaded into the classpath.
+     *
      * @param packages packages discovered in the JAR's manifest (may be empty)
      * @throws Exception any error; the manager wraps it in
      *                   {@link ClassLoaderException}

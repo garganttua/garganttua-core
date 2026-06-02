@@ -14,6 +14,15 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.TypeUtils;
 
+/**
+ * Type-introspection delegate for {@link CompositeReflection}.
+ *
+ * <p>
+ * Converts {@link Type} instances to {@link IClass} mirrors, compares types for
+ * structural equality, inspects generics, and classifies types (complex,
+ * collection/map/array, interface implementation).
+ * </p>
+ */
 class TypeDelegate {
     private static final Logger log = Logger.getLogger(TypeDelegate.class);
 

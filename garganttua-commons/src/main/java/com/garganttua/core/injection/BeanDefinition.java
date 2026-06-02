@@ -28,29 +28,22 @@ import com.garganttua.core.reflection.binders.IConstructorBinder;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create a complete bean definition
  * BeanDefinition<MyService> definition = new BeanDefinition<>(
- *         MyService.class,
- *         Optional.of(BeanStrategy.SINGLETON),
- *         Optional.of("myService"),
- *         Set.of(Primary.class),
+ *         reference,
  *         Optional.of(constructorBinder),
  *         Set.of(postConstructBuilder),
  *         Set.of(fieldBuilder));
  *
- * // Create an example for querying
- * BeanDefinition<MyService> query = BeanDefinition.example(
- *         MyService.class,
- *         Optional.of(BeanStrategy.SINGLETON),
- *         Optional.empty(),
- *         Set.of(Primary.class));
- *
- * // Check if a definition matches the query
- * if (definition.matches(query)) {
+ * // Match its reference against a query reference
+ * if (definition.reference().matches(query)) {
  *     // Beans match
  * }
+ *
+ * // Collect all dependency types for resolution ordering
+ * Set<IClass<?>> deps = definition.dependencies();
  * }</pre>
  *
  * @param <Bean>                            the type of bean this definition

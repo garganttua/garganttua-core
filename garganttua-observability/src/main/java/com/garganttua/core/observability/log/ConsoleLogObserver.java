@@ -35,6 +35,13 @@ public final class ConsoleLogObserver implements IObserver<ObservableEvent> {
         this.formatter = Objects.requireNonNull(formatter, "formatter");
     }
 
+    /**
+     * Format {@code event} and print it as one line to the configured stream.
+     * Null events are ignored; the write is synchronized so concurrent
+     * producers cannot interleave bytes.
+     *
+     * @param event the event to render, may be {@code null}
+     */
     @Override
     public void onEvent(ObservableEvent event) {
         if (event == null) {
@@ -46,6 +53,12 @@ public final class ConsoleLogObserver implements IObserver<ObservableEvent> {
         }
     }
 
+    /**
+     * Start building a {@link ConsoleLogObserver}.
+     *
+     * @return a fresh {@link Builder} defaulting to {@link System#out} and
+     *         {@link PlainTextEventFormatter}
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -77,6 +90,11 @@ public final class ConsoleLogObserver implements IObserver<ObservableEvent> {
             return this;
         }
 
+        /**
+         * Build the configured {@link ConsoleLogObserver}.
+         *
+         * @return a new immutable observer
+         */
         public ConsoleLogObserver build() {
             return new ConsoleLogObserver(this.stream, this.formatter);
         }

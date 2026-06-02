@@ -19,7 +19,7 @@ import java.util.Optional;
  * IBeanQuery<MyService> query = builder
  *     .type(MyService.class)
  *     .name("primaryService")
- *     .strategy(BeanStrategy.SINGLETON)
+ *     .strategy(BeanStrategy.singleton)
  *     .build();
  *
  * // Execute the query

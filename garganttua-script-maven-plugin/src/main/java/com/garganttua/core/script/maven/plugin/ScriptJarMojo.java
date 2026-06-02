@@ -167,6 +167,13 @@ public class ScriptJarMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.resources[0].directory}", readonly = true)
     private File resourcesDirectory;
 
+    /**
+     * Builds the script-includable JAR by collecting the configured and auto-detected
+     * Garganttua packages, writing them into the {@code Garganttua-Packages} manifest
+     * attribute, and attaching the resulting JAR as the project artifact.
+     *
+     * @throws MojoExecutionException if package auto-detection or JAR creation fails
+     */
     @Override
     public void execute() throws MojoExecutionException {
         getLog().info("Garganttua Script Maven Plugin - Creating script-includable JAR");

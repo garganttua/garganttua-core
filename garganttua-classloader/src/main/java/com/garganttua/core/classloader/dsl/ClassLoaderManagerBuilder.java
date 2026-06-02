@@ -28,10 +28,21 @@ public class ClassLoaderManagerBuilder implements IClassLoaderManagerBuilder {
         log.trace("ClassLoaderManagerBuilder created");
     }
 
+    /**
+     * Creates a new, unconfigured builder instance.
+     *
+     * @return a fresh {@link IClassLoaderManagerBuilder}
+     */
     public static IClassLoaderManagerBuilder builder() {
         return new ClassLoaderManagerBuilder();
     }
 
+    /**
+     * Builds a {@link ClassLoaderManager} with no hooks registered.
+     *
+     * @return the built {@link IClassLoaderManager}
+     * @throws DslException if construction fails
+     */
     @Override
     public IClassLoaderManager build() throws DslException {
         log.debug("Building ClassLoaderManager");

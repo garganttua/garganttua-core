@@ -43,8 +43,10 @@ public interface IWorkflowBuilder extends IDependentBuilder<IWorkflowBuilder, IW
 
     /**
      * Navigate back to the {@link IWorkflowsBuilder} that opened this child.
-     * Throws if this builder was created outside of a {@code WorkflowsBuilder}
-     * context.
+     *
+     * @return the parent workflows builder
+     * @throws IllegalStateException if this builder was created outside of a
+     *                               {@code WorkflowsBuilder} context
      */
     IWorkflowsBuilder up();
 

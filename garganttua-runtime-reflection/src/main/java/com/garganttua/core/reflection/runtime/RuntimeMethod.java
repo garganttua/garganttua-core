@@ -15,6 +15,10 @@ import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ITypeVariable;
 
+/**
+ * JVM runtime-reflection implementation of {@link IMethod}, wrapping a JDK
+ * {@link Method}. Instances are cached and shared per underlying method.
+ */
 public class RuntimeMethod implements IMethod {
 
 	private static final ConcurrentHashMap<Method, RuntimeMethod> CACHE = new ConcurrentHashMap<>();
@@ -25,14 +29,33 @@ public class RuntimeMethod implements IMethod {
 		this.method = method;
 	}
 
+	/**
+	 * Returns the cached mirror for the given JDK method, creating it on first
+	 * request.
+	 *
+	 * @param method the JDK method to wrap
+	 * @return the shared {@code RuntimeMethod} for {@code method}
+	 */
 	public static RuntimeMethod of(Method method) {
 		return CACHE.computeIfAbsent(method, RuntimeMethod::new);
 	}
 
+	/**
+	 * Returns the underlying JDK {@link Method} this mirror wraps.
+	 *
+	 * @return the wrapped method
+	 */
 	public Method unwrap() {
 		return method;
 	}
 
+	/**
+	 * Extracts the underlying JDK {@link Method} from an {@link IMethod} mirror.
+	 *
+	 * @param imethod the mirror to unwrap
+	 * @return the wrapped method
+	 * @throws IllegalArgumentException if {@code imethod} is not a {@code RuntimeMethod}
+	 */
 	public static Method unwrap(IMethod imethod) {
 		if (imethod instanceof RuntimeMethod rm) return rm.method;
 		throw new IllegalArgumentException("Cannot unwrap non-RuntimeMethod IMethod: " + imethod.getClass());

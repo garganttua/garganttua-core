@@ -11,6 +11,19 @@ import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.IContextualSupply;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for creating {@link ContextualSupplier} instances.
+ *
+ * <p>
+ * This builder wires an {@link IContextualSupply} together with the supplied and
+ * context types to produce a context-aware supplier.
+ * </p>
+ *
+ * @param <Supplied> the type of object supplied by the built supplier
+ * @param <Context> the type of context consumed when supplying
+ * @since 2.0.0-ALPHA01
+ * @see ContextualSupplier
+ */
 @Reflected
 public class ContextualSupplierBuilder<Supplied, Context> implements ISupplierBuilder<Supplied, IContextualSupplier<Supplied, Context>> {
     private static final Logger log = Logger.getLogger(ContextualSupplierBuilder.class);
@@ -19,6 +32,13 @@ public class ContextualSupplierBuilder<Supplied, Context> implements ISupplierBu
     private IClass<Supplied> suppliedClass;
     private IClass<Context> contextClass;
 
+    /**
+     * Creates a ContextualSupplierBuilder.
+     *
+     * @param supply the contextual supply function invoked at supply time
+     * @param suppliedClass the {@link IClass} of the supplied object
+     * @param contextClass the {@link IClass} of the context
+     */
     public ContextualSupplierBuilder(IContextualSupply<Supplied, Context> supply,
             IClass<Supplied> suppliedClass, IClass<Context> contextClass) {
         log.trace("Entering ContextualSupplierBuilder constructor with suppliedClass: {}, contextClass: {}", suppliedClass, contextClass);
@@ -38,6 +58,12 @@ public class ContextualSupplierBuilder<Supplied, Context> implements ISupplierBu
         return this.suppliedClass;
     }
 
+    /**
+     * Builds the configured {@link ContextualSupplier}.
+     *
+     * @return a new contextual supplier
+     * @throws DslException if the supplier cannot be constructed
+     */
     @Override
     public IContextualSupplier<Supplied, Context> build() throws DslException {
         log.trace("Entering build method");

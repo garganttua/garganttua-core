@@ -27,7 +27,7 @@ import com.garganttua.core.supply.ISupplier;
  *
  * @param <R> the type of value produced by this expression node
  * @see IExpressionNode
- * @see IExpressionNode
+ * @see IContextualEvaluate
  * @since 2.0.0-ALPHA01
  */
 @FunctionalInterface

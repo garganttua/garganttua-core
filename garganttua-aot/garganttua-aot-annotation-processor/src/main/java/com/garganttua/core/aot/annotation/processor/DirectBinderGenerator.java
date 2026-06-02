@@ -81,6 +81,12 @@ public class DirectBinderGenerator extends AbstractProcessor {
     private Messager messager;
     private boolean enabled;
 
+    /**
+     * Captures the {@link Messager} and reads the {@code garganttua.direct.binders}
+     * option, enabling generation only when it is set to {@code "true"}.
+     *
+     * @param processingEnv the processing environment supplied by the compiler
+     */
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
@@ -98,6 +104,15 @@ public class DirectBinderGenerator extends AbstractProcessor {
      *  so ServiceLoader (and GraalVM native-image) can discover them. */
     private final java.util.Set<String> generatedDescriptorFqns = new LinkedHashSet<>();
 
+    /**
+     * Generates AOT descriptors for {@code @Reflected} types (and auto-promoted
+     * {@code @Indexed}-meta types) each round, then writes the ServiceLoader
+     * descriptor once processing is over. Does nothing when generation is disabled.
+     *
+     * @param annotations the annotation types requested to be processed this round
+     * @param roundEnv     information about the current and prior rounds
+     * @return {@code false} — this processor never claims the annotations it reads
+     */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (!enabled) {

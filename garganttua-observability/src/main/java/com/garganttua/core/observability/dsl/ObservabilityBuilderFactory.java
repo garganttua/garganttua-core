@@ -15,6 +15,12 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class ObservabilityBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * Create a fresh {@link ObservabilityBuilder} for Bootstrap to register.
+     *
+     * @return a new, empty observability builder
+     * @throws DslException if the builder cannot be instantiated
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return ObservabilityBuilder.create();

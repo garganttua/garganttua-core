@@ -7,6 +7,16 @@ import java.util.Objects;
 
 import javax.crypto.SecretKey;
 
+/**
+ * Named container for a pair of {@link Key}s (encryption/signing and
+ * decryption/verification) generated for a single {@link IKeyAlgorithm}. A realm
+ * tracks an optional expiration date and a revocation flag, and exposes
+ * {@link #rotate()} to produce a fresh, version-incremented realm.
+ *
+ * <p>Realms are normally created via {@link KeyRealmBuilder}; the
+ * {@code fromSignatureMaterial} / {@code fromEncryptionMaterial} factories
+ * reconstruct a realm from persisted key bytes without regenerating.
+ */
 public class KeyRealm implements IKeyRealm {
     private static final Logger log = Logger.getLogger(KeyRealm.class);
 
@@ -157,6 +167,11 @@ public class KeyRealm implements IKeyRealm {
 		}
 	}
 
+	/**
+	 * {@return the private/secret key used for signing}
+	 *
+	 * @throws CryptoException if the realm is expired or revoked
+	 */
 	@Override
 	public IKey getKeyForSigning() throws CryptoException {
 		this.throwExceptionIfExpired();
@@ -164,6 +179,11 @@ public class KeyRealm implements IKeyRealm {
 		return this.encryptionKey;
 	}
 
+	/**
+	 * {@return the public/secret key used for signature verification}
+	 *
+	 * @throws CryptoException if the realm is expired or revoked
+	 */
 	@Override
 	public IKey getKeyForSignatureVerification() throws CryptoException {
 		this.throwExceptionIfExpired();
@@ -171,11 +191,22 @@ public class KeyRealm implements IKeyRealm {
 		return this.decryptionKey;
 	}
 
+	/**
+	 * {@return the key used for encryption (same key as {@link #getKeyForSigning()})}
+	 *
+	 * @throws CryptoException if the realm is expired or revoked
+	 */
 	@Override
 	public IKey getKeyForEncryption() throws CryptoException {
 		return this.getKeyForSigning();
 	}
 
+	/**
+	 * {@return the key used for decryption (same key as
+	 * {@link #getKeyForSignatureVerification()})}
+	 *
+	 * @throws CryptoException if the realm is expired or revoked
+	 */
 	@Override
 	public IKey getKeyForDecryption() throws CryptoException {
 		return this.getKeyForSignatureVerification();
@@ -193,42 +224,55 @@ public class KeyRealm implements IKeyRealm {
 		}
 	}
 
+	/** Marks this realm as revoked; subsequent key lookups will throw. */
 	@Override
 	public void revoke() {
 		this.revoked = true;
 		log.warn("Key realm {} has been revoked", this.name);
 	}
 
+	/** {@return {@code true} if an expiration date is set and now lies past it} */
 	@Override
 	public boolean isExpired() {
 		return this.expiration != null && new Date().after(this.expiration);
 	}
 
+	/** {@return the realm identifier} */
 	@Override
 	public String getName() {
 		return this.name;
 	}
 
+	/** {@return the algorithm this realm's keys were generated for} */
 	@Override
 	public IKeyAlgorithm getKeyAlgorithm() {
 		return this.keyAlgorithm;
 	}
 
+	/** {@return {@code true} if this realm has been revoked} */
 	@Override
 	public boolean isRevoked() {
 		return this.revoked;
 	}
 
+	/** {@return the absolute expiration date, or {@code null} if the realm never expires} */
 	@Override
 	public Date getExpiration() {
 		return this.expiration;
 	}
 
+	/** {@return this realm's version number, incremented on each {@link #rotate()}} */
 	@Override
 	public int getVersion() {
 		return this.version;
 	}
 
+	/**
+	 * Produces a new realm with freshly generated keys and an incremented version,
+	 * preserving the algorithm, expiration and cipher configuration.
+	 *
+	 * @return the rotated realm
+	 */
 	@Override
 	public IKeyRealm rotate() {
 		var rotated = new KeyRealm(this.name, this.keyAlgorithm, this.expiration, this.ivSize,

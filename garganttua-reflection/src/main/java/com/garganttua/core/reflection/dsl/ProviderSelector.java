@@ -6,6 +6,17 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
+/**
+ * Selects the effective {@link IReflectionProvider} among the registered ones.
+ *
+ * <p>
+ * For a single registered provider it short-circuits to that provider. Otherwise
+ * it returns the first provider whose {@link IReflectionProvider#supports(Class)}
+ * accepts the type, falling back to the highest-priority provider when none
+ * claims ownership. {@code forName} probes providers in order until one resolves
+ * the class.
+ * </p>
+ */
 class ProviderSelector implements IReflectionProvider {
     private static final Logger log = Logger.getLogger(ProviderSelector.class);
 

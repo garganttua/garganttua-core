@@ -30,6 +30,18 @@ public class AOTField implements IField {
     private volatile IClass<?> resolvedType;
     private volatile Field resolvedField;
 
+    /**
+     * Creates an AOT field descriptor from pre-computed metadata.
+     *
+     * <p>The {@code annotations} array is defensively cloned ({@code null} becomes
+     * empty). The live {@link Field} is resolved lazily on first get/set access.</p>
+     *
+     * @param name the field name
+     * @param declaringClassName binary name of the declaring class
+     * @param typeName binary name of the field type
+     * @param annotations the declared annotations present on the field
+     * @param genericType the declared generic type, or {@code null} to fall back to the raw type
+     */
     public AOTField(String name, String declaringClassName, String typeName,
                     int modifiers, Annotation[] annotations, Type genericType) {
         this.name = name;

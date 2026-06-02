@@ -9,6 +9,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.NullSupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * Builder for creating {@link NullSupplier} instances that always supply an
+ * empty value for a given type.
+ *
+ * @param <SuppliedType> the type the built supplier is declared to supply
+ * @since 2.0.0-ALPHA01
+ * @see NullSupplier
+ */
 @Reflected
 public class NullSupplierBuilder<SuppliedType>
         implements ISupplierBuilder<SuppliedType, ISupplier<SuppliedType>> {
@@ -16,12 +24,23 @@ public class NullSupplierBuilder<SuppliedType>
 
     private IClass<SuppliedType> suppliedClass;
 
+    /**
+     * Creates a NullSupplierBuilder.
+     *
+     * @param suppliedClass the {@link IClass} of the declared supplied type
+     */
     public NullSupplierBuilder(IClass<SuppliedType> suppliedClass) {
         log.trace("Entering NullSupplierBuilder constructor with suppliedClass: {}", suppliedClass);
         this.suppliedClass = suppliedClass;
         log.trace("Exiting NullSupplierBuilder constructor");
     }
 
+    /**
+     * Builds the configured {@link NullSupplier}.
+     *
+     * @return a new null-value supplier
+     * @throws DslException if the supplier cannot be constructed
+     */
     @Override
     public ISupplier<SuppliedType> build() throws DslException {
         log.trace("Entering build method");
@@ -47,6 +66,13 @@ public class NullSupplierBuilder<SuppliedType>
         return false;
     }
 
+    /**
+     * Static factory method for creating a NullSupplierBuilder.
+     *
+     * @param <SuppliedType> the declared supplied type
+     * @param suppliedClass the {@link IClass} of the declared supplied type
+     * @return a new builder instance
+     */
     public static <SuppliedType> NullSupplierBuilder<SuppliedType> of(IClass<SuppliedType> suppliedClass){
         log.trace("Entering static of method");
         log.debug("Creating NullSupplierBuilder for type: {}", suppliedClass.getSimpleName());

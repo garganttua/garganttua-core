@@ -4,6 +4,18 @@ import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.MalformedParameterizedTypeException;
 import java.lang.reflect.Type;
 
+/**
+ * Interface mirroring {@link java.lang.reflect.TypeVariable}.
+ *
+ * <p>
+ * Represents a type variable (e.g. the {@code T} in {@code List<T>}) and exposes its
+ * upper bounds, declaring element, and name. Runtime implementations wrap the actual
+ * {@code TypeVariable}; AOT implementations provide compile-time generated metadata.
+ * </p>
+ *
+ * @param <D> the type of {@link IGenericDeclaration} that declared this type variable
+ * @since 2.0.0-ALPHA01
+ */
 public interface ITypeVariable<D extends IGenericDeclaration> extends Type, IAnnotatedElement {
     /**
      * Returns an array of {@code Type} objects representing the

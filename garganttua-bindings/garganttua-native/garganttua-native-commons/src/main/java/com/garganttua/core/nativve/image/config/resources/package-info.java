@@ -10,33 +10,23 @@
  *
  * <h2>Main Classes</h2>
  * <ul>
- *   <li>{@code ResourceConfig} - Main resource configuration</li>
+ *   <li>{@link com.garganttua.core.nativve.image.config.resources.ResourceConfig} - static
+ *       utility for reading/writing {@code resource-config.json} include patterns</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
- * // Create resource configuration
- * ResourceConfig config = new ResourceConfig();
- *
- * // Add resource patterns
- * config.addPattern("application.properties");
- * config.addPattern("templates/all.html");
- * config.addPattern("static/all.css");
- * config.addPattern("static/all.js");
- *
- * // Add resource bundles
- * config.addBundle("messages");
- * config.addBundle("ValidationMessages");
- *
- * // Write to file
- * config.writeToFile("resource-config.json");
+ * // Add and remove resource include patterns directly in the config file
+ * ResourceConfig.addResource(resourceConfigFile, "application.properties");
+ * ResourceConfig.addResource(resourceConfigFile, userServiceClass);
+ * ResourceConfig.removeResource(resourceConfigFile, "application.properties");
  * }</pre>
  *
  * <h2>Features</h2>
  * <ul>
- *   <li>Resource pattern registration</li>
- *   <li>Resource bundle registration</li>
- *   <li>Glob pattern support</li>
+ *   <li>Resource pattern registration (literal-quoted)</li>
+ *   <li>Class-to-resource path conversion</li>
+ *   <li>Duplicate-safe add and idempotent remove</li>
  *   <li>JSON serialization</li>
  * </ul>
  *

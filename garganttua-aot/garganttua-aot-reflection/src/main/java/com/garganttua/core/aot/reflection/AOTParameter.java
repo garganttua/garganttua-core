@@ -28,6 +28,20 @@ public class AOTParameter implements IParameter {
     // Lazy resolution
     private volatile IClass<?> resolvedType;
 
+    /**
+     * Creates an AOT parameter descriptor from pre-computed metadata.
+     *
+     * <p>The {@code annotations} array is defensively cloned ({@code null} becomes
+     * empty). The parameter type is resolved lazily on first access.</p>
+     *
+     * @param name the parameter name
+     * @param typeName binary name of the parameter type
+     * @param namePresent whether a real name is present (vs. a synthetic {@code argN})
+     * @param implicit whether the parameter is implicitly declared
+     * @param synthetic whether the parameter is synthetic
+     * @param varArgs whether this is the trailing varargs parameter
+     * @param annotations the declared annotations present on the parameter
+     */
     public AOTParameter(String name, String typeName, int modifiers,
                         boolean namePresent, boolean implicit, boolean synthetic,
                         boolean varArgs, Annotation[] annotations) {

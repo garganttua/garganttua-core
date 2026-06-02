@@ -66,6 +66,15 @@ import com.garganttua.core.reflection.binders.dsl.IConstructorBinderBuilder;
 public interface IBeanConstructorBinderBuilder<Bean> extends
         IConstructorBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IConstructorBinder<Bean>>, Dependent {
 
+    /**
+     * Returns the bean types this constructor depends on, derived from its injected parameters.
+     *
+     * <p>
+     * Used by the DI container for resolution ordering and circular dependency detection.
+     * </p>
+     *
+     * @return the set of types this constructor requires for instantiation
+     */
     @Override
     Set<IClass<?>> dependencies();
 }

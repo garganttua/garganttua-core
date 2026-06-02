@@ -62,6 +62,15 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
     private L link;
     protected final DependentBuilderSupport support;
 
+    /**
+     * Constructs a linked dependent builder with the given parent and dependency
+     * specifications, merging any specs declared via annotations on the concrete class.
+     * Auto-detection is initially disabled.
+     *
+     * @param link the parent builder reachable via {@link #up()}
+     * @param dependencies the declared dependency specifications
+     * @throws NullPointerException if {@code link} is {@code null}
+     */
     protected AbstractAutomaticLinkedDependentBuilder(
             L link,
             Set<DependencySpec> dependencies) {
@@ -77,6 +86,11 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
         log.trace("Exiting AbstractAutomaticLinkedDependentBuilder constructor");
     }
 
+    /**
+     * Returns the parent builder this builder is linked to.
+     *
+     * @return the parent (link) builder
+     */
     @Override
     public L up() {
         log.trace("Entering up() method");
@@ -85,6 +99,13 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
         return this.link;
     }
 
+    /**
+     * Re-parents this builder to a new link.
+     *
+     * @param link the new parent builder
+     * @return this builder for method chaining
+     * @throws NullPointerException if {@code link} is {@code null}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public B setUp(L link) {
@@ -95,6 +116,13 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
         return (B) this;
     }
 
+    /**
+     * Supplies a concrete dependency builder instance to satisfy a declared dependency.
+     *
+     * @param dependency the dependency builder to provide
+     * @return this builder for method chaining
+     * @throws DslException if the dependency is not declared in {@link #use()} or {@link #require()}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public B provide(IObservableBuilder<?, ?> dependency) throws DslException {
@@ -102,16 +130,34 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
         return (B) this;
     }
 
+    /**
+     * Returns the classes of optional (use) dependencies declared by this builder.
+     *
+     * @return the set of optional dependency classes
+     */
     @Override
     public Set<IClass<? extends IObservableBuilder<?, ?>>> use() {
         return this.support.use();
     }
 
+    /**
+     * Returns the classes of required dependencies declared by this builder.
+     *
+     * @return the set of required dependency classes
+     */
     @Override
     public Set<IClass<? extends IObservableBuilder<?, ?>>> require() {
         return this.support.require();
     }
 
+    /**
+     * Builds the target object, running auto-detection (if enabled) and the
+     * pre-build and post-build dependency phases. The result is cached on
+     * first success and returned directly on subsequent calls.
+     *
+     * @return the built object
+     * @throws DslException if a dependency phase or {@code doBuild()} fails
+     */
     @Override
     public T build() throws DslException {
         log.trace("Entering build method");
@@ -181,26 +227,57 @@ public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder
 
     // --- Builder-kind hooks (DependencyKind.BUILDER) ------------------------
 
+    /**
+     * Configure-stage hook receiving the upstream BUILDER reference. No-op by
+     * default; override to react to a {@link DependencyKind#BUILDER} dependency
+     * during {@link DependencyStage#CONFIGURATION}. Must be idempotent.
+     *
+     * @param dependencyBuilder the upstream dependency builder
+     * @throws DslException if configuration fails
+     */
     protected void doConfigureWithDependencyBuilder(
             com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
         // no-op by default
     }
 
+    /**
+     * Orchestrator entry-point for the {@link DependencyStage#CONFIGURATION}
+     * stage, firing {@link #doConfigureWithDependencyBuilder} for each declared
+     * configuration-stage dependency.
+     *
+     * @throws DslException if a configuration hook fails
+     */
     @Override
     public void runConfigurationStage() throws DslException {
         this.support.processConfigurationDependencies(this::doConfigureWithDependencyBuilder);
     }
 
+    /**
+     * Auto-detect-stage hook receiving the upstream BUILDER reference. No-op by default.
+     *
+     * @param dependencyBuilder the upstream dependency builder
+     * @throws DslException if auto-detection fails
+     */
     protected void doAutoDetectionWithDependencyBuilder(
             com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) throws DslException {
         // no-op by default
     }
 
+    /**
+     * Pre-build-stage hook receiving the upstream BUILDER reference. No-op by default.
+     *
+     * @param dependencyBuilder the upstream dependency builder
+     */
     protected void doPreBuildWithDependencyBuilder(
             com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
         // no-op by default
     }
 
+    /**
+     * Post-build-stage hook receiving the upstream BUILDER reference. No-op by default.
+     *
+     * @param dependencyBuilder the upstream dependency builder
+     */
     protected void doPostBuildWithDependencyBuilder(
             com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder) {
         // no-op by default

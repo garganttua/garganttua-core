@@ -20,6 +20,16 @@ import com.garganttua.core.reflection.IMethod;
 
 import jakarta.annotation.Priority;
 
+/**
+ * {@link IAnnotationScanner} implementation backed by the
+ * <a href="https://github.com/ronmamo/reflections">Reflections</a> library.
+ *
+ * <p>Discovers classes and methods carrying a given annotation, optionally
+ * scoped to a package. {@link Reflections} instances are cached per package to
+ * avoid repeated full-classpath scans.
+ *
+ * <p>Registered as a cold-start SPI provider at {@link Priority} {@code 10}.
+ */
 @Priority(10)
 public class ReflectionsAnnotationScanner implements IAnnotationScanner {
     private static final Logger log = Logger.getLogger(ReflectionsAnnotationScanner.class);
@@ -57,11 +67,22 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
                 });
     }
 
+	/**
+	 * Returns all classes on the classpath annotated with {@code annotation}.
+	 *
+	 * @return the matching classes, never {@code null}
+	 */
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {
 		return getClassesWithAnnotation("", annotation);
 	}
 
+	/**
+	 * Returns the classes within {@code packageName} annotated with {@code annotation}.
+	 *
+	 * @param packageName package to scope the scan to; empty performs a global scan
+	 * @return the matching classes, never {@code null}
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<IClass<?>> getClassesWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
@@ -82,11 +103,25 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 		return result;
 	}
 
+	/**
+	 * Returns all methods on the classpath annotated with {@code annotation}.
+	 *
+	 * @return the matching methods, never {@code null}
+	 */
 	@Override
 	public List<IMethod> getMethodsWithAnnotation(IClass<? extends Annotation> annotation) {
 		return getMethodsWithAnnotation("", annotation);
 	}
 
+	/**
+	 * Returns the methods within {@code packageName} annotated with {@code annotation}.
+	 *
+	 * <p>Methods that cannot be resolved back through the {@link IClass} mirror are
+	 * skipped and logged rather than aborting the scan.
+	 *
+	 * @param packageName package to scope the scan to; empty performs a global scan
+	 * @return the matching methods, never {@code null}
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<IMethod> getMethodsWithAnnotation(String packageName, IClass<? extends Annotation> annotation) {
@@ -103,7 +138,7 @@ public class ReflectionsAnnotationScanner implements IAnnotationScanner {
 				IMethod found = IClass.getClass(method.getDeclaringClass()).getMethod(method.getName(), Arrays.stream(method.getParameterTypes()).map(IClass::getClass).toArray(IClass[]::new));
 				result.add(found);
 			} catch (NoSuchMethodException | SecurityException e) {
-				log.warn("Error", e);
+				log.warn("Skipping method '{}#{}' that could not be resolved", method.getDeclaringClass().getName(), method.getName(), e);
 			}
 		}
 

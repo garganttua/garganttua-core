@@ -23,6 +23,11 @@ public final class AOTRegistry implements IAOTRegistry {
     private AOTRegistry() {
     }
 
+    /**
+     * Returns the process-wide registry singleton.
+     *
+     * @return the shared {@code AOTRegistry} instance
+     */
     public static AOTRegistry getInstance() {
         return INSTANCE;
     }

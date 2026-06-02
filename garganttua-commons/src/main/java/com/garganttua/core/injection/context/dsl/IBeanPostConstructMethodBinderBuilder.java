@@ -71,6 +71,15 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 public interface IBeanPostConstructMethodBinderBuilder<Bean> extends
         IMethodBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>, Dependent {
 
+    /**
+     * Returns the bean types this post-construct method depends on, derived from its injected parameters.
+     *
+     * <p>
+     * Used by the DI container for resolution ordering and circular dependency detection.
+     * </p>
+     *
+     * @return the set of types this method requires for invocation
+     */
     @Override
     Set<IClass<?>> dependencies();
 

@@ -24,6 +24,22 @@ import com.garganttua.core.supply.FutureSupplier;
 import com.garganttua.core.supply.BlockingSupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+/**
+ * General-purpose builder that produces the appropriate {@link ISupplier}
+ * implementation from the configured value source.
+ *
+ * <p>
+ * Depending on which {@code withXxx(...)} method was called, {@link #build()}
+ * yields a future, blocking-queue, fixed, contextual, new-instance, or null
+ * supplier. Unless explicitly forbidden, the result is wrapped in a nullable
+ * guard reflecting the {@link #nullable(boolean)} setting.
+ * </p>
+ *
+ * @param <Supplied> the type of object supplied by the built supplier
+ * @since 2.0.0-ALPHA01
+ * @see ICommonSupplierBuilder
+ * @see ISupplier
+ */
 @Reflected
 public class SupplierBuilder<Supplied>
         implements ICommonSupplierBuilder<Supplied> {
@@ -39,6 +55,11 @@ public class SupplierBuilder<Supplied>
     private BlockingQueue<Supplied> blockingQueue;
     private Long timeoutMillis;
 
+    /**
+     * Creates a SupplierBuilder for the given supplied type.
+     *
+     * @param suppliedClass the {@link IClass} of the supplied object
+     */
     public SupplierBuilder(IClass<Supplied> suppliedClass) {
         log.trace("Entering SupplierBuilder constructor with suppliedClass={}", suppliedClass);
         this.suppliedClass = Objects.requireNonNull(suppliedClass, "Supplied class cannot be null");
@@ -61,6 +82,19 @@ public class SupplierBuilder<Supplied>
         return this.contextType != null;
     }
 
+    /**
+     * Builds the supplier matching the configured value source.
+     *
+     * <p>
+     * Source precedence is future, then blocking queue, then fixed value, then
+     * context, then constructor binder; if none is set a {@link NullSupplier} is
+     * produced. The result is wrapped in a nullable guard per
+     * {@link #nullable(boolean)}.
+     * </p>
+     *
+     * @return the constructed supplier
+     * @throws DslException if a context is set but the constructor binder is not contextual
+     */
     @SuppressWarnings({ "rawtypes" })
     @Override
     public ISupplier<Supplied> build() throws DslException {
@@ -131,12 +165,27 @@ public class SupplierBuilder<Supplied>
         return wrapNullable(supplier, true);
     }
 
+    /**
+     * Sets whether the built supplier is allowed to supply a null value.
+     *
+     * @param nullable {@code true} to permit null results
+     * @return this builder for chaining
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> nullable(boolean nullable) {
         this.nullable = Objects.requireNonNull(nullable, "Nullable cannot be null");
         return this;
     }
 
+    /**
+     * Configures a contextual supply source.
+     *
+     * @param <ContextType> the context type
+     * @param contextType the {@link IClass} of the context
+     * @param supply the contextual supply function
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public <ContextType> ICommonSupplierBuilder<Supplied> withContext(
             IClass<ContextType> contextType,
@@ -150,6 +199,13 @@ public class SupplierBuilder<Supplied>
 
     }
 
+    /**
+     * Configures a fixed value source.
+     *
+     * @param value the value to supply, may be {@code null}
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> withValue(Supplied value) throws DslException {
         log.trace("Entering withValue with value type={}", value != null ? value.getClass().getName() : "null");
@@ -159,6 +215,13 @@ public class SupplierBuilder<Supplied>
         return this;
     }
 
+    /**
+     * Configures a constructor binder used to create new instances at supply time.
+     *
+     * @param constructorBinder the constructor binder
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> withConstructor(
             IConstructorBinder<Supplied> constructorBinder)
@@ -180,21 +243,55 @@ public class SupplierBuilder<Supplied>
         return new NullableContextualSupplier<>(supplier, nullable);
     }
 
+    /**
+     * Creates a builder pre-configured with a fixed, non-null value.
+     *
+     * @param <T> the supplied type
+     * @param suppliedClass the {@link IClass} of the supplied object
+     * @param value the value to supply
+     * @return a configured builder
+     */
     public static <T> ICommonSupplierBuilder<T> fixed(IClass<T> suppliedClass, T value) {
         log.trace("Creating fixed supplier builder for type {}", suppliedClass);
         return new SupplierBuilder<>(suppliedClass).withValue(value).nullable(false);
     }
 
+    /**
+     * Creates a builder that produces new instances via a constructor binder.
+     *
+     * @param <T> the supplied type
+     * @param suppliedClass the {@link IClass} of the supplied object
+     * @param binder the constructor binder
+     * @return a configured builder
+     */
     public static <T> ICommonSupplierBuilder<T> newObject(IClass<T> suppliedClass, IConstructorBinder<T> binder) {
         log.trace("Creating newObject supplier builder for type {}", suppliedClass);
         return new SupplierBuilder<>(suppliedClass).withConstructor(binder);
     }
 
+    /**
+     * Creates a builder that produces a nullable {@link NullSupplier}.
+     *
+     * @param <T> the supplied type
+     * @param suppliedClass the {@link IClass} of the supplied object
+     * @return a configured builder
+     */
     public static <T> ICommonSupplierBuilder<T> nullObject(IClass<T> suppliedClass) {
         log.trace("Creating nullObject supplier builder for type {}", suppliedClass);
         return new SupplierBuilder<>(suppliedClass).nullable(true);
     }
 
+    /**
+     * Creates a builder configured with a contextual supply function.
+     *
+     * @param <T> the supplied type
+     * @param <C> the context type
+     * @param suppliedClass the {@link IClass} of the supplied object
+     * @param contextClass the {@link IClass} of the context
+     * @param supply the contextual supply function
+     * @return a configured builder
+     * @throws DslException if the configuration is invalid
+     */
     public static <T, C> ICommonSupplierBuilder<T> contextual(
             IClass<T> suppliedClass,
             IClass<C> contextClass,
@@ -203,6 +300,17 @@ public class SupplierBuilder<Supplied>
         return new SupplierBuilder<>(suppliedClass).withContext(contextClass, supply);
     }
 
+    /**
+     * Creates a builder that constructs new instances using a contextual
+     * constructor binder.
+     *
+     * @param <T> the supplied type
+     * @param <C> the context type
+     * @param suppliedClass the {@link IClass} of the supplied object
+     * @param contextClass the {@link IClass} of the context
+     * @param binder the contextual constructor binder
+     * @return a configured builder
+     */
     public static <T, C> ICommonSupplierBuilder<T> newContextual(
             IClass<T> suppliedClass,
             IClass<C> contextClass,
@@ -214,6 +322,14 @@ public class SupplierBuilder<Supplied>
         return builder;
     }
 
+    /**
+     * Configures an asynchronous source backed by a {@link CompletableFuture},
+     * with no timeout.
+     *
+     * @param future the future to await at supply time
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> withFuture(CompletableFuture<Supplied> future) throws DslException {
         log.trace("Entering withFuture with future");
@@ -223,6 +339,15 @@ public class SupplierBuilder<Supplied>
         return this;
     }
 
+    /**
+     * Configures an asynchronous source backed by a {@link CompletableFuture},
+     * awaited up to the given timeout.
+     *
+     * @param future the future to await at supply time
+     * @param timeoutMillis the timeout in milliseconds, or {@code null} for no timeout
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> withFuture(CompletableFuture<Supplied> future, Long timeoutMillis)
             throws DslException {
@@ -234,6 +359,13 @@ public class SupplierBuilder<Supplied>
         return this;
     }
 
+    /**
+     * Configures a {@link BlockingQueue} source with no timeout.
+     *
+     * @param queue the queue to poll at supply time
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> withBlockingQueue(BlockingQueue<Supplied> queue) throws DslException {
         log.trace("Entering withBlockingQueue with queue");
@@ -243,6 +375,14 @@ public class SupplierBuilder<Supplied>
         return this;
     }
 
+    /**
+     * Configures a {@link BlockingQueue} source polled up to the given timeout.
+     *
+     * @param queue the queue to poll at supply time
+     * @param timeoutMillis the timeout in milliseconds, or {@code null} for indefinite wait
+     * @return this builder for chaining
+     * @throws DslException if the configuration is invalid
+     */
     @Override
     public ICommonSupplierBuilder<Supplied> withBlockingQueue(BlockingQueue<Supplied> queue, Long timeoutMillis)
             throws DslException {

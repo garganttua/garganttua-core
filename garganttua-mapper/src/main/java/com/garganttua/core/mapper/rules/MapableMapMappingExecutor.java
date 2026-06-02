@@ -20,6 +20,12 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Maps a {@link java.util.Map} field by recursively mapping its keys and values
+ * into the destination map's generic key/value types. Keys or values whose
+ * source and destination types match are copied as-is; differing types are
+ * mapped through the {@link IMapper}.
+ */
 public class MapableMapMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(MapableMapMappingExecutor.class);
 
@@ -34,6 +40,16 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 	private final IClass<?> srcKeyType;
 	private final IClass<?> srcValueType;
 
+	/**
+	 * Creates an executor that recursively maps the entries of the map in
+	 * {@code sourceField} into {@code destinationField}.
+	 *
+	 * @param reflection the reflection facade used for generic type resolution and instantiation
+	 * @param mapper the mapper used to recursively map keys and values
+	 * @param sourceField the map field to read from the source object
+	 * @param destinationField the map field to write on the destination object
+	 * @throws ReflectionException if the field accessors cannot be resolved
+	 */
 	public MapableMapMappingExecutor(IReflection reflection, IMapper mapper, IField sourceField,
 			IField destinationField) throws ReflectionException {
 		this.reflection = reflection;
@@ -50,6 +66,11 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 		this.destValueType = getFieldGenericType(destinationField, 1, reflection);
 	}
 
+	/**
+	 * Maps the map entries using the bare mapper (no shared recursion scope).
+	 *
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject) throws MapperException {
@@ -65,6 +86,13 @@ public class MapableMapMappingExecutor implements IMappingRuleExecutor {
 		};
 	}
 
+	/**
+	 * Maps the map entries using the supplied recursion scope, which carries
+	 * cycle detection across the mapping boundary.
+	 *
+	 * @param recursion the shared recursion scope to delegate key/value mapping to
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject, IMappingRecursion recursion) throws MapperException {

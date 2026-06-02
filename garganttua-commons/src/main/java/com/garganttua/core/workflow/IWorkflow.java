@@ -77,6 +77,9 @@ public interface IWorkflow {
     WorkflowDescriptor getDescriptor();
 
     /**
+     * Indicates whether this workflow reuses a single pre-compiled script
+     * across executions.
+     *
      * @return {@code true} if this workflow was built with
      *         {@code WorkflowBuilder.precompile(true)} — the underlying script
      *         was parsed and its runtime built once at framework startup and

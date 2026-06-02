@@ -78,6 +78,15 @@ public final class FileLogObserver implements IObserver<ObservableEvent>, AutoCl
         }
     }
 
+    /**
+     * Format {@code event}, append it as one line to the file, and flush.
+     * Null events and events received after {@link #close()} are silently
+     * dropped; the write is synchronized so concurrent producers cannot
+     * interleave partial lines.
+     *
+     * @param event the event to render, may be {@code null}
+     * @throws UncheckedIOException if writing to the file fails
+     */
     @Override
     public void onEvent(ObservableEvent event) {
         if (event == null || this.closed.get()) {
@@ -102,6 +111,11 @@ public final class FileLogObserver implements IObserver<ObservableEvent>, AutoCl
         }
     }
 
+    /**
+     * Flush and release the underlying file handle. Idempotent; subsequent
+     * {@link #onEvent(ObservableEvent)} calls become silent no-ops. Flush and
+     * close failures are swallowed (best-effort) so closing never throws.
+     */
     @Override
     public void close() {
         if (!this.closed.compareAndSet(false, true)) {
@@ -135,6 +149,12 @@ public final class FileLogObserver implements IObserver<ObservableEvent>, AutoCl
         return this.closed.get();
     }
 
+    /**
+     * Start building a {@link FileLogObserver}.
+     *
+     * @return a fresh {@link Builder} defaulting to
+     *         {@link JsonLineEventFormatter} and append mode
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -177,6 +197,14 @@ public final class FileLogObserver implements IObserver<ObservableEvent>, AutoCl
             return this;
         }
 
+        /**
+         * Open the target file and build the {@link FileLogObserver}. Parent
+         * directories are created if missing.
+         *
+         * @return a new observer holding an open file handle
+         * @throws IllegalStateException if no path was set via {@link #path(Path)}
+         * @throws UncheckedIOException  if the file cannot be opened
+         */
         public FileLogObserver build() {
             if (this.path == null) {
                 throw new IllegalStateException("path must be set via .path(...) before build()");

@@ -42,6 +42,22 @@ public class AOTMethod implements IMethod {
     private volatile IClass<?>[] resolvedExceptionTypes;
     private volatile Method resolvedMethod;
 
+    /**
+     * Creates an AOT method descriptor from pre-computed metadata.
+     *
+     * <p>All arrays are defensively cloned; {@code null} arrays are normalised to
+     * empty ones. The live {@link Method} is resolved lazily on first invocation.</p>
+     *
+     * @param name the method name
+     * @param declaringClassName binary name of the declaring class
+     * @param returnTypeName binary name of the return type
+     * @param parameterTypeNames binary names of the parameter types, in order
+     * @param parameterNames the parameter names, in order (may be shorter than the types)
+     * @param annotations the declared annotations present on the method
+     * @param bridge whether the method is a bridge method
+     * @param defaultMethod whether the method is a {@code default} interface method
+     * @param exceptionTypeNames binary names of the declared checked exception types
+     */
     public AOTMethod(String name, String declaringClassName, String returnTypeName,
                      String[] parameterTypeNames, String[] parameterNames,
                      int modifiers, Annotation[] annotations,

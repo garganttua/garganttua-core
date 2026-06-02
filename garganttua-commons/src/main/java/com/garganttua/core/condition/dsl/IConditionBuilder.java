@@ -130,18 +130,27 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public interface IConditionBuilder extends ISupplierBuilder<ISupplier<Boolean>, ICondition> {
 
+    /**
+     * {@return the type supplied by the built condition, namely {@link ISupplier}}
+     */
     @SuppressWarnings("unchecked")
     @Override
     default Type getSuppliedType() {
         return (Class<ISupplier<Boolean>>) (Class<?>) ISupplier.class;
     }
 
+    /**
+     * {@return the {@link IClass} mirror of the supplied {@link ISupplier} type}
+     */
     @SuppressWarnings("unchecked")
     @Override
     default IClass<ISupplier<Boolean>> getSuppliedClass() {
         return (IClass<ISupplier<Boolean>>) (IClass<?>) IClass.getClass(ISupplier.class);
     }
 
+    /**
+     * {@return {@code false}; condition builders do not require evaluation context}
+     */
     @Override
     default boolean isContextual() {
         return false;

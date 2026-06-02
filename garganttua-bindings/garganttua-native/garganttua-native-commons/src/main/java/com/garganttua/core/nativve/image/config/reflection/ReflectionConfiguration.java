@@ -13,11 +13,22 @@ import com.garganttua.core.nativve.IReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * In-memory model of a GraalVM {@code reflect-config.json} file: a mutable list of
+ * {@link ReflectConfigEntry} entries that can be loaded from and saved to JSON.
+ */
 public class ReflectionConfiguration implements IReflectionConfiguration{
     private static final Logger log = Logger.getLogger(ReflectionConfiguration.class);
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
+	/**
+	 * Loads a reflection configuration from a JSON file. If the file cannot be read,
+	 * an empty configuration is returned rather than throwing.
+	 *
+	 * @param file the {@code reflect-config.json} file to read
+	 * @return a configuration populated from {@code file}, or an empty one on read failure
+	 */
 	public static ReflectionConfiguration loadFromFile(File file) {
 		log.trace("Entering loadFromFile with file: {}", file);
 		List<IReflectionConfigurationEntry> entries;
@@ -38,6 +49,11 @@ public class ReflectionConfiguration implements IReflectionConfiguration{
 
 	private List<IReflectionConfigurationEntry> entries;
 
+	/**
+	 * Returns the live list of reflection entries.
+	 *
+	 * @return the configured entries
+	 */
 	public List<IReflectionConfigurationEntry> getEntries() {
 		return entries;
 	}

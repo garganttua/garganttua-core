@@ -16,6 +16,11 @@ public class RuntimeAnnotatedType implements IAnnotatedType {
 
 	private final AnnotatedType delegate;
 
+	/**
+	 * Wraps the given JDK {@link AnnotatedType}.
+	 *
+	 * @param delegate the JDK annotated type to wrap
+	 */
 	public RuntimeAnnotatedType(AnnotatedType delegate) {
 		this.delegate = delegate;
 	}

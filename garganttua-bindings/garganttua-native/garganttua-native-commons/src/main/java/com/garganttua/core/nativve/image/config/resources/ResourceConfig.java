@@ -15,11 +15,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
+/**
+ * Utility for reading and writing GraalVM {@code resource-config.json} files,
+ * adding and removing literal-quoted ({@code \\Q...\\E}) include patterns for
+ * classes and arbitrary resource paths.
+ */
 public class ResourceConfig {
     private static final Logger log = Logger.getLogger(ResourceConfig.class);
 
 private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+
+    /**
+     * Adds the {@code .class} resource path of the given class to the resource config.
+     *
+     * @param resourceConfigFile the {@code resource-config.json} file to update
+     * @param clazz the class whose compiled resource should be included
+     * @throws IOException if the file cannot be read or written
+     */
     public static void addResource(File resourceConfigFile, IClass<?> clazz) throws IOException {
         log.trace("Entering addResource with file: {} and class: {}", resourceConfigFile, clazz.getName());
         String classPath = clazz.getName().replace('.', '/') + ".class";
@@ -28,6 +40,14 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
         log.trace("Exiting addResource");
     }
 
+	/**
+	 * Adds a resource include pattern to the resource config, creating the file's
+	 * {@code resources.includes} structure as needed and skipping duplicates.
+	 *
+	 * @param resourceConfigFile the {@code resource-config.json} file to update
+	 * @param resource the resource path to include (wrapped as a literal-quoted pattern)
+	 * @throws IOException if the file cannot be read or written
+	 */
 	public static void addResource(File resourceConfigFile, String resource)
 			throws IOException, StreamReadException, DatabindException, StreamWriteException {
 		log.trace("Entering addResource with file: {} and resource: {}", resourceConfigFile, resource);
@@ -58,6 +78,13 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
 		log.trace("Exiting addResource");
 	}
 
+    /**
+     * Removes the {@code .class} resource path of the given class from the resource config.
+     *
+     * @param resourceConfigFile the {@code resource-config.json} file to update
+     * @param clazz the class whose compiled resource should be removed
+     * @throws IOException if the file cannot be read or written
+     */
     public static void removeResource(File resourceConfigFile, IClass<?> clazz) throws IOException {
         log.trace("Entering removeResource with file: {} and class: {}", resourceConfigFile, clazz.getName());
         String classPath = clazz.getName().replace('.', '/') + ".class";
@@ -66,6 +93,14 @@ private static final ObjectMapper objectMapper = new ObjectMapper();
         log.trace("Exiting removeResource");
     }
 
+	/**
+	 * Removes a resource include pattern from the resource config. No-ops when the
+	 * file is missing, empty, lacks an {@code includes} section, or has no match.
+	 *
+	 * @param resourceConfigFile the {@code resource-config.json} file to update
+	 * @param resource the resource path to remove (matched as a literal-quoted pattern)
+	 * @throws IOException if the file cannot be read or written
+	 */
 	public static void removeResource(File resourceConfigFile, String resource)
 			throws IOException, StreamReadException, DatabindException, StreamWriteException {
 		log.trace("Entering removeResource with file: {} and resource: {}", resourceConfigFile, resource);

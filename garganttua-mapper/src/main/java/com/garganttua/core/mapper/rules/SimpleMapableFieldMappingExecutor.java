@@ -16,6 +16,11 @@ import com.garganttua.core.reflection.fields.FieldAccessor;
 import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
+/**
+ * Maps a single field whose value is itself a mappable (nested) object by
+ * delegating the field value to the {@link IMapper}. Used when the source and
+ * destination field types differ and require recursive mapping.
+ */
 public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
     private static final Logger log = Logger.getLogger(SimpleMapableFieldMappingExecutor.class);
 
@@ -26,6 +31,16 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 	private FieldAccessor<Object> sourceFieldAccessor;
 	private FieldAccessor<Object> destinationFieldAccessor;
 
+	/**
+	 * Creates an executor that recursively maps the nested object held by
+	 * {@code sourceFieldLeaf} into {@code destinationFieldLeaf}.
+	 *
+	 * @param reflection the reflection facade used to instantiate the destination
+	 * @param mapper the mapper used to recursively map the nested field value
+	 * @param sourceFieldLeaf the field to read from the source object
+	 * @param destinationFieldLeaf the field to write on the destination object
+	 * @throws ReflectionException if the field accessors cannot be resolved
+	 */
 	public SimpleMapableFieldMappingExecutor(IReflection reflection, IMapper mapper, IField sourceFieldLeaf, IField destinationFieldLeaf) throws ReflectionException {
 		this.reflection = reflection;
 		this.sourceFieldLeaf = sourceFieldLeaf;
@@ -37,6 +52,12 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 				new ResolvedField(new ObjectAddress(destinationFieldLeaf.getName(), false), List.of(destinationFieldLeaf)));
 	}
 
+	/**
+	 * Maps the nested source field using the bare mapper (no shared recursion
+	 * scope, so cross-boundary cycle detection does not apply).
+	 *
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject, Object sourceObject) throws MapperException {
 		// Fallback path (no recursion scope provided): use the bare mapper. Cycle
@@ -53,6 +74,13 @@ public class SimpleMapableFieldMappingExecutor implements IMappingRuleExecutor {
 		};
 	}
 
+	/**
+	 * Maps the nested source field using the supplied recursion scope, which
+	 * carries cycle detection across the mapping boundary.
+	 *
+	 * @param recursion the shared recursion scope to delegate nested mapping to
+	 * @return the populated destination object
+	 */
 	@Override
 	public <destination> destination doMapping(IClass<destination> destinationClass, destination destinationObject,
 			Object sourceObject, IMappingRecursion recursion) throws MapperException {

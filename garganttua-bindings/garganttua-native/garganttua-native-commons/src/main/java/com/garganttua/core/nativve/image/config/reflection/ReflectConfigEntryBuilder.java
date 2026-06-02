@@ -19,6 +19,11 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflectionProvider;
 
+/**
+ * Fluent builder for a {@link ReflectConfigEntry}, registering fields, methods,
+ * constructors and bulk-reflection flags for a single class. Supports automatic
+ * detection of members annotated with {@link Reflected @Reflected}.
+ */
 public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflectionConfigurationEntryBuilder, IReflectionConfigurationEntry> implements IReflectionConfigurationEntryBuilder {
     private static final Logger log = Logger.getLogger(ReflectConfigEntryBuilder.class);
 
@@ -46,6 +51,11 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 
 	private static final IClass<Reflected> REFLECTED_CLASS = wrapClass(Reflected.class);
 
+	/**
+	 * Creates a builder for the given type, starting from an empty entry.
+	 *
+	 * @param type the class to configure for reflection; must not be {@code null}
+	 */
 	public ReflectConfigEntryBuilder(IClass<?> type) {
 		log.trace("Creating ReflectConfigEntryBuilder for type: {}", type.getName());
 		this.type = Objects.requireNonNull(type, "Type cannot be null");
@@ -55,6 +65,12 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 		log.debug("Initialized ReflectConfigEntryBuilder for: {}", type.getName());
 	}
 
+	/**
+	 * Creates a builder that wraps an existing entry, resolving its backing class.
+	 *
+	 * @param entry the pre-existing entry to continue configuring
+	 * @throws DslException if the entry's class cannot be loaded from the classpath
+	 */
 	public ReflectConfigEntryBuilder(IReflectionConfigurationEntry entry) throws DslException {
 		log.trace("Creating ReflectConfigEntryBuilder from existing entry: {}", entry.getName());
 		this.entry = entry;
@@ -67,10 +83,23 @@ public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflect
 		}
 	}
 
+	/**
+	 * Creates a builder for the given class.
+	 *
+	 * @param clazz the class to configure for reflection
+	 * @return a new builder starting from an empty entry
+	 */
 	public static IReflectionConfigurationEntryBuilder builder(IClass<?> clazz) {
 		return new ReflectConfigEntryBuilder(clazz);
 	}
 
+	/**
+	 * Creates a builder that continues configuring an existing entry.
+	 *
+	 * @param entry the entry to wrap
+	 * @return a new builder backed by {@code entry}
+	 * @throws DslException if the entry's class cannot be loaded from the classpath
+	 */
 	public static IReflectionConfigurationEntryBuilder builder(ReflectConfigEntry entry) throws DslException {
 		return new ReflectConfigEntryBuilder(entry);
 	}

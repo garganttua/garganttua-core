@@ -15,6 +15,12 @@ import com.garganttua.core.dsl.IBuilder;
  */
 public final class ScriptsBuilderFactory implements IBootstrapBuilderFactory {
 
+    /**
+     * Creates a fresh {@link ScriptsBuilder} for the bootstrap auto-detection chain.
+     *
+     * @return a new {@code ScriptsBuilder} instance
+     * @throws DslException if the builder cannot be created
+     */
     @Override
     public IBuilder<?> create() throws DslException {
         return ScriptsBuilder.builder();
