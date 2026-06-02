@@ -34,6 +34,9 @@ final class FrameworkBuiltinRegistrar {
             "com.garganttua.core.expression.functions.Expressions",
             // script
             "com.garganttua.core.script.functions.ScriptFunctions",
+            "com.garganttua.core.script.functions.ScriptTimingFunctions",
+            "com.garganttua.core.script.functions.ScriptResilienceFunctions",
+            "com.garganttua.core.script.functions.ScriptConcurrencyFunctions",
             "com.garganttua.core.script.functions.LogFunctions",
             "com.garganttua.core.script.functions.ControlFlowFunctions",
             // runtime

@@ -18,6 +18,8 @@ import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.script.functions.ScriptFunctions;
+import com.garganttua.core.script.functions.ScriptTimingFunctions;
+import com.garganttua.core.script.functions.ScriptResilienceFunctions;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 class ScriptRetryTest {
@@ -60,26 +62,26 @@ class ScriptRetryTest {
 
     @Test
     void testMilliseconds() {
-        assertEquals(100L, ScriptFunctions.milliseconds(100));
-        assertEquals(100L, ScriptFunctions.milliseconds(100L));
+        assertEquals(100L, ScriptTimingFunctions.milliseconds(100));
+        assertEquals(100L, ScriptTimingFunctions.milliseconds(100L));
     }
 
     @Test
     void testSeconds() {
-        assertEquals(10000L, ScriptFunctions.seconds(10));
-        assertEquals(10000L, ScriptFunctions.seconds(10L));
+        assertEquals(10000L, ScriptTimingFunctions.seconds(10));
+        assertEquals(10000L, ScriptTimingFunctions.seconds(10L));
     }
 
     @Test
     void testMinutes() {
-        assertEquals(60000L, ScriptFunctions.minutes(1));
-        assertEquals(120000L, ScriptFunctions.minutes(2L));
+        assertEquals(60000L, ScriptTimingFunctions.minutes(1));
+        assertEquals(120000L, ScriptTimingFunctions.minutes(2L));
     }
 
     @Test
     void testHours() {
-        assertEquals(3600000L, ScriptFunctions.hours(1));
-        assertEquals(7200000L, ScriptFunctions.hours(2L));
+        assertEquals(3600000L, ScriptTimingFunctions.hours(1));
+        assertEquals(7200000L, ScriptTimingFunctions.hours(2L));
     }
 
     // ---- Time Unit Functions in Script ----
@@ -171,7 +173,7 @@ class ScriptRetryTest {
     @Test
     void testRetryWithNullReturnsNull() {
         // Test direct Java call
-        assertNull(ScriptFunctions.retry(3, 10, null));
+        assertNull(ScriptResilienceFunctions.retry(3, 10, null));
     }
 
     // ---- RetryWithBackoff with null returns null ----
@@ -179,37 +181,37 @@ class ScriptRetryTest {
     @Test
     void testRetryWithBackoffNullReturnsNull() {
         // Test direct Java call
-        assertNull(ScriptFunctions.retryWithBackoff(3, 10, 100, null));
+        assertNull(ScriptResilienceFunctions.retryWithBackoff(3, 10, 100, null));
     }
 
     // ---- Retry validates maxAttempts ----
 
     @Test
     void testRetryInvalidMaxAttempts() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retry(0, 10, FixedSupplierBuilder.of("value").build()));
+        assertThrows(Exception.class, () -> ScriptResilienceFunctions.retry(0, 10, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- Retry validates delay ----
 
     @Test
     void testRetryInvalidDelay() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retry(3, -1, FixedSupplierBuilder.of("value").build()));
+        assertThrows(Exception.class, () -> ScriptResilienceFunctions.retry(3, -1, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- RetryWithBackoff validates parameters ----
 
     @Test
     void testRetryWithBackoffInvalidMaxAttempts() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(0, 10, 100, FixedSupplierBuilder.of("value").build()));
+        assertThrows(Exception.class, () -> ScriptResilienceFunctions.retryWithBackoff(0, 10, 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testRetryWithBackoffInvalidDelay() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, -1, 100, FixedSupplierBuilder.of("value").build()));
+        assertThrows(Exception.class, () -> ScriptResilienceFunctions.retryWithBackoff(3, -1, 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testRetryWithBackoffMaxDelayLessThanInitial() {
-        assertThrows(Exception.class, () -> ScriptFunctions.retryWithBackoff(3, 100, 10, FixedSupplierBuilder.of("value").build()));
+        assertThrows(Exception.class, () -> ScriptResilienceFunctions.retryWithBackoff(3, 100, 10, FixedSupplierBuilder.of("value").build()));
     }
 }

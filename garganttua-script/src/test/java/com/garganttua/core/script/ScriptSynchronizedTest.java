@@ -15,6 +15,7 @@ import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.InterruptibleLeaseMutex;
 import com.garganttua.core.mutex.MutexStrategy;
 import com.garganttua.core.script.functions.ScriptFunctions;
+import com.garganttua.core.script.functions.ScriptConcurrencyFunctions;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 class ScriptSynchronizedTest {
@@ -24,14 +25,14 @@ class ScriptSynchronizedTest {
     @Test
     void testSynchronizedWithDirectValue() {
         IMutex mutex = new InterruptibleLeaseMutex("test-mutex");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 1000, FixedSupplierBuilder.of("hello").build());
+        Object result = ScriptConcurrencyFunctions.synchronizedExec("test", mutex, "acquire", 1000, FixedSupplierBuilder.of("hello").build());
         assertEquals("hello", result);
     }
 
     @Test
     void testSynchronizedWithNullExpression() {
         IMutex mutex = new InterruptibleLeaseMutex("test-mutex");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 1000, null);
+        Object result = ScriptConcurrencyFunctions.synchronizedExec("test", mutex, "acquire", 1000, null);
         assertNull(result);
     }
 
@@ -40,14 +41,14 @@ class ScriptSynchronizedTest {
     @Test
     void testSyncWithDirectValue() {
         IMutex mutex = new InterruptibleLeaseMutex("test-sync");
-        Object result = ScriptFunctions.sync("test", mutex, FixedSupplierBuilder.of("sync-value").build());
+        Object result = ScriptConcurrencyFunctions.sync("test", mutex, FixedSupplierBuilder.of("sync-value").build());
         assertEquals("sync-value", result);
     }
 
     @Test
     void testSyncWithNullExpression() {
         IMutex mutex = new InterruptibleLeaseMutex("test-sync");
-        Object result = ScriptFunctions.sync("test", mutex, null);
+        Object result = ScriptConcurrencyFunctions.sync("test", mutex, null);
         assertNull(result);
     }
 
@@ -56,14 +57,14 @@ class ScriptSynchronizedTest {
     @Test
     void testSynchronizedAcquireMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test-acquire");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 100, FixedSupplierBuilder.of("acquired").build());
+        Object result = ScriptConcurrencyFunctions.synchronizedExec("test", mutex, "acquire", 100, FixedSupplierBuilder.of("acquired").build());
         assertEquals("acquired", result);
     }
 
     @Test
     void testSynchronizedTryAcquireMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test-tryacquire");
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "tryAcquire", 0, FixedSupplierBuilder.of("tryacquired").build());
+        Object result = ScriptConcurrencyFunctions.synchronizedExec("test", mutex, "tryAcquire", 0, FixedSupplierBuilder.of("tryacquired").build());
         assertEquals("tryacquired", result);
     }
 
@@ -71,7 +72,7 @@ class ScriptSynchronizedTest {
     void testSynchronizedInvalidMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test-invalid");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("test", mutex, "invalid", 100, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.synchronizedExec("test", mutex, "invalid", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- Parameter validation ----
@@ -80,40 +81,40 @@ class ScriptSynchronizedTest {
     void testSynchronizedNullMutexName() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec(null, mutex, "acquire", 100, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.synchronizedExec(null, mutex, "acquire", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSynchronizedBlankMutexName() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("", mutex, "acquire", 100, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.synchronizedExec("", mutex, "acquire", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSynchronizedNullMutex() {
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("test", null, "acquire", 100, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.synchronizedExec("test", null, "acquire", 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSynchronizedNullMode() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.synchronizedExec("test", mutex, null, 100, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.synchronizedExec("test", mutex, null, 100, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSyncNullMutexName() {
         IMutex mutex = new InterruptibleLeaseMutex("test");
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.sync(null, mutex, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.sync(null, mutex, FixedSupplierBuilder.of("value").build()));
     }
 
     @Test
     void testSyncNullMutex() {
         assertThrows(ExpressionException.class, () ->
-                ScriptFunctions.sync("test", null, FixedSupplierBuilder.of("value").build()));
+                ScriptConcurrencyFunctions.sync("test", null, FixedSupplierBuilder.of("value").build()));
     }
 
     // ---- Concurrency test using IMutex directly ----
@@ -193,7 +194,7 @@ class ScriptSynchronizedTest {
             }
         };
 
-        Object result = ScriptFunctions.synchronizedExec("test", mutex, "acquire", 1000, supplier);
+        Object result = ScriptConcurrencyFunctions.synchronizedExec("test", mutex, "acquire", 1000, supplier);
         assertEquals("result", result);
         assertEquals(1, callCount.get());
     }
