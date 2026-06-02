@@ -4,8 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
@@ -13,7 +12,7 @@ import com.garganttua.core.reflection.binders.IContextualConstructorBinder;
 
 public class NewContextualSupplier<SuppliedType>
         implements IContextualSupplier<SuppliedType, Void> {
-    private static final IDiagnostic log = Diagnostics.of(NewContextualSupplier.class);
+    private static final Logger log = Logger.getLogger(NewContextualSupplier.class);
 
     private Type suppliedType;
     private IClass<SuppliedType> suppliedClass;

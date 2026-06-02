@@ -1,7 +1,6 @@
 package com.garganttua.core;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 /**
  * Utility class providing constants and utilities for CoreException error codes.
  *
@@ -53,7 +52,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * @see CoreException
  */
 public class CoreExceptionCodes {
-    private static final IDiagnostic log = Diagnostics.of(CoreExceptionCodes.class);
+    private static final Logger log = Logger.getLogger(CoreExceptionCodes.class);
 
     /**
      * Private constructor to prevent instantiation of this utility class.

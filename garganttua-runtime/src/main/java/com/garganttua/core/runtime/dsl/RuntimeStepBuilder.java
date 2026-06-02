@@ -5,8 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -33,7 +32,7 @@ public class RuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, Outp
         extends
         AbstractAutomaticLinkedDependentBuilder<IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeBuilder<InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>>
         implements IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepBuilder.class);
 
     private String stepName;
     private String runtimeName;

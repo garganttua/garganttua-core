@@ -6,8 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -23,7 +22,7 @@ import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 public abstract class AbstractConstructorArgInjectBinderBuilder<Constructed, Builder extends IConstructorBinderBuilder<Constructed, Builder, Link, IConstructorBinder<Constructed>>, Link>
         extends AbstractConstructorBinderBuilder<Constructed, Builder, Link> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractConstructorArgInjectBinderBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractConstructorArgInjectBinderBuilder.class);
 
     private final IClass<Constructed> constructedClass;
 

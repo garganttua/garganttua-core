@@ -4,12 +4,11 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 public class FixedSupplier<Supplied> implements ISupplier<Supplied> {
-    private static final IDiagnostic log = Diagnostics.of(FixedSupplier.class);
+    private static final Logger log = Logger.getLogger(FixedSupplier.class);
 
     private Supplied object;
     private IClass<Supplied> suppliedClass;

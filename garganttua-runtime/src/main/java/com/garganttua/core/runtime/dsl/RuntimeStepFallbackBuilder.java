@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.context.dsl.AbstractMethodArgInjectBinderBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -30,7 +29,7 @@ import jakarta.annotation.Nullable;
 public class RuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepFallbackBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
         implements IRuntimeStepFallbackBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepFallbackBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepFallbackBuilder.class);
 
     private String storeReturnInVariable = null;
     private Boolean output = false;

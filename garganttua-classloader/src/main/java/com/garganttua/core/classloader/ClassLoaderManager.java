@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Default {@link IClassLoaderManager} implementation. Adds JARs to the thread
@@ -24,7 +23,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  */
 public class ClassLoaderManager implements IClassLoaderManager {
 
-    private static final IDiagnostic log = Diagnostics.of(ClassLoaderManager.class);
+    private static final Logger log = Logger.getLogger(ClassLoaderManager.class);
 
     private final CopyOnWriteArrayList<IClassLoaderRebuildHook> hooks = new CopyOnWriteArrayList<>();
 

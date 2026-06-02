@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
@@ -21,7 +20,7 @@ import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflectionProvider;
 
 public class ReflectConfigEntryBuilder extends AbstractAutomaticBuilder<IReflectionConfigurationEntryBuilder, IReflectionConfigurationEntry> implements IReflectionConfigurationEntryBuilder {
-    private static final IDiagnostic log = Diagnostics.of(ReflectConfigEntryBuilder.class);
+    private static final Logger log = Logger.getLogger(ReflectConfigEntryBuilder.class);
 
 	private final IReflectionConfigurationEntry entry;
 	private IClass<?> type;

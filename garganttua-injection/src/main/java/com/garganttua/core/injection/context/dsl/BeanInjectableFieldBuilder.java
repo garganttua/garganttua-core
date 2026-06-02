@@ -4,8 +4,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -20,7 +19,7 @@ public class BeanInjectableFieldBuilder<FieldType, BeanType>
                 extends
                 AbstractFieldBinderBuilder<FieldType, BeanType, IBeanInjectableFieldBuilder<FieldType, BeanType>, IBeanFactoryBuilder<BeanType>>
                 implements IBeanInjectableFieldBuilder<FieldType, BeanType> {
-    private static final IDiagnostic log = Diagnostics.of(BeanInjectableFieldBuilder.class);
+    private static final Logger log = Logger.getLogger(BeanInjectableFieldBuilder.class);
 
         public BeanInjectableFieldBuilder(IBeanFactoryBuilder<BeanType> link,
                         IBeanFactoryBuilder<BeanType> beanSupplierBuilder, IClass<FieldType> fieldType)

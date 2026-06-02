@@ -2,6 +2,7 @@ package com.garganttua.core.observability.log;
 
 import com.garganttua.core.observability.EndEvent;
 import com.garganttua.core.observability.ErrorEvent;
+import com.garganttua.core.observability.LogEvent;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.StartEvent;
 
@@ -38,6 +39,7 @@ public final class PlainTextEventFormatter implements IEventFormatter {
             case StartEvent s -> sb.append("[START]");
             case EndEvent e -> sb.append("[END  ]");
             case ErrorEvent x -> sb.append("[ERROR]");
+            case LogEvent l -> sb.append("[LOG  ]");
         }
         sb.append(' ');
         sb.append(event.source());
@@ -62,6 +64,18 @@ public final class PlainTextEventFormatter implements IEventFormatter {
                     }
                 }
             }
+            case LogEvent l -> {
+                if (l.level() != null) {
+                    sb.append(", ").append(l.level());
+                }
+                sb.append(')');
+                if (l.message() != null && !l.message().isEmpty()) {
+                    sb.append(": ").append(l.message());
+                }
+            }
+        }
+        if (event.payload() != null) {
+            sb.append(" payload=").append(event.payload());
         }
         return sb.toString();
     }

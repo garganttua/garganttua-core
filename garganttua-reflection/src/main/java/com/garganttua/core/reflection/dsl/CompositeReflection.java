@@ -5,8 +5,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
@@ -41,7 +40,7 @@ import com.garganttua.core.reflection.query.ObjectQueryFactory;
  * </p>
  */
 class CompositeReflection implements IReflection {
-    private static final IDiagnostic log = Diagnostics.of(CompositeReflection.class);
+    private static final Logger log = Logger.getLogger(CompositeReflection.class);
 
     private final ProviderSelector providerSelector;
     private final ScannerAggregator scannerAggregator;

@@ -4,8 +4,7 @@ import org.github.siahsang.redutils.RedUtilsLock;
 import org.github.siahsang.redutils.RedUtilsLockImpl;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexStrategy;
@@ -21,7 +20,7 @@ import com.garganttua.core.mutex.MutexStrategy;
  * @since 2.0.0-ALPHA01
  */
 public class RedisMutex implements IMutex {
-    private static final IDiagnostic log = Diagnostics.of(RedisMutex.class);
+    private static final Logger log = Logger.getLogger(RedisMutex.class);
 
     private final RedUtilsLock redUtilsLock;
     private final String lockName;

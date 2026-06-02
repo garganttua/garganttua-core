@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractDependentBuilder;
@@ -39,7 +38,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class WorkflowBuilder extends AbstractDependentBuilder<IWorkflowBuilder, IWorkflow>
         implements IWorkflowBuilder {
-    private static final IDiagnostic log = Diagnostics.of(WorkflowBuilder.class);
+    private static final Logger log = Logger.getLogger(WorkflowBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class)),

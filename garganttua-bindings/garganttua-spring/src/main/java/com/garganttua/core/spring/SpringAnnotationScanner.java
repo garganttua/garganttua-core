@@ -10,8 +10,7 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
@@ -19,7 +18,7 @@ import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflection.runtime.RuntimeMethod;
 
 public class SpringAnnotationScanner implements IAnnotationScanner {
-    private static final IDiagnostic log = Diagnostics.of(SpringAnnotationScanner.class);
+    private static final Logger log = Logger.getLogger(SpringAnnotationScanner.class);
 
     @Override
     public List<IClass<?>> getClassesWithAnnotation(IClass<? extends Annotation> annotation) {

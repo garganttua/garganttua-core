@@ -1,7 +1,6 @@
 package com.garganttua.core.bootstrap;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -18,7 +17,7 @@ import java.util.Properties;
  * @since 2.0.0-ALPHA01
  */
 public final class GarganttuaVersion {
-    private static final IDiagnostic log = Diagnostics.of(GarganttuaVersion.class);
+    private static final Logger log = Logger.getLogger(GarganttuaVersion.class);
 
     private static final String PROPERTIES_FILE = "garganttua-version.properties";
     private static final String UNKNOWN = "UNKNOWN";

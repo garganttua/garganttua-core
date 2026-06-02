@@ -3,8 +3,7 @@ package com.garganttua.core.dsl.dependency;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
@@ -58,7 +57,7 @@ import com.garganttua.core.reflection.IClass;
 public abstract class AbstractAutomaticLinkedDependentBuilder<B extends IBuilder<T>, L, T>
         extends AbstractAutomaticBuilder<B, T>
         implements IAutomaticLinkedBuilder<B, L, T>, IDependentBuilder<B, T> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractAutomaticLinkedDependentBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractAutomaticLinkedDependentBuilder.class);
 
     private L link;
     protected final DependentBuilderSupport support;

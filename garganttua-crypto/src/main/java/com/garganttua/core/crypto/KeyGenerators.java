@@ -1,7 +1,6 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -12,7 +11,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 class KeyGenerators {
-    private static final IDiagnostic log = Diagnostics.of(KeyGenerators.class);
+    private static final Logger log = Logger.getLogger(KeyGenerators.class);
 
 	static SecretKey generateSymmetricKey(IKeyAlgorithm algorithm) {
 		if (algorithm instanceof KeyAlgorithm ka) {

@@ -1,12 +1,11 @@
 package com.garganttua.core.dsl;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.util.Objects;
 
 public abstract class AbstractLinkedBuilder<Link, Built>
         implements ILinkedBuilder<Link, Built> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractLinkedBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractLinkedBuilder.class);
 
     private Link link;
 

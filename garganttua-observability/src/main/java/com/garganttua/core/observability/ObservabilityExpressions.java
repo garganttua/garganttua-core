@@ -5,8 +5,6 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.observability.ObservableContextHolder.Session;
 
@@ -35,7 +33,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Reflected(queryAllDeclaredMethods = true)
 public class ObservabilityExpressions {
-    private static final IDiagnostic log = Diagnostics.of(ObservabilityExpressions.class);
+    private static final Logger log = Logger.getLogger(ObservabilityExpressions.class);
 
 	private static final ConcurrentMap<Key, Instant> STARTS = new ConcurrentHashMap<>();
 

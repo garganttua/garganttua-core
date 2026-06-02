@@ -1,7 +1,6 @@
 package com.garganttua.core.injection;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -52,7 +51,7 @@ import com.garganttua.core.CoreException;
  * @see IBeanFactory
  */
 public class DiException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(DiException.class);
+    private static final Logger log = Logger.getLogger(DiException.class);
 
     private static final long serialVersionUID = 1L;
 

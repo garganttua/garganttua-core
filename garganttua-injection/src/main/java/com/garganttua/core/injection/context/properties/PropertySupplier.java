@@ -4,8 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertySupplier;
 import com.garganttua.core.injection.context.InjectionContext;
@@ -13,7 +12,7 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.SupplyException;
 
 public class PropertySupplier<Property> implements IPropertySupplier<Property> {
-    private static final IDiagnostic log = Diagnostics.of(PropertySupplier.class);
+    private static final Logger log = Logger.getLogger(PropertySupplier.class);
 
     private String key;
     private Optional<String> provider;

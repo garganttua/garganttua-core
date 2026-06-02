@@ -1,12 +1,11 @@
 package com.garganttua.core.reflection.utils;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 public class ParameterizedTypeImpl implements ParameterizedType {
-    private static final IDiagnostic log = Diagnostics.of(ParameterizedTypeImpl.class);
+    private static final Logger log = Logger.getLogger(ParameterizedTypeImpl.class);
 
     private final Type rawType;
     private final Type[] typeArguments;

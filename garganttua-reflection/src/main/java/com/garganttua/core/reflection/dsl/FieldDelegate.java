@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IFieldValue;
@@ -20,7 +19,7 @@ import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
 class FieldDelegate {
-    private static final IDiagnostic log = Diagnostics.of(FieldDelegate.class);
+    private static final Logger log = Logger.getLogger(FieldDelegate.class);
 
     private final IReflectionProvider provider;
 

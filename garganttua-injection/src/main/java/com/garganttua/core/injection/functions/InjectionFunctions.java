@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanReference;
@@ -69,7 +68,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Reflected(queryAllDeclaredMethods = true)
 public final class InjectionFunctions {
-    private static final IDiagnostic log = Diagnostics.of(InjectionFunctions.class);
+    private static final Logger log = Logger.getLogger(InjectionFunctions.class);
 
     private InjectionFunctions() {
         // Utility class

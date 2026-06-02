@@ -3,14 +3,13 @@ package com.garganttua.core.injection.context.dsl;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class PropertyBuilder<PropertyType> implements IPropertyBuilder<PropertyType> {
-    private static final IDiagnostic log = Diagnostics.of(PropertyBuilder.class);
+    private static final Logger log = Logger.getLogger(PropertyBuilder.class);
 
     private final String key;
     private final PropertyType property;

@@ -15,8 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
@@ -42,7 +41,7 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.utils.CopyException;
 
 public class InjectionContext extends AbstractLifecycle implements IInjectionContext, IBootstrapSummaryContributor {
-    private static final IDiagnostic log = Diagnostics.of(InjectionContext.class);
+    private static final Logger log = Logger.getLogger(InjectionContext.class);
 
     public volatile static IInjectionContext context = null;
 

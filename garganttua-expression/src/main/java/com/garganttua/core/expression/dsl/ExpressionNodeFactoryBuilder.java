@@ -3,8 +3,7 @@ package com.garganttua.core.expression.dsl;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.expression.annotations.Expression;
@@ -29,7 +28,7 @@ public class ExpressionNodeFactoryBuilder<S>
         extends
         AbstractMethodBinderBuilder<IExpressionNode<S, ISupplier<S>>, IExpressionMethodBinderBuilder<S>, IExpressionContextBuilder, IExpressionNodeFactory<S, ISupplier<S>>>
         implements IExpressionMethodBinderBuilder<S> {
-    private static final IDiagnostic log = Diagnostics.of(ExpressionNodeFactoryBuilder.class);
+    private static final Logger log = Logger.getLogger(ExpressionNodeFactoryBuilder.class);
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> methodOwnerSupplier;
     @SuppressWarnings("unused")

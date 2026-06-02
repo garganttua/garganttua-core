@@ -13,8 +13,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.MultiSourceCollector;
@@ -91,7 +90,7 @@ public final class ObservabilityBuilder
         extends AbstractAutomaticDependentBuilder<IObservabilityBuilder, ObservabilityBinding>
         implements IObservabilityBuilder {
 
-    private static final IDiagnostic log = Diagnostics.of(ObservabilityBuilder.class);
+    private static final Logger log = Logger.getLogger(ObservabilityBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             // CONFIGURATION stage: receive the IInjectionContextBuilder BEFORE

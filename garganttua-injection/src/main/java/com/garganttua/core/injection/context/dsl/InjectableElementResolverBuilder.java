@@ -9,8 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
@@ -31,7 +30,7 @@ public class InjectableElementResolverBuilder
         extends
         AbstractAutomaticLinkedBuilder<IInjectableElementResolverBuilder, IInjectionContextBuilder, IInjectableElementResolver>
         implements IInjectableElementResolverBuilder {
-    private static final IDiagnostic log = Diagnostics.of(InjectableElementResolverBuilder.class);
+    private static final Logger log = Logger.getLogger(InjectableElementResolverBuilder.class);
 
     private static final String SOURCE_MANUAL = "manual";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";

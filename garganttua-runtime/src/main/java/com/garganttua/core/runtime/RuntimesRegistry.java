@@ -8,8 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 
 /**
@@ -24,7 +23,7 @@ import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
  * @since 2.0.0-ALPHA01
  */
 public class RuntimesRegistry implements IBootstrapSummaryContributor, Map<String, IRuntime<?, ?>> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimesRegistry.class);
+    private static final Logger log = Logger.getLogger(RuntimesRegistry.class);
 
     private final Map<String, IRuntime<?, ?>> runtimes;
 

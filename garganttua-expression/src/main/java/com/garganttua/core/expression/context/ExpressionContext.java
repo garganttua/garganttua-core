@@ -12,8 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.expression.Expression;
 import com.garganttua.core.expression.ExpressionException;
@@ -38,7 +37,7 @@ public class ExpressionContext implements IExpressionContext, IBootstrapSummaryC
     public ExpressionContext() {
     }
 
-    private static final IDiagnostic log = Diagnostics.of(ExpressionContext.class);
+    private static final Logger log = Logger.getLogger(ExpressionContext.class);
 
     private Map<String, IExpressionNodeFactory<?, ? extends ISupplier<?>>> nodeFactories = new ConcurrentHashMap<>();
     private final Map<String, IClass<?>> variableTypes = new ConcurrentHashMap<>();

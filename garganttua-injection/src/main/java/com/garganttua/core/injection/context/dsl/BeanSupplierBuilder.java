@@ -7,8 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
@@ -20,7 +19,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class BeanSupplierBuilder<Bean> implements IBeanSupplierBuilder<Bean> {
-    private static final IDiagnostic log = Diagnostics.of(BeanSupplierBuilder.class);
+    private static final Logger log = Logger.getLogger(BeanSupplierBuilder.class);
 
     private String name = null;
     private String provider = null;

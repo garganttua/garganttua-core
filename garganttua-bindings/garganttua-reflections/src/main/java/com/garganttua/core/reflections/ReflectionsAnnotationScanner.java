@@ -13,8 +13,7 @@ import org.reflections.scanners.Scanners;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
@@ -23,7 +22,7 @@ import jakarta.annotation.Priority;
 
 @Priority(10)
 public class ReflectionsAnnotationScanner implements IAnnotationScanner {
-    private static final IDiagnostic log = Diagnostics.of(ReflectionsAnnotationScanner.class);
+    private static final Logger log = Logger.getLogger(ReflectionsAnnotationScanner.class);
 
     /**
      * Cache of {@link Reflections} instances keyed by package name. Scanning

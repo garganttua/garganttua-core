@@ -2,8 +2,7 @@ package com.garganttua.core.runtime;
 
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.execution.IExecutor;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.execution.IFallBackExecutor;
@@ -11,7 +10,7 @@ import com.garganttua.core.observability.ObservabilityEmitter;
 
 public class RuntimeStep<ExecutionReturn, InputType, OutputType>
         implements IRuntimeStep<ExecutionReturn, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStep.class);
+    private static final Logger log = Logger.getLogger(RuntimeStep.class);
 
     private final String stepName;
     private Class<ExecutionReturn> executionReturn;

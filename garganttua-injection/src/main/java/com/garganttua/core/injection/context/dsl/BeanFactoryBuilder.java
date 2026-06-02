@@ -14,8 +14,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
@@ -44,7 +43,7 @@ import jakarta.annotation.PostConstruct;
 public class BeanFactoryBuilder<Bean>
         extends AbstractAutomaticDependentBuilder<IBeanFactoryBuilder<Bean>, IBeanFactory<Bean>>
         implements IBeanFactoryBuilder<Bean> {
-    private static final IDiagnostic log = Diagnostics.of(BeanFactoryBuilder.class);
+    private static final Logger log = Logger.getLogger(BeanFactoryBuilder.class);
 
     private static IClass<Inject> injectClass() {
         return IClass.getClass(Inject.class);

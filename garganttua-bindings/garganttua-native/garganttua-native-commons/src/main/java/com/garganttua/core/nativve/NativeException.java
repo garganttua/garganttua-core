@@ -1,11 +1,10 @@
 package com.garganttua.core.nativve;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 public class NativeException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(NativeException.class);
+    private static final Logger log = Logger.getLogger(NativeException.class);
 
     public NativeException(Throwable e) {
         super(NATIVE_ERROR, e);

@@ -2,8 +2,7 @@ package com.garganttua.core.injection.context.resolver;
 
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
@@ -22,7 +21,7 @@ public class FixedElementResolver implements IElementResolver {
     public FixedElementResolver() {
     }
 
-    private static final IDiagnostic log = Diagnostics.of(FixedElementResolver.class);
+    private static final Logger log = Logger.getLogger(FixedElementResolver.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override

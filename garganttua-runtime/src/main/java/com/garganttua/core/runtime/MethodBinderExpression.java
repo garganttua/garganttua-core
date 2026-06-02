@@ -4,8 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.reflection.IClass;
@@ -15,7 +14,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 public class MethodBinderExpression<R, C> implements IExpression<R, ISupplier<R>> {
-    private static final IDiagnostic log = Diagnostics.of(MethodBinderExpression.class);
+    private static final Logger log = Logger.getLogger(MethodBinderExpression.class);
 
     private final IContextualMethodBinder<R, C> binder;
     private final String expressionReference;

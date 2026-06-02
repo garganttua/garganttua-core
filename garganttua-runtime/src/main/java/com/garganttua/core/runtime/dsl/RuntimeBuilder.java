@@ -16,8 +16,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Named;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
@@ -51,7 +50,7 @@ public class RuntimeBuilder<InputType, OutputType>
                 extends
                 AbstractAutomaticLinkedDependentBuilder<IRuntimeBuilder<InputType, OutputType>, IRuntimesBuilder, IRuntime<InputType, OutputType>>
                 implements IRuntimeBuilder<InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimeBuilder.class);
 
         private String name;
         private final OrderedMapBuilder<String, IRuntimeStepBuilder<?, ?, InputType, OutputType>, IRuntimeStep<?, InputType, OutputType>> steps = new OrderedMapBuilder<>();

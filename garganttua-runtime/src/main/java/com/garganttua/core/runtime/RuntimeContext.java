@@ -1,8 +1,7 @@
 package com.garganttua.core.runtime;
 
 import java.lang.annotation.Annotation;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IExecutable;
 import java.time.Instant;
 import java.util.Collections;
@@ -39,7 +38,7 @@ import com.garganttua.core.utils.CopyException;
 
 public class RuntimeContext<InputType, OutputType> extends AbstractLifecycle
         implements IRuntimeContext<InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeContext.class);
+    private static final Logger log = Logger.getLogger(RuntimeContext.class);
 
     private final InputType input;
     private final IClass<?> outputType;

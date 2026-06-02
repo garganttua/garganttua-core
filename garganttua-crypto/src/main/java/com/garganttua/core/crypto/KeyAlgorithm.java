@@ -1,7 +1,6 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -183,7 +182,7 @@ public enum KeyAlgorithm implements IKeyAlgorithm {
     @Deprecated(forRemoval = true)
     RC2_1024("RC2", 1024);
 
-    private static final IDiagnostic log = Diagnostics.of(KeyAlgorithm.class);
+    private static final Logger log = Logger.getLogger(KeyAlgorithm.class);
 
     private final String algorithm;
     private final int keySize;

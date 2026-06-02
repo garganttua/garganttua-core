@@ -12,8 +12,7 @@ import javax.inject.Named;
 
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.classloader.IClassLoaderManager;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -59,7 +58,7 @@ public class ScriptsBuilder
         extends AbstractAutomaticDependentBuilder<IScriptsBuilder, IScriptingEnvironment>
         implements IScriptsBuilder {
 
-    private static final IDiagnostic log = Diagnostics.of(ScriptsBuilder.class);
+    private static final Logger log = Logger.getLogger(ScriptsBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class)),

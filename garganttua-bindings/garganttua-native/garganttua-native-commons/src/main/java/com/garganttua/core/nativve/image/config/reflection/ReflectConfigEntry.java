@@ -5,8 +5,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
@@ -16,7 +15,7 @@ public class ReflectConfigEntry implements IReflectionConfigurationEntry {
     public ReflectConfigEntry() {
     }
 
-    private static final IDiagnostic log = Diagnostics.of(ReflectConfigEntry.class);
+    private static final Logger log = Logger.getLogger(ReflectConfigEntry.class);
 
     private String name;
     private boolean queryAllDeclaredConstructors = false;

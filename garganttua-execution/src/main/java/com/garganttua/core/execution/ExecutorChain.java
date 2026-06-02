@@ -1,14 +1,13 @@
 package com.garganttua.core.execution;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExecutorChain<T> implements IExecutorChain<T> {
-    private static final IDiagnostic log = Diagnostics.of(ExecutorChain.class);
+    private static final Logger log = Logger.getLogger(ExecutorChain.class);
 
 	private final Queue<Entry<IExecutor<T>, IFallBackExecutor<T>>> executors;
 

@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
@@ -17,7 +16,7 @@ import jakarta.annotation.Nullable;
 import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected(queryAllDeclaredMethods = true)
 public class AndCondition implements ICondition {
-    private static final IDiagnostic log = Diagnostics.of(AndCondition.class);
+    private static final Logger log = Logger.getLogger(AndCondition.class);
 
     private Set<ICondition> conditions;
 

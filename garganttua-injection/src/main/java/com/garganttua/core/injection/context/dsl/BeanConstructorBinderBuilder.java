@@ -6,8 +6,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.annotations.Reflected;
@@ -16,7 +15,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class BeanConstructorBinderBuilder<Bean> extends
         AbstractConstructorArgInjectBinderBuilder<Bean, IBeanConstructorBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>>
         implements IBeanConstructorBinderBuilder<Bean> {
-    private static final IDiagnostic log = Diagnostics.of(BeanConstructorBinderBuilder.class);
+    private static final Logger log = Logger.getLogger(BeanConstructorBinderBuilder.class);
 
     private IClass<Bean> beanType;
 

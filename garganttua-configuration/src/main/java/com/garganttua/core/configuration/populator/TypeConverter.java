@@ -14,13 +14,12 @@ import java.time.Period;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.reflection.IClass;
 
 public class TypeConverter {
-    private static final IDiagnostic log = Diagnostics.of(TypeConverter.class);
+    private static final Logger log = Logger.getLogger(TypeConverter.class);
 
     @SuppressWarnings("unchecked")
     public <T> T convert(String value, Class<T> targetType) throws ConfigurationException {

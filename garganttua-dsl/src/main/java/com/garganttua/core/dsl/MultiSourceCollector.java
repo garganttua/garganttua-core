@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
@@ -60,7 +59,7 @@ import com.garganttua.core.supply.SupplyException;
  * @since 2.0.0-ALPHA01
  */
 public class MultiSourceCollector<K, V> {
-    private static final IDiagnostic log = Diagnostics.of(MultiSourceCollector.class);
+    private static final Logger log = Logger.getLogger(MultiSourceCollector.class);
 
     private static final String ERROR_SOURCE_PREFIX = "Source '";
     private static final String ERROR_EMPTY_RESULT = "' returned empty result";

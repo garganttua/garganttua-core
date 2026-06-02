@@ -2,12 +2,11 @@ package com.garganttua.core.dsl;
 
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IReflection;
 
 public abstract class AbstractAutomaticBuilder<Builder, Built> implements IRebuildableBuilder<Builder, Built> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractAutomaticBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractAutomaticBuilder.class);
 
     protected Boolean autoDetect;
     protected Built built;

@@ -3,8 +3,7 @@ package com.garganttua.core.reflection.fields;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IObjectQuery;
@@ -14,7 +13,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
 public class FieldResolver {
-    private static final IDiagnostic log = Diagnostics.of(FieldResolver.class);
+    private static final Logger log = Logger.getLogger(FieldResolver.class);
 
         // ========================================================================
         // Provider-based API (preferred)

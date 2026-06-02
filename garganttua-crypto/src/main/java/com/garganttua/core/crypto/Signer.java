@@ -1,7 +1,6 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -10,7 +9,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 
 class Signer {
-    private static final IDiagnostic log = Diagnostics.of(Signer.class);
+    private static final Logger log = Logger.getLogger(Signer.class);
 
 	static byte[] sign(PrivateKey key, String signatureAlgorithm, byte[] data) throws CryptoException {
 		log.debug("Signing with algorithm={}", signatureAlgorithm);

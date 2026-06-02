@@ -1,12 +1,11 @@
 package com.garganttua.core.nativve.image.config;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.io.File;
 import java.io.IOException;
 
 public class NativeImageConfig {
-    private static final IDiagnostic log = Diagnostics.of(NativeImageConfig.class);
+    private static final Logger log = Logger.getLogger(NativeImageConfig.class);
 
     private static final String NATIVE_IMAGE_DIR = "META-INF/native-image";
     private static final String REFLECT_CONFIG_FILE = "reflect-config.json";

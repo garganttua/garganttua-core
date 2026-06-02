@@ -2,8 +2,7 @@ package com.garganttua.core.condition.dsl;
 
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.NotNullCondition;
 import com.garganttua.core.dsl.DslException;
@@ -13,7 +12,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class NotNullConditionBuilder<T> implements IConditionBuilder {
-    private static final IDiagnostic log = Diagnostics.of(NotNullConditionBuilder.class);
+    private static final Logger log = Logger.getLogger(NotNullConditionBuilder.class);
 
     private ISupplierBuilder<T, ISupplier<T>> supplier;
 

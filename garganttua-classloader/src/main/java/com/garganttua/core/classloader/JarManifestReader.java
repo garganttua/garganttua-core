@@ -1,7 +1,6 @@
 package com.garganttua.core.classloader;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
@@ -37,7 +36,7 @@ import java.util.jar.Manifest;
  * @since 2.0.0-ALPHA01
  */
 public final class JarManifestReader {
-    private static final IDiagnostic log = Diagnostics.of(JarManifestReader.class);
+    private static final Logger log = Logger.getLogger(JarManifestReader.class);
 
     /**
      * The manifest attribute name for declaring packages to scan.

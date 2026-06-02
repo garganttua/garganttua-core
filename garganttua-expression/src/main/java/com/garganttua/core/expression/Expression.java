@@ -4,15 +4,14 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.context.ExpressionContext;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 
 public class Expression<R> implements IExpression<R, ISupplier<R>> {
-    private static final IDiagnostic log = Diagnostics.of(Expression.class);
+    private static final Logger log = Logger.getLogger(Expression.class);
 
     private IExpressionNode<R, ? extends ISupplier<R>> root;
 

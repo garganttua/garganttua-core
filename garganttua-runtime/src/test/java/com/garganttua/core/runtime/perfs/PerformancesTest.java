@@ -170,9 +170,8 @@ public class PerformancesTest {
         }
 
         private void deactivateLogs() {
-                // Migrated from logback — use IDiagnostic provider swap.
-                com.garganttua.core.diagnostic.Diagnostics.setProvider(
-                        com.garganttua.core.diagnostic.NoopDiagnosticProvider.INSTANCE);
+                // No-op: the observable Logger is a pure event source — with no
+                // observer attached, log calls are already silent.
         }
 
         private void finalizeReport(Instant start, Document document, Map<Instant, Double> cpuSamples,

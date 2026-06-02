@@ -1,7 +1,6 @@
 package com.garganttua.core.expression.functions;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
@@ -44,7 +43,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Reflected(queryAllDeclaredMethods = true)
 public class Expressions {
-    private static final IDiagnostic log = Diagnostics.of(Expressions.class);
+    private static final Logger log = Logger.getLogger(Expressions.class);
 
     // ========== Primitive Type Converters ==========
 

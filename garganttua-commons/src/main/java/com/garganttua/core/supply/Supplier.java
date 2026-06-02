@@ -1,7 +1,6 @@
 package com.garganttua.core.supply;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 /**
  * Utility class providing helper methods for working with object suppliers.
  *
@@ -41,7 +40,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * @see IContextualSupplier
  */
 public class Supplier {
-    private static final IDiagnostic log = Diagnostics.of(Supplier.class);
+    private static final Logger log = Logger.getLogger(Supplier.class);
 
     /**
      * Private constructor to prevent instantiation of this utility class.

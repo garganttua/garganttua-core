@@ -3,8 +3,7 @@ package com.garganttua.core.runtime.dsl;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.nativve.INativeBuilder;
@@ -56,7 +55,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class RuntimeNativeConfigurationBuilder
         extends AbstractAutomaticBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter>
         implements INativeBuilder<RuntimeNativeConfigurationBuilder, IReflectionUsageReporter> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeNativeConfigurationBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimeNativeConfigurationBuilder.class);
 
     private final Set<String> packages = new HashSet<>();
 

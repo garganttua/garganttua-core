@@ -10,8 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -23,7 +22,7 @@ import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
 import com.garganttua.core.runtime.dsl.RuntimesBuilder;
 
 public class TwoStepsRuntimeTest {
-    private static final IDiagnostic log = Diagnostics.of(TwoStepsRuntimeTest.class);
+    private static final Logger log = Logger.getLogger(TwoStepsRuntimeTest.class);
 
     @BeforeEach
     void logTestStart(TestInfo testInfo) {

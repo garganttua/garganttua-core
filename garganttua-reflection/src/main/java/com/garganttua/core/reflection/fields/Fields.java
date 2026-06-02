@@ -16,8 +16,7 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflectionProvider;
@@ -25,7 +24,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.TypeUtils;
 
 public class Fields {
-    private static final IDiagnostic log = Diagnostics.of(Fields.class);
+    private static final Logger log = Logger.getLogger(Fields.class);
 
 	private Fields() {
 		/* This utility class should not be instantiated */

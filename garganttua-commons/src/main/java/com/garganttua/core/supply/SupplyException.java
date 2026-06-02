@@ -1,7 +1,6 @@
 package com.garganttua.core.supply;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -41,7 +40,7 @@ import com.garganttua.core.CoreException;
  * @see IContextualSupplier
  */
 public class SupplyException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(SupplyException.class);
+    private static final Logger log = Logger.getLogger(SupplyException.class);
 
     /**
      * Constructs a new supply exception wrapping another exception.

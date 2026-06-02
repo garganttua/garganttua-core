@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.execution.ExecutorException;
@@ -24,7 +23,7 @@ import com.garganttua.core.supply.SupplyException;
 public class RuntimeStepMethodBinder<ExecutionReturned, InputType, OutputType>
         implements
         IRuntimeStepMethodBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepMethodBinder.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepMethodBinder.class);
 
     private final Set<IRuntimeStepCatch> catches;
     private final List<IRuntimeStepPipe> pipes;

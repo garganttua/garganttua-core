@@ -5,6 +5,7 @@ import java.io.StringWriter;
 
 import com.garganttua.core.observability.EndEvent;
 import com.garganttua.core.observability.ErrorEvent;
+import com.garganttua.core.observability.LogEvent;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.StartEvent;
 
@@ -19,11 +20,13 @@ import com.garganttua.core.observability.StartEvent;
  *   <li>{@code timestamp} (ISO-8601)</li>
  *   <li>{@code executionId} (UUID string)</li>
  *   <li>{@code source} (hierarchical string)</li>
- *   <li>{@code type} (one of {@code start}, {@code end}, {@code error})</li>
+ *   <li>{@code type} (one of {@code start}, {@code end}, {@code error}, {@code log})</li>
  * </ul>
  *
  * <p>End/error-only fields: {@code durationMs}, {@code code} (end), {@code
- * errorClass}, {@code errorMessage}, {@code stacktrace} (error).
+ * errorClass}, {@code errorMessage}, {@code stacktrace} (error). Log-only fields:
+ * {@code level}, {@code message}. The optional {@code payload} field (the
+ * event's {@code toString()}) is appended to any event type when present.
  *
  * <p>Pure JVM, no external dependency — escape logic is inlined.
  * Thread-safe and stateless.
@@ -72,6 +75,21 @@ public final class JsonLineEventFormatter implements IEventFormatter {
                     appendString(sb, "stacktrace", stackTrace(f));
                 }
             }
+            case LogEvent l -> {
+                appendString(sb, "type", "log");
+                if (l.level() != null) {
+                    sb.append(',');
+                    appendString(sb, "level", l.level().name());
+                }
+                if (l.message() != null) {
+                    sb.append(',');
+                    appendString(sb, "message", l.message());
+                }
+            }
+        }
+        if (event.payload() != null) {
+            sb.append(',');
+            appendString(sb, "payload", String.valueOf(event.payload()));
         }
         sb.append('}');
         return sb.toString();

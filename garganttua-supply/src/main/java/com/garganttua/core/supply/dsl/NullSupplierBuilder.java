@@ -2,8 +2,7 @@ package com.garganttua.core.supply.dsl;
 
 import java.lang.reflect.Type;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
@@ -13,7 +12,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class NullSupplierBuilder<SuppliedType>
         implements ISupplierBuilder<SuppliedType, ISupplier<SuppliedType>> {
-    private static final IDiagnostic log = Diagnostics.of(NullSupplierBuilder.class);
+    private static final Logger log = Logger.getLogger(NullSupplierBuilder.class);
 
     private IClass<SuppliedType> suppliedClass;
 

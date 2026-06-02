@@ -18,8 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
@@ -61,7 +60,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
-    private static final IDiagnostic log = Diagnostics.of(InjectionContextBuilder.class);
+    private static final Logger log = Logger.getLogger(InjectionContextBuilder.class);
 
     private static final String SOURCE_MANUAL = "manual";
     private static final String SOURCE_BUILT_IN = "built-in";

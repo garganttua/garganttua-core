@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IFieldValue;
@@ -23,7 +22,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 public class FieldAccessor<T> implements ISupplier<IFieldValue<T>> {
-    private static final IDiagnostic log = Diagnostics.of(FieldAccessor.class);
+    private static final Logger log = Logger.getLogger(FieldAccessor.class);
 
 	private final IClass<?> ownerType;
 	private final List<Object> fieldPath;

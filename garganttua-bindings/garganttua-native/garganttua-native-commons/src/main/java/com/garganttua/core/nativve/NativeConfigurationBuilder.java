@@ -5,8 +5,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
@@ -25,7 +24,7 @@ import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 public class NativeConfigurationBuilder
         extends AbstractAutomaticDependentBuilder<INativeConfigurationBuilder, INativeConfiguration>
         implements INativeConfigurationBuilder {
-    private static final IDiagnostic log = Diagnostics.of(NativeConfigurationBuilder.class);
+    private static final Logger log = Logger.getLogger(NativeConfigurationBuilder.class);
 
     private Set<IReflectionConfigurationEntryBuilder> reflectionEntries = new HashSet<>();
     private final Set<String> packages = new HashSet<>();

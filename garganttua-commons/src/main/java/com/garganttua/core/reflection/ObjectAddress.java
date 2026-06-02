@@ -1,7 +1,6 @@
 package com.garganttua.core.reflection;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ import java.util.Set;
  * @see IObjectQuery
  */
 public class ObjectAddress implements Cloneable {
-    private static final IDiagnostic log = Diagnostics.of(ObjectAddress.class);
+    private static final Logger log = Logger.getLogger(ObjectAddress.class);
 
     /**
      * Indicator for accessing map keys in an address path.

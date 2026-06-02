@@ -6,14 +6,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Function;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 
 class ScannerAggregator implements IAnnotationScanner {
-    private static final IDiagnostic log = Diagnostics.of(ScannerAggregator.class);
+    private static final Logger log = Logger.getLogger(ScannerAggregator.class);
 
     private final List<IAnnotationScanner> scanners;
 

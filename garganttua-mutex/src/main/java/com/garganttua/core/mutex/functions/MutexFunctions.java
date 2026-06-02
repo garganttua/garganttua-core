@@ -1,7 +1,6 @@
 package com.garganttua.core.mutex.functions;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.mutex.IMutex;
@@ -49,7 +48,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Reflected(queryAllDeclaredMethods = true)
 public final class MutexFunctions {
-    private static final IDiagnostic log = Diagnostics.of(MutexFunctions.class);
+    private static final Logger log = Logger.getLogger(MutexFunctions.class);
 
     private MutexFunctions() {
         // Utility class

@@ -1,7 +1,5 @@
 package com.garganttua.core.observability;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -20,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @since 2.0.0-ALPHA02
  */
 public class ObservableRegistry implements IObservable {
-    private static final IDiagnostic log = Diagnostics.of(ObservableRegistry.class);
+    private static final Logger log = Logger.getLogger(ObservableRegistry.class);
 
 	private final List<IObserver<ObservableEvent>> observers = new CopyOnWriteArrayList<>();
 

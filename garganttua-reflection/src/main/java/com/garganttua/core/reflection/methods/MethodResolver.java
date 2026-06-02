@@ -3,8 +3,7 @@ package com.garganttua.core.reflection.methods;
 import java.util.Arrays;
 import java.util.List;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
@@ -14,7 +13,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
 public class MethodResolver {
-    private static final IDiagnostic log = Diagnostics.of(MethodResolver.class);
+    private static final Logger log = Logger.getLogger(MethodResolver.class);
 
         // ========================================================================
         // Provider-based API (preferred)

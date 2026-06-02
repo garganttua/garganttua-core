@@ -9,8 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
@@ -33,7 +32,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 public abstract class AbstractMethodBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
         extends AbstractAutomaticLinkedDependentBuilder<Builder, Link, Built>
         implements IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractMethodBinderBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractMethodBinderBuilder.class);
 
     private ISupplierBuilder<?, ?> supplier;
 

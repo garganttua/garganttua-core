@@ -7,8 +7,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.aot.commons.IAOTClassBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -31,7 +30,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 public class AOTClassBuilder<T> extends AbstractAutomaticBuilder<IAOTClassBuilder<T>, IClass<T>>
         implements IAOTClassBuilder<T> {
-    private static final IDiagnostic log = Diagnostics.of(AOTClassBuilder.class);
+    private static final Logger log = Logger.getLogger(AOTClassBuilder.class);
 
     private final IClass<T> targetClass;
     private final List<AOTField> fieldList = new ArrayList<>();

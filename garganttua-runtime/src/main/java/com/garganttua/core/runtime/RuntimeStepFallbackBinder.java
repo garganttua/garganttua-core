@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.expression.IExpression;
@@ -20,7 +19,7 @@ import com.garganttua.core.supply.SupplyException;
 
 public class RuntimeStepFallbackBinder<ExecutionReturned, InputType, OutputType> implements
         IRuntimeStepFallbackBinder<ExecutionReturned, IRuntimeContext<InputType, OutputType>, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepFallbackBinder.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepFallbackBinder.class);
 
     private final String runtimeName;
     private final String stepName;

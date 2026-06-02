@@ -3,8 +3,7 @@ package com.garganttua.core.runtime;
 import java.util.Map;
 import java.util.UUID;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionChildContextFactory;
 import com.garganttua.core.injection.IInjectionContext;
@@ -25,7 +24,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @ChildContext
 @Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
 public class RuntimeContextFactory implements IInjectionChildContextFactory<IRuntimeContext<?, ?>> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeContextFactory.class);
+    private static final Logger log = Logger.getLogger(RuntimeContextFactory.class);
 
     @SuppressWarnings("unchecked")
     @Override

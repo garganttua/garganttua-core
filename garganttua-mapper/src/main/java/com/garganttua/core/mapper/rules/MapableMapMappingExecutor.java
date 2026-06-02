@@ -6,8 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.IMappingRecursion;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
@@ -22,7 +21,7 @@ import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
 public class MapableMapMappingExecutor implements IMappingRuleExecutor {
-    private static final IDiagnostic log = Diagnostics.of(MapableMapMappingExecutor.class);
+    private static final Logger log = Logger.getLogger(MapableMapMappingExecutor.class);
 
 	private final IReflection reflection;
 	private final IMapper mapper;

@@ -14,8 +14,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -63,7 +62,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class PropertiesFileProviderBuilder
         extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
-    private static final IDiagnostic log = Diagnostics.of(PropertiesFileProviderBuilder.class);
+    private static final Logger log = Logger.getLogger(PropertiesFileProviderBuilder.class);
 
     private static final String DEFAULT_CLASSPATH_RESOURCE = "application.properties";
 

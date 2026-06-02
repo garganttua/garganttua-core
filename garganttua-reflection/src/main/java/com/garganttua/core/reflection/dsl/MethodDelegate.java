@@ -6,8 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IMethodReturn;
@@ -19,7 +18,7 @@ import com.garganttua.core.reflection.methods.MethodResolver;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 
 class MethodDelegate {
-    private static final IDiagnostic log = Diagnostics.of(MethodDelegate.class);
+    private static final Logger log = Logger.getLogger(MethodDelegate.class);
 
     private final IReflectionProvider provider;
 

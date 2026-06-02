@@ -8,14 +8,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.nativve.IReflectionConfiguration;
 import com.garganttua.core.nativve.IReflectionConfigurationEntry;
 import com.garganttua.core.reflection.IClass;
 
 public class ReflectionConfiguration implements IReflectionConfiguration{
-    private static final IDiagnostic log = Diagnostics.of(ReflectionConfiguration.class);
+    private static final Logger log = Logger.getLogger(ReflectionConfiguration.class);
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 

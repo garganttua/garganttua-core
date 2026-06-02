@@ -8,8 +8,7 @@ import java.util.Set;
 
 import javax.inject.Named;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.annotations.Provider;
@@ -20,7 +19,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class BeanElementResolver {
-    private static final IDiagnostic log = Diagnostics.of(BeanElementResolver.class);
+    private static final Logger log = Logger.getLogger(BeanElementResolver.class);
 
     private Set<IClass<? extends Annotation>> qualifiers;
 

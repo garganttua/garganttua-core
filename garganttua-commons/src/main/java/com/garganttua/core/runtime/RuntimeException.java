@@ -3,8 +3,7 @@ package com.garganttua.core.runtime;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -47,7 +46,7 @@ import com.garganttua.core.CoreException;
  * @see CoreException
  */
 public class RuntimeException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeException.class);
+    private static final Logger log = Logger.getLogger(RuntimeException.class);
 
     /**
      * Optional reference to the runtime context where this exception occurred.

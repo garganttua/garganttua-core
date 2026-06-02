@@ -7,13 +7,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
 import com.garganttua.core.reflection.IClass;
 
 public class MutexManager implements IMutexManager, IBootstrapSummaryContributor {
-    private static final IDiagnostic log = Diagnostics.of(MutexManager.class);
+    private static final Logger log = Logger.getLogger(MutexManager.class);
 
     private final ConcurrentHashMap<String, IMutex> mutexes = new ConcurrentHashMap<>();
     private final Map<IClass<? extends IMutex>, IMutexFactory> factories;

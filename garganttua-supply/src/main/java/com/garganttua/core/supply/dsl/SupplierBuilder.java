@@ -5,8 +5,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.IConstructorBinder;
@@ -28,7 +27,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class SupplierBuilder<Supplied>
         implements ICommonSupplierBuilder<Supplied> {
-    private static final IDiagnostic log = Diagnostics.of(SupplierBuilder.class);
+    private static final Logger log = Logger.getLogger(SupplierBuilder.class);
 
     private IClass<?> contextType;
     private IContextualSupply<Supplied, ?> supply;

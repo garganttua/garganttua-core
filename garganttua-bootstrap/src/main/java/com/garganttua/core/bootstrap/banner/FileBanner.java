@@ -1,7 +1,6 @@
 package com.garganttua.core.bootstrap.banner;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +41,7 @@ import java.util.List;
  * @since 2.0.0-ALPHA01
  */
 public class FileBanner implements IBanner {
-    private static final IDiagnostic log = Diagnostics.of(FileBanner.class);
+    private static final Logger log = Logger.getLogger(FileBanner.class);
 
     /**
      * Default banner file name to look for in classpath.

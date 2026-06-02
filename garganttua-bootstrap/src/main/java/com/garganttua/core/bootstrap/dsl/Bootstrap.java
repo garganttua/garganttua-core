@@ -25,8 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.banner.BannerMode;
 import com.garganttua.core.bootstrap.banner.BootstrapSummary;
 import com.garganttua.core.bootstrap.banner.DependencyGraphRenderer;
@@ -103,7 +102,7 @@ import com.garganttua.core.supply.SupplyException;
  */
 public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBuiltRegistry>
         implements IBootstrap, IObservable {
-    private static final IDiagnostic log = Diagnostics.of(Bootstrap.class);
+    private static final Logger log = Logger.getLogger(Bootstrap.class);
 
     private static final String DEFAULT_VERSION = com.garganttua.core.bootstrap.GarganttuaVersion.getVersion();
     private static final String SOURCE_MANUAL = "manual";

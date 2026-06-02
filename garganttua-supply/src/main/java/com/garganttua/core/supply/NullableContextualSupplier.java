@@ -4,13 +4,12 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 public class NullableContextualSupplier<SuppliedType, ContextType>
         implements IContextualSupplier<SuppliedType, ContextType> {
-    private static final IDiagnostic log = Diagnostics.of(NullableContextualSupplier.class);
+    private static final Logger log = Logger.getLogger(NullableContextualSupplier.class);
 
     private final IContextualSupplier<SuppliedType, ContextType> delegate;
     private final boolean allowNull;

@@ -1,14 +1,13 @@
 package com.garganttua.core.reflection.utils;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 import java.util.Objects;
 
 public class WildcardTypeImpl implements WildcardType {
-    private static final IDiagnostic log = Diagnostics.of(WildcardTypeImpl.class);
+    private static final Logger log = Logger.getLogger(WildcardTypeImpl.class);
 
     private final Type[] upperBounds;
     private final Type[] lowerBounds;

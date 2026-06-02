@@ -3,8 +3,7 @@ package com.garganttua.core.injection.context.properties.resolver;
 import java.lang.annotation.Annotation;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
@@ -23,7 +22,7 @@ public class PropertyElementResolver implements IElementResolver {
     public PropertyElementResolver() {
     }
 
-    private static final IDiagnostic log = Diagnostics.of(PropertyElementResolver.class);
+    private static final Logger log = Logger.getLogger(PropertyElementResolver.class);
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override

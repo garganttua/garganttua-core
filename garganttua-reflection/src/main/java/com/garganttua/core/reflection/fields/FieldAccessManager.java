@@ -2,12 +2,11 @@ package com.garganttua.core.reflection.fields;
 
 import java.lang.reflect.Modifier;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IField;
 
 public class FieldAccessManager implements AutoCloseable {
-    private static final IDiagnostic log = Diagnostics.of(FieldAccessManager.class);
+    private static final Logger log = Logger.getLogger(FieldAccessManager.class);
 
 	private final IField field;
 	private final boolean originalAccessibility;

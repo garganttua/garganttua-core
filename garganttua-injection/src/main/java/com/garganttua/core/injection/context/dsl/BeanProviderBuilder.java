@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticLinkedDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
@@ -38,7 +37,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class BeanProviderBuilder
 		extends AbstractAutomaticLinkedDependentBuilder<IBeanProviderBuilder, IInjectionContextBuilder, IBeanProvider>
 		implements IBeanProviderBuilder {
-    private static final IDiagnostic log = Diagnostics.of(BeanProviderBuilder.class);
+    private static final Logger log = Logger.getLogger(BeanProviderBuilder.class);
 
 	private static final String SOURCE_MANUAL = "manual";
 	private static final String SOURCE_AUTO_DETECTED = "auto-detected";

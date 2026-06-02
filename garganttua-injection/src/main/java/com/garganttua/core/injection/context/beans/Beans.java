@@ -6,8 +6,7 @@ import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
@@ -20,7 +19,7 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected(queryAllDeclaredMethods = true)
 public class Beans {
-    private static final IDiagnostic log = Diagnostics.of(Beans.class);
+    private static final Logger log = Logger.getLogger(Beans.class);
 
     @Expression(name = "beanReference", description = "Creates a BeanReference with the specified parameters")
     public static BeanReference<?> beanReference(@Nullable IClass<?> type, Optional<BeanStrategy> strategy, Optional<String> name,

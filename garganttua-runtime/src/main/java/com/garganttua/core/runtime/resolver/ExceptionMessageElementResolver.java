@@ -3,8 +3,7 @@ package com.garganttua.core.runtime.resolver;
 import static com.garganttua.core.injection.IInjectableElementResolver.*;
 import static com.garganttua.core.runtime.RuntimeContext.*;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.Resolved;
@@ -21,7 +20,7 @@ public class ExceptionMessageElementResolver implements IElementResolver {
     public ExceptionMessageElementResolver() {
     }
 
-    private static final IDiagnostic log = Diagnostics.of(ExceptionMessageElementResolver.class);
+    private static final Logger log = Logger.getLogger(ExceptionMessageElementResolver.class);
 
     @Override
     public Resolved resolve(IClass<?> elementType, IAnnotatedElement element) throws DiException {

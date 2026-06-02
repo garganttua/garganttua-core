@@ -3,8 +3,7 @@ package com.garganttua.core.observability.dsl;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.observability.IObserver;
@@ -26,7 +25,7 @@ import com.garganttua.core.observability.ObservableEvent;
  * @since 2.0.0-ALPHA02
  */
 final class FilteredObserver implements IObserver<ObservableEvent> {
-    private static final IDiagnostic log = Diagnostics.of(FilteredObserver.class);
+    private static final Logger log = Logger.getLogger(FilteredObserver.class);
 
     private final IObserver<ObservableEvent> target;
     private final ICondition condition;

@@ -1,7 +1,6 @@
 package com.garganttua.core.utils;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -51,7 +50,7 @@ import com.garganttua.core.CoreException;
  * @see CoreException
  */
 public class CopyException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(CopyException.class);
+    private static final Logger log = Logger.getLogger(CopyException.class);
 
     /**
      * Constructs a new CopyException with the specified detail message.

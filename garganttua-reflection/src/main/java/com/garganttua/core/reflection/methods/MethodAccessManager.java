@@ -2,12 +2,11 @@ package com.garganttua.core.reflection.methods;
 
 import java.lang.reflect.Modifier;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IMethod;
 
 public class MethodAccessManager implements AutoCloseable {
-    private static final IDiagnostic log = Diagnostics.of(MethodAccessManager.class);
+    private static final Logger log = Logger.getLogger(MethodAccessManager.class);
 
 	private final IMethod method;
 	private final boolean originalAccessibility;

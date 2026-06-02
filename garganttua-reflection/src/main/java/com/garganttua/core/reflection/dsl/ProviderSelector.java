@@ -2,13 +2,12 @@ package com.garganttua.core.reflection.dsl;
 
 import java.util.List;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 
 class ProviderSelector implements IReflectionProvider {
-    private static final IDiagnostic log = Diagnostics.of(ProviderSelector.class);
+    private static final Logger log = Logger.getLogger(ProviderSelector.class);
 
     private final List<IReflectionProvider> providers;
 

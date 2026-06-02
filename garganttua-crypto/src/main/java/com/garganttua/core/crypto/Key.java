@@ -1,7 +1,6 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -16,7 +15,7 @@ import java.util.Objects;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Key implements IKey {
-    private static final IDiagnostic log = Diagnostics.of(Key.class);
+    private static final Logger log = Logger.getLogger(Key.class);
 
 	private final KeyType type;
 

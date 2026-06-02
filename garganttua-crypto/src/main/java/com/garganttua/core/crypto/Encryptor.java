@@ -1,7 +1,6 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -14,7 +13,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
 class Encryptor {
-    private static final IDiagnostic log = Diagnostics.of(Encryptor.class);
+    private static final Logger log = Logger.getLogger(Encryptor.class);
 
 	private static final int GCM_TAG_LENGTH_BITS = 128;
 

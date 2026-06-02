@@ -4,8 +4,7 @@ import java.util.Objects;
 
 import javax.inject.Named;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mutex.annotations.MutexFactory;
 
 import com.garganttua.core.reflection.annotations.Reflected;
@@ -85,7 +84,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Named("InterruptibleLeaseMutexFactory")
 @Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
 public class InterruptibleLeaseMutexFactory implements IMutexFactory {
-    private static final IDiagnostic log = Diagnostics.of(InterruptibleLeaseMutexFactory.class);
+    private static final Logger log = Logger.getLogger(InterruptibleLeaseMutexFactory.class);
 
     /**
      * Creates a new {@link InterruptibleLeaseMutex} with the specified name.

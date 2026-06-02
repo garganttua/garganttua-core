@@ -1,7 +1,6 @@
 package com.garganttua.core.execution;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -30,7 +29,7 @@ import com.garganttua.core.CoreException;
  * @since 2.0.0-ALPHA01
  */
 public class ExecutorException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(ExecutorException.class);
+    private static final Logger log = Logger.getLogger(ExecutorException.class);
 
 	private static final long serialVersionUID = 4089999852587836549L;
 

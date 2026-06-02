@@ -8,8 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.ExpressionNode;
 import com.garganttua.core.expression.IExpressionNode;
@@ -30,7 +29,7 @@ import com.garganttua.core.supply.SupplyException;
 import jakarta.annotation.Nullable;
 
 public class MethodCallExpressionNodeFactory<R, S extends ISupplier<R>> implements IExpressionNodeFactory<R, S> {
-    private static final IDiagnostic log = Diagnostics.of(MethodCallExpressionNodeFactory.class);
+    private static final Logger log = Logger.getLogger(MethodCallExpressionNodeFactory.class);
 
     private ResolvedMethod resolved;
     private ExpressionNodeFactory<R, S> factory;

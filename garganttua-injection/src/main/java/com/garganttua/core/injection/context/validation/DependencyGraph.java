@@ -6,12 +6,11 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 public class DependencyGraph {
-    private static final IDiagnostic log = Diagnostics.of(DependencyGraph.class);
+    private static final Logger log = Logger.getLogger(DependencyGraph.class);
 
     private final Map<IClass<?>, Set<IClass<?>>> adjacencyList = new LinkedHashMap<>();
 

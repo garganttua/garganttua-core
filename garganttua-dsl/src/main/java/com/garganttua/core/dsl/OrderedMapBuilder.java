@@ -1,13 +1,12 @@
 package com.garganttua.core.dsl;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.utils.OrderedMap;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class OrderedMapBuilder<K, V extends IBuilder<B>, B> extends OrderedMap<K, V> implements IBuilder<OrderedMap<K, B>> {
-    private static final IDiagnostic log = Diagnostics.of(OrderedMapBuilder.class);
+    private static final Logger log = Logger.getLogger(OrderedMapBuilder.class);
 
     @Override
     public OrderedMap<K, B> build() throws DslException {

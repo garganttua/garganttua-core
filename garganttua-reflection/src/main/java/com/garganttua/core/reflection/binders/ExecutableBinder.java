@@ -6,15 +6,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 public abstract class ExecutableBinder<ReturnedType> implements IExecutableBinder<ReturnedType> {
-    private static final IDiagnostic log = Diagnostics.of(ExecutableBinder.class);
+    private static final Logger log = Logger.getLogger(ExecutableBinder.class);
 
     protected final List<ISupplier<?>> parameterSuppliers;
 

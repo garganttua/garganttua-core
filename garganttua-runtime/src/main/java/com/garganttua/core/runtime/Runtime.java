@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 import com.garganttua.core.injection.IInjectionContext;
@@ -22,7 +21,7 @@ import com.github.f4b6a3.uuid.UuidCreator;
 
 public class Runtime<InputType, OutputType>
 		implements IRuntime<InputType, OutputType>, IObservable {
-    private static final IDiagnostic log = Diagnostics.of(Runtime.class);
+    private static final Logger log = Logger.getLogger(Runtime.class);
 
 	private final String name;
 	private final IInjectionContext injectionContext;

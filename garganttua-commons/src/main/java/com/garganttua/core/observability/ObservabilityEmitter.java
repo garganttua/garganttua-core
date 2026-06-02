@@ -106,33 +106,55 @@ public final class ObservabilityEmitter {
 		}
 
 		public void fireStart(String source) {
+			fireStart(source, null);
+		}
+
+		public void fireStart(String source, Object payload) {
 			if (!hasObservers()) {
 				return;
 			}
-			StartEvent event = new StartEvent(executionId, Instant.now(), source);
-			fire(event);
+			fire(new StartEvent(executionId, Instant.now(), source, payload));
 		}
 
 		public void fireEnd(String source) {
-			fireEnd(source, null);
+			fireEnd(source, null, null);
 		}
 
 		public void fireEnd(String source, Integer code) {
+			fireEnd(source, code, null);
+		}
+
+		public void fireEnd(String source, Integer code, Object payload) {
 			if (!hasObservers()) {
 				return;
 			}
 			Instant now = Instant.now();
 			Duration duration = Duration.between(startedAt, now);
-			fire(new EndEvent(executionId, now, source, duration, code));
+			fire(new EndEvent(executionId, now, source, duration, code, payload));
 		}
 
 		public void fireError(String source, Throwable failure) {
+			fireError(source, failure, null);
+		}
+
+		public void fireError(String source, Throwable failure, Object payload) {
 			if (!hasObservers()) {
 				return;
 			}
 			Instant now = Instant.now();
 			Duration duration = Duration.between(startedAt, now);
-			fire(new ErrorEvent(executionId, now, source, duration, failure));
+			fire(new ErrorEvent(executionId, now, source, duration, failure, payload));
+		}
+
+		public void fireLog(String source, LogEvent.Level level, String message) {
+			fireLog(source, level, message, null);
+		}
+
+		public void fireLog(String source, LogEvent.Level level, String message, Object payload) {
+			if (!hasObservers()) {
+				return;
+			}
+			fire(new LogEvent(executionId, Instant.now(), source, level, message, payload));
 		}
 
 		private void fire(ObservableEvent event) {

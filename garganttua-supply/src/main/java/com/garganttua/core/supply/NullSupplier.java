@@ -3,12 +3,11 @@ package com.garganttua.core.supply;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 public class NullSupplier<SuppliedType> implements ISupplier<SuppliedType>{
-    private static final IDiagnostic log = Diagnostics.of(NullSupplier.class);
+    private static final Logger log = Logger.getLogger(NullSupplier.class);
 
     private Type suppliedType;
     private IClass<SuppliedType> suppliedClass;

@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationNode;
@@ -17,7 +16,7 @@ import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.ILinkedBuilder;
 
 public class BuilderPopulator implements IConfigurationPopulator {
-    private static final IDiagnostic log = Diagnostics.of(BuilderPopulator.class);
+    private static final Logger log = Logger.getLogger(BuilderPopulator.class);
 
     private final List<IConfigurationFormat> formats;
     private final MethodMapping methodMapping;

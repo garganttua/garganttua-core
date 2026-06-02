@@ -6,8 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -18,7 +17,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPropertyProviderBuilder, IInjectionContextBuilder, IPropertyProvider>
         implements IPropertyProviderBuilder {
-    private static final IDiagnostic log = Diagnostics.of(PropertyProviderBuilder.class);
+    private static final Logger log = Logger.getLogger(PropertyProviderBuilder.class);
 
     private List<IPropertyBuilder<?>> propertyBuilders = new ArrayList<>();
 

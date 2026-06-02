@@ -9,8 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
@@ -23,7 +22,7 @@ import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IParameter;
 
 public class InjectableElementResolver implements IInjectableElementResolver {
-    private static final IDiagnostic log = Diagnostics.of(InjectableElementResolver.class);
+    private static final Logger log = Logger.getLogger(InjectableElementResolver.class);
 
     private Map<String, IElementResolver> resolvers = new ConcurrentHashMap<>();
 

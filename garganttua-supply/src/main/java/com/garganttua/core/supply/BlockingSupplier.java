@@ -6,8 +6,7 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 /**
@@ -35,7 +34,7 @@ import com.garganttua.core.reflection.IClass;
  * @see BlockingQueue
  */
 public class BlockingSupplier<Supplied> implements ISupplier<Supplied> {
-    private static final IDiagnostic log = Diagnostics.of(BlockingSupplier.class);
+    private static final Logger log = Logger.getLogger(BlockingSupplier.class);
 
     private final BlockingQueue<Supplied> queue;
     private final Long timeoutMillis;

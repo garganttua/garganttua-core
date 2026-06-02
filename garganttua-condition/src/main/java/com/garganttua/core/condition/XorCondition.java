@@ -5,8 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
@@ -14,7 +13,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected(queryAllDeclaredMethods = true)
 public class XorCondition implements ICondition {
-    private static final IDiagnostic log = Diagnostics.of(XorCondition.class);
+    private static final Logger log = Logger.getLogger(XorCondition.class);
 
     private Set<ICondition> conditions;
 

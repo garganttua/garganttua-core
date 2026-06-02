@@ -2,8 +2,7 @@ package com.garganttua.core.mapper.rules;
 
 import java.util.List;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.mapper.MappingDirection;
@@ -20,7 +19,7 @@ import com.garganttua.core.reflection.methods.MethodInvoker;
 import com.garganttua.core.reflection.methods.ResolvedMethod;
 
 public class MethodMappingExecutor implements IMappingRuleExecutor {
-    private static final IDiagnostic log = Diagnostics.of(MethodMappingExecutor.class);
+    private static final Logger log = Logger.getLogger(MethodMappingExecutor.class);
 
 	private IMethod method;
 	private IField sourceField;

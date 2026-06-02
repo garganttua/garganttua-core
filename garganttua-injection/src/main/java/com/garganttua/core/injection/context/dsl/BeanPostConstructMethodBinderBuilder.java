@@ -4,8 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IBeanFactory;
 import com.garganttua.core.reflection.IClass;
@@ -19,7 +18,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class BeanPostConstructMethodBinderBuilder<Bean> extends
                 AbstractMethodArgInjectBinderBuilder<Void, IBeanPostConstructMethodBinderBuilder<Bean>, IBeanFactoryBuilder<Bean>, IMethodBinder<Void>>
                 implements IBeanPostConstructMethodBinderBuilder<Bean> {
-    private static final IDiagnostic log = Diagnostics.of(BeanPostConstructMethodBinderBuilder.class);
+    private static final Logger log = Logger.getLogger(BeanPostConstructMethodBinderBuilder.class);
 
         protected BeanPostConstructMethodBinderBuilder(IBeanFactoryBuilder<Bean> up,
                         ISupplierBuilder<Bean, IBeanFactory<Bean>> supplier) throws DslException {

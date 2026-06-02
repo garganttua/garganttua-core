@@ -4,8 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.IPropertySupplier;
 import com.garganttua.core.injection.context.properties.PropertySupplier;
@@ -14,7 +13,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class PropertySupplierBuilder<Property> implements IPropertySupplierBuilder<Property> {
-    private static final IDiagnostic log = Diagnostics.of(PropertySupplierBuilder.class);
+    private static final Logger log = Logger.getLogger(PropertySupplierBuilder.class);
 
     private IClass<Property> type;
     private String key;

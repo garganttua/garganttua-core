@@ -3,8 +3,7 @@ package com.garganttua.core.mapper.rules;
 import java.util.Collection;
 import java.util.List;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mapper.IMappingRuleExecutor;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
@@ -17,7 +16,7 @@ import com.garganttua.core.reflection.fields.ResolvedField;
 import com.garganttua.core.reflection.fields.SingleFieldValue;
 
 public class SimpleCollectionMappingExecutor implements IMappingRuleExecutor {
-    private static final IDiagnostic log = Diagnostics.of(SimpleCollectionMappingExecutor.class);
+    private static final Logger log = Logger.getLogger(SimpleCollectionMappingExecutor.class);
 
 	private IReflection reflection;
 	private IField sourceField;

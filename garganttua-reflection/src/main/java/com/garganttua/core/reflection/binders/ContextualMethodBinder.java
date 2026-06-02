@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
@@ -20,7 +19,7 @@ import com.garganttua.core.supply.SupplyException;
 public class ContextualMethodBinder<ReturnedType, OwnerContextType>
         extends ContextualExecutableBinder<ReturnedType, OwnerContextType>
         implements IContextualMethodBinder<ReturnedType, OwnerContextType> {
-    private static final IDiagnostic log = Diagnostics.of(ContextualMethodBinder.class);
+    private static final Logger log = Logger.getLogger(ContextualMethodBinder.class);
 
     private final ISupplier<?> objectSupplier;
     private final ResolvedMethod method;

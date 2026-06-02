@@ -2,8 +2,7 @@ package com.garganttua.core.dsl.dependency;
 
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilder;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -45,7 +44,7 @@ import com.garganttua.core.reflection.IClass;
  */
 public abstract class AbstractDependentBuilder<B extends IBuilder<T>, T>
         implements IDependentBuilder<B, T> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractDependentBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractDependentBuilder.class);
 
     protected final DependentBuilderSupport support;
     protected T built;

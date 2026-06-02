@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationPopulator;
 import com.garganttua.core.configuration.format.JsonConfigurationFormat;
@@ -27,7 +26,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class ConfigurationBuilder extends AbstractAutomaticDependentBuilder<IConfigurationBuilder, IConfigurationPopulator>
         implements IConfigurationBuilder {
-    private static final IDiagnostic log = Diagnostics.of(ConfigurationBuilder.class);
+    private static final Logger log = Logger.getLogger(ConfigurationBuilder.class);
 
     private final List<IConfigurationFormat> formats = new ArrayList<>();
     private final List<ConfigurationSourceBuilder> sourceBuilders = new ArrayList<>();

@@ -1,7 +1,6 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.KeyPair;
 import java.util.Date;
 import java.util.Objects;
@@ -9,7 +8,7 @@ import java.util.Objects;
 import javax.crypto.SecretKey;
 
 public class KeyRealm implements IKeyRealm {
-    private static final IDiagnostic log = Diagnostics.of(KeyRealm.class);
+    private static final Logger log = Logger.getLogger(KeyRealm.class);
 
 	protected String name;
 

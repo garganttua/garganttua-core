@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.workflow.WorkflowException;
 import com.garganttua.core.workflow.WorkflowScript;
@@ -19,7 +18,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class WorkflowScriptBuilder implements IWorkflowScriptBuilder {
-    private static final IDiagnostic log = Diagnostics.of(WorkflowScriptBuilder.class);
+    private static final Logger log = Logger.getLogger(WorkflowScriptBuilder.class);
 
     private static final ScriptHeaderParser HEADER_PARSER = new ScriptHeaderParser();
 

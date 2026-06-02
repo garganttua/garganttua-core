@@ -3,14 +3,13 @@ package com.garganttua.core.expression.context;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.IExpressionNode;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.IContextualSupplier;
 
 public class ExpressionNodeContext implements IExpressionNodeContext {
-    private static final IDiagnostic log = Diagnostics.of(ExpressionNodeContext.class);
+    private static final Logger log = Logger.getLogger(ExpressionNodeContext.class);
 
     private List<Object> parameters;
 

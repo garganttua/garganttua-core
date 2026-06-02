@@ -7,8 +7,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -107,7 +106,7 @@ import com.garganttua.core.reflection.IClass;
  * @see BuilderDependency
  */
 public class DependentBuilderSupport {
-    private static final IDiagnostic log = Diagnostics.of(DependentBuilderSupport.class);
+    private static final Logger log = Logger.getLogger(DependentBuilderSupport.class);
 
     protected final Set<IBuilderDependency<?, ?>> useDependencies;
     protected final Set<IBuilderDependency<?, ?>> requireDependencies;

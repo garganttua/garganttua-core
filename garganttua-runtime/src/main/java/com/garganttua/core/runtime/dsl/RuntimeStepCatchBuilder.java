@@ -2,8 +2,7 @@ package com.garganttua.core.runtime.dsl;
 
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
@@ -16,7 +15,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 public class RuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> extends
                 AbstractAutomaticLinkedBuilder<IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepCatch>
                 implements IRuntimeStepCatchBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepCatchBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepCatchBuilder.class);
 
         private IClass<? extends Throwable> exception;
         private Integer code;

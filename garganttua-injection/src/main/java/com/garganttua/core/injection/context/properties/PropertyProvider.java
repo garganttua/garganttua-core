@@ -7,8 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
@@ -19,7 +18,7 @@ import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.utils.CopyException;
 
 public class PropertyProvider extends AbstractLifecycle implements IPropertyProvider {
-    private static final IDiagnostic log = Diagnostics.of(PropertyProvider.class);
+    private static final Logger log = Logger.getLogger(PropertyProvider.class);
 
     private Map<String, Object> properties = new ConcurrentHashMap<>();
 

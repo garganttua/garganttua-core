@@ -3,8 +3,7 @@ package com.garganttua.core.mapper;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 /**
@@ -72,7 +71,7 @@ public record MappingConfiguration(
 		List<MappingRule> sourceRules,
 		List<MappingRule> destinationRules,
 		MappingDirection mappingDirection) {
-    private static final IDiagnostic log = Diagnostics.of(MappingConfiguration.class);
+    private static final Logger log = Logger.getLogger(MappingConfiguration.class);
 
 	@Override
 	public boolean equals(Object o) {

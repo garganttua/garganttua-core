@@ -1,11 +1,10 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 public class CryptoException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(CryptoException.class);
+    private static final Logger log = Logger.getLogger(CryptoException.class);
 
 	private static final long serialVersionUID = 1L;
 

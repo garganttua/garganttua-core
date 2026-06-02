@@ -11,8 +11,7 @@ import org.jline.reader.LineReader;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.IExpressionContext;
@@ -29,7 +28,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Reflected(queryAllDeclaredMethods = true)
 public class ConsoleFunctions {
-    private static final IDiagnostic log = Diagnostics.of(ConsoleFunctions.class);
+    private static final Logger log = Logger.getLogger(ConsoleFunctions.class);
 
     private ConsoleFunctions() {
     }

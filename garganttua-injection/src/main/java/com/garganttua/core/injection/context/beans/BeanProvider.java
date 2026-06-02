@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -31,7 +30,7 @@ import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.utils.CopyException;
 
 public class BeanProvider extends AbstractLifecycle implements IBeanProvider {
-    private static final IDiagnostic log = Diagnostics.of(BeanProvider.class);
+    private static final Logger log = Logger.getLogger(BeanProvider.class);
 
 	private List<IBeanFactory<?>> beanFactories;
 	private final Object copyMutex = new Object();

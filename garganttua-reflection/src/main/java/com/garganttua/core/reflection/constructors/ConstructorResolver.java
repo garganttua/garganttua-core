@@ -6,15 +6,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ReflectionException;
 
 public class ConstructorResolver {
-    private static final IDiagnostic log = Diagnostics.of(ConstructorResolver.class);
+    private static final Logger log = Logger.getLogger(ConstructorResolver.class);
 
     // ========================================================================
     // Provider-based API (preferred)

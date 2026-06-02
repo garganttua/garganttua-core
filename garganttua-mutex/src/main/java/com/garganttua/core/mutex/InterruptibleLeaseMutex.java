@@ -8,8 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.observability.ObservabilityEmitter;
 
 /**
@@ -76,7 +75,7 @@ import com.garganttua.core.observability.ObservabilityEmitter;
  * @see MutexStrategy
  */
 public class InterruptibleLeaseMutex implements IMutex {
-    private static final IDiagnostic log = Diagnostics.of(InterruptibleLeaseMutex.class);
+    private static final Logger log = Logger.getLogger(InterruptibleLeaseMutex.class);
 
     private static final String MUTEX_RELEASED_MSG = "Mutex released: {}";
 

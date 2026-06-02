@@ -2,14 +2,13 @@ package com.garganttua.core.runtime;
 
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.execution.ExecutorException;
 import com.garganttua.core.reflection.IClass;
 
 public class RuntimeStepExecutionTools {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepExecutionTools.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepExecutionTools.class);
 
     static public void validateAndStoreReturnedValueInVariable(String runtimeName, String stepName,
             String variableName,

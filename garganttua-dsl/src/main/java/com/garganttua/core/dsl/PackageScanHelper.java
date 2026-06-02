@@ -4,8 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IClass;
@@ -22,7 +21,7 @@ import com.garganttua.core.reflection.IReflection;
  * @since 2.0.0-ALPHA01
  */
 public class PackageScanHelper {
-    private static final IDiagnostic log = Diagnostics.of(PackageScanHelper.class);
+    private static final Logger log = Logger.getLogger(PackageScanHelper.class);
 
     private final IReflection reflection;
     private IClass<? extends Annotation> scanAnnotationClass;

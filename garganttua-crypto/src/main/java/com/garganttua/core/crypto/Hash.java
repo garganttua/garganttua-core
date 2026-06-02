@@ -1,12 +1,11 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Hash implements IHash {
-    private static final IDiagnostic log = Diagnostics.of(Hash.class);
+    private static final Logger log = Logger.getLogger(Hash.class);
 
 	private final HashAlgorithm algorithm;
 

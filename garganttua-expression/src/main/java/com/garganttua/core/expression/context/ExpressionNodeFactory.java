@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.expression.ContextualExpressionNode;
 import com.garganttua.core.expression.ExpressionException;
@@ -36,7 +35,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 public class ExpressionNodeFactory<R, S extends ISupplier<R>>
         extends ContextualMethodBinder<IExpressionNode<R, S>, IExpressionNodeContext>
         implements IExpressionNodeFactory<R, S> {
-    private static final IDiagnostic log = Diagnostics.of(ExpressionNodeFactory.class);
+    private static final Logger log = Logger.getLogger(ExpressionNodeFactory.class);
 
     // ========== Fields ==========
 

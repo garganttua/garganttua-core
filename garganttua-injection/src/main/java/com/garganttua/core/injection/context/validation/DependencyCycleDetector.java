@@ -8,13 +8,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.reflection.IClass;
 
 public class DependencyCycleDetector {
-    private static final IDiagnostic log = Diagnostics.of(DependencyCycleDetector.class);
+    private static final Logger log = Logger.getLogger(DependencyCycleDetector.class);
 
     private enum VisitState {
         UNVISITED, VISITING, VISITED

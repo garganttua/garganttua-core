@@ -8,8 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 /**
@@ -38,7 +37,7 @@ import com.garganttua.core.reflection.IClass;
  * @see CompletableFuture
  */
 public class FutureSupplier<Supplied> implements ISupplier<Supplied> {
-    private static final IDiagnostic log = Diagnostics.of(FutureSupplier.class);
+    private static final Logger log = Logger.getLogger(FutureSupplier.class);
 
     private final CompletableFuture<Supplied> future;
     private final Long timeoutMillis;

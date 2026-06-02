@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.expression.context.IScriptFunction;
@@ -65,7 +64,7 @@ import com.garganttua.core.supply.SupplyException;
  * @since 2.0.0-ALPHA01
  */
 public class ScriptStepFactory {
-    private static final IDiagnostic log = Diagnostics.of(ScriptStepFactory.class);
+    private static final Logger log = Logger.getLogger(ScriptStepFactory.class);
 
     private static final String RUNTIME_NAME = "script";
 

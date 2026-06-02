@@ -3,8 +3,7 @@ package com.garganttua.core.configuration.dsl;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationSource;
 import com.garganttua.core.configuration.source.ClasspathConfigurationSource;
@@ -18,7 +17,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class ConfigurationSourceBuilder extends AbstractLinkedBuilder<IConfigurationBuilder, Void>
         implements IConfigurationSourceBuilder {
-    private static final IDiagnostic log = Diagnostics.of(ConfigurationSourceBuilder.class);
+    private static final Logger log = Logger.getLogger(ConfigurationSourceBuilder.class);
 
     private IConfigurationSource source;
     private IConfigurationFormat format;

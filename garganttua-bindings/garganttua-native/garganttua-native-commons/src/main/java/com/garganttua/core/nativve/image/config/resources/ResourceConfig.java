@@ -12,12 +12,11 @@ import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 public class ResourceConfig {
-    private static final IDiagnostic log = Diagnostics.of(ResourceConfig.class);
+    private static final Logger log = Logger.getLogger(ResourceConfig.class);
 
 private static final ObjectMapper objectMapper = new ObjectMapper();
     

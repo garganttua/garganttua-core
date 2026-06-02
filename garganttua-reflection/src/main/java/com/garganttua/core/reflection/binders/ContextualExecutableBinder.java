@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.supply.IContextualSupplier;
@@ -17,7 +16,7 @@ import com.garganttua.core.supply.SupplyException;
 
 public abstract class ContextualExecutableBinder<ReturnedType, Context>
         implements IContextualExecutableBinder<ReturnedType, Context> {
-    private static final IDiagnostic log = Diagnostics.of(ContextualExecutableBinder.class);
+    private static final Logger log = Logger.getLogger(ContextualExecutableBinder.class);
 
     protected final List<ISupplier<?>> parameterSuppliers;
 

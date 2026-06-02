@@ -4,8 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
@@ -17,7 +16,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 //@Resolver(annotations={Prototype.class})
 public class PrototypeElementResolver extends BeanElementResolver implements IElementResolver {
-    private static final IDiagnostic log = Diagnostics.of(PrototypeElementResolver.class);
+    private static final Logger log = Logger.getLogger(PrototypeElementResolver.class);
 
     public PrototypeElementResolver(Set<IClass<? extends Annotation>> qualifiers) {
         super(qualifiers);

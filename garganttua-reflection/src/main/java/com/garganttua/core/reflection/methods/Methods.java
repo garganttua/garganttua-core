@@ -5,14 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IMethodReturn;
 
 public class Methods {
-    private static final IDiagnostic log = Diagnostics.of(Methods.class);
+    private static final Logger log = Logger.getLogger(Methods.class);
 
         public static boolean isStatic(IMethod method) {
                 return Modifier.isStatic(method.getModifiers());

@@ -1,10 +1,9 @@
 package com.garganttua.core.runtime;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 public record RuntimeStepCatch(IClass<? extends Throwable> exception, Integer code) implements IRuntimeStepCatch {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepCatch.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepCatch.class);
 
 }

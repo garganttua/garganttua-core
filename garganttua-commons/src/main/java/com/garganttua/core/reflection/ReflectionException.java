@@ -1,7 +1,6 @@
 package com.garganttua.core.reflection;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -42,7 +41,7 @@ import com.garganttua.core.CoreException;
  * @see IObjectQuery
  */
 public class ReflectionException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(ReflectionException.class);
+    private static final Logger log = Logger.getLogger(ReflectionException.class);
 
 	/**
 	 * Constructs a new reflection exception with the specified message.

@@ -6,8 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
@@ -18,7 +17,7 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.Fields;
 
 public class ObjectQuery<T> implements IObjectQuery<T> {
-    private static final IDiagnostic log = Diagnostics.of(ObjectQuery.class);
+    private static final Logger log = Logger.getLogger(ObjectQuery.class);
 
     private IClass<T> objectClass;
     private IReflectionProvider provider;

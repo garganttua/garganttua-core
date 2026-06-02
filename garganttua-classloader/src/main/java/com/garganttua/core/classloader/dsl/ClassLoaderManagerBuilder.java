@@ -3,8 +3,7 @@ package com.garganttua.core.classloader.dsl;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.classloader.ClassLoaderManager;
 import com.garganttua.core.classloader.IClassLoaderManager;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.annotations.Reflected;
 
@@ -23,7 +22,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class ClassLoaderManagerBuilder implements IClassLoaderManagerBuilder {
 
-    private static final IDiagnostic log = Diagnostics.of(ClassLoaderManagerBuilder.class);
+    private static final Logger log = Logger.getLogger(ClassLoaderManagerBuilder.class);
 
     private ClassLoaderManagerBuilder() {
         log.trace("ClassLoaderManagerBuilder created");

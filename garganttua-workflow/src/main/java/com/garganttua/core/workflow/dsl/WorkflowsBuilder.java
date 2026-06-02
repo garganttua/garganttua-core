@@ -12,8 +12,7 @@ import java.util.Set;
 import javax.inject.Named;
 
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
@@ -59,7 +58,7 @@ public class WorkflowsBuilder
         extends AbstractAutomaticDependentBuilder<IWorkflowsBuilder, Map<String, IWorkflow>>
         implements IWorkflowsBuilder {
 
-    private static final IDiagnostic log = Diagnostics.of(WorkflowsBuilder.class);
+    private static final Logger log = Logger.getLogger(WorkflowsBuilder.class);
 
     private static final Set<DependencySpec> DEPENDENCIES = Set.of(
             DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class)),

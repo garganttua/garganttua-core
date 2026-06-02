@@ -7,8 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
 import com.garganttua.core.reflection.IClass;
@@ -33,7 +32,7 @@ import com.garganttua.core.supply.SupplyException;
  * @since 2.0.0-ALPHA01
  */
 public class SubRuntimeExpression implements IExpression<Object, ISupplier<Object>> {
-    private static final IDiagnostic log = Diagnostics.of(SubRuntimeExpression.class);
+    private static final Logger log = Logger.getLogger(SubRuntimeExpression.class);
 
     private final SubRuntime<Object[], Object> subRuntime;
     private final Set<String> scopedVariableNames;

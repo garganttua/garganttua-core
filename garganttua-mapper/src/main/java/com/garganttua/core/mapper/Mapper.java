@@ -12,8 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mapper.annotations.MappingIgnore;
 import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.observability.IObserver;
@@ -26,7 +25,7 @@ import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 
 public class Mapper implements IMapper, IObservable {
-    private static final IDiagnostic log = Diagnostics.of(Mapper.class);
+    private static final Logger log = Logger.getLogger(Mapper.class);
 
 	protected final Map<MappingKey, CachedMappingConfiguration> mappingConfigurations = new ConcurrentHashMap<>();
 

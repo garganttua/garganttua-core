@@ -1,7 +1,6 @@
 package com.garganttua.core.mutex.redis.functions;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.mutex.IMutex;
@@ -56,7 +55,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Reflected(queryAllDeclaredMethods = true)
 public final class RedisMutexFunctions {
-    private static final IDiagnostic log = Diagnostics.of(RedisMutexFunctions.class);
+    private static final Logger log = Logger.getLogger(RedisMutexFunctions.class);
 
     private RedisMutexFunctions() {
         // Utility class

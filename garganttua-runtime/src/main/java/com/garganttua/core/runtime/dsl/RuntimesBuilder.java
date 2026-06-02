@@ -12,8 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Named;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
@@ -51,7 +50,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>
         implements IRuntimesBuilder {
-    private static final IDiagnostic log = Diagnostics.of(RuntimesBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimesBuilder.class);
 
     private final Set<String> packages = new HashSet<>();
 

@@ -7,8 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.condition.dsl.IConditionBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -39,7 +38,7 @@ public class RuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType
         AbstractMethodArgInjectBinderBuilder<ExecutionReturn, IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepBuilder<ExecutionReturn, StepObjectType, InputType, OutputType>, IRuntimeStepMethodBinder<ExecutionReturn, IRuntimeContext<InputType, OutputType>, InputType, OutputType>>
         implements
         IRuntimeStepMethodBuilder<ExecutionReturn, StepObjectType, InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeStepMethodBuilder.class);
+    private static final Logger log = Logger.getLogger(RuntimeStepMethodBuilder.class);
 
     private String storeReturnInVariable = null;
     private Boolean output = false;

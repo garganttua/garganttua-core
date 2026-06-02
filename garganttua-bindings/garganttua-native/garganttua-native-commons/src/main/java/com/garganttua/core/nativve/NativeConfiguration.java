@@ -1,7 +1,6 @@
 package com.garganttua.core.nativve;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,7 +17,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class NativeConfiguration implements INativeConfiguration {
-    private static final IDiagnostic log = Diagnostics.of(NativeConfiguration.class);
+    private static final Logger log = Logger.getLogger(NativeConfiguration.class);
 
     private static final String NATIVE_IMAGE_DIR = "META-INF/native-image";
     private static final String REFLECT_CONFIG_FILE = "reflect-config.json";

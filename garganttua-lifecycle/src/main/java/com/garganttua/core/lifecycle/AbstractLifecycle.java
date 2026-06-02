@@ -2,13 +2,12 @@ package com.garganttua.core.lifecycle;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionUser;
 
 public abstract class AbstractLifecycle implements ILifecycle, IReflectionUser {
-    private static final IDiagnostic log = Diagnostics.of(AbstractLifecycle.class);
+    private static final Logger log = Logger.getLogger(AbstractLifecycle.class);
 
     protected final AtomicBoolean initialized = new AtomicBoolean(false);
     protected final AtomicBoolean started = new AtomicBoolean(false);

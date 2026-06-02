@@ -5,8 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IContextualBeanSupplier;
@@ -16,7 +15,7 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.SupplyException;
 
 public class ContextualBeanSupplier<Bean> implements IContextualBeanSupplier<Bean> {
-    private static final IDiagnostic log = Diagnostics.of(ContextualBeanSupplier.class);
+    private static final Logger log = Logger.getLogger(ContextualBeanSupplier.class);
 
     private Optional<String> provider;
     private BeanReference<Bean> query;

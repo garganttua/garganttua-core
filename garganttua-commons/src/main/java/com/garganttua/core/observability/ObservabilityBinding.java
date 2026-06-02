@@ -1,8 +1,6 @@
 package com.garganttua.core.observability;
 
 import com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -32,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 2.0.0-ALPHA02
  */
 public final class ObservabilityBinding implements AutoCloseable, IBootstrapSummaryContributor {
-    private static final IDiagnostic log = Diagnostics.of(ObservabilityBinding.class);
+    private static final Logger log = Logger.getLogger(ObservabilityBinding.class);
 
     /**
      * A single {@code (source, wrapper)} subscription tracked so {@link #close()}

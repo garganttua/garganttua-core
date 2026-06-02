@@ -8,14 +8,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 
 /** Namming rule [provider::][class(simple or FQDN)][!strategy][#name][@qualifier1(simple or FQDN)][@qualifier2(simple or FQDN),...] */
 public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> strategy, Optional<String> name,
         Set<IClass<? extends Annotation>> qualifiers) {
-    private static final IDiagnostic log = Diagnostics.of(BeanReference.class);
+    private static final Logger log = Logger.getLogger(BeanReference.class);
 
     /**
      * Returns the effective name of the bean.

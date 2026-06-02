@@ -6,8 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.garganttua.core.classloader.ClassLoaderException;
 import com.garganttua.core.classloader.IClassLoaderManager;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.MutexException;
 import com.garganttua.core.mutex.MutexStrategy;
@@ -25,7 +24,7 @@ import jakarta.annotation.Nullable;
 import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected(queryAllDeclaredMethods = true)
 public class ScriptFunctions {
-    private static final IDiagnostic log = Diagnostics.of(ScriptFunctions.class);
+    private static final Logger log = Logger.getLogger(ScriptFunctions.class);
 
     private ScriptFunctions() {
     }

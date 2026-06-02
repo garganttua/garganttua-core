@@ -1,7 +1,6 @@
 package com.garganttua.core.mutex;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -54,7 +53,7 @@ import com.garganttua.core.CoreException;
  * @see IMutexManager
  */
 public class MutexException extends CoreException{
-    private static final IDiagnostic log = Diagnostics.of(MutexException.class);
+    private static final Logger log = Logger.getLogger(MutexException.class);
 
     /**
      * Constructs a new MutexException with the specified message.

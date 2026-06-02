@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.IMethodReturn;
@@ -20,7 +19,7 @@ import com.garganttua.core.supply.SupplyException;
 public class ConstructorBinder<Constructed>
         extends ExecutableBinder<Constructed>
         implements IConstructorBinder<Constructed> {
-    private static final IDiagnostic log = Diagnostics.of(ConstructorBinder.class);
+    private static final Logger log = Logger.getLogger(ConstructorBinder.class);
 
     private IClass<Constructed> objectClass;
     private IConstructor<Constructed> constructor;

@@ -6,8 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.BeanReference;
@@ -26,7 +25,7 @@ import com.garganttua.core.supply.SupplyException;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 public class BeanFactory<Bean> implements IBeanFactory<Bean> {
-    private static final IDiagnostic log = Diagnostics.of(BeanFactory.class);
+    private static final Logger log = Logger.getLogger(BeanFactory.class);
 
 	private volatile Bean bean;
 	private BeanDefinition<Bean> definition;

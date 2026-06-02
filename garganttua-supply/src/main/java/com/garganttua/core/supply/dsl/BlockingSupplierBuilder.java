@@ -4,8 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.BlockingSupplier;
@@ -36,7 +35,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class BlockingSupplierBuilder<Supplied>
         implements ISupplierBuilder<Supplied, ISupplier<Supplied>> {
-    private static final IDiagnostic log = Diagnostics.of(BlockingSupplierBuilder.class);
+    private static final Logger log = Logger.getLogger(BlockingSupplierBuilder.class);
 
     private final BlockingQueue<Supplied> queue;
     private final IClass<Supplied> suppliedClass;

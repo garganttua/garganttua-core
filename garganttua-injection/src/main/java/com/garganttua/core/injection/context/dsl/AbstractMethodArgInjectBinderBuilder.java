@@ -3,8 +3,7 @@ package com.garganttua.core.injection.context.dsl;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.dependency.DependencySpecBuilder;
 import com.garganttua.core.dsl.DslException;
@@ -21,7 +20,7 @@ import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 public abstract class AbstractMethodArgInjectBinderBuilder<ExecutionReturn, Builder extends IMethodBinderBuilder<ExecutionReturn, Builder, Link, Built>, Link, Built extends IMethodBinder<ExecutionReturn>>
         extends AbstractMethodBinderBuilder<ExecutionReturn, Builder, Link, Built> {
-    private static final IDiagnostic log = Diagnostics.of(AbstractMethodArgInjectBinderBuilder.class);
+    private static final Logger log = Logger.getLogger(AbstractMethodArgInjectBinderBuilder.class);
 
     private static final Set<DependencySpec> INJECT_DEPS = Set.of(
             new DependencySpecBuilder(IClass.getClass(IInjectableElementResolverBuilder.class)).requireForAutoDetect().build());

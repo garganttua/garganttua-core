@@ -1,7 +1,6 @@
 package com.garganttua.core.runtime;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -20,7 +19,7 @@ public record RuntimeResult<InputType, OutputType>(
         Integer code,
         Set<RuntimeExceptionRecord> recordedExceptions,
         Map<String, Object> variables) implements IRuntimeResult<InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeResult.class);
+    private static final Logger log = Logger.getLogger(RuntimeResult.class);
 
     @Override
     public boolean hasAborted(){

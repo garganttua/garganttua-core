@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.expression.ExpressionException;
 import com.garganttua.core.expression.IExpression;
@@ -33,7 +32,7 @@ import com.garganttua.core.supply.SupplyException;
  * @since 2.0.0-ALPHA01
  */
 public class CatchAwareExpression<R> implements IExpression<R, ISupplier<R>> {
-    private static final IDiagnostic log = Diagnostics.of(CatchAwareExpression.class);
+    private static final Logger log = Logger.getLogger(CatchAwareExpression.class);
 
     /**
      * A single catch clause: matcher + handler expression + optional code.

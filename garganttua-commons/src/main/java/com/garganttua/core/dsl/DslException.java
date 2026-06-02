@@ -1,7 +1,6 @@
 package com.garganttua.core.dsl;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -40,7 +39,7 @@ import com.garganttua.core.CoreException;
  * @see IBuilder
  */
 public class DslException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(DslException.class);
+    private static final Logger log = Logger.getLogger(DslException.class);
 
     private static final long serialVersionUID = 1L;
 

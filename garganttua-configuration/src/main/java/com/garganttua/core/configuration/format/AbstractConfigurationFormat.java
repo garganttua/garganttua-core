@@ -6,8 +6,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.ConfigurationException;
 import com.garganttua.core.configuration.IConfigurationFormat;
 import com.garganttua.core.configuration.IConfigurationNode;
@@ -15,7 +14,7 @@ import com.garganttua.core.configuration.node.ConfigurationNode;
 import com.garganttua.core.reflection.IClass;
 
 public abstract class AbstractConfigurationFormat implements IConfigurationFormat {
-    private static final IDiagnostic log = Diagnostics.of(AbstractConfigurationFormat.class);
+    private static final Logger log = Logger.getLogger(AbstractConfigurationFormat.class);
 
     protected abstract ObjectMapper createMapper();
 

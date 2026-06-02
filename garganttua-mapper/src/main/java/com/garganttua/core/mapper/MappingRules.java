@@ -7,8 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.mapper.annotations.MappingIgnore;
 import com.garganttua.core.mapper.annotations.ObjectMappingRule;
@@ -29,7 +28,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 
 public class MappingRules {
-    private static final IDiagnostic log = Diagnostics.of(MappingRules.class);
+    private static final Logger log = Logger.getLogger(MappingRules.class);
 
 	private final IReflection reflection;
 

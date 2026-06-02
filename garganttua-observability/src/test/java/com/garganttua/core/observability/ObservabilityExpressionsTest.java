@@ -89,8 +89,14 @@ class ObservabilityExpressionsTest {
 	}
 
 	@Test
-	void observe_unknownType_isNoop() {
+	void observe_unknownType_firesNoObserveEvent() {
 		ObservabilityExpressions.observe("not-a-real-event", "ignored");
-		assertEquals(0, received.size());
+		// An unknown type fires no Start/End/Error observe event. It does emit a
+		// warning — and now that logging is observable, that surfaces as a
+		// LogEvent correlated with the current session, which is expected.
+		long observeEvents = received.stream()
+				.filter(e -> !(e instanceof LogEvent))
+				.count();
+		assertEquals(0, observeEvents);
 	}
 }

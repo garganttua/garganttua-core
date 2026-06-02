@@ -1,7 +1,6 @@
 package com.garganttua.core.script.functions;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.annotations.Expression;
 
 import jakarta.annotation.Nullable;
@@ -25,8 +24,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected(queryAllDeclaredMethods = true)
 public class LogFunctions {
 
-    private static final IDiagnostic SCRIPT_LOGGER =
-            Diagnostics.getProvider().diagnosticFor(LogFunctions.class);
+    private static final Logger SCRIPT_LOGGER = Logger.getLogger(LogFunctions.class);
 
     private LogFunctions() {
     }

@@ -1,7 +1,6 @@
 package com.garganttua.core.condition;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.CoreException;
 
 /**
@@ -55,7 +54,7 @@ import com.garganttua.core.CoreException;
  * @see CoreException
  */
 public class ConditionException extends CoreException {
-    private static final IDiagnostic log = Diagnostics.of(ConditionException.class);
+    private static final Logger log = Logger.getLogger(ConditionException.class);
 
     /**
      * Constructs a new ConditionException with the specified detail message.

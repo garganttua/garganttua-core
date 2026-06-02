@@ -3,8 +3,7 @@ package com.garganttua.core.condition.dsl;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.condition.CustomCondition;
 import com.garganttua.core.condition.ICondition;
 import com.garganttua.core.dsl.DslException;
@@ -14,7 +13,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class CustomConditionBuilder<T> implements IConditionBuilder {
-    private static final IDiagnostic log = Diagnostics.of(CustomConditionBuilder.class);
+    private static final Logger log = Logger.getLogger(CustomConditionBuilder.class);
 
     private final ISupplierBuilder<T, ? extends ISupplier<T>> builder;
     private final Predicate<T> predicate;

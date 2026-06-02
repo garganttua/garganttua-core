@@ -4,8 +4,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
 import com.garganttua.core.expression.context.IExpressionVariableResolver;
 import com.garganttua.core.expression.context.IScriptFunction;
@@ -14,7 +13,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 public class DynamicFunctionNode implements IExpressionNode<Object, ISupplier<Object>> {
-    private static final IDiagnostic log = Diagnostics.of(DynamicFunctionNode.class);
+    private static final Logger log = Logger.getLogger(DynamicFunctionNode.class);
 
     private final String functionName;
     private final List<IExpressionNode<?, ? extends ISupplier<?>>> argumentNodes;

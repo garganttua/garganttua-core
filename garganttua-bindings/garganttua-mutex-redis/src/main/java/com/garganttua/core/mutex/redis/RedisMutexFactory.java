@@ -6,8 +6,7 @@ import javax.inject.Named;
 
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.mutex.IMutex;
 import com.garganttua.core.mutex.IMutexFactory;
 import com.garganttua.core.mutex.MutexException;
@@ -86,7 +85,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Named("RedisMutexFactory")
 @Reflected(queryAllDeclaredConstructors = true, queryAllDeclaredMethods = true)
 public class RedisMutexFactory implements IMutexFactory {
-    private static final IDiagnostic log = Diagnostics.of(RedisMutexFactory.class);
+    private static final Logger log = Logger.getLogger(RedisMutexFactory.class);
 
     private final RedUtilsConfig redisConfig;
 

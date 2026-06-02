@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
@@ -22,7 +21,7 @@ import com.garganttua.core.supply.SupplyException;
 public class MethodBinder<Returned>
         extends ExecutableBinder<Returned>
         implements IMethodBinder<Returned> {
-    private static final IDiagnostic log = Diagnostics.of(MethodBinder.class);
+    private static final Logger log = Logger.getLogger(MethodBinder.class);
 
     private final ResolvedMethod method;
     private final ISupplier<?> objectSupplier;

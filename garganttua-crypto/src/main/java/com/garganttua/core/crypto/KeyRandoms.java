@@ -1,11 +1,10 @@
 package com.garganttua.core.crypto;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.security.SecureRandom;
 
 public class KeyRandoms {
-    private static final IDiagnostic log = Diagnostics.of(KeyRandoms.class);
+    private static final Logger log = Logger.getLogger(KeyRandoms.class);
 
 	private static final SecureRandom DEFAULT_SECURE_RANDOM;
 

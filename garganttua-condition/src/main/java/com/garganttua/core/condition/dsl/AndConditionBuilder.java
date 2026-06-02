@@ -4,8 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.condition.AndCondition;
 import com.garganttua.core.condition.ConditionException;
 import com.garganttua.core.condition.ICondition;
@@ -14,7 +13,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected
 public class AndConditionBuilder implements IConditionBuilder {
-    private static final IDiagnostic log = Diagnostics.of(AndConditionBuilder.class);
+    private static final Logger log = Logger.getLogger(AndConditionBuilder.class);
 
     private IConditionBuilder[] conditions;
 

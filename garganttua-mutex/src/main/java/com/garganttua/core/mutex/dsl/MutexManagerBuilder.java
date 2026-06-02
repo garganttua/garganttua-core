@@ -8,8 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
@@ -38,7 +37,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Reflected
 public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMutexManagerBuilder, IMutexManager>
         implements IMutexManagerBuilder {
-    private static final IDiagnostic log = Diagnostics.of(MutexManagerBuilder.class);
+    private static final Logger log = Logger.getLogger(MutexManagerBuilder.class);
 
     private static final String SOURCE_CONTEXT = "context";
     private static final String SOURCE_MANUAL = "manual";

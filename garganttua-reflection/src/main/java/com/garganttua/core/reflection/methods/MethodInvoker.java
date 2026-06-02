@@ -10,8 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
@@ -24,7 +23,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.SupplyException;
 
 public class MethodInvoker<T, R> implements ISupplier<IMethodReturn<R>> {
-    private static final IDiagnostic log = Diagnostics.of(MethodInvoker.class);
+    private static final Logger log = Logger.getLogger(MethodInvoker.class);
 
 	private IClass<T> ownerType;
 	private List<Object> methodPath;

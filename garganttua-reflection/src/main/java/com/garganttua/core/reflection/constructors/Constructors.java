@@ -4,14 +4,13 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IConstructor;
 import com.garganttua.core.reflection.TypeUtils;
 
 public class Constructors {
-    private static final IDiagnostic log = Diagnostics.of(Constructors.class);
+    private static final Logger log = Logger.getLogger(Constructors.class);
 
     private Constructors() {
         /* This utility class should not be instantiated */

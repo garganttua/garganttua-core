@@ -4,8 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.execution.ExecutorChain;
 import com.garganttua.core.execution.IExecutorChain;
 
@@ -24,7 +23,7 @@ import com.garganttua.core.execution.IExecutorChain;
  * @since 2.0.0-ALPHA01
  */
 public class SubRuntime<InputType, OutputType> {
-    private static final IDiagnostic log = Diagnostics.of(SubRuntime.class);
+    private static final Logger log = Logger.getLogger(SubRuntime.class);
 
     private final String name;
     private final Map<String, IRuntimeStep<?, InputType, OutputType>> steps;

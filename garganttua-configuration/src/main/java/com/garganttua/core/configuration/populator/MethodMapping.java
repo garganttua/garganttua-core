@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.annotations.ConfigIgnore;
 import com.garganttua.core.configuration.annotations.ConfigProperty;
 
 public class MethodMapping {
-    private static final IDiagnostic log = Diagnostics.of(MethodMapping.class);
+    private static final Logger log = Logger.getLogger(MethodMapping.class);
 
     private final MethodMappingStrategy strategy;
 

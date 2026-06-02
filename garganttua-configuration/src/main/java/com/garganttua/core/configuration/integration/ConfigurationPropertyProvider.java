@@ -5,8 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.IConfigurationNode;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IPropertyProvider;
@@ -16,7 +15,7 @@ import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 
 public class ConfigurationPropertyProvider implements IPropertyProvider {
-    private static final IDiagnostic log = Diagnostics.of(ConfigurationPropertyProvider.class);
+    private static final Logger log = Logger.getLogger(ConfigurationPropertyProvider.class);
 
     private final Map<String, String> properties;
     private LifecycleStatus status = LifecycleStatus.NEW;

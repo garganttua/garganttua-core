@@ -3,8 +3,7 @@ package com.garganttua.core.condition;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.condition.dsl.AndConditionBuilder;
 import com.garganttua.core.condition.dsl.CustomConditionBuilder;
 import com.garganttua.core.condition.dsl.CustomExtractedConditionBuilder;
@@ -22,7 +21,7 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class Conditions {
-    private static final IDiagnostic log = Diagnostics.of(Conditions.class);
+    private static final Logger log = Logger.getLogger(Conditions.class);
 
     private Conditions() {
 

@@ -2,8 +2,7 @@ package com.garganttua.core.injection.context.resolver;
 
 import java.util.Objects;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.injection.IElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.Resolved;
@@ -20,7 +19,7 @@ public class NullElementResolver implements IElementResolver {
     public NullElementResolver() {
     }
 
-    private static final IDiagnostic log = Diagnostics.of(NullElementResolver.class);
+    private static final Logger log = Logger.getLogger(NullElementResolver.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override

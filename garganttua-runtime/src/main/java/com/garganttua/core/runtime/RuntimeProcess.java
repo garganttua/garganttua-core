@@ -1,13 +1,12 @@
 package com.garganttua.core.runtime;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class RuntimeProcess {
-    private static final IDiagnostic log = Diagnostics.of(RuntimeProcess.class);
+    private static final Logger log = Logger.getLogger(RuntimeProcess.class);
 
     private final Map<String, Map<String, String>> stages;
 

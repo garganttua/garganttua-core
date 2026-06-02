@@ -12,8 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
@@ -73,7 +72,7 @@ import jakarta.annotation.Nullable;
 public class ExpressionContextBuilder
         extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {
-    private static final IDiagnostic log = Diagnostics.of(ExpressionContextBuilder.class);
+    private static final Logger log = Logger.getLogger(ExpressionContextBuilder.class);
 
     private static final String SOURCE_EXPLICIT = "explicit";
     private static final String SOURCE_AUTO_DETECTED = "auto-detected";
