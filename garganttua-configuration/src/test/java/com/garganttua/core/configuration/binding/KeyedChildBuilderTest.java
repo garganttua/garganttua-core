@@ -4,7 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.garganttua.core.reflection.JdkReflectionProvider;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 
 import com.garganttua.core.configuration.binding.KeyedChildFixtures.Item;
 import com.garganttua.core.configuration.binding.KeyedChildFixtures.ParentBuilder;
@@ -20,6 +24,12 @@ import com.garganttua.core.configuration.source.StringConfigurationSource;
  * with String/IClass argument conversion and ascent via {@code up()} (provider) then {@code and()} (item).
  */
 class KeyedChildBuilderTest {
+
+    @BeforeEach
+    void installReflection() throws Exception {
+        // IClass.forName (String -> IClass argument conversion) needs the global IReflection.
+        ReflectionBuilder.builder().withProvider(new JdkReflectionProvider()).build();
+    }
 
     private static ConfigurationApplier applier() {
         return new ConfigurationApplier(
@@ -72,4 +82,5 @@ class KeyedChildBuilderTest {
                         new Item("b", "java.lang.Long", Strategy.singleton)),
                 parent.items());
     }
+
 }

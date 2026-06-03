@@ -1,5 +1,6 @@
 package com.garganttua.core.bootstrap.dsl;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -65,5 +66,55 @@ class ConfigDeclaresInjectionBeanTest {
 
         assertTrue(ctx.queryBean(ref).isPresent(),
                 "bean declared from config must be resolvable in the built injection context");
+    }
+
+    @Test
+    @DisplayName("config can declare a bean in a brand-new provider scope (create-if-absent)")
+    void beanDeclaredInNewScopeIsResolvable() throws Exception {
+        IReflectionBuilder rb = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        rb.build();
+
+        IInjectionContextBuilder builder = InjectionContext.builder().provide(rb);
+
+        String json = "{"
+                + "\"$module\": \"injection\","
+                + "\"beanProvider\": { \"application\": { \"withBean\": {"
+                + "  \"" + ConfigDeclaredBean.class.getName() + "\": { \"strategy\": \"prototype\" } } } }"
+                + "}";
+
+        new ConfigurationApplier(
+                new BuilderPopulator(List.of(new JsonConfigurationFormat()), MethodMappingStrategy.SMART, false))
+                .apply(builder, new StringConfigurationSource(json, "json"));
+
+        IInjectionContext ctx = builder.build();
+        ctx.onInit().onStart();
+
+        BeanReference<ConfigDeclaredBean> ref = new BeanReference<>(
+                IClass.getClass(ConfigDeclaredBean.class), Optional.empty(), Optional.empty(), Set.of());
+
+        assertTrue(ctx.queryBean(ref).isPresent(), "bean must resolve");
+        assertTrue(ctx.queryBean("application", ref).isPresent(),
+                "bean must resolve from the newly-created 'application' provider scope");
+    }
+
+    @Test
+    @DisplayName("an unknown bean class in config fails clearly")
+    void unknownBeanClassFailsClearly() throws Exception {
+        IReflectionBuilder rb = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        rb.build();
+
+        IInjectionContextBuilder builder = InjectionContext.builder().provide(rb);
+        String json = "{ \"$module\": \"injection\", \"beanProvider\": { \"garganttua\": {"
+                + " \"withBean\": { \"com.example.DoesNotExist\": { \"strategy\": \"singleton\" } } } } }";
+
+        ConfigurationApplier applier = new ConfigurationApplier(
+                new BuilderPopulator(List.of(new JsonConfigurationFormat()), MethodMappingStrategy.SMART, false));
+
+        assertThrows(Exception.class,
+                () -> applier.apply(builder, new StringConfigurationSource(json, "json")));
     }
 }

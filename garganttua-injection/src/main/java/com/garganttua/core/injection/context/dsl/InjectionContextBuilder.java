@@ -285,16 +285,25 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
     }
 
     /**
-     * Returns the bean provider builder registered under the given scope.
+     * Returns the bean provider builder for the given scope, creating and registering an
+     * empty one (under the manual source) if none exists yet.
+     *
+     * <p>Create-if-absent makes the fluent form {@code beanProvider("app").withBean(...)}
+     * work for a brand-new scope, and lets external configuration target arbitrary scopes.</p>
      *
      * @param scope the scope name; must not be {@code null}
-     * @return the provider builder, or {@code null} if none is registered for the scope
+     * @return the provider builder for the scope (never {@code null})
      */
     @Override
     public IBeanProviderBuilder beanProvider(String scope) {
         log.trace("Entering beanProvider(scope={})", scope);
         Objects.requireNonNull(scope, "Scope cannot be null");
         IBeanProviderBuilder provider = getAllBeanProviders().get(scope);
+        if (provider == null) {
+            log.debug("Creating bean provider for new scope '{}'", scope);
+            provider = new BeanProviderBuilder(this).autoDetect(false);
+            this.manualBeanProviders.put(scope, provider);
+        }
         log.trace("Exiting beanProvider with provider={}", provider);
         return provider;
     }
