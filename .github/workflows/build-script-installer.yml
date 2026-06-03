@@ -36,13 +36,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: 'temurin'
           cache: maven
 
+      # AOT annotation processor is in-reactor but on every module's processor
+      # path -> clean one-pass build is circular. Bootstrap with processing off
+      # to install all artifacts, then build normally.
+      - name: Bootstrap local repo (no annotation processing)
+        run: mvn -B -ntp -Pbootstrap-no-apt install -DskipTests -Djacoco.skip=true -q
       - name: Build all modules
         run: mvn install -DskipTests -Djacoco.skip=true -q
 
@@ -81,7 +86,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           java-version: '25'
@@ -121,7 +126,7 @@ jobs:
             tar -xzf garganttua-script-${{ steps.version.outputs.version }}-linux-installer.tar.gz
             cd garganttua-script-${{ steps.version.outputs.version }}
 
-            # Install (requires Java 21+)
+            # Install (requires Java 25+)
             sudo ./install.sh
 
             # Or install to custom location
@@ -137,7 +142,7 @@ jobs:
 
             ### Requirements
 
-            - Java 21 or later
+            - Java 25 or later
           files: |
             ./release/garganttua-script-${{ steps.version.outputs.version }}-linux-installer.tar.gz
             ./release/garganttua-script-${{ steps.version.outputs.version }}-executable.jar

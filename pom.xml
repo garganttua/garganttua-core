@@ -558,6 +558,29 @@
   </modules>
 
   <profiles>
+    <!-- Bootstrap profile for clean repos / CI: disables the AOT annotation
+         processor on the compiler path so the reactor can build with NO copy of
+         garganttua-aot-annotation-processor:${project.version} present yet
+         (the processor depends on garganttua-commons, and every module declares
+         the processor on its annotationProcessorPath -> a clean one-pass build is
+         circular). CI runs `mvn -Pbootstrap-no-apt install -DskipTests` first to
+         populate the local repo with all artifacts (incl. the processor), then a
+         normal `mvn deploy` runs annotation processing with the processor resolved. -->
+    <profile>
+      <id>bootstrap-no-apt</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <proc>none</proc>
+              <annotationProcessorPaths combine.self="override"/>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <!-- Opt-in code-size gate (WARNING ONLY — never fails the build). Kept out
          of the default build so offline builds don't need the Checkstyle
          artifacts. Activate with `-Pquality`:
