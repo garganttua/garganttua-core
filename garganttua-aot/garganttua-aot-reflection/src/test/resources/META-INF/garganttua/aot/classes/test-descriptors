@@ -1,0 +1,5 @@
+# Legacy AOT descriptor index — exercised by GeneratedDescriptorLoaderBehaviourTest.
+# Blank lines and comment lines (starting with '#') must be skipped.
+
+com.garganttua.core.aot.reflection.LegacyDescriptorFixture
+com.garganttua.test.DefinitelyDoesNotExistDescriptor
