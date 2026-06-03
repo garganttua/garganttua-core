@@ -83,6 +83,12 @@ public class BuilderPopulator implements IConfigurationPopulator {
             var key = entry.getKey();
             var childNode = entry.getValue();
 
+            // Keys prefixed with '$' are reserved framework metadata (e.g. the
+            // "$module" target shebang in JSON), not builder methods — skip them.
+            if (key.startsWith("$")) {
+                continue;
+            }
+
             context.pushPath(key);
             try {
                 var method = this.methodMapping.resolve(builder.getClass(), key);

@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.MultiSourceCollector;
@@ -63,6 +64,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
 @Bootstrap
 @ReflectedBuilder
 @Reflected
+@ConfigurableBuilder("injection")
 public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<IInjectionContextBuilder, IInjectionContext>
         implements IInjectionContextBuilder {
     private static final Logger log = Logger.getLogger(InjectionContextBuilder.class);
