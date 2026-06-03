@@ -6,6 +6,7 @@ import com.garganttua.core.configuration.annotations.ConfigIgnore;
 import com.garganttua.core.configuration.annotations.ConfigProperty;
 import com.garganttua.core.configuration.annotations.Configurable;
 import com.garganttua.core.configuration.annotations.ConfigurationFormat;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 
 /**
  * Pre-registers the configuration module's annotation surface into the AOT
@@ -29,5 +30,8 @@ public class ConfigurationInfrastructureSeed implements IAOTInfrastructureSeed {
         context.registerClass(ConfigProperty.class);
         context.registerClass(ConfigIgnore.class);
         context.registerClass(ConfigurationFormat.class);
+        // The bootstrap contributor reads @ConfigurableBuilder off builder classes at
+        // runtime — keep the annotation reflectively available in native-image.
+        context.registerClass(ConfigurableBuilder.class);
     }
 }

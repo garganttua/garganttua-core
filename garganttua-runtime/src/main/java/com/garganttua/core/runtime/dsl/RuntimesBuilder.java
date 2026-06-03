@@ -17,6 +17,7 @@ import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.MultiSourceCollector;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
@@ -60,6 +61,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("runtimes")
 public class RuntimesBuilder extends AbstractAutomaticDependentBuilder<IRuntimesBuilder, Map<String, IRuntime<?, ?>>>
         implements IRuntimesBuilder {
     private static final Logger log = Logger.getLogger(RuntimesBuilder.class);

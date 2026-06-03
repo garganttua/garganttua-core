@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import com.garganttua.core.observability.Logger;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
@@ -74,6 +75,7 @@ import jakarta.annotation.Nullable;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("expression")
 public class ExpressionContextBuilder
         extends AbstractAutomaticDependentBuilder<IExpressionContextBuilder, IExpressionContext>
         implements IExpressionContextBuilder {

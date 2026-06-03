@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.core.observability.Logger;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.dsl.DslException;
@@ -58,6 +59,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("mutex")
 public class MutexManagerBuilder extends AbstractAutomaticDependentBuilder<IMutexManagerBuilder, IMutexManager>
         implements IMutexManagerBuilder {
     private static final Logger log = Logger.getLogger(MutexManagerBuilder.class);
