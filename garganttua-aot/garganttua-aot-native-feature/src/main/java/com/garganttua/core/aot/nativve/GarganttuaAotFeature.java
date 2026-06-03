@@ -18,6 +18,7 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 import com.garganttua.core.aot.commons.AOTRegistry;
 import com.garganttua.core.aot.reflection.AOTClass;
+import com.garganttua.core.aot.reflection.AOTParameterizedType;
 import com.garganttua.core.aot.reflection.AOTReflectionProvider;
 import com.garganttua.core.reflection.IClass;
 
@@ -91,6 +92,14 @@ public class GarganttuaAotFeature implements Feature {
         // classes (a blanket --initialize-at-build-time=com.garganttua breaks
         // ExpressionUtils / IOperationRequest, whose <clinit> must stay runtime).
         RuntimeClassInitialization.initializeAtBuildTime(AOTReflectionProvider.class);
+        // AOTField_* descriptors now hold an AOTParameterizedType instance in
+        // their genericType field (AOTFieldSourceGenerator emits
+        // AOTParameterizedType.of(...) for parameterized fields). Those
+        // instances reach the image heap when the AOTField_* INSTANCE is
+        // initialised at build time, so AOTParameterizedType itself must be
+        // initialize-at-build-time too — otherwise native-image (notably the
+        // stricter heap check in GraalVM 25) rejects the reachable object.
+        RuntimeClassInitialization.initializeAtBuildTime(AOTParameterizedType.class);
 
         int classCount = 0;
         int memberCount = 0;
