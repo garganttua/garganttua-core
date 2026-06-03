@@ -15,6 +15,7 @@ import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.injection.BeanReference;
@@ -53,6 +54,7 @@ import com.garganttua.core.workflow.annotations.WorkflowDefinition;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("workflows")
 public class WorkflowsBuilder
         extends AbstractAutomaticDependentBuilder<IWorkflowsBuilder, Map<String, IWorkflow>>
         implements IWorkflowsBuilder {

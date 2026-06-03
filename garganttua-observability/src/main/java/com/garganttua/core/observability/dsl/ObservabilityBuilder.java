@@ -17,6 +17,7 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.MultiSourceCollector;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.injection.BeanReference;
@@ -86,6 +87,7 @@ import com.garganttua.core.supply.SupplyException;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("observability")
 public final class ObservabilityBuilder
         extends AbstractAutomaticDependentBuilder<IObservabilityBuilder, ObservabilityBinding>
         implements IObservabilityBuilder {

@@ -16,6 +16,7 @@ import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IBuilderObserver;
 import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.context.IExpressionContext;
@@ -54,6 +55,7 @@ import com.garganttua.core.script.context.ScriptContext;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("scripts")
 public class ScriptsBuilder
         extends AbstractAutomaticDependentBuilder<IScriptsBuilder, IScriptingEnvironment>
         implements IScriptsBuilder {

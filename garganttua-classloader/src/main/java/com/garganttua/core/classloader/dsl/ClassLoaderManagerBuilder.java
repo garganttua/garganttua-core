@@ -5,6 +5,7 @@ import com.garganttua.core.classloader.ClassLoaderManager;
 import com.garganttua.core.classloader.IClassLoaderManager;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.annotations.ConfigurableBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
@@ -20,6 +21,7 @@ import com.garganttua.core.reflection.annotations.Reflected;
  */
 @Bootstrap
 @Reflected
+@ConfigurableBuilder("classloader")
 public class ClassLoaderManagerBuilder implements IClassLoaderManagerBuilder {
 
     private static final Logger log = Logger.getLogger(ClassLoaderManagerBuilder.class);
