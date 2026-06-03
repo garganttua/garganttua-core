@@ -110,7 +110,8 @@ class ConstructorDelegate {
         if (optCtor.isEmpty()) {
             log.error("Class {} does not have constructor with provided params", clazz.getName());
             throw new ReflectionException(
-                    "Class " + clazz.getSimpleName() + " does not have constructor with params " + args);
+                    "Class " + clazz.getSimpleName() + " does not have constructor with params "
+                            + java.util.Arrays.toString(args));
         }
         return invokeConstructor(clazz, (IConstructor<T>) optCtor.get(), force, args);
     }

@@ -15,7 +15,9 @@ public class KeySerializer {
 	 * @return the Base64-encoded raw key
 	 */
 	public static String exportRawKey(IKey key) {
-		return new String(key.getRawKey());
+		// getRawKey() already returns Base64-encoded (ASCII) bytes (legacy contract),
+		// so decode them to the String form with an explicit lossless charset.
+		return new String(key.getRawKey(), java.nio.charset.StandardCharsets.US_ASCII);
 	}
 
 	/**

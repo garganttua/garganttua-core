@@ -162,7 +162,10 @@ public class ContextualFieldBinder<OnwerType, FieldType, OwnerContextType, Field
      */
     @Override
     public Optional<FieldType> supply(OwnerContextType ownerContext, Object... otherContexts) throws SupplyException {
-        return this.supply(ownerContext, otherContexts);
+        Object[] contexts = new Object[otherContexts.length + 1];
+        contexts[0] = ownerContext;
+        System.arraycopy(otherContexts, 0, contexts, 1, otherContexts.length);
+        return Optional.ofNullable(Supplier.contextualSupply(this.valueSupplier, contexts));
     }
 
     /** {@return the supplied field value class} */
