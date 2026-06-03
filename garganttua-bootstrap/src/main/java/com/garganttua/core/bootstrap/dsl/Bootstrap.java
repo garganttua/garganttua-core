@@ -27,6 +27,7 @@ import com.garganttua.core.bootstrap.banner.StageTimings;
 import com.garganttua.core.bootstrap.banner.FileBanner;
 import com.garganttua.core.bootstrap.banner.GarganttuaBanner;
 import com.garganttua.core.bootstrap.banner.IBanner;
+import com.garganttua.core.bootstrap.dsl.IBootstrapConfigurationContributor;
 import com.garganttua.core.bootstrap.dsl.IBootstrapStageListener;
 import com.garganttua.core.bootstrap.dsl.IBootstrapStageListener.Stage;
 import com.garganttua.core.observability.ObservabilityBinding;
@@ -888,7 +889,29 @@ public class Bootstrap extends AbstractAutomaticDependentBuilder<IBootstrap, IBu
                 }
             }
         }
+        runConfigurationContributors();
         log.trace("Exiting runGlobalConfigurationPhase()");
+    }
+
+    /**
+     * Invoke any {@link IBootstrapConfigurationContributor} discovered via
+     * {@link java.util.ServiceLoader} (e.g. the optional {@code garganttua-configuration}
+     * module) with every registered builder, so external configuration files can be
+     * applied to matching {@code @ConfigurableBuilder} instances before they build.
+     * No-op when no contributor is on the classpath.
+     */
+    private void runConfigurationContributors() {
+        List<IBuilder<?>> builders = getBuilders();
+        for (IBootstrapConfigurationContributor contributor :
+                java.util.ServiceLoader.load(IBootstrapConfigurationContributor.class)) {
+            try {
+                log.debug("Applying configuration contributor {}", contributor.getClass().getName());
+                contributor.contribute(builders);
+            } catch (RuntimeException e) {
+                log.error("Configuration contributor {} failed: {}",
+                        contributor.getClass().getName(), e.getMessage(), e);
+            }
+        }
     }
 
 

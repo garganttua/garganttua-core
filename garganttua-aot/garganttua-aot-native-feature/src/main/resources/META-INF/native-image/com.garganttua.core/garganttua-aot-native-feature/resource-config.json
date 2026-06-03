@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "META-INF/garganttua/index/.*",
+        "comment": "Annotation index files are read at runtime via ClassLoader.getResources() by AnnotationIndex / AOTAnnotationScanner / GarganttuaModules. native-image does not embed resources by default, so register them here. Shipped by the native feature (always on the native classpath) so every consumer is index-ready without a per-project override."
+      }
+    ]
+  }
+}

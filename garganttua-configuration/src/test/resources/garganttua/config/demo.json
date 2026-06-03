@@ -1,0 +1,6 @@
+{
+  "$module": "demo",
+  "name": "booted",
+  "count": 3,
+  "enabled": true
+}
