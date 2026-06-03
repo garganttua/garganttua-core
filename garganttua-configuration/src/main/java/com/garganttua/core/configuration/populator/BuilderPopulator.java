@@ -134,16 +134,35 @@ public class BuilderPopulator implements IConfigurationPopulator {
             PopulationContext context) throws Exception {
         var returnType = method.getReturnType();
 
+        // Keyed child-builder: a method taking the entry KEY as its single argument and
+        // returning a child builder — e.g. beanProvider(String scope) -> IBeanProviderBuilder
+        // or withBean(IClass<?> type) -> IBeanFactoryBuilder. The object node is then a map
+        // of {argValue -> child configuration}, mirroring the fluent DSL nesting.
+        var keyed = findKeyedChildMethod(builder.getClass(), method.getName());
+        if (keyed != null) {
+            for (var entry : node.children().entrySet()) {
+                var arg = this.typeConverter.convert(entry.getKey(), keyed.getParameterTypes()[0]);
+                var child = keyed.invoke(builder, arg);
+                if (child != null) {
+                    context.pushPath(entry.getKey());
+                    try {
+                        populateBuilder(child, entry.getValue(), context);
+                        ascend(child);
+                    } finally {
+                        context.popPath();
+                    }
+                }
+            }
+            return;
+        }
+
         // Check if return type is a child builder (IBuilder or ILinkedBuilder)
         if (isChildBuilder(returnType, builder.getClass())) {
             // Call the method to get the child builder, then populate recursively
             var childBuilder = method.invoke(builder);
             if (childBuilder != null) {
                 populateBuilder(childBuilder, node, context);
-                // If it's a linked builder, call up() to return to parent
-                if (childBuilder instanceof ILinkedBuilder<?, ?> linked) {
-                    linked.up();
-                }
+                ascend(childBuilder);
             }
         } else if (method.getParameterCount() == 1 && Map.class.isAssignableFrom(method.getParameterTypes()[0])) {
             // Pass as Map
@@ -245,6 +264,48 @@ public class BuilderPopulator implements IConfigurationPopulator {
 
         log.warn("Cannot map value '{}' to method {} with {} parameters",
                 text, method.getName(), method.getParameterCount());
+    }
+
+    /**
+     * Finds a same-named method that takes a single non-builder (scalar/IClass) argument and
+     * returns a child builder — the signature used to open a keyed child scope from config
+     * (e.g. {@code beanProvider(String)}, {@code withBean(IClass)}). Returns {@code null} when
+     * no such method exists (so the caller falls back to the regular object handling).
+     */
+    private Method findKeyedChildMethod(Class<?> builderClass, String name) {
+        for (var m : builderClass.getMethods()) {
+            if (!m.getName().equals(name) || m.getParameterCount() != 1) {
+                continue;
+            }
+            var param = m.getParameterTypes()[0];
+            if (IBuilder.class.isAssignableFrom(param)) {
+                continue; // the (scope, providerBuilder) register overload — not a keyed opener
+            }
+            if (isChildBuilder(m.getReturnType(), builderClass)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns from a configured child builder to its parent: {@code up()} for an
+     * {@link ILinkedBuilder}, else a no-arg {@code and()} method when present (the bean DSL
+     * uses {@code and()}), else a no-op (the child was registered eagerly).
+     */
+    private void ascend(Object childBuilder) {
+        if (childBuilder instanceof ILinkedBuilder<?, ?> linked) {
+            linked.up();
+            return;
+        }
+        try {
+            childBuilder.getClass().getMethod("and").invoke(childBuilder);
+        } catch (NoSuchMethodException e) {
+            // no ascend method — nothing to close
+        } catch (Exception e) {
+            log.debug("Could not ascend from {} via and(): {}",
+                    childBuilder.getClass().getSimpleName(), e.getMessage());
+        }
     }
 
     private boolean isChildBuilder(Class<?> returnType, Class<?> builderClass) {

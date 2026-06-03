@@ -124,6 +124,11 @@ public class TypeConverter {
                 return (T) IClass.forName(value);
             }
 
+            // IClass — the framework's reflection wrapper (e.g. withBean(IClass<?>) keys)
+            if (IClass.class.isAssignableFrom(targetType)) {
+                return (T) IClass.forName(value);
+            }
+
             // Enum
             if (targetType.isEnum()) {
                 return convertEnum(value, targetType);
@@ -137,9 +142,21 @@ public class TypeConverter {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private <T> T convertEnum(String value, Class<T> enumType) {
-        return (T) Enum.valueOf((Class<Enum>) enumType, value.toUpperCase(java.util.Locale.ROOT));
+        Object[] constants = enumType.getEnumConstants();
+        for (Object c : constants) {
+            if (((Enum<?>) c).name().equals(value)) {
+                return (T) c; // exact match (handles lower-case enums like BeanStrategy.singleton)
+            }
+        }
+        for (Object c : constants) {
+            if (((Enum<?>) c).name().equalsIgnoreCase(value)) {
+                return (T) c; // case-insensitive fallback
+            }
+        }
+        // No match — let Enum.valueOf raise a clear IllegalArgumentException
+        return (T) Enum.valueOf((Class<Enum>) enumType, value);
     }
 
     /**
