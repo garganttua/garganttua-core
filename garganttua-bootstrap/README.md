@@ -64,6 +64,7 @@ triggers `bootstrap.rebuild()`.
  - `jakarta.annotation:jakarta.annotation-api`
  - `com.garganttua.core:garganttua-reflections:test`
  - `com.garganttua.core:garganttua-runtime-reflection:test`
+ - `com.garganttua.core:garganttua-configuration:test`
 
 <!-- AUTO-GENERATED-END -->
 

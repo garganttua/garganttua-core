@@ -33,6 +33,13 @@ import com.garganttua.core.observability.Logger;
  * alias (shebang), and for every builder annotated {@code @ConfigurableBuilder} whose
  * alias matches, it applies the file to that builder before it builds.</p>
  *
+ * <p><b>Precedence:</b> configuration is applied at the CONFIGURATION stage, after the
+ * builder has been constructed (so any programmatic setup already ran) and before it
+ * builds. For scalar setters this means the configuration file wins (it is applied last);
+ * for collection-style builders the items merge into the builder's existing sources. A
+ * dedicated, higher-priority {@code "configuration"} {@code MultiSourceCollector} source
+ * is a planned refinement.</p>
+ *
  * @since 2.0.0-ALPHA02
  */
 public class BootstrapConfigurationContributor implements IBootstrapConfigurationContributor {
