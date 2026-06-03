@@ -45,8 +45,8 @@ public abstract class AbstractConfigurationFormat implements IConfigurationForma
 
     @Override
     public boolean supports(String extensionOrMediaType) {
-        return extensions().contains(extensionOrMediaType.toLowerCase())
-                || mediaTypes().contains(extensionOrMediaType.toLowerCase());
+        return extensions().contains(extensionOrMediaType.toLowerCase(java.util.Locale.ROOT))
+                || mediaTypes().contains(extensionOrMediaType.toLowerCase(java.util.Locale.ROOT));
     }
 
     /**

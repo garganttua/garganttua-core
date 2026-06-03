@@ -74,7 +74,7 @@ public class EnvironmentConfigurationSource implements IConfigurationSource {
     }
 
     private String normalizeKey(String key) {
-        return key.toLowerCase().replace('_', '.');
+        return key.toLowerCase(java.util.Locale.ROOT).replace('_', '.');
     }
 
     private String escapeJson(String value) {

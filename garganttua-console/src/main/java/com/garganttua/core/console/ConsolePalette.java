@@ -84,7 +84,7 @@ final class ConsolePalette {
         }
 
         // Default to true on Unix-like systems
-        String os = System.getProperty("os.name").toLowerCase();
+        String os = System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT);
         return os.contains("nix") || os.contains("nux") || os.contains("mac");
     }
 }

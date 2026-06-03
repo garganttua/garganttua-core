@@ -216,7 +216,7 @@ public class WorkflowRenderer {
             sb.append(stageColor).append("  ┌").append("─".repeat(boxWidth)).append("┐")
               .append(RESET).append(bypassCol).append("\n");
             sb.append(stageColor).append("  │").append(RESET).append(BOLD).append(stageColor);
-            String stageTitle = "  STAGE " + (stageIdx + 1) + ": " + stage.name().toUpperCase() + "  ";
+            String stageTitle = "  STAGE " + (stageIdx + 1) + ": " + stage.name().toUpperCase(java.util.Locale.ROOT) + "  ";
             sb.append(stageTitle).append(RESET).append(stageColor);
             sb.append(padRight("", boxWidth - stageTitle.length())).append("│")
               .append(RESET).append(bypassCol).append("\n");

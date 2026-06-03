@@ -613,6 +613,19 @@
               <xmlOutput>true</xmlOutput>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-pmd-plugin</artifactId>
+            <version>3.28.0</version>
+            <configuration>
+              <failOnViolation>false</failOnViolation>
+              <includeTests>false</includeTests>
+              <rulesets>
+                <ruleset>category/java/errorprone.xml</ruleset>
+                <ruleset>category/java/bestpractices.xml</ruleset>
+              </rulesets>
+            </configuration>
+          </plugin>
         </plugins>
       </build>
     </profile>

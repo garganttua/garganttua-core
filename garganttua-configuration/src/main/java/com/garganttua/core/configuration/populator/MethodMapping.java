@@ -125,9 +125,9 @@ public class MethodMapping {
             return s;
         }
         var parts = s.split("[_.]");
-        var sb = new StringBuilder(parts[0].toLowerCase());
+        var sb = new StringBuilder(parts[0].toLowerCase(java.util.Locale.ROOT));
         for (int i = 1; i < parts.length; i++) {
-            sb.append(capitalize(parts[i].toLowerCase()));
+            sb.append(capitalize(parts[i].toLowerCase(java.util.Locale.ROOT)));
         }
         return sb.toString();
     }
@@ -137,9 +137,9 @@ public class MethodMapping {
             return s;
         }
         var parts = s.split("-");
-        var sb = new StringBuilder(parts[0].toLowerCase());
+        var sb = new StringBuilder(parts[0].toLowerCase(java.util.Locale.ROOT));
         for (int i = 1; i < parts.length; i++) {
-            sb.append(capitalize(parts[i].toLowerCase()));
+            sb.append(capitalize(parts[i].toLowerCase(java.util.Locale.ROOT)));
         }
         return sb.toString();
     }

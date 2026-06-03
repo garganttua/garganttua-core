@@ -448,7 +448,7 @@ public class ConsoleFunctions {
                     // Read single character or line
                     String input = lineReader.readLine("");
                     if (input != null) {
-                        input = input.trim().toLowerCase();
+                        input = input.trim().toLowerCase(java.util.Locale.ROOT);
                         if (input.equals("q") || input.equals("quit") || input.equals("exit")) {
                             // Exit pagination
                             break;

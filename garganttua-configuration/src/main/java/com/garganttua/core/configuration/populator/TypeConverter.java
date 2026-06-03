@@ -139,7 +139,7 @@ public class TypeConverter {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <T> T convertEnum(String value, Class<T> enumType) {
-        return (T) Enum.valueOf((Class<Enum>) enumType, value.toUpperCase());
+        return (T) Enum.valueOf((Class<Enum>) enumType, value.toUpperCase(java.util.Locale.ROOT));
     }
 
     /**

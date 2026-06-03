@@ -297,7 +297,7 @@ public final class Logger implements IObservable {
 
     private static int resolveThreshold() {
         String prop = System.getProperty("garganttua.log.level", "INFO");
-        return switch (prop.trim().toUpperCase()) {
+        return switch (prop.trim().toUpperCase(java.util.Locale.ROOT)) {
             case "TRACE" -> LogEvent.Level.TRACE.ordinal();
             case "DEBUG" -> LogEvent.Level.DEBUG.ordinal();
             case "INFO" -> LogEvent.Level.INFO.ordinal();

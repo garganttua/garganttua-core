@@ -146,7 +146,7 @@ public final class ScriptConcurrencyFunctions {
         int waitTime;
         TimeUnit waitTimeUnit = TimeUnit.MILLISECONDS;
 
-        switch (mode.toLowerCase()) {
+        switch (mode.toLowerCase(java.util.Locale.ROOT)) {
             case "acquire":
                 // acquire mode: use timeout, or -1 if timeout is 0 (wait forever)
                 waitTime = timeoutMs > 0 ? (int) timeoutMs : -1;

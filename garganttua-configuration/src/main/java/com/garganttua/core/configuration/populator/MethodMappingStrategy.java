@@ -23,6 +23,6 @@ public enum MethodMappingStrategy {
         if (strategy == null || strategy.isEmpty()) {
             return SMART;
         }
-        return valueOf(strategy.toUpperCase());
+        return valueOf(strategy.toUpperCase(java.util.Locale.ROOT));
     }
 }

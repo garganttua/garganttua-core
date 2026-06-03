@@ -73,7 +73,7 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
             sb.append(type.getName()); 
         }
 
-        strategy.ifPresent(s -> sb.append("!").append(s.name().toLowerCase()));
+        strategy.ifPresent(s -> sb.append("!").append(s.name().toLowerCase(java.util.Locale.ROOT)));
 
         name.ifPresent(n -> sb.append("#").append(n));
 
@@ -243,7 +243,7 @@ public record BeanReference<Bean>(IClass<Bean> type, Optional<BeanStrategy> stra
 
         Optional<String> provider = extractProvider(ref);
         Optional<String> clsStr = extractClass(ref);
-        Optional<BeanStrategy> strategy = extractStrategy(ref).map(s -> BeanStrategy.valueOf(s.toLowerCase()));
+        Optional<BeanStrategy> strategy = extractStrategy(ref).map(s -> BeanStrategy.valueOf(s.toLowerCase(java.util.Locale.ROOT)));
         Optional<String> name = extractName(ref);
         Set<IClass<? extends Annotation>> qualifierClasses = new HashSet<>();
 
