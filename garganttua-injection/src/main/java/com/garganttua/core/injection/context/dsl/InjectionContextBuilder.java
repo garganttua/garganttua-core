@@ -338,6 +338,11 @@ public class InjectionContextBuilder extends AbstractAutomaticDependentBuilder<I
         log.trace("Entering propertyProvider(scope={})", scope);
         Objects.requireNonNull(scope, "Scope cannot be null");
         IPropertyProviderBuilder provider = getAllPropertyProviders().get(scope);
+        if (provider == null) {
+            log.debug("Creating property provider for new scope '{}'", scope);
+            provider = new PropertyProviderBuilder(this).autoDetect(false);
+            this.manualPropertyProviders.put(scope, provider);
+        }
         log.trace("Exiting propertyProvider with provider={}", provider);
         return provider;
     }

@@ -94,10 +94,10 @@ class BuilderPopulatorBehaviourTest {
     }
 
     // ---------- no-arg flag method ----------
-    // NOTE: MethodMapping.findValidMethod filters to methods with >= 1 parameter, so a no-arg
-    // builder method is never resolved as a config key. The "flag-style" no-arg branch in
-    // BuilderPopulator.handleValueNode is therefore unreachable via key resolution. We assert
-    // the observable behaviour: a no-arg method is NOT invoked (treated as unknown key in lax).
+    // A no-arg flag setter (returns void or the builder) IS resolvable and is invoked only when
+    // the config value is true — the flag-style branch in BuilderPopulator.handleValueNode.
+    // (MethodMapping.isMappable admits no-arg flag setters / child openers; the prior >= 1 rule
+    // wrongly excluded them — fixed 2026-06-04.)
 
     public static class FlagBuilder implements IBuilder<String> {
         boolean called;
@@ -106,17 +106,23 @@ class BuilderPopulatorBehaviourTest {
     }
 
     @Test
-    void noArgMethodIsNeverResolvedAsAConfigKey() throws Exception {
+    void noArgFlagMethodIsInvokedWhenValueTrue() throws Exception {
         var b = new FlagBuilder();
-        // lax mode: unknown key 'activate' (no-arg method not resolvable) is ignored, no throw
         this.populator.populate(b, new StringConfigurationSource("{\"activate\": true}", "json"));
-        assertFalse(b.called, "no-arg method must not be invoked since it cannot be resolved");
+        assertTrue(b.called, "no-arg flag method must be invoked when its config value is true");
+    }
+
+    @Test
+    void noArgFlagMethodIsNotInvokedWhenValueFalse() throws Exception {
+        var b = new FlagBuilder();
+        this.populator.populate(b, new StringConfigurationSource("{\"activate\": false}", "json"));
+        assertFalse(b.called, "no-arg flag method must NOT be invoked when its config value is false");
     }
 
     // ---------- nested object: parameterless child-builder accessor ----------
-    // NOTE: a child-builder accessor with zero params (the common DSL idiom, e.g. server())
-    // is also filtered out by the >= 1 param rule, so descent never happens. We assert that
-    // the nested object is silently skipped (suspected limitation/bug).
+    // A child-builder accessor with zero params (the common DSL idiom, e.g. server()) IS now
+    // descended into: the nested object configures the child, then ascends via up().
+    // (Previously skipped by the >= 1 param rule — fixed 2026-06-04.)
 
     public static class RootBuilder implements IBuilder<String> {
         String name;
@@ -141,15 +147,15 @@ class BuilderPopulatorBehaviourTest {
     }
 
     @Test
-    void parameterlessChildBuilderAccessorIsNotDescendedInto() throws Exception {
+    void parameterlessChildBuilderAccessorIsDescendedInto() throws Exception {
         var json = "{\"name\": \"app\", \"server\": {\"host\": \"localhost\", \"port\": 8080}}";
         var b = new RootBuilder();
         this.populator.populate(b, new StringConfigurationSource(json, "json"));
         assertEquals("app", b.name);
-        // child never populated because server() (0 params) is not resolvable
-        assertNull(b.child.host);
-        assertEquals(0, b.child.port);
-        assertFalse(b.child.upCalled);
+        // child IS populated: server() (0 params, returns a child builder) is now descended into
+        assertEquals("localhost", b.child.host);
+        assertEquals(8080, b.child.port);
+        assertTrue(b.child.upCalled, "ascent via up() must happen after the child is configured");
     }
 
     // ---------- @ConfigProperty / @ConfigIgnore ----------

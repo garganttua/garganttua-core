@@ -78,4 +78,22 @@ public interface IPropertyProviderBuilder extends IAutomaticLinkedBuilder<IPrope
      */
     <PropertyType> IPropertyProviderBuilder withProperty(IClass<PropertyType> propertyType, String key, PropertyType property) throws DslException;
 
+    /**
+     * Registers a string-valued property in this provider.
+     *
+     * <p>
+     * Convenience overload for the common case where the value originates as text — notably
+     * when populating the builder from a configuration file. The value is stored as a
+     * {@link String}; the backing provider coerces it to the requested scalar type on read
+     * (see {@code getProperty(key, type)}), so typed lookups such as
+     * {@code getProperty("app.port", Integer.class)} still work.
+     * </p>
+     *
+     * @param key the property key for lookup (e.g., "database.url", "app.port")
+     * @param value the property value as text
+     * @return this builder for method chaining
+     * @throws DslException if the property cannot be registered
+     */
+    IPropertyProviderBuilder withProperty(String key, String value) throws DslException;
+
 }

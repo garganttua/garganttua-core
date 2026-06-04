@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.configuration.annotations.ConfigIgnore;
 import com.garganttua.core.configuration.annotations.ConfigProperty;
+import com.garganttua.core.dsl.IBuilder;
 
 /**
  * Resolves a configuration key to a builder {@link Method} using the configured
@@ -98,7 +99,7 @@ public class MethodMapping {
     private Optional<Method> findByAnnotation(Class<?> builderClass, String configKey) {
         return Arrays.stream(builderClass.getMethods())
                 .filter(m -> !m.isAnnotationPresent(ConfigIgnore.class))
-                .filter(m -> m.getParameterCount() >= 1)
+                .filter(MethodMapping::isMappable)
                 .filter(m -> !m.getDeclaringClass().equals(Object.class))
                 .filter(m -> m.isAnnotationPresent(ConfigProperty.class))
                 .filter(m -> m.getAnnotation(ConfigProperty.class).value().equals(configKey))
@@ -108,10 +109,35 @@ public class MethodMapping {
     private Optional<Method> findValidMethod(List<Method> methods) {
         return methods.stream()
                 .filter(m -> !m.isAnnotationPresent(ConfigIgnore.class))
-                .filter(m -> m.getParameterCount() >= 1)
+                .filter(MethodMapping::isMappable)
                 .filter(m -> !m.getDeclaringClass().equals(Object.class))
+                // prefer a value-consuming overload (>=1 arg) over a 0-arg flag/opener of the same name
+                .sorted((a, b) -> Integer.compare(b.getParameterCount() == 0 ? 0 : 1,
+                        a.getParameterCount() == 0 ? 0 : 1))
                 .findFirst();
     }
+
+    /**
+     * A method is mappable from config when it either consumes a value (≥1 parameter) or is a
+     * recognisable <em>no-arg config target</em>: a flag setter (returns {@code void} or the
+     * builder) or a no-arg child-builder opener (returns an {@link IBuilder}). Structural ascent
+     * and terminal methods ({@code build}, {@code up}, {@code setUp}, {@code and}) and plain
+     * getters (which return data, not {@code void}/a builder) are excluded so config keys never
+     * accidentally invoke them.
+     */
+    private static boolean isMappable(Method m) {
+        if (m.getParameterCount() >= 1) {
+            return true;
+        }
+        if (STRUCTURAL_METHODS.contains(m.getName())) {
+            return false;
+        }
+        var rt = m.getReturnType();
+        return rt == void.class || IBuilder.class.isAssignableFrom(rt);
+    }
+
+    private static final java.util.Set<String> STRUCTURAL_METHODS = java.util.Set.of(
+            "build", "up", "setUp", "and");
 
     static String capitalize(String s) {
         if (s == null || s.isEmpty()) {

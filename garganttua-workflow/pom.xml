@@ -79,5 +79,11 @@
 			<artifactId>garganttua-mapper</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Cross-builder config-population coverage: drives every @ConfigurableBuilder from a file. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-configuration</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

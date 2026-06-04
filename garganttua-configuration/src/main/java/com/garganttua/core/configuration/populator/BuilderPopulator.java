@@ -156,6 +156,21 @@ public class BuilderPopulator implements IConfigurationPopulator {
             return;
         }
 
+        // Keyed scalar setter: a fluent method (String key, V value) fed an object of scalar
+        // entries — invoked once per entry, e.g. withProperty(String, String) declaring
+        // properties from config: { "app.port": "8080", "db.url": "..." }.
+        var keyedScalar = findKeyedScalarMethod(builder.getClass(), method.getName());
+        if (keyedScalar != null && allChildrenAreValues(node)) {
+            var valueType = keyedScalar.getParameterTypes()[1];
+            for (var entry : node.children().entrySet()) {
+                var value = entry.getValue().asText()
+                        .map(t -> this.typeConverter.convert(t, valueType))
+                        .orElse(null);
+                keyedScalar.invoke(builder, entry.getKey(), value);
+            }
+            return;
+        }
+
         // Check if return type is a child builder (IBuilder or ILinkedBuilder)
         if (isChildBuilder(returnType, builder.getClass())) {
             // Call the method to get the child builder, then populate recursively
@@ -286,6 +301,36 @@ public class BuilderPopulator implements IConfigurationPopulator {
             }
         }
         return null;
+    }
+
+    /**
+     * Finds a fluent method shaped {@code (String key, V value)} where {@code V} is a scalar
+     * (non-builder) type — the signature used to declare keyed scalar entries from config,
+     * e.g. {@code withProperty(String, String)}. Returns {@code null} when no such method
+     * exists (so the caller falls back to the regular object handling).
+     */
+    private Method findKeyedScalarMethod(Class<?> builderClass, String name) {
+        for (var m : builderClass.getMethods()) {
+            if (!m.getName().equals(name) || m.getParameterCount() != 2) {
+                continue;
+            }
+            if (m.getParameterTypes()[0] != String.class) {
+                continue;
+            }
+            if (IBuilder.class.isAssignableFrom(m.getParameterTypes()[1])) {
+                continue;
+            }
+            var rt = m.getReturnType();
+            if (IBuilder.class.isAssignableFrom(rt) || ILinkedBuilder.class.isAssignableFrom(rt)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /** {@return {@code true} if every child of the given object node is a scalar VALUE node} */
+    private boolean allChildrenAreValues(IConfigurationNode node) {
+        return node.children().values().stream().allMatch(IConfigurationNode::isValue);
     }
 
     /**

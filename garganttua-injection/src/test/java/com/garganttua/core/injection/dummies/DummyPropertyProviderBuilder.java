@@ -112,4 +112,10 @@ public class DummyPropertyProviderBuilder implements IPropertyProviderBuilder {
         return this;
     }
 
+    @Override
+    public IPropertyProviderBuilder withProperty(String key, String value) throws DslException {
+        properties.put(key, value);
+        return this;
+    }
+
 }

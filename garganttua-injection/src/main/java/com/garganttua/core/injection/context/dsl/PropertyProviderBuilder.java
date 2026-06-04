@@ -56,6 +56,15 @@ public class PropertyProviderBuilder extends AbstractAutomaticLinkedBuilder<IPro
     }
 
     @Override
+    public IPropertyProviderBuilder withProperty(String key, String value) throws DslException {
+        log.trace("Entering withProperty(key={}, value={})", key, value);
+        this.propertyBuilders.add(new PropertyBuilder<>(key, value));
+        log.debug("Added string property with key={}", key);
+        log.trace("Exiting withProperty");
+        return this;
+    }
+
+    @Override
     protected IPropertyProvider doBuild() throws DslException {
         log.trace("Entering doBuild()");
         Map<String, Object> properties = this.propertyBuilders.stream()

@@ -149,6 +149,12 @@ public class PropertiesFileProviderBuilder
     }
 
     @Override
+    public IPropertyProviderBuilder withProperty(String key, String value) throws DslException {
+        this.sources.add(new PropertySource(PropertySourceType.INLINE, key + "=" + value));
+        return this;
+    }
+
+    @Override
     protected void doAutoDetection() throws DslException {
         log.debug("Auto-detecting {} on classpath", DEFAULT_CLASSPATH_RESOURCE);
         this.sources.add(0, new PropertySource(PropertySourceType.CLASSPATH, DEFAULT_CLASSPATH_RESOURCE));
