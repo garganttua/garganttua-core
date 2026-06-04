@@ -1,0 +1,46 @@
+# On a version tag, generate release notes from Conventional Commits (git-cliff,
+# using cliff.toml) and publish a GitHub Release. Runs alongside maven-publish.yml
+# (which handles the Maven Packages deploy) — this workflow only produces the notes.
+#
+# For a MAJOR (e.g. v2.0.0), the auto-generated notes are the *body*; curate the
+# headline + breaking-changes + migration on top (see docs/CHANGELOG-v2.0.0-draft.md)
+# either by editing the release after it is drafted, or by adding BREAKING CHANGE:
+# footers to the relevant commits so they surface automatically.
+
+name: Release notes
+
+on:
+  push:
+    tags:
+      - "v*"   # v2.0.0, v2.0.0-ALPHA03, …
+  workflow_dispatch:
+
+permissions:
+  contents: write   # required to create the GitHub Release
+
+jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so git-cliff can read the commit range
+
+      - name: Generate release notes (git-cliff)
+        id: cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: RELEASE_NOTES.md
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          # Tag the alphas/betas/RCs as pre-releases automatically.
+          prerelease: ${{ contains(github.ref_name, 'ALPHA') || contains(github.ref_name, 'BETA') || contains(github.ref_name, 'RC') }}
+          name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
