@@ -25,9 +25,22 @@ import com.garganttua.core.script.ScriptException;
  * <p>Mutable state on the underlying {@link ScriptContext} is NEVER touched
  * by this class: every {@link #execute(Object...)} call goes directly to
  * {@code runtime.execute(args)} and wraps the result in a fresh
- * {@link CompiledScriptExecutionResult}. The only shared mutable state is
- * the {@code includedScripts} map on the captured ScriptContext, which is a
- * {@code ConcurrentHashMap} — safe across concurrent callers.
+ * {@link CompiledScriptExecutionResult}.
+ *
+ * <p><b>Re-entrancy.</b> Each {@code execute()} binds a <em>fresh</em>
+ * {@link ScriptContext} frame (via {@link ScriptContext#createChildScript()})
+ * as the current {@link ScriptExecutionContext}, instead of the shared
+ * {@code captured} context. This is essential for re-entrant execution: the
+ * built-in {@code include()} / {@code execute_script()} / {@code script_variable()}
+ * functions register and resolve sub-scripts through the current context's
+ * {@code includedScripts} map and read their {@code lastVariables}/{@code lastOutput}.
+ * Sharing one {@code captured} context across a nested {@code execute()} of the
+ * same compiled instance (e.g. a supplier resolved mid-script that re-invokes
+ * the same workflow) would let the nested call's {@code include()} replace the
+ * sub-script instances the enclosing call is still reading — corrupting the
+ * enclosing result. A per-call frame gives each (possibly nested) execution its
+ * own sub-script registry and last-* state while the immutable compiled
+ * {@code runtime} stays shared.
  *
  * @since 2.0.0-ALPHA02
  */
@@ -49,7 +62,11 @@ final class CompiledScript implements ICompiledScript {
         try (ObservabilityEmitter.Scope scope = ObservabilityEmitter.open(this.observers, UUID.randomUUID())) {
             scope.fireStart("compiledscript:execute");
             try {
-                IScriptExecutionResult result = ScriptExecutionContext.callIn(this.captured, () -> {
+                // Fresh per-call frame: its own includedScripts registry + last-* state,
+                // so a re-entrant execute() of this same compiled instance cannot clobber
+                // the enclosing call's sub-scripts. The immutable runtime is shared.
+                ScriptContext frame = this.captured.createChildScript();
+                IScriptExecutionResult result = ScriptExecutionContext.callIn(frame, () -> {
                     Optional<IRuntimeResult<Object[], Object>> raw = this.runtime.execute(args);
                     return wrap(raw);
                 });
