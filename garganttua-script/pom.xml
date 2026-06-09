@@ -54,8 +54,15 @@
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-reflections</artifactId>
-      <!-- compile (not provided): Main directly references ReflectionsAnnotationScanner,
-           so it is needed on the compile classpath AND must be bundled in the fat-JAR. -->
+      <!-- runtime + optional: Main loads ReflectionsAnnotationScanner via Class.forName
+           (no compile-time symbol reference), so this is only needed at runtime — to
+           bundle a scanner in the executable fat-JAR / linux-installer for the JVM CLI.
+           'optional' stops it (and org.reflections) leaking transitively onto every
+           downstream consumer's classpath: full-AOT / native consumers get their scanner
+           from the AOT starter, JVM consumers from the runtime/hybrid starter. Mirrors
+           the garganttua-runtime-reflection treatment above. -->
+      <scope>runtime</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>

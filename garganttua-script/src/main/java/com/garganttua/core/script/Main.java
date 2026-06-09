@@ -7,12 +7,12 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Map;
 
-import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.InjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.reflection.IAnnotationScanner;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
@@ -139,11 +139,27 @@ public class Main {
         }
     }
 
+    // Loaded reflectively (like the reflection provider above) so the script
+    // module keeps NO compile-time coupling to the org.reflections-backed
+    // scanner. This stops garganttua-reflections (and org.reflections) leaking
+    // onto the compile/runtime classpath of every downstream consumer — full-AOT
+    // and native consumers get their scanner from the AOT starter instead. The
+    // JVM CLI fat-JAR still bundles it (garganttua-reflections is a runtime dep).
+    private static IAnnotationScanner loadAnnotationScanner() {
+        try {
+            Class<?> scannerClass = Class.forName("com.garganttua.core.reflections.ReflectionsAnnotationScanner");
+            return (IAnnotationScanner) scannerClass.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load ReflectionsAnnotationScanner. "
+                    + "Ensure garganttua-reflections is on the classpath.", e);
+        }
+    }
+
     private static int executeScript(File scriptFile, String[] args, boolean dumpOnError)
             throws ScriptException, IOException {
         IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(loadReflectionProvider())
-                .withScanner(new ReflectionsAnnotationScanner());
+                .withScanner(loadAnnotationScanner());
 
         // Build the reflection chain first: this installs the global IReflection
         // (IClass.setReflection) that InjectionContext.builder() resolves at construction.
@@ -321,7 +337,7 @@ public class Main {
     private static IExpressionContext buildExpressionContext() {
         IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(loadReflectionProvider())
-                .withScanner(new ReflectionsAnnotationScanner());
+                .withScanner(loadAnnotationScanner());
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContext.builder()
                 .provide(reflectionBuilder)
