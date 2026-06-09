@@ -28,12 +28,12 @@ When building native images with GraalVM, all reflection and resource metadata m
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-native-image-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA02
+2.0.0-ALPHA03
 
 ### Dependencies
  - `org.apache.maven.plugin-tools:maven-plugin-annotations:provided`
@@ -139,7 +139,7 @@ Minimal configuration to enable native image support:
         <plugin>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-native-image-maven-plugin</artifactId>
-            <version>2.0.0-ALPHA02</version>
+            <version>2.0.0-ALPHA03</version>
             <executions>
                 <execution>
                     <goals>
@@ -165,7 +165,7 @@ Declare resources that must be included in the native image:
 <plugin>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-native-image-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
     <executions>
         <execution>
             <goals>
@@ -197,7 +197,7 @@ Explicitly control when the plugin executes:
 <plugin>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-native-image-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
     <executions>
         <execution>
             <id>prepare-native-image</id>
@@ -227,7 +227,7 @@ Use in parent POM to apply to all modules:
             <plugin>
                 <groupId>com.garganttua.core</groupId>
                 <artifactId>garganttua-native-image-maven-plugin</artifactId>
-                <version>2.0.0-ALPHA02</version>
+                <version>2.0.0-ALPHA03</version>
                 <executions>
                     <execution>
                         <goals>
@@ -299,7 +299,7 @@ Combine with the official GraalVM plugin for complete native image builds:
         <plugin>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-native-image-maven-plugin</artifactId>
-            <version>2.0.0-ALPHA02</version>
+            <version>2.0.0-ALPHA03</version>
             <executions>
                 <execution>
                     <goals>
@@ -360,7 +360,7 @@ Enable native image preparation only for specific profiles:
                 <plugin>
                     <groupId>com.garganttua.core</groupId>
                     <artifactId>garganttua-native-image-maven-plugin</artifactId>
-                    <version>2.0.0-ALPHA02</version>
+                    <version>2.0.0-ALPHA03</version>
                     <executions>
                         <execution>
                             <goals>
@@ -425,7 +425,7 @@ Configure for Spring Boot applications:
         <plugin>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-native-image-maven-plugin</artifactId>
-            <version>2.0.0-ALPHA02</version>
+            <version>2.0.0-ALPHA03</version>
             <executions>
                 <execution>
                     <goals>
@@ -462,7 +462,7 @@ Configure for Quarkus applications:
         <plugin>
             <groupId>com.garganttua.core</groupId>
             <artifactId>garganttua-native-image-maven-plugin</artifactId>
-            <version>2.0.0-ALPHA02</version>
+            <version>2.0.0-ALPHA03</version>
             <executions>
                 <execution>
                     <goals>
@@ -491,7 +491,7 @@ Create a custom Maven extension to automatically discover resources:
 <plugin>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-native-image-maven-plugin</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
     <executions>
         <execution>
             <goals>
@@ -792,7 +792,7 @@ ls -la src/main/resources/config/missing.yml
             <plugin>
                 <groupId>com.garganttua.core</groupId>
                 <artifactId>garganttua-native-image-maven-plugin</artifactId>
-                <version>2.0.0-ALPHA02</version>
+                <version>2.0.0-ALPHA03</version>
                 <executions>
                     <execution>
                         <goals>
@@ -852,7 +852,7 @@ ls -la src/main/resources/config/missing.yml
             <plugin>
                 <groupId>com.garganttua.core</groupId>
                 <artifactId>garganttua-native-image-maven-plugin</artifactId>
-                <version>2.0.0-ALPHA02</version>
+                <version>2.0.0-ALPHA03</version>
                 <executions>
                     <execution>
                         <goals>

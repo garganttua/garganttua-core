@@ -32,12 +32,12 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-workflow</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA02
+2.0.0-ALPHA03
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
@@ -51,6 +51,7 @@ A **workflow** is a pipeline composed of **stages** executed sequentially. Each 
  - `com.garganttua.core:garganttua-aot-reflection:${project.version}:test`
  - `com.garganttua.core:garganttua-aot-annotation-scanner:${project.version}:test`
  - `com.garganttua.core:garganttua-mapper:test`
+ - `com.garganttua.core:garganttua-configuration:test`
 
 <!-- AUTO-GENERATED-END -->
 

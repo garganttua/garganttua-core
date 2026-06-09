@@ -12,12 +12,12 @@ The Garganttua Mutex module provides a thread-safe mutex synchronization framewo
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-mutex</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA02
+2.0.0-ALPHA03
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`

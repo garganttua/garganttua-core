@@ -44,12 +44,12 @@ Garganttua Core is built on three core principles:
 <dependency>
     <groupId>com.garganttua</groupId>
     <artifactId>garganttua-core</artifactId>
-    <version>2.0.0-ALPHA02</version>
+    <version>2.0.0-ALPHA03</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA02
+2.0.0-ALPHA03
 
 ### Dependencies
  - `org.junit.jupiter:junit-jupiter-engine:test`
@@ -505,7 +505,7 @@ This project is distributed under the MIT License. See individual module READMEs
 
 ## 🗺️ Roadmap
 
-### Version 2.0.0-ALPHA02 (Current)
+### Version 2.0.0-ALPHA03 (Current)
 
 - 30+ modules, 1175+ tests passing
 - AOT module suite generating reflection-free runtime descriptors
