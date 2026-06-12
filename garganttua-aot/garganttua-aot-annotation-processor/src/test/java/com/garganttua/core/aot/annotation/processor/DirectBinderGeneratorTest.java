@@ -242,6 +242,104 @@ class DirectBinderGeneratorTest {
         assertTrue(Files.exists(r.outputDir.resolve("sample/AOTMethod_Overloads_other_0.java")));
     }
 
+    // --- Generic members: type variables must be erased, never leaked ---
+
+    @Test
+    void genericMethodErasesTypeVariablesInParamsAndCasts(@TempDir Path tmp) throws IOException {
+        // A method with its own type parameter (`<T>`) whose parameter and
+        // return types mention T. The descriptor must erase T to its bound
+        // (java.lang.Object here) — a bare `T` in the param-type array or an
+        // `(T)` cast in invoke() would not compile (T is out of scope in the
+        // generated class). Regression for the AOT generic-method bug.
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected(queryAllDeclaredMethods = true)
+                public class Box {
+                    public <T> void put(String key, T value) {}
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Box", src);
+        assertCompiled(r);
+        String methodSrc = Files.readString(r.outputDir.resolve("sample/AOTMethod_Box_put_0.java"));
+        // Param-type metadata array: T erased to java.lang.Object, never "T".
+        assertTrue(methodSrc.contains("\"java.lang.String\", \"java.lang.Object\""),
+                () -> "type-variable param must be erased to java.lang.Object; got:\n" + methodSrc);
+        assertFalse(methodSrc.contains("\"T\""),
+                () -> "bare type-variable name 'T' must not appear in the descriptor; got:\n" + methodSrc);
+        // invoke() cast: (java.lang.Object), never (T).
+        assertTrue(methodSrc.contains("(java.lang.Object) args[1]"),
+                () -> "type-variable arg must be cast to java.lang.Object; got:\n" + methodSrc);
+        assertFalse(methodSrc.contains("(T)"),
+                () -> "invoke() must not cast to the out-of-scope type variable T; got:\n" + methodSrc);
+    }
+
+    @Test
+    void genericMethodErasesBoundedTypeVariableToItsBound(@TempDir Path tmp) throws IOException {
+        // A bounded type variable `<T extends Number>` erases to its bound.
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected(queryAllDeclaredMethods = true)
+                public class Bounded {
+                    public <T extends Number> T pick(T value) { return value; }
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Bounded", src);
+        assertCompiled(r);
+        String methodSrc = Files.readString(r.outputDir.resolve("sample/AOTMethod_Bounded_pick_0.java"));
+        assertTrue(methodSrc.contains("\"java.lang.Number\""),
+                () -> "bounded type variable must erase to its bound java.lang.Number; got:\n" + methodSrc);
+        assertTrue(methodSrc.contains("(java.lang.Number) args[0]"),
+                () -> "bounded type-variable arg must be cast to its bound; got:\n" + methodSrc);
+        assertFalse(methodSrc.contains("(T)"),
+                () -> "no bare (T) cast expected; got:\n" + methodSrc);
+    }
+
+    @Test
+    void parameterizedReturnTypeIsErased(@TempDir Path tmp) throws IOException {
+        // A method returning Optional<T> must report the raw java.util.Optional
+        // in its descriptor — type arguments are dropped, no bare T leaks.
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                import java.util.Optional;
+                @Reflected(queryAllDeclaredMethods = true)
+                public class Holder {
+                    public <T> Optional<T> get(T value) { return Optional.of(value); }
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Holder", src);
+        assertCompiled(r);
+        String methodSrc = Files.readString(r.outputDir.resolve("sample/AOTMethod_Holder_get_0.java"));
+        assertTrue(methodSrc.contains("\"java.util.Optional\""),
+                () -> "parameterized return type must be erased to raw java.util.Optional; got:\n" + methodSrc);
+        assertFalse(methodSrc.contains("\"T\""),
+                () -> "bare type-variable name 'T' must not appear; got:\n" + methodSrc);
+    }
+
+    @Test
+    void genericFieldTypeIsErased(@TempDir Path tmp) throws IOException {
+        // A field whose type is a class-level type variable must erase to its
+        // bound — both the metadata string and the (T) cast in set() would
+        // otherwise fail to compile.
+        String src = """
+                package sample;
+                import com.garganttua.core.reflection.annotations.Reflected;
+                @Reflected(allDeclaredFields = true)
+                public class Cell<T> {
+                    T value;
+                }
+                """;
+        CompileResult r = compile(tmp, "sample.Cell", src);
+        assertCompiled(r);
+        String fieldSrc = Files.readString(r.outputDir.resolve("sample/AOTField_Cell_value.java"));
+        assertTrue(fieldSrc.contains("(java.lang.Object) value"),
+                () -> "type-variable field must be cast to java.lang.Object in set(); got:\n" + fieldSrc);
+        assertFalse(fieldSrc.contains("(T) value"),
+                () -> "set() must not cast to the out-of-scope type variable T; got:\n" + fieldSrc);
+    }
+
     // --- Validation errors ---
 
     @Test

@@ -350,24 +350,25 @@ public class DirectBinderGenerator extends AbstractProcessor {
         Map<ExecutableElement, String> methodNames = AOTNaming.methodDescriptorNames(typeElement, methods);
         Map<ExecutableElement, String> constructorNames = AOTNaming.constructorDescriptorNames(typeElement, constructors);
 
+        javax.lang.model.util.Types types = processingEnv.getTypeUtils();
         // 1. Per-field descriptors
         for (VariableElement field : fields) {
-            AOTFieldSourceGenerator gen = new AOTFieldSourceGenerator(typeElement, field);
+            AOTFieldSourceGenerator gen = new AOTFieldSourceGenerator(types, typeElement, field);
             writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
         }
         // 2. Per-method descriptors
         for (ExecutableElement method : methods) {
-            AOTMethodSourceGenerator gen = new AOTMethodSourceGenerator(typeElement, method, methodNames.get(method));
+            AOTMethodSourceGenerator gen = new AOTMethodSourceGenerator(types, typeElement, method, methodNames.get(method));
             writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
         }
         // 3. Per-constructor descriptors
         for (ExecutableElement ctor : constructors) {
-            AOTConstructorSourceGenerator gen = new AOTConstructorSourceGenerator(typeElement, ctor, constructorNames.get(ctor));
+            AOTConstructorSourceGenerator gen = new AOTConstructorSourceGenerator(types, typeElement, ctor, constructorNames.get(ctor));
             writeSource(gen.getGeneratedQualifiedName(), gen.generate(), typeElement);
         }
         // 4. The class descriptor (refers to the above)
         AOTClassSourceGenerator classGen = new AOTClassSourceGenerator(
-                typeElement, fields, methods, methodNames, constructors, constructorNames);
+                types, typeElement, fields, methods, methodNames, constructors, constructorNames);
         writeSource(classGen.getGeneratedQualifiedName(), classGen.generate(), typeElement);
 
         messager.printMessage(Diagnostic.Kind.NOTE,

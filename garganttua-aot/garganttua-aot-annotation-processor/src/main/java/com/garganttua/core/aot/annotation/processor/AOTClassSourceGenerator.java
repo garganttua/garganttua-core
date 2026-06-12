@@ -11,6 +11,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 /**
  * Generates Java source code for an AOTClass subclass that extends
@@ -26,6 +27,7 @@ import javax.lang.model.type.TypeMirror;
  */
 public final class AOTClassSourceGenerator {
 
+    private final Types types;
     private final TypeElement typeElement;
     private final String packageName;
     private final String simpleName;
@@ -41,6 +43,7 @@ public final class AOTClassSourceGenerator {
     /**
      * Creates a generator for the class descriptor of {@code typeElement}.
      *
+     * @param types            the type utilities used to erase generic types
      * @param typeElement      the {@code @Reflected} type to describe
      * @param fields           the fields to expose, in source order
      * @param methods          the methods to expose, in source order
@@ -48,12 +51,14 @@ public final class AOTClassSourceGenerator {
      * @param constructors     the constructors to expose, in source order
      * @param constructorNames mapping of each constructor to its generated descriptor class name
      */
-    public AOTClassSourceGenerator(TypeElement typeElement,
+    public AOTClassSourceGenerator(Types types,
+                                   TypeElement typeElement,
                                    List<VariableElement> fields,
                                    List<ExecutableElement> methods,
                                    Map<ExecutableElement, String> methodNames,
                                    List<ExecutableElement> constructors,
                                    Map<ExecutableElement, String> constructorNames) {
+        this.types = types;
         this.typeElement = typeElement;
         this.qualifiedName = typeElement.getQualifiedName().toString();
         this.simpleName = typeElement.getSimpleName().toString();
@@ -213,7 +218,7 @@ public final class AOTClassSourceGenerator {
         if (superclass.getKind() == TypeKind.NONE) {
             return "null";
         }
-        return "\"" + TypeNames.getTypeName(superclass) + "\"";
+        return "\"" + TypeNames.getTypeName(types, superclass) + "\"";
     }
 
     private String buildInterfaceNamesArray() {
@@ -224,7 +229,7 @@ public final class AOTClassSourceGenerator {
         StringBuilder sb = new StringBuilder("new String[]{");
         for (int i = 0; i < interfaces.size(); i++) {
             if (i > 0) sb.append(", ");
-            sb.append("\"").append(TypeNames.getTypeName(interfaces.get(i))).append("\"");
+            sb.append("\"").append(TypeNames.getTypeName(types, interfaces.get(i))).append("\"");
         }
         sb.append('}');
         return sb.toString();

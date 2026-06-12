@@ -9,6 +9,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 /**
  * Generates a typed subclass of {@code AOTField} for one declared field,
@@ -28,7 +29,7 @@ final class AOTFieldSourceGenerator {
     private final boolean isStatic;
     private final boolean isFinal;
 
-    AOTFieldSourceGenerator(TypeElement enclosing, VariableElement field) {
+    AOTFieldSourceGenerator(Types types, TypeElement enclosing, VariableElement field) {
         this.field = field;
         this.enclosingQualifiedName = enclosing.getQualifiedName().toString();
         this.enclosingSimpleName = enclosing.getSimpleName().toString();
@@ -36,7 +37,7 @@ final class AOTFieldSourceGenerator {
         this.packageName = lastDot > 0 ? enclosingQualifiedName.substring(0, lastDot) : "";
         this.generatedSimpleName = AOTNaming.fieldDescriptorName(enclosing, field);
         TypeMirror type = field.asType();
-        this.fieldTypeName = TypeNames.getTypeName(type);
+        this.fieldTypeName = TypeNames.getTypeName(types, type);
         this.primitiveKind = TypeNames.primitiveKind(type);
         this.isStatic = field.getModifiers().contains(Modifier.STATIC);
         this.isFinal = field.getModifiers().contains(Modifier.FINAL);

@@ -6,6 +6,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 /**
  * Generates a typed subclass of {@code AOTConstructor} for one declared
@@ -15,12 +16,14 @@ import javax.lang.model.type.TypeMirror;
 final class AOTConstructorSourceGenerator {
 
     private final ExecutableElement constructor;
+    private final Types types;
     private final String packageName;
     private final String enclosingSimpleName;
     private final String enclosingQualifiedName;
     private final String generatedSimpleName;
 
-    AOTConstructorSourceGenerator(TypeElement enclosing, ExecutableElement constructor, String generatedSimpleName) {
+    AOTConstructorSourceGenerator(Types types, TypeElement enclosing, ExecutableElement constructor, String generatedSimpleName) {
+        this.types = types;
         this.constructor = constructor;
         this.generatedSimpleName = generatedSimpleName;
         this.enclosingQualifiedName = enclosing.getQualifiedName().toString();
@@ -74,7 +77,7 @@ final class AOTConstructorSourceGenerator {
     private String[] typeNames(List<? extends VariableElement> params) {
         String[] out = new String[params.size()];
         for (int i = 0; i < params.size(); i++) {
-            out[i] = TypeNames.getTypeName(params.get(i).asType());
+            out[i] = TypeNames.getTypeName(types, params.get(i).asType());
         }
         return out;
     }
@@ -91,7 +94,7 @@ final class AOTConstructorSourceGenerator {
         List<? extends TypeMirror> thrown = constructor.getThrownTypes();
         String[] out = new String[thrown.size()];
         for (int i = 0; i < thrown.size(); i++) {
-            out[i] = TypeNames.getTypeName(thrown.get(i));
+            out[i] = TypeNames.getTypeName(types, thrown.get(i));
         }
         return out;
     }
@@ -100,7 +103,7 @@ final class AOTConstructorSourceGenerator {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < params.size(); i++) {
             if (i > 0) sb.append(", ");
-            sb.append(AOTMethodSourceGenerator.castArg(params.get(i).asType(), i));
+            sb.append(AOTMethodSourceGenerator.castArg(types, params.get(i).asType(), i));
         }
         return sb.toString();
     }

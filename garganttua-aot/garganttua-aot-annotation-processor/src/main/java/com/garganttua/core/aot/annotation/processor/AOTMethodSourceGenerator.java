@@ -8,6 +8,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 /**
  * Generates a typed subclass of {@code AOTMethod} for one declared method,
@@ -17,6 +18,7 @@ import javax.lang.model.type.TypeMirror;
 final class AOTMethodSourceGenerator {
 
     private final ExecutableElement method;
+    private final Types types;
     private final String packageName;
     private final String enclosingSimpleName;
     private final String enclosingQualifiedName;
@@ -24,7 +26,8 @@ final class AOTMethodSourceGenerator {
     private final boolean isStatic;
     private final boolean isVoid;
 
-    AOTMethodSourceGenerator(TypeElement enclosing, ExecutableElement method, String generatedSimpleName) {
+    AOTMethodSourceGenerator(Types types, TypeElement enclosing, ExecutableElement method, String generatedSimpleName) {
+        this.types = types;
         this.method = method;
         this.generatedSimpleName = generatedSimpleName;
         this.enclosingQualifiedName = enclosing.getQualifiedName().toString();
@@ -59,7 +62,7 @@ final class AOTMethodSourceGenerator {
         src.append("    private ").append(generatedSimpleName).append("() {\n");
         src.append("        super(\"").append(method.getSimpleName()).append("\", \"")
            .append(enclosingQualifiedName).append("\", \"")
-           .append(TypeNames.getTypeName(method.getReturnType())).append("\", ")
+           .append(TypeNames.getTypeName(types, method.getReturnType())).append("\", ")
            .append(buildStringArray(typeNames(params))).append(", ")
            .append(buildStringArray(paramNames(params))).append(", ")
            .append(TypeNames.toReflectModifiers(method.getModifiers())).append(", ")
@@ -118,7 +121,7 @@ final class AOTMethodSourceGenerator {
     private String[] typeNames(List<? extends VariableElement> params) {
         String[] out = new String[params.size()];
         for (int i = 0; i < params.size(); i++) {
-            out[i] = TypeNames.getTypeName(params.get(i).asType());
+            out[i] = TypeNames.getTypeName(types, params.get(i).asType());
         }
         return out;
     }
@@ -135,7 +138,7 @@ final class AOTMethodSourceGenerator {
         List<? extends TypeMirror> thrown = method.getThrownTypes();
         String[] out = new String[thrown.size()];
         for (int i = 0; i < thrown.size(); i++) {
-            out[i] = TypeNames.getTypeName(thrown.get(i));
+            out[i] = TypeNames.getTypeName(types, thrown.get(i));
         }
         return out;
     }
@@ -144,18 +147,18 @@ final class AOTMethodSourceGenerator {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < params.size(); i++) {
             if (i > 0) sb.append(", ");
-            sb.append(castArg(params.get(i).asType(), i));
+            sb.append(castArg(types, params.get(i).asType(), i));
         }
         return sb.toString();
     }
 
-    static String castArg(TypeMirror type, int index) {
+    static String castArg(Types types, TypeMirror type, int index) {
         String primitive = TypeNames.primitiveKind(type);
         if (primitive != null) {
             String wrapper = TypeNames.primitiveWrapper(primitive);
             return "(" + wrapper + ") args[" + index + "]";
         }
-        return "(" + TypeNames.getTypeName(type) + ") args[" + index + "]";
+        return "(" + TypeNames.getTypeName(types, type) + ") args[" + index + "]";
     }
 
     static String buildStringArray(String[] values) {
