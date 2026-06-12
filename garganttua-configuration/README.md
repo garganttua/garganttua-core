@@ -25,12 +25,12 @@ The `garganttua-configuration` module provides a unified API for loading configu
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-configuration</artifactId>
-    <version>2.0.0-ALPHA03</version>
+    <version>2.0.0-ALPHA04</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA03
+2.0.0-ALPHA04
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`

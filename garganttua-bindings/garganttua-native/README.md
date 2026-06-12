@@ -18,12 +18,12 @@ Parent module for Garganttua Native support. This POM aggregates submodules that
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-native</artifactId>
-    <version>2.0.0-ALPHA03</version>
+    <version>2.0.0-ALPHA04</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA03
+2.0.0-ALPHA04
 
 ### Dependencies
 

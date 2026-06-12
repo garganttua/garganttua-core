@@ -6,7 +6,7 @@ Garganttua Observability provides the **script-side instrumentation bridge** (`:
 
 The primitives themselves — sealed event hierarchy (`StartEvent`, `EndEvent`, `ErrorEvent`), `IObservable<E>`, `IObserver<E>`, `ObservableRegistry`, `ObservableContextHolder`, `ObservabilityEmitter` — are in `garganttua-commons` under package `com.garganttua.core.observability`. Code that only needs to emit events depends on `commons`; only this module is needed when scripts must emit `:observe(...)` events.
 
-**Engines instrumented out of the box** (as of 2.0.0-ALPHA03): `Workflow`, `Runtime` (per-execution + per-step), `ScriptContext` (compile/execute), `Mapper`, `Bootstrap` (per phase + per builder), `InterruptibleLeaseMutex`, `BeanFactory` (bean creation). An observer attached to a `Workflow` sees correlated events from every nested engine — they all share the same `executionId` thanks to `ObservableContextHolder` stack-based propagation.
+**Engines instrumented out of the box** (as of 2.0.0-ALPHA04): `Workflow`, `Runtime` (per-execution + per-step), `ScriptContext` (compile/execute), `Mapper`, `Bootstrap` (per phase + per builder), `InterruptibleLeaseMutex`, `BeanFactory` (bean creation). An observer attached to a `Workflow` sees correlated events from every nested engine — they all share the same `executionId` thanks to `ObservableContextHolder` stack-based propagation.
 
 The module deliberately offers **only the primitives** — aggregators, metrics backends, and export adapters are left to consumers. Existing in-module patterns (`MapperMetrics`, `StatsObserver` in `garganttua-api`) remain valid examples to copy.
 
@@ -27,12 +27,12 @@ The module deliberately offers **only the primitives** — aggregators, metrics 
 <dependency>
     <groupId>com.garganttua.core</groupId>
     <artifactId>garganttua-observability</artifactId>
-    <version>2.0.0-ALPHA03</version>
+    <version>2.0.0-ALPHA04</version>
 </dependency>
 ```
 
 ### Actual version
-2.0.0-ALPHA03
+2.0.0-ALPHA04
 
 ### Dependencies
  - `com.garganttua.core:garganttua-commons`
