@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.garganttua.core</groupId>
+        <artifactId>garganttua-examples</artifactId>
+        <version>2.0.0-ALPHA04</version>
+    </parent>
+
+    <artifactId>garganttua-example-aot-only</artifactId>
+    <description>Minimal "AOT-only" consumer proving Garganttua AOT reflection (compile-time rich IClass descriptors) runs on just the AOT starter + reflection facade, with no injection, runtime, expression, bootstrap or workflow.</description>
+
+    <properties>
+        <!-- The AOT annotation processor (wired in the root parent's maven-compiler-plugin)
+             only emits AOTClass_* descriptors + the IAOTSelfRegistering SPI when this is true.
+             The framework build leaves it false; a downstream AOT app flips it on, exactly as
+             this example does. -->
+        <garganttua.direct.binders>true</garganttua.direct.binders>
+        <exec.mainClass>com.garganttua.example.aot.AotOnlyDemo</exec.mainClass>
+    </properties>
+
+    <dependencies>
+        <!-- The ONE and only dependency. Pulls (transitively) just:
+               garganttua-aot-reflection      -> commons, aot-commons, dsl
+               garganttua-aot-annotation-scanner -> commons
+             i.e. the AOT reflection provider + annotation scanner. No DI, no runtime,
+             no expression, no bootstrap, no workflow. -->
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-starter-aot</artifactId>
+            <type>pom</type>
+        </dependency>
+
+        <!-- The composition root of the IReflection facade (ReflectionBuilder /
+             CompositeReflection). The starter ships the AOT *provider* + *scanner*, but
+             they plug INTO this facade: generated AOTClass_* descriptors resolve member
+             types through the static IClass.getClass(...) facade, which needs an
+             IReflection installed via IClass.setReflection(...). Apps that go through
+             garganttua-bootstrap get this transitively; a no-bootstrap AOT app like this
+             one must add it explicitly. Still strictly the reflection layer — no DI,
+             runtime, expression, bootstrap or workflow. -->
+        <dependency>
+            <groupId>com.garganttua.core</groupId>
+            <artifactId>garganttua-reflection</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- `mvn -f garganttua-examples/pom.xml -pl garganttua-example-aot-only exec:java` -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${maven.exec.plugin.version}</version>
+                <configuration>
+                    <mainClass>${exec.mainClass}</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

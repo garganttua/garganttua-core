@@ -86,6 +86,8 @@ Garganttua Core is organized into independent modules, each focusing on a specif
 | \|- [**garganttua-console**](./garganttua-console/README.md) | Interactive REPL console for Garganttua Script. |
 | \|- [**garganttua-crypto**](./garganttua-crypto/README.md) | Encryption, hashing, and secure key management utilities. |
 | \|- [**garganttua-dsl**](./garganttua-dsl/README.md) | Declarative language and builder framework for Garganttua DSLs. |
+| \|- [**garganttua-examples**](./garganttua-examples/README.md) | Aggregator for runnable consumer-side examples; kept out of the root reactor so a plain root `mvn install` never depends on them — build with `mvn -f garganttua-examples/pom.xml install`. |
+| \|    \|- [**garganttua-example-aot-only**](./garganttua-examples/garganttua-example-aot-only/README.md) | Minimal "AOT-only" consumer proving Garganttua AOT reflection (compile-time rich IClass descriptors) runs on just the AOT starter + reflection facade, with no injection, runtime, expression, bootstrap or workflow. |
 | \|- [**garganttua-execution**](./garganttua-execution/README.md) | Task execution, orchestration, and fallback handling engine. |
 | \|- [**garganttua-expression**](./garganttua-expression/README.md) | Advanced expression language for object supplying. |
 | \|    \|- [**bin**](./garganttua-expression/bin/README.md) | Advanced expression language for object supplying. |
