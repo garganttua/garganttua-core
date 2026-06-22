@@ -39,9 +39,15 @@
     <dependency>
       <groupId>com.garganttua.core</groupId>
       <artifactId>garganttua-runtime-reflection</artifactId>
-      <!-- runtime (not provided): the executable fat-JAR / linux-installer must bundle a
-           reflection provider so the CLI cold-starts; it is loaded via Class.forName. -->
+      <!-- runtime + optional: the executable fat-JAR / linux-installer must bundle a
+           reflection provider so the CLI cold-starts; it is loaded via Class.forName
+           (no compile-time symbol reference). 'optional' stops it leaking transitively
+           onto every downstream consumer's classpath: full-AOT / native consumers get
+           their provider from the AOT starter, JVM consumers from the runtime/hybrid
+           starter. The fat-JAR still bundles it (shade includes optional runtime deps).
+           Mirrors the garganttua-reflections treatment below. -->
       <scope>runtime</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.garganttua.core</groupId>
@@ -59,8 +65,8 @@
            bundle a scanner in the executable fat-JAR / linux-installer for the JVM CLI.
            'optional' stops it (and org.reflections) leaking transitively onto every
            downstream consumer's classpath: full-AOT / native consumers get their scanner
-           from the AOT starter, JVM consumers from the runtime/hybrid starter. Mirrors
-           the garganttua-runtime-reflection treatment above. -->
+           from the AOT starter, JVM consumers from the runtime/hybrid starter. Same
+           treatment as garganttua-runtime-reflection above. -->
       <scope>runtime</scope>
       <optional>true</optional>
     </dependency>
